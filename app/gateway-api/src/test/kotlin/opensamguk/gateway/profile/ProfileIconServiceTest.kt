@@ -249,6 +249,7 @@ class ProfileIconServiceTest {
         return ProfileIconService(
             userRepository = userRepository,
             decoder = ProfileIconDecoder(51_200),
+            transformer = ProfileIconTransformer(maxStoredBytes = 51_200),
             storage = storage,
             catalog = catalog,
             reconciler = reconciler,

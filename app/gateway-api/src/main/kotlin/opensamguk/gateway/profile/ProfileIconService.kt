@@ -25,6 +25,7 @@ class ProfileIconPayloadTooLargeException : RuntimeException("프로필 아이�
 class ProfileIconService(
     private val userRepository: UserRepository,
     private val decoder: ProfileIconDecoder,
+    private val transformer: ProfileIconTransformer,
     private val storage: LocalProfileIconStorage,
     private val catalog: SharedProfileIconCatalog,
     private val reconciler: ProfileIconOperationReconciler,
@@ -37,7 +38,9 @@ class ProfileIconService(
 
     @Transactional
     fun upload(userDetails: CustomUserDetails, source: ByteArray): UserResponse {
-        val decoded = decoder.decode(source)
+        // 업로드본은 그대로 저장하지 않는다 — 카드 규격(148×210)으로 변환해서 저장한다.
+        // 그래야 카드 슬롯이 꽉 차고, 유저가 비율·크기를 미리 맞출 필요가 없다.
+        val decoded = transformer.toCard(decoder.decode(source))
         val user = findLocked(userDetails)
         val changedAt = clock.instant()
         assertChangeAllowed(user, changedAt)

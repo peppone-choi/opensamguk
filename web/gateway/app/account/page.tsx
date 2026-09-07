@@ -13,7 +13,7 @@ import { Portrait } from '@opensamguk/ui';
 
 // 규격 밖 이미지는 브라우저에서 128x128로 크롭·축소해 보낸다(lib/profileIcon). 그건 편의일 뿐
 // 최종 보안 경계는 서버다 — 우회해도 서버 거부를 성공으로 위장하지 않는다.
-const ICON_GUIDE = 'jpg·png·gif·webp·avif 이미지를 올리면 중앙을 정사각형으로 잘라 128x128로 자동 변환합니다. 크기를 미리 맞출 필요는 없습니다.';
+const ICON_GUIDE = 'jpg·png·gif·webp·avif 이미지를 올리면 위쪽 중앙을 기준으로 잘라 카드 규격(148×210)으로 자동 변환합니다. 크기·비율을 미리 맞출 필요는 없습니다.';
 // image/* 대신 서버가 받는 타입만 나열한다 — iOS 사진 선택기가 HEIC를 jpeg로 변환해 넘겨준다.
 const ICON_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,image/avif';
 
@@ -143,7 +143,8 @@ function AccountSettings() {
             <section className="game-panel">
                 <h2>전콘</h2>
                 {/* 전콘은 게임에서 장수 얼굴로 쓰인다 — 실제 렌더 규격(card-126 = 126×178)으로 미리 보여준다.
-                    초상 규칙(ADR-LITE-049): 정사각·각진 모서리, object-fit: contain(잘림 0). */}
+                    초상 규칙(ADR-LITE-049): 3종은 원본 히어로 / 148×210 카드 / 96 아이콘이고, 업로드본은
+                    서버가 카드 규격으로 변환해 저장한다(ProfileIconTransformer). */}
                 <Portrait picture={picture.trim() || null} imageServer={imgsvr} size="card-126" alt="현재 전콘" />
                 <form className="account-form" onSubmit={submitUpload}>
                     <p>{ICON_GUIDE}</p>

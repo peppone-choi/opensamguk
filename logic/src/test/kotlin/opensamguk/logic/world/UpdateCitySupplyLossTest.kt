@@ -241,6 +241,32 @@ class UpdateCitySupplyLossTest {
         assertEquals(11, unchanged.officerLevel, "officer in a kept city is untouched")
     }
 
+    /**
+     * 보급 절단으로 도시가 중립화돼도 **군주는 강등하지 않는다**.
+     *
+     * 군주가 강등되면 국가가 군주를 잃고, 그 상태에서 정복이 일어나면 턴 루프가 통째로 멈춘다
+     * (PR #660 「ConquerCity collapse: no lord」 — 그 PR 이 UNKNOWN 으로 남긴 유래가 이 경로다).
+     * 이 단언을 지우고 무조건 강등으로 되돌리면 빨개진다.
+     */
+    @Test
+    fun `lost city does not demote the lord (officer_level 12)`() {
+        val lord = general(22, 1, cityId = 1, officerLevel = 12, officerCity = 3)
+        val governor = general(23, 1, cityId = 1, officerLevel = 4, officerCity = 3)
+        val result = applyCitySupply(
+            cities = listOf(city(1, 1), city(2, 2), city(3, 1, trust = 10.0)),
+            generals = listOf(lord, governor),
+            capitals = listOf(SupplyCapital(1, 1), SupplyCapital(2, 2)),
+            cityConst = lineConst(), year = 200, month = 1,
+        )
+        assertEquals(listOf(3), result.lostCityIds)
+        val keptLord = result.generals.first { it.id == 22 }
+        assertEquals(12, keptLord.officerLevel, "lord keeps officer_level 12")
+        assertEquals(3, (keptLord.meta["officer_city"] as Number).toInt(), "lord officer_city untouched")
+        val demoted = result.generals.first { it.id == 23 }
+        assertEquals(1, demoted.officerLevel, "non-lord officers still reset")
+        assertEquals(0, (demoted.meta["officer_city"] as Number).toInt())
+    }
+
     @Test
     fun `general 5 percent decay groups unsupplied cities by ascending city id (first-seen order)`() {
         // two unsupplied cities of the SAME nation; both generals decay identically regardless of group

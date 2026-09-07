@@ -408,6 +408,9 @@
 .os-portrait--ring { outline: 2px solid var(--nation, var(--bronze)); outline-offset: -2px; }
 .os-portrait--inactive > img { filter: grayscale(1); opacity: 0.6; }
 .os-portrait--hero > img { object-fit: contain; object-position: top center; }
+/* 아이콘 슬롯은 정사각인데 업로드 전콘은 카드 비율(148×210)로 저장된다 — contain 이면 좌우가
+   비므로 얼굴만 덮어 자른다. RTK14 아이콘은 이미 정사각이라 cover 가 무동작이다. */
+.os-portrait--icon > img { object-fit: cover; object-position: top center; }
 .os-portrait--hero::after {
   content: '';
   position: absolute;
