@@ -276,7 +276,7 @@ object HotColdCatalog {
             boundary = AccessBoundary.BOOT_ALLOCATOR,
             bound = AccessBound.AGGREGATE,
             ordering = "world-scoped max id aggregates",
-            calls = listOf(RuntimeCall("messageRepository.findMaxId"), RuntimeCall("auctionRepository.findMaxId")),
+            calls = listOf(RuntimeCall("messageRepository.findMaxId"), RuntimeCall("auctionRepository.findMaxId"), RuntimeCall("battleReplayRepository.findMaxId")),
         ),
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnRunService.kt",

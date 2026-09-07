@@ -53,6 +53,11 @@ class SideReadRepositoryConfiguration {
     fun messageRepository(raw: MessageRawRepository, scope: SideReadWorldScope): MessageRepository =
         MessageRepository(raw, scope.worldId.value, 0)
 
+    /** Phase 4X-C — 리플레이 id 시드(엔진 `DaemonLoopConfig` 의 `battleReplayIdAllocator`). */
+    @Bean
+    fun battleReplayRepository(jdbc: NamedParameterJdbcTemplate, scope: SideReadWorldScope): BattleReplayRepository =
+        BattleReplayRepository(jdbc, scope.worldId)
+
     @Bean
     fun diplomacyRepository(context: ApplicationContext, scope: SideReadWorldScope): DiplomacyRepository =
         WorldScopedDiplomacyRepository(context.getBean(DiplomacyRawRepository::class.java), scope.worldId)

@@ -111,7 +111,9 @@ class ProcessWarPlanHookTest {
         assertTrue(downIdx > 0, plain.calls.toString())
         assertEquals(listOf("result:G1", "result:G2"), plain.calls.subList(downIdx - 2, downIdx), "수비자 격파 직전 result 쌍")
         assertTrue(plain.calls.getOrNull(downIdx + 1)?.startsWith("addTrain:G1") == true, "다음 수비자 첫 접촉이 이어진다: ${plain.calls.drop(downIdx)}")
-        assertEquals("conflict", plain.calls.last())
+        // 이 픽스처는 두 번째 수비자가 살아남은 채 페이즈가 소진된다 → 사후 `!logWritten` result 쌍이 마지막이고, 성은 건드리지 않아 conflict 없음.
+        assertEquals(listOf("result:G1", "result:G3"), plain.calls.takeLast(2), plain.calls.toString())
+        assertTrue(plain.calls.none { it == "conflict" || it.startsWith("contact:C10") }, plain.calls.toString())
     }
 
     @Test
