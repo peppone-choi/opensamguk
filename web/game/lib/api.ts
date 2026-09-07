@@ -447,6 +447,18 @@ export const api = {
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),
+    // Phase 4X-A 가신·부곡(spec v3 §6) — 본인/같은 국가만.
+    myRetinue: <T>() => get<T>('/api/my-retinue'),
+    // Phase 4X-B 작전(spec v4.1 §6) — 국가 내부 정보.
+    operations: <T>() => get<T>('/api/operations'),
+    // 도시 목록(`[city, nation, name, level]` 4-튜플, CityListController) — 작전 목표 select 원천.
+    cityList: <T>() => get<T>('/api/cities'),
+    operation: <T>(id: number) => get<T>(`/api/operations/${id}`),
+    // Phase 4X-C 출병 계획 봉인·리플레이(spec v4.1 §6) — 계획은 미소비만, 리플레이는 공격국·수비국·본인만.
+    myBattlePlans: <T>() => get<T>('/api/my-battle-plans'),
+    battleReplays: <T>(scope: 'nation' | 'mine' = 'nation') => get<T>(`/api/battles/replays?scope=${scope}`),
+    battleReplay: <T>(id: number) => get<T>(`/api/battles/replays/${id}`),
+    generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),
     myBoss: <T>() => get<T>('/api/my-boss'),
@@ -801,6 +813,9 @@ export const api = {
     // Bearer로 붙여 보내므로 별도 헤더 주입 불필요. 비ADMIN은 game-api가 403, 비로그인은 401.
     admin: {
         gameSettings: () => get<AdminGameSettingsResponse>('/api/admin/game-settings'),
+        // 서버 상태(OPEN/PRE_OPEN/CLOSED) — 202 접수. Phase 3 이전까지 FE 미배선이던 AdminWriteController.updateServerStatus.
+        serverStatus: (status: string) =>
+            post<{ result: boolean; status?: string; reason?: string }>('/api/admin/server-status', { status }),
         patchGameSettings: (values: Record<string, string | number>) =>
             patch<AdminGameSettingsPatchResponse>('/api/admin/game-settings', { values }),
         generalModeration: () => get<AdminGeneralModerationResponse>('/api/admin/general-moderation'),

@@ -180,6 +180,15 @@ describe('BattleCenter route', () => {
       await waitFor(() => expect(screen.getByText(`${type}-1`)).toBeInTheDocument());
     }
 
+    // 우측 레일 — 정렬·대상 장수·기록 구획 앵커 4종(라벨 verbatim)
+    const rail = screen.getByRole('complementary', { name: '감찰 대상' });
+    expect(within(rail).getByLabelText('정렬')).toBeInTheDocument();
+    expect(within(rail).getByLabelText('대상 장수')).toBeInTheDocument();
+    for (const [type, title] of [['generalHistory', '장수 열전'], ['battleDetail', '전투 기록'], ['battleResult', '전투 결과'], ['generalAction', '개인 기록']]) {
+      expect(within(rail).getByRole('link', { name: new RegExp(title) })).toHaveAttribute('href', `#bc-${type}`);
+      expect(document.getElementById(`bc-${type}`)).not.toBeNull();
+    }
+
     fireEvent.click(screen.getByRole('button', { name: '다음 ▶' }));
     await waitFor(() => expect(screen.getByTestId('general-basic-card')).toHaveTextContent('관우 / 후한왕조'));
     expect(apiMocks.generalLog).toHaveBeenCalledWith(2, 'generalHistory');

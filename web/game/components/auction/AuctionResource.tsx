@@ -10,9 +10,9 @@
 // write: api.commands.auctionBid / auctionOpenBuyRice / auctionOpenSellRice (wire 코드 기존).
 
 import { useCallback, useEffect, useState } from 'react';
+import { LogText } from '@opensamguk/ui';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import { formatLog } from '../../lib/utilGame';
 import { useTurnRefresh } from '../../hooks/useTurnRefresh';
 
 // ── D1 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────────
@@ -299,8 +299,8 @@ export default function AuctionResource({ generalId, onToast }: Props) {
             {/* ── 이전 경매(최근 20건) — BE BLOCKED(recentLogs 원천 미포팅) → 빈 목록 ── */}
             <div style={{ marginTop: 'var(--space-md)', fontWeight: 600 }}>이전 경매(최근 20건)</div>
             {recentLogs.map((log, idx) => (
-                // formatLog: 색/태그 마크업 → HTML(legacy v-html 패턴 동일).
-                <div key={idx} dangerouslySetInnerHTML={{ __html: formatLog(log) }} />
+                // 색/태그 토큰 → LogText(팔레트 span, innerHTML 없음).
+                <div key={idx}><LogText text={log} /></div>
             ))}
 
             <style jsx>{`

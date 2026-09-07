@@ -22,8 +22,9 @@
 // EMPTY-SAFE: missing posts / empty reservedTurns render empty cells, never crash.
 
 import { useEffect, useState, useCallback } from 'react';
+import { LogText, Panel, SectionHeader, Slot } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
-import GameCard from '../../../components/GameCard';
+import PageHead from '../../../components/PageHead';
 import GeneralName from '../../../components/game/GeneralName';
 import CommandModal from '../../../components/CommandModal';
 import ChiefCommandReserve, { type ChiefReserveLaunch } from '../../../components/game/ChiefCommandReserve';
@@ -68,46 +69,13 @@ function ChiefPostCard({
     });
 
     return (
-        <GameCard
-            style={{
-                borderColor: isMe ? 'var(--gold-dim)' : undefined,
-                borderWidth: isMe ? '2px' : undefined,
-            }}
-        >
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    gap: 'var(--space-sm)',
-                    marginBottom: 'var(--space-sm)',
-                    paddingBottom: 'var(--space-xs)',
-                    borderBottom: '1px solid var(--border-subtle)',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-sm)', minWidth: 0 }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                        {post?.officerLevelText ?? ''}
-                    </span>
-                    <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <GeneralName
-                            name={name}
-                            npcType={post?.npcType ?? 0}
-                            style={{
-                                fontSize: 'var(--text-base)',
-                                textDecoration: isMe ? 'underline' : undefined,
-                            }}
-                        />
-                    </strong>
-                </div>
-                {post?.turnTime != null && (
-                    <span className="f_tnum" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                        {shortTurnTime(post.turnTime)}
-                    </span>
-                )}
-            </div>
-
-            {/* 내 직책 칸이면 슬롯-편집(ChiefCommandReserve), 아니면 read-only brief 목록. */}
+        <Panel className="record-panel chief-post" frame={isMe ? 'bronze' : 'none'} aria-label={`${post?.officerLevelText ?? '직책'} ${name}`}>
+            <SectionHeader
+                title={<GeneralName name={name} npcType={post?.npcType ?? 0} style={{ textDecoration: isMe ? 'underline' : undefined }} />}
+                sub={post?.officerLevelText ?? ''}
+                actions={post?.turnTime != null ? <span className="os-num chief-post__time">{shortTurnTime(post.turnTime)}</span> : undefined}
+            />
+            {/* 내 직책 칸이면 슬롯-편집(ChiefCommandReserve), 아니면 read-only 순 목록(한 순 = 한 슬롯). */}
             {isMe ? (
                 <ChiefCommandReserve
                     maxChiefTurn={maxChiefTurn}
@@ -117,33 +85,22 @@ function ChiefPostCard({
                     generalId={generalId}
                 />
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                <div className="chief-post__slots">
                     {Array.from({ length: maxChiefTurn }, (_, idx) => {
                         const turn = turns.find((t) => t.turnIdx === idx);
+                        // 빈 슬롯은 legacy ChiefReservedCommand 와 같이 '휴식'(색/태그 토큰은 LogText 로).
                         return (
-                            <div
+                            <Slot
                                 key={idx}
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1.75rem 1fr',
-                                    alignItems: 'center',
-                                    fontSize: 'var(--text-sm)',
-                                    padding: '2px var(--space-xs)',
-                                    background: idx % 2 === 0 ? 'var(--bg-hover)' : 'transparent',
-                                    borderRadius: 'var(--radius-sm)',
-                                }}
-                            >
-                                <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{idx + 1}</span>
-                                <span
-                                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                                    dangerouslySetInnerHTML={{ __html: turn?.brief ?? '' }}
-                                />
-                            </div>
+                                n={idx + 1}
+                                state={turn?.brief ? 'planned' : 'rest'}
+                                cmd={turn?.brief ? <LogText text={turn.brief} /> : '휴식'}
+                            />
                         );
                     })}
                 </div>
             )}
-        </GameCard>
+        </Panel>
     );
 }
 
@@ -212,15 +169,11 @@ export default function ChiefCenterPage() {
 
     return (
         <Shell>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>사령부</h1>
-                {data && (
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-                        {data.year}년 {data.month}월
-                    </span>
-                )}
-                <button onClick={() => void fetchData()} style={{ marginLeft: 'auto' }}>새로고침</button>
-            </div>
+            <PageHead
+                title="사령부"
+                chip={data ? `${data.year}年 ${data.month}月` : undefined}
+                actions={<button type="button" className="os-button os-button--sm os-button--ghost" onClick={() => void fetchData()}>새로고침</button>}
+            />
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
@@ -232,19 +185,13 @@ export default function ChiefCenterPage() {
             )}
 
             {data && !isAllowed && (
-                <GameCard>
-                    <p style={{ color: 'var(--text-secondary)' }}>권한이 부족합니다. 수뇌부가 아닙니다.</p>
-                </GameCard>
+                <Panel className="record-panel">
+                    <p className="record-empty">권한이 부족합니다. 수뇌부가 아닙니다.</p>
+                </Panel>
             )}
 
             {data && isAllowed && (
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                        gap: 'var(--space-md)',
-                    }}
-                >
+                <div className="chief-grid">
                     {CHIEF_LEVEL_ORDER.map((level) => (
                         <ChiefPostCard
                             key={level}

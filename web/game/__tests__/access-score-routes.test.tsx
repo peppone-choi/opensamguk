@@ -122,7 +122,8 @@ describe('general access score routes', () => {
 
     render(<RankingsGeneralsPage />);
 
-    await waitFor(() => expect(screen.getByText('고점')).toBeInTheDocument());
+    // 상위 3 시상대(壹貳參)가 이름을 한 번 더 그린다 — 표 행은 아래에서 따로 본다.
+    await waitFor(() => expect(screen.getAllByText('고점').length).toBeGreaterThan(0));
     const rows = screen.getAllByRole('row');
     expect(within(rows[1]).getByText('고점')).toBeInTheDocument();
     expect(rows[1].lastElementChild).toHaveTextContent('110【보통】');

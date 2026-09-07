@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import MapPreview from './MapPreview';
+import NationSummary from './NationSummary';
 import ServerLog from './ServerLog';
 
 /**
@@ -64,9 +65,12 @@ export default function ServerBoard() {
                 ))}
             </div>
 
-            {/* 선택 서버 현황: 세계지도(아이콘/깃발) + 전황 로그 */}
+            {/* 선택 서버 현황: 세계지도(아이콘/깃발) + 세력 현황 + 전황 로그(ADR-LITE-049 01·02) */}
             <MapPreview serverId={selected.id} serverName={selected.name} />
-            <ServerLog serverId={selected.id} />
+            <div className="server-board__side">
+                <NationSummary serverId={selected.id} serverName={selected.name} />
+                <ServerLog serverId={selected.id} />
+            </div>
         </section>
     );
 }

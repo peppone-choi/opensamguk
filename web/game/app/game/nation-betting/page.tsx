@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import BettingDetail from '../../../components/betting/BettingDetail';
@@ -98,7 +99,7 @@ export default function NationBettingPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 베팅장</h1>
+            <PageHead title="국가 베팅장" />
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button onClick={() => void fetchData()}>새로고침</button>

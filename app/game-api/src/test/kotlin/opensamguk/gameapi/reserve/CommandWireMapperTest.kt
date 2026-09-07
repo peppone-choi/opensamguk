@@ -53,6 +53,21 @@ class CommandWireMapperTest {
     }
 
     @Test
+    fun `json null arguments map to Kotlin null, not the string "null" (4X-B fallbackText)`() {
+        val cmd = CommandWireMapper.toCommand(
+            code = "operationDeclare", generalId = 10, requestId = "req-op",
+            argJson = """{"kind":"capture_city","targetCityId":2,"title":"낙양 공략","fallbackText":null,"deadlineMonths":null}""",
+        )
+        val op = roundTrip(cmd!!) as TurnDaemonCommand.OperationDeclare
+        assertNull(op.fallbackText)
+        assertNull(op.deadlineMonths)
+        assertEquals("낙양 공략", op.title)
+        val plan = roundTrip(CommandWireMapper.toCommand("battlePlanSave", 10, "req-bp", """{"targetCityId":31,"stance":"probe","retreatLossPct":null,"retreatMoraleBelow":40}""")!!) as TurnDaemonCommand.BattlePlanSave
+        assertNull(plan.retreatLossPct)
+        assertEquals(40, plan.retreatMoraleBelow)
+    }
+
+    @Test
     fun `auctionBid maps auctionId amount and optional tryExtendCloseDate`() {
         val cmd = CommandWireMapper.toCommand(
             code = "auctionBid",
@@ -358,5 +373,28 @@ class CommandWireMapperTest {
             """{"messageId":77}""",
         ) as TurnDaemonCommand.AcceptRaiseInvaderMessage
         assertEquals(77, invader.messageId)
+    }
+
+    @Test
+    fun `boardRead maps articleNo and boardArticle carries kind and voteId (ADR-LITE-049 14)`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("boardRead"))
+        val read = roundTrip(
+            CommandWireMapper.toCommand("boardRead", 10, "r", """{"articleNo":5}""")!!,
+        ) as TurnDaemonCommand.BoardRead
+        assertEquals(10, read.generalId)
+        assertEquals(5, read.articleNo)
+
+        val vote = roundTrip(
+            CommandWireMapper.toCommand("boardArticle", 10, "r", """{"kind":"vote","voteId":3,"title":"표결","text":"본문"}""")!!,
+        ) as TurnDaemonCommand.BoardArticle
+        assertEquals("vote", vote.kind)
+        assertEquals(3, vote.voteId)
+
+        // kind 부재 → general(레거시 클라이언트 호환), voteId null.
+        val plain = roundTrip(
+            CommandWireMapper.toCommand("boardArticle", 10, "r", """{"title":"t","text":"x"}""")!!,
+        ) as TurnDaemonCommand.BoardArticle
+        assertEquals("general", plain.kind)
+        assertNull(plain.voteId)
     }
 }

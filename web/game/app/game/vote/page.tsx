@@ -39,6 +39,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
@@ -264,9 +265,7 @@ export default function VotePage() {
     return (
         <Shell>
             {/* legacy PageVote.vue:4 — "설문 조사({voteReward}금과 추첨으로 유니크템 증정!)". reward 부재 시 안내 생략. */}
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
-                설문 조사{voteReward != null && `(${voteReward.toLocaleString()}금과 추첨으로 유니크템 증정!)`}
-            </h1>
+            <PageHead title={<>설문 조사{voteReward != null && `(${voteReward.toLocaleString()}금과 추첨으로 유니크템 증정!)`}</>} />
 
             <div
                 className="control-bar"

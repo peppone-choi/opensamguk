@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameTable from '../../../components/GameTable';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { formatRefreshScore } from '../../../lib/utilGame';
 import { matchesQuery } from '../../../lib/chosung';
-import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { PublicGeneral } from '../../../types/game';
 
@@ -186,7 +187,7 @@ export default function GeneralsPage() {
     if (loading) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>전체 장수</h1>
+                <PageHead title="전체 장수" />
                 <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
             </Shell>
         );
@@ -195,7 +196,7 @@ export default function GeneralsPage() {
     if (error) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>전체 장수</h1>
+                <PageHead title="전체 장수" />
                 <p style={{ color: 'var(--crimson)' }}>{error}</p>
                 <button
                     onClick={() => fetchData()}
@@ -253,17 +254,7 @@ export default function GeneralsPage() {
 
     const rows = sorted.map((g) => [
         // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). a_genList.php:127.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-            key={`pic-${g.generalId}`}
-            src={portraitUrl(g.picture, g.imageServer)}
-            onError={onPortraitError}
-            alt=""
-            width={32}
-            height={40}
-            style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
-            draggable={false}
-        />,
+        <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
         // 장수명 (npc 색상)
         <GeneralName key={`n-${g.generalId}`} name={g.name} npcType={g.npc} />,
         // 연령 — "{age}세" (a_genList.php:189)
@@ -304,7 +295,7 @@ export default function GeneralsPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>전체 장수</h1>
+            <PageHead title="전체 장수" />
 
             <div
                 style={{

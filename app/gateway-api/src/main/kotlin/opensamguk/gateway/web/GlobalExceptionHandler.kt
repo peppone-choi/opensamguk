@@ -39,6 +39,11 @@ class GlobalExceptionHandler {
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ApiError("인증에 실패했습니다.", HttpStatus.UNAUTHORIZED.value()))
 
+    @ExceptionHandler(opensamguk.gateway.service.NoticeNotFoundException::class)
+    fun noticeNotFound(e: opensamguk.gateway.service.NoticeNotFoundException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiError(e.message ?: "공지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND.value()))
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun illegalArg(e: IllegalArgumentException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST)

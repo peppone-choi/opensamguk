@@ -13,7 +13,21 @@ function isPostId(value: string | undefined): boolean {
 
 function isPublicReadPath(path: readonly string[]): boolean {
   return (path.length === 1 && path[0] === 'posts') ||
+    (path.length === 1 && path[0] === 'categories') ||
     (path.length === 2 && path[0] === 'posts' && isPostId(path[1]));
+}
+// ADR-LITE-049 13 — 신고(로그인 필요) · 관리자 신고 목록/처리(로그인 필요, 권한은 board-api 가 판정)
+function isPostReportPath(path: readonly string[]): boolean {
+  return path.length === 3 && path[0] === 'posts' && isPostId(path[1]) && path[2] === 'report';
+}
+function isCommentReportPath(path: readonly string[]): boolean {
+  return path.length === 5 && path[0] === 'posts' && isPostId(path[1]) && path[2] === 'comments' && isPostId(path[3]) && path[4] === 'report';
+}
+function isAdminReportListPath(path: readonly string[]): boolean {
+  return path.length === 2 && path[0] === 'admin' && path[1] === 'reports';
+}
+function isAdminReportPath(path: readonly string[]): boolean {
+  return path.length === 3 && path[0] === 'admin' && path[1] === 'reports' && isPostId(path[2]);
 }
 
 function isPostCreatePath(path: readonly string[]): boolean {
@@ -95,19 +109,21 @@ async function forward(
 
 export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPublicReadPath(path) ? forward(request, path, 'GET', 'optional') : routeNotFound();
+  if (isPublicReadPath(path)) return forward(request, path, 'GET', 'optional');
+  if (isAdminReportListPath(path)) return forward(request, path, 'GET', 'required');
+  return routeNotFound();
 }
 
 export async function POST(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPostCreatePath(path) || isCommentCreatePath(path)
+  return isPostCreatePath(path) || isCommentCreatePath(path) || isPostReportPath(path) || isCommentReportPath(path)
     ? forward(request, path, 'POST', 'required')
     : routeNotFound();
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPostMutationPath(path) || isPinPath(path)
+  return isPostMutationPath(path) || isPinPath(path) || isAdminReportPath(path)
     ? forward(request, path, 'PATCH', 'required')
     : routeNotFound();
 }

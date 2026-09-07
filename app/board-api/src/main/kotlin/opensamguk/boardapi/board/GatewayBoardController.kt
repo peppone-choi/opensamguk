@@ -29,12 +29,60 @@ class GatewayBoardController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "false") includeDeleted: Boolean,
+        // ADR-LITE-049 13 — latest | popular | mine, 검색어 q(제목·본문 ILIKE)
+        @RequestParam(defaultValue = "latest") sort: String,
+        @RequestParam(required = false) q: String?,
         @AuthenticationPrincipal principal: BoardUserDetails?,
         response: HttpServletResponse,
     ): GatewayBoardPageResponse {
         response.addHeader(HttpHeaders.VARY, HttpHeaders.AUTHORIZATION)
-        return boardService.list(category, page, size, principal, includeDeleted)
+        val sortValue = runCatching { GatewayBoardSort.valueOf(sort.uppercase()) }.getOrElse {
+            throw IllegalArgumentException("sort 는 latest, popular, mine 중 하나여야 합니다.")
+        }
+        return boardService.list(category, page, size, principal, includeDeleted, sortValue, q)
     }
+
+    /** 분류별 공개 글 수(6 분류) — 커뮤니티 분류 칩. */
+    @GetMapping("/categories")
+    fun categories(): List<GatewayBoardCategoryCount> = boardService.categoryCounts()
+
+    // ── ADR-LITE-049 13 — 신고 ──────────────────────────────────────────────
+    @PostMapping("/posts/{postId}/report")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun reportPost(
+        @PathVariable postId: Long,
+        @Valid @RequestBody request: CreateGatewayBoardReportRequest,
+        @AuthenticationPrincipal principal: BoardUserDetails,
+    ): GatewayBoardReportResponse = boardService.reportPost(postId, request, principal)
+
+    @PostMapping("/posts/{postId}/comments/{commentId}/report")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun reportComment(
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long,
+        @Valid @RequestBody request: CreateGatewayBoardReportRequest,
+        @AuthenticationPrincipal principal: BoardUserDetails,
+    ): GatewayBoardReportResponse = boardService.reportComment(postId, commentId, request, principal)
+
+    /** 관리자 — 신고 목록(status 없으면 전부). 비관리자는 403. */
+    @GetMapping("/admin/reports")
+    fun listReports(
+        @RequestParam(required = false) status: GatewayBoardReportStatus?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "50") size: Int,
+        @AuthenticationPrincipal principal: BoardUserDetails?,
+        response: HttpServletResponse,
+    ): List<GatewayBoardReportResponse> {
+        response.addHeader(HttpHeaders.VARY, HttpHeaders.AUTHORIZATION)
+        return boardService.listReports(status, page, size, principal)
+    }
+
+    @PatchMapping("/admin/reports/{reportId}")
+    fun handleReport(
+        @PathVariable reportId: Long,
+        @Valid @RequestBody request: UpdateGatewayBoardReportRequest,
+        @AuthenticationPrincipal principal: BoardUserDetails,
+    ): GatewayBoardReportResponse = boardService.handleReport(reportId, request, principal)
 
     @GetMapping("/posts/{postId}")
     fun getPost(

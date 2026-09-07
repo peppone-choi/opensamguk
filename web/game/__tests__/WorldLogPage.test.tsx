@@ -87,7 +87,9 @@ describe('WorldLogPage', () => {
 
     await waitFor(() => expect(screen.getByText(/새 기록/)).toBeInTheDocument());
     expect(screen.queryByText('187년 1월 중순')).not.toBeInTheDocument();
-    expect(screen.getByText('●187년 1월:새 기록')).toBeInTheDocument();
+    // text 는 devsam 토큰(<C>●</>) 원문 — 연감·작전실과 같은 formatLog 가 색 span 으로 바꾸므로 행 textContent 로 본다.
+    const rows = document.querySelectorAll('.chron__item');
+    expect(Array.from(rows).map((row) => row.textContent)).toEqual(['●187년 1월:새 기록']);
     expect(mocks.worldLog).toHaveBeenCalledTimes(2);
   });
 });

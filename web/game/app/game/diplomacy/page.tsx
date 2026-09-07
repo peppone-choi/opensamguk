@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
@@ -237,7 +239,7 @@ export default function DiplomacyPage() {
     if (permission < 1) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교부</h1>
+                <PageHead title="외교부" />
                 <GameCard>
                     <p style={{ color: 'var(--text-secondary)' }}>권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
                 </GameCard>
@@ -247,7 +249,7 @@ export default function DiplomacyPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교부</h1>
+            <PageHead title="외교부" />
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button onClick={() => void fetchData()}>새로고침</button>
@@ -255,7 +257,7 @@ export default function DiplomacyPage() {
 
             {/* 외교 빠른 명령 — route each through CommandModal (nation-target SelectNationField). */}
             <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>외교 명령</h2>
+                <SectionHeader as="h2" title="외교 명령" />
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                     {DIPLO_QUICK_ACTIONS.map(act => (
                         <button
@@ -278,7 +280,7 @@ export default function DiplomacyPage() {
             {canWrite && (
                 <GameCard style={{ marginBottom: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>외교 서신 작성</h2>
+                        <SectionHeader as="h2" title="외교 서신 작성" />
                         <button onClick={() => setShowWriteForm(!showWriteForm)}>
                             {showWriteForm ? '접기' : '펼치기'}
                         </button>
@@ -367,7 +369,7 @@ export default function DiplomacyPage() {
                 <>
                     {/* 외교 대상 국가 — candidate counter-nations (excludes self & 재야). */}
                     <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>외교 대상 국가</h2>
+                        <SectionHeader as="h2" title="외교 대상 국가" />
                         {nations.length === 0 ? (
                             <p style={{ color: 'var(--text-muted)' }}>외교 대상 국가가 없습니다.</p>
                         ) : (
@@ -389,7 +391,7 @@ export default function DiplomacyPage() {
                     </GameCard>
 
                     {/* 외교 서신 — letter list, newest-first. */}
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>외교 서신</h2>
+                    <SectionHeader as="h2" title="외교 서신" />
                     {letters.length === 0 ? (
                         <GameCard>
                             <p style={{ color: 'var(--text-muted)' }}>주고받은 외교 서신이 없습니다.</p>

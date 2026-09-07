@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LogText } from '@opensamguk/ui';
 
 /**
  * 전황 로그 — devsam '제 전황' 맵 아래 최근 이벤트 텍스트(정복/멸망/전투 등 월드 로그).
@@ -19,11 +20,6 @@ interface LogEntry {
     text: string;
 }
 
-// devsam 로그 색/태그 마크업(<Y>…</>, <b>, <C>, <D>, <W> 등)을 표시용 평문으로 제거.
-// 【작위】/【지급】 등 본문 대괄호는 유지. 색 렌더(span 변환)는 후속 polish.
-function stripTags(s: string): string {
-    return s.replace(/<[^>]*>/g, '');
-}
 
 export default function ServerLog({ serverId = 'main' }: { serverId?: string }) {
     const [entries, setEntries] = useState<LogEntry[] | null>(null);
@@ -74,7 +70,7 @@ export default function ServerLog({ serverId = 'main' }: { serverId?: string }) 
                         <span className="server-log-date">
                             {`${e.year}년 ${e.month}월${e.phaseText ? ` ${e.phaseText}` : ''}`}
                         </span>
-                        <span className="server-log-text">{stripTags(e.text)}</span>
+                        <LogText className="server-log-text" text={e.text} />
                     </li>
                 ))}
             </ul>

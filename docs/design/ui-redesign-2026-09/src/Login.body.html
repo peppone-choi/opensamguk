@@ -1,0 +1,79 @@
+<div style="position:relative;width:1440px;height:900px;overflow:hidden;background:#0c0f0e">
+  <!-- backdrop: live strategic map -->
+  <div style="position:absolute;left:520px;top:-40px;width:1000px;height:980px;opacity:.9">@@ISO(1000,760,bare)@@</div>
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,#0c0f0e 0%,#0c0f0e 38%,rgba(12,15,14,.55) 62%,rgba(12,15,14,.2) 100%)"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(1200px 500px at 30% 100%,rgba(211,176,100,.10),transparent 60%)"></div>
+
+  <!-- top strip -->
+  <div style="position:absolute;left:0;right:0;top:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 40px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="logo-wordmark-sm.png" alt="오픈삼국" style="display:block;height:30px;width:auto">
+      <span class="mono" style="font-size:10px;letter-spacing:.2em;color:#8a8477">공개 알파</span>
+    </div>
+    <div style="display:flex;gap:22px;font-size:13px;color:#b9b2a3">
+      <span>회원 가입</span>
+    </div>
+  </div>
+
+  <!-- left column -->
+  <div style="position:absolute;left:120px;top:96px;width:400px;display:flex;flex-direction:column;gap:22px">
+    <img src="logo-wordmark.png" alt="오픈삼국" style="display:block;width:340px;height:auto;margin-left:-14px;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="serif" style="font-size:30px;font-weight:900;line-height:1.25;letter-spacing:-.01em;text-wrap:pretty">한 명의 장수에서 천하까지.</div>
+      <div style="font-size:14px;color:#b9b2a3;line-height:1.6;text-wrap:pretty">사건을 읽고, 명령을 계획하고, 동시에 봉인된 전투를 지켜본다. 살아 있는 편년체 위에서 벌어지는 비동기 전략.</div>
+    </div>
+
+    <div class="frame-bronze" style="background:#1b201d;padding:28px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <span class="serif" style="font-size:20px;font-weight:700">로그인</span>
+        <span style="font-size:12px;color:#8a8477">계정이 없으신가요? <a href="#">회원가입</a></span>
+      </div>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#b9b2a3">계정명
+        <div style="height:44px;display:flex;align-items:center;padding:0 12px;background:#141816;border:1px solid #3d4740;color:#8a8477;font-size:14px">계정명</div>
+      </label>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#b9b2a3">비밀번호
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#141816;border:1px solid #d3b064;box-shadow:0 0 0 3px rgba(255,211,109,.18);color:#ece6d8;font-size:14px;letter-spacing:.3em">••••••••<span style="letter-spacing:0;font-size:11px;color:#8a8477">표시</span></div>
+      </label>
+      <div class="btn primary" style="height:48px;font-size:15px;letter-spacing:.08em">로그인</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#8a8477"><span>비밀번호를 잊으셨나요?</span><span>로그인 유지</span></div>
+    </div>
+  </div>
+
+  <!-- ServerBoard: 서버 탭 + 세력/로그 + 프로빈스·현·군 토글 (지도 위 오버레이) -->
+  <div style="position:absolute;left:560px;top:72px;display:flex;gap:6px">
+    <span class="chip bronze" style="height:24px">빼섭 0기</span><span class="chip" style="height:24px">빼섭 1기</span>
+    <span style="width:1px;height:24px;background:#3d4740;margin:0 4px"></span>
+    <div class="pill-tabs" style="height:24px"><span class="on" style="height:22px">세력</span><span style="height:22px">로그</span></div>
+    <div class="pill-tabs" style="height:24px"><span class="on" style="height:22px">프로빈스</span><span style="height:22px">현</span><span style="height:22px">군</span></div>
+  </div>
+  <div style="position:absolute;right:56px;top:96px;width:300px;display:flex;flex-direction:column;gap:10px">
+    <div class="panel" style="backdrop-filter:blur(6px);background:rgba(27,32,29,.86)">
+      <div class="sec-h"><span class="bar"></span><span class="t">빼섭 0기</span><span class="sub">서기 200년 3월 중순</span></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:12px;color:#7aa7c7">【역사모드2-2】 반동탁연합 결성(정사)</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip moss">&lt;5국 경쟁중&gt;</span><span class="chip">유저 38 / 120명</span><span class="chip">NPC 3명</span><span class="chip">60분 턴 서버</span></div>
+        <div style="font-size:11px;color:#8a8477">(상성: 사실), (기타: 유산 사용 · 토너먼트 3분)</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#b58a3f)@@<span style="flex:1">원소</span><span class="num" style="color:#b9b2a3">12성 · 41명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#7a4fa8)@@<span style="flex:1">동탁</span><span class="num" style="color:#b9b2a3">9성 · 28명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#3f6fb5)@@<span style="flex:1">조조</span><span class="num" style="color:#b9b2a3">7성 · 33명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#4f9a5a)@@<span style="flex:1">유비</span><span class="num" style="color:#b9b2a3">5성 · 19명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#c9573f)@@<span style="flex:1">손견</span><span class="num" style="color:#b9b2a3">4성 · 16명</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="backdrop-filter:blur(6px);background:rgba(27,32,29,.86)">
+      <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">중원 정세</span><span class="sub">최근 사건</span></div>
+      <div style="padding:4px 0">
+        <div style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:8px 12px;font-size:12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">3月 상순</span><span>동탁군이 <b style="color:#ece6d8">호뢰관</b>에서 연합군을 격퇴</span></div>
+        <div style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:8px 12px;font-size:12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">2月 하순</span><span><b style="color:#ece6d8">손견</b>이 낙양을 향해 출병</span></div>
+        <div style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:8px 12px;font-size:12px"><span class="mono" style="color:#8a8477">2月 중순</span><span>원소가 <b style="color:#ece6d8">맹주</b>로 추대됨</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom-left footnote -->
+  <div style="position:absolute;left:120px;bottom:32px;font-size:11px;color:#8a8477;display:flex;gap:16px">
+    <span>개인정보처리방침</span><span>이용약관</span>
+  </div>
+</div>

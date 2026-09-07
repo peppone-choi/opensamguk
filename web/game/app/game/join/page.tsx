@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import type { JoinFormResponse } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
 import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
-import { onPortraitError, portraitUrl } from '../../../lib/portrait';
 import { SafeHtml } from '../../../components/SafeHtml';
 import type { MapPreviewResponse } from '../../../lib/types';
 
@@ -447,10 +447,6 @@ export default function JoinPage() {
   }
 
   // 전콘 미리보기 — 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
-  const iconPath = portraitUrl(
-    pic ? joinForm?.member.picture : null,
-    pic ? joinForm?.member.imageServer : 0,
-  );
 
   return (
     <Shell>
@@ -547,8 +543,7 @@ export default function JoinPage() {
         <div>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={iconPath} alt="전콘" onError={onPortraitError} style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'contain', background: 'var(--color-surface-2, #1f2937)' }} />
+            <Portrait picture={pic ? joinForm?.member.picture : null} imageServer={pic ? joinForm?.member.imageServer : 0} size="icon-48" alt="전콘" />
             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
               <input
                 type="checkbox"
@@ -731,37 +726,20 @@ export default function JoinPage() {
         </section>
 
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
-          <button
-            type="submit"
-            disabled={loading || total > DEFAULT_STAT_TOTAL}
-            style={{
-              flex: 1,
-              padding: 'var(--space-md)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-primary)',
-              color: '#fff',
-              fontWeight: 700,
-              opacity: loading || total > DEFAULT_STAT_TOTAL ? 0.6 : 1,
-              cursor: loading || total > DEFAULT_STAT_TOTAL ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {loading ? '생성 중...' : '장수 생성'}
-          </button>
-          <button
-            type="button"
-            onClick={resetArgs}
-            disabled={loading}
-            style={{
-              padding: 'var(--space-md) var(--space-lg)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-surface-2, #374151)',
-              color: 'var(--color-text)',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            다시 입력
-          </button>
+          {(() => {
+            const block = loading ? '생성 중입니다' : total > DEFAULT_STAT_TOTAL ? `능력치 합계가 ${DEFAULT_STAT_TOTAL}을 넘습니다` : null;
+            const label = loading ? '생성 중...' : '장수 생성';
+            return block ? (
+              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }} disabled reason={block}>{label}</Button>
+            ) : (
+              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }}>{label}</Button>
+            );
+          })()}
+          {loading ? (
+            <Button type="button" variant="ghost" style={{ minHeight: 44, padding: '0 var(--space-lg)' }} disabled reason="생성 중입니다">다시 입력</Button>
+          ) : (
+            <Button type="button" variant="ghost" onClick={resetArgs} style={{ minHeight: 44, padding: '0 var(--space-lg)' }}>다시 입력</Button>
+          )}
         </div>
       </form>
     </Shell>

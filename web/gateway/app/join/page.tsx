@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Brand } from '@opensamguk/ui';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -26,6 +26,18 @@ export default function JoinPage() {
 
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    // 하이드레이션 전 클릭의 네이티브 제출을 막는다(login 페이지와 같은 규약).
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => {
+        // 하이드레이션 전에 SSR 입력에 타이핑된 값을 controlled 상태로 받아들인다(login 페이지와 같은 규약).
+        const dom = (name: string) => (document.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? '');
+        setUsername((v) => v || dom('username'));
+        setPassword((v) => v || dom('password'));
+        setPasswordConfirm((v) => v || dom('passwordConfirm'));
+        setNickname((v) => v || dom('nickname'));
+        setEmail((v) => v || dom('email'));
+        setHydrated(true);
+    }, []);
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -175,7 +187,7 @@ export default function JoinPage() {
 
                         {error && <div className="auth-error">{error}</div>}
 
-                        <button type="submit" className="btn-primary btn-block" disabled={submitting}>
+                        <button type="submit" className="btn-primary btn-block" disabled={submitting || !hydrated} title={submitting ? '가입 처리 중입니다' : !hydrated ? '준비 중입니다' : undefined} data-reason={submitting ? '가입 처리 중입니다' : !hydrated ? '준비 중입니다' : undefined}>
                             {AUTH_LABELS.registerBtn}
                         </button>
                     </form>

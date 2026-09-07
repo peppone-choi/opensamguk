@@ -45,4 +45,9 @@ data class BattleCommandContext(
     val loggerYear: Int,
     /** The actor logger's month (war-seed component 3, `che_출병.php:249`). */
     val loggerMonth: Int,
+    /**
+     * Phase 4X-C — 그 장수의 봉인·미소비 계획 중 `sealedDate <= executingDate` 인 것(키 = `finalTargetCityId`).
+     * AI 가 명령을 바꾼 턴(`autorunMode`)은 빈 맵. 비어 있으면 `che_출병` 은 훅을 감싸지 않는다(바이트 동일).
+     */
+    val sealedPlans: Map<Int, opensamguk.logic.war.plan.SealedBattlePlan> = emptyMap(),
 )

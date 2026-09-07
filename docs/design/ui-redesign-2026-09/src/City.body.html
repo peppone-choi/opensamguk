@@ -1,0 +1,97 @@
+<div style="width:1440px;height:1000px;background:#0c0f0e;display:flex;flex-direction:column;overflow:hidden">
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="btn sm ghost">← 작전실</span>
+      <span class="serif" style="font-size:18px;font-weight:900">도시 정보</span>
+      <div class="pill-tabs"><span class="on">현재 도시</span><span>세력 도시 (7)</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="chip">200年 3月 중순</span><span class="btn sm ghost">갱신</span></div>
+  </div>
+
+  <!-- hero: 【지역 | 등급】 도시명 · 지배 국가 · 보급 -->
+  <div style="position:relative;height:170px;border-bottom:1px solid #3d4740;overflow:hidden;background:#141816">
+    <div style="position:absolute;right:0;top:-160px;width:900px;opacity:.55">@@ISO(900,560,bare)@@</div>
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,#141816 30%,rgba(20,24,22,.7) 60%,rgba(20,24,22,.2))"></div>
+    <div style="position:relative;display:flex;align-items:center;gap:24px;padding:0 40px;height:100%">
+      <img src="cast-capital.png" alt="" style="width:96px;height:96px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.6))">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:baseline;gap:12px"><span class="serif" style="font-size:34px;font-weight:900">허창</span><span class="serif" style="font-size:16px;color:#8a8477">許昌 · 【潁川 | 대도시】</span><span class="chip" style="background:#3f6fb5;color:#fff;border-color:#3f6fb5">지배 국가 【 조조 】</span><span class="chip moss">보급 정상</span></div>
+        <div style="display:flex;gap:16px;font-size:13px;color:#b9b2a3">
+          <span>태수 <b style="color:#ece6d8">순욱</b></span><span>군사 <b style="color:#7aa7c7">정욱</b></span><span>종사 <b style="color:#8a8477">-</b></span><span>주둔 <b class="num" style="color:#ece6d8">6명 · 18,400</b></span><span>특산 <b style="color:#ece6d8">쌀 · 철</b></span>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <span class="btn">명령 예약</span><span class="btn ghost">이동 계획</span><span class="btn ghost">인접 도시</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:grid;grid-template-columns:380px minmax(0,1fr);gap:14px;padding:14px 20px 16px;min-height:0">
+    <!-- gauges (CityBasicCard 8 + 관직) -->
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+      <div class="panel" style="display:flex;flex-direction:column">
+        <div class="sec-h"><span class="bar" style="background:#697e58"></span><span class="t">내정</span><span class="sub">8항목</span></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:11px">
+          <div class="gauge"><div class="g-top"><span>주민</span><span class="num">84,200 / 100,000</span></div><div class="g-bar" style="height:9px"><i style="width:84%"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>민심</span><span class="num">72.4</span></div><div class="g-bar" style="height:9px"><i style="width:72%;background:#d3b064"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>농업</span><span class="num">6,412 / 8,000 <span style="color:#8fa77a">+348 예정</span></span></div><div class="g-bar" style="height:9px"><i style="width:80%"></i><i style="left:80%;width:4.5%;background:#8fa77a"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>상업</span><span class="num">5,900 / 8,000</span></div><div class="g-bar" style="height:9px"><i style="width:74%"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>치안</span><span class="num">4,100 / 5,000</span></div><div class="g-bar" style="height:9px"><i style="width:82%"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>수비</span><span class="num">3,100 / 5,000</span></div><div class="g-bar" style="height:9px"><i style="width:62%;background:#7aa7c7"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>성벽</span><span class="num">7,400 / 9,000</span></div><div class="g-bar" style="height:9px"><i style="width:82%;background:#7aa7c7"></i></div></div>
+          <div class="gauge"><div class="g-top"><span>시세</span><span class="num">104%</span></div><div class="g-bar" style="height:9px"><i style="width:90%;background:#8a8477"></i></div></div>
+          <div class="divider"></div>
+          <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
+            <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">태수</span><b style="font-size:13px">순욱</b></div>
+            <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">군사</span><b style="font-size:13px;color:#7aa7c7">정욱</b></div>
+            <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">종사</span><span style="font-size:13px;color:#8a8477">-</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div class="sec-h"><span class="bar" style="background:#c96b5d"></span><span class="t">도시 기록</span><span class="sub">최근</span></div>
+        <div style="display:flex;flex-direction:column;font-size:12px">
+          <div style="display:grid;grid-template-columns:56px 1fr;gap:8px;padding:8px 12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">3月 상순</span><span>하후돈이 <b>농지 개간</b> · 농업 +412</span></div>
+          <div style="display:grid;grid-template-columns:56px 1fr;gap:8px;padding:8px 12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">2月 하순</span><span>조조가 <b>증축</b> 완료 · 최대 주민 100,000</span></div>
+          <div style="display:grid;grid-template-columns:56px 1fr;gap:8px;padding:8px 12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">2月 중순</span><span style="color:#e08a7c">동탁 밀정 적발 · 치안 -120</span></div>
+          <div style="display:grid;grid-template-columns:56px 1fr;gap:8px;padding:8px 12px"><span class="mono" style="color:#8a8477">2月 상순</span><span>순욱이 태수로 부임</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+      <!-- 주둔 장수: 얼굴·이름·통무지정매·관직·守·병종·병사·훈련·사기·명령 -->
+      <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+        <div class="sec-h"><span class="bar"></span><span class="t">주둔 장수</span><span class="sub">6명 · 18,400</span><span style="flex:1"></span><span class="chip" style="height:18px">병력순</span></div>
+        <table class="table" style="font-size:11px">
+          <thead><tr><th>얼 굴</th><th>이 름</th><th style="text-align:right">통솔</th><th style="text-align:right">무력</th><th style="text-align:right">지력</th><th style="text-align:right">정치</th><th style="text-align:right">매력</th><th>관 직</th><th>守</th><th>병 종</th><th style="text-align:right">병 사</th><th style="text-align:right">훈련</th><th style="text-align:right">사기</th><th>명 령</th></tr></thead>
+          <tbody>
+            <tr style="background:rgba(211,176,100,.06)"><td style="padding:0 6px"><div class="pt ring" style="width:28px;height:28px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div></td><td><b>하후돈</b> <span class="chip bronze" style="height:14px;font-size:9px">나</span></td><td class="num" style="text-align:right">88</td><td class="num" style="text-align:right">91</td><td class="num" style="text-align:right">62</td><td class="num" style="text-align:right">58</td><td class="num" style="text-align:right">71</td><td>장군</td><td>-</td><td>기병</td><td class="num" style="text-align:right">12,000</td><td class="num" style="text-align:right">84</td><td class="num" style="text-align:right">77</td><td><span class="chip bronze" style="height:16px;font-size:10px">출병 낙양</span></td></tr>
+            <tr><td style="padding:0 6px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,sunuk)@@</div></td><td>순욱</td><td class="num" style="text-align:right">70</td><td class="num" style="text-align:right">32</td><td class="num" style="text-align:right">96</td><td class="num" style="text-align:right">94</td><td class="num" style="text-align:right">88</td><td>승상</td><td style="color:#d3b064">태수</td><td>보병</td><td class="num" style="text-align:right">2,000</td><td class="num" style="text-align:right">60</td><td class="num" style="text-align:right">70</td><td><span class="chip" style="height:16px;font-size:10px">상업 투자</span></td></tr>
+            <tr><td style="padding:0 6px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,jeonguk)@@</div></td><td>정욱</td><td class="num" style="text-align:right">64</td><td class="num" style="text-align:right">55</td><td class="num" style="text-align:right">88</td><td class="num" style="text-align:right">80</td><td class="num" style="text-align:right">60</td><td>-</td><td style="color:#7aa7c7">군사</td><td>궁병</td><td class="num" style="text-align:right">500</td><td class="num" style="text-align:right">40</td><td class="num" style="text-align:right">60</td><td><span class="chip" style="height:16px;font-size:10px">징병</span></td></tr>
+            <tr><td style="padding:0 6px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,akjin)@@</div></td><td>악진</td><td class="num" style="text-align:right">78</td><td class="num" style="text-align:right">82</td><td class="num" style="text-align:right">50</td><td class="num" style="text-align:right">44</td><td class="num" style="text-align:right">55</td><td>교위</td><td>-</td><td>보병</td><td class="num" style="text-align:right">2,400</td><td class="num" style="text-align:right">72</td><td class="num" style="text-align:right">68</td><td><span class="chip" style="height:16px;font-size:10px">훈련</span></td></tr>
+            <tr><td style="padding:0 6px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,heojeo)@@</div></td><td>허저</td><td class="num" style="text-align:right">70</td><td class="num" style="text-align:right">95</td><td class="num" style="text-align:right">36</td><td class="num" style="text-align:right">30</td><td class="num" style="text-align:right">62</td><td>교위</td><td>-</td><td>보병</td><td class="num" style="text-align:right">1,500</td><td class="num" style="text-align:right">55</td><td class="num" style="text-align:right">80</td><td><span class="chip" style="height:16px;font-size:10px">휴식</span></td></tr>
+            <tr><td style="padding:0 6px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,ijeon)@@</div></td><td>이전 <span class="chip" style="height:14px;font-size:9px">NPC</span></td><td class="num" style="text-align:right">72</td><td class="num" style="text-align:right">68</td><td class="num" style="text-align:right">75</td><td class="num" style="text-align:right">66</td><td class="num" style="text-align:right">70</td><td>-</td><td>-</td><td>보병</td><td class="num" style="text-align:right">0</td><td class="num" style="text-align:right">-</td><td class="num" style="text-align:right">-</td><td><span class="chip" style="height:16px;font-size:10px">휴식</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:auto;padding:8px 12px;border-top:1px solid #2c342f;display:flex;gap:16px;font-size:12px;color:#b9b2a3">
+          <span>수비 병력 합 <b class="num" style="color:#ece6d8">18,400</b></span><span>공성 시 방어력 <b class="num" style="color:#ece6d8">10,300</b></span><span>보급선 <b style="color:#8fa77a">본국 직결</b></span>
+        </div>
+      </div>
+
+      <!-- 인접 도시: 도시명·적군·병장(총)·90병장·60병장·수비○·장수 -->
+      <div class="panel" style="display:flex;flex-direction:column">
+        <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">인접 도시</span><span class="sub">4</span><span style="flex:1"></span><span style="font-size:11px;color:#8a8477">적군은 정찰 시점 기준 · 알 수 없음은 회색</span></div>
+        <table class="table" style="font-size:11px">
+          <thead><tr><th>도시명</th><th>국가</th><th>거리</th><th style="text-align:right">적군</th><th style="text-align:right">병장(총)</th><th style="text-align:right">90병장</th><th style="text-align:right">60병장</th><th style="text-align:right">수비○</th><th>장수</th></tr></thead>
+          <tbody>
+            <tr><td style="display:flex;align-items:center;gap:8px"><img src="cast-town.png" alt="" style="width:24px;height:24px"><b>완</b> <span style="color:#8a8477">南陽郡</span></td><td style="display:flex;align-items:center;gap:4px">@@FLAG(#3f6fb5,12)@@조조</td><td class="num">1순 · 육로</td><td class="num" style="text-align:right;color:#8a8477">-</td><td class="num" style="text-align:right">6,200</td><td class="num" style="text-align:right">1,800</td><td class="num" style="text-align:right">3,100</td><td class="num" style="text-align:right">2,400</td><td>조인 외 2</td></tr>
+            <tr><td style="display:flex;align-items:center;gap:8px"><img src="cast-city.png" alt="" style="width:24px;height:24px"><b>낙양</b> <span style="color:#8a8477">河南尹</span></td><td style="display:flex;align-items:center;gap:4px">@@FLAG(#7a4fa8,12)@@동탁 <span class="chip rust" style="height:14px;font-size:9px">교전</span></td><td class="num">3순 · 도하 1</td><td class="num" style="text-align:right;color:#e08a7c">41,000</td><td class="num" style="text-align:right">41,000</td><td class="num" style="text-align:right">22,000</td><td class="num" style="text-align:right">12,000</td><td class="num" style="text-align:right">7,200</td><td>화웅 외 11</td></tr>
+            <tr><td style="display:flex;align-items:center;gap:8px"><img src="cast-town.png" alt="" style="width:24px;height:24px"><b>진류</b> <span style="color:#8a8477">陳留郡</span></td><td style="display:flex;align-items:center;gap:4px">@@FLAG(#3f6fb5,12)@@조조</td><td class="num">1순 · 육로</td><td class="num" style="text-align:right;color:#8a8477">-</td><td class="num" style="text-align:right">4,100</td><td class="num" style="text-align:right">900</td><td class="num" style="text-align:right">2,000</td><td class="num" style="text-align:right">1,800</td><td>2명</td></tr>
+            <tr><td style="display:flex;align-items:center;gap:8px"><img src="cast-city.png" alt="" style="width:24px;height:24px"><b>양양</b> <span style="color:#8a8477">南郡</span></td><td style="color:#8a8477">공백지</td><td class="num">2순 · 수운</td><td class="num" style="text-align:right;color:#8a8477">알 수 없음</td><td class="num" style="text-align:right;color:#8a8477">알 수 없음</td><td class="num" style="text-align:right;color:#8a8477">-</td><td class="num" style="text-align:right;color:#8a8477">-</td><td class="num" style="text-align:right">4,200</td><td style="color:#8a8477">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

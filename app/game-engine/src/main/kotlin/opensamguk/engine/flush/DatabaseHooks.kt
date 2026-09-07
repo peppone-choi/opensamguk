@@ -17,6 +17,18 @@ import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
+import opensamguk.infra.persistence.BoardReadInsertRow
+import opensamguk.infra.persistence.BugokRow
+import opensamguk.infra.persistence.OperationRow
+import opensamguk.infra.persistence.BattlePlanRow
+import opensamguk.infra.persistence.BattleReplayInsertRow
+import opensamguk.engine.turn.BattlePlan
+import opensamguk.infra.persistence.OperationUnitRow
+import opensamguk.infra.persistence.RetainerRow
+import opensamguk.engine.turn.Bugok
+import opensamguk.engine.turn.Operation
+import opensamguk.engine.turn.OperationUnit
+import opensamguk.engine.turn.Retainer
 import opensamguk.infra.persistence.CityLedgerV2UpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
@@ -307,6 +319,38 @@ object DatabaseHooks {
         kvDirty.map { (k, v) -> KvWrite(table = k.table, namespace = k.namespace, key = k.key, value = v) }
 
     /** Engine [Troop] → infra [TroopRow]. The troop's id IS its `troop_leader` (PK). */
+    private fun toRetainerRow(r: Retainer) = RetainerRow(
+        id = r.id, masterGeneralId = r.masterGeneralId, origin = r.origin, generalId = r.generalId, name = r.name,
+        relation = r.relation, role = r.role, hasOwnBugok = r.hasOwnBugok, releasePolicy = r.releasePolicy,
+        loyalty = r.loyalty, task = r.task,
+    )
+
+    private fun toOperationRow(o: Operation) = OperationRow(
+        id = o.id, nationId = o.nationId, kind = o.kind, targetCityId = o.targetCityId, title = o.title, fallbackText = o.fallbackText,
+        declaredByGeneralId = o.declaredByGeneralId, declaredYear = o.declaredYear, declaredMonth = o.declaredMonth, declaredPhase = o.declaredPhase,
+        deadlineYear = o.deadlineYear, deadlineMonth = o.deadlineMonth, deadlinePhase = o.deadlinePhase, status = o.status,
+        departed = o.milestones.departed, arrived = o.milestones.arrived, supplied = o.milestones.supplied, objective = o.milestones.objective,
+        closedReason = o.closedReason,
+    )
+
+    private fun toBattlePlanRow(p: BattlePlan) = BattlePlanRow(
+        id = p.id, generalId = p.generalId, targetCityId = p.targetCityId, stance = p.stance,
+        retreatLossPct = p.retreatLossPct, retreatMoraleBelow = p.retreatMoraleBelow,
+        sealedAt = p.sealedAt, sealedYear = p.sealedYear, sealedMonth = p.sealedMonth, sealedPhase = p.sealedPhase,
+        resolvedYear = p.resolvedYear, resolvedMonth = p.resolvedMonth, resolvedPhase = p.resolvedPhase, version = p.version,
+    )
+
+    private fun toOperationUnitRow(u: OperationUnit) = OperationUnitRow(
+        id = u.id, operationId = u.operationId, generalId = u.generalId, bugokId = u.bugokId, role = u.role,
+        joinedCityId = u.joinedCityId, joinedYear = u.joinedYear, joinedMonth = u.joinedMonth, joinedPhase = u.joinedPhase,
+    )
+
+    private fun toBugokRow(b: Bugok) = BugokRow(
+        id = b.id, masterGeneralId = b.masterGeneralId, name = b.name, troops = b.troops, crewTypeId = b.crewTypeId,
+        training = b.training, morale = b.morale, fatigue = b.fatigue, provisions = b.provisions,
+        commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied,
+    )
+
     private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
 
     private fun toOldGeneralArchiveRow(
@@ -581,6 +625,11 @@ object DatabaseHooks {
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
         val createdNationIds = dirty.createdNations.map { it.id }.toSet()
         val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
+        val createdRetainerIds = dirty.createdRetainers.map { it.id }.toSet()
+        val createdBugokIds = dirty.createdBugoks.map { it.id }.toSet()
+        val createdOperationIds = dirty.createdOperations.map { it.id }.toSet()
+        val createdOperationUnitIds = dirty.createdOperationUnits.map { it.id }.toSet()
+        val createdBattlePlanIds = dirty.createdBattlePlans.map { it.id }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -631,7 +680,14 @@ object DatabaseHooks {
                 // NOT serial). Prevents cross-tick id reuse after restart.
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-            ),
+            ).apply {
+                // Phase 4X-A 고수위(spec v3 P1): 값이 있을 때만 싣는다 — 행 0 세계의 world_state.meta 바이트 동일.
+                (state.meta["maxRetainerId"] as? Number)?.let { put("max_retainer_id", it.toInt()) }
+                (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }
+                (state.meta["maxOperationId"] as? Number)?.let { put("max_operation_id", it.toInt()) }
+                (state.meta["maxOperationUnitId"] as? Number)?.let { put("max_operation_unit_id", it.toInt()) }
+                (state.meta["maxBattlePlanId"] as? Number)?.let { put("max_battle_plan_id", it.toInt()) }
+            },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -668,6 +724,25 @@ object DatabaseHooks {
             createdTroops = dirty.createdTroops.map { toTroopRow(it) },
             deletedTroops = dirty.deletedTroops,
             updatedTroops = dirty.troops.filter { it.id !in createdTroopIds }.map { toTroopRow(it) },
+            // Phase 4X-A 가신·부곡 — world-lifecycle 채널(troop 미러). step-8g 는 표마다 DELETE → CREATE → UPDATE.
+            createdRetainers = dirty.createdRetainers.map { toRetainerRow(it) },
+            updatedRetainers = dirty.retainers.filter { it.id !in createdRetainerIds }.map { toRetainerRow(it) },
+            deletedRetainerIds = dirty.deletedRetainers,
+            createdBugoks = dirty.createdBugoks.map { toBugokRow(it) },
+            updatedBugoks = dirty.bugoks.filter { it.id !in createdBugokIds }.map { toBugokRow(it) },
+            deletedBugokIds = dirty.deletedBugoks,
+            // Phase 4X-B 작전 — world-lifecycle 채널(8h). 이번 틱 생성 행은 UPDATE 에서 제외.
+            createdOperations = dirty.createdOperations.map { toOperationRow(it) },
+            updatedOperations = dirty.operations.filter { it.id !in createdOperationIds }.map { toOperationRow(it) },
+            deletedOperationIds = dirty.deletedOperations,
+            createdOperationUnits = dirty.createdOperationUnits.map { toOperationUnitRow(it) },
+            updatedOperationUnits = dirty.operationUnits.filter { it.id !in createdOperationUnitIds }.map { toOperationUnitRow(it) },
+            deletedOperationUnitIds = dirty.deletedOperationUnits,
+            // Phase 4X-C 출병 계획(8i) + 리플레이 INSERT(recorder 채널).
+            createdBattlePlans = dirty.createdBattlePlans.map { toBattlePlanRow(it) },
+            updatedBattlePlans = dirty.battlePlans.filter { it.id !in createdBattlePlanIds }.map { toBattlePlanRow(it) },
+            deletedBattlePlanIds = dirty.deletedBattlePlans,
+            battleReplayInserts = recorder.battleReplayInserts().map { BattleReplayInsertRow(it.columns) },
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
@@ -701,6 +776,7 @@ object DatabaseHooks {
             // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
             boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },
             boardCommentInserts = recorder.boardCommentInserts().map { BoardCommentInsertRow(it.columns) },
+            boardReadInserts = recorder.boardReadInserts().map { BoardReadInsertRow(it.columns) },
             // F4 Wave 투표 — 설문조사(vote_poll/vote/vote_comment) INSERT (recorder 채널, board와 동일;
             // world-state 효과 아님). vote_poll-먼저-vote/vote_comment 순서는 step-8e에서 보존된다.
             votePollInserts = recorder.votePollInserts().map { VotePollInsertRow(it.columns) },

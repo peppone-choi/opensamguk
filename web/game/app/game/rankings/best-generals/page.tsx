@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
+import PageHead from '../../../../components/PageHead';
+import RecordsTabs from '../../../../components/records/RecordsTabs';
 import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
@@ -30,14 +32,14 @@ export default function BestGeneralsPage() {
 
   if (loading) return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>명장 순위</h1>
+      <PageHead title="명장 순위" tabs={<RecordsTabs />} />
       <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
     </Shell>
   );
 
   if (error) return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>명장 순위</h1>
+      <PageHead title="명장 순위" tabs={<RecordsTabs />} />
       <p style={{ color: 'var(--crimson)' }}>{error}</p>
     </Shell>
   );
@@ -59,7 +61,7 @@ export default function BestGeneralsPage() {
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>명장 순위</h1>
+      <PageHead title="명장 순위" tabs={<RecordsTabs />} />
       <GameTable headers={headers} rows={rows} />
     </Shell>
   );

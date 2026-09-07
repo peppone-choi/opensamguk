@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
+:root{
+  --bg:#0c0f0e; --panel:#1b201d; --inset:#141816; --raised:#232a26; --line:#2c342f; --line-2:#3d4740;
+  --bronze:#d3b064; --bronze-dim:#9c7f3f; --bronze-glow:rgba(211,176,100,.16);
+  --moss:#697e58; --moss-2:#8fa77a; --rust:#c96b5d; --info:#7aa7c7; --focus:#ffd36d;
+  --text:#ece6d8; --text-2:#b9b2a3; --muted:#8a8477;
+  --serif:'Noto Serif KR','Nanum Myeongjo','Apple SD Gothic Neo',serif;
+  --sans:'Noto Sans KR','Pretendard Variable',Pretendard,'Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#0c0f0e;color:#ece6d8;font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:#d3b064;text-decoration:none} a:hover{color:#ffd36d}
+.serif{font-family:var(--serif)} .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.panel{background:#1b201d;border:1px solid #2c342f}
+.inset{background:#141816;border:1px solid #2c342f}
+.sec-h{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-bottom:1px solid #2c342f;background:linear-gradient(180deg,#232a26,#1b201d)}
+.sec-h .t{font-family:var(--serif);font-weight:700;font-size:14px;letter-spacing:.02em;color:#ece6d8}
+.sec-h .sub{font-size:11px;color:#8a8477;font-family:var(--mono)}
+.sec-h .bar{width:3px;height:14px;background:#d3b064}
+.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;font-size:11px;font-weight:500;border:1px solid #3d4740;color:#b9b2a3;background:#141816;white-space:nowrap}
+.chip.bronze{color:#d3b064;border-color:#9c7f3f;background:rgba(211,176,100,.10)}
+.chip.moss{color:#8fa77a;border-color:#697e58;background:rgba(105,126,88,.16)}
+.chip.rust{color:#e08a7c;border-color:#c96b5d;background:rgba(201,107,93,.14)}
+.chip.info{color:#7aa7c7;border-color:#4b6d87;background:rgba(122,167,199,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;font:inherit;font-size:13px;font-weight:500;color:#ece6d8;background:#232a26;border:1px solid #3d4740;cursor:pointer;white-space:nowrap}
+.btn.primary{background:linear-gradient(180deg,#e2c37a,#c9a656);color:#161410;font-weight:700;border-color:#9c7f3f;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 18px rgba(211,176,100,.18)}
+.btn.ghost{background:transparent}
+.btn.danger{background:rgba(201,107,93,.12);color:#e08a7c;border-color:#c96b5d}
+.btn.disabled{color:#8a8477;border-style:dashed;background:transparent;cursor:not-allowed}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.nav-item{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 14px;font-size:13px;font-weight:500;color:#b9b2a3;border-bottom:2px solid transparent}
+.nav-item.on{color:#d3b064;border-bottom-color:#d3b064;background:linear-gradient(180deg,transparent,rgba(211,176,100,.08))}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:12px}
+.kv dt{color:#8a8477;white-space:nowrap} .kv dd{margin:0;color:#ece6d8;font-family:var(--mono)}
+.stat-row{display:grid;grid-template-columns:28px 1fr 34px;align-items:center;gap:8px;font-size:12px}
+.stat-row .bar{height:6px;background:#141816;border:1px solid #2c342f;position:relative}
+.stat-row .bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#9c7f3f,#d3b064)}
+.gauge{display:grid;gap:3px;font-size:12px}
+.gauge .g-top{display:flex;justify-content:space-between;color:#b9b2a3}
+.gauge .g-bar{height:8px;background:#141816;border:1px solid #2c342f;position:relative}
+.gauge .g-bar i{position:absolute;left:0;top:0;bottom:0;background:#697e58}
+.pt{position:relative;overflow:hidden;background:#141816;border:1px solid #3d4740}
+.pt svg{display:block;width:100%;height:100%}
+.pt.ring{outline:2px solid var(--nation,#d3b064);outline-offset:-2px}
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th{height:32px;padding:0 10px;text-align:left;color:#8a8477;font-weight:500;background:#141816;border-bottom:1px solid #3d4740;white-space:nowrap}
+.table td{height:40px;padding:0 10px;border-bottom:1px solid #2c342f;vertical-align:middle;white-space:nowrap}
+.table tr:hover td{background:#232a26}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.feed{display:grid;gap:0}
+.feed-item{display:grid;grid-template-columns:32px 1fr;gap:10px;padding:10px 12px;border-bottom:1px solid #2c342f}
+.feed-item .who{font-size:12px;font-weight:700;color:#ece6d8}
+.feed-item .what{font-size:12px;color:#b9b2a3;line-height:1.45;text-wrap:pretty}
+.feed-item .when{font-size:10px;color:#8a8477;font-family:var(--mono)}
+.slot{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;height:44px;padding:0 10px;border-bottom:1px solid #2c342f}
+.slot .n{font-family:var(--mono);font-size:11px;color:#8a8477}
+.slot .cmd{font-size:13px;font-weight:500}
+.slot .tgt{font-size:11px;color:#8a8477}
+.slot.now{background:rgba(211,176,100,.08);box-shadow:inset 3px 0 0 #d3b064}
+.slot.rest .cmd{color:#8a8477;font-weight:400}
+.tile{display:grid;gap:6px;padding:10px;border:1px solid #3d4740;background:#1b201d;min-height:64px}
+.tile.ok:hover{border-color:#d3b064;box-shadow:0 0 0 1px rgba(211,176,100,.25)}
+.tile.need{border-color:#4b6d87}
+.tile.no{border-style:dashed;color:#8a8477}
+.tile .tn{font-size:13px;font-weight:700}
+.tile .tc{font-size:11px;color:#8a8477;font-family:var(--mono)}
+.ico{width:16px;height:16px;flex:none}
+.ico-20{width:20px;height:20px;flex:none}
+.pill-tabs{display:flex;gap:0;border:1px solid #3d4740;background:#141816}
+.pill-tabs span{padding:0 12px;height:30px;display:inline-flex;align-items:center;font-size:12px;color:#8a8477;border-right:1px solid #2c342f}
+.pill-tabs span.on{color:#d3b064;background:rgba(211,176,100,.10);font-weight:700}
+.divider{height:1px;background:#2c342f}
+.frame-bronze{border:1px solid #9c7f3f;box-shadow:0 0 0 1px #0c0f0e,0 0 0 2px #3d4740,0 10px 30px rgba(0,0,0,.5)}

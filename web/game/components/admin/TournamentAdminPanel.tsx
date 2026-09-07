@@ -1,0 +1,273 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import GameCard from '@/components/GameCard';
+import GameTable from '@/components/GameTable';
+import StatusBadge from '@/components/StatusBadge';
+import { api } from '@/lib/api';
+import {
+    TOAST_DURATION_MS,
+    TOURNAMENT_STATUS_LABEL,
+    TOURNAMENT_STATUS_VARIANT,
+} from '@/lib/constants';
+import { useTurnRefresh } from '@/hooks/useTurnRefresh';
+import type { FrontInfoResponse } from '@/lib/types';
+
+interface TournamentEntry {
+    id: number;
+    generalId: number;
+    generalName: string;
+    nationId: number;
+    nationName: string;
+    round: number;
+    seed: number;
+    eliminated: boolean;
+}
+
+interface TournamentMatch {
+    id: number;
+    round: number;
+    bracket: string;
+    attackerId: number;
+    attackerName: string;
+    defenderId: number;
+    defenderName: string;
+    winnerId?: number;
+    winnerName?: string;
+    status: string;
+}
+
+interface TournamentData {
+    entries: TournamentEntry[];
+    matches: TournamentMatch[];
+}
+
+
+
+export default function TournamentAdminPanel() {
+    const [entries, setEntries] = useState<TournamentEntry[]>([]);
+    const [matches, setMatches] = useState<TournamentMatch[]>([]);
+    const [actor, setActor] = useState<{ generalId: number | null; permission: number }>({ generalId: null, permission: 0 });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
+    const [toast, setToast] = useState<string>('');
+    const [actionLoading, setActionLoading] = useState<'start' | 'reset' | null>(null);
+    const [activeTab, setActiveTab] = useState<'entries' | 'matches' | 'admin'>('entries');
+
+    // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
+        try {
+            const data = await api.tournament<TournamentData>();
+            setEntries(data.entries ?? []);
+            setMatches(data.matches ?? []);
+            setError('');
+        } catch {
+            setError('토너먼트 데이터를 불러올 수 없습니다.');
+        } finally {
+            if (!background) setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // OPENSAM-196 — 턴 종료 시 참가자/대진표 재조회.
+    useTurnRefresh(() => fetchData(true));
+
+    useEffect(() => {
+        let on = true;
+        api.frontInfo()
+            .then((info: FrontInfoResponse) => {
+                if (on) setActor({ generalId: info.general?.generalId ?? null, permission: info.general?.permission ?? 0 });
+            })
+            .catch(() => {
+                if (on) setActor({ generalId: null, permission: 0 });
+            });
+        return () => {
+            on = false;
+        };
+    }, []);
+
+    async function startTournament() {
+        if (actor.generalId == null) return;
+        setActionLoading('start');
+        setError('');
+        try {
+            await api.tournamentStart(actor.generalId);
+            setToast('토너먼트 시작 요청이 접수되었습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '토너먼트 시작에 실패했습니다.');
+        } finally {
+            setActionLoading(null);
+        }
+    }
+
+    async function resetTournament() {
+        if (actor.generalId == null) return;
+        setActionLoading('reset');
+        setError('');
+        try {
+            await api.tournamentReset(actor.generalId);
+            setToast('토너먼트 초기화 요청이 접수되었습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '토너먼트 초기화에 실패했습니다.');
+        } finally {
+            setActionLoading(null);
+        }
+    }
+
+    const activeEntries = entries.filter(e => !e.eliminated);
+    const eliminatedEntries = entries.filter(e => e.eliminated);
+    const canManageTournament = actor.generalId != null && actor.permission >= 2;
+
+    const entryRows = activeEntries.map(e => [
+        e.seed.toString(),
+        e.generalName,
+        e.nationName,
+        `R${e.round}`,
+        <StatusBadge key={e.id} variant="jade">생존</StatusBadge>,
+    ]);
+
+    const matchRows = matches.map(m => [
+        `R${m.round}`,
+        m.bracket,
+        m.attackerName,
+        m.defenderName,
+        m.winnerName ?? '-',
+        <StatusBadge key={m.id} variant={TOURNAMENT_STATUS_VARIANT[m.status] ?? 'muted'}>
+            {TOURNAMENT_STATUS_LABEL[m.status] ?? m.status}
+        </StatusBadge>,
+    ]);
+
+    return (
+        <>
+            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
+                토너먼트 관리
+            </h1>
+
+            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button onClick={() => fetchData()}>새로고침</button>
+            </div>
+
+            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
+            {error && <p role="alert" style={{ color: 'var(--crimson)' }}>{error}</p>}
+
+            {toast && (
+                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                    {toast}
+                </div>
+            )}
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 'var(--space-xs)', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)' }}>
+                {(['entries', 'matches', 'admin'] as const).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        style={{
+                            background: 'transparent',
+                            borderBottom: activeTab === tab ? '2px solid var(--gold)' : '2px solid transparent',
+                            color: activeTab === tab ? 'var(--gold)' : 'var(--text-secondary)',
+                            borderRadius: 0,
+                            padding: 'var(--space-sm) var(--space-md)',
+                        }}
+                    >
+                        {tab === 'entries' && '참가자'}
+                        {tab === 'matches' && '대진표'}
+                        {tab === 'admin' && '관리'}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'entries' && (
+                <>
+                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+                        참가자 목록
+                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginLeft: 'var(--space-sm)' }}>
+                            ({activeEntries.length}명 생존 / {eliminatedEntries.length}명 탈락)
+                        </span>
+                    </h2>
+                    {entryRows.length > 0 ? (
+                        <GameTable
+                            headers={['시드', '장수', '국가', '라운드', '상태']}
+                            rows={entryRows}
+                        />
+                    ) : (
+                        <p style={{ color: 'var(--text-muted)' }}>참가자가 없습니다.</p>
+                    )}
+
+                    {eliminatedEntries.length > 0 && (
+                        <>
+                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', marginTop: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
+                                탈락자
+                            </h2>
+                            <GameTable
+                                headers={['시드', '장수', '국가', '라운드', '상태']}
+                                rows={eliminatedEntries.map(e => [
+                                    e.seed.toString(),
+                                    e.generalName,
+                                    e.nationName,
+                                    `R${e.round}`,
+                                    <StatusBadge key={e.id} variant="muted">탈락</StatusBadge>,
+                                ])}
+                            />
+                        </>
+                    )}
+                </>
+            )}
+
+            {activeTab === 'matches' && (
+                <>
+                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+                        대진표
+                    </h2>
+                    {matchRows.length > 0 ? (
+                        <GameTable
+                            headers={['라운드', '브래킷', '공격자', '방어자', '승자', '상태']}
+                            rows={matchRows}
+                        />
+                    ) : (
+                        <p style={{ color: 'var(--text-muted)' }}>대진이 없습니다.</p>
+                    )}
+                </>
+            )}
+
+            {activeTab === 'admin' && (
+                <GameCard>
+                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
+                        토너먼트 관리
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                            <button
+                                onClick={startTournament}
+                                disabled={!canManageTournament || actionLoading != null}
+                                style={{ background: 'var(--jade)', color: 'white', fontWeight: 600 }}
+                            >
+                                {actionLoading === 'start' ? '시작 요청 중...' : '토너먼트 시작'}
+                            </button>
+                            <button
+                                onClick={resetTournament}
+                                disabled={!canManageTournament || actionLoading != null}
+                                style={{ background: 'var(--crimson)', color: 'white', fontWeight: 600 }}
+                            >
+                                {actionLoading === 'reset' ? '초기화 요청 중...' : '초기화'}
+                            </button>
+                        </div>
+                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                            토너먼트 시작: 참가자 등록 및 1라운드 대진 생성<br />
+                            진행: 토너먼트는 턴 처리에서 자동 진행<br />
+                            초기화: 토너먼트 상태 초기화
+                        </p>
+                    </div>
+                </GameCard>
+            )}
+        </>
+    );
+}

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import GeneralName from '../../../components/game/GeneralName';
@@ -213,7 +215,7 @@ export default function MyBossPage() {
     return (
       <Shell>
         <div className="page-content">
-          <h1>내 상관</h1>
+          <PageHead title="내 상관" />
           <p className="text-muted">로딩 중...</p>
         </div>
       </Shell>
@@ -224,7 +226,7 @@ export default function MyBossPage() {
     return (
       <Shell>
         <div className="page-content">
-          <h1>내 상관</h1>
+          <PageHead title="내 상관" />
           <div className="error-state">
             <p>{error}</p>
             <button onClick={() => fetchData()}>다시 시도</button>
@@ -238,7 +240,7 @@ export default function MyBossPage() {
     return (
       <Shell>
         <div className="page-content">
-          <h1>내 상관</h1>
+          <PageHead title="내 상관" />
           <p className="text-muted">재야입니다.</p>
         </div>
       </Shell>
@@ -251,24 +253,21 @@ export default function MyBossPage() {
   return (
     <Shell>
       <div className="page-content">
-        <h1>내 상관</h1>
+        <PageHead title="내 상관" />
         {toast && (
           <div className="toast" role="alert">
             {toast}
           </div>
         )}
         <GameCard className="boss-card">
-          <div className="card-header">
-            <h2>{boss.bossName}</h2>
-            <StatusBadge variant="gold">{boss.bossOfficerLevel}급</StatusBadge>
-          </div>
+          <SectionHeader as="h2" title={boss.bossName} actions={<StatusBadge variant="gold">{boss.bossOfficerLevel}급</StatusBadge>} />
           <p className="text-muted">{boss.nationName ?? '소속 국가'} 인사부</p>
         </GameCard>
 
         {boss.canManagePersonnel ? (
           <div style={{ display: 'grid', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
             <GameCard>
-              <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>임명</h2>
+              <SectionHeader as="h2" title="임명" />
               <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'end' }}>
                 <label>
                   <span className="text-muted">직책</span>
@@ -307,7 +306,7 @@ export default function MyBossPage() {
             </GameCard>
 
             <GameCard>
-              <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>추방</h2>
+              <SectionHeader as="h2" title="추방" />
               <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'end' }}>
                 <label>
                   <span className="text-muted">대상</span>
@@ -331,7 +330,7 @@ export default function MyBossPage() {
             </GameCard>
 
             <GameCard>
-              <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>권한</h2>
+              <SectionHeader as="h2" title="권한" />
               <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
                 <PermissionPicker
                   title="외교권자"
@@ -363,7 +362,7 @@ export default function MyBossPage() {
         )}
 
         <GameCard style={{ marginTop: 'var(--space-md)' }}>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>직책 현황</h2>
+          <SectionHeader as="h2" title="직책 현황" />
           {allSlots.length === 0 ? (
             <p className="text-muted">표시할 직책이 없습니다.</p>
           ) : (
@@ -393,7 +392,7 @@ export default function MyBossPage() {
         </GameCard>
 
         <GameCard style={{ marginTop: 'var(--space-md)' }}>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>세력 장수</h2>
+          <SectionHeader as="h2" title="세력 장수" />
           {roster.length === 0 ? (
             <p className="text-muted">소속 장수가 없습니다.</p>
           ) : (

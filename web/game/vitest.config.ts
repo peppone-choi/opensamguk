@@ -14,6 +14,7 @@ export default defineConfig({
         alias: {
             '@': resolve(__dirname, '.'),
             '@opensamguk/ui': resolve(__dirname, '../shared/src/index.ts'),
+            'next/font/google': resolve(__dirname, '__tests__/stubs/next-font-google.ts'),
         },
     },
     test: {

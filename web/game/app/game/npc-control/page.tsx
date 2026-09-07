@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import { api, isIntakeDenied, isIntakeQueued, type CommandResultResponse } from '../../../lib/api';
 import type { NpcPolicyResponse, NpcPolicyValue } from '../../../types/game';
@@ -39,15 +41,6 @@ const POLICY_FIELDS: PolicyFieldDef[] = [
     { key: 'cureThreshold', title: '요양 기준', info: '요양 기준 %입니다. 이보다 많이 부상을 입으면 요양합니다.', step: 5, min: 10, max: 100 },
 ];
 
-const sectionBarStyle: React.CSSProperties = {
-    textAlign: 'center',
-    border: '0.5px solid var(--border-medium)',
-    background: 'var(--bg-elevated)',
-    padding: 'var(--space-xs) var(--space-sm)',
-    fontWeight: 600,
-    fontSize: 'var(--text-sm)',
-    marginBottom: 'var(--space-sm)',
-};
 
 const subBarStyle: React.CSSProperties = {
     textAlign: 'center',
@@ -173,7 +166,7 @@ function PriorityPanel({
 
     return (
         <GameCard>
-            <div style={sectionBarStyle}>{title}</div>
+            <SectionHeader title={title} />
             <p style={{ textAlign: 'right', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }}>
                 {setterLine}
             </p>
@@ -293,16 +286,16 @@ export default function NpcControlPage() {
     };
 
     if (loading) {
-        return <Shell><h1>NPC 정책</h1><p style={{ color: 'var(--text-muted)' }}>로딩 중...</p></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><p style={{ color: 'var(--text-muted)' }}>로딩 중...</p></Shell>;
     }
     if (error) {
-        return <Shell><h1>NPC 정책</h1><p style={{ color: 'var(--crimson)' }}>{error}</p></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><p style={{ color: 'var(--crimson)' }}>{error}</p></Shell>;
     }
     if (!hasNation) {
-        return <Shell><h1>NPC 정책</h1><GameCard><p>국가에 소속되어있지 않습니다.</p></GameCard></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><GameCard><p>국가에 소속되어있지 않습니다.</p></GameCard></Shell>;
     }
     if ((permission ?? 0) < 1) {
-        return <Shell><h1>NPC 정책</h1><GameCard><p>권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p></GameCard></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><GameCard><p>권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p></GameCard></Shell>;
     }
 
     const defaults = data?.defaultNationPolicy ?? {};
@@ -315,14 +308,14 @@ export default function NpcControlPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>NPC 정책</h1>
+            <PageHead title="NPC 정책" />
             {status && (
                 <div role="status" style={{ marginBottom: 'var(--space-sm)', color: status.startsWith('설정하지') ? 'var(--crimson)' : 'var(--text-secondary)' }}>
                     {status}
                 </div>
             )}
             <GameCard className="mb-md">
-                <div style={sectionBarStyle}>국가 정책</div>
+                <SectionHeader title="국가 정책" />
                 <p style={{ textAlign: 'right', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
                     {lastSetterLine(lastSetters.policy.setter, lastSetters.policy.date)}
                 </p>

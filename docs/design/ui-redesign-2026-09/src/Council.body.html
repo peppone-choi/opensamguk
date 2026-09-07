@@ -1,0 +1,94 @@
+<div style="width:1440px;height:1000px;background:#0c0f0e;display:flex;flex-direction:column;overflow:hidden">
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="btn sm ghost">← 작전실</span>
+      @@FLAG(#3f6fb5,18)@@<span class="serif" style="font-size:18px;font-weight:900">조조 · 회의실</span>
+      <span style="font-size:12px;color:#8a8477">국가 소속 장수 33명 · 게임 안</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="chip bronze">내 직책 · 장군 (수뇌부)</span><span class="chip">200年 3月 중순</span></div>
+  </div>
+  <!-- two clearly separated rooms -->
+  <div style="height:48px;display:flex;align-items:stretch;padding:0 20px;border-bottom:1px solid #2c342f;background:#141816;gap:10px">
+    <span class="nav-item on" style="height:48px;padding:0 18px">회의실 <span style="font-size:11px;color:#8a8477;font-weight:400">· 전체 장수</span></span>
+    <span class="nav-item" style="height:48px;padding:0 18px;color:#c96b5d;border-left:1px solid #3d4740"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>기밀실 <span style="font-size:11px;color:#8a8477;font-weight:400">· 수뇌부 5명 · 열람 기록</span></span>
+    <span style="flex:1"></span>
+    <span class="nav-item" style="height:48px;color:#8a8477">커뮤니티는 서버 밖 ↗</span>
+  </div>
+
+  <div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;padding:14px 20px 16px;min-height:0">
+    <!-- 회의실 -->
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #2c342f">
+        <div class="pill-tabs"><span class="on">전체</span><span>표결</span><span>작전</span><span>공지</span></div>
+        <span style="flex:1"></span><span class="btn primary" style="height:34px">글쓰기</span>
+      </div>
+      <!-- vote post -->
+      <div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:14px;border-bottom:1px solid #2c342f;background:rgba(211,176,100,.05)">
+        <div class="pt ring" style="width:44px;height:44px;--nation:#d3b064">@@PT(96,96,jojo)@@</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px"><b style="font-size:14px">조조</b><span class="chip bronze" style="height:16px;font-size:10px">군주</span><span style="font-size:11px;color:#8a8477">· 40분 전</span><span style="flex:1"></span><span class="chip info">표결 4/7 · 마감 3月 하순</span></div>
+          <span class="serif" style="font-size:16px;font-weight:700">[표결] 양양 확보 작전을 낙양 공략과 병행할 것인가</span>
+          <div style="font-size:13px;color:#b9b2a3;line-height:1.6">수운 2순이면 낙양 정체 중에도 병력 분산 없이 가능하다는 순욱의 안. 반대는 보급선 두 갈래 부담.</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="flex:1;height:10px;background:#141816;border:1px solid #2c342f;position:relative"><i style="position:absolute;left:0;top:0;bottom:0;width:57%;background:#697e58"></i><i style="position:absolute;left:57%;top:0;bottom:0;width:29%;background:#c96b5d"></i></div>
+            <span class="num" style="font-size:11px;color:#b9b2a3">찬 4 · 반 2 · 미표 1</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="pt" style="width:22px;height:22px">@@PT(96,96,sunuk)@@</div><div class="pt" style="width:22px;height:22px">@@PT(96,96,heojeo)@@</div><div class="pt" style="width:22px;height:22px">@@PT(96,96,join)@@</div><div class="pt" style="width:22px;height:22px">@@PT(96,96,jojo)@@</div><span style="font-size:11px;color:#8a8477">찬성</span>
+            <span style="width:1px;height:14px;background:#3d4740;margin:0 4px"></span>
+            <div class="pt" style="width:22px;height:22px">@@PT(96,96,hahoudon)@@</div><div class="pt" style="width:22px;height:22px">@@PT(96,96,heojeo)@@</div><span style="font-size:11px;color:#8a8477">반대</span>
+            <span style="flex:1"></span><span class="btn sm">찬성</span><span class="btn sm ghost">반대</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;border-top:1px dashed #2c342f">
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:10px"><div class="pt" style="width:28px;height:28px">@@PT(96,96,sunuk)@@</div><div style="font-size:12px"><b>순욱</b> <span class="chip" style="height:14px;font-size:9px">승상</span> <span style="color:#8a8477">· 30분 전</span><div style="color:#b9b2a3;margin-top:2px">호송 20,000은 낙양 쪽에 이미 잡혀 있습니다. 양양은 현지 징발로 충분합니다.</div></div></div>
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:10px"><div class="pt ring" style="width:28px;height:28px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div style="font-size:12px"><b>하후돈</b> <span class="chip" style="height:14px;font-size:9px">장군</span> <span style="color:#8a8477">· 12분 전</span><div style="color:#b9b2a3;margin-top:2px">호뢰관 결과 보고 정하죠. 리플레이 첨부합니다. <span style="color:#d3b064">호뢰관 전투 · 리플레이</span></div></div></div>
+            <div style="display:flex;gap:8px"><div class="pt ring" style="width:28px;height:28px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div class="inset" style="flex:1;height:34px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#8a8477">의견 쓰기…</div><span class="btn sm">등록</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- normal posts -->
+      <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid #2c342f">
+        <div class="pt" style="width:40px;height:40px">@@PT(96,96,heojeo)@@</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700"><span class="chip rust" style="height:16px;font-size:10px;margin-right:6px">작전</span>낙양 공략 · 3月 중순 봉인 전 부대 편성 마감</span><span style="font-size:11px;color:#8a8477">조인 <span class="chip" style="height:14px;font-size:9px">도독</span> · 2시간 전</span></div>
+        <span class="num" style="font-size:12px;color:#b9b2a3">댓글 9</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid #2c342f">
+        <div class="pt" style="width:40px;height:40px">@@PT(96,96,akjin)@@</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700">신입 장수 분들, 허창 내정 우선순위 정리</span><span style="font-size:11px;color:#8a8477">악진 <span class="chip" style="height:14px;font-size:9px">교위</span> · 어제</span></div>
+        <span class="num" style="font-size:12px;color:#b9b2a3">댓글 17</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:10px 14px">
+        <div class="pt" style="width:40px;height:40px">@@PT(96,96,sunuk)@@</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700"><span class="chip bronze" style="height:16px;font-size:10px;margin-right:6px">공지</span>국가방침 한실부흥 · 포상 기준 개정</span><span style="font-size:11px;color:#8a8477">순욱 <span class="chip" style="height:14px;font-size:9px">승상</span> · 2일 전</span></div>
+        <span class="num" style="font-size:12px;color:#b9b2a3">댓글 4</span>
+      </div>
+    </div>
+
+    <!-- 기밀실 preview: visually distinct (rust frame, lock, audit) -->
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+      <div class="panel" style="display:flex;flex-direction:column;min-height:0;border-color:#c96b5d;box-shadow:0 0 0 1px #0c0f0e,0 0 0 2px rgba(201,107,93,.35);background:linear-gradient(180deg,#221b1a,#1b201d)">
+        <div class="sec-h" style="background:linear-gradient(180deg,#2e2422,#221b1a);border-bottom-color:#4a2f2b"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#e08a7c" stroke-width="1.5"><rect x="3" y="7" width="10" height="7"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg><span class="t" style="color:#e08a7c">기밀실</span><span class="sub">수뇌부 5명</span><span style="flex:1"></span><span class="chip rust" style="height:18px">열람 기록 남음</span></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid #3a2c29;font-size:11px;color:#8a8477">
+          열람 가능 <div class="pt ring" style="width:20px;height:20px;--nation:#d3b064">@@PT(96,96,jojo)@@</div><div class="pt" style="width:20px;height:20px">@@PT(96,96,sunuk)@@</div><div class="pt ring" style="width:20px;height:20px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div class="pt" style="width:20px;height:20px">@@PT(96,96,heojeo)@@</div><div class="pt" style="width:20px;height:20px">@@PT(96,96,join)@@</div>
+        </div>
+        <div style="display:grid;grid-template-columns:36px 1fr;gap:10px;padding:12px;border-bottom:1px solid #3a2c29">
+          <div class="pt ring" style="width:36px;height:36px;--nation:#d3b064">@@PT(96,96,jojo)@@</div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px"><b>조조</b> <span class="chip bronze" style="height:14px;font-size:9px">군주</span> <span style="color:#8a8477">· 1시간 전</span></span><span style="font-size:13px;font-weight:700">원소 불가침, 하순까지 회신 미루고 낙양 결과 본다</span><span style="font-size:12px;color:#b9b2a3;line-height:1.5">정욱이 낙양 정탐 2순 뒤 복귀. 화웅 진지 실병력 확인 후 판단.</span><span style="font-size:11px;color:#8a8477">열람 3/5 · 댓글 2</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:36px 1fr;gap:10px;padding:12px;border-bottom:1px solid #3a2c29">
+          <div class="pt" style="width:36px;height:36px">@@PT(96,96,sunuk)@@</div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px"><b>순욱</b> <span class="chip" style="height:14px;font-size:9px">승상</span> <span style="color:#8a8477">· 어제</span></span><span style="font-size:13px;font-weight:700">암행부 보고 · 손견 진영 내 이탈 조짐</span><span style="font-size:11px;color:#8a8477">열람 5/5 · 댓글 4</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px 12px 10px 48px;font-size:12px"><div class="pt ring" style="width:28px;height:28px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div><b>하후돈</b> <span style="color:#8a8477">· 12분 전</span><div style="color:#b9b2a3;margin-top:2px">화웅 실병력은 9,000 근처가 맞습니다. 리플레이 P2 손실률로 역산.</div></div></div>
+        <div style="margin-top:auto;padding:10px 12px;border-top:1px solid #3a2c29;font-size:11px;color:#8a8477;line-height:1.5">직책이 바뀌면 즉시 접근이 끊기고, 이전 열람 기록은 남습니다. URL 직접 입력으로 우회할 수 없습니다.</div>
+      </div>
+      <div class="panel">
+        <div class="sec-h"><span class="bar"></span><span class="t">회의실 참여</span><span class="sub">최근 순</span></div>
+        <div style="padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px">
+          <div class="pt ring" style="width:28px;height:28px;--nation:#d3b064">@@PT(96,96,jojo)@@</div><div class="pt" style="width:28px;height:28px">@@PT(96,96,sunuk)@@</div><div class="pt ring" style="width:28px;height:28px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div class="pt" style="width:28px;height:28px">@@PT(96,96,heojeo)@@</div><div class="pt" style="width:28px;height:28px">@@PT(96,96,join)@@</div><div class="pt" style="width:28px;height:28px">@@PT(96,96,sunuk)@@</div><div class="pt" style="width:28px;height:28px">@@PT(96,96,jojo)@@</div><div class="pt" style="width:28px;height:28px;filter:grayscale(1);opacity:.5">@@PT(96,96,heojeo)@@</div><div class="pt" style="width:28px;height:28px;filter:grayscale(1);opacity:.5">@@PT(96,96,join)@@</div>
+          <span style="align-self:center;font-size:11px;color:#8a8477;margin-left:4px">활동 7 · 침묵 2 · NPC 제외</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

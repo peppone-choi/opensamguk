@@ -7,6 +7,9 @@ import opensamguk.logic.war.searchDistanceListToDest
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.domain.General
 import opensamguk.logic.world.ActiveWorldMap
+import opensamguk.logic.operation.OperationRules
+import opensamguk.logic.tick.GameDate
+import opensamguk.logic.war.plan.SealedBattlePlan
 
 /**
  * BO2 — the engine-side builder that stages a [BattleCommandContext] for the `che_출병` resolver (BO3),
@@ -33,6 +36,8 @@ object BattleCommandContextBuilder {
         loggerYear: Int,
         loggerMonth: Int,
         pipelineFor: ((General) -> GeneralActionPipeline)? = null,
+        /** Phase 4X-C(M5): AI 가 명령을 바꾼 턴이면 봉인 계획을 싣지 않는다(계획은 사람이 예약한 목표 도시로의 출병에만). */
+        autorunMode: Boolean = false,
     ): BattleCommandContext {
         val attacker = world.getGeneralById(attackerGeneralId)
             ?: error("BattleCommandContextBuilder: general $attackerGeneralId not in world")
@@ -73,6 +78,12 @@ object BattleCommandContextBuilder {
         val nationById = world.listNations().associate { it.id to PerTurnOverlay.toLogicNation(it) }
         val logicGenerals = world.listGenerals().map { PerTurnOverlay.toLogicGeneral(it) }
 
+        // Phase 4X-C(spec v4.1 §5 F5·F6): 봉인·미소비 계획 중 `sealedDate <= executingDate`(같은 순 봉인도 적용), 키 = 목표 도시.
+        val executing = GameDate(state.currentYear, state.currentMonth, state.currentPhase.coerceIn(1, 3))
+        val sealedPlans = if (autorunMode) emptyMap() else world.battlePlansOf(attackerGeneralId)
+            .filter { p -> p.sealed && !p.resolved && OperationRules.absoluteTurn(GameDate(p.sealedYear ?: 0, p.sealedMonth ?: 1, p.sealedPhase ?: 1)) <= OperationRules.absoluteTurn(executing) }
+            .associate { p -> p.targetCityId to SealedBattlePlan(p.id, p.targetCityId, p.stance, p.retreatLossPct, p.retreatMoraleBelow) }
+
         return BattleCommandContext(
             attackerCityId = attackerCityId,
             finalTargetCityId = finalTargetCityId,
@@ -93,6 +104,7 @@ object BattleCommandContextBuilder {
             hiddenSeed = hiddenSeed,
             loggerYear = loggerYear,
             loggerMonth = loggerMonth,
+            sealedPlans = sealedPlans,
         )
     }
 }

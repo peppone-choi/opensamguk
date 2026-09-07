@@ -38,6 +38,7 @@ PHP와 draw-for-draw, byte-for-byte로 일치해야 한다는 의무와 PHP UI�
 
 | 문서 | 답하는 질문 |
 |---|---|
+| [ui-redesign-2026-09/](./ui-redesign-2026-09/README.md) | 화면은 어떻게 생겨야 하는가 — 야전 사령부(Concept A) 시안 19장 소스, 팔레트·초상·부서 메뉴·세 게시 공간 규칙 (ADR-LITE-049) |
 | [현재 로드맵](./roadmap.md) | 무엇이 승인·구현·진행·제안 상태인가? |
 | [기존 코어와 현재 설계의 경계](./architecture-boundary.md) | 동결 기준선과 신규 세계관·시스템을 어떻게 나누는가? |
 | [문서 전면 개편 계획](../superpowers/plans/2026-08-20-documentation-overhaul-plan.md) | 이번 문서 개편은 어떤 증거와 검증을 따르는가? |

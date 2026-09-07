@@ -9,6 +9,11 @@ import opensamguk.common.rng.serializeSeed
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.engine.war.BattleCommandContextBuilder
+import opensamguk.logic.operation.OperationRules
+import opensamguk.logic.tick.GameDate
+import opensamguk.logic.war.plan.BattlePlanRules
+import opensamguk.logic.war.plan.BattleReplayCodec
+import opensamguk.logic.war.plan.BattleReplayDraft
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.develop.SightseeingExternalSelector
@@ -389,6 +394,7 @@ class ReservedTurnHandler(
                 loggerYear = year,
                 loggerMonth = month,
                 pipelineFor = pipelineBuilder?.let { builder -> { g -> builder.pipelineFor(g) } },
+                autorunMode = autorunMode,
             )
         } else {
             null
@@ -434,7 +440,10 @@ class ReservedTurnHandler(
         backfillRandomImgwanDestNation(actionCode, draft, preGeneral)
         for (execution in executions) {
             when (val executedDefinition = execution.definition) {
-                is CheChulbyeong -> drainWarBattleResult(executedDefinition.lastBattleResult, draft)
+                is CheChulbyeong -> {
+                    drainWarBattleResult(executedDefinition.lastBattleResult, draft)
+                    drainBattleReplay(executedDefinition.lastReplayDraft, general)
+                }
                 is CheInjaeTamsaek -> {
                     drainScoutNpc(executedDefinition.lastBuiltNpc)
                     recordScoutInheritance(executedDefinition.lastBuiltNpc, general.userId, execution.context.args)
@@ -677,6 +686,54 @@ class ReservedTurnHandler(
             pre.dead + delta,
         )
         world.getDiplomacy(fromNationId, toNationId)?.let { recorder.diffDiplomacy(pre, it) }
+    }
+
+    /**
+     * Phase 4X-C(spec v4.1 §5) — 봉인 계획이 있던 출병의 후처리: 계획 소비(`resolved*`) + 이름·`operation_id` 를 채운 `battle_replay`
+     * INSERT(recorder 선할당 id) + 개인 기록 1줄. 계획이 없으면(`draft == null`) 채널 0 — 바이트 동일.
+     */
+    private fun drainBattleReplay(replay: BattleReplayDraft?, general: TurnGeneral) {
+        if (replay == null) return
+        val state = world.getState()
+        val now = GameDate(state.currentYear, state.currentMonth, state.currentPhase.coerceIn(1, GameConst.phasesPerMonth))
+        world.getBattlePlanById(replay.plan.id)?.let { plan ->
+            world.updateBattlePlan(plan.copy(resolvedYear = now.year, resolvedMonth = now.month, resolvedPhase = now.phase))
+        }
+        val names: (String, Int) -> String = { kind, id ->
+            if (kind == "general") world.getGeneralById(id)?.name ?: "G$id" else world.getCityById(id)?.name ?: "C$id"
+        }
+        val phasesJson = BattleReplayCodec.encodePhases(replay, names)
+        val result = replay.result()
+        val settlement = linkedMapOf<String, Any?>(
+            "crewBefore" to replay.crewBefore, "crewAfter" to replay.crewAfter, "deadAttacker" to replay.deadAttacker,
+            "deadDefender" to replay.deadDefender, "riceUsed" to replay.riceUsed, "result" to result, "planStop" to replay.stop?.code,
+        )
+        val replayHash = BattleReplayCodec.replayHash(phasesJson, settlement)
+        // operation_id 채움 규칙(R10): 공격자가 참여 중인 진행 작전 중 목표 도시가 같은 것(id 오름차순 첫 번째), 없으면 NULL.
+        val operationId = world.operationUnitsOfGeneral(general.id)
+            .mapNotNull { world.getOperationById(it.operationId) }
+            .filter { it.status in OperationRules.OPEN_STATUSES && it.targetCityId == replay.plan.targetCityId }
+            .minByOrNull { it.id }?.id
+        val columns = linkedMapOf<String, Any?>(
+            "battle_plan_id" to replay.plan.id,
+            "operation_id" to operationId,
+            "attacker_general_id" to replay.attackerId,
+            "attacker_name" to names("general", replay.attackerId),
+            "attacker_nation_id" to replay.attackerNationId,
+            "defender_city_id" to replay.cityId,
+            "defender_city_name" to names("city", replay.cityId),
+            "defender_nation_id" to replay.defenderNationId,
+            "year" to now.year, "month" to now.month, "phase" to now.phase,
+            "war_seed" to replay.warSeed, "input_hash" to replay.inputHash, "replay_hash" to replayHash,
+            "schema_version" to BattlePlanRules.REPLAY_SCHEMA_VERSION,
+            "battle_phases_json" to phasesJson,
+            "attacker_crew_before" to replay.crewBefore, "attacker_crew_after" to replay.crewAfter,
+            "attacker_dead" to replay.deadAttacker, "defender_dead" to replay.deadDefender, "rice_used" to replay.riceUsed,
+            "result" to result, "plan_stop" to replay.stop?.code,
+            "plan_stance" to replay.plan.stance, "plan_retreat_loss_pct" to replay.plan.retreatLossPct, "plan_retreat_morale_below" to replay.plan.retreatMoraleBelow,
+        )
+        val id = recorder.recordBattleReplayInsert(columns)
+        world.pushLog(LogEntryDraft(scope = "general", category = "action", text = "리플레이 <Y>#$id</> 가 기록되었습니다.", generalId = general.id, nationId = general.nationId))
     }
 
     private fun drainConquerCity(result: ProcessWarResult?, attacker: TurnGeneral, year: Int, month: Int) {

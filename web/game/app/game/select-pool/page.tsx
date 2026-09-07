@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import { api, type SelectPoolCard, type SelectPoolResponse } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
-import { onPortraitError, portraitUrl } from '../../../lib/portrait';
 
 interface StatEdit {
     leadership: string;
@@ -152,7 +153,7 @@ export default function SelectPoolPage() {
     return (
         <Shell>
             <div className="page-content claim-screen">
-                <h1>장수 선택</h1>
+                <PageHead title="장수 선택" />
                 {pool?.validUntil && <p className="page-subtitle">선택 기한 {pool.validUntil}</p>}
                 {error && <div className="claim-error" role="alert">{error}</div>}
                 {status && <div className="claim-mode-active" role="status">{status}</div>}
@@ -172,14 +173,7 @@ export default function SelectPoolPage() {
                                 <GameCard key={card.uniqueName}>
                                     <article style={{ display: 'grid', gap: 'var(--space-sm)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                                            <img
-                                                src={portraitUrl(card.picture, card.imageServer)}
-                                                alt=""
-                                                width={64}
-                                                height={64}
-                                                onError={onPortraitError}
-                                                style={{ width: 64, height: 64, objectFit: 'contain' }}
-                                            />
+                                            <Portrait picture={card.picture} imageServer={card.imageServer} size="card-56" alt="" />
                                             <div>
                                                 <h2 style={{ margin: 0, fontSize: 'var(--text-lg)' }}>{card.generalName}</h2>
                                                 <div>{stats}</div>

@@ -204,6 +204,7 @@ class DaemonLoopConfig {
         votePollRepository: VotePollRepository,
         diplomacyLetterRepository: DiplomacyLetterRepository,
         messageRepository: MessageRepository,
+        battleReplayRepository: opensamguk.infra.read.BattleReplayRepository,
         contactReader: opensamguk.infra.read.ContactReader,
         gameKvRepository: opensamguk.infra.read.GameKvRepository,
         bettingRepository: opensamguk.infra.read.BettingRepository,
@@ -268,6 +269,7 @@ class DaemonLoopConfig {
 
         var nextMessageId = messageRepository.findMaxId()
         var nextAuctionId = auctionRepository.findMaxId()
+        var nextBattleReplayId = battleReplayRepository.findMaxId()
 
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
         // Built here (not inside RTH) so the succession handler diffs into the SAME recorder the reserved
@@ -276,6 +278,7 @@ class DaemonLoopConfig {
         val recorder = ChangeRecorder(
             messageIdAllocator = { ++nextMessageId },
             auctionIdAllocator = { ++nextAuctionId },
+            battleReplayIdAllocator = { ++nextBattleReplayId },
             kvWriteObserver = world::applyKvDirtyFree,
             initialInheritancePoints = state.meta["inheritancePoints"] as? Map<*, *> ?: emptyMap<Any?, Any?>(),
         )
@@ -403,6 +406,8 @@ class DaemonLoopConfig {
                 eventDispatcher = eventDispatcher,
                 archiveHistoryReader = archiveHistoryReader,
                 statisticSnapshotReader = statisticSnapshotReader,
+                retainerMonthly = opensamguk.engine.retainer.RetainerMonthlyService(),
+                operationMonthly = opensamguk.engine.operation.OperationMonthlyService(),
             ),
         )
 

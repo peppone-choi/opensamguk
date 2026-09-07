@@ -1,43 +1,40 @@
 'use client';
-
-// ── 전황 (World-Log) — READ-ONLY 월드 글로벌 이력 뷰어 ──────────────────────────
+// ── 전황 (World-Log) — READ-ONLY 월드 글로벌 이력 뷰어 · 12 기록 「편년체」 레이아웃 ─────────────
 // game-api `GET /api/world-log`(WorldLogController) → {entries:[{id,year,month,phase,phaseText,text}]}.
-// log_entry SYSTEM 스코프(정복/멸망/건국/작위 등) 글로벌 이력 최신순 30건을 그대로 렌더한다.
-// 헤더 셀에만 노출되던 전황을 전용 페이지로 분리(W4 read surface). 연감(history/page.tsx)과
-// 동일한 레이아웃/스타일을 따른다.
-//
-// `text`는 서버가 내려준 패러티 로그 원문(devsam 색/태그 마크업 포함)이라, 연감의
-// v-html="formatLog(item)" 패턴 그대로 dangerouslySetInnerHTML로 렌더한다.
+// log_entry SYSTEM 스코프(정복/멸망/건국/작위 등) 글로벌 이력 최신순 30건을 (연·월·순) 단위로 묶어 그린다.
+// `text`는 서버가 내려준 패러티 로그 원문(devsam 색/태그 토큰)이라 연감·작전실과 같은 LogText(토큰→팔레트 span, innerHTML 없음)로 렌더한다.
 //
 // EMPTY-SAFE: 신선 시드면 entries === [] → 빈-상태 안내. 절대 크래시하지 않는다.
 // (개인 전투 기록 / 장수 행동 로그(general_record)는 백엔드에 테이블이 없어 범위 밖 — 미구현 갭.)
-
 import { useCallback, useEffect, useState } from 'react';
+import { LogText, Panel, SectionHeader, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
-import GameCard from '../../../components/GameCard';
+import PageHead from '../../../components/PageHead';
+import RecordsTabs from '../../../components/records/RecordsTabs';
 import { api } from '../../../lib/api';
-import type { WorldLogResponse } from '../../../lib/api';
+import type { WorldLogEntry, WorldLogResponse } from '../../../lib/api';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
-const sectionBarStyle: React.CSSProperties = {
-    textAlign: 'center',
-    border: '0.5px solid var(--border-medium)',
-    background: 'var(--bg-elevated)',
-    padding: 'var(--space-xs) var(--space-sm)',
-    fontWeight: 600,
-    fontSize: 'var(--text-sm)',
-    marginBottom: 'var(--space-sm)',
-    marginTop: 'var(--space-lg)',
-};
+interface PhaseGroup {
+    key: string;
+    year: number;
+    month: number;
+    phaseText: string | null;
+    items: WorldLogEntry[];
+}
 
-const logRowStyle: React.CSSProperties = {
-    fontSize: 'var(--text-sm)',
-    lineHeight: 1.7,
-    padding: 'var(--space-xs) 0',
-    borderBottom: '1px solid var(--border-subtle)',
-    display: 'flex',
-    gap: 'var(--space-sm)',
-};
+/** 연·월·순이 같은 연속 항목을 한 묶음으로(서버 정렬 최신순 유지). */
+function groupByPhase(entries: WorldLogEntry[]): PhaseGroup[] {
+    const groups: PhaseGroup[] = [];
+    for (const item of entries) {
+        const phaseText = item.phaseText ?? null;
+        const key = `${item.year}-${item.month}-${item.phase ?? phaseText ?? ''}`;
+        const last = groups[groups.length - 1];
+        if (last && last.key === key) last.items.push(item);
+        else groups.push({ key, year: item.year, month: item.month, phaseText, items: [item] });
+    }
+    return groups;
+}
 
 export default function WorldLogPage() {
     const [data, setData] = useState<WorldLogResponse | null>(null);
@@ -75,33 +72,36 @@ export default function WorldLogPage() {
     });
 
     const entries = data?.entries ?? [];
+    const groups = groupByPhase(entries);
+    const range = groups.length > 0
+        ? `${groups[groups.length - 1].year}年 ${groups[groups.length - 1].month}月 ~ ${groups[0].year}年 ${groups[0].month}月`
+        : undefined;
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>전황</h1>
-
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
-
+            <PageHead title="전황" tabs={<RecordsTabs />} />
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
             {!loading && !error && (
-                <>
-                    {/* ── 중원 정세 (log_entry SYSTEM 이력, 최신순 30건) ──────────────── */}
-                    <div style={sectionBarStyle}>중원 정세</div>
-                    <GameCard>
-                        {entries.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
-                        ) : (
-                            <div>
-                                {entries.map((item) => (
-                                    <div key={item.id} style={logRowStyle}>
-                                        {/* text는 서버 패러티 로그 원문(색/태그) — 연감과 동일 v-html 렌더. */}
-                                        <span style={{ flex: '1 1 auto' }} dangerouslySetInnerHTML={{ __html: item.text }} />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </GameCard>
-                </>
+                <Panel className="chron record-panel">
+                    <SectionHeader title="중원 정세 · 편년체" sub={range} />
+                    <div className="chron__body">
+                        {groups.length === 0 && <EmptyState illustration="records" title="기록이 없습니다." />}
+                        {groups.map((g) => (
+                            <section key={g.key} className="chron__group" aria-label={`${g.year}年 ${g.month}月${g.phaseText ? ` ${g.phaseText}` : ''}`}>
+                                <div className="chron__when">
+                                    <span className="chron__month">{g.month}月{g.phaseText ? ` ${g.phaseText}` : ''}</span>
+                                    <span className="chron__year">{g.year}年</span>
+                                </div>
+                                <div className="chron__items">
+                                    {g.items.map((item) => (
+                                        <div key={item.id} className="chron__item"><LogText text={item.text} /></div>
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
+                </Panel>
             )}
         </Shell>
     );

@@ -69,6 +69,10 @@ function response(record: typeof currentRecord) {
     };
 }
 
+function recordRows(): (string | null)[] {
+    return Array.from(document.querySelectorAll('.record-row')).map((row) => row.textContent);
+}
+
 describe('HistoryPage', () => {
     beforeEach(() => {
         mocks.history.mockReset();
@@ -93,13 +97,14 @@ describe('HistoryPage', () => {
 
         expect(await screen.findByTestId('history-map')).toHaveTextContent('190/7:5:1:촉:true');
         expect(screen.getByText(/190년 7월: 현재 정세/)).toBeInTheDocument();
-        expect(screen.getByText('관우의 현재 동향')).toBeInTheDocument();
+        // <Y>관우</> 토큰이 팔레트 span 으로 갈라지므로 행 textContent 로 본다.
+        expect(recordRows()).toContain('관우의 현재 동향');
 
         fireEvent.change(screen.getByRole('combobox'), { target: { value: '2285' } });
 
         await waitFor(() => expect(mocks.history).toHaveBeenCalledWith(2285));
         await waitFor(() => expect(screen.getByText(/190년 6월: 보관 정세/)).toBeInTheDocument());
-        expect(screen.getByText('장비의 보관 동향')).toBeInTheDocument();
+        expect(recordRows()).toContain('장비의 보관 동향');
         expect(screen.getByTestId('history-map')).toHaveTextContent('190/6:3:2:위:true');
     });
 });

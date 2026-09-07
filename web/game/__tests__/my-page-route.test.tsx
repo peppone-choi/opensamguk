@@ -135,8 +135,9 @@ describe('MyPage route', () => {
 
         expect(screen.getByTestId('general-basic-card')).toBeInTheDocument();
         expect(screen.getByTestId('my-info-log-panel')).toHaveTextContent('general:77');
-        expect(screen.getByText('후한왕조')).toBeInTheDocument();
-        expect(screen.getByText('업')).toBeInTheDocument();
+        // 히어로(소속·도시)와 정보 표가 같은 값을 두 번 그린다 — 존재만 본다.
+        expect(screen.getAllByText('후한왕조').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('업').length).toBeGreaterThan(0);
         expect(screen.getByText('훈련/사기')).toBeInTheDocument();
         expect(screen.getByText('90 / 80')).toBeInTheDocument();
         expect(screen.getByText('수비')).toBeInTheDocument();

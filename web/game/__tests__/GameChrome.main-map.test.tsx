@@ -185,22 +185,27 @@ describe('GameChrome main map', () => {
     expect(subjectPanel).toContainElement(screen.getByTestId('general-card'));
   });
 
-  it('renders legacy PageFront status rows before the main board', () => {
+  it('renders the PageFront status rows inside the nation area of the subject panel (ADR-LITE-049 · S2)', () => {
     const { container } = render(<GameChrome />);
-
     expect(screen.getByText('접속중인 국가: 위, 촉')).toBeInTheDocument();
     expect(screen.getByText('【 접속자 】 3')).toBeInTheDocument();
     expect(screen.getByText('【 국가방침 】')).toBeInTheDocument();
     expect(screen.getByText('한실부흥')).toBeInTheDocument();
-    expect(container.querySelector('.main-status')?.nextElementSibling).toHaveClass('ingame-board');
+    const status = container.querySelector('.main-status') as HTMLElement;
+    expect(container.querySelector('.ib-subject-panel')).toContainElement(status);
+    expect(status.previousElementSibling).toHaveAttribute('data-testid', 'nation-card');
   });
-
-  it('links back to the gateway lobby from the main action row', () => {
-    render(<GameChrome />);
-
-    expect(screen.getByRole('link', { name: '로비로' })).toHaveAttribute('href', '/lobby');
+  it('keeps the map, reserved list, records and messages in one board (지도·명령 목록 고정)', () => {
+    const { container } = render(<GameChrome />);
+    const board = container.querySelector('.ingame-board') as HTMLElement;
+    expect(board.querySelector('.ib-records')).not.toBeNull();
+    expect(board.querySelector('.ib-map')).not.toBeNull();
+    expect(board.querySelector('.ib-reserved')).not.toBeNull();
+    expect(board.querySelector('.ib-messages')).not.toBeNull();
+    expect(screen.getByRole('tab', { name: /중원 정세/ })).toHaveAttribute('aria-selected', 'true');
+    // 갱신·로비로는 쉘의 부서 나브(DeptNav)가 맡는다 — 메인 본문에는 없다.
+    expect(screen.queryByRole('link', { name: '로비로' })).not.toBeInTheDocument();
   });
-
   it('passes front-info into function children for the main record zone', () => {
     const { container } = render(
       <GameChrome>{(loadedFrontInfo) => <div data-testid="record-probe">{loadedFrontInfo.recentRecord.global[0]?.[1]}</div>}</GameChrome>,

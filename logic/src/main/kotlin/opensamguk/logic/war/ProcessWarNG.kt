@@ -148,24 +148,26 @@ fun processWarNG(
         def.addPhase()
 
         // --- (8)(9) continuation + the terminal tryWound sites (`:398-470`) ---
+        // Phase 4X-C(spec v4.1 §5): (1) 자연 퇴각 우선 → (2) 수비자가 무너지지 않은 페이즈(`!fell`)의 계획 정지는 같은 퇴각 함수 →
+        // (3) 수비자 분기는 오늘 그대로(max-phase break 만 `|| stop != null` 로 넓힘). 계획이 없으면 `stop == null` 이라
+        // 호출·draw 순서가 오늘과 같다(`ProcessWarPlanHookTest` 적색 프로브).
         val attackerCont = attacker.continueWar()
         if (!attackerCont.canContinue) {
             // 공격자 퇴각 (`:398-419`).
             logWritten = true
-            hooks.onBattleResultLog(attacker)
-            hooks.onBattleResultLog(def)
-
-            attacker.addLose()
-            def.addWin()
-
-            attacker.tryWound()   // :407 — terminal site 1
-            def.tryWound()        // :408
-
-            hooks.onRetreatLog(attacker, def, attackerCont.noRice)
+            retreatAttacker(attacker, def, attackerCont.noRice, hooks)
             break
         }
 
         val defenderCont = def.continueWar()
+        val stop = hooks.plannedStop(attacker, def, attacker.getPhase())
+        val fell = !defenderCont.canContinue && (def !is WarUnitCity || def.isSiege())
+        if (!fell && stop != null) {
+            // 계획 퇴각 — 자연 퇴각과 같은 비용(`addLose`·`tryWound`), 비공성 성 재정비 페이즈도 여기(M1).
+            logWritten = true
+            retreatAttacker(attacker, def, noRice = false, hooks = hooks)
+            break
+        }
         if (!defenderCont.canContinue) {
             // 수비자 전멸/패퇴 (`:422-468`).
             logWritten = true
@@ -195,7 +197,7 @@ fun processWarNG(
                 hooks.onDefenderDownLog(attacker, def, defenderCont.noRice)
             }
 
-            if (attacker.getPhase() >= attacker.getMaxPhase()) {
+            if (attacker.getPhase() >= attacker.getMaxPhase() || stop != null) {
                 break
             }
 
@@ -239,6 +241,23 @@ fun processWarNG(
     getNextDefender(defender, false)   // :499 — terminal release (applyDB on the last defender)
 
     return conquerCity
+}
+
+/**
+ * 공격자 퇴각 블록(`process_war.php:398-419`) — 자연 퇴각과 계획 퇴각(Phase 4X-C)이 같은 함수를 탄다.
+ * `logWritten = true` 와 `break` 는 호출부에 남긴다(spec v4.1 T1).
+ */
+private fun retreatAttacker(attacker: WarUnitGeneral, def: WarUnit, noRice: Boolean, hooks: WarBattleHooks) {
+    hooks.onBattleResultLog(attacker)
+    hooks.onBattleResultLog(def)
+
+    attacker.addLose()
+    def.addWin()
+
+    attacker.tryWound()   // :407 — terminal site 1
+    def.tryWound()        // :408
+
+    hooks.onRetreatLog(attacker, def, noRice)
 }
 
 /** Dispatch finishBattle to the concrete leaf (general vs city); a null defender (no contact) is a no-op. */

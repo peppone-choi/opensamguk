@@ -121,4 +121,49 @@ class BoardFlushIT {
 
     private fun count(table: String): Int =
         jdbc.queryForObject("SELECT count(*) FROM $table", MapSqlParameterSource(), Int::class.java)!!
+
+    @Test
+    fun `board_post kind and vote_id persist and board_post_read is idempotent per (post, general)`() {
+        executor.flush(
+            FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
+                worldStateUpdate = ws(),
+                boardPostInserts = listOf(
+                    BoardPostInsertRow(
+                        linkedMapOf(
+                            "nation_id" to 1, "is_secret" to true, "author_general_id" to 10,
+                            "author_name" to "유비", "title" to "표결 안건", "content_html" to "내용", "kind" to "vote", "vote_id" to 3,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val postId = jdbc.queryForObject(
+            "SELECT id FROM board_post WHERE title = :t", MapSqlParameterSource("t", "표결 안건"), Int::class.java,
+        )!!
+        val row = jdbc.queryForMap("SELECT kind, vote_id FROM board_post WHERE id = :id", MapSqlParameterSource("id", postId))
+        assertEquals("vote", row["kind"])
+        assertEquals(3, row["vote_id"])
+
+        // 같은 (post, general) 을 두 번 — 첫 열람만 남는다(ON CONFLICT DO NOTHING).
+        repeat(2) {
+            executor.flush(
+                FlushPayload(
+                    worldId = opensamguk.common.world.WorldId(1),
+                    worldStateUpdate = ws(),
+                    boardReadInserts = listOf(
+                        BoardReadInsertRow(linkedMapOf("post_id" to postId, "general_id" to 10)),
+                        BoardReadInsertRow(linkedMapOf("post_id" to postId, "general_id" to 11)),
+                    ),
+                ),
+            )
+        }
+        val readRows = jdbc.queryForList(
+            "SELECT general_id FROM board_post_read WHERE post_id = :id ORDER BY id", MapSqlParameterSource("id", postId),
+        )
+        assertEquals(listOf(10, 11), readRows.map { it["general_id"] })
+        assertTrue(executor.lastOps().any { it.table == "board_post_read" && it.verb == FlushVerb.CREATE_MANY })
+        // 클래스 단위 DB 를 공유하므로 이 테스트의 글을 지운다(열람 기록은 CASCADE) — 다른 테스트의 count 가 흔들리지 않게.
+        jdbc.update("DELETE FROM board_post WHERE id = :id", MapSqlParameterSource("id", postId))
+    }
 }

@@ -31,6 +31,8 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
+  const busyProps = busy ? ({ disabled: true, reason: '처리 중입니다' } as const) : ({} as const);
+
   return (
     <Modal
       ariaLabel={title}
@@ -43,14 +45,14 @@ export function ConfirmDialog({
       <h3 className="os-confirm-dialog__title">{title}</h3>
       <div className="os-confirm-dialog__body">{message}</div>
       <div className="os-confirm-dialog__actions">
-        <Button variant="ghost" onClick={onCancel} disabled={busy}>
+        <Button variant="ghost" onClick={onCancel} {...busyProps}>
           {cancelLabel}
         </Button>
         <Button
           ref={confirmRef}
           variant={danger ? 'danger' : 'primary'}
           onClick={onConfirm}
-          disabled={busy}
+          {...busyProps}
         >
           {busy ? '처리 중…' : confirmLabel}
         </Button>

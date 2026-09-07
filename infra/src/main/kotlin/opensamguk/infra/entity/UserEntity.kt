@@ -71,6 +71,16 @@ class UserEntity(
     @Column(name = "profile_icon_managed", nullable = false)
     var profileIconManaged: Boolean = false,
 
+    // ADR-LITE-049 13 — 계정 대표 장수(커뮤니티 아이콘 원천). 세계 id·장수 id·이름 스냅샷. 없으면 null.
+    @Column(name = "representative_world_id", nullable = true)
+    var representativeWorldId: Int? = null,
+
+    @Column(name = "representative_general_id", nullable = true)
+    var representativeGeneralId: Int? = null,
+
+    @Column(name = "representative_general_name", nullable = true, length = 50)
+    var representativeGeneralName: String? = null,
+
     // legacy member_log(action_type=login) 최신 행 대체 — 최근 로그인 시각.
     @Column(name = "last_login_at", nullable = true)
     var lastLoginAt: LocalDateTime? = null,

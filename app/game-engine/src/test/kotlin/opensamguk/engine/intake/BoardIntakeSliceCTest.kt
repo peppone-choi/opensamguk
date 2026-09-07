@@ -232,4 +232,61 @@ class BoardIntakeSliceCTest {
         assertEquals("올바르지 않은 입력입니다.", (res as BoardActionResult).reason)
         assertTrue(recorder.boardCommentInserts().isEmpty())
     }
+
+    // ── ADR-LITE-049 14 — 글 종류·표결 연결·기밀실 열람 기록 ─────────────────────
+    @Test
+    fun `article add carries kind and vote_id columns (default general, null)`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        handler(world, recorder).handleArticle(
+            TurnDaemonCommand.BoardArticle(generalId = 10, isSecret = false, title = "표결", text = "본문", kind = "vote", voteId = 3),
+        )
+        handler(world, recorder).handleArticle(
+            TurnDaemonCommand.BoardArticle(generalId = 10, isSecret = false, title = "일반", text = "본문"),
+        )
+        val rows = recorder.boardPostInserts()
+        assertEquals("vote", rows[0].columns["kind"])
+        assertEquals(3, rows[0].columns["vote_id"])
+        assertEquals("general", rows[1].columns["kind"])
+        assertEquals(null, rows[1].columns["vote_id"])
+    }
+
+    @Test
+    fun `기밀실 read by a 수뇌부 officer records a board_post_read INSERT and flushes it`() {
+        val world = world(general(officerLevel = 12))
+        val recorder = ChangeRecorder()
+        val res = handler(world, recorder, post(id = 5, isSecret = true)).handleRead(
+            TurnDaemonCommand.BoardRead(generalId = 10, articleNo = 5),
+        )
+        assertTrue((res as BoardActionResult).ok)
+        val c = recorder.boardReadInserts().single().columns
+        assertEquals(5, c["post_id"])
+        assertEquals(10, c["general_id"])
+        assertEquals(1, flush(world, recorder).boardReadInserts.size)
+    }
+
+    @Test
+    fun `회의실 read succeeds without recording (열람 기록은 기밀실만)`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        val res = handler(world, recorder, post(id = 5, isSecret = false)).handleRead(
+            TurnDaemonCommand.BoardRead(generalId = 10, articleNo = 5),
+        )
+        assertTrue((res as BoardActionResult).ok)
+        assertTrue(recorder.boardReadInserts().isEmpty())
+    }
+
+    @Test
+    fun `기밀실 read by a non-수뇌부 officer is denied and a missing article or articleNo is denied`() {
+        val recorder = ChangeRecorder()
+        val denied = handler(world(general(officerLevel = 2)), recorder, post(id = 5, isSecret = true)).handleRead(
+            TurnDaemonCommand.BoardRead(generalId = 10, articleNo = 5),
+        )
+        assertEquals("권한이 부족합니다. 수뇌부가 아닙니다.", (denied as BoardActionResult).reason)
+        val missing = handler(world(), recorder).handleRead(TurnDaemonCommand.BoardRead(generalId = 10, articleNo = 77))
+        assertEquals("게시물이 없습니다.", (missing as BoardActionResult).reason)
+        val noNo = handler(world(), recorder).handleRead(TurnDaemonCommand.BoardRead(generalId = 10, articleNo = null))
+        assertEquals("올바르지 않은 입력입니다.", (noNo as BoardActionResult).reason)
+        assertTrue(recorder.boardReadInserts().isEmpty())
+    }
 }

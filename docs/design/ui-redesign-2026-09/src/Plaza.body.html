@@ -1,0 +1,108 @@
+<div style="width:1440px;height:900px;background:#0c0f0e;display:flex;flex-direction:column;overflow:hidden">
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="btn sm ghost">← 작전실</span>
+      <span class="serif" style="font-size:18px;font-weight:900">광장</span>
+      <span style="font-size:12px;color:#8a8477">서버 전체가 함께 쓰는 곳 · 국가와 무관</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+      <span style="display:flex;align-items:center;gap:5px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#d3b064" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 8h5M8 5.5v5"/></svg><span class="num">12,480</span></span>
+      <span style="display:flex;align-items:center;gap:5px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#8fa77a" stroke-width="1.5"><path d="M8 2v12M4 6c2 0 4 1 4 3M12 6c-2 0-4 1-4 3M4 10c2 0 4 1 4 3M12 10c-2 0-4 1-4 3"/></svg><span class="num">8,120</span></span>
+      <span class="chip bronze">포인트 3,210</span>
+    </div>
+  </div>
+  <div style="height:44px;display:flex;align-items:stretch;padding:0 20px;border-bottom:1px solid #2c342f;background:#141816;gap:2px">
+    <span class="nav-item on">경매장 · 금/쌀</span>
+    <span class="nav-item">경매장 · 유니크 <span class="chip bronze" style="height:16px;font-size:10px;padding:0 5px">적토마 입찰 중</span></span>
+    <span class="nav-item">베팅장 <span class="chip rust" style="height:16px;font-size:10px;padding:0 5px">진행</span></span>
+    <span class="nav-item">토너먼트</span>
+    <span class="nav-item">유산 관리</span>
+  </div>
+
+  <div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;padding:14px 20px 16px;min-height:0">
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="sec-h"><span class="bar" style="background:#697e58"></span><span class="t">쌀 구매 (금 → 쌀)</span><span class="sub">12건</span><span style="flex:1"></span><span style="font-size:11px;color:#8a8477">시세 <span class="num" style="color:#ece6d8">1 : 1.04</span></span></div>
+          <table class="table">
+            <thead><tr><th>번호</th><th>판매자</th><th style="text-align:right">수량</th><th>입찰자</th><th style="text-align:right">입찰가</th><th style="text-align:right">단가</th><th style="text-align:right">마감가</th><th>거래 종료</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="num" style="color:#8a8477">41</td><td style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,sunuk)@@</div>순욱</td><td class="num" style="text-align:right">5,000</td><td>하후돈</td><td class="num" style="text-align:right;color:#d3b064">4,900</td><td class="num" style="text-align:right">0.98</td><td class="num" style="text-align:right">5,200</td><td class="num">3月 하순 14:00</td><td><span class="btn sm">입찰</span></td></tr>
+              <tr><td class="num" style="color:#8a8477">40</td><td style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,yubi)@@</div>유비</td><td class="num" style="text-align:right">2,000</td><td style="color:#8a8477">-</td><td class="num" style="text-align:right">1,900</td><td class="num" style="text-align:right">0.95</td><td class="num" style="text-align:right">2,100</td><td class="num">3月 중순 19:00</td><td><span class="btn sm">입찰</span></td></tr>
+              <tr><td class="num" style="color:#8a8477">38</td><td style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,ijeon)@@</div>가나다42</td><td class="num" style="text-align:right">1,000</td><td>정욱</td><td class="num" style="text-align:right;color:#d3b064">1,120</td><td class="num" style="text-align:right">1.12</td><td class="num" style="text-align:right">1,300</td><td class="num" style="color:#e08a7c">3月 중순 13:40</td><td><span class="btn sm">입찰</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="sec-h"><span class="bar" style="background:#d3b064"></span><span class="t">쌀 판매 (쌀 → 금)</span><span class="sub">9건</span></div>
+          <table class="table">
+            <thead><tr><th>번호</th><th>판매자</th><th style="text-align:right">수량</th><th>입찰자</th><th style="text-align:right">입찰가</th><th style="text-align:right">단가</th><th style="text-align:right">마감가</th><th>거래 종료</th><th></th></tr></thead>
+            <tbody>
+              <tr style="background:rgba(211,176,100,.06)"><td class="num" style="color:#8a8477">39</td><td style="display:flex;align-items:center;gap:8px"><div class="pt ring" style="width:24px;height:24px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div>하후돈 <span class="chip bronze" style="height:14px;font-size:9px">내 등록</span></td><td class="num" style="text-align:right">3,000</td><td>악진</td><td class="num" style="text-align:right;color:#d3b064">2,850</td><td class="num" style="text-align:right">0.95</td><td class="num" style="text-align:right">3,000</td><td class="num">3月 하순 18:00</td><td><span class="btn sm ghost">취소</span></td></tr>
+              <tr><td class="num" style="color:#8a8477">37</td><td style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,wonso)@@</div>원소</td><td class="num" style="text-align:right">10,000</td><td style="color:#8a8477">-</td><td class="num" style="text-align:right">9,000</td><td class="num" style="text-align:right">0.90</td><td class="num" style="text-align:right">9,800</td><td class="num">4月 상순 12:00</td><td><span class="btn sm">입찰</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- unique spotlight + betting -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0">
+        <div class="panel frame-bronze" style="display:flex;flex-direction:column;background:radial-gradient(400px 200px at 20% 0%,rgba(211,176,100,.14),#1b201d)">
+          <div class="sec-h"><span class="bar"></span><span class="t">유니크 경매 · 진행 중</span><span class="sub">마감 3h 12m</span></div>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;padding:14px">
+            <div style="width:120px;height:120px;border:1px solid #9c7f3f;background:#141816;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 64 64" width="72" height="72" fill="none" stroke="#d3b064" stroke-width="1.6"><path d="M10 50 C12 30 26 22 40 24 L48 16 L52 26 L46 30 C50 36 48 46 40 50 Z"/><path d="M20 50 L18 58 M36 50 L38 58"/><circle cx="43" cy="24" r="1.5" fill="#d3b064"/></svg></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:baseline;gap:8px"><span class="serif" style="font-size:20px;font-weight:900;color:#d3b064">적토마</span><span class="chip bronze">전설의 말</span></div>
+              <div style="font-size:12px;color:#b9b2a3;line-height:1.5">무력 +7 · 이동 +1 · 일기토 회피 +5%. 서버에 하나뿐인 명마.</div>
+              <div style="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2px 8px;font-size:11px"><span style="color:#8a8477">번호</span><b class="num">7</b><span style="color:#8a8477">주최자</span><b>운영</b><span style="color:#8a8477">종료일시</span><b class="num">3月 하순 16:12</b><span style="color:#8a8477">최대지연 · 연장</span><b>2회 · 남음</b><span style="color:#8a8477">현재 포인트</span><b class="num" style="color:#d3b064">3,210</b><span style="color:#8a8477">내 잔여</span><b class="num">3,210</b></div>
+              <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;border-top:1px solid #2c342f;padding-top:6px"><span style="color:#8a8477">입찰자 목록 · 입찰포인트 · 시각</span>
+                <div style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:20px;height:20px">@@PT(96,96,ijeon)@@</div><span style="flex:1">가나다42</span><b class="num" style="color:#d3b064">3,210</b><span class="mono" style="color:#8a8477">12:28</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><div class="pt" style="width:20px;height:20px">@@PT(96,96,yubi)@@</div><span style="flex:1">유비</span><b class="num">3,000</b><span class="mono" style="color:#8a8477">11:50</span></div>
+              </div>
+              <div style="display:flex;gap:6px"><div class="inset" style="width:110px;height:36px;display:flex;align-items:center;padding:0 10px" class="num">3,300</div><span class="btn primary" style="height:36px">입찰</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="sec-h"><span class="bar" style="background:#c96b5d"></span><span class="t">베팅장 · 낙양 공방</span><span class="sub">마감 3月 하순</span></div>
+          <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #3d4740;background:#141816">@@FLAG(#3f6fb5)@@<span style="flex:1;font-size:13px">조조가 낙양을 점령한다</span><span class="num" style="color:#b9b2a3">배당 2.4</span><span class="num" style="color:#8a8477;width:60px;text-align:right">41%</span><span class="btn sm">베팅</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #d3b064;background:rgba(211,176,100,.08)">@@FLAG(#7a4fa8)@@<span style="flex:1;font-size:13px">동탁이 낙양을 지킨다 <span class="chip bronze" style="height:14px;font-size:9px">내 베팅 500</span></span><span class="num" style="color:#b9b2a3">배당 1.7</span><span class="num" style="color:#8a8477;width:60px;text-align:right">52%</span><span class="btn sm ghost">추가</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #3d4740;background:#141816"><span style="width:14px"></span><span style="flex:1;font-size:13px">기한 내 미결</span><span class="num" style="color:#b9b2a3">배당 6.0</span><span class="num" style="color:#8a8477;width:60px;text-align:right">7%</span><span class="btn sm">베팅</span></div>
+            <div style="font-size:11px;color:#8a8477;margin-top:auto">총 판돈 <span class="num" style="color:#b9b2a3">48,200</span> · 참가 <span class="num" style="color:#b9b2a3">61명</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+      <div class="panel">
+        <div class="sec-h"><span class="bar" style="background:#d3b064"></span><span class="t">쌀 판매 등록</span></div>
+        <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:12px">
+          <label style="display:flex;flex-direction:column;gap:4px;color:#8a8477">수량<div class="inset num" style="height:36px;display:flex;align-items:center;padding:0 10px;color:#ece6d8">1,000</div></label>
+          <label style="display:flex;flex-direction:column;gap:4px;color:#8a8477">마감(시간)<div class="inset num" style="height:36px;display:flex;align-items:center;padding:0 10px;color:#ece6d8">24</div></label>
+          <label style="display:flex;flex-direction:column;gap:4px;color:#8a8477">개시가<div class="inset num" style="height:36px;display:flex;align-items:center;padding:0 10px;color:#ece6d8">500</div></label>
+          <label style="display:flex;flex-direction:column;gap:4px;color:#8a8477">즉시 낙찰가<div class="inset num" style="height:36px;display:flex;align-items:center;padding:0 10px;color:#ece6d8">2,000</div></label>
+          <span class="btn primary" style="grid-column:1 / span 2;height:40px">등록</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">토너먼트</span><span class="sub">전력전 · 접수 중</span></div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">접수 마감</span><span class="num">4月 상순</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">참가</span><span class="num">24 / 32</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">우승 상금</span><span class="num" style="color:#d3b064">자금 20,000</span></div>
+          <div style="display:flex;gap:-4px;align-items:center"><div class="pt" style="width:24px;height:24px">@@PT(96,96,yubi)@@</div><div class="pt" style="width:24px;height:24px;margin-left:-6px">@@PT(96,96,dongtak)@@</div><div class="pt" style="width:24px;height:24px;margin-left:-6px">@@PT(96,96,jojo)@@</div><span style="margin-left:8px;color:#8a8477">외 21명 참가</span></div>
+          <span class="btn" style="height:36px">참가 신청</span>
+        </div>
+      </div>
+      <div class="panel" style="flex:1;min-height:0">
+        <div class="sec-h"><span class="bar" style="background:#697e58"></span><span class="t">최근 거래</span></div>
+        <div style="display:flex;flex-direction:column;font-size:12px">
+          <div style="display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:8px 12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">12:40</span><span>쌀 2,000 낙찰 · <b>순욱</b> → 유비</span><span class="num" style="color:#d3b064">1,980</span></div>
+          <div style="display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:8px 12px;border-bottom:1px solid #2c342f"><span class="mono" style="color:#8a8477">11:05</span><span>유니크 <b>청강검</b> 낙찰 · 원소</span><span class="num" style="color:#d3b064">2,410p</span></div>
+          <div style="display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:8px 12px"><span class="mono" style="color:#8a8477">09:30</span><span>베팅 정산 · 기주 가뭄 <span style="color:#8a8477">(적중 12명)</span></span><span class="num" style="color:#8fa77a">+1,200</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

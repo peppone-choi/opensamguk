@@ -168,6 +168,8 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `
 - 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·현재 spec/API 불일치는 라이브 루프에서 계속 폐쇄한다. 역사적 회귀 결함만 frozen baseline과 PHP 참고 자료로 비교한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
 - 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 9서비스) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
 
+**UI 정본(ADR-LITE-049, 2026-09-06).** 두 프런트의 시각·정보구조 정본은 야전 사령부(Concept A) 캔버스이며 소스 사본은 `docs/design/ui-redesign-2026-09/`, 구현 계획은 `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`다. 메인=작전실(지도 중앙·명령 목록 12순 우측 고정), 커뮤니티/회의실/기밀실은 별개 화면, 초상 3종, 현행 라벨·게이팅 불변, 비활성은 점선+사유.
+
 **브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
 `python3 tools/assets/build_brand_assets.py`가 두 프런트엔드의 파비콘·앱아이콘·워드마크를 전량
 재생성한다. 산출물(`web/*/app/{icon,apple-icon}.png`, `favicon.ico`, `web/*/public/logo-wordmark*.png`)을

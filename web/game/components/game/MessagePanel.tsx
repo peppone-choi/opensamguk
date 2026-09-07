@@ -77,7 +77,28 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
     }
 
     return (
-        <section className="message-panel" id="msgPanel" aria-label="메시지">
+        <section className="message-panel os-panel os-panel--static" id="msgPanel" aria-label="메시지">
+            {/* 3탭(국가·전체·개인) — ADR-LITE-049 S2 「하단 메시지 3탭」. 라벨은 기존 채널 라벨 그대로. */}
+            <div className="os-section-header msg-head">
+                <span className="os-section-header__bar" aria-hidden="true" />
+                <h3 className="os-section-header__title">메시지</h3>
+                <span className="os-section-header__spacer" />
+                <div className="os-pill-tabs" role="tablist" aria-label="메시지 채널">
+                    {channels.map((c) => (
+                        <button
+                            key={c.key}
+                            type="button"
+                            role="tab"
+                            aria-selected={active === c.mailbox}
+                            className={active === c.mailbox ? 'os-pill-tabs__on' : undefined}
+                            disabled={sending}
+                            onClick={() => setActive(c.mailbox)}
+                        >
+                            {c.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
             <form
                 className="msg-input-form"
                 onSubmit={(e) => {
@@ -85,34 +106,19 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
                     void handleSend();
                 }}
             >
-                <select
-                    className="msg-mailbox-select"
-                    value={active}
-                    onChange={(e) => setActive(Number(e.target.value))}
-                    disabled={sending}
-                >
-                    <optgroup label="즐겨찾기">
-                        {channels.map((c) => (
-                            <option key={c.key} value={c.mailbox}>
-                                {c.label}
-                            </option>
-                        ))}
-                    </optgroup>
-                </select>
                 <input
                     type="text"
                     maxLength={99}
-                    className="msg-input"
+                    className="msg-input os-inset"
                     placeholder="서신을 입력하세요"
                     value={sendText}
                     onChange={(e) => setSendText(e.target.value)}
                     disabled={sending}
                 />
-                <button type="submit" className="msg-send-btn" disabled={sending || !sendText.trim()}>
+                <button type="submit" className="msg-send-btn os-button os-button--primary os-button--sm" disabled={sending || !sendText.trim()}>
                     서신전달&amp;갱신
                 </button>
             </form>
-
             <div className="msg-list">
                 {messages == null && !failed && (
                     <div className="msg-empty"><span className="spinner" /></div>

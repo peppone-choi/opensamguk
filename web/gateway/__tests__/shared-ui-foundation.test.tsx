@@ -9,7 +9,7 @@ describe('shared UI foundation', () => {
     render(
       <Card>
         <Brand size="large" />
-        <Button disabled>확인</Button>
+        <Button disabled reason="테스트">확인</Button>
       </Card>,
     );
 

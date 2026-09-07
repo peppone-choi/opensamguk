@@ -1,0 +1,250 @@
+<div style="width:1440px;height:1000px;background:#0c0f0e;display:flex;flex-direction:column;overflow:hidden">
+  <!-- ===== status bar (GameInfo 제목행 + 자원) ===== -->
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">
+    <div style="display:flex;align-items:center;gap:18px">
+      <img src="logo-wordmark-sm.png" alt="오픈삼국" style="display:block;height:30px;width:auto">
+      <span style="width:1px;height:22px;background:#3d4740"></span>
+      <div style="display:flex;flex-direction:column;line-height:1.15">
+        <span style="font-size:13px;font-weight:700">삼국지 빼섭 0기</span>
+        <span style="font-size:11px;color:#7aa7c7">【역사모드2-2】 반동탁연합 결성(정사)</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="inset" style="display:flex;align-items:center;gap:12px;height:38px;padding:0 14px">
+        <span class="serif" style="font-size:16px;font-weight:700;color:#ece6d8">현재: 200年 3月 <span style="color:#d3b064">중순</span></span>
+        <span style="font-size:11px;color:#8a8477">(60분 턴 서버)</span>
+        <span style="width:1px;height:18px;background:#3d4740"></span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#b9b2a3"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>다음 순 <span class="mono" style="color:#ffd36d;font-weight:700">04:12</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+        <span title="자금" style="display:flex;align-items:center;gap:5px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#d3b064" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 8h5M8 5.5v5"/></svg><span class="num">12,480</span></span>
+        <span title="군량" style="display:flex;align-items:center;gap:5px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#8fa77a" stroke-width="1.5"><path d="M8 2v12M4 6c2 0 4 1 4 3M12 6c-2 0-4 1-4 3M4 10c2 0 4 1 4 3M12 10c-2 0-4 1-4 3"/></svg><span class="num">8,120</span></span>
+        <span title="전체 접속자 수" style="display:flex;align-items:center;gap:5px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="#b9b2a3" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 13a4.5 4.5 0 0 1 9 0M11 6.5a2.5 2.5 0 0 1 0 5M14.5 13a3.5 3.5 0 0 0-3-3.4"/></svg><span class="num">38</span><span style="font-size:11px;color:#8a8477">명 접속</span></span>
+      </div>
+      <span style="width:1px;height:22px;background:#3d4740"></span>
+      <div style="position:relative"><svg class="ico-20" viewBox="0 0 20 20" fill="none" stroke="#b9b2a3" stroke-width="1.5"><path d="M5 13V9a5 5 0 0 1 10 0v4l1.5 2h-13z"/><path d="M8 17a2 2 0 0 0 4 0"/></svg><span style="position:absolute;top:-4px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#c96b5d;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center" class="mono">3</span></div>
+      <div class="pt ring" style="width:32px;height:32px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div>
+    </div>
+  </div>
+
+  <!-- ===== department nav (20 actions grouped) ===== -->
+  <div style="height:44px;display:flex;align-items:stretch;justify-content:space-between;padding:0 20px;border-bottom:1px solid #2c342f;background:#141816">
+    <div style="display:flex;gap:2px">
+      <span class="nav-item on">작전실</span>
+      <span class="nav-item" title="세력 정보 · 인사부 · 세력 장수 · 회의실 · 외교부 · 내무부 · 사령부 · NPC 정책 · 암행부 · 감찰부 · 기밀실">국가 운영 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+      <span class="nav-item">군사 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+      <span class="nav-item">정보 <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg></span>
+      <span class="nav-item">광장 <span class="chip bronze" style="height:16px;font-size:10px;padding:0 5px">베팅 진행</span></span>
+      <span class="nav-item">기록</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="btn sm ghost">갱신</span>
+      <span class="btn sm ghost">로비로</span>
+      <span class="btn sm ghost" style="color:#8a8477">커뮤니티 ↗</span>
+    </div>
+  </div>
+
+  <!-- ===== server info strip (GameInfo 13셀 나머지) ===== -->
+  <div style="height:30px;display:flex;align-items:center;gap:6px;padding:0 20px;border-bottom:1px solid #2c342f;background:#0f1311;font-size:11px;color:#b9b2a3;overflow:hidden;white-space:nowrap">
+    <span class="chip" style="height:20px">NPC 3명 · NPC선택: 가능</span>
+    <span class="chip" style="height:20px">등록 장수: 유저 <b class="num" style="color:#ece6d8">38</b> / 120 + <span style="color:#7aa7c7">NPC 3명</span></span>
+    <span class="chip" style="height:20px">턴당 갱신횟수: <b class="num" style="color:#ece6d8">20</b>회</span>
+    <span class="chip" style="height:20px">동작 시각: <span class="mono">12:40:03</span></span>
+    <span class="chip" style="height:20px">토너먼트: 경기당 3분 · <span style="color:#e08a7c">현재 경기 없음</span></span>
+    <span class="chip bronze" style="height:20px">12건 거래 진행중</span>
+    <span class="chip info" style="height:20px">설문 진행 중: 다음 시즌 턴텀</span>
+    <span class="chip" style="height:20px">기타 설정: 상성 사실 · 유산 사용</span>
+  </div>
+
+  <!-- ===== body ===== -->
+  <div style="flex:1;display:grid;grid-template-columns:330px minmax(0,1fr) 360px;gap:14px;padding:12px 20px 0;min-height:0">
+    <!-- left: 지난 순 사건 (장수 동향 · 개인 기록 · 중원 정세) -->
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">지난 순</span><span class="sub">3月 상순 → 중순</span><span style="flex:1"></span><span class="chip" style="height:18px">최근 15건</span></div>
+      <div style="display:flex;gap:0;border-bottom:1px solid #2c342f;font-size:11px">
+        <span style="padding:6px 12px;color:#d3b064;border-bottom:2px solid #d3b064;font-weight:700">중원 정세</span>
+        <span style="padding:6px 12px;color:#8a8477">장수 동향</span>
+        <span style="padding:6px 12px;color:#8a8477">개인 기록</span>
+      </div>
+      <div class="feed" style="flex:1;overflow:hidden">
+        <div class="feed-item" style="background:rgba(201,107,93,.08)">
+          <div class="pt" style="width:32px;height:32px">@@PT(96,96,dongtak)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">동탁 <span class="chip rust" style="height:16px;font-size:10px">전투</span></span><span class="what"><b>호뢰관</b>에서 연합군 3만을 격퇴. 손견 부대 퇴각, 사상 4,200.</span><span class="when">3月 상순 · 전투 리플레이 보기</span></div>
+        </div>
+        <div class="feed-item">
+          <div class="pt" style="width:32px;height:32px">@@PT(96,96,wonso)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">원소 <span class="chip info" style="height:16px;font-size:10px">외교</span></span><span class="what">조조에게 <b>불가침 제의</b>. 회신 기한 2순.</span><span class="when">3月 상순</span></div>
+        </div>
+        <div class="feed-item">
+          <div class="pt" style="width:32px;height:32px">@@PT(96,96,yubi)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">유비 <span class="chip moss" style="height:16px;font-size:10px">이동</span></span><span class="what">평원에서 <b>북해</b>로 출발. 3순 후 도착 예정.</span><span class="when">2月 하순</span></div>
+        </div>
+        <div class="feed-item">
+          <div class="pt" style="width:32px;height:32px">@@PT(96,96,jojo)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">조조 <span class="chip bronze" style="height:16px;font-size:10px">국가</span></span><span class="what">국가방침을 <b>한실부흥</b>으로 선포. 허창 증축 완료.</span><span class="when">2月 하순</span></div>
+        </div>
+        <div class="feed-item">
+          <div class="pt" style="width:32px;height:32px">@@PT(96,96,hahoudon)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">하후돈 <span class="chip" style="height:16px;font-size:10px">내정</span></span><span class="what">허창 <b>농지 개간</b> 완료. 농업 +412.</span><span class="when">2月 하순 · 내 기록</span></div>
+        </div>
+        <div class="feed-item">
+          <div style="width:32px;height:32px;border:1px solid #3d4740;background:#141816;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8a8477" stroke-width="1.4"><path d="M2 12c2-4 5-4 6 0 1-4 4-4 6 0M3 5l2 2 2-2 2 2 2-2 2 2"/></svg></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span class="who">세계 <span class="chip" style="height:16px;font-size:10px">사건</span></span><span class="what">기주에 <b>가뭄</b>. 원소 영토 농업 -8%.</span><span class="when">2月 중순</span></div>
+        </div>
+      </div>
+      <div style="padding:8px 12px;border-top:1px solid #2c342f;font-size:11px;color:#8a8477;display:flex;justify-content:space-between"><span>15건 중 6건</span><span style="color:#d3b064">연대기 전체 보기</span></div>
+    </div>
+
+    <!-- center: map + current city + nation -->
+    <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+      <div class="panel frame-bronze" style="position:relative;flex:1;min-height:0;overflow:hidden;background:#0c0f0e">
+        <div style="position:absolute;inset:0">@@ISO(720,470)@@</div>
+        <div style="position:absolute;left:10px;top:10px;display:flex;gap:6px">
+          <span class="chip bronze">아이소메트릭</span><span class="chip">평면 선택</span>
+        </div>
+        <div style="position:absolute;right:10px;top:10px;display:flex;gap:6px">
+          <span class="chip">세력</span><span class="chip">보급</span><span class="chip">부대</span><span class="chip">지형</span>
+        </div>
+        <div class="panel" style="position:absolute;left:10px;bottom:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;background:rgba(27,32,29,.9)">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px">@@FLAG(#3f6fb5,12)@@조조 <span style="color:#8a8477">(내 소속)</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px">@@FLAG(#7a4fa8,12)@@동탁 <span class="chip rust" style="height:14px;font-size:9px">교전</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px">@@FLAG(#b58a3f,12)@@원소 <span class="chip info" style="height:14px;font-size:9px">불가침 제의</span></div>
+        </div>
+        <div class="panel" style="position:absolute;right:10px;bottom:10px;width:220px;padding:10px;display:flex;flex-direction:column;gap:6px;background:rgba(27,32,29,.92);border-color:#ffd36d">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700">허창 <span style="font-size:11px;color:#8a8477;font-weight:400">潁川郡</span></span><span class="chip bronze" style="height:16px;font-size:10px">현재 위치</span></div>
+          <div style="font-size:11px;color:#b9b2a3;display:flex;gap:10px"><span>주둔 <span class="num">6명</span></span><span>병력 <span class="num">18,400</span></span><span>보급 <span style="color:#8fa77a">양호</span></span></div>
+          <div style="display:flex;gap:6px"><span class="btn sm" style="flex:1">도시 정보</span><span class="btn sm ghost" style="flex:1">이동 계획</span></div>
+        </div>
+      </div>
+
+      <!-- CityBasicCard + NationBasicCard/MainStatusPanel -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;height:206px">
+        <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+          <div class="sec-h" style="height:32px;background:#3f6fb5;border-bottom-color:#2c342f"><img src="cast-capital.png" alt="" style="width:22px;height:22px"><span class="t" style="color:#fff">【潁川 | 대도시】 허창</span><span style="flex:1"></span><span style="font-size:11px;color:#fff">지배 국가 【 조조 】</span></div>
+          <div style="flex:1;padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:11px">
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>주민</span><span class="num">84,200 / 100,000</span></div><div class="g-bar" style="height:5px"><i style="width:84%"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>민심</span><span class="num">72.4</span></div><div class="g-bar" style="height:5px"><i style="width:72%;background:#d3b064"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>농업</span><span class="num">6,412 / 8,000</span></div><div class="g-bar" style="height:5px"><i style="width:80%"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>상업</span><span class="num">5,900 / 8,000</span></div><div class="g-bar" style="height:5px"><i style="width:74%"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>치안</span><span class="num">4,100 / 5,000</span></div><div class="g-bar" style="height:5px"><i style="width:82%"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>수비</span><span class="num">3,100 / 5,000</span></div><div class="g-bar" style="height:5px"><i style="width:62%;background:#7aa7c7"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>성벽</span><span class="num">7,400 / 9,000</span></div><div class="g-bar" style="height:5px"><i style="width:82%;background:#7aa7c7"></i></div></div>
+            <div class="gauge" style="gap:2px"><div class="g-top" style="font-size:11px"><span>시세</span><span class="num">104%</span></div><div class="g-bar" style="height:5px"><i style="width:90%;background:#8a8477"></i></div></div>
+          </div>
+          <div style="display:flex;gap:0;border-top:1px solid #2c342f;font-size:11px">
+            <div style="flex:1;padding:5px 10px;display:flex;justify-content:space-between"><span style="color:#8a8477">태수</span><b>순욱</b></div>
+            <div style="flex:1;padding:5px 10px;display:flex;justify-content:space-between;border-left:1px solid #2c342f"><span style="color:#8a8477">군사</span><b style="color:#7aa7c7">정욱</b></div>
+            <div style="flex:1;padding:5px 10px;display:flex;justify-content:space-between;border-left:1px solid #2c342f"><span style="color:#8a8477">종사</span><span style="color:#8a8477">-</span></div>
+          </div>
+        </div>
+        <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+          <div class="sec-h" style="height:32px">@@FLAG(#3f6fb5)@@<span class="t">조조</span><span class="sub">성향 패도 · Lv 3</span><span style="flex:1"></span><span class="chip bronze" style="height:18px">국력 96,400</span></div>
+          <div style="padding:6px 10px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:2px 10px;font-size:11px">
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">군주</span><b>조조</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">군주대리</span><b>순욱</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">속령 · 장수</span><b class="num">7 · 33</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">총 주민</span><b class="num">412,300</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">총 병사</span><b class="num">96,000</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">기술력</span><b class="num">1,240</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">국고</span><b class="num" style="color:#d3b064">212,400</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">병량</span><b class="num" style="color:#8fa77a">380,100</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">지급률 · 세율</span><b class="num">100% · 12%</b></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">외교</span><span class="chip" style="height:14px;font-size:9px">제한 없음</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">임관</span><span class="chip moss" style="height:14px;font-size:9px">허용</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">전쟁</span><span class="chip rust" style="height:14px;font-size:9px">교전 중</span></div>
+          </div>
+          <div style="margin-top:auto;border-top:1px solid #2c342f;padding:5px 10px;display:flex;flex-direction:column;gap:3px;font-size:11px">
+            <div style="display:flex;gap:6px"><span style="color:#8a8477;white-space:nowrap">접속중인 국가</span><span style="color:#b9b2a3">조조, 원소, 유비</span></div>
+            <div style="display:flex;gap:6px"><span style="color:#8a8477;white-space:nowrap">【 접속자 】</span><span style="color:#b9b2a3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">조조, 순욱, 하후돈, 악진, 허저, 조인</span></div>
+            <div style="display:flex;gap:6px"><span style="color:#d3b064;white-space:nowrap">【 국가방침 】</span><span style="color:#ece6d8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">한실부흥. 중순 봉인 전 부대 편성 마감, 낙양 공략 우선.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: 명령 목록 — 한 순 = 한 턴 (PartialReservedCommand) -->
+    <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+      <div class="sec-h"><span class="bar"></span><span class="t">명령 목록</span><span class="sub">12순 · 예약 6</span><span style="flex:1"></span><span class="chip bronze" style="height:18px;font-size:10px">조작 대상: 본인</span><span class="chip" style="height:18px;font-size:10px">국가 예턴</span></div>
+      <div style="display:grid;grid-template-columns:22px 82px 1fr auto;gap:6px;padding:3px 10px;font-size:10px;color:#8a8477;background:#141816;border-bottom:1px solid #2c342f"><span>#</span><span>순 · 실행</span><span>명령 · 대상</span><span>상태</span></div>
+      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+        <div class="slot now" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">1</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;font-weight:700">3月 중순</span><span class="mono" style="font-size:10px;color:#ffd36d">13:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">출병</span><span class="tgt">낙양 · 궁병 12,000</span></div><span class="chip bronze" style="height:18px;font-size:10px">봉인됨</span></div>
+        <div class="slot" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">2</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px">3月 하순</span><span class="mono" style="font-size:10px;color:#8a8477">14:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">징병</span><span class="tgt">허창 · 3,000 · 자금 4,500</span></div><span class="chip moss" style="height:18px;font-size:10px">사용 가능</span></div>
+        <div class="slot" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">3</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px">4月 상순</span><span class="mono" style="font-size:10px;color:#8a8477">15:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">훈련</span><span class="tgt">허창</span></div><span class="chip moss" style="height:18px;font-size:10px">사용 가능</span></div>
+        <div class="slot" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">4</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px">4月 중순</span><span class="mono" style="font-size:10px;color:#8a8477">16:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">농지 개간</span><span class="tgt">허창 · 자금 1,200</span></div><span class="chip info" style="height:18px;font-size:10px">대상 필요</span></div>
+        <div class="slot" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">5</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px">4月 하순</span><span class="mono" style="font-size:10px;color:#8a8477">17:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">이동</span><span class="tgt">완 · 2순</span></div><span class="chip rust" style="height:18px;font-size:10px">사용 불가</span></div>
+        <div class="slot" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">6</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px">5月 상순</span><span class="mono" style="font-size:10px;color:#8a8477">18:00</span></span><div style="display:flex;flex-direction:column;line-height:1.15"><span class="cmd" style="font-size:12px">헌납</span><span class="tgt">자금 5,000</span></div><span class="chip" style="height:18px;font-size:10px">정보 부족</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">7</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">5月 중순</span><span class="mono" style="font-size:10px;color:#8a8477">19:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">8</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">5月 하순</span><span class="mono" style="font-size:10px;color:#8a8477">20:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">9</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">6月 상순</span><span class="mono" style="font-size:10px;color:#8a8477">21:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">10</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">6月 중순</span><span class="mono" style="font-size:10px;color:#8a8477">22:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">11</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">6月 하순</span><span class="mono" style="font-size:10px;color:#8a8477">23:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+        <div class="slot rest" style="grid-template-columns:22px 82px 1fr auto;height:40px"><span class="n">12</span><span style="display:flex;flex-direction:column;line-height:1.15"><span style="font-size:11px;color:#8a8477">7月 상순</span><span class="mono" style="font-size:10px;color:#8a8477">00:00</span></span><span class="cmd">휴식</span><span style="font-size:10px;color:#8a8477">비어 있음</span></div>
+      </div>
+      <div style="padding:8px 10px;border-top:1px solid #3d4740;display:flex;flex-direction:column;gap:6px;background:#141816">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8a8477"><span>당기기/미루기</span><div class="inset num" style="width:40px;height:26px;display:flex;align-items:center;justify-content:center;color:#ece6d8">1</div><span class="btn sm ghost" style="height:26px">적용</span><span style="flex:1"></span><span class="btn sm ghost" style="height:26px">반복</span><span class="btn sm ghost" style="height:26px">비우기</span></div>
+        <span class="btn primary" style="height:38px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>명령 추가 · 편집</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== bottom: GeneralBasicCard · 휘하·부곡 · MessagePanel ===== -->
+  <div style="height:214px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 360px;gap:14px;padding:12px 20px 14px">
+    <div class="panel" style="display:grid;grid-template-columns:120px 1fr;gap:12px;padding:10px 12px">
+      <div class="pt ring" style="width:120px;height:170px;--nation:#3f6fb5">@@PT(148,210,hahoudon)@@</div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="serif" style="font-size:19px;font-weight:900">하후돈</span><span style="font-size:11px;color:#8a8477">원양 · 연령 38세</span>
+          <span class="chip bronze" style="height:18px">관직 장군</span><span class="chip" style="height:18px">소속 조조</span><span class="chip" style="height:18px">호칭 맹장</span><span class="chip moss" style="height:18px">부상 없음</span>
+          <span style="flex:1"></span><span style="font-size:11px;color:#8a8477">Lv <span class="num" style="color:#ece6d8">24</span> · 경험 <span class="num" style="color:#ece6d8">3,420</span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:10px">
+          <div class="stat-row" style="grid-template-columns:1fr;gap:3px"><span style="font-size:11px;color:#8a8477;display:flex;justify-content:space-between">통솔 <b class="num" style="color:#ece6d8">88 <span style="color:#8fa77a;font-weight:400">+3</span></b></span><div class="bar"><i style="width:88%"></i></div></div>
+          <div class="stat-row" style="grid-template-columns:1fr;gap:3px"><span style="font-size:11px;color:#8a8477;display:flex;justify-content:space-between">무력 <b class="num" style="color:#ece6d8">91 <span style="color:#8fa77a;font-weight:400">+5</span></b></span><div class="bar"><i style="width:91%"></i></div></div>
+          <div class="stat-row" style="grid-template-columns:1fr;gap:3px"><span style="font-size:11px;color:#8a8477;display:flex;justify-content:space-between">지력 <b class="num" style="color:#ece6d8">62</b></span><div class="bar"><i style="width:62%"></i></div></div>
+          <div class="stat-row" style="grid-template-columns:1fr;gap:3px"><span style="font-size:11px;color:#8a8477;display:flex;justify-content:space-between">정치 <b class="num" style="color:#ece6d8">58</b></span><div class="bar"><i style="width:58%"></i></div></div>
+          <div class="stat-row" style="grid-template-columns:1fr;gap:3px"><span style="font-size:11px;color:#8a8477;display:flex;justify-content:space-between">매력 <b class="num" style="color:#ece6d8">71</b></span><div class="bar"><i style="width:71%"></i></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:3px 12px;font-size:11px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">병종</span><b>기병</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">병사</span><b class="num">12,000</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">훈련</span><b class="num">84</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">사기</span><b class="num">77</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">삭턴</span><b class="num">0 턴</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">명마</span><b>오추마</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">무기</span><b>대도</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">서적</span><span style="color:#8a8477">-</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">도구</span><b>철갑</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">성격</span><b>저돌</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">자금</span><b class="num" style="color:#d3b064">12,480</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">군량</span><b class="num" style="color:#8fa77a">8,120</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8a8477">공헌</span><b>열후</b></div>
+          <div style="display:flex;justify-content:space-between;grid-column:span 2"><span style="color:#8a8477">특기</span><b>돌격 · 견고</b></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:auto"><span class="btn sm">장수 상세</span><span class="btn sm ghost">휘하 · 부곡</span><span class="btn sm ghost">내 정보&amp;설정</span></div>
+      </div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div class="sec-h"><span class="bar" style="background:#697e58"></span><span class="t">휘하 · 부곡</span><span class="sub">인물 4 · 부곡 2</span></div>
+      <div style="flex:1;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,sunuk)@@</div><span style="flex:1">순욱 <span style="color:#8a8477">막료</span></span><span class="chip moss" style="height:16px;font-size:10px">헌책</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,akjin)@@</div><span style="flex:1">악진 <span style="color:#8a8477">부장</span></span><span class="chip" style="height:16px;font-size:10px">부곡 1 지휘</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,heojeo)@@</div><span style="flex:1">허저 <span style="color:#8a8477">부장</span></span><span class="chip" style="height:16px;font-size:10px">대기</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,jeonguk)@@</div><span style="flex:1">정욱 <span style="color:#8a8477">문객</span></span><span class="chip" style="height:16px;font-size:10px">임무 중</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:12px"><b>부곡 1 · 기병</b><span class="num" style="color:#b9b2a3">4,000</span></div><div style="display:flex;gap:8px;font-size:10px;color:#8a8477"><span>훈련 <span class="num" style="color:#ece6d8">90</span></span><span>사기 <span class="num" style="color:#ece6d8">82</span></span><span>피로 <span class="num" style="color:#e08a7c">31</span></span></div></div>
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;font-size:12px"><b>부곡 2 · 보병</b><span class="num" style="color:#b9b2a3">2,500</span></div><div style="display:flex;gap:8px;font-size:10px;color:#8a8477"><span>훈련 <span class="num" style="color:#ece6d8">64</span></span><span>사기 <span class="num" style="color:#ece6d8">70</span></span><span>군량 <span class="num" style="color:#ece6d8">12순</span></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">메시지</span><span style="flex:1"></span><div class="pill-tabs" style="height:22px"><span class="on" style="height:20px;padding:0 8px">국가</span><span style="height:20px;padding:0 8px">전체</span><span style="height:20px;padding:0 8px">개인 <span class="chip rust" style="height:14px;font-size:9px;margin-left:4px">2</span></span></div></div>
+      <div style="flex:1;padding:6px 0;overflow:hidden">
+        <div style="display:grid;grid-template-columns:24px 1fr;gap:8px;padding:6px 12px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,jojo)@@</div><div><b>조조</b> <span style="color:#8a8477;font-size:10px">국가 메시지 · 2분 전</span><div style="color:#b9b2a3">낙양 출병은 중순 봉인 전까지 부대 편성 끝내라.</div></div></div>
+        <div style="display:grid;grid-template-columns:24px 1fr;gap:8px;padding:6px 12px;font-size:12px"><div class="pt" style="width:24px;height:24px">@@PT(96,96,sunuk)@@</div><div><b>순욱</b> <span style="color:#8a8477;font-size:10px">국가 메시지 · 20분 전</span><div style="color:#b9b2a3">원소 제의는 시간 벌기입니다. 회신은 하순으로.</div></div></div>
+      </div>
+      <div style="display:flex;gap:6px;padding:8px 10px;border-top:1px solid #2c342f"><div class="inset" style="flex:1;height:32px;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#8a8477">서신을 입력하세요</div><span class="btn sm">보내기</span></div>
+    </div>
+  </div>
+</div>

@@ -51,6 +51,10 @@ export const AUTH_LABELS = {
 export const FOOTER_LINKS = ['개인정보처리방침', '이용약관'] as const;
 
 export const LOBBY_LABELS = {
+    // 상단바(ADR-LITE-049)
+    navLobby: '로비',
+    navBoard: '게시판',
+    navAccount: '계정',
     serverSelect: '서 버 선 택',
     colServer: '서 버',
     colInfo: '정 보',

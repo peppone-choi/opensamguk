@@ -1,0 +1,105 @@
+<div style="width:1440px;height:900px;background:#0c0f0e;display:flex;flex-direction:column;overflow:hidden">
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#2a1f1d,#1b201d)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="btn sm ghost">← 감찰부</span>
+      <span class="serif" style="font-size:18px;font-weight:900">호뢰관 전투 · 리플레이</span>
+      <span class="chip">3月 하순 해결</span><span class="chip rust">아군 열세 · 퇴각</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="btn sm ghost">공유 링크</span><span class="btn sm ghost">감찰부 기록</span></div>
+  </div>
+
+  <div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:0">
+    <div style="display:flex;flex-direction:column;min-height:0">
+      <!-- versus header -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;padding:12px 24px;border-bottom:1px solid #2c342f;background:#141816">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="pt ring" style="width:56px;height:80px;--nation:#3f6fb5">@@PT(148,210,hahoudon)@@</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#b9b2a3">@@FLAG(#3f6fb5,12)@@조조</span><b class="serif" style="font-size:20px">하후돈</b><span class="num" style="font-size:12px;color:#b9b2a3">16,000 → <span style="color:#e08a7c">11,800</span> (-4,200)</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span class="serif" style="font-size:28px;font-weight:900;color:#8a8477">對</span><span class="chip">6페이즈 · 결정론</span></div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;text-align:right">
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#b9b2a3">동탁 @@FLAG(#7a4fa8,12)@@</span><b class="serif" style="font-size:20px">화웅</b><span class="num" style="font-size:12px;color:#b9b2a3">9,400 → <span style="color:#e08a7c">7,900</span> (-1,500)</span></div>
+          <div class="pt ring" style="width:56px;height:80px;--nation:#7a4fa8">@@PT(148,210,hwaung)@@</div>
+        </div>
+      </div>
+      <!-- battlefield replay -->
+      <div style="position:relative;flex:1;min-height:0;overflow:hidden">
+        <svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:100%">
+          <defs><pattern id="hex2" width="52" height="45" patternUnits="userSpaceOnUse"><path d="M26 1 L50 12 L50 34 L26 45 L2 34 L2 12 Z" fill="none" stroke="#2c342f" stroke-width=".8"/></pattern></defs>
+          <rect width="1000" height="560" fill="#10140f"/><rect width="1000" height="560" fill="url(#hex2)"/>
+          <path d="M0 100 Q150 60 250 140 Q320 210 200 280 Q100 330 0 300 Z" fill="#1c241d"/>
+          <path d="M0 470 Q250 430 500 480 T1000 450 L1000 560 L0 560 Z" fill="#14232a"/>
+          <rect x="400" y="30" width="200" height="50" fill="#2a2320" stroke="#5a4a3c"/>
+          <!-- unit trails -->
+          <path d="M500 420 L500 250 L520 200" stroke="#3f6fb5" stroke-width="3" fill="none" opacity=".6"/>
+          <path d="M230 420 Q170 300 300 210" stroke="#3f6fb5" stroke-width="2" fill="none" opacity=".4" stroke-dasharray="6 6"/>
+          <path d="M500 110 L500 190" stroke="#7a4fa8" stroke-width="3" opacity=".6"/>
+          <!-- clash -->
+          <circle cx="510" cy="200" r="46" fill="#c96b5d" opacity=".18"><animate attributeName="r" values="40;52;40" dur="1.4s" repeatCount="indefinite"/></circle>
+          <g transform="translate(500 240)"><rect x="-52" y="-18" width="104" height="36" fill="#3f6fb5" stroke="#0c0f0e"/><text y="5" text-anchor="middle" font-family="'Noto Sans KR'" font-weight="700" font-size="12" fill="#fff">하후돈 11,800</text></g>
+          <g transform="translate(300 210)"><rect x="-40" y="-14" width="80" height="28" fill="#3f6fb5" stroke="#0c0f0e"/><text y="4" text-anchor="middle" font-family="'Noto Sans KR'" font-size="11" fill="#fff">악진 3,600</text></g>
+          <g transform="translate(510 170)"><rect x="-44" y="-16" width="88" height="32" fill="#7a4fa8" stroke="#0c0f0e"/><text y="5" text-anchor="middle" font-family="'Noto Sans KR'" font-weight="700" font-size="12" fill="#fff">화웅 7,900</text></g>
+          <text x="560" y="300" font-family="'JetBrains Mono'" font-size="12" fill="#ffd36d">3페이즈 · 사기 77 → 52</text>
+          <text x="30" y="30" font-family="'Noto Sans KR'" font-size="11" fill="#8a8477">맑음 · 북풍 · 정오</text>
+        </svg>
+        <!-- transport -->
+        <div class="panel" style="position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-direction:column;background:rgba(27,32,29,.95)">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px">
+            <span class="btn sm" style="width:36px;padding:0"><svg class="ico" viewBox="0 0 16 16" fill="currentColor"><path d="M4 3l9 5-9 5z"/></svg></span>
+            <span class="btn sm ghost" style="width:32px;padding:0">‹</span><span class="btn sm ghost" style="width:32px;padding:0">›</span>
+            <span class="mono" style="font-size:12px;color:#b9b2a3">3 / 6</span>
+            <div style="flex:1;position:relative;height:24px;display:flex;align-items:center">
+              <div style="position:absolute;left:0;right:0;height:4px;background:#141816;border:1px solid #2c342f"></div>
+              <div style="position:absolute;left:0;width:46%;height:4px;background:#d3b064"></div>
+              <div style="position:absolute;left:16%;top:6px;width:2px;height:12px;background:#e08a7c"></div>
+              <div style="position:absolute;left:46%;top:6px;width:2px;height:12px;background:#e08a7c"></div>
+              <div style="position:absolute;left:82%;top:6px;width:2px;height:12px;background:#7aa7c7"></div>
+              <div style="position:absolute;left:calc(46% - 6px);width:12px;height:12px;background:#ffd36d;transform:rotate(45deg)"></div>
+            </div>
+            <div class="pill-tabs"><span>0.5×</span><span class="on">1×</span><span>2×</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));border-top:1px solid #2c342f">
+            <div style="padding:6px 10px;border-right:1px solid #2c342f;font-size:11px;color:#8a8477"><span class="mono">1</span> 전진 · 접촉 없음</div>
+            <div style="padding:6px 10px;border-right:1px solid #2c342f;font-size:11px;color:#b9b2a3"><span class="mono">2</span> 돌격 · <span style="color:#e08a7c">관문 -18%</span></div>
+            <div style="padding:6px 10px;border-right:1px solid #2c342f;font-size:11px;color:#ffd36d;background:rgba(211,176,100,.10)"><span class="mono">3</span> 교전 · 사기 급락</div>
+            <div style="padding:6px 10px;border-right:1px solid #2c342f;font-size:11px;color:#8a8477"><span class="mono">4</span> 악진 합류 지연</div>
+            <div style="padding:6px 10px;border-right:1px solid #2c342f;font-size:11px;color:#8a8477"><span class="mono">5</span> 조건 발동 · 방어</div>
+            <div style="padding:6px 10px;font-size:11px;color:#8a8477"><span class="mono">6</span> 퇴각 · 완</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: log + summary -->
+    <div style="border-left:1px solid #2c342f;background:#141816;display:flex;flex-direction:column;min-height:0">
+      <div class="sec-h"><span class="bar" style="background:#c96b5d"></span><span class="t">감찰부</span><span class="sub">대상 하후돈 · 정렬 최근 전투</span></div>
+      <div style="display:flex;gap:0;border-bottom:1px solid #2c342f;font-size:11px">
+        <span style="padding:6px 10px;color:#e08a7c;border-bottom:2px solid #c96b5d;font-weight:700">전투 기록</span>
+        <span style="padding:6px 10px;color:#8a8477">전투 결과</span>
+        <span style="padding:6px 10px;color:#8a8477">장수 열전</span>
+        <span style="padding:6px 10px;color:#8a8477">개인 기록</span>
+        <span style="flex:1"></span>
+        <span style="padding:6px 10px;color:#8a8477">최근 전투 · 전투 횟수 · 최근 턴 · 이름</span>
+      </div>
+      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;font-size:12px">
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px"><span class="mono" style="color:#8a8477;width:22px">P1</span><span style="color:#b9b2a3">하후돈 본대가 관문 앞 200보까지 전진. 화웅은 진지를 지킴.</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px"><span class="mono" style="color:#8a8477;width:22px">P2</span><span style="color:#b9b2a3">돌격 개시. 관문·진지 보정 <b style="color:#e08a7c">-18%</b>. 아군 -1,900 · 적 -600.</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px;background:rgba(211,176,100,.08);box-shadow:inset 3px 0 0 #d3b064"><span class="mono" style="color:#d3b064;width:22px">P3</span><span>교전 지속. <b>하후돈</b> 사기 77 → 52. 화웅이 <b>일기토</b> 거부. 아군 -1,400 · 적 -700.</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px"><span class="mono" style="color:#8a8477;width:22px">P4</span><span style="color:#8a8477">악진 별동대, 능선 이동 지연(피로 31)으로 합류 실패.</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px"><span class="mono" style="color:#8a8477;width:22px">P5</span><span style="color:#8a8477">조건 “사기 40 미만 → 방어” 발동. 추격 없음.</span></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #2c342f;display:flex;gap:8px"><span class="mono" style="color:#8a8477;width:22px">P6</span><span style="color:#8a8477">퇴각선 완으로 철수. 화웅 추격 없음(진지 유지).</span></div>
+      </div>
+      <div style="padding:12px;border-top:1px solid #3d4740;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:11px;color:#8a8477">캠페인 정산</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">사상</span><span class="num" style="font-size:15px;font-weight:700;color:#e08a7c">-4,200</span></div>
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">군량 소모</span><span class="num" style="font-size:15px;font-weight:700">-2,900</span></div>
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">작전 진척</span><span class="num" style="font-size:15px;font-weight:700;color:#e08a7c">38% → 31%</span></div>
+          <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">경험</span><span class="num" style="font-size:15px;font-weight:700;color:#8fa77a">무력 +8</span></div>
+        </div>
+        <div class="inset" style="padding:8px 10px;font-size:11px;color:#b9b2a3;line-height:1.5">같은 seed·입력이면 같은 결과를 재생합니다. 이의는 감찰부에서 이 리플레이를 첨부해 제기합니다.</div>
+        <div style="display:flex;gap:6px"><span class="btn" style="flex:1">다음 명령 계획</span><span class="btn ghost" style="flex:1">회의실 공유</span></div>
+      </div>
+    </div>
+  </div>
+</div>

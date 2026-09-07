@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
@@ -235,7 +236,7 @@ export default function MyCitiesPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>세력 도시</h1>
+                    <PageHead title="세력 도시" />
                     <p className="text-muted">로딩 중...</p>
                 </div>
             </Shell>
@@ -246,7 +247,7 @@ export default function MyCitiesPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>세력 도시</h1>
+                    <PageHead title="세력 도시" />
                     <div className="error-state">
                         <p>{error}</p>
                         <button onClick={() => fetchData()}>다시 시도</button>
@@ -261,7 +262,7 @@ export default function MyCitiesPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>세력 도시</h1>
+                    <PageHead title="세력 도시" />
                     <p className="text-muted">재야입니다.</p>
                 </div>
             </Shell>
@@ -271,7 +272,7 @@ export default function MyCitiesPage() {
     return (
         <Shell>
             <div className="page-content">
-                <h1>세력 도시</h1>
+                <PageHead title="세력 도시" />
                 <p className="page-subtitle">총 {cities.length}개</p>
 
                 {cities.length > 0 && (

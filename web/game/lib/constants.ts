@@ -33,19 +33,7 @@ export const DIPLOMACY_LABEL: Record<string, string> = {
     ally: '동맹',
 };
 
-export const NAV_ITEMS = [
-    { path: '/game', label: '내 정보', icon: '👤' },
-    { path: '/game/generals', label: '장수', icon: '⚔️' },
-    { path: '/game/city', label: '도시', icon: '🏰' },
-    { path: '/game/diplomacy', label: '외교', icon: '📜' },
-    { path: '/game/auction', label: '경매', icon: '🔨' },
-    { path: '/game/betting', label: '내기', icon: '🎲' },
-    { path: '/game/mailbox', label: '우편', icon: '✉️' },
-    { path: '/game/tournament', label: '토너먼트', icon: '🏆' },
-    { path: '/game/rankings', label: '랭킹', icon: '📊' },
-    { path: '/game/simulator', label: '시뮬', icon: '🎮' },
-];
-
+// NAV_ITEMS(옛 사이드바·하단 탭)는 ADR-LITE-049 부서 메뉴(lib/dept-menu-config.ts MOBILE_TABS)로 대체돼 제거했다.
 // ── FE 전역 상수 (GameConst Kotlin 동기) ──────────────────────────────────────
 
 /** 무기한 날짜 — legacy PHP '9999-12-31' (메시지/서신 유효기간 무기한 표시). */
@@ -135,3 +123,7 @@ export const TOURNAMENT_STATUS_LABEL: Record<string, string> = {
     FINISHED: '종료',
     CANCELLED: '취소',
 };
+
+// game-api AdminWriteController.SERVER_STATUSES 와 같은 집합(서버 상태 변경 허용값).
+export const SERVER_STATUSES = ['OPEN', 'PRE_OPEN', 'CLOSED'] as const;
+export type ServerStatus = (typeof SERVER_STATUSES)[number];

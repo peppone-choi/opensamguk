@@ -104,6 +104,7 @@ describe('Board rich text command lifecycle', () => {
             isSecret: false,
             title: '',
             text: '<p><strong>천하</strong> 통일</p>',
+            kind: 'general',
         });
         expect(apiMocks.board).toHaveBeenCalledTimes(1);
 

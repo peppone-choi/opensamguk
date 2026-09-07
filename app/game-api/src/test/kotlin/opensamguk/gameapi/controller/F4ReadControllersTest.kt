@@ -7,6 +7,7 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.read.BoardCommentReadRepository
+import opensamguk.gameapi.read.BoardPostReadLogRepository
 import opensamguk.gameapi.read.BoardPostReadRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
@@ -91,6 +92,7 @@ class F4ReadControllersTest {
     private val inheritLogs = mock(InheritanceLogReadRepository::class.java)
     private val boardPosts = mock(BoardPostReadRepository::class.java)
     private val boardComments = mock(BoardCommentReadRepository::class.java)
+    private val boardReads = mock(BoardPostReadLogRepository::class.java)
     private val polls = mock(VotePollReadRepository::class.java)
     private val votes = mock(VoteReadRepository::class.java)
     private val voteComments = mock(VoteCommentReadRepository::class.java)
@@ -890,7 +892,7 @@ class F4ReadControllersTest {
     fun `board public 회의실 returns empty articles with verbatim title`() {
         `when`(boardPosts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=false"))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(false))
@@ -901,7 +903,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 blocked for anonymous with INFO reason`() {
-        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=true"))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=true"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.secret").value(true))
             .andExpect(jsonPath("$.title").value("기밀실"))
@@ -916,10 +918,46 @@ class F4ReadControllersTest {
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
         `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=true").with(principal(7L)))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=true").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.blockedReason").doesNotExist())
             .andExpect(jsonPath("$.articles.length()").value(0))
+    }
+
+    @Test
+    fun `board 기밀실 lists kind, readers, chief count and participants from read sources only`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(gen(10, "순욱", nationId = 1, officerLevel = 5), gen(11, "곽가", nationId = 1, officerLevel = 1)),
+        )
+        `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(
+            listOf(
+                opensamguk.gameapi.read.BoardPostReadEntity(
+                    id = 5, worldId = 1, nationId = 1, isSecret = true, authorGeneralId = 10, authorName = "순욱",
+                    title = "원소 불가침", contentHtml = "회신 미루자", createdAt = Instant.EPOCH, kind = "notice",
+                ),
+            ),
+        )
+        `when`(boardComments.findByPostIdOrderByCreatedAtAscIdAsc(5)).thenReturn(emptyList())
+        `when`(boardReads.findByPostIds(listOf(5))).thenReturn(
+            listOf(opensamguk.gameapi.read.BoardPostReadLogEntity(id = 1, worldId = 1, postId = 5, generalId = 10, readAt = Instant.EPOCH)),
+        )
+
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+            .perform(get("/api/board?secret=true").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.articles[0].kind").value("notice"))
+            .andExpect(jsonPath("$.articles[0].readers.read[0].generalId").value(10))
+            .andExpect(jsonPath("$.articles[0].readers.total").value(1))
+            .andExpect(jsonPath("$.articles[0].authorGeneralId").value(10))
+            .andExpect(jsonPath("$.chiefCount").value(1))
+            .andExpect(jsonPath("$.myGeneralId").value(10))
+            .andExpect(jsonPath("$.myPermission").value(2))
+            .andExpect(jsonPath("$.participants.length()").value(2))
+            // tick 원천이 없으면(월드 상태 없음) 활동 판정은 전부 false — 날조 없음.
+            .andExpect(jsonPath("$.participants[0].active").value(false))
     }
 
     // ── GET /api/votes (empty list) + detail tally ───────────────────────────────────────────────────

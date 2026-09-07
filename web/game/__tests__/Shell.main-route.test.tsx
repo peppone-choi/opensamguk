@@ -23,7 +23,9 @@ vi.mock('@/lib/serverGameUrl', async () => {
   return { ...actual, useServerId: mocks.serverId };
 });
 
+vi.mock('@/hooks/useShellFrontInfo', () => ({ useShellFrontInfo: () => ({ info: null, error: false, reload: vi.fn() }) }));
 vi.mock('@/components/Header', () => ({ default: () => <header data-testid="header" /> }));
+vi.mock('@/components/DeptNav', () => ({ default: () => <nav data-testid="dept-nav" /> }));
 vi.mock('@/components/BottomNav', () => ({ default: () => <nav data-testid="bottom-nav" /> }));
 
 describe('Shell main route chrome', () => {

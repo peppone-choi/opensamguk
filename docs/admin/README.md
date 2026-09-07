@@ -7,13 +7,15 @@
 
 | 표면 | 대표 경로 | 책임 |
 |---|---|---|
-| Gateway 관리자 | `/admin` | 회원, 게시판, 서버 생성·리셋·삭제, 버전, 공용·서버 환경 |
-| 게임 관리자 | `/game/admin1`, `admin2`, `admin5`, `admin7`, `admin8`, `tournament-admin` | 현재 월드 설정·장수 조치·통계·로그·외교·토너먼트 |
+| Gateway 관리자 | `/admin` (운영 콘솔: 개요 · 회원 관리 · 게시판 관리 · 서버 제어 · 게임 환경 · 공지) | 회원, 게시판, 서버 생성·리셋·삭제, 버전, 공용·서버 환경, 공지 |
+| 게임 관리자 | `/game/admin`(허브, 탭 `?tab=settings\|generals\|stats\|logs\|diplomacy\|tournament\|status`) — 옛 `/game/admin1`, `admin2`, `admin5`, `admin7`, `admin8`, `tournament-admin` 도 그대로 열림 | 현재 월드 설정·장수 조치·통계·로그·외교·토너먼트·서버 상태 |
 
 브라우저에서 탭이 보이는 것은 편의 기능입니다. 실제 권한은 Gateway의 `ROLE_ADMIN`, game-api의 인증 주체,
 장수 소유권·직책과 각 API의 서버 검사가 결정합니다.
 
 ## 먼저 읽을 문서
+
+- [관리 표면 대조표](./admin-surface-map.md): 어느 화면이 어느 API 를 부르는지, 위험 등급
 
 - [서버 생명주기](./server-lifecycle.md): 생성, 시드, 리셋, 삭제, 버전 승격
 - [회원·게임 관리](./member-and-game-management.md): 회원, 장수, 게시판, 게임 설정과 읽기 화면
