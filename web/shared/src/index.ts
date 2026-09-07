@@ -52,6 +52,7 @@ export {
   cityMarkerHitBox,
   cityMarkerRadius,
   cityMarkerZoomStep,
+  parseTerrainEtagHash,
   buildIsoScene,
   completeJurisdictionOverlays,
   expandOwner,
