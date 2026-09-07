@@ -91,6 +91,11 @@ jobs:
           ' "$method" "$path"
           }
 
+          echo "=== Current maintenance state (body only; the token is never printed) ==="
+          STATE_RC=0
+          STATE_BODY="$(maintenance_http GET /maintenance 2>/dev/null)" || STATE_RC=$?
+          echo "GET /maintenance rc=$STATE_RC body=${STATE_BODY:-<none>}"
+
           echo "=== Before: does this deployer know atomic idle admission? ==="
           BEFORE_RC=0
           maintenance_http POST /maintenance/enter-if-idle >/dev/null 2>&1 || BEFORE_RC=$?
@@ -102,6 +107,10 @@ jobs:
             exit 0
           fi
           if [ "$BEFORE_RC" -ne 9 ]; then
+            # rc=8 은 엔드포인트가 있는데 거부됐다는 뜻이다(창이 이미 잡혔거나 deployer 가 idle 이 아니다).
+            # 그 몸통을 그대로 보여 준다 — 무엇을 붙들고 있는지는 이 응답에만 있다. 아무것도 바꾸지 않는다.
+            ADMIT_BODY="$(maintenance_http POST /maintenance/enter-if-idle 2>/dev/null || true)"
+            echo "enter-if-idle body=${ADMIT_BODY:-<none>}"
             echo "ERROR: deployer refused admission for a reason other than missing support (rc=$BEFORE_RC); operator inspection required" >&2
             exit 1
           fi
