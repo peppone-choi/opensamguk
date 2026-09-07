@@ -1,31 +1,26 @@
 {
-  "schemaVersion": 2,
-  "ledgerId": "han-supply-disconnection-adjudications-v3",
-  "worldVersion": "han-world-v3",
-  "decisions": [
-    {
-      "runtimeCityId": 305,
-      "physicalPlaceRef": "chgis:v6:cnty:43252",
-      "routeNodeKey": "7fd6fa9f-3589-4e83-8a9d-49cd7d206fc9",
-      "jurisdictionId": "43252",
-      "decision": "PROTECT_GEOMETRY_DEFECT",
-      "sourceLedgerRow": "PARENT-0034@480:266",
-      "rationale": "The reviewed source classifies the degree-zero 徐縣 spatial province as a modern-lake geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
-      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
-      "effectiveScenarioFrom": 1020,
-      "effectiveScenarioTo": 1110
-    },
-    {
-      "runtimeCityId": 548,
-      "physicalPlaceRef": "chgis:v6:cnty:40740",
-      "routeNodeKey": "8cdeb3ac-8959-4240-8526-706543a8a57b",
-      "jurisdictionId": "40740",
-      "decision": "PROTECT_GEOMETRY_DEFECT",
-      "sourceLedgerRow": "PARENT-0051@549:331",
-      "rationale": "The reviewed source classifies the degree-zero 鄮縣 spatial province as a displaced-island geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
-      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
-      "effectiveScenarioFrom": 1030,
-      "effectiveScenarioTo": 1110
-    }
+ "schemaVersion": 2,
+ "ledgerId": "han-supply-disconnection-adjudications-v3",
+ "worldVersion": "han-world-v3",
+ "decisions": [],
+ "retiredDecisions": {
+  "note": "ADR-LITE-051 郡 내부 보급선이 이 두 城을 자기 郡에 이어 주면서, 두 보급 모델이 함께 「끊겼다」고 보던 상태가 사라졌다. 판정 행의 expectedCurrentReachability(BOTH_UNSUPPLIED)가 더 이상 현실과 맞지 않아 은퇴시킨다. **기하 결함 자체는 사라지지 않았다** — 그것은 여전히 territory-disconnection-adjudications-v1.json 이 추적한다. 보급선이 제거되면 이 城들은 다시 미판정 BOTH_UNSUPPLIED 가 되어 게이트가 빨개진다(조용히 묻히지 않는다).",
+  "retiredAt": "2026-09-08",
+  "rows": [
+   {
+    "runtimeCityId": 305,
+    "physicalPlaceRef": "chgis:v6:cnty:43252",
+    "jurisdictionId": "43252",
+    "decision": "PROTECT_GEOMETRY_DEFECT",
+    "sourceLedgerRow": "PARENT-0034@480:266"
+   },
+   {
+    "runtimeCityId": 548,
+    "physicalPlaceRef": "chgis:v6:cnty:40740",
+    "jurisdictionId": "40740",
+    "decision": "PROTECT_GEOMETRY_DEFECT",
+    "sourceLedgerRow": "PARENT-0051@549:331"
+   }
   ]
+ }
 }

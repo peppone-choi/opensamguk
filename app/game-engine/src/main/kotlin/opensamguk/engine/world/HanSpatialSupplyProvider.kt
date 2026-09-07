@@ -36,6 +36,9 @@ class HanSpatialSupplyProvider(
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
     private val policyLoader: HanSupplyDisconnectionPolicyLoader? = null,
+    /** ADR-LITE-051 郡 내부 보급선. 없으면 보급이 오늘과 같다. */
+    private val commanderySupplyLinks: CommanderySupplyLinkLoader =
+        CommanderySupplyLinkLoader(objectMapper, "data/map/han-commandery-supply-links-v1.json"),
 ) {
     @Volatile
     private var cached: CanonicalSpatialSupply? = null
@@ -95,10 +98,25 @@ class HanSpatialSupplyProvider(
             provinceOwners = owners,
             provinceAdjacency = if (strategic == null) canonical.adjacency.map(IntArray::clone) else {
                 val indices = canonical.provinceIds.withIndex().associate { it.value to it.index }
-                val adjacency = List(indices.size) { mutableListOf<Int>() }
+                val adjacency = List(indices.size) { mutableSetOf<Int>() }
                 strategic.topology.traversalEdges.filter { it.mode == TraversalMode.LAND }.forEach { edge ->
                     val a = indices.getValue((edge.from as StrategicNodeRef.LandProvince).id)
                     val b = indices.getValue((edge.to as StrategicNodeRef.LandProvince).id)
+                    adjacency[a] += b
+                    adjacency[b] += a
+                }
+                // ADR-LITE-051 — 郡 내부 보급선. 郡 은 후한의 행정·병참 단위이므로 **보급**은
+                // 물리적 인접뿐 아니라 행정선을 따라서도 흐른다. 소유 격자에서 같은 郡의
+                // 프로빈스가 조각으로 끊긴 곳을 최소 간선으로 잇는다(실측: scenario_1020 개시
+                // 절단 102 → 40, 공융 14/16 → 0/16).
+                //
+                // **이동은 바뀌지 않는다** — 위의 LAND traversalEdges 는 그대로다. 이 간선은
+                // 보급망(provinceAdjacency)에만 더해지고, 전략 위상은 여전히 래스터에서 맞닿은
+                // 프로빈스끼리만 이동을 허용한다.
+                commanderySupplyLinks.load().forEach { (a, b) ->
+                    require(a in adjacency.indices && b in adjacency.indices) {
+                        "Commandery supply link references unknown province index $a/$b"
+                    }
                     adjacency[a] += b
                     adjacency[b] += a
                 }
