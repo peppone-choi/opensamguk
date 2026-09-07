@@ -1,0 +1,68 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "han-county-misbinding-adjudications-v1",
+ "note": "같은 이름의 다른 곳에 결속된 縣. 이 縣들의 좌표는 자기 郡과 수백~천 km 떨어져 있어 지리적으로 성립하지 않는다. 郡 내부 연결 규칙(build_han_world.py 의 commandery completion)에서 제외한다 — 틀린 좌표를 이으면 郡을 가로지르는 가짜 간선이 생긴다.",
+ "detection": "같은 郡의 **가장 가까운** 城에서도 200km 넘게 떨어진 城을 전수로 세어 13건을 얻고, 그중 郡 중앙 위치와의 거리·郡 산포까지 함께 보아 아래 5건을 오배정으로 판정했다. 나머지 8건은 郡 자체가 성기거나(五原郡 2城) 결손이 커서 벌어진 것이라 오배정으로 보지 않는다.",
+ "consequence": "각 이름의 타일이 원장에 **하나뿐**이라 결속을 바꿀 대상이 없다. 진짜 縣의 좌표는 외부 원천에서 받아야 하며, 받은 값은 namu-place-locations-v1.json 에 있다. 좌표를 실제로 갈아끼우는 것은 별도 작업이다.",
+ "adjudications": [
+  {
+   "canonicalGroup": "上郡",
+   "sourceName": "定陽",
+   "runtimeCityName": "정양(上郡)",
+   "boundCoordinate": {"lon": 118.601, "lat": 28.816},
+   "boundLocation": "강서 — 上郡은 섬서다",
+   "nearestSiblingKm": 1190,
+   "correctCoordinate": {"lat": 36.32850, "lon": 109.86952},
+   "correctLocation": "산시성 옌안시 바오타구 린진 야오지아포촌",
+   "evidence": "https://namu.wiki/w/삼국지/지명/병주",
+   "decision": "EXCLUDE_FROM_COMMANDERY_COMPLETION"
+  },
+  {
+   "canonicalGroup": "犍為郡",
+   "sourceName": "南安",
+   "runtimeCityName": "남안",
+   "boundCoordinate": {"lon": 114.745, "lat": 25.659},
+   "boundLocation": "강서 — 犍為는 사천이다",
+   "nearestSiblingKm": 946,
+   "correctCoordinate": {"lat": 29.56444, "lon": 103.75589},
+   "correctLocation": "쓰촨성 러산시 시중구",
+   "evidence": "https://namu.wiki/w/삼국지/지명/익주",
+   "decision": "EXCLUDE_FROM_COMMANDERY_COMPLETION"
+  },
+  {
+   "canonicalGroup": "弘農郡",
+   "sourceName": "新安",
+   "runtimeCityName": "신안",
+   "boundCoordinate": {"lon": 118.868, "lat": 28.929},
+   "boundLocation": "절강 — 弘農은 하남이다",
+   "nearestSiblingKm": 864,
+   "correctLocation": "허난성 이마시",
+   "evidence": "https://namu.wiki/w/삼국지/지명/사례교위부",
+   "decision": "EXCLUDE_FROM_COMMANDERY_COMPLETION"
+  },
+  {
+   "canonicalGroup": "安定郡",
+   "sourceName": "高平",
+   "runtimeCityName": "고평",
+   "boundCoordinate": {"lon": 116.719, "lat": 35.150},
+   "boundLocation": "산둥 — 安定은 영하다",
+   "nearestSiblingKm": 685,
+   "correctCoordinate": {"lat": 36.01400, "lon": 106.28710},
+   "correctLocation": "닝샤 구위안시 위안저우구",
+   "evidence": "https://namu.wiki/w/삼국지/지명/옹주",
+   "decision": "EXCLUDE_FROM_COMMANDERY_COMPLETION"
+  },
+  {
+   "canonicalGroup": "沛國",
+   "sourceName": "建平",
+   "runtimeCityName": "건평",
+   "boundCoordinate": {"lon": 118.324, "lat": 27.039},
+   "boundLocation": "강서 — 沛國은 안휘다",
+   "nearestSiblingKm": 684,
+   "correctCoordinate": {"lat": 34.08171, "lon": 115.94837},
+   "correctLocation": "허난성 상추시 샤이현 마터우진 쉬야오촌",
+   "evidence": "https://namu.wiki/w/삼국지/지명/예주",
+   "decision": "EXCLUDE_FROM_COMMANDERY_COMPLETION"
+  }
+ ]
+}
