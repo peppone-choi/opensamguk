@@ -21,7 +21,13 @@ function LoginForm() {
     const [submitting, setSubmitting] = useState(false);
     // 하이드레이션 전의 클릭은 네이티브 GET 제출로 새어 자격이 URL 에 실린다(mailbox e2e 실측) — 마운트 전엔 제출 버튼을 사유와 함께 잠근다.
     const [hydrated, setHydrated] = useState(false);
-    useEffect(() => { setHydrated(true); }, []);
+    useEffect(() => {
+        // 하이드레이션 전에 SSR 입력에 타이핑된 값은 controlled 상태로 덮이며 사라진다(mailbox e2e 실측: 빈 폼 제출) — DOM 값을 상태로 받아들인다.
+        const dom = (name: string) => (document.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? '');
+        setUsername((v) => v || dom('username'));
+        setPassword((v) => v || dom('password'));
+        setHydrated(true);
+    }, []);
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();

@@ -28,7 +28,16 @@ export default function JoinPage() {
     const [submitting, setSubmitting] = useState(false);
     // 하이드레이션 전 클릭의 네이티브 제출을 막는다(login 페이지와 같은 규약).
     const [hydrated, setHydrated] = useState(false);
-    useEffect(() => { setHydrated(true); }, []);
+    useEffect(() => {
+        // 하이드레이션 전에 SSR 입력에 타이핑된 값을 controlled 상태로 받아들인다(login 페이지와 같은 규약).
+        const dom = (name: string) => (document.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? '');
+        setUsername((v) => v || dom('username'));
+        setPassword((v) => v || dom('password'));
+        setPasswordConfirm((v) => v || dom('passwordConfirm'));
+        setNickname((v) => v || dom('nickname'));
+        setEmail((v) => v || dom('email'));
+        setHydrated(true);
+    }, []);
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
