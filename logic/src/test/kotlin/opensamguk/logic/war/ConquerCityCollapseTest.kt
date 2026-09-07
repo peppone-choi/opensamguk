@@ -540,4 +540,53 @@ class ConquerCityCollapseTest {
     }
 
     private fun valueFitInt(v: Int): Int = maxOf(0, v)
+
+    @Test
+    fun `collapse without a lord still destroys the nation in ascending PK order`() {
+        // 프로덕션 회귀: 군주(officer_level 12)가 없는 1성 국가를 정복하면 turn-daemon-loop 가 매 틱 예외로 멈췄다.
+        val a = gen(id = 4, gold = 1000, rice = 2000)
+        val b = gen(id = 2, gold = 500, rice = 800)
+        val input = ConquerCityInput(
+            admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = "normal"),
+            attacker = attacker(),
+            defenderCity = city(nationId = 20).copy(conflict = """{"10":100.0}"""),
+            defenderNation = Nation(id = 20, level = 5, capitalCityId = 200, gold = 5000, rice = 6000),
+            defenderCityGenerals = emptyList(),
+            defenderNationCityCount = 1, // ⇒ COLLAPSE
+            defenderNationGenerals = listOf(a, b), // 군주 없음
+            allCitiesForBfs = emptyList(),
+        )
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.3, 0.4, 0.3, 0.4)),
+            bools = ArrayDeque(listOf(false, false)),
+            rangeInts = ArrayDeque(listOf()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+
+        assertEquals(listOf(2, 4), res.collapseGeneralOrder)
+        assertEquals(20, res.deletedNationId)
+        assertTrue(res.destroyNationEvent)
+        // 모든 장수가 재야로 중립화된다 (markGeneralDeleted 는 여전히 쓰지 않는다).
+        assertTrue(res.generalDeltas.filter { it.pre.id in listOf(2, 4) }.all { it.post.nationId == 0 })
+        assertTrue(res.deletedGeneralIds.isEmpty())
+    }
+
+    @Test
+    fun `collapse with no generals at all still destroys the nation`() {
+        val input = ConquerCityInput(
+            admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = "normal"),
+            attacker = attacker(),
+            defenderCity = city(nationId = 20).copy(conflict = """{"10":100.0}"""),
+            defenderNation = Nation(id = 20, level = 5, capitalCityId = 200, gold = 5000, rice = 6000),
+            defenderCityGenerals = emptyList(),
+            defenderNationCityCount = 1,
+            defenderNationGenerals = emptyList(),
+            allCitiesForBfs = emptyList(),
+        )
+        val res = ConquerCity.resolve(input)
+
+        assertEquals(emptyList(), res.collapseGeneralOrder)
+        assertEquals(20, res.deletedNationId)
+        assertTrue(res.destroyNationEvent)
+    }
 }
