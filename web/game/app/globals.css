@@ -1199,22 +1199,6 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
 }
 
-/* Gauge (재사용 now/max 막대, components/game/Gauge.tsx) — MapCityDetail의 mcd-metric/mcd-bar 스타일을
-   공유한다. 여기선 메인 도시 카드용 그리드 래퍼만 선언(레거시 CityBasicCard 처럼 dense 2열). */
-.gauge-metrics {
-  margin-top: var(--space-sm);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-@media (max-width: 500px) {
-  .gauge-metrics { grid-template-columns: 1fr; }
-}
-
 /* ── F2 Wave 5 — main-screen assembly (#ingameBoard legacy grid) ─────────────── */
 /* ===== 작전실 보드 (ADR-LITE-049 · 03) — 좌 지난 순 330 / 중앙 지도 1fr / 우 명령 목록 360 ===== */
 .ingame-board {
@@ -1243,15 +1227,6 @@ input:focus, select:focus, textarea:focus {
   .ingame-board > .ib-messages { grid-column: 1 / 4; grid-row: 3; }
 }
 .ib-map .map-viewer { border-radius: 0; }
-.ib-subject-panel {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  border-left: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--border-subtle);
-}
 .subject-target-bar {
   display: grid;
   grid-template-columns: minmax(5rem, auto) minmax(12rem, 1fr) minmax(12rem, auto);
@@ -1313,37 +1288,6 @@ input:focus, select:focus, textarea:focus {
   content: '/';
   color: var(--text-muted);
   margin-right: var(--space-xs);
-}
-.ib-subject-panel > .basic-card {
-  border: 0;
-  border-top: 1px solid var(--border-subtle);
-}
-.ib-subject-panel .ib-city,
-.ib-subject-panel .ib-nation,
-.ib-subject-panel .ib-general {
-  grid-row: auto;
-  grid-column: auto;
-}
-.subject-secondary-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
-  gap: 1px;
-  background: var(--border-subtle);
-}
-.subject-secondary-grid > .basic-card {
-  border: 0;
-}
-@media (max-width: 900px) {
-  .subject-target-bar {
-    grid-template-columns: 1fr;
-  }
-  .subject-target-title,
-  .subject-target-current {
-    justify-content: center;
-  }
-  .subject-secondary-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .main-page-content {
@@ -1415,18 +1359,6 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   font-size: var(--text-sm);
 }
-.basic-card-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 1px;
-  background: var(--border-subtle);
-}
-.general-basic-card .basic-card-grid {
-  grid-template-columns: repeat(3, minmax(36px, 2fr) minmax(64px, 5fr));
-}
-.nation-basic-card .basic-card-grid {
-  grid-template-columns: minmax(42px, 0.45fr) minmax(0, 1fr) minmax(42px, 0.45fr) minmax(0, 1fr);
-}
 .basic-card-row { display: contents; }
 .basic-card-head {
   background: var(--bg-elevated);
@@ -1442,104 +1374,12 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   text-align: center;
 }
-.general-basic-card .basic-card-row-wide .basic-card-body { grid-column: 2 / -1; }
-.nation-basic-card .basic-card-row-wide .basic-card-body { grid-column: span 3; }
-.stat-value-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-  min-width: 0;
-}
-.stat-value-cell-with-bar {
-  display: grid;
-  grid-template-columns: minmax(2.4rem, auto) minmax(2.6rem, 1fr);
-}
-.stat-value-text {
-  white-space: nowrap;
-}
-.stat-exp-bar,
-.level-exp-bar {
-  min-width: 2.6rem;
-}
-.level-exp-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  width: 100%;
-}
-.crewtype-cell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 0;
-}
-.crewtype-icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-.basic-card-extra {
-  border-top: 1px solid var(--border-subtle);
-}
-.basic-card-extra > summary {
-  cursor: pointer;
-  list-style: none;
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  text-align: center;
-  font-size: var(--text-xs);
-  font-weight: 700;
-  padding: var(--space-xs) var(--space-sm);
-}
-.basic-card-extra > summary::-webkit-details-marker {
-  display: none;
-}
-.basic-card-extra > summary::before {
-  content: '▸ ';
-}
-.basic-card-extra[open] > summary::before {
-  content: '▾ ';
-}
-@media (max-width: 700px) {
-  .general-basic-card .basic-card-grid {
-    grid-template-columns: minmax(42px, 0.55fr) minmax(0, 2fr);
-  }
-  .stat-value-cell-with-bar { grid-template-columns: minmax(2.2rem, auto) minmax(3rem, 1fr); }
-}
-.general-card-head {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  min-height: 64px;
-}
-.general-card-head .basic-card-name {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.general-card-portrait {
-  display: block;
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  background: #111;
-  border-right: 1px solid var(--border-subtle);
-}
 /* 성향 pros(cyan) / cons(magenta) — 레거시 NationBasicCard type 색상 그대로. */
-.bc-pros { color: cyan; }
-.bc-cons { color: magenta; }
-/* 가능/금지 등 상태 색(레거시 limegreen/red). */
-.bc-ok { color: limegreen; }
-.bc-no { color: red; }
+.bc-pros { color: var(--info); }
+.bc-cons { color: var(--rust); }
 /* 통솔보너스(+lbonus) — 레거시 cyan. */
-.bc-bonus { color: cyan; }
-.bc-penalty { color: magenta; }
-/* 도시 카드 머리(레거시 cityNamePanel/nationNamePanel) — 국가색 배경, 굵게. */
-.city-basic-card .basic-card-name + .basic-card-name { border-top: 1px solid var(--bg-card); }
+.bc-bonus { color: var(--moss-2); }
+.bc-penalty { color: var(--rust); }
 /* Reserved-command panel (PartialReservedCommand) — 5-col ring table. */
 .reserved-command-panel {
   border: 1px solid var(--border-subtle);
@@ -1945,17 +1785,22 @@ input:focus, select:focus, textarea:focus {
   top: 56px;
   z-index: 99;
 }
-.dept-nav__groups { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.dept-nav__groups { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .dept-nav__groups::-webkit-scrollbar { display: none; }
 .dept-nav__group { position: relative; display: flex; }
 .dept-nav__group > button { font: inherit; background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; padding: 0 14px; border-radius: 0; }
 .dept-nav__group > button:hover { background: transparent; }
 .dept-nav__caret { font-size: 10px; color: var(--muted); margin-left: 2px; }
+/* 드롭다운은 position: fixed 다 — `.dept-nav__groups` 의 overflow-x:auto 가 overflow-y 까지 auto 로
+   계산시켜 44px 스크롤 컨테이너가 절대배치 메뉴를 잘라냈다(항목이 하나만 보였다). fixed 는 조상
+   overflow 에 잘리지 않는다. 좌표는 DeptNav 가 버튼 rect 로 채운다. */
 .dept-nav__menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed;
+  top: var(--dept-menu-top, 96px);
+  left: var(--dept-menu-left, 0);
   min-width: 240px;
+  max-height: calc(100vh - var(--dept-menu-top, 96px) - 12px);
+  overflow-y: auto;
   margin: 0;
   padding: 6px 0;
   list-style: none;
@@ -1991,7 +1836,7 @@ input:focus, select:focus, textarea:focus {
 .dept-nav--vertical .dept-nav__groups { flex-direction: column; overflow: visible; }
 .dept-nav--vertical .dept-nav__group { flex-direction: column; }
 .dept-nav--vertical .dept-nav__group > button { justify-content: flex-start; min-height: 40px; }
-.dept-nav--vertical .dept-nav__menu { position: static; border: 0; box-shadow: none; background: transparent; padding: 0 0 8px 12px; }
+.dept-nav--vertical .dept-nav__menu { position: static; max-height: none; overflow: visible; border: 0; box-shadow: none; background: transparent; padding: 0 0 8px 12px; }
 .dept-nav--vertical .dept-nav__actions { padding: 8px 12px 0; border-top: 1px solid var(--line); }
 
 .dept-sheet { position: fixed; inset: 0; z-index: 200; }
@@ -2100,7 +1945,122 @@ input:focus, select:focus, textarea:focus {
 .subject-nation .main-status { border: 1px solid var(--line); border-top: 0; background: var(--panel); padding: 6px 12px; }
 .main-status-row { font-size: 12px; color: var(--text-2); padding: 3px 0; }
 .main-status-notice-head { color: var(--muted); }
-.ib-subject-panel > .basic-card, .subject-secondary-grid > .basic-card, .subject-nation > .basic-card { border: 1px solid var(--line); background: var(--panel); border-radius: 0; }
+
+/* ── 작전실 카드(도시·국가·장수) — ADR-LITE-049 03 아트보드 ──────────────────────────────
+   낡은 `.basic-card`(국가색 전폭 헤더 + 2열 라벨/값)를 대체한다. 라벨·게이팅·표시 필드는 그대로다. */
+.war-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.war-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--inset);
+  font-size: 12px;
+}
+.war-card__head--nation { border-bottom-color: var(--line-2); }
+.war-card__title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.war-card__head--nation .war-card__title { color: inherit; }
+.war-card__sub { font-size: 11px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.war-card__head-right { margin-left: auto; font-size: 11px; white-space: nowrap; }
+.war-card__spacer { flex: 1; }
+.war-card__chip { height: 18px; font-size: 10px; }
+.war-card__empty { padding: 16px 12px; font-size: 12px; color: var(--muted); }
+
+/* 도시 8게이지 — 2열 */
+.war-card__gauges {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 12px;
+  padding: 8px 10px;
+  align-content: start;
+}
+.war-card__gauges .os-gauge { gap: 2px; font-size: 11px; }
+.war-card__gauges .os-gauge__bar { height: 5px; }
+.war-card__gauge--textonly { align-self: start; }
+.war-card__officers { display: flex; border-top: 1px solid var(--line); font-size: 11px; }
+.war-card__officer { flex: 1; display: flex; justify-content: space-between; gap: 6px; padding: 5px 10px; min-width: 0; }
+.war-card__officer + .war-card__officer { border-left: 1px solid var(--line); }
+.war-card__none { color: var(--muted); }
+
+/* 라벨/값 격자 — 국가 3열 · 장수 5열 */
+.war-card__facts { display: grid; gap: 3px 12px; padding: 6px 10px; font-size: 11px; align-content: start; }
+.war-card__facts--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.war-card__facts--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.war-card__fact { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
+.war-card__fact--wide { grid-column: span 2; }
+.war-card__k { color: var(--muted); white-space: nowrap; }
+.war-card__v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: var(--text); }
+.war-card__v--gold { color: var(--bronze); }
+.war-card__v--rice { color: var(--moss-2); }
+.war-card__crewtype { display: inline-flex; align-items: center; gap: 4px; }
+.war-card__crewtype img { width: 14px; height: 14px; object-fit: contain; image-rendering: pixelated; flex: 0 0 auto; }
+
+/* 장수 카드 — 초상 + 본문 */
+/* 이 카드는 작전실 전폭 말고도 /game/my·전투부의 320~390px 열에 들어간다. 열 수는 뷰포트가 아니라
+   카드 자신의 폭을 봐야 한다 — 뷰포트 기준이면 넓은 화면의 좁은 열에서 5열이 그대로 남아 글자가 뭉갠다. */
+.war-card--general { display: grid; grid-template-columns: 126px minmax(0, 1fr); gap: 12px; padding: 10px 12px; container-type: inline-size; }
+.war-card__portrait { align-self: start; }
+.war-card__general-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.war-card__general-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.war-card__name { font-family: var(--font-serif); font-size: 19px; font-weight: 900; }
+.war-card__age { font-size: 11px; }
+.war-card__age--moss { color: var(--moss-2); }
+.war-card__age--bronze { color: var(--bronze); }
+.war-card__age--rust { color: var(--rust); }
+.war-card__lv { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.war-card__lv b { color: var(--text); }
+.war-card__lvbar { display: inline-block; width: 56px; height: 4px; background: var(--inset); border: 1px solid var(--line); }
+.war-card__lvbar > i { display: block; height: 100%; background: var(--bronze); }
+
+.war-card__stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.war-card__stat { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.war-card__stat-top { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--muted); }
+.war-card__stat-top b { color: var(--text); }
+.war-card__stat--injured .war-card__stat-top b { color: var(--rust); }
+.war-card__stat-bar { display: block; height: 6px; background: var(--inset); border: 1px solid var(--line); }
+.war-card__stat-bar > i { display: block; height: 100%; background: var(--moss); }
+.war-card__stat-exp { display: block; height: 3px; background: var(--inset); }
+.war-card__stat-exp > i { display: block; height: 100%; background: var(--info); }
+
+.war-card__extra { border-top: 1px solid var(--line); margin-top: auto; }
+.war-card__extra > summary { cursor: pointer; padding: 5px 10px; font-size: 11px; color: var(--muted); list-style: none; }
+.war-card__extra > summary::-webkit-details-marker { display: none; }
+.war-card__extra > summary::before { content: '▸ '; }
+.war-card__extra[open] > summary::before { content: '▾ '; }
+
+@container (max-width: 720px) {
+  .war-card__facts--5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .war-card__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container (max-width: 460px) {
+  .war-card__facts--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .war-card__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 초상 자리는 컨테이너 자신의 열 수라 @container 로는 못 바꾼다(컨테이너는 자기 질의로 자기를 못 고친다).
+   좁은 화면에서만 세로로 쌓는다. */
+@media (max-width: 560px) {
+  .war-card--general { grid-template-columns: 1fr; }
+  .war-card__portrait { justify-self: center; }
+}
+@media (max-width: 900px) {
+  .war-card__facts--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 .reserved-command-panel { border-radius: 0; display: flex; flex-direction: column; }
 .rcp-title { color: var(--text); text-align: left; padding: 0 12px; }

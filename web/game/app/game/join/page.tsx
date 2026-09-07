@@ -446,7 +446,9 @@ export default function JoinPage() {
     setError('');
   }
 
-  // 전콘 미리보기 — 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
+  // 전콘 미리보기 — 실제 장수 얼굴이 그려지는 크기(card-126 = 126×178)로 보여준다. 전콘을 켜면 이 그림이
+  // 작전실 장수 카드의 초상 자리에 그대로 들어가므로 48px 아이콘으로 보여주면 실제와 어긋난다.
+  // 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
 
   return (
     <Shell>
@@ -543,7 +545,7 @@ export default function JoinPage() {
         <div>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-            <Portrait picture={pic ? joinForm?.member.picture : null} imageServer={pic ? joinForm?.member.imageServer : 0} size="icon-48" alt="전콘" />
+            <Portrait picture={pic ? joinForm?.member.picture : null} imageServer={pic ? joinForm?.member.imageServer : 0} size="card-126" alt="전콘" />
             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
               <input
                 type="checkbox"

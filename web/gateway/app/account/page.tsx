@@ -7,9 +7,9 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import { useAuth } from '@/lib/auth-context';
 import { changeNickname, changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
-import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { normalizeProfileIcon } from '@/lib/profileIcon';
 import RepresentativeSection from '@/components/account/RepresentativeSection';
+import { Portrait } from '@opensamguk/ui';
 
 // 규격 밖 이미지는 브라우저에서 128x128로 크롭·축소해 보낸다(lib/profileIcon). 그건 편의일 뿐
 // 최종 보안 경계는 서버다 — 우회해도 서버 거부를 성공으로 위장하지 않는다.
@@ -116,7 +116,6 @@ function AccountSettings() {
         }, '계정을 삭제했습니다.');
     };
 
-    const preview = portraitUrl(picture.trim() || null, imgsvr);
     return (
         <main className="lobby-main fade-in">
             <div className="lobby-section-title-row">
@@ -143,7 +142,9 @@ function AccountSettings() {
             </section>
             <section className="game-panel">
                 <h2>전콘</h2>
-                <img src={preview} onError={onPortraitError} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'contain', borderRadius: 4 }} />
+                {/* 전콘은 게임에서 장수 얼굴로 쓰인다 — 실제 렌더 규격(card-126 = 126×178)으로 미리 보여준다.
+                    초상 규칙(ADR-LITE-049): 정사각·각진 모서리, object-fit: contain(잘림 0). */}
+                <Portrait picture={picture.trim() || null} imageServer={imgsvr} size="card-126" alt="현재 전콘" />
                 <form className="account-form" onSubmit={submitUpload}>
                     <p>{ICON_GUIDE}</p>
                     <label className="account-field">이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept={ICON_ACCEPT} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>

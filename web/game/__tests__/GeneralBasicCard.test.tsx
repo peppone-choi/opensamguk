@@ -55,7 +55,9 @@ const nation: FrontNationInfo = {
 };
 
 describe('GeneralBasicCard', () => {
-    it('renders stat and level as six key-value pairs and keeps extra info collapsed', () => {
+    // 작전실 카드 리디자인(ADR-LITE-049 · 03 아트보드): 마크업은 `.basic-card*` → `.war-card*` 로 바뀌었고
+    // 능력치는 라벨/값 행이 아니라 5열 막대다. 표시하는 값(보정치·자금·군량·접힌 추가정보)은 그대로다.
+    it('renders the five stat meters with bonuses and keeps extra info collapsed', () => {
         const { container } = render(<GeneralBasicCard general={general} nation={nation} />);
 
         expect(screen.getByText('+7')).toBeInTheDocument();
@@ -65,13 +67,41 @@ describe('GeneralBasicCard', () => {
         expect(screen.getByText('12,345')).toBeInTheDocument();
         expect(screen.getByText('67,890')).toBeInTheDocument();
         expect(screen.getByText('추가정보').closest('details')).not.toHaveAttribute('open');
-        expect(container.querySelectorAll('.general-basic-card .basic-card-head').length).toBeGreaterThanOrEqual(6);
-        expect(screen.getByText('통솔')).toHaveClass('basic-card-head');
-        expect(screen.getByText('무력')).toHaveClass('basic-card-head');
-        expect(screen.getByText('지력')).toHaveClass('basic-card-head');
-        expect(screen.getByText('정치')).toHaveClass('basic-card-head');
-        expect(screen.getByText('매력')).toHaveClass('basic-card-head');
-        expect(screen.getByText('Lv')).toHaveClass('basic-card-head');
-        expect(container.querySelectorAll('.sammo-bar').length).toBeGreaterThanOrEqual(6);
+
+        for (const label of ['통솔', '무력', '지력', '정치', '매력']) {
+            const meter = screen.getByRole('meter', { name: label });
+            expect(meter).toHaveClass('war-card__stat');
+            expect(screen.getByText(label)).toHaveClass('war-card__k');
+        }
+        expect(container.querySelectorAll('.war-card__stat').length).toBe(5);
+        // 능력 경험(*_exp)이 있는 다섯 항목은 얇은 두 번째 막대를 함께 그린다.
+        expect(container.querySelectorAll('.war-card__stat-exp').length).toBe(5);
+        // Lv·경험은 이름 줄 우측으로 이동했다(라벨 행이 아니다).
+        expect(container.querySelector('.war-card__lv')?.textContent).toContain('Lv');
+        expect(container.querySelector('.war-card__lvbar')).not.toBeNull();
+    });
+
+    it('renders 관직 · 소속 · 호칭 · 부상 as chips', () => {
+        const { container } = render(<GeneralBasicCard general={general} nation={nation} />);
+        const chips = Array.from(container.querySelectorAll('.war-card__chip')).map((c) => c.textContent);
+        expect(chips.some((t) => t?.startsWith('소속'))).toBe(true);
+        expect(chips).toContain('부상 건강');
+    });
+
+    // 부상일 때 라벨이 사라지면 그 칩이 무엇인지 알 수 없다 — 라벨은 상태와 무관하게 남아야 한다.
+    it('keeps the 부상 label when the general is actually injured', () => {
+        const { container } = render(<GeneralBasicCard general={{ ...general, injury: 35 }} nation={nation} />);
+        const chips = Array.from(container.querySelectorAll('.war-card__chip')).map((c) => c.textContent);
+        expect(chips).toContain('부상 중상');
+    });
+
+    // 능력 막대의 분모는 엔진 상한(255)이다. 100 을 넘는 장수가 꽉 찬 막대로 뭉개지면 안 된다.
+    it('scales stat meters against the engine cap, not 100', () => {
+        const { container } = render(<GeneralBasicCard general={{ ...general, leadership: 151, strength: 100 }} nation={nation} />);
+        const lead = screen.getByRole('meter', { name: '통솔' });
+        expect(lead).toHaveAttribute('aria-valuemax', '255');
+        expect(lead).toHaveAttribute('aria-valuenow', '151');
+        const widths = Array.from(container.querySelectorAll('.war-card__stat-bar > i')).map((i) => (i as HTMLElement).style.width);
+        expect(widths[0]).not.toBe(widths[1]);
     });
 });

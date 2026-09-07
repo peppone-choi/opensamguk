@@ -97,6 +97,13 @@ export const CITY_TRADE_MULTIPLIER = 10;
 
 export const STAT_UP_THRESHOLD = 30;
 
+/**
+ * 능력치 상한 — 엔진 `DomesticHelpers.MAX_LEVEL`(logic/.../domestic/DomesticHelpers.kt:47)과 같은 값.
+ * `StatChange` 가 통·무·지·정·매를 0..255 로 클램프한다. 능력 막대의 분모는 반드시 이 값이어야 한다 —
+ * 100 으로 잡으면 100 을 넘는 장수(시나리오 실측 최대 156)가 전부 꽉 찬 막대로 뭉개진다.
+ */
+export const STAT_MAX_LEVEL = 255;
+
 /** SSE 엔드포인트 — 턴 완료 이벤트. */
 export const SSE_TURN_ENDPOINT = '/api/game/sse/turn';
 

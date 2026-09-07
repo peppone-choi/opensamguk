@@ -718,11 +718,12 @@ async function readOperationalBrowserEvidence(page: Page): Promise<BrowserOperat
 }
 
 async function rawExtraCardValues(page: Page): Promise<Record<string, string>> {
-  return page.locator('section[aria-label="장수 정보"] details.basic-card-extra .basic-card-row').evaluateAll((rows) => {
+  // 작전실 카드 리디자인(ADR-LITE-049): `.basic-card*` → `.war-card*`. 읽는 값은 그대로다.
+  return page.locator('section[aria-label="장수 정보"] details.war-card__extra .war-card__fact').evaluateAll((rows) => {
     const values: Record<string, string> = {};
     for (const row of rows) {
-      const label = row.querySelector('.basic-card-head')?.textContent?.trim();
-      const value = row.querySelector('.basic-card-body')?.textContent?.trim();
+      const label = row.querySelector('.war-card__k')?.textContent?.trim();
+      const value = row.querySelector('.war-card__v')?.textContent?.trim();
       if (label && value) values[label] = value;
     }
     return values;
@@ -1144,7 +1145,7 @@ test('operational smoke follows che_요양 from reservation through durable exec
     }, { timeout: 30_000 }).toBe(true);
 
     const card = page.getByRole('region', { name: '장수 정보' });
-    const extra = card.locator('details.basic-card-extra');
+    const extra = card.locator('details.war-card__extra');
     await expect(extra, 'GeneralBasicCard additional information').toBeVisible({ timeout: 30_000 });
     if (!(await extra.evaluate((element) => (element as HTMLDetailsElement).open))) {
       await extra.locator('summary').click();
