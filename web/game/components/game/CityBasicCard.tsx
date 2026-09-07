@@ -63,7 +63,15 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
                 <Gauge label="수비" value={city.defense} max={city.defenseMax} tone="rust" display={`${num(city.defense)} / ${num(city.defenseMax)}`} />
                 <Gauge label="성벽" value={city.wall} max={city.wallMax} tone="rust" display={`${num(city.wall)} / ${num(city.wallMax)}`} />
                 {tradePercent != null ? (
-                    <Gauge label="시세" value={tradePercent} max={100} tone="bronze" display={`${city.trade}%`} />
+                    <Gauge
+                        label="시세"
+                        value={tradePercent}
+                        max={100}
+                        tone="bronze"
+                        display={`${city.trade}%`}
+                        // 막대는 레거시 (trade-95)*10 이라 aria-valuenow 가 화면 숫자와 다르다 — 읽어줄 값은 실제 시세다.
+                        aria-valuetext={`${city.trade}%`}
+                    />
                 ) : (
                     // 분모가 없으므로 막대를 그리지 않는다 — 없는 최댓값을 지어내지 않는다.
                     <div className="os-gauge war-card__gauge--textonly">

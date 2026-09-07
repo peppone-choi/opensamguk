@@ -4,7 +4,7 @@
 // 비활성은 숨기지 않고 점선 + 사유 툴팁(OPENSAM-113). 우측: 갱신 · 로비로 · 커뮤니티 ↗.
 // 게이팅을 아직 모르면(loading) 중립으로 두고, 서버 정보가 없으면(error) 「서버 정보 없음」만 붙인다 — 권한 사유를 지어내지 않는다.
 // 키보드: 그룹 버튼 Enter/Space/ArrowDown 으로 열고 첫 항목에 포커스, 항목 간 ArrowUp/Down·Home/End, Escape 로 닫고 버튼으로 복귀.
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { Chip, ReasonTooltip } from '@opensamguk/ui';
 import { useAuthOptional } from '@/lib/auth-context';
@@ -56,6 +56,11 @@ export interface DeptNavProps {
 }
 
 const MENU_ITEM_SELECTOR = '[role="menuitem"]';
+
+// 드롭다운 좌표는 첫 커밋 프레임에 이미 있어야 한다 — useEffect 로 잡으면 한 프레임 동안 좌표가 없어
+// max-height 계산이 무너지고, 그 무너진 컨테이너 안으로 포커스가 들어간다. SSR 에서는 layout effect 가
+// 경고를 내므로 서버에서만 useEffect 로 떨어진다.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function moveFocus(list: HTMLElement | null, from: HTMLElement, delta: number | 'first' | 'last') {
     if (!list) return;
@@ -135,21 +140,30 @@ function GroupMenu({
     // 항목이 하나만 보였다). 좌표는 버튼 rect 에서 잡고, 열려 있는 동안 스크롤·리사이즈에 맞춰 갱신한다.
     const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
 
-    useEffect(() => {
+    const place = useCallback(() => {
+        const rect = buttonRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const next = { top: Math.round(rect.bottom), left: Math.round(rect.left) };
+        // 스크롤 틱마다 새 객체를 넣으면 매 틱 리렌더가 된다 — 값이 실제로 변할 때만 넣는다.
+        setAnchor((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : next));
+    }, []);
+
+    useIsomorphicLayoutEffect(() => {
         if (!open || vertical) { setAnchor(null); return; }
-        const place = () => {
-            const rect = buttonRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            setAnchor({ top: Math.round(rect.bottom), left: Math.round(rect.left) });
-        };
         place();
         window.addEventListener('resize', place);
         window.addEventListener('scroll', place, true);
+        // 「진행」 칩이 붙는 등 나브 줄 자체가 흐르면 fixed 메뉴의 x 가 낡는다 — 크기 변화도 따라간다.
+        const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
+        if (observer && buttonRef.current?.parentElement?.parentElement) {
+            observer.observe(buttonRef.current.parentElement.parentElement);
+        }
         return () => {
             window.removeEventListener('resize', place);
             window.removeEventListener('scroll', place, true);
+            observer?.disconnect();
         };
-    }, [open, vertical]);
+    }, [open, place, vertical]);
 
     // 열리면 첫 항목에 포커스(세로 모드는 전부 펼쳐져 있으므로 제외).
     useEffect(() => {

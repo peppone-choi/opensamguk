@@ -56,8 +56,9 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
     const facts: { k: string; v: React.ReactNode; tone?: 'gold' | 'rice' }[] = [
         { k: nation?.rulerOfficerText ?? '군주', v: chiefOf(12) },
         { k: nation?.deputyOfficerText ?? '군주대리', v: chiefOf(11) },
-        { k: '속령 · 장수', v: has && nation!.population && nation!.crew
-            ? `${formatNumber(nation!.population.cityCnt)} · ${formatNumber(nation!.crew.generalCnt)}` : NA },
+        // 속령·장수는 각자 자기 그룹에만 의존한다 — 한쪽이 null 이라고 다른 쪽 수치까지 잃지 않는다.
+        { k: '속령', v: has && nation!.population ? formatNumber(nation!.population.cityCnt) : NA },
+        { k: '장수', v: has && nation!.crew ? formatNumber(nation!.crew.generalCnt) : NA },
         { k: '총 주민', v: has && nation!.population
             ? `${formatNumber(nation!.population.now)} / ${formatNumber(nation!.population.max)}` : NA },
         { k: '총 병사', v: has && nation!.crew
@@ -77,9 +78,14 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
             <header className="war-card__head">
                 <Flag color={nationColor} size={14} />
                 <span className="war-card__title">{nation?.name ?? '재야'}</span>
-                {typeNode && <span className="war-card__sub">{typeNode} · Lv {nation!.level}</span>}
+                {/* 성향이 없어도 Lv 는 보여야 한다 — 부제 두 조각을 따로 건다. */}
+                <span className="war-card__sub">
+                    {typeNode}
+                    {typeNode && ' · '}
+                    {has ? `Lv ${nation!.level}` : NA}
+                </span>
                 <span className="war-card__spacer" />
-                {has && <Chip tone="bronze" className="war-card__chip">국력 {formatNumber(nation!.power ?? 0)}</Chip>}
+                <Chip tone="bronze" className="war-card__chip">국력 {has ? formatNumber(nation!.power ?? 0) : NA}</Chip>
             </header>
 
             <div className="war-card__facts war-card__facts--3">

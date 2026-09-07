@@ -85,6 +85,23 @@ describe('GeneralBasicCard', () => {
         const { container } = render(<GeneralBasicCard general={general} nation={nation} />);
         const chips = Array.from(container.querySelectorAll('.war-card__chip')).map((c) => c.textContent);
         expect(chips.some((t) => t?.startsWith('소속'))).toBe(true);
-        expect(chips).toContain('부상 없음');
+        expect(chips).toContain('부상 건강');
+    });
+
+    // 부상일 때 라벨이 사라지면 그 칩이 무엇인지 알 수 없다 — 라벨은 상태와 무관하게 남아야 한다.
+    it('keeps the 부상 label when the general is actually injured', () => {
+        const { container } = render(<GeneralBasicCard general={{ ...general, injury: 35 }} nation={nation} />);
+        const chips = Array.from(container.querySelectorAll('.war-card__chip')).map((c) => c.textContent);
+        expect(chips).toContain('부상 중상');
+    });
+
+    // 능력 막대의 분모는 엔진 상한(255)이다. 100 을 넘는 장수가 꽉 찬 막대로 뭉개지면 안 된다.
+    it('scales stat meters against the engine cap, not 100', () => {
+        const { container } = render(<GeneralBasicCard general={{ ...general, leadership: 151, strength: 100 }} nation={nation} />);
+        const lead = screen.getByRole('meter', { name: '통솔' });
+        expect(lead).toHaveAttribute('aria-valuemax', '255');
+        expect(lead).toHaveAttribute('aria-valuenow', '151');
+        const widths = Array.from(container.querySelectorAll('.war-card__stat-bar > i')).map((i) => (i as HTMLElement).style.width);
+        expect(widths[0]).not.toBe(widths[1]);
     });
 });

@@ -10,7 +10,7 @@ import { Chip, Portrait } from '@opensamguk/ui';
 import { formatNumber } from '@/lib/format';
 import { formatInjury, nextExpLevelRemain } from '@/lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
-import { ICON_CDN, STAT_UP_THRESHOLD } from '@/lib/constants';
+import { ICON_CDN, STAT_MAX_LEVEL, STAT_UP_THRESHOLD } from '@/lib/constants';
 
 // 장비/특기/성격/병종 코드를 표시값으로. 레거시 dummyInfo.name='-' 동치: 'None'/null/빈값 → '-'.
 function codeText(code?: string | null): string {
@@ -55,7 +55,9 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
     const [injuryText] = formatInjury(general.injury);
     const injured = general.injury > 0;
 
-    // 통·무·지·정·매 — 막대는 값/100, 값 옆에 onCalcStat 보정치(있을 때만). 부상 시 값이 붉어진다.
+    // 통·무·지·정·매 — 막대 분모는 엔진 상한(STAT_MAX_LEVEL=255, DomesticHelpers.MAX_LEVEL)이다.
+    // 100 을 분모로 쓰면 100 을 넘는 장수(시나리오 실측 최대 156)가 전부 꽉 찬 막대로 뭉개지고
+    // aria-valuenow 가 aria-valuemax 를 넘는다 — 없는 상한을 지어내지 않는다.
     const stats = [
         { label: '통솔', value: general.leadership, bonus: general.leadershipBonus ?? general.lbonus, exp: general.leadershipExp },
         { label: '무력', value: general.strength, bonus: general.strengthBonus, exp: general.strengthExp },
@@ -98,7 +100,7 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         {
             k: '특기',
             wide: true,
-            v: `${nameOrCode(general.specialDomesticName, general.specialDomestic)} · ${nameOrCode(general.specialWarName, general.specialWar)}`,
+            v: `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`,
         },
     ];
 
@@ -141,7 +143,9 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
                     <Chip tone="bronze" className="war-card__chip">관직 {officerText}</Chip>
                     <Chip className="war-card__chip">소속 {nation?.name ?? '재야'}</Chip>
                     <Chip className="war-card__chip">호칭 {general.honorText ?? '-'}</Chip>
-                    <Chip tone={injured ? 'rust' : 'moss'} className="war-card__chip">{injured ? injuryText : '부상 없음'}</Chip>
+                    {/* 부상 라벨은 상태와 무관하게 항상 붙인다 — 부상일 때만 라벨이 사라지면 그 칩이 무엇인지 알 수 없다.
+                        상태어는 formatInjury 그대로(건강/경상/중상/심각/위독). */}
+                    <Chip tone={injured ? 'rust' : 'moss'} className="war-card__chip">부상 {injuryText}</Chip>
                     <span className="war-card__spacer" />
                     <span className="war-card__lv">
                         Lv <b className="os-num">{general.explevel ?? 0}</b> · 경험 <b className="os-num">{formatNumber(general.experience ?? 0)}</b>
@@ -158,13 +162,15 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
                             aria-label={s.label}
                             aria-valuenow={s.value}
                             aria-valuemin={0}
-                            aria-valuemax={100}
+                            aria-valuemax={STAT_MAX_LEVEL}
                         >
                             <span className="war-card__stat-top">
                                 <span className="war-card__k">{s.label}</span>
                                 <b className="os-num">{s.value}<SignedBonus value={s.bonus} /></b>
                             </span>
-                            <span className="war-card__stat-bar"><i style={{ width: `${Math.min(100, Math.max(0, s.value))}%` }} /></span>
+                            <span className="war-card__stat-bar">
+                                <i style={{ width: `${Math.min(100, Math.max(0, (s.value / STAT_MAX_LEVEL) * 100))}%` }} />
+                            </span>
                             {/* 능력 경험(다음 상승까지) — 분모가 있는 값만 얇은 두 번째 막대로. */}
                             {s.exp != null && (
                                 <span className="war-card__stat-exp" title={`${s.label} 경험`}>
