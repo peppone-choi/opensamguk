@@ -803,7 +803,8 @@ async function createAndLogin(context: BrowserContext): Promise<{ page: Page; us
     { name: 'username', value: username },
     { name: 'password', value: password },
     { name: 'passwordConfirm', value: password },
-    { name: 'nickname', value: `e2e-${suffix}` },
+    // 닉네임은 gateway-api 규칙(2~20자)에 맞춘다 — Date.now()+난수 접미가 21자를 만들면 가입이 거부되거나(구 폼) 잘린다(신 폼 maxLength).
+    { name: 'nickname', value: `e2e-${suffix}`.slice(0, 20) },
   ]);
   const registerResponsePromise = page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 30_000 });
   await page.getByRole('button', { name: /가입/ }).click();

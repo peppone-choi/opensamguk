@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { Brand, Button, Chip } from '@opensamguk/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +19,9 @@ function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    // 하이드레이션 전의 클릭은 네이티브 GET 제출로 새어 자격이 URL 에 실린다(mailbox e2e 실측) — 마운트 전엔 제출 버튼을 사유와 함께 잠근다.
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => { setHydrated(true); }, []);
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -93,8 +96,8 @@ function LoginForm() {
                     </div>
                 </div>
                 {error && <div className="auth-error" role="alert">{error}</div>}
-                {submitting ? (
-                    <Button type="submit" variant="primary" block disabled reason="로그인 중입니다">{AUTH_LABELS.loginBtn}</Button>
+                {submitting || !hydrated ? (
+                    <Button type="submit" variant="primary" block disabled reason={submitting ? '로그인 중입니다' : '준비 중입니다'}>{AUTH_LABELS.loginBtn}</Button>
                 ) : (
                     <Button type="submit" variant="primary" block className="btn-primary btn-block">{AUTH_LABELS.loginBtn}</Button>
                 )}
