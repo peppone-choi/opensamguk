@@ -1,0 +1,148 @@
+name: Bootstrap deployer (one-shot recovery)
+
+# 공유 스택 배포(deploy.yml)는 `POST /maintenance/enter-if-idle` 로 유지보수 창을 원자적으로 잡은 **뒤에만**
+# 저장소를 sync 하고 deployer 를 교체한다(tools/ops/test_source_deploy_maintenance.py 가 그 순서를 계약으로 고정).
+# 그래서 박스의 deployer 가 그 엔드포인트를 모르는 버전이면 닭과 달걀이 된다 — 새 deployer 를 올려야 진입이 되는데,
+# 진입해야 새 deployer 를 올린다. 2026-09-06 10:22 에 그 계약이 들어간 직후부터 모든 공유 스택 배포가 이 지점에서
+# 실패했다(스택은 매번 무변경). 이 워크플로는 그 매듭을 푸는 **일회성 복구 도구**다: 앱 컨테이너는 건드리지 않고
+# socket-proxy 와 deployer 만 최신 opensamguk-docker 로 교체한 뒤, 원자적 진입이 실제로 되는지 확인하고 즉시 나온다.
+# 상시 배포 경로가 아니다 — 평소 배포는 deploy.yml 이 하고 그 계약은 그대로다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type BOOTSTRAP DEPLOYER to proceed'
+        required: true
+        type: string
+
+concurrency:
+  group: bootstrap-deployer
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    steps:
+      - name: Replace the deployer and verify atomic idle admission
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          if [ "$INPUT_CONFIRM" != "BOOTSTRAP DEPLOYER" ]; then
+            echo "ERROR: confirmation phrase mismatch; nothing was touched" >&2
+            exit 2
+          fi
+
+          # 승격·리셋·배포와 같은 락 — 프로덕션 작업이 겹치지 않는다.
+          exec 9>/tmp/opensamguk-production.lock
+          if ! flock -w 1800 9; then
+            echo "ERROR: timed out after 1800 seconds waiting for /tmp/opensamguk-production.lock" >&2
+            exit 1
+          fi
+
+          STACK="$HOME/opensamguk-docker"
+          cd "$STACK"
+
+          # deploy.yml 의 maintenance_http 와 같은 경로·같은 토큰 취급(토큰은 컨테이너 env 에서만 읽고 절대 찍지 않는다).
+          maintenance_http() {
+            local method="$1"
+            local path="$2"
+            docker exec opensamguk-deployer python3 -c '
+          import os, sys, urllib.error, urllib.request
+
+          method, path = sys.argv[1:]
+          if (method, path) not in {("GET", "/maintenance"), ("POST", "/maintenance/enter-if-idle"), ("POST", "/maintenance/leave")}:
+              raise SystemExit(2)
+          token = os.environ.get("DEPLOYER_TOKEN", "")
+          if not token:
+              raise SystemExit(2)
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          request = urllib.request.Request(
+              "http://localhost:9000" + path,
+              data=b"" if method == "POST" else None,
+              headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+              method=method,
+          )
+          try:
+              response = urllib.request.build_opener(NoRedirect).open(request, timeout=10)
+          except urllib.error.HTTPError as error:
+              response = error
+          except (OSError, TimeoutError, urllib.error.URLError):
+              raise SystemExit(1)
+          try:
+              body = response.read(4097)
+              status = response.status
+          finally:
+              response.close()
+          if len(body) > 4096:
+              raise SystemExit(1)
+          sys.stdout.buffer.write(body)
+          if 200 <= status < 300:
+              raise SystemExit(0)
+          raise SystemExit(9 if status == 404 else 8)
+          ' "$method" "$path"
+          }
+
+          echo "=== Before: does this deployer know atomic idle admission? ==="
+          BEFORE_RC=0
+          maintenance_http POST /maintenance/enter-if-idle >/dev/null 2>&1 || BEFORE_RC=$?
+          echo "enter-if-idle probe rc=$BEFORE_RC (0=supported+entered, 9=unsupported, 8=refused/busy, 1=transport)"
+          if [ "$BEFORE_RC" -eq 0 ]; then
+            # 이미 지원한다 — 우리가 연 창을 즉시 닫고 아무것도 바꾸지 않는다.
+            maintenance_http POST /maintenance/leave >/dev/null
+            echo "=== deployer already supports atomic idle admission; nothing to bootstrap ==="
+            exit 0
+          fi
+          if [ "$BEFORE_RC" -ne 9 ]; then
+            echo "ERROR: deployer refused admission for a reason other than missing support (rc=$BEFORE_RC); operator inspection required" >&2
+            exit 1
+          fi
+
+          echo "=== Syncing opensamguk-docker main ==="
+          if [ -n "$(git status --porcelain --untracked-files=normal)" ]; then
+            echo "ERROR: refusing to sync a dirty tracked or non-ignored untracked opensamguk-docker tree" >&2
+            git status --short --untracked-files=normal >&2
+            exit 1
+          fi
+          git fetch origin main
+          git merge --ff-only origin/main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "ERROR: opensamguk-docker HEAD does not match origin/main after fast-forward sync" >&2
+            exit 1
+          fi
+
+          echo "=== GHCR login ==="
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          COMPOSE="docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env"
+
+          # deployer 는 socket-proxy 경유로만 Docker 에 닿는다. --no-deps 재생성이라 여기서 명시적으로 보장한다.
+          echo "=== Ensuring deployer socket-proxy ==="
+          $COMPOSE up -d socket-proxy
+
+          echo "=== Replacing the deployer (app containers untouched) ==="
+          $COMPOSE up -d --build --force-recreate --no-deps deployer
+
+          if ! docker exec opensamguk-deployer docker version >/dev/null; then
+            echo "ERROR: replaced deployer cannot reach Docker through socket-proxy" >&2
+            exit 1
+          fi
+
+          echo "=== After: verifying atomic idle admission ==="
+          AFTER_RC=0
+          maintenance_http POST /maintenance/enter-if-idle >/dev/null 2>&1 || AFTER_RC=$?
+          if [ "$AFTER_RC" -ne 0 ]; then
+            echo "ERROR: replaced deployer still does not admit atomically (rc=$AFTER_RC); deploy.yml stays blocked" >&2
+            exit 1
+          fi
+          # 확인만 하고 창은 바로 돌려준다 — 이 워크플로는 배포하지 않는다.
+          maintenance_http POST /maintenance/leave >/dev/null
+          echo "=== Bootstrap complete; deploy.yml can now enter the window on its own ==="
