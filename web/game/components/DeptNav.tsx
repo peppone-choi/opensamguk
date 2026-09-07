@@ -131,6 +131,25 @@ function GroupMenu({
     const listRef = useRef<HTMLUListElement>(null);
     const single = group.entries.length === 1 && group.entries[0].kind === 'route';
     const highlight = groupHighlight(group, gating, global);
+    // 드롭다운은 position: fixed 다(그룹 줄의 가로 스크롤 컨테이너가 절대배치 메뉴를 잘라내서
+    // 항목이 하나만 보였다). 좌표는 버튼 rect 에서 잡고, 열려 있는 동안 스크롤·리사이즈에 맞춰 갱신한다.
+    const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
+
+    useEffect(() => {
+        if (!open || vertical) { setAnchor(null); return; }
+        const place = () => {
+            const rect = buttonRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            setAnchor({ top: Math.round(rect.bottom), left: Math.round(rect.left) });
+        };
+        place();
+        window.addEventListener('resize', place);
+        window.addEventListener('scroll', place, true);
+        return () => {
+            window.removeEventListener('resize', place);
+            window.removeEventListener('scroll', place, true);
+        };
+    }, [open, vertical]);
 
     // 열리면 첫 항목에 포커스(세로 모드는 전부 펼쳐져 있으므로 제외).
     useEffect(() => {
@@ -180,7 +199,17 @@ function GroupMenu({
                 )}
                 {!vertical && <span aria-hidden="true" className="dept-nav__caret">▾</span>}
             </button>
-            <ul ref={listRef} id={id} role="menu" aria-label={group.label} className="dept-nav__menu" hidden={!open}>
+            <ul
+                ref={listRef}
+                id={id}
+                role="menu"
+                aria-label={group.label}
+                className="dept-nav__menu"
+                hidden={!open}
+                style={!vertical && anchor
+                    ? ({ ['--dept-menu-top']: `${anchor.top}px`, ['--dept-menu-left']: `${anchor.left}px` } as React.CSSProperties)
+                    : undefined}
+            >
                 {group.entries.map((entry, i) => (
                     <EntryRow key={i} view={evaluateEntry(entry, gating, global, gatingState)} serverId={serverId} onNavigate={onNavigate} onKeyNav={onKeyNav} />
                 ))}

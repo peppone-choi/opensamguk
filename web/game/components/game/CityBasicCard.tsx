@@ -1,20 +1,12 @@
 'use client';
 
-// CityBasicCard — 플레이어 소재 도시 정보 카드(레거시 CityBasicCard.vue 충실 이식).
-// 레거시는 cityNamePanel(국가색, 【지역 | 등급】 도시명) + nationNamePanel(지배 국가/공백지) + 주민/민심/
-// 농업/상업/치안/수비/성벽/시세 게이지 + 태수/군사/종사 칸을 그린다. web/game 의 front-info.city
-// (FrontCityInfo)가 싣는 now/max 수치만 게이지로 렌더한다(날조 금지). 게이지는 기존 Gauge 컴포넌트
-// (레거시 SammoBar 동치) 재사용.
-//
-// 렌더 필드(API 보유): name + level(등급) + 지배국(nationId/nationName/nationColor) + 주민/농업/상업/
-// 치안/수비/성벽(now/max Gauge) + 민심(trust, barOnly) + 시세(trade % 막대).
-//
-// 등급(level)=getCityLevelList()[level] 한글명(수/진/관/이/소/중/대/특), 지역(region)=CityConst.regionMap[region]
-// 한글명(하북/중원/…/동이)을 서버가 levelName/regionName 으로 해석해 내려준다. 도시 관직(태수4/군사3/종사2)은
-// front-info.city.officers(officer_city==이 도시 AND officer_level∈{4,3,2}, PHP officerList GetFrontInfo:504).
+// CityBasicCard — 작전실 「도시」 카드(ADR-LITE-049 · 03 아트보드).
+// 시안: 32px 국가색 헤더(【지역 | 등급】 도시명 + 우측 지배 국가) → 2열 게이지 8종 → 하단 태수/군사/종사 3칸.
+// 데이터 계약은 종전 그대로다 — front-info.city(FrontCityInfo)가 싣는 now/max 만 그린다(날조 금지).
+// 시세(trade)는 분모가 없으므로 레거시 tradeBarPercent=(trade-95)*10 을 그대로 쓰고, null 이면 막대 없이
+// 「상인 없음」만 쓴다. 도시 관직은 officer_city==이 도시 AND officer_level∈{4,3,2}.
 
-import Gauge from './Gauge';
-import SammoBar from './SammoBar';
+import { Gauge } from '@opensamguk/ui';
 import GeneralName from './GeneralName';
 import type { FrontCityInfo } from '@/lib/types';
 
@@ -29,6 +21,8 @@ function isBrightColor(hex?: string): boolean {
     return (r * 299 + g * 587 + b * 114) / 1000 >= 128;
 }
 
+const num = (v: number): string => v.toLocaleString();
+
 export interface CityBasicCardProps {
     city: FrontCityInfo | null;
 }
@@ -36,66 +30,61 @@ export interface CityBasicCardProps {
 export default function CityBasicCard({ city }: CityBasicCardProps) {
     if (!city) {
         return (
-            <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
-                <div className="basic-card-name" style={{ backgroundColor: '#333333', color: '#fff' }}>
-                    도시
-                </div>
-                <div className="mcd-empty">배치된 도시가 없습니다.</div>
+            <section className="war-card war-card--city" aria-label="도시 정보">
+                <header className="war-card__head war-card__head--nation" style={{ backgroundColor: '#333', color: '#fff' }}>
+                    <span className="war-card__title">도시</span>
+                </header>
+                <div className="war-card__empty">배치된 도시가 없습니다.</div>
             </section>
         );
     }
 
-    const cityNationColor = city.nationColor ?? '#333333';
-    const cityHeaderText = isBrightColor(cityNationColor) ? '#000' : '#fff';
+    const nationColor = city.nationColor ?? '#333333';
+    const headText = isBrightColor(nationColor) ? '#0f120f' : '#fff';
     const nationLabel = city.nationId !== 0 ? `지배 국가 【 ${city.nationName ?? '-'} 】` : '공 백 지';
+    const tradePercent = city.trade != null ? Math.min(100, Math.max(0, (city.trade - 95) * 10)) : null;
 
     return (
-        <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
-            {/* cityNamePanel — 레거시 【지역 | 등급】 도시명(CityBasicCard.vue:10). 지역/등급 모두 서버 해석
-                한글명(regionName=CityConst.regionMap[region], levelName=getCityLevelList()[level]). 부재 시 폴백. */}
-            <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
-                【{city.regionName ? `${city.regionName} | ` : ''}{city.levelName ?? `Lv.${city.level}`}】 {city.name}
-            </div>
-            {/* nationNamePanel — 지배 국가/공백지. */}
-            <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
-                {nationLabel}
-            </div>
-            <div className="gauge-metrics">
-                <Gauge label="주민" now={city.population} max={city.populationMax} />
-                {/* 민심(trust) — 막대 cur/100, 텍스트는 레거시대로 단독 숫자(소수 1자리, '%' 없음). */}
-                <Gauge label="민심" now={city.trust} max={100} barOnly />
-                <Gauge label="농업" now={city.agriculture} max={city.agricultureMax} />
-                <Gauge label="상업" now={city.commerce} max={city.commerceMax} />
-                <Gauge label="치안" now={city.security} max={city.securityMax} />
-                <Gauge label="수비" now={city.defense} max={city.defenseMax} />
-                <Gauge label="성벽" now={city.wall} max={city.wallMax} />
-                {/* 시세(trade %) — 레거시 tradeBarPercent=(trade-95)*10(0..100 클램프). trade==null(상인 없음)이면
-                    막대 없이 텍스트만(분모 없는 단독 표시, 날조 금지). */}
-                <div className="mcd-metric gauge-metric">
-                    <div className="mcd-metric-head">시세</div>
-                    <div className="mcd-metric-body">
-                        {city.trade != null && (
-                            <SammoBar percent={Math.min(100, Math.max(0, (city.trade - 95) * 10))} height={7} />
-                        )}
-                        <div className="mcd-metric-text">{city.trade != null ? `${city.trade}%` : '상인 없음'}</div>
+        <section className="war-card war-card--city" aria-label="도시 정보">
+            <header className="war-card__head war-card__head--nation" style={{ backgroundColor: nationColor, color: headText }}>
+                <span className="war-card__title">
+                    【{city.regionName ? `${city.regionName} | ` : ''}{city.levelName ?? `Lv.${city.level}`}】 {city.name}
+                </span>
+                <span className="war-card__head-right">{nationLabel}</span>
+            </header>
+
+            <div className="war-card__gauges">
+                <Gauge label="주민" value={city.population} max={city.populationMax} display={`${num(city.population)} / ${num(city.populationMax)}`} />
+                {/* 민심(trust) — 막대는 cur/100, 텍스트는 레거시대로 단독 숫자(소수 1자리, '%' 없음). */}
+                <Gauge label="민심" value={city.trust} max={100} tone="bronze" display={city.trust.toLocaleString(undefined, { maximumFractionDigits: 1 })} />
+                <Gauge label="농업" value={city.agriculture} max={city.agricultureMax} display={`${num(city.agriculture)} / ${num(city.agricultureMax)}`} />
+                <Gauge label="상업" value={city.commerce} max={city.commerceMax} display={`${num(city.commerce)} / ${num(city.commerceMax)}`} />
+                <Gauge label="치안" value={city.security} max={city.securityMax} display={`${num(city.security)} / ${num(city.securityMax)}`} />
+                <Gauge label="수비" value={city.defense} max={city.defenseMax} tone="rust" display={`${num(city.defense)} / ${num(city.defenseMax)}`} />
+                <Gauge label="성벽" value={city.wall} max={city.wallMax} tone="rust" display={`${num(city.wall)} / ${num(city.wallMax)}`} />
+                {tradePercent != null ? (
+                    <Gauge label="시세" value={tradePercent} max={100} tone="bronze" display={`${city.trade}%`} />
+                ) : (
+                    // 분모가 없으므로 막대를 그리지 않는다 — 없는 최댓값을 지어내지 않는다.
+                    <div className="os-gauge war-card__gauge--textonly">
+                        <div className="os-gauge__top"><span>시세</span><span className="os-num">상인 없음</span></div>
                     </div>
-                </div>
-                {/* 도시 관직(태수4/군사3/종사2) — 레거시 CityBasicCard.vue officerList[4/3/2]. 이름색=getNPCColor(npc),
-                    빈 슬롯은 '-'(officerList[N]?.name ?? '-'). officers=officer_city==이 도시 AND officer_level∈{4,3,2}. */}
+                )}
+            </div>
+
+            <footer className="war-card__officers">
                 {([['태수', 4], ['군사', 3], ['종사', 2]] as const).map(([label, lvl]) => {
                     const off = city.officers?.find((o) => o.officerLevel === lvl);
                     return (
-                        <div key={label} className="mcd-metric gauge-metric">
-                            <div className="mcd-metric-head">{label}</div>
-                            <div className="mcd-metric-body">
-                                <div className="mcd-metric-text">
-                                    {off ? <GeneralName name={off.name} npcType={off.npc} /> : '-'}
-                                </div>
-                            </div>
+                        <div key={label} className="war-card__officer">
+                            <span className="war-card__k">{label}</span>
+                            <span className="war-card__v">
+                                {off ? <GeneralName name={off.name} npcType={off.npc} /> : <span className="war-card__none">-</span>}
+                            </span>
                         </div>
                     );
                 })}
-            </div>
+            </footer>
         </section>
     );
 }
