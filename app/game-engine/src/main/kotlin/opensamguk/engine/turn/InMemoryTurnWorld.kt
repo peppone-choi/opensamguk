@@ -910,6 +910,8 @@ class InMemoryTurnWorld(
         val battlePlansOut = dirtyBattlePlanIds.mapNotNull { battlePlans[it] }
         val createdBattlePlans = createdBattlePlanIds.mapNotNull { battlePlans[it] }
         val deletedBattlePlans = deletedBattlePlanIds.toList()
+        // PR 비평 S17: 소비된 계획은 이번 flush 로 `resolved_*` 가 영속되고 부팅 시 다시 읽지 않으므로 메모리에서도 내린다(잔류 방지).
+        for (id in battlePlans.values.filter { it.resolved }.map { it.id }) battlePlans.remove(id)
 
         dirtyGeneralIds.clear()
         dirtyCityIds.clear()

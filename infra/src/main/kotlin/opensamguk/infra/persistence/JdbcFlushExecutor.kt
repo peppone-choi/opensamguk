@@ -283,11 +283,13 @@ open class JdbcFlushExecutor(
             if (payload.updatedOperationUnits.isNotEmpty()) operationUnitUpdate(payload.worldId, payload.updatedOperationUnits)
 
             // 8i. 출병 계획·리플레이 채널 (Phase 4X-C, spec v4.1 §3): 8h 뒤 — battle_replay.operation_id FK 대상이 먼저 존재.
-            //     계획 DELETE → CREATE → UPDATE 뒤에 리플레이 INSERT(battle_plan_id FK). 5단계 general DELETE 가 계획을 CASCADE 로
-            //     지우는 같은 틱은 recorder 가 pending INSERT 의 id 를 NULL 로 바꿔 둔다(F3·N4).
+            //     계획 DELETE → **UPDATE → CREATE**(PR 비평 S12: 같은 틱 「A 소비(resolved UPDATE) + 같은 키 B 저장(CREATE)」 이
+            //     부분 UNIQUE(`WHERE resolved_year IS NULL`) 와 충돌하지 않도록 UPDATE 가 먼저; UPDATE 대상은 지난 틱 행뿐이라 안전)
+            //     뒤에 리플레이 INSERT(battle_plan_id FK). 5단계 general DELETE 가 계획을 CASCADE 로 지우는 같은 틱은 recorder 가
+            //     pending INSERT 의 id 를 NULL 로 바꿔 둔다(F3·N4).
             if (payload.deletedBattlePlanIds.isNotEmpty()) battlePlanDeleteMany(payload.worldId, payload.deletedBattlePlanIds)
-            if (payload.createdBattlePlans.isNotEmpty()) battlePlanCreateMany(payload.worldId, payload.createdBattlePlans)
             if (payload.updatedBattlePlans.isNotEmpty()) battlePlanUpdate(payload.worldId, payload.updatedBattlePlans)
+            if (payload.createdBattlePlans.isNotEmpty()) battlePlanCreateMany(payload.worldId, payload.createdBattlePlans)
             if (payload.battleReplayInserts.isNotEmpty()) battleReplayInsertMany(payload.worldId, payload.battleReplayInserts)
 
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {

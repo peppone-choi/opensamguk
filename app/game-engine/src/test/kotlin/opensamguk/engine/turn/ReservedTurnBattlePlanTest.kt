@@ -65,6 +65,7 @@ class ReservedTurnBattlePlanTest {
         assertEquals(1, world.getBattlePlanById(5)!!.resolvedMonth, "계획은 소비된다(F7)")
         val dirty = world.consumeDirtyState()
         assertEquals(5, dirty.battlePlans.single().id)
+        assertNull(world.getBattlePlanById(5), "소비된 계획은 flush 뒤 메모리에서 내린다(S17)")
         assertTrue(dirty.logs.any { it.scope == "general" && it.generalId == 100 && it.text.contains("리플레이 <Y>#1</> 가 기록되었습니다.") })
     }
 

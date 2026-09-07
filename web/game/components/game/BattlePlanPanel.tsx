@@ -38,6 +38,7 @@ export default function BattlePlanPanel({ cityId, battleCenterHref }: { readonly
     const [message, setMessage] = useState('');
     const [estimate, setEstimate] = useState<Estimate | null>(null);
     const [now, setNow] = useState(() => Date.now());
+    // 초기값은 UI 기본값일 뿐 게이트가 아니다(S15): 손실 % 는 rules 범위 중간값, 사기 임계는 아트보드 예시(40) — 저장 시 플레이어 입력만 실린다.
     const [form, setForm] = useState({ stance: 'assault', lossOn: false, loss: 50, moraleOn: false, morale: 40 });
     const [formSeeded, setFormSeeded] = useState(false);
 
@@ -55,6 +56,11 @@ export default function BattlePlanPanel({ cityId, battleCenterHref }: { readonly
 
     const existing: BattlePlan | undefined = useMemo(() => plans?.plans.find((p) => p.targetCityId === cityId), [plans, cityId]);
     useEffect(() => {
+        if (plans && !existing && !formSeeded) {
+            const r = plans.rules;
+            setForm((f) => ({ ...f, loss: Math.round((r.retreatLossPctMin + r.retreatLossPctMax) / 2) }));
+            setFormSeeded(true);
+        }
         if (existing && !formSeeded) {
             setForm({ stance: existing.stance, lossOn: existing.retreatLossPct != null, loss: existing.retreatLossPct ?? 50, moraleOn: existing.retreatMoraleBelow != null, morale: existing.retreatMoraleBelow ?? 40 });
             setFormSeeded(true);
@@ -157,12 +163,12 @@ export default function BattlePlanPanel({ cityId, battleCenterHref }: { readonly
                         <legend>조건</legend>
                         <label className="bp__cond">
                             <input type="checkbox" checked={form.lossOn} onChange={(e) => setForm({ ...form, lossOn: e.target.checked })} />
-                            병력 <input type="number" aria-label="퇴각 손실 %" min={rules.retreatLossPctMin} max={rules.retreatLossPctMax} value={form.loss} disabled={!form.lossOn} onChange={(e) => setForm({ ...form, loss: Number(e.target.value) })} />% 손실 시 퇴각
+                            병력 <input type="number" aria-label="퇴각 손실 %" min={rules.retreatLossPctMin} max={rules.retreatLossPctMax} value={form.loss} disabled={!form.lossOn} title={form.lossOn ? undefined : '조건을 켜면 입력할 수 있습니다'} onChange={(e) => setForm({ ...form, loss: Number(e.target.value) })} />% 손실 시 퇴각
                             <span className="bp__reason">({rules.retreatLossPctMin}~{rules.retreatLossPctMax})</span>
                         </label>
                         <label className="bp__cond">
                             <input type="checkbox" checked={form.moraleOn} onChange={(e) => setForm({ ...form, moraleOn: e.target.checked })} />
-                            사기 <input type="number" aria-label="퇴각 사기 임계" min={rules.retreatMoraleMin} max={rules.retreatMoraleMax} value={form.morale} disabled={!form.moraleOn} onChange={(e) => setForm({ ...form, morale: Number(e.target.value) })} /> 미만이면 퇴각
+                            사기 <input type="number" aria-label="퇴각 사기 임계" min={rules.retreatMoraleMin} max={rules.retreatMoraleMax} value={form.morale} disabled={!form.moraleOn} title={form.moraleOn ? undefined : '조건을 켜면 입력할 수 있습니다'} onChange={(e) => setForm({ ...form, morale: Number(e.target.value) })} /> 미만이면 퇴각
                             <span className="bp__reason">(공격자에겐 「방어로 전환」 이 없어 퇴각으로 적습니다)</span>
                         </label>
                         <label className="bp__cond bp__cond--off" title="엔진에 추격이 없습니다" data-reason="엔진에 추격이 없습니다">

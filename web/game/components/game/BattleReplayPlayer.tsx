@@ -50,10 +50,10 @@ export default function BattleReplayPlayer({ id, battleCenterHref, operationHref
                 <Panel className="replay__panel" aria-label="페이즈">
                     <SectionHeader title="페이즈" sub={`${summary.year}年 ${summary.month}月 ${PHASE_TEXT[summary.phase] ?? ''} 해결`} />
                     <div className="replay__scrub" role="group" aria-label="페이즈 스크럽">
-                        <button type="button" className="os-button os-button--ghost os-button--sm" aria-label="이전 페이즈" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0}>‹</button>
+                        <button type="button" className="os-button os-button--ghost os-button--sm" aria-label="이전 페이즈" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0} title={idx === 0 ? '첫 페이즈입니다' : undefined}>‹</button>
                         <span className="os-num" aria-live="polite">{total === 0 ? 0 : idx + 1} / {total}</span>
-                        <button type="button" className="os-button os-button--ghost os-button--sm" aria-label="다음 페이즈" onClick={() => setIdx((i) => Math.min(total - 1, i + 1))} disabled={idx >= total - 1}>›</button>
-                        <button type="button" className="os-button os-button--ghost os-button--sm" onClick={() => setPlaying((p) => !p)} disabled={total === 0}>{playing ? '정지' : '재생'}</button>
+                        <button type="button" className="os-button os-button--ghost os-button--sm" aria-label="다음 페이즈" onClick={() => setIdx((i) => Math.min(total - 1, i + 1))} disabled={idx >= total - 1} title={idx >= total - 1 ? '마지막 페이즈입니다' : undefined}>›</button>
+                        <button type="button" className="os-button os-button--ghost os-button--sm" onClick={() => setPlaying((p) => !p)} disabled={total === 0} title={total === 0 ? '페이즈 기록이 없습니다' : undefined}>{playing ? '정지' : '재생'}</button>
                         {[0.5, 1, 2].map((s) => (
                             <button key={s} type="button" className={`os-button os-button--ghost os-button--sm${speed === s ? ' is-active' : ''}`} aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}×</button>
                         ))}

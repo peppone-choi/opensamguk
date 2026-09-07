@@ -42,6 +42,8 @@ object BattlePlanRules {
     const val REASON_OWN_CITY = "아군 도시입니다."
     const val REASON_SEALED = "봉인된 계획입니다."
     const val REASON_NO_PLAN = "계획이 없습니다."
+    /** NPC(npcState >= 2)는 계획을 봉인하지 않는다 — 결정성(인테이크만, PR 비평 S11). */
+    const val REASON_NPC = "NPC 장수는 출병 계획을 둘 수 없습니다."
 
     sealed interface SaveInput {
         data class Ok(val targetCityId: Int, val stance: String, val retreatLossPct: Int?, val retreatMoraleBelow: Int?) : SaveInput

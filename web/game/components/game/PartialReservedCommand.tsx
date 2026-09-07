@@ -185,7 +185,7 @@ export default function PartialReservedCommand({
                                         <a
                                             className={`os-chip os-chip--bronze rcp-seal rcp-seal--sealed${autorunNotice ? ' rcp-seal--autorun' : ''}`}
                                             href={`${battlePlanHref}?city=${slot.arg.destCityID}`}
-                                            title={autorunNotice ? 'AI 가 명령을 바꾼 턴에는 적용되지 않습니다' : '봉인된 출병 계획 보기'}
+                                            title="봉인된 출병 계획 보기 · AI 가 명령을 바꾼 턴에는 적용되지 않습니다"
                                         >
                                             봉인됨
                                         </a>

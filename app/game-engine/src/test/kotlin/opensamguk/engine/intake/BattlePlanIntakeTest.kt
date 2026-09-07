@@ -61,6 +61,10 @@ class BattlePlanIntakeTest {
     fun `save gates, draft update bumps version, seal locks, delete only drafts`() {
         val world = world(); val recorder = ChangeRecorder(); val h = BattlePlanHandler(world, recorder)
         assertEquals("장수가 존재하지 않습니다.", save(h, generalId = 99).reason)
+        // S11: NPC(npcState >= 2)는 세 명령 모두 전 게이트에서 거부
+        val npc = BattlePlanHandler(world(general(10).copy(npcState = 2)), ChangeRecorder())
+        assertEquals(BattlePlanRules.REASON_NPC, save(npc).reason)
+        assertEquals(BattlePlanRules.REASON_NPC, (npc.handleSeal(TurnDaemonCommand.BattlePlanSeal(generalId = 10, planId = 1)) as BattlePlanActionResult).reason)
         assertEquals(BattlePlanRules.REASON_INPUT, save(h, stance = "advance").reason)
         assertEquals(BattlePlanRules.REASON_INPUT, save(h, pct = 5).reason)
         assertEquals(BattlePlanRules.REASON_NO_TARGET, save(h, city = 999).reason)

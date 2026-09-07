@@ -94,8 +94,10 @@ class BattlePlanReplayFlushIT {
         assertEquals(1, count("battle_replay")); assertEquals(2, jdbc.queryForObject("SELECT version FROM battle_plan WHERE world_id = 1 AND id = 1", MapSqlParameterSource(), Int::class.java))
         assertEquals("probe", jdbc.queryForObject("SELECT plan_stop FROM battle_replay WHERE world_id = 1 AND id = 1", MapSqlParameterSource(), String::class.java))
 
-        // 2) 부분 UNIQUE: 소비된 1번과 같은 키(10, 2)의 새 미소비 계획은 허용, 미소비 둘은 거부(적색면)
-        executor.flush(FlushPayload(worldId = worldId, worldStateUpdate = ws(mapOf("max_battle_plan_id" to 2)), createdBattlePlans = listOf(plan(2, sealed = false))))
+        // 2) 부분 UNIQUE: 소비된 1번과 같은 키(10, 2)의 새 미소비 계획은 허용, 미소비 둘은 거부(적색면).
+        //    S12: 「같은 틱 A 소비(UPDATE) + 같은 키 B 저장(CREATE)」 한 payload — 8i 가 UPDATE 를 CREATE 앞에 두어 COMMIT 된다.
+        executor.flush(FlushPayload(worldId = worldId, worldStateUpdate = ws(), updatedBattlePlans = listOf(plan(1, sealed = true, resolved = false, version = 3))))
+        executor.flush(FlushPayload(worldId = worldId, worldStateUpdate = ws(mapOf("max_battle_plan_id" to 2)), updatedBattlePlans = listOf(plan(1, sealed = true, resolved = true, version = 4)), createdBattlePlans = listOf(plan(2, sealed = false))))
         assertEquals(2, count("battle_plan"))
         assertThrows<Exception> { executor.flush(FlushPayload(worldId = worldId, worldStateUpdate = ws(), createdBattlePlans = listOf(plan(3, sealed = false)))) }
         assertEquals(2, count("battle_plan"))

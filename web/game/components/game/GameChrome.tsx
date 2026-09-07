@@ -143,6 +143,8 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
 
         {/* 우: 명령 목록 12순 */}
         <div className="ib-reserved">
+          {/* PR 비평 S10: 장수별 자율행동 신호(`my-page.autorunLimit`)는 항상 null 이고 `global.autorunUser` 는 서버 전역 정책이라
+              「봉인됨」 칩 점선(autorunNotice)의 근거가 못 된다 — 점선은 켜지 않고 칩 툴팁이 「AI 가 명령을 바꾼 턴에는 적용되지 않습니다」 를 항상 말한다. */}
           {generalId != null && (
             <PartialReservedCommand
               generalId={generalId}
@@ -153,7 +155,6 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
               onToast={show}
               hero={{ picture: general.picture, imageServer: general.imageServer, name: general.name, nationColor: nation?.color ?? null }}
               battlePlanHref={battlePlanHref}
-              autorunNotice={frontInfo.global.autorunUser != null}
             />
           )}
         </div>

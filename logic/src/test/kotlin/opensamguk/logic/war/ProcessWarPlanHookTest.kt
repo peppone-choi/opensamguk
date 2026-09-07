@@ -103,6 +103,15 @@ class ProcessWarPlanHookTest {
         assertEquals(plain.attackerCrew, attacker.getCrew()); assertEquals(plain.defenderCrews, listOf(d1.getCrew(), d2.getCrew())); assertEquals(plain.conquer, conquer)
         // 오늘 동작의 형태 핀: 퇴각 없음, 수비자 격파 로그가 있고 페이즈 소진(또는 둘 다 격파)
         assertTrue(plain.calls.none { it.startsWith("retreat:") }, plain.calls.toString())
+        // S14 리터럴 핀(계획 없는 경로의 훅 호출 순서 — 리팩터 전 순서 그대로): 진격 → 첫 접촉(addTrain×2·contact·init×2) →
+        // 페이즈마다 phaseCaller A→D → phase 로그 … → 수비자 격파(result×2·down) → 다음 수비자 첫 접촉 … → 사후 result 쌍 → 분쟁.
+        val head = listOf("advance", "addTrain:G1", "addTrain:G2", "contact:G2", "init:G1", "init:G2", "phaseCaller:G1", "phaseCaller:G2")
+        assertEquals(head, plain.calls.take(head.size), plain.calls.toString())
+        val downIdx = plain.calls.indexOfFirst { it.startsWith("down:G2") }
+        assertTrue(downIdx > 0, plain.calls.toString())
+        assertEquals(listOf("result:G1", "result:G2"), plain.calls.subList(downIdx - 2, downIdx), "수비자 격파 직전 result 쌍")
+        assertTrue(plain.calls.getOrNull(downIdx + 1)?.startsWith("addTrain:G1") == true, "다음 수비자 첫 접촉이 이어진다: ${plain.calls.drop(downIdx)}")
+        assertEquals("conflict", plain.calls.last())
     }
 
     @Test

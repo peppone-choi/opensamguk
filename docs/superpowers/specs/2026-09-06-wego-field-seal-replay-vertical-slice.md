@@ -132,7 +132,7 @@
 ## 6. 읽기 API (game-api) — `GameApiSecurityConfig` `.authenticated()` 등록
 
 - `GET /api/my-battle-plans`: 401 익명 · 200 `{generalId, plans:[{id, targetCityId, targetCityName, stance, stanceLabel, retreatLossPct, retreatMoraleBelow, sealed, sealedAt, resolved:false, version}], rules:{stances:[{value,label,description}], retreatLossPctMin, retreatLossPctMax, provisional:true}}`(소비된 계획은 목록에 없다).
-- `GET /api/battles/replays?scope=nation|mine`(감찰부 목록): 401 익명 · 200 `[{id, year, month, phase, attackerName, attackerNationId, defenderCityName, defenderNationId, result, resultLabel, attackerDead, defenderDead, hasPlan}]` — `nation` 은 내 국가가 공격자 **또는** 수비자인 리플레이, 재야는 `mine` 만.
+- `GET /api/battles/replays?scope=nation|mine`(감찰부 목록, **공격 50 + 수비 50 최신순 병합 — 그 이상은 잘린다(S13)**): 401 익명 · 200 `[{id, year, month, phase, attackerName, attackerNationId, defenderCityName, defenderNationId, result, resultLabel, attackerDead, defenderDead, hasPlan}]` — `nation` 은 내 국가가 공격자 **또는** 수비자인 리플레이, 재야는 `mine` 만.
 - `GET /api/battles/replays/{id}`: 401 익명 · 403 (공격 국가·수비 국가 어느 쪽도 아님; 본인이면 200) · 200 위 + `battlePhases`, `settlement:{attackerCrewBefore, attackerCrewAfter, attackerDead, defenderDead, riceUsed, conquered}`, `plan:{stance, retreatLossPct, retreatMoraleBelow, planStop} | null`, `seed:{warSeed, inputHash, replayHash, schemaVersion}`, `operationId`.
 - 예상 범위(09 「예상 (결정론 시뮬)」): 기존 `POST /api/simulate-battle` 을 **그대로** 쓴다 — `defenderGeneralId` 가 필요하므로 09 화면은 목표 도시 상세 API 가 주는 수비 장수 목록의 **첫 항목**(클라이언트가 `extractBattleOrder` 를 재현하지 않는다; 없으면 「수비 장수 없음 — 성 방어만」 으로 disabled)을 넣고 「목록 첫 수비자 1인 기준 예상」 이라고 적는다(S10·R). 결과는 killed/dead 의 min/avg/max. 아트보드의 「우세 41% · 대등 37% · 열세 22%」 는 그 API 가 per-repeat 결과를 주지 않으므로 **그리지 않는다**.
 
@@ -156,7 +156,7 @@
 
 ## 9. 마이그레이션·순서
 
-V57 = 이 절편(4X-B V56 뒤 — 이미 커밋됨; `battle_replay.operation_id` FK `ON DELETE SET NULL (operation_id)`). executor 단계는 **8i**(8h 가 커밋됨). 계획 문서 4X-C 블록은 v3 커밋에서 이 스펙으로 실제로 고쳤다(N3): 이름에서 WEGO 삭제·07-30 링크는 「범위 밖 참조」·봉인 마감 `<=`·`battle_plan.operation_id` 없음(리플레이 쪽에만)·명령 3종 이름·409 아님·stance 2종·조건 2종·소비된 계획.
+V57 = 이 절편(4X-B V56 뒤 — 이미 커밋됨; `battle_replay.operation_id` FK `ON DELETE SET NULL (operation_id)`). executor 단계는 **8i**(8h 가 커밋됨) — 순서는 계획 DELETE → **UPDATE → CREATE**(같은 틱 「A 소비 + 같은 키 B 저장」 이 부분 UNIQUE 와 충돌하지 않게, S12) → 리플레이 INSERT. 소비된 계획은 flush 시 메모리에서도 내린다(S17). 장수별 autorun 신호가 클라이언트에 없어(`my-page.autorunLimit` 항상 null) 「봉인됨」 칩 점선은 켜지 않고 툴팁으로만 말한다(S10). 계획 문서 4X-C 블록은 v3 커밋에서 이 스펙으로 실제로 고쳤다(N3): 이름에서 WEGO 삭제·07-30 링크는 「범위 밖 참조」·봉인 마감 `<=`·`battle_plan.operation_id` 없음(리플레이 쪽에만)·명령 3종 이름·409 아님·stance 2종·조건 2종·소비된 계획.
 
 ## 10. UNKNOWN · 밖
 

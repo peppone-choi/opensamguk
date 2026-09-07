@@ -32,6 +32,8 @@ class BattlePlanHandler(
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(generalId)) {
             return null to fail(type, generalId, "접속 제한입니다.")
         }
+        // ②′ NPC 가드(PR 비평 S11, 4X-A S6 과 같은 부류): 전환기 `?generalId=` 신뢰 구멍으로 NPC 출병에 계획을 봉인하는 것을 엔진에서 막는다.
+        if (me.npcState >= 2) return null to fail(type, generalId, BattlePlanRules.REASON_NPC)
         return me to null
     }
 
