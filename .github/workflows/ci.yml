@@ -35,6 +35,11 @@ jobs:
       - name: Verify Han supply disagreements (fail closed)
         if: '!cancelled()'
         run: python3 tools/scenario/audit_han_supply_disagreements.py --map han-world-v3 --check
+      # 위 게이트는 두 보급 모델의 **불일치**만 본다 — 둘 다 「끊겼다」에 동의하면 무료 통과다.
+      # 그래서 공융이 16城 중 14城을 개시부터 잃은 채로 초록이었다. 이 게이트가 그 절대 축이다.
+      - name: Verify scenario seed supply reachability (baseline pinned)
+        if: '!cancelled()'
+        run: python3 tools/scenario/audit_scenario_seed_supply.py --check
       - name: Verify reviewed Han route candidate regeneration
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
