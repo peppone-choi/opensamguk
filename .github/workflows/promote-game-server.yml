@@ -37,6 +37,8 @@ jobs:
           INPUT_SERVER: ${{ inputs.server }}
           INPUT_TAG: ${{ inputs.tag }}
           INPUT_INCLUDE_ENGINE: ${{ inputs.include_engine }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         run: |
           set -euo pipefail
           exec 9>/tmp/opensamguk-production.lock
@@ -44,6 +46,11 @@ jobs:
             echo "ERROR: timed out after 1800 seconds waiting for /tmp/opensamguk-production.lock" >&2
             exit 1
           fi
+
+          # 매 승격 재login → 박스 토큰 만료 무관(deploy.yml 과 같은 규약). 없으면 pull 이 `denied` 로 떨어진다
+          # (2026-09-07 실측: 공유 스택 배포가 유지보수 창에서 막혀 재login 이 오래 없던 박스에서 승격이 이 지점에서 실패).
+          echo "=== GHCR login ==="
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
