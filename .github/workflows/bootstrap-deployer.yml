@@ -98,19 +98,28 @@ jobs:
 
           echo "=== Before: does this deployer know atomic idle admission? ==="
           BEFORE_RC=0
-          maintenance_http POST /maintenance/enter-if-idle >/dev/null 2>&1 || BEFORE_RC=$?
-          echo "enter-if-idle probe rc=$BEFORE_RC (0=supported+entered, 9=unsupported, 8=refused/busy, 1=transport)"
+          BEFORE_BODY="$(maintenance_http POST /maintenance/enter-if-idle 2>/dev/null)" || BEFORE_RC=$?
+          echo "enter-if-idle probe rc=$BEFORE_RC body=${BEFORE_BODY:-<none>}"
           if [ "$BEFORE_RC" -eq 0 ]; then
             # 이미 지원한다 — 우리가 연 창을 즉시 닫고 아무것도 바꾸지 않는다.
             maintenance_http POST /maintenance/leave >/dev/null
             echo "=== deployer already supports atomic idle admission; nothing to bootstrap ==="
             exit 0
           fi
-          if [ "$BEFORE_RC" -ne 9 ]; then
-            # rc=8 은 엔드포인트가 있는데 거부됐다는 뜻이다(창이 이미 잡혔거나 deployer 가 idle 이 아니다).
-            # 그 몸통을 그대로 보여 준다 — 무엇을 붙들고 있는지는 이 응답에만 있다. 아무것도 바꾸지 않는다.
-            ADMIT_BODY="$(maintenance_http POST /maintenance/enter-if-idle 2>/dev/null || true)"
-            echo "enter-if-idle body=${ADMIT_BODY:-<none>}"
+
+          # 「미지원」 신호는 404 만이 아니다. 이 박스의 deployer 는 maintenance-v1 을 광고하면서도
+          # enter-if-idle 라우트가 없어 `{"error":"maintenance endpoint unavailable"}` 을 돌려준다(2026-09-07 실측).
+          # 그 몸통과 「창이 열려 있다」(state=open, 즉 아무도 점유하지 않았다)를 **함께** 만족할 때만 미지원으로 본다 —
+          # 진짜 busy(누가 창을 잡고 있음)는 state 가 open 이 아니므로 여기 들어오지 못한다.
+          UNSUPPORTED=false
+          if [ "$BEFORE_RC" -eq 9 ]; then
+            UNSUPPORTED=true
+          elif [ "$BEFORE_RC" -eq 8 ] \
+            && printf '%s' "${BEFORE_BODY:-}" | grep -Fq 'maintenance endpoint unavailable' \
+            && printf '%s' "${STATE_BODY:-}" | grep -Fq '"state":"open"'; then
+            UNSUPPORTED=true
+          fi
+          if [ "$UNSUPPORTED" != true ]; then
             echo "ERROR: deployer refused admission for a reason other than missing support (rc=$BEFORE_RC); operator inspection required" >&2
             exit 1
           fi
@@ -147,9 +156,9 @@ jobs:
 
           echo "=== After: verifying atomic idle admission ==="
           AFTER_RC=0
-          maintenance_http POST /maintenance/enter-if-idle >/dev/null 2>&1 || AFTER_RC=$?
+          AFTER_BODY="$(maintenance_http POST /maintenance/enter-if-idle 2>/dev/null)" || AFTER_RC=$?
           if [ "$AFTER_RC" -ne 0 ]; then
-            echo "ERROR: replaced deployer still does not admit atomically (rc=$AFTER_RC); deploy.yml stays blocked" >&2
+            echo "ERROR: replaced deployer still does not admit atomically (rc=$AFTER_RC body=${AFTER_BODY:-<none>}); deploy.yml stays blocked" >&2
             exit 1
           fi
           # 확인만 하고 창은 바로 돌려준다 — 이 워크플로는 배포하지 않는다.
