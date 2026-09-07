@@ -6,7 +6,7 @@
 // 시세(trade)는 분모가 없으므로 레거시 tradeBarPercent=(trade-95)*10 을 그대로 쓰고, null 이면 막대 없이
 // 「상인 없음」만 쓴다. 도시 관직은 officer_city==이 도시 AND officer_level∈{4,3,2}.
 
-import { Gauge } from '@opensamguk/ui';
+import { Gauge, Panel, SectionHeader } from '@opensamguk/ui';
 import GeneralName from './GeneralName';
 import type { FrontCityInfo } from '@/lib/types';
 
@@ -30,12 +30,10 @@ export interface CityBasicCardProps {
 export default function CityBasicCard({ city }: CityBasicCardProps) {
     if (!city) {
         return (
-            <section className="war-card war-card--city" aria-label="도시 정보">
-                <header className="war-card__head war-card__head--nation" style={{ backgroundColor: '#333', color: '#fff' }}>
-                    <span className="war-card__title">도시</span>
-                </header>
+            <Panel className="war-card war-card--city" aria-label="도시 정보">
+                <SectionHeader className="war-card__head" title="도시" />
                 <div className="war-card__empty">배치된 도시가 없습니다.</div>
-            </section>
+            </Panel>
         );
     }
 
@@ -45,13 +43,14 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
     const tradePercent = city.trade != null ? Math.min(100, Math.max(0, (city.trade - 95) * 10)) : null;
 
     return (
-        <section className="war-card war-card--city" aria-label="도시 정보">
-            <header className="war-card__head war-card__head--nation" style={{ backgroundColor: nationColor, color: headText }}>
-                <span className="war-card__title">
-                    【{city.regionName ? `${city.regionName} | ` : ''}{city.levelName ?? `Lv.${city.level}`}】 {city.name}
-                </span>
-                <span className="war-card__head-right">{nationLabel}</span>
-            </header>
+        <Panel className="war-card war-card--city" aria-label="도시 정보">
+            {/* 시안 03 아트보드의 32px 국가색 sec-h — 배경만 국가색이고 구조는 공유 SectionHeader 다. */}
+            <SectionHeader
+                className="war-card__head war-card__head--nation"
+                style={{ backgroundColor: nationColor, color: headText }}
+                title={`【${city.regionName ? `${city.regionName} | ` : ''}${city.levelName ?? `Lv.${city.level}`}】 ${city.name}`}
+                actions={<span className="war-card__head-right">{nationLabel}</span>}
+            />
 
             <div className="war-card__gauges">
                 <Gauge label="주민" value={city.population} max={city.populationMax} display={`${num(city.population)} / ${num(city.populationMax)}`} />
@@ -93,6 +92,6 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
                     );
                 })}
             </footer>
-        </section>
+        </Panel>
     );
 }

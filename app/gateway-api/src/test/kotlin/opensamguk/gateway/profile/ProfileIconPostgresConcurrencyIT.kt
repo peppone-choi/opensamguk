@@ -85,7 +85,8 @@ class ProfileIconPostgresConcurrencyIT {
             val reloaded = userRepository.findByUsername("concurrent-profile-icon").orElseThrow()
             assertTrue(reloaded.imgsvr)
             assertTrue(reloaded.profileIconManaged)
-            assertTrue(Regex("[0-9a-f]{8}\\.png").matches(requireNotNull(reloaded.picture)))
+            // 저장본은 카드 규격 JPEG 으로 다시 인코딩된다(ProfileIconTransformer) — 업로드가 PNG 라도 .jpg 다.
+            assertTrue(Regex("[0-9a-f]{8}\\.jpg").matches(requireNotNull(reloaded.picture)))
             assertTrue(reloaded.profileIconChangedAt != null)
             val storedFiles = Files.list(storageRoot).use { paths ->
                 paths.filter { it.fileName.toString() != ".ops" }.toList()

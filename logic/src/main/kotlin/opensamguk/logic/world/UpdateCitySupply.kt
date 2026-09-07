@@ -196,11 +196,14 @@ data class CitySupplyResult(
  *      `nation=0, officer_set=0, conflict={}, term=0, front=0 WHERE city IN lostIds`.
  *
  * PORT NOTE (PHP frozen historical baseline (ADR-LITE-042; not current product authority) over the plan's "REUSE FoundingCascade"): the UpdateCitySupply
- * officer-reset (`officer_level=1, officer_city=0`) is UNCONDITIONAL on the matched generals (NO
- * `officer_level<12` guard, NO makelimit write) — distinct from FoundingCascade.demoteMember; and
+ * officer-reset (`officer_level=1, officer_city=0`) has NO makelimit write. It is unconditional on the
+ * matched generals EXCEPT the lord (officer_level 12) — see the 4a comment for why we deviate here — distinct from FoundingCascade.demoteMember; and
  * the city neutralize ALSO sets `officer_set=0`/`term=0` which FoundingCascade.neutralizeCity does
  * NOT. Ported faithfully here rather than reusing the (different-shaped) 방랑 cascade helpers.
  */
+/** 군주 관직 등급. `ConquerCity.resolveCollapse` 가 멸망 순서 핀으로 쓰는 값과 같다. */
+private const val LORD_OFFICER_LEVEL = 12
+
 fun applyCitySupply(
     cities: List<City>,
     generals: List<General>,
@@ -274,10 +277,17 @@ fun applyCitySupply(
         return CitySupplyResult(decayedCities, decayedGenerals, lostCityIds, isolatedLogs, reachability?.rows.orEmpty())
     }
 
-    // 4a — officer reset: officer_level=1, officer_city=0 WHERE officer_city IN lostIds (unconditional).
+    // 4a — officer reset: officer_level=1, officer_city=0 WHERE officer_city IN lostIds.
+    //
+    // 군주(officer_level 12)는 강등하지 않는다 — PHP 원본에는 이 가드가 없지만, 보급이 끊긴 도시가
+    // 중립화될 때 군주까지 일반으로 떨어지면 **국가가 군주를 잃는다**. 그 상태가 프로덕션에서
+    // 턴 루프를 멈춰 세웠고(PR #660: 「ConquerCity collapse: no lord」), 그 PR 은 군주 없는 국가의
+    // 유래를 UNKNOWN 으로 남겼다. 여기가 그 유래다. 군주는 城 관직이 아니라 국가 관직이므로
+    // 도시를 잃었다고 군주 자리가 사라질 이유도 없다.
+    // 군주의 officer_city 는 0 인 것이 정상이라 이 가드는 정상 월드에서는 무동작이다 — 골든 불변.
     val finalGenerals = decayedGenerals.map { g ->
         val officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: 0
-        if (officerCity in lostCitySet) {
+        if (officerCity in lostCitySet && g.officerLevel != LORD_OFFICER_LEVEL) {
             g.copy(officerLevel = 1, meta = withMetaSet(g.meta, "officer_city", 0))
         } else {
             g

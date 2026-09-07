@@ -7,7 +7,7 @@
 // 전까지 null → 해당 값은 '-'. 재야(nation==null/id==0)면 본문은 레거시 `!nation.id` 분기대로 '해당 없음'.
 // 미렌더(API-BLOCKED): 전략(strategicCmdLimit/impossibleStrategicCommand — 명령엔진 필요).
 
-import { Chip, Flag } from '@opensamguk/ui';
+import { Chip, Flag, Panel, SectionHeader } from '@opensamguk/ui';
 import { formatNumber } from '@/lib/format';
 import type { FrontNationInfo } from '@/lib/types';
 
@@ -74,19 +74,26 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
     ];
 
     return (
-        <section className="war-card war-card--nation" aria-label="국가 정보">
-            <header className="war-card__head">
-                <Flag color={nationColor} size={14} />
-                <span className="war-card__title">{nation?.name ?? '재야'}</span>
-                {/* 성향이 없어도 Lv 는 보여야 한다 — 부제 두 조각을 따로 건다. */}
-                <span className="war-card__sub">
-                    {typeNode}
-                    {typeNode && ' · '}
-                    {has ? `Lv ${nation!.level}` : NA}
-                </span>
-                <span className="war-card__spacer" />
-                <Chip tone="bronze" className="war-card__chip">국력 {has ? formatNumber(nation!.power ?? 0) : NA}</Chip>
-            </header>
+        <Panel className="war-card war-card--nation" aria-label="국가 정보">
+            {/* 시안 03 아트보드의 32px sec-h — 깃발·국가명·성향/Lv 부제·우측 국력 칩. 구조는 공유 SectionHeader 다. */}
+            <SectionHeader
+                className="war-card__head"
+                title={
+                    <>
+                        <Flag color={nationColor} size={14} />
+                        {nation?.name ?? '재야'}
+                    </>
+                }
+                /* 성향이 없어도 Lv 는 보여야 한다 — 부제 두 조각을 따로 건다. */
+                sub={
+                    <>
+                        {typeNode}
+                        {typeNode && ' · '}
+                        {has ? `Lv ${nation!.level}` : NA}
+                    </>
+                }
+                actions={<Chip tone="bronze" className="war-card__chip">국력 {has ? formatNumber(nation!.power ?? 0) : NA}</Chip>}
+            />
 
             <div className="war-card__facts war-card__facts--3">
                 {facts.map((f) => (
@@ -96,6 +103,6 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
                     </div>
                 ))}
             </div>
-        </section>
+        </Panel>
     );
 }

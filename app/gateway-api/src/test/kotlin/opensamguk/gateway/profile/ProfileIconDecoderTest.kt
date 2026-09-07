@@ -35,11 +35,22 @@ class ProfileIconDecoderTest {
     }
 
     @Test
-    fun `rejects byte dimension and shape boundary violations`() {
+    fun `rejects byte and dimension boundary violations`() {
         assertInvalid(TestImageFixtures.exactSizePng(51_200) + byteArrayOf(0))
         assertInvalid(TestImageFixtures.image("png", 63))
         assertInvalid(TestImageFixtures.image("png", 129))
-        assertInvalid(TestImageFixtures.image("png", 80, 81))
+    }
+
+    /**
+     * 정사각 강제는 없앴다 — 업로드본은 `ProfileIconTransformer` 가 카드 규격(148×210)으로 변환한다.
+     * 이 단언을 되돌려 `width != height` 를 거절하게 만들면, 보통 사진을 올린 유저가 다시 거절당하고
+     * 화면 안내문(「비율을 미리 맞출 필요 없다」)이 또 거짓말이 된다.
+     */
+    @Test
+    fun `accepts non-square uploads`() {
+        val decoded = decoder.decode(TestImageFixtures.image("png", 80, 81))
+        assertEquals(80, decoded.width)
+        assertEquals(81, decoded.height)
     }
 
     @Test

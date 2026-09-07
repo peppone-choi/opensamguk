@@ -64,15 +64,20 @@ class ProfileIconHttpSecurityTest {
             .andExpect(header().string("X-Content-Type-Options", "nosniff"))
     }
 
+    /**
+     * 클라이언트가 대는 mime·파일명은 무시하고 **디코드한 바이트**로 판정한다. 이제 저장본은
+     * 카드 규격 JPEG 으로 다시 인코딩되므로(ProfileIconTransformer) 확장자는 항상 `.jpg` 다 —
+     * 업로드가 무엇이었든 위조한 컨테이너가 그대로 흘러 들어갈 여지가 없다.
+     */
     @Test
-    fun `multipart ignores spoofed client mime and filename and uses decoded AVIF`() {
+    fun `multipart ignores spoofed client mime and filename and re-encodes to a card JPEG`() {
         mockMvc.perform(
             multipart(PATH)
                 .file(MockMultipartFile("file", "payload.php", "text/plain", TestImageFixtures.avif80()))
                 .with(user(CustomUserDetails(savedUser))),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.picture", matchesPattern("[0-9a-f]{8}\\.avif")))
+            .andExpect(jsonPath("$.picture", matchesPattern("[0-9a-f]{8}\\.jpg")))
             .andExpect(jsonPath("$.imageServer").value(1))
             .andExpect(header().string("X-Content-Type-Options", "nosniff"))
     }

@@ -46,6 +46,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // 전콘 카드 변환(ProfileIconTransformer)이 AWT/ImageIO 를 쓴다. 헤드리스가 아니면 macOS 에서
+    // 테스트 JVM 이 SIGABRT 로 죽고(실측 exit 134), 리눅스 CI 에는 디스플레이가 없다.
+    // 서버 자체는 Spring Boot 가 기본으로 헤드리스라 별도 설정이 필요없다.
+    systemProperty("java.awt.headless", "true")
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")

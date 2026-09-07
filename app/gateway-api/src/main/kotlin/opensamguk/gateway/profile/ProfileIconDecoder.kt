@@ -65,9 +65,17 @@ class ProfileIconDecoder(
         }
     }
 
+    /**
+     * 정사각형 강제는 없앴다 — 업로드본은 `ProfileIconTransformer` 가 카드 규격(148×210)으로
+     * 변환하므로 유저가 비율을 맞출 이유가 없다(화면 안내문이 원래부터 그렇게 약속하고 있었다).
+     * 남은 것은 디코더가 감당할 범위 검사뿐이다. 공유 초상 카탈로그는 자기 쪽에서 여전히
+     * 「정사각 64~128」을 따로 강제한다(`SharedProfileIconCatalog`).
+     */
     private fun validateDimensions(width: Int, height: Int) {
-        if (width != height || width !in minDimension..maxDimension || height !in minDimension..maxDimension) {
-            throw InvalidProfileIconException("프로필 아이콘은 64~128px 정사각형이어야 합니다.")
+        if (width !in minDimension..maxDimension || height !in minDimension..maxDimension) {
+            throw InvalidProfileIconException(
+                "프로필 아이콘은 가로·세로 ${minDimension}~${maxDimension}px 범위여야 합니다.",
+            )
         }
     }
 

@@ -110,6 +110,7 @@ def audit_documents(
     scenarios: dict[int, dict[str, Any]],
     ledger: dict[str, Any],
     source_ledger: dict[str, Any],
+    include_unsupplied: bool = False,
 ) -> AuditResult:
     errors: list[str] = []
     rows: list[dict[str, Any]] = []
@@ -308,7 +309,12 @@ def audit_documents(
                 verdict in {"CITY_ONLY_PROTECTED", "SPATIAL_CUT_UPHELD", "BOTH_UNSUPPLIED_PROTECTED"}
             ):
                 used_policy_keys.add((scenario_code, city_id))
-            if by_city != by_spatial or verdict == "BOTH_UNSUPPLIED_PROTECTED":
+            # 기본 출력은 종전대로 「불일치 + 보호된 절단」만 싣는다. `--include-unsupplied` 를 주면
+            # 두 모델이 함께 「끊겼다」로 본 城(BOTH_UNSUPPLIED)까지 싣는다 — 개시 도달성 게이트가
+            # 그 절대 축을 읽는다. 기본 출력이 바뀌면 기존 소비자가 흔들리므로 플래그로 가른다.
+            if by_city != by_spatial or verdict == "BOTH_UNSUPPLIED_PROTECTED" or (
+                include_unsupplied and verdict == "BOTH_UNSUPPLIED"
+            ):
                 city = runtime_by_id[city_id]
                 province = provinces[city["provinceId"]]
                 rows.append({
@@ -376,7 +382,7 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def audit_repository(map_name: str = "han-world-v3") -> AuditResult:
+def audit_repository(map_name: str = "han-world-v3", include_unsupplied: bool = False) -> AuditResult:
     runtime_map_path, ledger_path = DOMAIN_PATHS[map_name]
     ownership = _load_json(OWNERSHIP_PATH)
     scenario_codes = sorted(row["scenarioCode"] for row in ownership["scenarios"])
@@ -390,6 +396,7 @@ def audit_repository(map_name: str = "han-world-v3") -> AuditResult:
         scenarios,
         _load_json(ledger_path),
         _load_json(SOURCE_LEDGER_PATH),
+        include_unsupplied=include_unsupplied,
     )
 
 
@@ -398,8 +405,13 @@ def main() -> int:
     parser.add_argument("--map", choices=sorted(DOMAIN_PATHS), default="han-world-v3")
     parser.add_argument("--check", action="store_true", help="exit non-zero on any audit error")
     parser.add_argument("--json", action="store_true", help="print deterministic JSON inventory")
+    parser.add_argument(
+        "--include-unsupplied",
+        action="store_true",
+        help="also emit BOTH_UNSUPPLIED rows (개시 도달성 게이트가 읽는 절대 축)",
+    )
     args = parser.parse_args()
-    result = audit_repository(args.map)
+    result = audit_repository(args.map, include_unsupplied=args.include_unsupplied)
     payload = {"summaries": result.summaries, "rows": result.rows, "errors": result.errors}
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
