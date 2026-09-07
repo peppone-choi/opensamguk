@@ -67,7 +67,7 @@ describe('OperationPanel (08 작전 진행)', () => {
         fireEvent.change(screen.getByLabelText('제목'), { target: { value: '낙양 재공략' } });
         fireEvent.change(screen.getByLabelText('기한(개월)'), { target: { value: '2' } });
         fireEvent.click(screen.getByRole('button', { name: '선언' }));
-        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('operationDeclare', { kind: 'capture_city', targetCityId: 9, title: '낙양 재공략', fallbackText: null, deadlineMonths: 2 }, 10));
+        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('operationDeclare', { kind: 'capture_city', targetCityId: 9, title: '낙양 재공략', deadlineMonths: 2 }, 10));
     });
 
     it('disables declare with a reason for non-chiefs and shows the empty state', async () => {

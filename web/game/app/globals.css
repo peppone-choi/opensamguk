@@ -2395,6 +2395,8 @@ input:focus, select:focus, textarea:focus {
 
 /* ── Phase 4X-B 작전 (08 국가 운영 「작전 진행」, /game/my-nation#operations) ─────────────────── */
 .ops { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+/* 국가 운영 `.record-grid`(auto-fit 320px) 안에서는 한 셀에 눌리지 않도록 행 전체를 쓴다(4X-B 실화면: 이정표 라벨이 세로로 깨짐). */
+.record-grid > .ops { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 1231px) { .ops { grid-template-columns: 1fr; } }
 .ops__panel { padding: 0 0 10px; }
 .ops__list { list-style: none; margin: 0; padding: 0; }
@@ -2406,8 +2408,9 @@ input:focus, select:focus, textarea:focus {
 .ops__kind, .ops__deadline { color: var(--muted); }
 .ops__fallback { margin: 0; font-size: 12px; color: var(--text-2); }
 .ops__progress { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; align-items: center; gap: 10px; }
-.ops__milestone-count { font-size: 13px; color: var(--bronze); }
-.ops__milestones { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; font-size: 11px; color: var(--muted); }
+.ops__milestone-count { font-size: 13px; color: var(--bronze); white-space: nowrap; }
+.ops__milestones { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); }
+.ops__milestones li { white-space: nowrap; }
 .ops__milestones li[data-on="true"] { color: var(--moss-2); }
 .ops__units { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .ops__unit { display: flex; align-items: center; gap: 8px; font-size: 12px; }

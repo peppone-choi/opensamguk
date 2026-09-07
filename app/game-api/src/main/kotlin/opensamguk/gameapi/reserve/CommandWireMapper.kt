@@ -3,6 +3,7 @@ package opensamguk.gameapi.reserve
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
@@ -556,17 +557,22 @@ object CommandWireMapper {
         }
     }
 
+    // JSON `null` 은 부재와 같다 — `JsonNull` 도 `JsonPrimitive` 라 `.content` 가 "null" 문자열이 된다(4X-B 실화면: 대체 목표가
+    // 「null」 로 저장). 네 접근자 모두 `JsonNull` 을 먼저 걸러 null 을 돌려준다.
+    private fun Map<String, JsonElement>.primitive(key: String): JsonPrimitive? =
+        (this[key] as? JsonPrimitive)?.takeUnless { it is JsonNull }
+
     private fun Map<String, JsonElement>.int(key: String): Int? =
-        (this[key] as? JsonPrimitive)?.let { it.intOrNull ?: it.content.toIntOrNull() }
+        primitive(key)?.let { it.intOrNull ?: it.content.toIntOrNull() }
 
     private fun Map<String, JsonElement>.long(key: String): Long? =
-        (this[key] as? JsonPrimitive)?.content?.toLongOrNull()
+        primitive(key)?.content?.toLongOrNull()
 
     private fun Map<String, JsonElement>.str(key: String): String? =
-        (this[key] as? JsonPrimitive)?.content
+        primitive(key)?.content
 
     private fun Map<String, JsonElement>.bool(key: String): Boolean? =
-        (this[key] as? JsonPrimitive)?.let { it.booleanOrNull ?: it.content.toBooleanStrictOrNull() }
+        primitive(key)?.let { it.booleanOrNull ?: it.content.toBooleanStrictOrNull() }
 
     private fun Map<String, JsonElement>.intList(key: String): List<Int> {
         val el = this[key] ?: return emptyList()

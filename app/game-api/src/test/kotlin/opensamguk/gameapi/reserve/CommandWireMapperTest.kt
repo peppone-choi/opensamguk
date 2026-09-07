@@ -53,6 +53,21 @@ class CommandWireMapperTest {
     }
 
     @Test
+    fun `json null arguments map to Kotlin null, not the string "null" (4X-B fallbackText)`() {
+        val cmd = CommandWireMapper.toCommand(
+            code = "operationDeclare", generalId = 10, requestId = "req-op",
+            argJson = """{"kind":"capture_city","targetCityId":2,"title":"낙양 공략","fallbackText":null,"deadlineMonths":null}""",
+        )
+        val op = roundTrip(cmd!!) as TurnDaemonCommand.OperationDeclare
+        assertNull(op.fallbackText)
+        assertNull(op.deadlineMonths)
+        assertEquals("낙양 공략", op.title)
+        val plan = roundTrip(CommandWireMapper.toCommand("battlePlanSave", 10, "req-bp", """{"targetCityId":31,"stance":"probe","retreatLossPct":null,"retreatMoraleBelow":40}""")!!) as TurnDaemonCommand.BattlePlanSave
+        assertNull(plan.retreatLossPct)
+        assertEquals(40, plan.retreatMoraleBelow)
+    }
+
+    @Test
     fun `auctionBid maps auctionId amount and optional tryExtendCloseDate`() {
         val cmd = CommandWireMapper.toCommand(
             code = "auctionBid",

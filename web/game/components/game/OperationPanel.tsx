@@ -60,9 +60,10 @@ export default function OperationPanel() {
 
     const submitDeclare = (e: FormEvent) => {
         e.preventDefault();
+        // 대체 목표는 비었으면 키 자체를 보내지 않는다 — JSON null 이 wire 매퍼에서 "null" 문자열로 읽히던 결함(4X-B 실화면)을 양쪽에서 막는다.
         void run('declare', 'operationDeclare', {
             kind: form.kind, targetCityId: Number(form.targetCityId), title: form.title,
-            fallbackText: form.fallbackText || null, deadlineMonths: Number(form.deadlineMonths),
+            ...(form.fallbackText.trim() ? { fallbackText: form.fallbackText.trim() } : {}), deadlineMonths: Number(form.deadlineMonths),
         });
     };
 
