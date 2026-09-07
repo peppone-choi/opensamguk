@@ -177,10 +177,11 @@ object ConquerCity {
         val admin = input.admin
         val loseNation = input.defenderNation!!
         // deleteNation order: other generals (no != lord) ascending PK + the lord LAST (func.php:1735).
+        // 군주가 없는 국가도 멸망은 끝까지 진행된다 — 순서 핀은 군주가 있을 때만 적용하고, 없으면 오름차순
+        // PK 만 남는다. (프로덕션에서 군주 없는 1성 국가를 정복하면 턴 루프가 통째로 멈췄다.)
         val lord = input.defenderNationGenerals.firstOrNull { it.officerLevel == 12 }
-            ?: error("ConquerCity collapse: no lord (officer_level 12) in the defender nation")
-        val others = input.defenderNationGenerals.filter { it.id != lord.id }.sortedBy { it.id }
-        val oldNationGenerals = others + lord
+        val others = input.defenderNationGenerals.filter { it.id != lord?.id }.sortedBy { it.id }
+        val oldNationGenerals = if (lord != null) others + lord else others
         val defenderNationUl = JosaUtil.pick(input.defenderNationName, "을")
         logs += ConquerLog.nationHistory(
             input.attacker.nationId,
