@@ -19,9 +19,9 @@ on:
         default: true
         type: boolean
       scenario_code:
-        description: "Scenario code to seed after reset"
+        description: "Scenario code to seed after reset (scenario_1020 = 【역사모드2】 반동탁연합 결성 — pep 정본)"
         required: true
-        default: "scenario_2"
+        default: "scenario_1020"
         type: string
       generation:
         description: "Generation number, or current to preserve env"
@@ -33,15 +33,18 @@ on:
         required: true
         default: "current"
         type: string
+      # 도시 집합은 지도 빌드마다 바뀐다(縣 복구로 늘고, 도시명에 郡名이 붙었다). 라이브 월드에서 잰 값을
+      # 그대로 넣으면 리셋은 되고 검증만 빨개진다(2026-09-07 런 34100129248: 774 로 재고 781 이 심겼다).
+      # 아래 기본값은 2026-09-07 scenario_1020 리셋 직후 실측이다. 지도가 바뀌면 같이 갱신해라.
       expected_city_count:
-        description: "Optional public API city count assertion"
+        description: "Optional public API city count assertion (blank = skip)"
         required: false
-        default: "78"
+        default: "781"
         type: string
       expected_first_city:
-        description: "Optional public API first-city assertion"
+        description: "Optional public API first-city assertion (blank = skip)"
         required: false
-        default: "낙양"
+        default: "장안(京兆尹)"
         type: string
 
 concurrency:
