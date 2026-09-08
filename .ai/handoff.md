@@ -1,6 +1,80 @@
 # Agent Handoff
 
 
+## Current handoff (2026-09-08) — 공융 보급 절단 수정 완료·프로덕션 반영 끝, 지도 트랙 절반 남음
+
+### 한 줄
+
+사용자 제보 「공융이 보급이 끊겨서 증발한다」를 끝까지 추적해 고쳤고, **머지 → 배포 → 승격 →
+리셋 → 라이브 실측까지 마쳤다. 새 월드의 개시 보급 절단은 19국 전부 0城이다.**
+
+### 무엇이 끝났나
+
+| PR | 내용 | 상태 |
+|---|---|---|
+| #664 | 개인 서신 수신자 선택 · 정보 스트립 줄바꿈 · 약한 ETag 지문 | 머지 |
+| #665 | 전콘 카드 변환 · 군주 강등 가드 · 개시 보급 게이트 | 머지 |
+| #666 | 정본 1,180縣 커버리지 감사 · 좌표 원장 · 격자 빌더 · 원인 규명 | 머지 |
+| #667 | **ADR-LITE-051 郡 내부 보급선 — 공융 수정** | 머지 (main `d9f3b18a`) |
+
+프로덕션 `pep`: 배포 success → 승격 success(엔진 포함) → 리셋 success(백업 켬, scenario_1020).
+리셋 후 실측 **187년 1월 상순 · 19국 · 개시 절단 0城**(공융 16/16 보급).
+
+### 결정 — ADR-LITE-051
+
+**보급은 행정선(郡)을 따라서도 흐른다.** 郡은 후한의 행정·병참 단위이므로, 소유 격자에서 같은
+郡의 프로빈스가 조각으로 끊긴 곳을 최소 간선으로 잇는다(`data/map/han-commandery-supply-links-v1.json`,
+생성기 `tools/map/build_commandery_supply_links.py`, 70개 · 길이 중앙값 48km).
+
+**이동은 바뀌지 않는다** — 전략 위상 LAND 간선과 `_land_owners_are_adjacent` 는 그대로다.
+새 간선은 `SpatialSupplyNetwork.provinceAdjacency`(보급 전용)에만 들어간다.
+
+되돌리기: 그 JSON 을 지우면 보급이 예전과 같아진다(`CommanderySupplyLinkLoader` 가 파일 부재를
+빈 목록으로 읽는다).
+
+### 다음 사람이 반드시 알아야 할 함정 (전부 실측으로 물렸다)
+
+1. **보급 모델이 둘이다.** `han-world-v3` 런타임은 **spatial 프로빈스 망만** 쓴다. CityConst
+   그래프(`connections`)를 고치면 게임은 하나도 안 바뀐다 — 40城이 `BOTH_UNSUPPLIED` →
+   `CITY_ONLY` 로 분류만 옮겨가고 게이트만 깨진다. 실제로 구현했다가 되돌렸다.
+2. **`data/map/*` 는 통째로 gitignored 다.** 새 산출물은 `!` 예외 없이는 `git add -A` 로도 안
+   들어간다. 로컬은 초록, CI 만 빨갛다(감사 24건 + 엔진 테스트 4건). 커밋 뒤
+   `git show --stat HEAD` 로 눈으로 확인해라.
+3. **Gradle UP-TO-DATE 거짓 초록.** 「전체 회귀 녹색」이라 보고했다가 틀렸다. `--rerun-tasks`
+   없이는 테스트가 안 돈다. 진짜 수치는 4,521건 / 실패 0이다.
+4. **심사된 판정 행을 코드가 조용히 무효화하면 안 된다.** 郡 보급선이 보호받던 城 305·548 을
+   이어 버려 보호 행이 낡았고, 나는 그 행을 은퇴시켰다 — 틀렸다. 보호 행을 되살리고 보호된
+   城을 규칙에서 **제외**하는 쪽이 맞다.
+5. **정본 대조는 반드시 (郡, 縣) 쌍으로.** 이름만으로 맞추면 동명이지가 겹쳐 788/1180 이 나온다
+   (정직한 값은 400 결손). 표기는 繁/簡/혼재 세 갈래라 `han-name-simplification-v1.json` 으로
+   눕힌다. 접미사는 `县/縣` 만 떼고 `國·道` 는 이름의 일부다(安國·夷道 — 같이 떼면 20건 어긋난다).
+6. **긴 보정 간선 = 좌표 결함 신호.** 郡 보급선이 수백 km 로 길어지는 곳은 예외 없이 동명이지
+   오배정이었다(上郡 定陽 1,190km 등 5건, `county-misbinding-adjudications-v1.json`).
+
+### 남은 일 — 계획 문서: `docs/superpowers/plans/2026-09-07-han-map-rebuild.md`
+
+1. **프로빈스 이설**(「둘 다」 지시의 나머지 절반). 소유 격자에서 잘못 놓인 프로빈스를 옳은
+   자리로 옮겨 **지도 정확도**를 올린다. 보급은 이미 고쳐졌으므로 이건 정확도 작업이다.
+   실측: 극현 프로빈스 25칸이 (459,178)에 있는데 있어야 할 곳에서 30열 서쪽이다. 크게 어긋난
+   것은 755개 중 29개(3.8%)이고, 31개를 옮겨도 절단은 102 → 90 에서 멎었다(그래서 보급선을
+   먼저 했다). 대가: 수역·전략 위상·경로 노드·15개 시나리오 소유권 재생성 + `han-tiles.json`
+   통파일 해시를 핀한 8개 파일 재핀.
+2. **나무위키 좌표 수확 267縣.** 원장 `data/curated/han/namu-place-locations-v1.json`(227행).
+   요령: 문서가 길어 요약기가 표를 뭉개므로 **한 郡씩** 요청해야 좌표가 나온다.
+   진행: 정본 1,180縣 중 지도 배치 781 · 원장 채움 75 · 타일만 26 · **좌표 없음 298**.
+3. **깃허브 이슈·지라 티켓 정리** — 사용자가 지시했으나 아직 착수 못 했다.
+4. UI: 작전실 도시·국가 카드는 `Panel`·`SectionHeader` 로 결선했다. 나머지 화면의 일회용
+   `war-card__*` 계열이 남아 있는지 점검이 필요하다.
+
+### 상태
+
+- 워크트리 `worktrees/opensamguk/ui-redesign-2026-09` 는 `origin/main`(`d9f3b18a`)에 detach.
+  작업 트리 깨끗, 미커밋 없음.
+- 게이트 전부 초록: `build_han_world` · `apply_han_world` · `audit_han_supply_disagreements` ·
+  `audit_scenario_seed_supply` · `build_commandery_supply_links` · `build_han_water_topology` ·
+  `build_han_route_node_candidates` · `audit_territory_disconnections` · `audit_county_coverage`.
+- 테스트: JVM 4,521 / 계약 371 / 지도 656 — 전부 통과.
+
 ## Current handoff (2026-08-23) — OPENSAM-226 W1-B remediation interrupted; resume from RED
 
 - Reason: 사용자가 진행 중인 구현을 중단하고 핸드오프 후 대기를 요청했다. 실행 중이던
