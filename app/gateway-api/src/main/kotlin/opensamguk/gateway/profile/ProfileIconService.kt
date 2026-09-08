@@ -19,7 +19,7 @@ class ProfileIconChangedTodayException : RuntimeException("프로필 아이콘�
 class ProfileIconPersistenceException(cause: Throwable? = null) :
     RuntimeException("프로필 아이콘 변경을 완료할 수 없습니다.", cause)
 
-class ProfileIconPayloadTooLargeException : RuntimeException("프로필 아이콘은 50KB 이하여야 합니다.")
+class ProfileIconPayloadTooLargeException(message: String = "프로필 아이콘은 50KB 이하여야 합니다.") : RuntimeException(message)
 
 @Service
 class ProfileIconService(
@@ -37,10 +37,10 @@ class ProfileIconService(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
-    fun upload(userDetails: CustomUserDetails, source: ByteArray): UserResponse {
-        // 업로드본은 그대로 저장하지 않는다 — 카드 규격(148×210)으로 변환해서 저장한다.
-        // 그래야 카드 슬롯이 꽉 차고, 유저가 비율·크기를 미리 맞출 필요가 없다.
-        val decoded = transformer.toCard(decoder.decode(source))
+    fun upload(userDetails: CustomUserDetails, source: ByteArray, crops: PortraitCrops? = null): UserResponse {
+        // Legacy file-only uploads retain the card contract. Manual uploads journal all three
+        // independently cropped variants and the unchanged original as one owned archive.
+        val decoded = if (crops == null) transformer.toCard(decoder.decode(source)) else PortraitBundle.create(source, crops)
         val user = findLocked(userDetails)
         val changedAt = clock.instant()
         assertChangeAllowed(user, changedAt)
@@ -97,6 +97,26 @@ class ProfileIconService(
             changedAt = changedAt,
             operation = operation,
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun source(userDetails: CustomUserDetails): Triple<String, String, ByteArray> {
+        val name = ownBundle(userDetails)
+        val type = storage.readBundle(name) { PortraitBundle.entry(it, "source-type").toString(Charsets.US_ASCII) }
+        if (type !in setOf("image/jpeg", "image/png", "image/webp")) throw ProfileIconStorageException()
+        return Triple(name, type, storage.readBundle(name) { PortraitBundle.entry(it, "source") })
+    }
+
+    @Transactional(readOnly = true)
+    fun crops(userDetails: CustomUserDetails): Pair<String, PortraitCrops> {
+        val name = ownBundle(userDetails)
+        return name to storage.readBundle(name, PortraitBundle::readCrops)
+    }
+
+    private fun ownBundle(userDetails: CustomUserDetails): String {
+        val user = userRepository.findByUsername(userDetails.username).orElseThrow { InvalidProfileIconException() }
+        return ownedCurrentFile(user)?.takeIf(PortraitBundle.NAME::matches)
+            ?: throw org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND)
     }
 
     private fun findLocked(userDetails: CustomUserDetails): UserEntity =

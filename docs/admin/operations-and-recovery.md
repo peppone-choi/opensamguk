@@ -199,3 +199,14 @@ DB를 추측으로 고치지 말고 restart-rehydrate 증거와 quarantine 절�
 - 실행한 조치와 결과
 
 토큰, 비밀번호, 실제 `.env`, 사용자 개인정보는 첨부하지 않습니다.
+
+
+## 전콘 원본·세 구도 보관
+
+새 수동 편집 업로드는 `8hex.portrait` 관리 파일 하나에 검증된 원본, 정규화 자르기 좌표, 히어로633×900·카드148×210·아이콘96×96 JPEG를 함께 보관합니다. 기존 단일 이미지 파일도 계속 지원합니다.
+프로필 파일 볼륨의 백업·복원에 `.portrait` 및 기존 `.ops` 복구 기록을 포함해야 합니다. 파일을 변형별로 분해하거나 `.ops`를 별도 정리하지 않습니다. 기존 업로드/교체/삭제 트랜잭션 복구 경로를 그대로 사용합니다.
+
+브라우저가 보내는 원본 상한은8MiB, archive 저장 상한은12MiB입니다. multipart 요청 상한은 원본과 좌표를 담을 수 있도록9MiB로 설정합니다. 외부 reverse proxy를 별도로 운영한다면 해당 업로드 요청의 body 상한도 확인해야 합니다.
+공개 `/profile-icons/<관리이름>.portrait/{hero|card|icon}.jpg`는 렌더 결과만 제공합니다. 원본 및 자르기 정보는 인증된 본인 전용 `/auth/account/profile-icon/{source|crops}`이며 캐시하지 않습니다. 원본과 metadata의 `X-Portrait-Id`가 다르면 클라이언트는 동시 변경으로 판정해 다시 읽도록 안내합니다.
+
+Gateway Next 서버가 공개 변형 요청을 gateway-api로 전달합니다. game 단독 개발 서버는 `GATEWAY_WEB_URL`(기본 http://localhost:3000)로 같은 경로를 전달합니다. archive 자체를 nginx 정적 파일 허용 목록에 추가해서는 안 됩니다.

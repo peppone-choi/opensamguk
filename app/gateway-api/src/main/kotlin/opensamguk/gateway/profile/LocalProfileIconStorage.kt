@@ -147,7 +147,7 @@ class LocalProfileIconStorage internal constructor(
     }
 
     fun prepareUpload(icon: DecodedProfileIcon, oldFileName: String?): PreparedProfileIcon {
-        if (icon.bytes.isEmpty() || icon.bytes.size > maxStoredBytes || icon.extension !in EXTENSIONS) {
+        if (icon.bytes.isEmpty() || icon.bytes.size > (if (icon.extension == "portrait") PortraitBundle.MAX_BUNDLE_BYTES else maxStoredBytes) || icon.extension !in EXTENSIONS) {
             throw ProfileIconStorageException()
         }
         if (oldFileName != null && !isManagedFileName(oldFileName)) {
@@ -213,6 +213,18 @@ class LocalProfileIconStorage internal constructor(
             throw e
         } catch (e: Exception) {
             throw ProfileIconStorageException(e)
+        }
+    }
+
+    /** Reads through the anchored secure directory, never a caller-controlled filesystem path. */
+    internal fun <T> readBundle(fileName: String, reader: (java.io.InputStream) -> T): T {
+        if (!PortraitBundle.NAME.matches(fileName)) throw InvalidProfileIconException()
+        return withCheckedRoot {
+            val attributes = managedAttributes(fileName)
+            if (!attributes.isRegularFile || attributes.isSymbolicLink || attributes.size() > PortraitBundle.MAX_BUNDLE_BYTES) throw ProfileIconStorageException()
+            rootAnchor.newByteChannel(Path.of(fileName), setOf(StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)).use { channel ->
+                java.nio.channels.Channels.newInputStream(channel).use(reader)
+            }
         }
     }
 
@@ -647,8 +659,8 @@ class LocalProfileIconStorage internal constructor(
 
     companion object {
         private val STEM = Regex("[0-9a-f]{8}")
-        private val MANAGED_FILE = Regex("[0-9a-f]{8}\\.(avif|webp|jpg|png|gif)")
-        private val EXTENSIONS = setOf("avif", "webp", "jpg", "png", "gif")
+        private val MANAGED_FILE = Regex("[0-9a-f]{8}\\.(avif|webp|jpg|png|gif|portrait)")
+        private val EXTENSIONS = setOf("avif", "webp", "jpg", "png", "gif", "portrait")
         private val OPERATION_ID = Regex("[0-9a-f]{32}")
         private val OPERATION_MARKER = Regex("[0-9a-f]{32}\\.json")
         private val STAGE_FILE = Regex("\\.stage-([0-9a-f]{32})")

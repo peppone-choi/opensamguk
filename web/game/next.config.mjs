@@ -34,6 +34,10 @@ const nextConfig = {
     async rewrites() {
         return [
             {
+                source: '/profile-icons/:path*',
+                destination: `${process.env.GATEWAY_WEB_URL || 'http://localhost:3000'}/profile-icons/:path*`,
+            },
+            {
                 source: '/api/game/:path*',
                 destination: `${process.env.GATEWAY_WEB_URL || 'http://localhost:3000'}/api/game/:path*`,
             },
