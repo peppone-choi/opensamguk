@@ -2,12 +2,26 @@ package opensamguk.logic.world
 
 import java.util.Collections
 
+/** Named deployment within a physical node; the city's identity is only a return origin. */
+data class BattlefieldPresence(
+    val siteId: String,
+    val catalogHash: String,
+    val returnCityId: Int,
+) {
+    init {
+        require(siteId.matches(Regex("[a-z][a-z0-9-]*"))) { "Invalid battlefield identity" }
+        require(catalogHash.matches(Regex("[0-9a-f]{64}"))) { "Battlefield catalog requires SHA-256" }
+        require(returnCityId > 0) { "Battlefield requires a return city" }
+    }
+}
+
 data class GeneralPositionState(
     val topologyRevision: String,
     val topologyHash: String,
     val generalId: Int,
     val node: StrategicNodeRef,
     val revision: Long,
+    val battlefield: BattlefieldPresence? = null,
 ) {
     init {
         validateGeneralPositionIdentity(topologyRevision, topologyHash, generalId)
@@ -21,6 +35,7 @@ data class GeneralPositionAssessment(
     val topologyHash: String,
     val generalId: Int,
     val node: StrategicNodeRef,
+    val battlefield: BattlefieldPresence? = null,
 ) {
     init {
         validateGeneralPositionIdentity(topologyRevision, topologyHash, generalId)
@@ -128,7 +143,7 @@ fun projectGeneralPosition(
     if (!knownNode) return denied(GeneralPositionDenialCode.UNKNOWN_NODE)
     val previous = snapshot.stateFor(assessment.generalId)
     if (expectedRevision != previous?.revision) return denied(GeneralPositionDenialCode.STALE_REVISION)
-    if (previous != null && previous.node == assessment.node) {
+    if (previous != null && previous.node == assessment.node && previous.battlefield == assessment.battlefield) {
         return GeneralPositionChangeResult.Unchanged(previous)
     }
     if (previous?.revision == Long.MAX_VALUE) return denied(GeneralPositionDenialCode.REVISION_EXHAUSTED)
@@ -141,6 +156,7 @@ fun projectGeneralPosition(
             assessment.generalId,
             assessment.node,
             nextRevision,
+            assessment.battlefield,
         ),
     )
 }

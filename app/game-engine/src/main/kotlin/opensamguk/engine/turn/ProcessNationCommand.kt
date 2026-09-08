@@ -109,6 +109,10 @@ class ProcessNationCommand(
     ): LastTurn {
         val general = world.getGeneralById(generalId)
             ?: error("ProcessNationCommand: general $generalId not in world")
+        if (world.isGeneralAtBattlefield(generalId)) {
+            world.pushLog(nationLog(general, "action", "general", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다."))
+            return lastTurn
+        }
         val prepared = prepareCommand(general, nationCommand)
         val nationId = general.nationId
 
@@ -193,6 +197,8 @@ class ProcessNationCommand(
     fun processInstant(generalId: Int, nationCommand: ChosenCommand): InstantResult {
         val general = world.getGeneralById(generalId)
             ?: return InstantResult.Denied("장수가 없습니다.")
+        if (world.isGeneralAtBattlefield(generalId))
+            return InstantResult.Denied("전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.")
         if (!InstantNationCommandRegistry.isInstantNationCommand(nationCommand.actionCode)) {
             return InstantResult.Denied("처리할 수 없습니다.")
         }
@@ -510,7 +516,7 @@ class ProcessNationCommand(
 
         // --- drain draft (mirrors ReservedTurnHandler nation-capable path) ---
         recorder.diffGeneral(preGeneral, draft.general)
-        world.applyGeneralDirtyFree(applyLogicToGeneral(general, draft.general))
+        opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(general, draft.general))
 
         if (preNation != null && draft.nation != null && draft.nation !== preNation) {
             recorder.diffNation(preNation, draft.nation!!)
@@ -527,9 +533,10 @@ class ProcessNationCommand(
         draft.destGeneral?.let { destG ->
             if (destG.id == general.id) return@let
             val pre = world.getGeneralById(destG.id)?.let { toLogicGeneral(it) } ?: return@let
+            if (world.isGeneralAtBattlefield(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
             if (destG != pre) {
                 recorder.diffGeneral(pre, destG)
-                world.getGeneralById(destG.id)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, destG)) }
+                world.getGeneralById(destG.id)?.let { opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(it, destG)) }
             }
         }
         draft.destCity?.let { destC ->
@@ -556,8 +563,9 @@ class ProcessNationCommand(
         }
         for (moved in draft.cascadeGenerals) {
             val pre = world.getGeneralById(moved.id) ?: continue
+            if (world.isGeneralAtBattlefield(pre.id) && moved.cityId != pre.cityId && moved.nationId == pre.nationId) continue
             recorder.diffGeneral(toLogicGeneral(pre), moved)
-            world.applyGeneralDirtyFree(applyLogicToGeneral(pre, moved))
+            opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(pre, moved))
         }
         for (moved in draft.cascadeCities) {
             val pre = world.getCityById(moved.id) ?: continue
@@ -652,7 +660,7 @@ class ProcessNationCommand(
             "che_허보" -> {
                 val destCityId = (args["destCityID"] as? Number)?.toInt() ?: return emptyList()
                 world.listGenerals()
-                    .filter { it.cityId == destCityId && it.nationId != nationId && it.nationId != 0 }
+                    .filter { world.isGeneralPhysicallyInCity(it.id, destCityId) && it.nationId != nationId && it.nationId != 0 }
                     .map { toLogicGeneral(it) }
             }
             else -> emptyList()
@@ -734,12 +742,12 @@ class ProcessNationCommand(
         val postGeneral = ctx.general
         if (postGeneral != null && postGeneral != preGeneral) {
             recorder.diffGeneral(preGeneral, postGeneral)
-            world.getGeneralById(general.id)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postGeneral)) }
+            world.getGeneralById(general.id)?.let { opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(it, postGeneral)) }
         }
         val postDestGeneral = ctx.destGeneral
         if (destGeneralId != null && preDestGeneral != null && postDestGeneral != null && postDestGeneral != preDestGeneral) {
             recorder.diffGeneral(preDestGeneral, postDestGeneral)
-            world.getGeneralById(destGeneralId)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postDestGeneral)) }
+            world.getGeneralById(destGeneralId)?.let { opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(it, postDestGeneral)) }
         }
 
         // --- route the actor + dest nation drafts → recorder diffs (single dirty source) ---

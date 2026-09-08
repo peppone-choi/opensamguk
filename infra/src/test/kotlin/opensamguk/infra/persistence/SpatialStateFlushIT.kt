@@ -77,6 +77,22 @@ class SpatialStateFlushIT {
     }
 
     @Test
+    fun `battlefield entry and return persist and reload without a second location row`() {
+        val node = StrategicNodeRef.LandProvince("p1")
+        val presence = opensamguk.logic.world.BattlefieldPresence("changban", hash, 42)
+        val entered = position(node, 1).copy(battlefield = presence)
+        executor.flush(payload(1, position = GeneralPositionWriteRow(null, entered)))
+        fun reload() = jdbc.queryForObject(
+            "SELECT * FROM general_spatial_position WHERE world_id = 1 AND general_id = 10",
+            emptyMap<String, Any>(), org.springframework.jdbc.core.RowMapper { rs, _ -> GeneralPositionRowCodec.decode(rs) },
+        )
+        assertEquals(entered, reload())
+        val returned = entered.copy(revision = 2, battlefield = null)
+        executor.flush(payload(1, position = GeneralPositionWriteRow(1, returned)))
+        assertEquals(returned, reload())
+    }
+
+    @Test
     fun `insert then coalesced update persists both typed state channels`() {
         executor.flush(
             payload(
@@ -179,6 +195,23 @@ class SpatialStateFlushIT {
         assertEquals(1, count("general_spatial_position", 2))
         assertEquals(0, count("general", 1))
         assertEquals(1, count("general", 2))
+    }
+
+
+    @Test
+    fun `position delete CAS is world scoped and stale delete rolls back world update`() {
+        val original = position(StrategicNodeRef.LandProvince("p1"), 4)
+        for (id in 1..2) executor.flush(payload(id, position = GeneralPositionWriteRow(null, original)))
+        val stale = payload(1, position = GeneralPositionWriteRow(3, original, delete = true), currentYear = 201)
+        assertFailsWith<StaleGeneralPositionException> { executor.flush(stale) }
+        assertEquals(1, count("general_spatial_position", 1))
+        assertEquals(200, jdbc.queryForObject("SELECT current_year FROM world_state WHERE id=1", emptyMap<String, Any>(), Int::class.java))
+        val deletion = payload(1, position = GeneralPositionWriteRow(4, original, delete = true))
+        executor.flush(deletion)
+        assertEquals(0, count("general_spatial_position", 1))
+        assertEquals(1, count("general_spatial_position", 2))
+        assertFailsWith<StaleGeneralPositionException> { executor.flush(deletion) }
+        assertEquals(1, count("general_spatial_position", 2))
     }
 
     private fun payload(

@@ -1242,6 +1242,24 @@ input:focus, select:focus, textarea:focus {
 
   /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(HanMapCanvas 가 ResizeObserver 로 따라온다). */
   .ib-map .map-viewer { display: flex; flex-direction: column; height: 100%; }
+  /* 전장 행동은 양쪽 레일 사이의 지도 조작 공간 안에서 읽고 실행한다. */
+  .war-room .ib-map .map-viewer {
+    --battlefield-left-clearance: calc(330px + var(--stage-inset) * 2);
+    --battlefield-right-clearance: calc(360px + var(--stage-inset) * 2);
+    --battlefield-control-right: var(--battlefield-right-clearance);
+    --battlefield-control-width: calc(100% - var(--battlefield-left-clearance) - var(--battlefield-right-clearance));
+  }
+  .war-room .ib-map .battlefield-panel {
+    flex: 0 0 auto;
+    margin-left: var(--battlefield-left-clearance);
+    margin-right: var(--battlefield-right-clearance);
+    max-height: 45%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+    background: var(--stage-overlay-bg);
+  }
+
   .ib-map .map-viewer-canvas,
   .ib-map .map-viewer-ph { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
 

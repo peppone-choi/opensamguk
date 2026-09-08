@@ -441,7 +441,7 @@ class CommandQueueService(
          * 사용 가능한 장수 커맨드 코드 집합. ReserveBulk의 `사용할 수 없는 커맨드입니다.` 게이트 원천.
          */
         val GENERAL_COMMAND_CODES: Set<String> =
-            GameConst.availableGeneralCommand.values.flatten().toSet()
+            GameConst.availableGeneralCommand.values.flatten().toSet() + "che_전장이동"
 
         /** PHP `Util::array_flatten(GameConst::$availableChiefCommand)` — 사용 가능한 국가(수뇌) 커맨드 코드 집합. */
         val CHIEF_COMMAND_CODES: Set<String> =

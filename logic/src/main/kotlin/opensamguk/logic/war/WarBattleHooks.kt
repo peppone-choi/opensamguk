@@ -54,6 +54,9 @@ interface WarBattleHooks {
     /** The 진격 global+general log echoing warSeed (`:252-253`). */
     fun onAdvanceLog(attacker: WarUnitGeneral, city: WarUnitCity) {}
 
+    /** Field encounter advance; never implies a city or conquest target. */
+    fun onFieldAdvanceLog(attacker: WarUnitGeneral) {}
+
     /** The 대결/공격/수비 first-contact log (`:303-326`). */
     fun onContactLog(attacker: WarUnitGeneral, defender: WarUnit) {}
 

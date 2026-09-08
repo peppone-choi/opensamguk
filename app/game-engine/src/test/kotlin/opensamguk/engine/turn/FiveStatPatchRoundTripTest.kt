@@ -38,14 +38,7 @@ class FiveStatPatchRoundTripTest {
     fun `ReservedTurnHandler patch reflects logic politics and charm back to engine stats`() {
         val engine = engineGeneral()
         val logic = PerTurnOverlay.toLogicGeneral(engine).copy(politics = 77, charm = 88)
-        val method = ReservedTurnHandler.Companion::class.java.getDeclaredMethod(
-            "applyGeneralPatch",
-            TurnGeneral::class.java,
-            opensamguk.logic.domain.General::class.java,
-        )
-        method.isAccessible = true
-
-        val patched = method.invoke(ReservedTurnHandler.Companion, engine, logic) as TurnGeneral
+        val patched = ReservedTurnHandler.applyGeneralPatch(engine, logic)
 
         assertEquals(77, patched.stats.politics)
         assertEquals(88, patched.stats.charm)

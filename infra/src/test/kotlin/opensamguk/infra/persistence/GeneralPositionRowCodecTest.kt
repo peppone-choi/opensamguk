@@ -13,6 +13,19 @@ class GeneralPositionRowCodecTest {
     private val hash = "c".repeat(64)
 
     @Test
+    fun `battlefield presence round trips as one atomic value and partial rows fail closed`() {
+        val columns = mapOf("battlefield_id" to "changban", "battlefield_catalog_hash" to hash,
+            "battlefield_return_city_id" to 42)
+        val decoded = GeneralPositionRowCodec.decode(row(columns))
+        assertEquals(opensamguk.logic.world.BattlefieldPresence("changban", hash, 42), decoded.battlefield)
+        for (key in columns.keys) {
+            assertFailsWith<IllegalArgumentException> {
+                GeneralPositionRowCodec.decode(row(columns + (key to null)))
+            }
+        }
+    }
+
+    @Test
     fun `decodes both exact strategic node discriminators`() {
         val land = GeneralPositionRowCodec.decode(row())
         assertEquals(12, land.generalId)

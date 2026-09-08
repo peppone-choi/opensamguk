@@ -463,16 +463,28 @@ open class JdbcFlushExecutor(
                 .addValue("node_id", nodeId)
                 .addValue("revision", state.revision)
                 .addValue("expected_revision", row.expectedRevision)
-            val sql = if (row.expectedRevision == null) {
+                .addValue("battlefield_id", state.battlefield?.siteId)
+                .addValue("battlefield_catalog_hash", state.battlefield?.catalogHash)
+                .addValue("battlefield_return_city_id", state.battlefield?.returnCityId)
+            val sql = if (row.delete) {
+                """
+                DELETE FROM general_spatial_position
+                WHERE world_id = :world_id AND general_id = :general_id
+                    AND topology_revision = :topology_revision AND topology_hash = :topology_hash
+                    AND revision = :expected_revision
+                """.trimIndent()
+            } else if (row.expectedRevision == null) {
                 """
                 INSERT INTO general_spatial_position
-                    (world_id, general_id, topology_revision, topology_hash, node_kind, node_id, revision)
-                VALUES (:world_id, :general_id, :topology_revision, :topology_hash, :node_kind, :node_id, :revision)
+                    (world_id, general_id, topology_revision, topology_hash, node_kind, node_id, revision, battlefield_id, battlefield_catalog_hash, battlefield_return_city_id)
+                VALUES (:world_id, :general_id, :topology_revision, :topology_hash, :node_kind, :node_id, :revision, :battlefield_id, :battlefield_catalog_hash, :battlefield_return_city_id)
                 ON CONFLICT (world_id, general_id) DO NOTHING
                 """.trimIndent()
             } else {
                 """
-                UPDATE general_spatial_position SET node_kind = :node_kind, node_id = :node_id, revision = :revision
+                UPDATE general_spatial_position SET node_kind = :node_kind, node_id = :node_id, revision = :revision,
+                    battlefield_id = :battlefield_id, battlefield_catalog_hash = :battlefield_catalog_hash,
+                    battlefield_return_city_id = :battlefield_return_city_id
                 WHERE world_id = :world_id AND general_id = :general_id
                     AND topology_revision = :topology_revision AND topology_hash = :topology_hash
                     AND revision = :expected_revision
@@ -482,7 +494,9 @@ open class JdbcFlushExecutor(
                 throw StaleGeneralPositionException(worldId.value, state.generalId, row.expectedRevision)
             }
         }
-        lastOps.add(FlushExecOp("general_spatial_position", FlushVerb.UPDATE, rows.size))
+        val deleted = rows.count { it.delete }
+        if (deleted > 0) lastOps.add(FlushExecOp("general_spatial_position", FlushVerb.DELETE_MANY, deleted))
+        if (deleted < rows.size) lastOps.add(FlushExecOp("general_spatial_position", FlushVerb.UPDATE, rows.size - deleted))
     }
 
     /** Typed campaign-only writes share the world fence and all resource deltas' transaction. */

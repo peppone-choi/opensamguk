@@ -38,16 +38,49 @@ fun processWarNG(
     getNextDefender: (prev: WarUnit?, reqNext: Boolean) -> WarUnit?,
     city: WarUnitCity,
     hooks: WarBattleHooks = WarBattleHooks.NOOP,
-): Boolean {
+): Boolean = runBattlePhases(rng, attacker, getNextDefender, city, hooks).conquerCity
+
+/** Result of an encounter without a city target. Defender IDs retain encounter order. */
+data class FieldWarOutcome(
+    val contact: Boolean,
+    val attackerRetreated: Boolean,
+    val defeatedDefenderIds: List<Int>,
+)
+
+/** Field mode shares the city phase arithmetic but has no siege/conquest fallback. */
+fun processFieldWarNG(
+    rng: RandUtil,
+    attacker: WarUnitGeneral,
+    getNextDefender: (prev: WarUnit?, reqNext: Boolean) -> WarUnit?,
+    hooks: WarBattleHooks = WarBattleHooks.NOOP,
+): FieldWarOutcome = runBattlePhases(rng, attacker, getNextDefender, null, hooks).field
+
+private data class PhaseOutcome(val conquerCity: Boolean, val field: FieldWarOutcome)
+
+private fun runBattlePhases(
+    rng: RandUtil,
+    attacker: WarUnitGeneral,
+    getNextDefender: (prev: WarUnit?, reqNext: Boolean) -> WarUnit?,
+    city: WarUnitCity?,
+    hooks: WarBattleHooks,
+): PhaseOutcome {
     // The single shared rng is built ONCE in the OUTER processWar() and threaded into every unit by
     // reference; we assert (not re-seed) that the units already hold it (the #1 parity invariant).
     require(attacker.rng === rng) { "attacker must hold the ONE shared war rng (no re-seed)" }
-    require(city.rng === rng) { "city must hold the ONE shared war rng (no re-seed)" }
+    require(city == null || city.rng === rng) { "city must hold the ONE shared war rng (no re-seed)" }
 
     // warSeed is only ECHOED to the 진격 log (process_war.php:252-253); the rng is NOT rebuilt from it here.
-    hooks.onAdvanceLog(attacker, city)
+    if (city != null) hooks.onAdvanceLog(attacker, city)
 
     var defender: WarUnit? = getNextDefender(null, true)   // :246 — LAZY first pull
+    if (city == null) {
+        if (defender == null) return PhaseOutcome(false, FieldWarOutcome(false, false, emptyList()))
+        require(defender is WarUnitGeneral && defender.rng === rng) { "Field defenders must be generals sharing the battle RNG" }
+        hooks.onFieldAdvanceLog(attacker)
+    }
+    var contact = false
+    var attackerRetreated = false
+    val defeatedDefenderIds = mutableListOf<Int>()
     var conquerCity = false
     var logWritten = false
 
@@ -56,6 +89,7 @@ fun processWarNG(
         logWritten = false
 
         if (defender == null) {
+            if (city == null) break
             // No (more) general defenders → the city becomes the siege defender (`:259-263`).
             city.setSiege()
             defender = city
@@ -79,6 +113,10 @@ fun processWarNG(
         }
 
         val def = defender!!
+        if (city == null) require(def is WarUnitGeneral && def.rng === rng) {
+            "Field defenders must be generals sharing the battle RNG"
+        }
+        contact = true
 
         // --- first contact with a NEW defender: init caller fires (`:289-334`) ---
         if (def.getPhase() == 0 && def.getOppose() == null) {
@@ -155,6 +193,7 @@ fun processWarNG(
         if (!attackerCont.canContinue) {
             // 공격자 퇴각 (`:398-419`).
             logWritten = true
+            attackerRetreated = true
             retreatAttacker(attacker, def, attackerCont.noRice, hooks)
             break
         }
@@ -165,6 +204,7 @@ fun processWarNG(
         if (!fell && stop != null) {
             // 계획 퇴각 — 자연 퇴각과 같은 비용(`addLose`·`tryWound`), 비공성 성 재정비 페이즈도 여기(M1).
             logWritten = true
+            attackerRetreated = true
             retreatAttacker(attacker, def, noRice = false, hooks = hooks)
             break
         }
@@ -194,6 +234,7 @@ fun processWarNG(
                 // 실제 공성을 위해 다시 초기화 — the non-siege city eats a hit then re-arms (`:451-453`).
                 def.setOppose(null)
             } else {
+                if (def is WarUnitGeneral) defeatedDefenderIds.add(def.no)
                 hooks.onDefenderDownLog(attacker, def, defenderCont.noRice)
             }
 
@@ -203,6 +244,7 @@ fun processWarNG(
 
             finishDefenderBattle(def)
             defender = getNextDefender(def, true)   // :464 — LAZY mid-loop pull
+            if (city == null && defender == null) break
 
             if (defender != null && defender !is WarUnitGeneral) {
                 throw IllegalStateException("다음 수비자를 받아오는데 실패")
@@ -225,7 +267,7 @@ fun processWarNG(
     finishDefenderBattle(defender)
 
     // (P4-C6) post-loop city block + addConflict (NO draws) (`:484-497`).
-    if (city.getDead() > 0 || defender is WarUnitCity) {
+    if (city != null && (city.getDead() > 0 || defender is WarUnitCity)) {
         if (city !== defender) {
             // the WarUnitCity def/wall round on a city that was NEVER the active siege defender — do NOT omit.
             city.setOppose(attacker)
@@ -240,7 +282,7 @@ fun processWarNG(
 
     getNextDefender(defender, false)   // :499 — terminal release (applyDB on the last defender)
 
-    return conquerCity
+    return PhaseOutcome(conquerCity, FieldWarOutcome(contact, attackerRetreated, defeatedDefenderIds.toList()))
 }
 
 /**

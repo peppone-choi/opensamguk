@@ -37,6 +37,7 @@ class PrecheckStateViewFactory(
     private val nations: NationReadRepository,
     private val diplomacies: DiplomacyReadRepository,
     private val worldStates: WorldStateReadRepository,
+    private val battlefields: opensamguk.gameapi.read.BattlefieldReadRepository? = null,
 ) {
 
     /**
@@ -90,6 +91,9 @@ class PrecheckStateViewFactory(
 
         val env = LinkedHashMap(envMap(requireActiveMap)).apply {
             this["ownCities"] = ownCities.associateTo(LinkedHashMap()) { it.id to it.level }
+            if (this["mapName"] == "han-world-v3") {
+                this["battlefieldPresent"] = battlefields?.read(generalId)?.position?.battlefield != null
+            }
         }
         // CD1 — preload the actor nation's directional diplomacy rows into the view so the dest-*
         // constraint family (AllowDiplomacyStatus / battleground at-war existence) resolves

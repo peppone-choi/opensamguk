@@ -23,6 +23,34 @@ class GeneralPositionStateTest {
     ) = GeneralPositionAssessment(topologyRevision, topologyHash, generalId, node)
 
     @Test
+    fun `enter and leave battlefield within same province advances authoritative location`() {
+        val cityPosition = GeneralPositionState("r1", hash, 1, land, 1)
+        val presence = BattlefieldPresence("changban", "b".repeat(64), 42)
+        val entry = assertIs<GeneralPositionChangeResult.Changed>(projectGeneralPosition(
+            snapshot(listOf(cityPosition)), 1, assessment().copy(battlefield = presence),
+        ))
+        assertEquals(2L, entry.state.revision)
+        assertEquals(presence, entry.state.battlefield)
+        val deployed = snapshot(listOf(entry.state))
+        assertIs<GeneralPositionChangeResult.Unchanged>(projectGeneralPosition(
+            deployed, 2, assessment().copy(battlefield = presence),
+        ))
+        assertEquals(GeneralPositionDenialCode.STALE_REVISION,
+            assertIs<GeneralPositionChangeResult.Denied>(projectGeneralPosition(deployed, 1, assessment())).code)
+        val returned = assertIs<GeneralPositionChangeResult.Changed>(projectGeneralPosition(deployed, 2, assessment()))
+        assertEquals(3L, returned.state.revision)
+        assertNull(returned.state.battlefield)
+    }
+
+    @Test
+    fun `battlefield presence rejects malformed identity and missing return origin`() {
+        assertFailsWith<IllegalArgumentException> { BattlefieldPresence("", hash, 1) }
+        assertFailsWith<IllegalArgumentException> { BattlefieldPresence("../other", hash, 1) }
+        assertFailsWith<IllegalArgumentException> { BattlefieldPresence("changban", "bad", 1) }
+        assertFailsWith<IllegalArgumentException> { BattlefieldPresence("changban", hash, 0) }
+    }
+
+    @Test
     fun `missing position stays unknown and first explicit land position creates revision one`() {
         val before = snapshot()
         assertNull(before.stateFor(1))

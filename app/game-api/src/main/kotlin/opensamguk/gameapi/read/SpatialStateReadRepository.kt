@@ -1,6 +1,7 @@
 package opensamguk.gameapi.read
 
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.seed.HistoricalBattlefieldCatalog
 import opensamguk.infra.persistence.GeneralPositionRowCodec
 import opensamguk.infra.persistence.ProvinceControlRowCodec
 import opensamguk.logic.world.GeneralPositionSnapshot
@@ -32,12 +33,13 @@ class SpatialStateReadRepository(
             """
             SELECT 'PROVINCE' AS channel, province_id, nation_id, NULL::integer AS general_id,
                 NULL::text AS node_kind, NULL::text AS node_id, topology_revision, topology_hash,
-                revision, true AS general_exists
+                revision, true AS general_exists, NULL::text AS battlefield_id,
+                NULL::text AS battlefield_catalog_hash, NULL::integer AS battlefield_return_city_id
             FROM province_control WHERE world_id = :world_id
             UNION ALL
             SELECT 'POSITION' AS channel, NULL::text AS province_id, NULL::integer AS nation_id,
                 p.general_id, p.node_kind, p.node_id, p.topology_revision, p.topology_hash, p.revision,
-                g.id IS NOT NULL AS general_exists
+                g.id IS NOT NULL AS general_exists, p.battlefield_id, p.battlefield_catalog_hash, p.battlefield_return_city_id
             FROM general_spatial_position p
             LEFT JOIN general g ON g.world_id = p.world_id AND g.id = p.general_id
             WHERE p.world_id = :world_id
@@ -52,7 +54,9 @@ class SpatialStateReadRepository(
                         "PROVINCE" -> provinces.add(ProvinceControlRowCodec.decode(rows))
                         "POSITION" -> {
                             require(rows.getBoolean("general_exists")) { "Orphan general position" }
-                            positions.add(GeneralPositionRowCodec.decode(rows))
+                            val position = GeneralPositionRowCodec.decode(rows)
+                            position.battlefield?.let { HistoricalBattlefieldCatalog.validatePresence(position.node, it) }
+                            positions.add(position)
                         }
                         else -> error("Unknown spatial state channel")
                     }

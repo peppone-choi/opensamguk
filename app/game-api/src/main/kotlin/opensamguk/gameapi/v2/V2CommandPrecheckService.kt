@@ -58,6 +58,9 @@ class V2CommandPrecheckService(
         args: V2GarrisonRecruitArgs,
     ): V2CommandAvailability {
         val state = states.build(generalId, args = mapOf("destCityID" to args.cityId))
+        if (state?.env?.get("battlefieldPresent") == true) {
+            return V2CommandAvailability.Blocked("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.")
+        }
         val city = state?.view?.get(RequirementKey.City(args.cityId)) as? City
         val decision = decideGarrisonRecruit(
             args,
@@ -110,6 +113,9 @@ class V2CommandPrecheckService(
             args = mapOf("sourceCityID" to args.fromCityId, "destCityID" to args.toCityId),
             requireActiveMap = false,
         )
+        if (state?.env?.get("battlefieldPresent") == true) {
+            return V2CityTransportDecision.Denied("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.") to null
+        }
         val from = state?.view?.get(RequirementKey.City(args.fromCityId)) as? City
         val to = state?.view?.get(RequirementKey.City(args.toCityId)) as? City
         val mapName = state?.env?.get("mapName") as? String

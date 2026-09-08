@@ -67,6 +67,19 @@ export interface AdjEdge {
   ford?: number[];
 }
 
+export interface BattlefieldMapTarget {
+  id: string; name: string; latitude: number; longitude: number; current?: boolean;
+}
+export interface BattlefieldMapProjection { cell: number; k: number; x0: number; y1: number; pad: number }
+export function projectBattlefieldTarget(latitude: number, longitude: number,
+  projection: BattlefieldMapProjection | undefined, cols: number, rows: number): { col: number; row: number } | null {
+  if (!projection || ![latitude, longitude, cols, rows, projection.cell, projection.k, projection.x0, projection.y1, projection.pad].every(Number.isFinite)
+    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || projection.cell <= 0 || projection.k <= 0 || cols <= 0 || rows <= 0) return null;
+  const col = (longitude * projection.k - projection.x0 + projection.pad) / projection.cell;
+  const row = (projection.y1 + projection.pad - latitude) / projection.cell;
+  return col >= 0 && row >= 0 && col < cols && row < rows ? { col, row } : null;
+}
+
 export interface HanTiles {
   _meta: {
     cols: number;
@@ -74,6 +87,7 @@ export interface HanTiles {
     year: number;
     terrainLegend: Record<string, string>;
     roadMaskBits?: Record<string, number>;
+    projection?: BattlefieldMapProjection;
   };
   terrain: string[];
   owner: [number, number][];
@@ -225,6 +239,8 @@ export interface IsoActivation {
 export type InitialFocusProfile = 'current-city-close';
 
 export interface HanMapCanvasProps extends IsoSceneOptions {
+  battlefieldTargets?: readonly BattlefieldMapTarget[];
+  onBattlefieldActivate?: (target: BattlefieldMapTarget) => void;
   mapCode: string;
   tiles?: HanTiles | null;
   /** Strong byte identity for explicitly supplied, already-validated terrain. */
@@ -1388,6 +1404,8 @@ function resolveProvinceUrl(
 }
 
 export function HanMapCanvas({
+  battlefieldTargets = [],
+  onBattlefieldActivate,
   mapCode,
   tiles: suppliedTiles,
   tilesSha256,
@@ -1715,6 +1733,13 @@ export function HanMapCanvas({
     politicalPathsRef.current = provinceMap ? bakePoliticalPaths(provinceMap, countyIndex) : null;
   }, [countyIndex, provinceMap]);
 
+  const battlefieldHits = useRef<Array<{ target: BattlefieldMapTarget; x: number; y: number; radius: number }>>([]);
+  const projectedBattlefields = useMemo(() => loadedTiles ? battlefieldTargets.flatMap(target => {
+    const point = projectBattlefieldTarget(target.latitude, target.longitude, loadedTiles._meta.projection, loadedTiles._meta.cols, loadedTiles._meta.rows);
+    return point ? [{ target, ...point }] : [];
+  }) : [], [battlefieldTargets, loadedTiles]);
+  const projectedBattlefieldsRef = useRef(projectedBattlefields);
+  projectedBattlefieldsRef.current = projectedBattlefields;
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const terrain = terrainRef.current;
@@ -1737,6 +1762,17 @@ export function HanMapCanvas({
       administrativeLayer,
       strategicRef.current,
     );
+    battlefieldHits.current = [];
+    const ctx = canvas.getContext('2d');
+    if (ctx) for (const item of projectedBattlefieldsRef.current) {
+      const [x, y] = cellToScreen(item.col, item.row, view);
+      const radius = 7 * sizeRef.current.dpr;
+      ctx.save(); ctx.fillStyle = '#24231f'; ctx.strokeStyle = item.target.current ? '#f2e4bb' : '#c8bea4';
+      ctx.lineWidth = 2 * sizeRef.current.dpr;
+      ctx.beginPath(); ctx.moveTo(x,y-radius); ctx.lineTo(x+radius,y); ctx.lineTo(x,y+radius); ctx.lineTo(x-radius,y); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
+    }
   }, [administrativeLayer]);
 
   useEffect(() => {
@@ -1769,7 +1805,7 @@ export function HanMapCanvas({
 
   useEffect(() => {
     render();
-  }, [hideCityNames, render, scene, strategicScene, strategicControls, showWater, selectedRoutePoints]);
+  }, [hideCityNames, render, scene, strategicScene, strategicControls, showWater, selectedRoutePoints, projectedBattlefields]);
 
   useEffect(() => {
     const hasWavingFlag = scene?.cities.some((city) => (
@@ -2108,6 +2144,8 @@ export function HanMapCanvas({
     dragMovedRef.current = false;
     if (moved) return;
     const point = eventPoint(event);
+    const battlefield = point ? battlefieldHits.current.find(hit => Math.hypot(hit.x - point.canvasX, hit.y - point.canvasY) <= hit.radius) : null;
+    if (battlefield) { onBattlefieldActivate?.(battlefield.target); return; }
     const water = point ? waterAt(point.canvasX, point.canvasY) : null;
     if (water) { setInspectedWater(water.id); return; }
     const city = point ? cityAt(point.canvasX, point.canvasY) : null;
@@ -2210,6 +2248,13 @@ export function HanMapCanvas({
             : '서버 경로가 현재 지도와 일치하지 않아 표시하지 않습니다.'}</p>}
         </section>
       )}
+      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
+        {projectedBattlefields.map(({target}) => <button key={target.id} type="button" aria-label={`${target.name} 전장 선택`} onClick={() => onBattlefieldActivate?.(target)}
+          className="os-button os-button--ghost os-button--sm"
+          style={{background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
+          ◇ {target.name}{target.current ? ' · 주둔' : ''}
+        </button>)}
+      </div>}
       <div className="os-iso-map__controls" style={{ position: 'absolute', left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
         <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>

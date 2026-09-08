@@ -187,6 +187,8 @@ class ReservedTurnHandler(
      * SAME recorder — P2 Risk #4 single-dirty-source).
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
+    private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
+    private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -276,6 +278,23 @@ class ReservedTurnHandler(
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear).copy(
             mapName = ActiveWorldMap.requireName(state.config, state.meta),
         )
+
+        if (actionCode == "che_전장이동") {
+            val result = opensamguk.engine.war.BattlefieldTurnHandler(world, recorder,
+                battlefieldCatalog(), battlefieldCityAnchors(), hiddenSeed,
+                { g -> pipelineBuilder?.pipelineFor(g) ?: opensamguk.logic.stats.GeneralActionPipeline() })
+                .execute(generalId, args, year, month)
+            result.reason?.let { world.pushLog(actionLog(general, it)) }
+            return HandledTurn(generalId, runtimeRegistry.resolve(actionCode), !result.allowed,
+                result.reason, result.logs + listOfNotNull(result.reason), env, args, autorunMode)
+        }
+        if (world.isGeneralAtBattlefield(generalId)) {
+            val isRest = actionCode == runtimeRegistry.fallback.key
+            val reason = if (isRest) null else "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다."
+            reason?.let { world.pushLog(actionLog(general, it)) }
+            return HandledTurn(generalId, runtimeRegistry.fallback, !isRest, reason,
+                listOfNotNull(reason), env, args, autorunMode)
+        }
 
         val baseDefinition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)
         val parsedArgs = runCatching { baseDefinition.parseArgsForGeneral(args, generalId) }.getOrNull()
@@ -411,7 +430,7 @@ class ReservedTurnHandler(
             // 의 기본 정렬(= id 오름차순)이므로 id-ascending으로 정렬해 draw-for-draw 패러티를 유지한다.
             candidateGenerals = if (actionCode == MUJAKWI_GEONGUK || actionCode == IDONG) {
                 world.listGenerals()
-                    .filter { it.nationId == nationId && it.id != generalId }
+                    .filter { it.nationId == nationId && it.id != generalId && !world.isGeneralAtBattlefield(it.id) }
                     .map { PerTurnOverlay.toLogicGeneral(it) }
             } else emptyList(),
             candidateCityIds = if (actionCode == MUJAKWI_GEONGUK) {
@@ -480,13 +499,14 @@ class ReservedTurnHandler(
         }
 
         // --- dirty-free apply: write the post-state engine rows; ChangeRecorder owns dirtiness ---
-        world.applyGeneralDirtyFree(applyGeneralPatch(general, draft.general))
+        opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(general, draft.general), battlefieldCityAnchors)
         draft.destGeneral?.let { destG ->
             if (destG.id != generalId) {
                 val pre = world.getGeneralById(destG.id)
                     ?: error("ReservedTurnHandler: dest general ${destG.id} not in world")
+                if (world.isGeneralAtBattlefield(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), destG)
-                world.applyGeneralDirtyFree(applyGeneralPatch(pre, destG))
+                opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(pre, destG))
             }
         }
         enginePostCity?.let { world.applyCityDirtyFree(applyCityPatch(it, postCity)) }
@@ -546,8 +566,9 @@ class ReservedTurnHandler(
         // draft.general, already diffed above) — the resolver appends only the OTHER moved generals.
         for (movedGeneral in draft.cascadeGenerals) {
             val pre = world.getGeneralById(movedGeneral.id) ?: continue
+            if (world.isGeneralAtBattlefield(pre.id) && movedGeneral.cityId != pre.cityId && movedGeneral.nationId == pre.nationId) continue
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), movedGeneral)
-            world.applyGeneralDirtyFree(applyGeneralPatch(pre, movedGeneral))
+            opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(pre, movedGeneral))
         }
         // cascade cities (방랑 / 무작위 city reverts — defensive; empty for 거병).
         for (movedCity in draft.cascadeCities) {
@@ -748,7 +769,7 @@ class ReservedTurnHandler(
             postBattleGenerals[g.id] ?: PerTurnOverlay.toLogicGeneral(g)
         }
         val defenderCityGenerals = logicGenerals
-            .filter { it.nationId == defenderNationId && it.cityId == cityId }
+            .filter { it.nationId == defenderNationId && world.isGeneralPhysicallyInCity(it.id, cityId) }
             .sortedBy { it.id }
         val defenderNationGenerals = logicGenerals
             .filter { it.nationId == defenderNationId }
@@ -863,7 +884,7 @@ class ReservedTurnHandler(
     private fun applyWarGeneralDelta(post: LogicGeneral) {
         val pre = world.getGeneralById(post.id) ?: return
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), post)
-        world.applyGeneralDirtyFree(applyGeneralPatch(pre, post))
+        opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(pre, post))
     }
 
     private fun applyWarCityDelta(post: LogicCity) {
@@ -890,7 +911,7 @@ class ReservedTurnHandler(
 
     private fun applyLifecycleGeneral(pre: TurnGeneral, post: TurnGeneral) {
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
-        world.applyGeneralDirtyFree(post)
+        opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, post)
     }
 
     internal fun setAutorunLimit(generalId: Int, limit: Int) {
@@ -922,7 +943,8 @@ class ReservedTurnHandler(
             .asSequence()
             .filter { patient ->
                 patient.id != generalId &&
-                    patient.cityId == general.cityId &&
+                    world.isGeneralPhysicallyInCity(general.id, general.cityId) &&
+                    world.isGeneralPhysicallyInCity(patient.id, general.cityId) &&
                     patient.injury > 10 &&
                     (general.nationId != 0 || patient.nationId == 0)
             }
@@ -1240,7 +1262,7 @@ class ReservedTurnHandler(
 
     private fun preloadDisbandCascade(draft: GeneralActionDraft, nationId: Int, generalId: Int) {
         world.listGenerals()
-            .filter { it.nationId == nationId && it.id != generalId }
+            .filter { it.nationId == nationId && it.id != generalId && !world.isGeneralAtBattlefield(it.id) }
             .sortedBy { it.id }
             .mapTo(draft.cascadeGenerals) { PerTurnOverlay.toLogicGeneral(it) }
         world.listCities()
@@ -1874,7 +1896,7 @@ class ReservedTurnHandler(
          * golden proves it (3030+44*0.7=3060.8 → 3061; 3030+64*0.7=3074.8 → 3075). Round via phpRound
          * here so the engine row matches the D1 mapper's rounded column.
          */
-        private fun applyGeneralPatch(engine: TurnGeneral, post: LogicGeneral): TurnGeneral =
+        internal fun applyGeneralPatch(engine: TurnGeneral, post: LogicGeneral): TurnGeneral =
             engine.copy(
                 userId = post.userId,
                 gold = post.gold,

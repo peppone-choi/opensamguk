@@ -1,5 +1,6 @@
 package opensamguk.infra.persistence
 
+import opensamguk.logic.world.BattlefieldPresence
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 import java.sql.ResultSet
@@ -18,19 +19,30 @@ object GeneralPositionRowCodec {
             "WATER_ZONE" -> StrategicNodeRef.WaterZone(nodeId)
             else -> throw IllegalArgumentException("Unknown strategic node kind: $nodeKind")
         }
+        val siteId = rs.getString("battlefield_id")
+        val catalogHash = rs.getString("battlefield_catalog_hash")
+        val returnCityId = rs.getObject("battlefield_return_city_id")
+        val battlefield = if (siteId == null && catalogHash == null && returnCityId == null) null else {
+            require(siteId != null && catalogHash != null && returnCityId is Int) { "Partial battlefield presence" }
+            BattlefieldPresence(siteId, catalogHash, returnCityId)
+        }
         return GeneralPositionState(
             topologyRevision = requireNotNull(rs.getString("topology_revision")),
             topologyHash = requireNotNull(rs.getString("topology_hash")),
             generalId = generalId,
             node = node,
             revision = revision,
+            battlefield = battlefield,
         )
     }
 }
 
-data class GeneralPositionWriteRow(val expectedRevision: Long?, val state: GeneralPositionState) {
+data class GeneralPositionWriteRow(
+    val expectedRevision: Long?, val state: GeneralPositionState, val delete: Boolean = false,
+) {
     init {
-        require(expectedRevision == null || (expectedRevision > 0 && state.revision > expectedRevision)) {
+        require(if (delete) expectedRevision != null && expectedRevision > 0 && state.revision >= expectedRevision
+            else expectedRevision == null || (expectedRevision > 0 && state.revision > expectedRevision)) {
             "General position write must advance the expected persisted revision"
         }
     }

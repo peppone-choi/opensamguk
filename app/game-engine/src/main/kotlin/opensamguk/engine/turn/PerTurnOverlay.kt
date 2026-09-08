@@ -53,7 +53,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
 
     // --- logic-model reads (overlay-first; conversion engine -> logic) ---
 
-    fun getLogicGeneral(id: Int): LogicGeneral? = getGeneral(id)?.let { toLogicGeneral(it) }
+    fun getLogicGeneral(id: Int): LogicGeneral? = getGeneral(id)?.let { physicalLogicGeneral(it) }
     fun getLogicCity(id: Int): LogicCity? = getCity(id)?.let { toLogicCity(it) }
     fun getLogicNation(id: Int): LogicNation? = getNation(id)?.let { toLogicNation(it) }
 
@@ -64,12 +64,15 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
     fun listLogicNations(): List<LogicNation> = world.listNations().map { toLogicNation(it) }
 
     fun listLogicGenerals(): List<LogicGeneral> =
-        world.listGenerals().map { toLogicGeneral(stagedGenerals[it.id] ?: it) }
+        world.listGenerals().map { physicalLogicGeneral(stagedGenerals[it.id] ?: it) }
 
     /** Directional (me,you) diplomacy row converted engine -> logic, or null when absent. */
     fun getLogicDiplomacy(me: Int, you: Int): LogicDiplomacy? =
         world.listDiplomacy().firstOrNull { it.fromNationId == me && it.toNationId == you }
             ?.let { toLogicDiplomacy(it) }
+
+    private fun physicalLogicGeneral(general: TurnGeneral): LogicGeneral =
+        toLogicGeneral(general).let { if (world.isGeneralAtBattlefield(general.id)) it.copy(cityId = 0) else it }
 
     companion object {
         /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim + P2 mil/equip). */

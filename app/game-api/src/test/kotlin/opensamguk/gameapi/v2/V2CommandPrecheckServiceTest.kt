@@ -37,6 +37,21 @@ class V2CommandPrecheckServiceTest {
     private val transportArgs = V2CityTransportArgs(1, 2, 100, 0, 0, null)
 
     @Test
+    fun `deployed actor blocks both immediate city actions and transport preview`() {
+        val service = service("han-world-v3", 2000, deployed = true)
+        val recruit = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema,
+            opensamguk.logic.v2.command.V2GarrisonRecruitArgs(1,100))
+        val transport = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, transportArgs)
+        for (available in listOf(recruit, transport)) {
+            assertEquals("BATTLEFIELD_LOCATION", assertIs<V2CommandAvailability.Blocked>(service.precheck(10, available)).code)
+        }
+        val preview = service.previewTransport(10, transportArgs)
+        assertEquals("BLOCKED", preview.status)
+        assertEquals("BATTLEFIELD_LOCATION", preview.code)
+        assertNull(preview.route)
+    }
+
+    @Test
     fun `V3 preview produces exact stable route then precheck validates both pins`() {
         val service = service("han-world-v3", 2000, ::projection)
         val preview = service.previewTransport(10, transportArgs)
@@ -128,7 +143,7 @@ class V2CommandPrecheckServiceTest {
     private fun service(
         mapName: String, crew: Int,
         loadTopology: () -> HanStrategicRouteProjection = { error("legacy must not load V3 topology") },
-        fromCityId: Int = 1, toCityId: Int = 2,
+        fromCityId: Int = 1, toCityId: Int = 2, deployed: Boolean = false,
     ): V2CommandPrecheckService {
         val generals = mock(GeneralReadRepository::class.java)
         val cities = mock(CityReadRepository::class.java)
@@ -168,6 +183,7 @@ class V2CommandPrecheckServiceTest {
         )
 
         doAnswer { invocation ->
+            check(!deployed) { "Deployed precheck must not query city resources" }
             @Suppress("UNCHECKED_CAST")
             val mapper = invocation.getArgument<RowMapper<Any>>(2)
             val resultSet = mock(ResultSet::class.java)
@@ -181,7 +197,12 @@ class V2CommandPrecheckServiceTest {
             any<RowMapper<Any>>(),
         )
 
-        val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds)
+        val fields = if (deployed) mock(opensamguk.gameapi.read.BattlefieldReadRepository::class.java).also {
+            `when`(it.read(10)).thenReturn(opensamguk.gameapi.read.BattlefieldReadState("r1", "a".repeat(64),
+                GeneralPositionState("r1", "a".repeat(64), 10, StrategicNodeRef.LandProvince("45776"), 1,
+                    BattlefieldPresence("changban", "b".repeat(64), fromCityId)), emptyMap()))
+        } else null
+        val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, fields)
         return V2CommandPrecheckService(states, jdbc, GameApiProcessWorld(1), loadTopology)
     }
 }

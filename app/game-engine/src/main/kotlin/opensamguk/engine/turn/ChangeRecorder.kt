@@ -793,7 +793,19 @@ class ChangeRecorder(
         if (world.getGeneralById(assessment.generalId) == null || assessment.generalId in deletedGeneralIds) {
             return GeneralPositionChangeResult.Denied(GeneralPositionDenialCode.UNKNOWN_GENERAL)
         }
-        val result = projectGeneralPosition(before, expectedRevision, assessment)
+        val pending = generalPositionWrites[assessment.generalId]
+        val revisionFloor = maxOf(
+            (world.getGeneralById(assessment.generalId)?.meta?.get("spatialPositionRevisionFloor") as? Number)?.toLong() ?: 0L,
+            if (pending?.delete == true) pending.state.revision else 0L,
+        )
+        val absent = before.stateFor(assessment.generalId) == null
+        if (absent && revisionFloor == Long.MAX_VALUE) {
+            return GeneralPositionChangeResult.Denied(GeneralPositionDenialCode.REVISION_EXHAUSTED)
+        }
+        val projected = projectGeneralPosition(before, expectedRevision, assessment)
+        val result = if (projected is GeneralPositionChangeResult.Changed && absent) {
+            projected.copy(state = projected.state.copy(revision = maxOf(projected.state.revision, revisionFloor + 1)))
+        } else projected
         if (result is GeneralPositionChangeResult.Changed) {
             val existing = generalPositionWrites[assessment.generalId]
             val persistedExpected = if (existing != null) existing.expectedRevision else result.expectedRevision
@@ -803,6 +815,26 @@ class ChangeRecorder(
             generalPositionWrites[assessment.generalId] = write
         }
         return result
+    }
+
+    /** Revoke explicit location with the same world/CAS contract as position writes. */
+    fun removeGeneralPosition(world: InMemoryTurnWorld, generalId: Int): Boolean {
+        gateMutation("removeGeneralPosition")
+        requireSpatialWorld(world.worldId)
+        val before = world.generalPositionSnapshot() ?: return false
+        val current = before.stateFor(generalId) ?: return false
+        val pending = generalPositionWrites[generalId]
+        val expected = if (pending != null) pending.expectedRevision else current.revision
+        if (expected == null) generalPositionWrites.remove(generalId)
+        else generalPositionWrites[generalId] = GeneralPositionWriteRow(expected, current, delete = true)
+        val general = checkNotNull(world.getGeneralById(generalId))
+        val floor = maxOf(current.revision, (general.meta["spatialPositionRevisionFloor"] as? Number)?.toLong() ?: 0L)
+        val after = general.copy(meta = general.meta + ("spatialPositionRevisionFloor" to floor))
+        diffGeneral(PerTurnOverlay.toLogicGeneral(general), PerTurnOverlay.toLogicGeneral(after))
+        world.applyGeneralDirtyFree(after)
+        world.applyGeneralPositionDirtyFree(before.withoutGeneral(generalId))
+        spatialWorldId = world.worldId
+        return true
     }
 
     private fun requireSpatialWorld(worldId: WorldId) {
