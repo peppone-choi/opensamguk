@@ -3,17 +3,20 @@
 // 중원정보 (Global Diplomacy) — F4 page 2. READ-ONLY this wave (no mutation wiring).
 // Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/ts/PageGlobalDiplomacy.vue + hwe/sammo/API/Global/GetDiplomacy.php.
 //
-// Three sections, verbatim section titles + colors (legacy `.tb-title` backgrounds):
-//   외교 현황 (blue)   — the diplomacy matrix (nations × nations) with ★/▲/ㆍ/@ symbols.
-//   분쟁 현황 (magenta) — per-city 분쟁 share% feed (hidden when conflict[] is empty,
+// Three sections, verbatim section titles. 색은 레거시 리터럴(blue/magenta/green)에서
+// 야전 사령부 팔레트로 사상했다(화면 일체화) — 의미(정보/경고/전장)는 그대로 두고 이름만
+// 토큰으로 옮긴 것이며, #fff 텍스트를 채도 높은 바탕에 얹던 대비 문제도 같이 없앤다:
+//   외교 현황 (--info)  — the diplomacy matrix (nations × nations) with ★/▲/ㆍ/@ symbols.
+//   분쟁 현황 (--rust)  — per-city 분쟁 share% feed (hidden when conflict[] is empty,
 //                         exactly as legacy `v-if="diplomacy.conflict.length > 0"`).
-//   중원 지도 (green)   — reuse <MapViewer/> (same component as the main screen) + a
+//   중원 지도 (--moss)  — reuse <MapViewer/> (same component as the main screen) + a
 //                         SimpleNationList-style nation panel.
 //
 // Symbol/color maps reproduced byte-for-byte from PageGlobalDiplomacy.vue:
-//   infomative (a cell that involves the viewer's nation): 0★red 1▲magenta 2ㆍ 7@green
-//   neutral    (a cell that does not involve the viewer):  0★red 1▲magenta 2(empty) 7"에러"
-//   self cell: ＼ · involved-viewer cell background: #660000
+//   infomative (a cell that involves the viewer's nation): 0★교전 1▲선포 2ㆍ 7@불가침
+//   neutral    (a cell that does not involve the viewer):  0★교전 1▲선포 2(empty) 7"에러"
+//   self cell: ＼ · involved-viewer cell background: --rust 틴트(구 #660000)
+//   기호별 색은 .gd-state--war/--declared/--pact 로, 팔레트 토큰을 쓴다.
 // GetDiplomacy already collapses neutral states 3-7→2 server-side for non-viewer rows,
 // so the only states the maps ever see for neutral cells are 0/1/2(/7-error guard).
 //
@@ -21,6 +24,7 @@
 // map unseeded → MapViewer renders its own placeholder. Never crashes.
 
 import { useEffect, useState, useCallback } from 'react';
+import PageHead from '../../../components/PageHead';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import MapViewer from '../../../components/game/MapViewer';
@@ -48,10 +52,10 @@ function isBrightColor(color: string): boolean {
 // Verbatim from PageGlobalDiplomacy.vue infomativeStateCharMap (cells involving the viewer).
 function infomativeCell(state: number): React.ReactNode {
     switch (state) {
-        case 0: return <span style={{ color: 'red' }}>★</span>;
-        case 1: return <span style={{ color: 'magenta' }}>▲</span>;
+        case 0: return <span className="gd-state gd-state--war">★</span>;
+        case 1: return <span className="gd-state gd-state--declared">▲</span>;
         case 2: return 'ㆍ';
-        case 7: return <span style={{ color: 'green' }}>@</span>;
+        case 7: return <span className="gd-state gd-state--pact">@</span>;
         default: return null;
     }
 }
@@ -59,8 +63,8 @@ function infomativeCell(state: number): React.ReactNode {
 // Verbatim from PageGlobalDiplomacy.vue neutralStateCharMap (cells not involving the viewer).
 function neutralCell(state: number): React.ReactNode {
     switch (state) {
-        case 0: return <span style={{ color: 'red' }}>★</span>;
-        case 1: return <span style={{ color: 'magenta' }}>▲</span>;
+        case 0: return <span className="gd-state gd-state--war">★</span>;
+        case 1: return <span className="gd-state gd-state--declared">▲</span>;
         case 2: return '';
         case 7: return '에러';
         default: return '';
@@ -142,39 +146,31 @@ export default function GlobalDiplomacyPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>중원 정보</h1>
+            <PageHead title="중원 정보" />
 
-            <div className="control-bar" style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="control-bar dip-toolbar">
                 <button onClick={fetchData}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* ── 외교 현황 (diplomacy matrix) ─────────────────────────────────── */}
             <div
-                className="section-title"
-                style={{ background: 'blue', color: '#fff', textAlign: 'center', fontSize: 'var(--text-lg)', fontWeight: 600, padding: 'var(--space-xs) var(--space-sm)', marginBottom: 'var(--space-sm)' }}
-            >
+                className="section-title band-title band-title--info">
                 외교 현황
             </div>
-            <GameCard style={{ marginBottom: 'var(--space-xl)' }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="game-table" style={{ margin: 'auto', minWidth: 400 }}>
+            <GameCard className="gd-section">
+                <div className="u-scroll-x">
+                    <table className="game-table gd-matrix">
                         <thead>
                             <tr>
                                 <th></th>
                                 {nations.map((nation) => (
                                     <th
                                         key={nation.nation}
-                                        style={{
-                                            textAlign: 'center',
-                                            color: isBrightColor(nation.color) ? '#000' : '#fff',
-                                            backgroundColor: nation.color,
-                                            minWidth: '1ch',
-                                            maxWidth: '3ch',
-                                            fontWeight: 'normal',
-                                        }}
+                                        className="gd-matrix__col"
+                                        style={{ color: isBrightColor(nation.color) ? '#000' : '#fff', backgroundColor: nation.color }}
                                     >
                                         {nation.name}
                                     </th>
@@ -185,22 +181,15 @@ export default function GlobalDiplomacyPage() {
                             {nations.map((me) => (
                                 <tr key={me.nation}>
                                     <th
-                                        style={{
-                                            textAlign: 'right',
-                                            paddingRight: '1ch',
-                                            paddingLeft: '1ch',
-                                            minWidth: '10ch',
-                                            color: isBrightColor(me.color) ? '#000' : '#fff',
-                                            backgroundColor: me.color,
-                                            fontWeight: 'normal',
-                                        }}
+                                        className="gd-matrix__row"
+                                        style={{ color: isBrightColor(me.color) ? '#000' : '#fff', backgroundColor: me.color }}
                                     >
                                         {me.name}
                                     </th>
                                     {nations.map((you) => {
                                         if (me.nation === you.nation) {
                                             return (
-                                                <td key={you.nation} style={{ textAlign: 'center' }}>
+                                                <td key={you.nation} className="u-center">
                                                     ＼
                                                 </td>
                                             );
@@ -211,10 +200,7 @@ export default function GlobalDiplomacyPage() {
                                         return (
                                             <td
                                                 key={you.nation}
-                                                style={{
-                                                    textAlign: 'center',
-                                                    ...(involvesViewer ? { backgroundColor: '#660000' } : {}),
-                                                }}
+                                                className={`u-center${involvesViewer ? ' gd-matrix__cell--mine' : ''}`}
                                             >
                                                 {state == null
                                                     ? ''
@@ -229,10 +215,10 @@ export default function GlobalDiplomacyPage() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={nations.length + 1} style={{ textAlign: 'center' }}>
-                                    불가침 : <span style={{ color: 'limegreen' }}>@</span>, 통상 : ㆍ, 선포 :{' '}
-                                    <span style={{ color: 'magenta' }}>▲</span>, 교전 :{' '}
-                                    <span style={{ color: 'red' }}>★</span>
+                                <td colSpan={nations.length + 1} className="u-center">
+                                    불가침 : <span className="gd-state gd-state--pact">@</span>, 통상 : ㆍ, 선포 :{' '}
+                                    <span className="gd-state gd-state--declared">▲</span>, 교전 :{' '}
+                                    <span className="gd-state gd-state--war">★</span>
                                 </td>
                             </tr>
                         </tfoot>
@@ -244,57 +230,41 @@ export default function GlobalDiplomacyPage() {
             {conflict.length > 0 && (
                 <>
                     <div
-                        className="section-title"
-                        style={{ background: 'magenta', color: '#fff', textAlign: 'center', fontSize: 'var(--text-lg)', fontWeight: 600, padding: 'var(--space-xs) var(--space-sm)', marginBottom: 'var(--space-sm)' }}
-                    >
+                        className="section-title band-title band-title--alert">
                         분쟁 현황
                     </div>
-                    <GameCard style={{ marginBottom: 'var(--space-xl)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                    <GameCard className="gd-section">
+                        <div className="u-stack-sm gd-conflicts">
                             {conflict.map(([cityId, conflictNations]) => (
-                                <div key={cityId} style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                                <div key={cityId} className="gd-conflict">
                                     {/* legacy PageGlobalDiplomacy.vue:68 — gameConst.cityConst[cityID].name 으로 도시명 표시.
                                         cityConst 미로드/미존재 시에만 `도시 {id}` 폴백(날조 아님). */}
                                     <div
-                                        style={{
-                                            flexBasis: '16ch',
-                                            textAlign: 'right',
-                                            paddingRight: '1ch',
-                                            alignSelf: 'center',
-                                            color: 'var(--text-secondary)',
-                                        }}
+                                        className="gd-conflict__city"
                                     >
                                         {formatCityName(cityId, cityConst) || `도시 ${cityId}`}
                                     </div>
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                                    <div className="gd-conflict__bars">
                                         {Object.entries(conflictNations).map(([nationIdStr, percent]) => {
                                             const nid = Number(nationIdStr);
                                             const nation = nationById.get(nid);
                                             const color = nation?.color ?? '#555555';
                                             const name = nation?.name ?? `세력 ${nid}`;
                                             return (
-                                                <div key={nid} style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
+                                                <div key={nid} className="gd-bar">
                                                     <div
-                                                        style={{
-                                                            flexBasis: '16ch',
-                                                            paddingLeft: '1ch',
-                                                            color: isBrightColor(color) ? '#000' : '#fff',
-                                                            backgroundColor: color,
-                                                        }}
+                                                        className="gd-bar__name"
+                                                        style={{ color: isBrightColor(color) ? '#000' : '#fff', backgroundColor: color }}
                                                     >
                                                         {name}
                                                     </div>
-                                                    <div style={{ flexBasis: '6ch', textAlign: 'right', paddingRight: '0.5ch' }}>
+                                                    <div className="gd-bar__pct">
                                                         {percent.toLocaleString(undefined, { minimumFractionDigits: 1 })}%
                                                     </div>
-                                                    <div style={{ flex: 1, alignSelf: 'center' }}>
+                                                    <div className="gd-bar__track">
                                                         <div
-                                                            style={{
-                                                                width: `${percent}%`,
-                                                                marginLeft: 0,
-                                                                height: '1.2em',
-                                                                backgroundColor: color,
-                                                            }}
+                                                            className="gd-bar__fill"
+                                                            style={{ width: `${percent}%`, backgroundColor: color }}
                                                         />
                                                     </div>
                                                 </div>
@@ -310,24 +280,22 @@ export default function GlobalDiplomacyPage() {
 
             {/* ── 중원 지도 (map + nation list) ────────────────────────────────── */}
             <div
-                className="section-title"
-                style={{ background: 'green', color: '#fff', textAlign: 'center', fontSize: 'var(--text-lg)', fontWeight: 600, padding: 'var(--space-xs) var(--space-sm)', marginBottom: 'var(--space-sm)' }}
-            >
+                className="section-title band-title band-title--field">
                 중원 지도
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                <div style={{ flex: '2 1 360px', minWidth: 0 }}>
+            <div className="gd-split">
+                <div className="gd-split__map">
                     <MapViewer />
                 </div>
-                <div style={{ flex: '1 1 260px', minWidth: 240 }}>
+                <div className="gd-split__list">
                     <GameCard>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="game-table" style={{ width: '100%' }}>
+                        <div className="u-scroll-x">
+                            <table className="game-table u-full">
                                 <thead>
                                     <tr>
-                                        <th style={{ width: '50%' }}>국명</th>
-                                        <th style={{ width: '25%', textAlign: 'right' }}>국력</th>
-                                        <th style={{ width: '25%', textAlign: 'right' }}>속령</th>
+                                        <th className="gd-w50">국명</th>
+                                        <th className="u-right gd-w25">국력</th>
+                                        <th className="u-right gd-w25">속령</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -335,25 +303,22 @@ export default function GlobalDiplomacyPage() {
                                         <tr key={n.nation}>
                                             <td>
                                                 <span
-                                                    style={{
-                                                        color: isBrightColor(n.color) ? '#000' : '#fff',
-                                                        backgroundColor: n.color,
-                                                        padding: '0 0.5ch',
-                                                    }}
+                                                    className="gd-nation-tag"
+                                                    style={{ color: isBrightColor(n.color) ? '#000' : '#fff', backgroundColor: n.color }}
                                                     title={n.cities.join(', ')}
                                                 >
                                                     {n.name}
                                                 </span>
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>{n.power.toLocaleString()}</td>
-                                            <td style={{ textAlign: 'right' }} title={n.cities.join(', ')}>
+                                            <td className="u-right">{n.power.toLocaleString()}</td>
+                                            <td className="u-right" title={n.cities.join(', ')}>
                                                 {n.cities.length.toLocaleString()}
                                             </td>
                                         </tr>
                                     ))}
                                     {nations.length === 0 && !loading && (
                                         <tr>
-                                            <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            <td colSpan={3} className="u-center text-muted">
                                                 활동 중인 세력이 없습니다.
                                             </td>
                                         </tr>

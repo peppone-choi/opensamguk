@@ -268,31 +268,30 @@ export default function VotePage() {
             <PageHead title={<>설문 조사{voteReward != null && `(${voteReward.toLocaleString()}금과 추첨으로 유니크템 증정!)`}</>} />
 
             <div
-                className="control-bar"
-                style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}
+                className="control-bar dip-toolbar"
             >
                 <button onClick={() => fetchList()}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* ── current vote: result + comments ─────────────────────────────── */}
             {!loading && !error && info && (
                 <>
-                    <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="game-table" style={{ width: '100%' }}>
+                    <GameCard className="vote-section">
+                        <div className="u-scroll-x">
+                            <table className="game-table u-full">
                                 <thead>
                                     <tr>
-                                        <th colSpan={3} style={{ textAlign: 'right' }}>설문 제목</th>
+                                        <th colSpan={3} className="u-right">설문 제목</th>
                                         <th>
                                             {info.title}
                                             {info.multipleOptions !== 1 && ` ${selectableLabel(info)}`}
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th colSpan={3} style={{ textAlign: 'right' }}>게시자</th>
+                                        <th colSpan={3} className="u-right">게시자</th>
                                         <th>{info.opener ?? '[SYSTEM]'}</th>
                                     </tr>
                                 </thead>
@@ -305,7 +304,7 @@ export default function VotePage() {
                                             <tr key={idx}>
                                                 {/* canVote → 좌측에 radio/checkbox(투표 입력); 아니면 read-only 색상 인덱스 셀. */}
                                                 {canVote ? (
-                                                    <td style={{ textAlign: 'center' }}>
+                                                    <td className="u-center">
                                                         {isSingle ? (
                                                             <input
                                                                 type="radio"
@@ -325,24 +324,21 @@ export default function VotePage() {
                                                     </td>
                                                 ) : (
                                                     <td
-                                                        style={{
-                                                            textAlign: 'right',
-                                                            backgroundColor: color,
-                                                            color: isBrightColor(color) ? '#000' : '#fff',
-                                                        }}
+                                                        className="u-right"
+                                                        style={{ backgroundColor: color, color: isBrightColor(color) ? '#000' : '#fff' }}
                                                     >
                                                         {idx + 1}.
                                                     </td>
                                                 )}
-                                                <td style={{ textAlign: 'right' }}>{count}명</td>
-                                                <td style={{ textAlign: 'right' }}>({percent}%)</td>
+                                                <td className="u-right">{count}명</td>
+                                                <td className="u-right">({percent}%)</td>
                                                 <td>{option}</td>
                                             </tr>
                                         );
                                     })}
                                     {info.options.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            <td colSpan={4} className="u-center text-muted">
                                                 항목이 없습니다.
                                             </td>
                                         </tr>
@@ -353,19 +349,19 @@ export default function VotePage() {
                                         {/* canVote → 투표 버튼 footer; 아니면 결산 라벨(read-only). */}
                                         {canVote ? (
                                             <>
-                                                <td style={{ textAlign: 'center' }}>투표</td>
+                                                <td className="u-center">투표</td>
                                                 <td colSpan={2}>
                                                     <button
                                                         onClick={openVote}
                                                         disabled={submitting}
-                                                        style={{ width: '100%' }}
+                                                        className="u-full"
                                                     >
                                                         투표
                                                     </button>
                                                 </td>
                                             </>
                                         ) : (
-                                            <td colSpan={3} style={{ textAlign: 'center' }}>결산</td>
+                                            <td colSpan={3} className="u-center">결산</td>
                                         )}
                                         <td>
                                             투표율: {total} / {userCnt} ({' '}
@@ -375,7 +371,7 @@ export default function VotePage() {
                                     {/* 마감 (voteClose, admin) — endDate가 아직 없을 때만 노출(이미 마감은 no-op). */}
                                     {isVoteAdmin && myGeneralId !== 0 && !info.endDate && (
                                         <tr>
-                                            <td colSpan={4} style={{ textAlign: 'right' }}>
+                                            <td colSpan={4} className="u-right">
                                                 <button
                                                     onClick={() =>
                                                         setModal({
@@ -397,33 +393,33 @@ export default function VotePage() {
                     </GameCard>
 
                     {/* comments */}
-                    <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="game-table" style={{ width: '100%' }}>
+                    <GameCard className="vote-section">
+                        <div className="u-scroll-x">
+                            <table className="game-table u-full">
                                 <thead>
                                     <tr>
-                                        <th style={{ width: '5ch', textAlign: 'right' }}>#</th>
-                                        <th style={{ textAlign: 'center' }}>국가명</th>
-                                        <th style={{ textAlign: 'center' }}>장수명</th>
+                                        <th className="vote-count">#</th>
+                                        <th className="u-center">국가명</th>
+                                        <th className="u-center">장수명</th>
                                         <th>댓글</th>
-                                        <th style={{ textAlign: 'center' }}>일시</th>
+                                        <th className="u-center">일시</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {(detail?.comments ?? []).map((comment, idx) => (
                                         <tr key={comment.id ?? idx}>
-                                            <td style={{ textAlign: 'right' }}>{idx + 1}.</td>
-                                            <td style={{ textAlign: 'center' }}>{comment.nationName}</td>
-                                            <td style={{ textAlign: 'center' }}>{comment.generalName}</td>
-                                            <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{comment.text}</td>
-                                            <td style={{ textAlign: 'center', fontSize: 'var(--text-xs)' }}>
+                                            <td className="u-right">{idx + 1}.</td>
+                                            <td className="u-center">{comment.nationName}</td>
+                                            <td className="u-center">{comment.generalName}</td>
+                                            <td className="vote-text">{comment.text}</td>
+                                            <td className="u-center vote-small">
                                                 {shortDate(comment.date)}
                                             </td>
                                         </tr>
                                     ))}
                                     {(detail?.comments?.length ?? 0) === 0 && (
                                         <tr>
-                                            <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            <td colSpan={5} className="u-center text-muted">
                                                 댓글이 없습니다.
                                             </td>
                                         </tr>
@@ -436,7 +432,7 @@ export default function VotePage() {
                                         <td></td>
                                         <td colSpan={2}>
                                             <button
-                                                style={{ width: '100%' }}
+                                                className="u-full"
                                                 disabled={myGeneralId === 0 || commentDraft.trim().length === 0 || submitting}
                                                 onClick={() =>
                                                     setModal({
@@ -457,7 +453,7 @@ export default function VotePage() {
                                                 placeholder="새 댓글 내용"
                                                 maxLength={200}
                                                 disabled={myGeneralId === 0 || submitting}
-                                                style={{ width: '100%' }}
+                                                className="u-full"
                                             />
                                         </td>
                                     </tr>
@@ -471,38 +467,28 @@ export default function VotePage() {
             {/* ── 이전 설문 조사 list ──────────────────────────────────────────── */}
             {!loading && !error && (
                 <>
-                    <div
-                        className="section-title"
-                        style={{ background: 'var(--bg2, #2a2a2a)', color: 'var(--text-primary)', textAlign: 'center', fontSize: 'var(--text-lg)', fontWeight: 600, padding: 'var(--space-xs) var(--space-sm)', marginBottom: 'var(--space-sm)' }}
-                    >
+                    <div className="section-title band-title">
                         이전 설문 조사
                     </div>
                     <GameCard>
                         {voteListEntries.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                            <div className="u-stack-xs">
                                 {voteListEntries.map(([id, vInfo]) => (
                                     <div key={id}>
                                         <button
                                             onClick={() => setCurrentId(id)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                padding: 0,
-                                                color: id === currentId ? 'var(--gold)' : 'var(--jade)',
-                                                cursor: 'pointer',
-                                                textAlign: 'left',
-                                            }}
+                                            className={`link-button${id === currentId ? ' link-button--current' : ''}`}
                                         >
                                             {vInfo.title}
                                         </button>
-                                        <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                                        <span className="text-muted vote-small">
                                             {' '}({vInfo.startDate})
                                         </span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+                            <p className="u-center text-muted vote-empty">
                                 설문 조사가 없습니다.
                             </p>
                         )}
@@ -512,22 +498,16 @@ export default function VotePage() {
 
             {/* ── 새 설문 조사 개설 (newVote, admin) — legacy isVoteAdmin 패널 ──────── */}
             {!loading && !error && isVoteAdmin && myGeneralId !== 0 && (
-                <GameCard style={{ marginTop: 'var(--space-lg)' }}>
+                <GameCard className="vote-section-foot">
                     <button
                         onClick={() => setShowNewVote((v) => !v)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            color: 'var(--jade)',
-                            cursor: 'pointer',
-                        }}
+                        className="link-button"
                     >
                         새 설문 조사 열기
                     </button>
                     {showNewVote && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                        <div className="u-stack-sm vote-form">
+                            <label className="u-stack-xs">
                                 <span>설문 제목</span>
                                 <input
                                     type="text"
@@ -535,16 +515,16 @@ export default function VotePage() {
                                     onChange={(e) => setNewTitle(e.target.value)}
                                 />
                             </label>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                            <label className="u-stack-xs">
                                 <span>설문 대상(엔터로 구분) ({newOptionsCount}건)</span>
                                 <textarea
                                     rows={Math.max(2, newOptionsCount + 1)}
                                     value={newOptionsText}
                                     onChange={(e) => setNewOptionsText(e.target.value)}
-                                    style={{ resize: 'vertical' }}
+                                    className="vote-textarea"
                                 />
                             </label>
-                            <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                            <label className="u-stack-xs">
                                 <span>동시 응답 수(0=모두)</span>
                                 <input
                                     type="number"
@@ -552,10 +532,10 @@ export default function VotePage() {
                                     max={newOptionsCount}
                                     value={newMultiple}
                                     onChange={(e) => setNewMultiple(Number(e.target.value))}
-                                    style={{ width: '120px' }}
+                                    className="vote-width-120"
                                 />
                             </label>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <div className="dip-form__actions">
                                 <button
                                     onClick={openNewVote}
                                     disabled={newTitle.trim().length === 0 || newOptionsCount === 0 || submitting}
@@ -594,19 +574,7 @@ export default function VotePage() {
             )}
 
             {toast && (
-                <div
-                    role="status"
-                    style={{
-                        position: 'fixed',
-                        bottom: 16,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: 'var(--surface-raised)',
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                    }}
-                    onClick={() => setToast(null)}
-                >
+                <div role="status" className="toast-floating" onClick={() => setToast(null)}>
                     {toast}
                 </div>
             )}
