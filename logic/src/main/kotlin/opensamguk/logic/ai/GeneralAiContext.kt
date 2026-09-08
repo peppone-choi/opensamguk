@@ -174,6 +174,7 @@ data class GeneralAiContext(
     val fullIntel: Double = 0.0,
     val nationTech: Int = 0,
     val selfCrew: Int = 0,
+    val selfCrewTypeId: Int = 0,
     val selfCity: City? = null,
     val cityDevelRate: Map<String, Double> = emptyMap(),
     val chiefStatMin: Int = 65,

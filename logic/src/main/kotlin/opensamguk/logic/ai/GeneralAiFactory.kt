@@ -80,6 +80,7 @@ object GeneralAiFactory {
             do국가선택 = bodies.do국가선택,
             do방랑군이동 = bodies.do방랑군이동,
             do건국 = bodies.do건국,
+            do건국준비 = bodies.do건국준비,
             do해산 = bodies.do해산,
             do중립 = bodies.do중립,
             // the nation spine (FD2).
@@ -139,6 +140,7 @@ data class GeneralAiDoBodies(
     val do국가선택: (LastTurn?) -> ChosenCommand? = { null },
     val do방랑군이동: (LastTurn?) -> ChosenCommand? = { null },
     val do건국: (LastTurn?) -> ChosenCommand? = { null },
+    val do건국준비: (LastTurn?) -> ChosenCommand? = { null },
     val do해산: (LastTurn?) -> ChosenCommand? = { null },
     val do중립: (LastTurn?) -> ChosenCommand = { ChosenCommand("che_중립", emptyMap()) },
     val candidateAllowed: (actionCode: String, rawArgs: Map<String, Any?>) -> Boolean = { _, _ -> true },
@@ -203,6 +205,7 @@ data class GeneralAiDoBodies(
                 do국가선택 = GenFoundFamily.do국가선택(ctx),
                 do방랑군이동 = GenWarMoveFamily.do방랑군이동(ctx),
                 do건국 = GenFoundFamily.do건국(ctx),
+                do건국준비 = GenFoundFamily.do건국준비(ctx),
                 do해산 = GenFoundFamily.do해산(ctx),
                 do중립 = GenFoundFamily.do중립(ctx),
                 // the F-BRIDGE gate + the meta-KV delta sink threaded from the ctx (decision #12 / M4).

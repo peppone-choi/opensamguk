@@ -85,6 +85,7 @@ class GeneralAI(
     private val do국가선택: ((LastTurn?) -> ChosenCommand?) = { null },
     private val do방랑군이동: ((LastTurn?) -> ChosenCommand?) = { null },
     private val do건국: ((LastTurn?) -> ChosenCommand?) = { null },
+    private val do건국준비: ((LastTurn?) -> ChosenCommand?) = { null },
     private val do해산: ((LastTurn?) -> ChosenCommand?) = { null },
     private val do중립: ((LastTurn?) -> ChosenCommand) = { ChosenCommand("che_중립", emptyMap()) },
     // --- nation spine (FD2) ---
@@ -197,6 +198,7 @@ class GeneralAI(
         if (input.npcType >= 2 && input.officerLevel == 12 && !input.capital) {
             if (input.relYearMonth > 1) { // :3806
                 do건국(null)?.let { return it.copy(reason = "do건국") }
+                do건국준비(null)?.let { return it.copy(reason = "do건국준비") }
             }
             do방랑군이동(null)?.let { return it.copy(reason = "do방랑군이동") } // :3814
             if (input.relYearMonth > 1) { // :3820
