@@ -1,5 +1,7 @@
 package opensamguk.gateway.security
 
+import jakarta.servlet.DispatcherType
+
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -41,6 +43,8 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it
+                    // Servlet error rendering must preserve the status of the authorized request.
+                    .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     .requestMatchers("/internal/**").permitAll()
                     .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
                     .requestMatchers("/health").permitAll()
