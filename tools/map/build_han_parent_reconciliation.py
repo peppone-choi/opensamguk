@@ -2,6 +2,7 @@
 """Generate the review-only Han tile-to-administrative-parent reconciliation ledger."""
 
 import argparse
+import copy
 import hashlib
 import json
 import re
@@ -1473,8 +1474,40 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
                 )
         rows.append(row)
     summary = _summary(rows, selections["absent"], direct_jun_reviews, tiles)
-    _assert_locked_contract(summary, selections["absent"])
-    return {
+    projection = None
+    sys.path.insert(0, str(ROOT))
+    from tools.map import relocate_han_province as relocation
+    if relocation.LEDGER.exists():
+        later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
+        current_tiles = relocation.canonicalize_city_order(documents["data/map/han-tiles.json"], later)
+        if relocation.digest(current_tiles) == later["outputDocumentSha256"]:
+            prior_tiles = relocation.restore_document(current_tiles, later)
+            prior_documents = {**documents, "data/map/han-tiles.json": prior_tiles}
+            prior_records = copy.deepcopy(input_records)
+            prior_records["data/map/han-tiles.json"]["sha256"] = later["inputTilesSha256"]
+            # Recursive prior state uses the original, unchanged locked contract.
+            prior = build_ledger(prior_documents, prior_records)
+            deltas = Counter()
+            for cell in later["ownerDelta"]:
+                deltas[cell["before"]] -= 1
+                deltas[cell["after"]] += 1
+            city_deltas = Counter()
+            for record in current_tiles["provinceRecords"]:
+                if record.get("cityIndex") is not None:
+                    city_id = current_tiles["cities"][record["cityIndex"]]["id"]
+                    city_deltas[city_id] += deltas[record["id"]]
+            projected_rows = copy.deepcopy(prior["rows"])
+            for row in projected_rows:
+                row["cellCount"] += city_deltas[row["cityId"]]
+            expected = _summary(projected_rows, selections["absent"], direct_jun_reviews, tiles)
+            if summary != expected:
+                raise ValueError("reconciliation differs from exact relocated-cell bucket projection")
+            projection = {"inputTilesSha256": later["inputTilesSha256"],
+                          "changedCellCount": len(later["ownerDelta"]),
+                          "provinceCellDeltas": dict(sorted((key, value) for key, value in deltas.items() if value))}
+    if projection is None:
+        _assert_locked_contract(summary, selections["absent"])
+    result = {
         "schemaVersion": 1,
         "ledgerId": "han-administrative-parent-reconciliation-v1",
         "referenceYear": REFERENCE_YEAR,
@@ -1491,6 +1524,9 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
         "directTerritoryJunReviews": direct_jun_reviews,
         "rows": rows,
     }
+    if projection is not None:
+        result["relocationCountProjection"] = projection
+    return result
 
 
 def render_ledger(input_paths: dict[str, Path] | None = None) -> bytes:

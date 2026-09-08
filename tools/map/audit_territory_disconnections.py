@@ -506,6 +506,19 @@ def validate_ledger(document: object) -> list[dict]:
 def check(document: Mapping, ledger: Mapping) -> dict:
     rows = validate_ledger(ledger)
     components = inventory(document)
+    projection = None
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tools.map import relocate_han_province as relocation
+    if relocation.LEDGER.exists():
+        later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
+        if relocation.digest(document) == later["outputDocumentSha256"]:
+            before = relocation.restore_document(document, later)
+            prior = check(before, ledger)
+            if prior["errors"]:
+                raise ValueError("prior territory review fails before relocation: " + repr(prior["errors"]))
+            rows = relocation.project_territory_rows(before, document, rows, later)
+            projection = later["territoryProjection"]
     by_key = {c["componentKey"]: c for c in components}
     errors: list[str] = []
     covered: set[str] = set()
@@ -589,6 +602,7 @@ def check(document: Mapping, ledger: Mapping) -> dict:
             )
     verdicts = Counter(row["verdict"] for row in rows if row["componentKey"] in by_key)
     return {
+        "relocationProjection": projection,
         "componentCount": len(components),
         "adjudicatedCount": len(covered),
         "verdictCounts": dict(sorted(verdicts.items())),

@@ -955,7 +955,12 @@ class CommittedDataTest(unittest.TestCase):
     def test_resolved_ningyang_component_is_absent_without_a_replacement_component(self):
         document = json.loads(audit.DEFAULT_TILES.read_text(encoding="utf-8"))
         ledger = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
-        inventory_keys = {row["componentKey"] for row in audit.inventory(document)}
+        self.assertEqual([], audit.check(document, ledger)["errors"])
+        # The immutable historical rows describe the prior state. The later Geuk
+        # body swap is validated separately by audit.check above.
+        from tools.map import relocate_han_province as relocation
+        prior = relocation.restore_document(document, json.loads(relocation.LEDGER.read_text()))
+        inventory_keys = {row["componentKey"] for row in audit.inventory(prior)}
         ledger_keys = {row["componentKey"] for row in ledger["adjudications"]}
 
         self.assertNotIn("PARENT-0028@452:210", inventory_keys)

@@ -2140,12 +2140,12 @@
         "id": "PARENT-0036",
         "displayName": "평원군",
         "componentCellCounts": [
-          536,
+          550,
           39
         ],
         "components": [
           {
-            "cellCount": 536,
+            "cellCount": 550,
             "memberIds": [
               "200038",
               "45087",
@@ -2173,13 +2173,14 @@
         "componentCellCounts": [
           549,
           168,
-          48,
+          23,
           13
         ],
         "components": [
           {
             "cellCount": 549,
             "memberIds": [
+              "85272",
               "85292",
               "85312",
               "85325",
@@ -2201,10 +2202,9 @@
             ]
           },
           {
-            "cellCount": 48,
+            "cellCount": 23,
             "memberIds": [
-              "85217",
-              "85272"
+              "85217"
             ]
           },
           {
@@ -9853,7 +9853,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63"
+      "sha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
