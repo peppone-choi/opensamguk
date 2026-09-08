@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "scope": "Seven non-normalized names manually located in supplied text; no automatic identity remapping",
+  "rows": [
+    {
+      "canonicalGroup": "汝南郡",
+      "sourceName": "慎陽",
+      "recordId": "f237d47659e211d7e0bdffde38ae34e5b1ade0391e00825cebcb59a578d9312e:126",
+      "sourceNamesHan": [
+        "愼陽縣"
+      ],
+      "reason": "ORTHOGRAPHIC_VARIANT_REQUIRES_EXPLICIT_MAPPING",
+      "ledgerCoordinate": [
+        32.78049,
+        114.37146
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 32.78049,
+          "lon": 114.37146
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "汝南郡",
+      "sourceName": "思善",
+      "recordId": "f237d47659e211d7e0bdffde38ae34e5b1ade0391e00825cebcb59a578d9312e:160",
+      "sourceNamesHan": [
+        "思善國"
+      ],
+      "reason": "COUNTY_KINGDOM_SUFFIX_REQUIRES_IDENTITY_REVIEW",
+      "ledgerCoordinate": [
+        33.5385,
+        115.7811
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 33.5385,
+          "lon": 115.7811
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "汝南郡",
+      "sourceName": "安昌",
+      "recordId": "f237d47659e211d7e0bdffde38ae34e5b1ade0391e00825cebcb59a578d9312e:164",
+      "sourceNamesHan": [
+        "安昌國"
+      ],
+      "reason": "COUNTY_KINGDOM_SUFFIX_REQUIRES_IDENTITY_REVIEW",
+      "ledgerCoordinate": [
+        32.79088,
+        113.89268
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 32.79088,
+          "lon": 113.89268
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "汝南郡",
+      "sourceName": "博陽",
+      "recordId": "f237d47659e211d7e0bdffde38ae34e5b1ade0391e00825cebcb59a578d9312e:166",
+      "sourceNamesHan": [
+        "博陽國"
+      ],
+      "reason": "COUNTY_KINGDOM_SUFFIX_REQUIRES_IDENTITY_REVIEW",
+      "ledgerCoordinate": [
+        33.57853,
+        114.73217
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 33.57853,
+          "lon": 114.73217
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "西河郡",
+      "sourceName": "皋狼",
+      "recordId": "538467d8b236e72159c2b7006ffd46eb4383e880bb9be59b3150d96069446594:621",
+      "sourceNamesHan": [
+        "皐狼縣"
+      ],
+      "reason": "ORTHOGRAPHIC_VARIANT_REQUIRES_EXPLICIT_MAPPING",
+      "ledgerCoordinate": [
+        37.87442,
+        111.23601
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 37.87442,
+          "lon": 111.23601
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "東萊郡",
+      "sourceName": "盧鄉",
+      "recordId": "0a7587fb8f1581fd663a00540e46dd8df45a5a530e6c6534fb00430257015f9f:506",
+      "sourceNamesHan": [
+        "盧鄕縣"
+      ],
+      "reason": "ORTHOGRAPHIC_VARIANT_REQUIRES_EXPLICIT_MAPPING",
+      "ledgerCoordinate": [
+        36.98516,
+        119.85121
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 36.98516,
+          "lon": 119.85121
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [],
+      "historicalLocationVerified": false
+    },
+    {
+      "canonicalGroup": "益州郡",
+      "sourceName": "俞元",
+      "recordId": "3dbff015f0a87b906a744ced72e233177de6a5323271b4e53f4dbdab5d1d60e0:825",
+      "sourceNamesHan": [
+        "兪元縣"
+      ],
+      "reason": "ORTHOGRAPHIC_VARIANT_REQUIRES_EXPLICIT_MAPPING",
+      "ledgerCoordinate": [
+        24.67462,
+        102.90431
+      ],
+      "sourceCoordinatePairs": [
+        {
+          "lat": 24.67462,
+          "lon": 102.90431
+        }
+      ],
+      "coordinateEqual": true,
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "historicalLocationVerified": false
+    }
+  ]
+}
