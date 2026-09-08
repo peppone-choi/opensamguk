@@ -226,7 +226,7 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.mapCode").value("han-world-v3"))
             .andExpect(jsonPath("$.strategicTopology.mapCode").value("han-world-v3"))
             .andExpect(jsonPath("$.strategicTopology.worldId").value(1))
-            .andExpect(jsonPath("$.strategicTopology.baseTilesSha256").value("237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63"))
+            .andExpect(jsonPath("$.strategicTopology.baseTilesSha256").value("5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb"))
             .andExpect(jsonPath("$.cities.length()").value(1))
             .andExpect(jsonPath("$.cities[0].id").value(781))
             .andExpect(jsonPath("$.cities[0].name").value("역성"))

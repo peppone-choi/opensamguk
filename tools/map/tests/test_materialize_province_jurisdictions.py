@@ -58,15 +58,18 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertEqual(1_524, len(tiles["provinceRecords"]))
         self.assertEqual(1_020, len(tiles["jurisdictionRecords"]))
         self.assertEqual(172, len(tiles["commanderyRecords"]))
+        # Preserve the original Licheng geometry proof before the separate Geuk stage.
+        from tools.map import relocate_han_province as relocation
+        prior = relocation.restore_document(tiles, json.loads(relocation.LEDGER.read_text()))
         geometry_hashes = {
             key: hashlib.sha256(
                 json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
             ).hexdigest()
             for key, value in {
-                "terrain": tiles["terrain"],
-                "owner": tiles["owner"],
-                "cities": tiles["cities"],
-                "countyAdjacency": tiles["adjacency"]["county"],
+                "terrain": prior["terrain"],
+                "owner": prior["owner"],
+                "cities": prior["cities"],
+                "countyAdjacency": prior["adjacency"]["county"],
             }.items()
         }
         self.assertEqual(

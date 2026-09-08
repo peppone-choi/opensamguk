@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63"
+      "sha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -264,6 +264,19 @@
     "nonExactRowsNeverApproveParent": true
   },
   "referenceYear": 220,
+  "relocationCountProjection": {
+    "changedCellCount": 61,
+    "inputTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
+    "provinceCellDeltas": {
+      "200026": 3,
+      "45028": 7,
+      "45107": 6,
+      "45124": 8,
+      "85272": 11,
+      "85325": -36,
+      "DIRECT-PARENT-0107-67cb635d068b": 1
+    }
+  },
   "rows": [
     {
       "approvalEvidence": {
@@ -318,7 +331,7 @@
         "routeNodeKey": "e334023b-ad81-4d1f-bb10-7f5d3cf5b816"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:濟南國:009",
-      "cellCount": 28,
+      "cellCount": 31,
       "cityId": "200026",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -328,7 +341,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 28,
+            "cellCount": 31,
             "junArrayIndex": 35,
             "nameCh": "濟南國"
           }
@@ -1992,10 +2005,10 @@
         "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "85466",
+            "anchorCityId": "85272",
             "candidateAdministrativeGroupId": "hhs-group:112:北海國",
-            "candidateAdministrativeUnitId": "hhs:112:北海國:003",
-            "squaredGridDistance": 10
+            "candidateAdministrativeUnitId": "hhs:112:北海國:001",
+            "squaredGridDistance": 5
           }
         ]
       },
@@ -18401,7 +18414,7 @@
         "routeNodeKey": "a434c985-10fa-4f11-a449-085beee88a6d"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:濟南國:005",
-      "cellCount": 23,
+      "cellCount": 30,
       "cityId": "45028",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -18411,7 +18424,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 23,
+            "cellCount": 30,
             "junArrayIndex": 35,
             "nameCh": "濟南國"
           }
@@ -18843,7 +18856,7 @@
       }
     },
     {
-      "cellCount": 26,
+      "cellCount": 32,
       "cityId": "45107",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -18853,7 +18866,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 26,
+            "cellCount": 32,
             "junArrayIndex": 36,
             "nameCh": "平原郡"
           }
@@ -19198,7 +19211,7 @@
         "routeNodeKey": "9fd7534a-3066-4f3e-8eeb-deae2b9f6ca0"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:平原郡:004",
-      "cellCount": 66,
+      "cellCount": 74,
       "cityId": "45124",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -19208,7 +19221,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 66,
+            "cellCount": 74,
             "junArrayIndex": 36,
             "nameCh": "平原郡"
           }
@@ -33190,7 +33203,7 @@
         "routeNodeKey": "e46c566b-5cc8-4853-8777-6f4ddc0b1730"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:北海國:001",
-      "cellCount": 25,
+      "cellCount": 36,
       "cityId": "85272",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -33200,7 +33213,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 25,
+            "cellCount": 36,
             "junArrayIndex": 38,
             "nameCh": "北海國"
           }
@@ -33438,7 +33451,7 @@
         "routeNodeKey": "5228a3f4-1a03-4394-b52d-73a411dd9a5a"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:北海國:005",
-      "cellCount": 82,
+      "cellCount": 46,
       "cityId": "85325",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -33448,7 +33461,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 82,
+            "cellCount": 46,
             "junArrayIndex": 38,
             "nameCh": "北海國"
           }
@@ -46579,15 +46592,15 @@
   "schemaVersion": 1,
   "summary": {
     "approvedPhysicalPlaceIdAbsentCount": 0,
-    "cityLinkedCellCount": 107156,
+    "cityLinkedCellCount": 107155,
     "cityLinkedProvinceCount": 998,
     "coordinateFootprintMajorityMismatchCount": 0,
     "crossParentRegionFootprintCount": 0,
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80963,
-      "PROPOSED_GEOMETRIC": 18163
+      "EXACT_APPROVED": 80956,
+      "PROPOSED_GEOMETRIC": 18169
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
@@ -46595,13 +46608,13 @@
       "EXACT_APPROVED": 782,
       "PROPOSED_GEOMETRIC": 283
     },
-    "directTerritoryCellCount": 120193,
+    "directTerritoryCellCount": 120194,
     "directTerritoryProvinceCount": 526,
     "directTerritoryReview": {
       "pendingCandidateJunCount": 17,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80963,
+    "exactApprovedCellCount": 80956,
     "exactApprovedRowCount": 782,
     "geometryDiagnostics": {
       "distanceTies": {
@@ -46609,7 +46622,7 @@
         "rowCount": 3
       },
       "multiGroupJun": {
-        "cellCount": 7820,
+        "cellCount": 7826,
         "rowCount": 84
       },
       "singleGroupJun": {
@@ -46617,14 +46630,14 @@
         "rowCount": 199
       },
       "uniqueNearest": {
-        "cellCount": 18094,
+        "cellCount": 18100,
         "rowCount": 280
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1138,
     "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26193,
+    "unresolvedCellCount": 26199,
     "unresolvedRowCount": 356
   }
 }

@@ -713,7 +713,10 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         city_by_id = {city["id"]: city for city in tiles["cities"]}
         self.assertEqual((423, 386), (city_by_id["32540"]["col"], city_by_id["32540"]["row"]))
         self.assertEqual((435, 174), (city_by_id["210314"]["col"], city_by_id["210314"]["row"]))
-        self.assertEqual(ledger["outputCitiesSha256"], json_digest(tiles["cities"]))
+        # The historical fragment hashes pin the state before the later relocation.
+        from tools.map import relocate_han_province as relocation
+        prior = relocation.restore_document(tiles, json.loads(relocation.LEDGER.read_text()))
+        self.assertEqual(ledger["outputCitiesSha256"], json_digest(prior["cities"]))
         self.assertEqual(ledger["outputJunsSha256"], json_digest(tiles["juns"]))
         self.assertEqual(
             ledger["seatOwnerSha256"],

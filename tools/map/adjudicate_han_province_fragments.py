@@ -499,7 +499,7 @@ def _nearest_target_partition(
     return {target_id: cells for target_id, cells in result.items() if cells}
 
 
-def materialize_document(document: dict, ledger: dict) -> dict:
+def _materialize_fragment_document(document: dict, ledger: dict) -> dict:
     """Return an idempotently patched copy after validating every decision."""
     updated = copy.deepcopy(document)
     meta = updated.get("_meta")
@@ -864,6 +864,21 @@ def materialize_document(document: dict, ledger: dict) -> dict:
     counts["adjCounty"] = len(county_adjacency)
     counts["adjCommandery"] = len(commandery_adjacency)
     return updated
+
+
+def materialize_document(document: dict, ledger: dict) -> dict:
+    """Validate prior decisions before composing an exact later relocation stage."""
+    from tools.map import relocate_han_province as relocation
+
+    if relocation.LEDGER.exists():
+        later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
+        if relocation.digest(document) == later["outputDocumentSha256"]:
+            restored = relocation.restore_document(document, later)
+            reviewed = _materialize_fragment_document(restored, ledger)
+            if reviewed != restored:
+                raise ValueError("relocation input is not the canonical prior fragment output")
+            return relocation.relocate_document(reviewed, later)
+    return _materialize_fragment_document(document, ledger)
 
 
 def main() -> int:

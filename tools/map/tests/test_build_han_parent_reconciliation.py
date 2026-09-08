@@ -71,7 +71,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         self.assertEqual(998, ledger["summary"]["cityLinkedProvinceCount"])
         self.assertEqual(526, ledger["summary"]["directTerritoryProvinceCount"])
         self.assertEqual(227_349, ledger["summary"]["landCellCount"])
-        self.assertEqual(120_193, ledger["summary"]["directTerritoryCellCount"])
+        self.assertEqual(120_194, ledger["summary"]["directTerritoryCellCount"])
         self.assertEqual(782, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
@@ -552,7 +552,7 @@ class HanParentReconciliationTest(unittest.TestCase):
 
         self.assertEqual(1_138, len(self.ledger["rows"]))
         self.assertEqual(1_138, len(self.rows))
-        self.assertEqual(107_156, sum(row["cellCount"] for row in self.ledger["rows"]))
+        self.assertEqual(107_155, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(227_349, summary["landCellCount"])
         self.assertEqual(
             summary["landCellCount"],
@@ -569,21 +569,21 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 80_963,
-                "PROPOSED_GEOMETRIC": 18_163,
+                "EXACT_APPROVED": 80_956,
+                "PROPOSED_GEOMETRIC": 18_169,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
         self.assertEqual(356, summary["unresolvedRowCount"])
-        self.assertEqual(26_193, summary["unresolvedCellCount"])
+        self.assertEqual(26_199, summary["unresolvedCellCount"])
         self.assertEqual(
             {"rowCount": 199, "cellCount": 10_343},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 84, "cellCount": 7_820},
+            {"rowCount": 84, "cellCount": 7_826},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -611,7 +611,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 280, "cellCount": 18_094},
+            {"rowCount": 280, "cellCount": 18_100},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(

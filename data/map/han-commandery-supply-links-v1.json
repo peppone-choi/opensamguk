@@ -135,19 +135,19 @@
   },
   {
    "canonicalGroup": "北海國",
+   "fromProvinceIndex": 693,
+   "toProvinceIndex": 703,
+   "fromCityName": "동안평",
+   "toCityName": "극",
+   "distanceKm": 39.4
+  },
+  {
+   "canonicalGroup": "北海國",
    "fromProvinceIndex": 703,
    "toProvinceIndex": 707,
    "fromCityName": "극",
    "toCityName": "주허",
    "distanceKm": 27.9
-  },
-  {
-   "canonicalGroup": "北海國",
-   "fromProvinceIndex": 703,
-   "toProvinceIndex": 729,
-   "fromCityName": "극",
-   "toCityName": "평수",
-   "distanceKm": 22.7
   },
   {
    "canonicalGroup": "北海國",
