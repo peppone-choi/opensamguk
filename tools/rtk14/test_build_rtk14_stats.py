@@ -100,6 +100,78 @@ def legacy_tuple(name, leadership=1, strength=2, intel=3, birth=150, death=220):
 
 
 class Rtk14StatsBuilderTest(unittest.TestCase):
+    def test_reviewed_legacy_portraits_change_only_picture_and_are_deterministic(self):
+        rows = source_rows()
+        rows[0] = source_row(1, "누반", birth=178, appearance=196, death=207)
+        rows[1] = source_row(2, "곽여왕", birth=184, appearance=202, death=235)
+        plain = b._source_rows_to_rtk(rows)
+        portraits = copy.deepcopy(plain)
+        portraits["누반"][0]["portraitId"] = 10502
+        portraits["곽여왕"][0]["portraitId"] = 10815
+        for section in b.RUNTIME_SECTIONS:
+            with self.subTest(section=section):
+                scenario = {"startYear": 200, section: [
+                    legacy_tuple("루반", 65, 76, 39, 178, 207),
+                    legacy_tuple("곽씨", 42, 4, 55, 184, 235),
+                ]}
+                for row in scenario[section]:
+                    row[2] = None
+                baseline, _ = b.enrich_scenario(scenario, plain)
+                expected = copy.deepcopy(baseline)
+                expected[section][0][2] = "10502.png"
+                expected[section][1][2] = "10815.png"
+                # Added workbook officers also receive their normal portrait IDs.
+                for row in expected.get("general", []):
+                    if row[17] in (1, 2):
+                        row[2] = "10502.png" if row[17] == 1 else "10815.png"
+                result, _ = b.enrich_scenario(scenario, portraits)
+                self.assertEqual("10502.png", result[section][0][2])
+                self.assertEqual(expected, result)
+                self.assertEqual(result, b.enrich_scenario(scenario, portraits)[0])
+                self.assertIsNone(scenario[section][0][2])
+
+    def test_reviewed_legacy_portraits_reject_identity_and_target_drift(self):
+        rows = source_rows()
+        rows[0] = source_row(1, "누반", birth=178, appearance=196, death=207)
+        rtk = b._source_rows_to_rtk(rows)
+        rtk["누반"][0]["portraitId"] = 10502
+        for index in (5, 6, 7, 9, 10):
+            with self.subTest(index=index):
+                row = legacy_tuple("루반", 65, 76, 39, 178, 207)
+                row[2] = None
+                row[index] += 1
+                result, _ = b.enrich_scenario({"startYear": 200, "general": [row]}, rtk)
+                self.assertIsNone(result["general"][0][2])
+        explicit = legacy_tuple("루반", 65, 76, 39, 178, 207)
+        result, _ = b.enrich_scenario({"startYear": 200, "general": [explicit]}, rtk)
+        self.assertEqual("portrait", result["general"][0][2])
+        for target in (None, 10268):
+            with self.subTest(target=target):
+                rtk["누반"][0]["portraitId"] = target
+                row = legacy_tuple("루반", 65, 76, 39, 178, 207)
+                row[2] = None
+                result, _ = b.enrich_scenario({"startYear": 200, "general": [row]}, rtk)
+                self.assertIsNone(result["general"][0][2])
+
+    def test_reviewed_legacy_portrait_identity_requires_exact_name_and_single_verified_target(self):
+        source = {"name": "누반", "portraitId": 10502, "birth": 178, "death": 207}
+        for candidates in ([], [source, source], [{**source, "name": "손노반"}],
+                           [{**source, "birth": 179}], [{**source, "death": 208}]):
+            row = legacy_tuple("루반", 65, 76, 39, 178, 207)
+            row[2] = None
+            entry = b.read_devsam({"general": [row]})[0]
+            b._fill_reviewed_legacy_portrait(entry, {"누반": candidates})
+            self.assertIsNone(row[2])
+        for name in ("루반1", "손노반", "곽씨1"):
+            row = legacy_tuple(name, 65, 76, 39, 178, 207)
+            row[2] = None
+            b._fill_reviewed_legacy_portrait(b.read_devsam({"general": [row]})[0], {"누반": [source]})
+            self.assertIsNone(row[2])
+        row = legacy_tuple("루반", 65, 76, 39, 178, 207)
+        row[2] = ""
+        b._fill_reviewed_legacy_portrait(b.read_devsam({"general": [row]})[0], {"누반": [source]})
+        self.assertEqual("10502.png", row[2])
+
     def test_portrait_registry_joins_every_source_by_unique_fingerprint_and_name(self):
         rows = source_rows()
         rtk = b._source_rows_to_rtk(rows)
