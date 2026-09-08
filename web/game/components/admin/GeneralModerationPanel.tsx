@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminBlockedWrite, AdminGeneralModerationResponse, AdminGeneralModerationRow } from '@/lib/api';
@@ -13,12 +14,13 @@ function errorText(e: unknown, fallback = '데이터를 불러올 수 없습니�
     return msg || fallback;
 }
 
-function optionStyle(g: AdminGeneralModerationRow): React.CSSProperties {
-    const style: React.CSSProperties = {};
-    if (g.block > 0) style.backgroundColor = 'red';
-    if (g.npc >= 2) style.color = 'cyan';
-    else if (g.npc === 1) style.color = 'skyblue';
-    return style;
+// 범례와 같은 이름의 클래스로 칠한다 — 리터럴 색(cyan/skyblue/red)을 팔레트 토큰으로 사상했다.
+function optionClass(g: AdminGeneralModerationRow): string | undefined {
+    const classes: string[] = [];
+    if (g.block > 0) classes.push('adm-mod--blocked');
+    if (g.npc >= 2) classes.push('adm-mod--npc');
+    else if (g.npc === 1) classes.push('adm-mod--npc-user');
+    return classes.length > 0 ? classes.join(' ') : undefined;
 }
 
 function ActionButtons({
@@ -31,7 +33,7 @@ function ActionButtons({
     onAction: (action: AdminBlockedWrite) => void;
 }) {
     return (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="u-row-sm">
             {actions.map((a) => (
                 <button
                     key={a.label}
@@ -118,18 +120,18 @@ export default function GeneralModerationPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>회원 관리</h1>
+            <PageHead title="회원 관리" />
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {data && !error && (
                 <>
-                    <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                        <table className="game-table" style={{ width: '100%' }}>
+                    <GameCard className="adm-section">
+                        <table className="game-table u-full">
                             <tbody>
                                 <tr>
-                                    <th style={{ width: 120, textAlign: 'center' }}>접속제한</th>
+                                    <th className="adm-w120">접속제한</th>
                                     <td>
                                         <ActionButtons actions={data.bulkActions} disabled={actionLoading != null} onAction={runAction} />
                                     </td>
@@ -138,61 +140,61 @@ export default function GeneralModerationPanel() {
                         </table>
                     </GameCard>
 
-                    <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) 1fr', gap: 'var(--space-md)' }}>
+                    <GameCard className="adm-section">
+                        <div className="adm-split">
                             <div>
-                                <div style={{ marginBottom: 8, lineHeight: 1.7 }}>
+                                <div className="adm-para">
                                     회원선택<br />
-                                    <span style={{ color: 'cyan' }}>NPC</span><br />
-                                    <span style={{ color: 'skyblue' }}>NPC유저</span><br />
-                                    <span style={{ color: 'red' }}>접속제한</span><br />
-                                    <b style={{ backgroundColor: 'red' }}>블럭회원</b>
+                                    <span className="adm-mod--npc">NPC</span><br />
+                                    <span className="adm-mod--npc-user">NPC유저</span><br />
+                                    <span className="adm-mod--limited">접속제한</span><br />
+                                    <b className="adm-mod--blocked">블럭회원</b>
                                 </div>
                                 <select
                                     multiple
                                     size={20}
                                     value={selected.map(String)}
                                     onChange={(e) => setSelected(Array.from(e.currentTarget.selectedOptions, (o) => Number(o.value)))}
-                                    style={{ width: '100%', minHeight: 360, background: '#000', color: '#fff', fontSize: 14 }}
+                                    className="adm-console"
                                 >
                                     {data.generals.map((g) => (
-                                        <option key={g.no} value={g.no} style={optionStyle(g)}>
+                                        <option key={g.no} value={g.no} className={optionClass(g)}>
                                             {g.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
-                                {notice && <p style={{ margin: 0, color: 'var(--sam-green)' }}>{notice}</p>}
+                            <div className="adm-stack-grid">
+                                {notice && <p className="adm-notice">{notice}</p>}
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>블럭</h2>
+                                    <h2 className="adm-h3">블럭</h2>
                                     <ActionButtons actions={data.selectedActions.slice(0, 5)} disabled={actionLoading != null} onAction={runAction} />
-                                    <p style={{ margin: '8px 0 0', color: 'var(--text-muted)' }}>1단계:발언권, 2단계:턴블럭</p>
+                                    <p className="adm-note adm-note--gap">1단계:발언권, 2단계:턴블럭</p>
                                 </section>
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>강제 사망</h2>
+                                    <h2 className="adm-h3">강제 사망</h2>
                                     <ActionButtons actions={data.selectedActions.slice(5, 6)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>이벤트2</h2>
+                                    <h2 className="adm-h3">이벤트2</h2>
                                     <ActionButtons actions={data.selectedActions.slice(6, 11)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>접속제한</h2>
+                                    <h2 className="adm-h3">접속제한</h2>
                                     <ActionButtons actions={data.selectedActions.slice(11, 13)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>명령 설정</h2>
+                                    <h2 className="adm-h3">명령 설정</h2>
                                     <ActionButtons actions={data.selectedActions.slice(13, 15)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
-                                    <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>메세지 전달</h2>
+                                    <h2 className="adm-h3">메세지 전달</h2>
                                     <input
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value.slice(0, 255))}
                                         maxLength={255}
-                                        style={{ width: 'min(100%, 520px)', background: '#000', color: '#fff', marginRight: 8 }}
+                                        className="adm-console-input"
                                     />
                                     <button
                                         disabled={
@@ -212,15 +214,15 @@ export default function GeneralModerationPanel() {
                     </GameCard>
 
                     <GameCard>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="u-row-sm">
                             <button onClick={() => void load()}>새로고침</button>
-                            <span style={{ color: 'var(--text-muted)' }}>
+                            <span className="text-muted">
                                 선택 {selectedRows.length}명 / 전체 {data.generals.length}명
                             </span>
                         </div>
                         {selectedRows.length > 0 && (
-                            <div style={{ overflowX: 'auto', marginTop: 12 }}>
-                                <table className="game-table" style={{ minWidth: 720 }}>
+                            <div className="adm-table-wrap">
+                                <table className="game-table adm-table--wide">
                                     <thead>
                                         <tr>
                                             <th>장수</th>
@@ -237,10 +239,10 @@ export default function GeneralModerationPanel() {
                                         {selectedRows.map((g) => (
                                             <tr key={g.no}>
                                                 <td>{g.name}</td>
-                                                <td style={{ textAlign: 'center' }}>{g.npc}</td>
-                                                <td style={{ textAlign: 'center' }}>{g.block}</td>
-                                                <td style={{ textAlign: 'center' }}>{g.killturn ?? '-'}</td>
-                                                <td style={{ textAlign: 'center' }}>{g.nationId}</td>
+                                                <td className="u-center">{g.npc}</td>
+                                                <td className="u-center">{g.block}</td>
+                                                <td className="u-center">{g.killturn ?? '-'}</td>
+                                                <td className="u-center">{g.nationId}</td>
                                                 <td>{g.turnTime ?? '-'}</td>
                                                 <td>{g.command0 ?? '-'}</td>
                                                 <td>{g.command1 ?? '-'}</td>

@@ -105,7 +105,7 @@ function PolicyControls({
     disabled: boolean;
 }) {
     return (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+        <div className="adm-actions">
             <button type="button" disabled={disabled} style={buttonStyle} onClick={onReset}>초깃값으로</button>
             <button type="button" disabled={disabled} style={buttonStyle} onClick={onRevert}>이전값으로</button>
             <button type="button" disabled={disabled} style={buttonStyle} onClick={onSubmit}>설정</button>
@@ -167,14 +167,14 @@ function PriorityPanel({
     return (
         <GameCard>
             <SectionHeader title={title} />
-            <p style={{ textAlign: 'right', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }}>
+            <p className="adm-note--right">
                 {setterLine}
             </p>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>{hint}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+            <p className="adm-hint">{hint}</p>
+            <div className="adm-grid-2">
                 <div>
                     <div style={subBarStyle}>비활성</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    <div className="u-stack-xs">
                         {unused.map((id) => (
                             <div key={id} style={itemStyle}>
                                 <span>{id}</span>
@@ -185,11 +185,11 @@ function PriorityPanel({
                 </div>
                 <div>
                     <div style={subBarStyle}>활성</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    <div className="u-stack-xs">
                         {active.map((id, index) => (
                             <div key={`${id}-${index}`} style={itemStyle}>
                                 <span>{id}</span>
-                                <span style={{ display: 'flex', gap: 4 }}>
+                                <span className="u-row-sm">
                                     <button type="button" disabled={disabled || index === 0} aria-label={`${id} 위로`} onClick={() => shift(index, -1)}>↑</button>
                                     <button type="button" disabled={disabled || index === active.length - 1} aria-label={`${id} 아래로`} onClick={() => shift(index, 1)}>↓</button>
                                     <button type="button" disabled={disabled} aria-label={`${id} 비활성`} onClick={() => move(id, false)}>‹</button>
@@ -286,10 +286,10 @@ export default function NpcControlPage() {
     };
 
     if (loading) {
-        return <Shell><PageHead title="NPC 정책" /><p style={{ color: 'var(--text-muted)' }}>로딩 중...</p></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><p className="text-muted">로딩 중...</p></Shell>;
     }
     if (error) {
-        return <Shell><PageHead title="NPC 정책" /><p style={{ color: 'var(--crimson)' }}>{error}</p></Shell>;
+        return <Shell><PageHead title="NPC 정책" /><p className="page-error">{error}</p></Shell>;
     }
     if (!hasNation) {
         return <Shell><PageHead title="NPC 정책" /><GameCard><p>국가에 소속되어있지 않습니다.</p></GameCard></Shell>;
@@ -310,19 +310,19 @@ export default function NpcControlPage() {
         <Shell>
             <PageHead title="NPC 정책" />
             {status && (
-                <div role="status" style={{ marginBottom: 'var(--space-sm)', color: status.startsWith('설정하지') ? 'var(--crimson)' : 'var(--text-secondary)' }}>
+                <div role="status" className={`adm-status${status.startsWith('설정하지') ? ' page-error' : ' text-secondary'}`}>
                     {status}
                 </div>
             )}
             <GameCard className="mb-md">
                 <SectionHeader title="국가 정책" />
-                <p style={{ textAlign: 'right', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
+                <p className="adm-note--right">
                     {lastSetterLine(lastSetters.policy.setter, lastSetters.policy.date)}
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-sm)' }}>
+                <div className="adm-grid-320">
                     {POLICY_FIELDS.map((field) => (
-                        <label key={field.key} style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-sm)' }}>
-                            <span style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 700, marginBottom: 'var(--space-xs)' }}>{field.title}</span>
+                        <label key={field.key} className="adm-card">
+                            <span className="adm-label">{field.title}</span>
                             <input
                                 aria-label={field.title}
                                 type="number"
@@ -337,13 +337,13 @@ export default function NpcControlPage() {
                                         [field.key]: field.ratio ? raw / 100 : raw,
                                     }));
                                 }}
-                                style={{ width: '100%', marginBottom: 'var(--space-xs)' }}
+                                className="adm-input"
                             />
-                            <span style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                            <span className="adm-label__sub">
                                 초깃값 {displayValue(field, defaults[field.key]).toLocaleString()}
                                 {typeof zero[field.key] === 'number' ? ` · 0 기준값 ${(zero[field.key] as number).toLocaleString()}` : ''}
                             </span>
-                            <span style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 'var(--space-xs)' }}>{field.info}</span>
+                            <span className="adm-label__note">{field.info}</span>
                         </label>
                     ))}
                 </div>
@@ -366,7 +366,7 @@ export default function NpcControlPage() {
                     }}
                 />
             </GameCard>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 'var(--space-md)' }}>
+            <div className="adm-grid-360">
                 <PriorityPanel
                     title="NPC 사령턴 우선순위"
                     hint={<>예턴이 없거나, 지정되어 있더라도 실패하면 아래 순위에 따라 사령턴을 시도합니다.</>}

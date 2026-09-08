@@ -2680,3 +2680,59 @@ input:focus, select:focus, textarea:focus {
 .gd-split__list { flex: 1 1 260px; min-width: 240px; }
 .gd-w25 { width: 25%; }
 .gd-w50 { width: 50%; }
+
+/* 어드민 패널 공통 — 화면마다 다시 짓지 않는다 */
+.u-left { text-align: left; }
+.u-row-md { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.adm-section { margin-bottom: 16px; }
+.adm-section--xl { margin-bottom: 20px; }
+.adm-h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.adm-h2--spaced { margin-top: 16px; }
+.adm-h3 { font-size: 13px; margin: 0 0 8px; }
+.adm-note { color: var(--muted); margin: 0; font-size: 12px; line-height: 1.7; }
+.adm-note--right { text-align: right; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.adm-hint { font-size: 11px; color: var(--text-2); margin-bottom: 8px; }
+.adm-empty { color: var(--muted); text-align: center; margin: 0; }
+.adm-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+.adm-tab { background: transparent; border-bottom: 2px solid transparent; }
+.adm-tab--on { border-bottom-color: var(--bronze); color: var(--bronze); }
+.adm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.adm-grid-320 { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.adm-grid-360 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
+.adm-split { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 12px; }
+.adm-card { border: 1px solid var(--line); padding: 8px; }
+.adm-label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.adm-label__sub { display: block; font-size: 11px; color: var(--muted); }
+.adm-label__note { display: block; font-size: 11px; color: var(--text-2); margin-top: 4px; }
+.adm-input { width: 100%; margin-bottom: 4px; }
+.adm-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px; }
+.adm-console { width: 100%; min-height: 360px; background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 13px; }
+.adm-console-input { width: min(100%, 520px); background: var(--bg); color: var(--text); margin-right: 8px; }
+.adm-table-wrap { overflow-x: auto; margin-top: 12px; }
+.adm-table--wide { min-width: 720px; }
+.adm-table--xwide { min-width: 1200px; white-space: nowrap; }
+.adm-matrix { margin: auto; min-width: 480px; }
+.adm-w100 { width: 100px; }
+.adm-w120 { width: 120px; text-align: center; }
+.adm-w140 { width: 140px; text-align: right; }
+.adm-w12ch { text-align: left; width: 12ch; }
+.adm-col { flex: 1 1 320px; min-width: 280px; }
+.adm-ok { background: var(--moss); color: var(--bg); font-weight: 600; }
+.adm-bad { background: var(--rust); color: var(--bg); font-weight: 600; }
+/* 회원 관리 범례 — 목록 항목과 범례가 같은 클래스를 쓴다(리터럴 cyan/skyblue/red 를 팔레트로 사상). */
+.adm-mod--npc { color: var(--log-c); }
+.adm-mod--npc-user { color: var(--log-s); }
+.adm-mod--limited { color: var(--rust); }
+.adm-mod--blocked { background-color: var(--rust); color: var(--bg); }
+/* 이전에는 정의되지 않은 --sam-green 이라 알림 글자색이 아예 적용되지 않았다. */
+.adm-notice { margin: 0; color: var(--moss-2); }
+.adm-stack-grid { display: grid; gap: 12px; align-content: start; }
+.adm-para { margin-bottom: 8px; line-height: 1.7; }
+.adm-note--gap { margin: 8px 0 0; }
+.adm-tab { padding: 8px 12px; color: var(--text-2); border-radius: 0; }
+.adm-status { margin-bottom: 8px; }
+/* 게임 관리 입력 — 이전에는 #000/#fff 리터럴이었다. */
+.adm-text-input { width: 100%; max-width: 720px; background: var(--bg); color: var(--text); }
+/* 좁은 수치 입력 — .adm-text-input 뒤에 와야 max-width 를 덮는다. */
+.adm-num { text-align: right; max-width: 80px; }
+.adm-num--wide { text-align: right; max-width: 260px; }
