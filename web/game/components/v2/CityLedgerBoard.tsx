@@ -25,7 +25,7 @@ export default function CityLedgerBoard() {
 
     return (
         <GameCard>
-            {error && <p role="status" style={{ color: 'crimson' }}>{error}</p>}
+            {error && <p role="status" className="page-error">{error}</p>}
             {!error && entries === null && <p>불러오는 중…</p>}
             {!error && entries !== null && entries.length === 0 && (
                 <p>원장에 기록된 도시가 아직 없습니다(모든 도시가 0/0/0).</p>

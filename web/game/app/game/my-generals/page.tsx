@@ -140,7 +140,7 @@ export default function MyGeneralsPage() {
         const lead = injuredStat(g.leadership, g.injury);
         const str = injuredStat(g.strength, g.injury);
         const intel = injuredStat(g.intel, g.injury);
-        const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
+        const lbonusText = g.lbonus > 0 ? <span className="stat-bonus"> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default).
             <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
@@ -150,10 +150,10 @@ export default function MyGeneralsPage() {
             g.honorText,                        // 명성
             formatNumber(g.bill),               // 봉록
             <span key={`l-${g.generalId}`}>
-                <span style={{ color: wounded ? 'red' : undefined }}>{lead}</span>{lbonusText}
+                <span className={wounded ? 'stat--wounded' : undefined}>{lead}</span>{lbonusText}
             </span>,
-            <span key={`s-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{str}</span>,
-            <span key={`i-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{intel}</span>,
+            <span key={`s-${g.generalId}`} className={wounded ? 'stat--wounded' : undefined}>{str}</span>,
+            <span key={`i-${g.generalId}`} className={wounded ? 'stat--wounded' : undefined}>{intel}</span>,
             g.politics ?? '-',                  // 정치(부상색/lbonus 미적용 — 통솔/무력/지력 전용)
             g.charm ?? '-',                     // 매력(부상색/lbonus 미적용 — 통솔/무력/지력 전용)
             formatNumber(g.gold),               // 자금

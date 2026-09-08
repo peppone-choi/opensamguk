@@ -17,7 +17,7 @@ export default function BattleReplayList({ hrefFor, scope = 'nation' }: { readon
         <Panel className="replay-list" id="battle-replays" aria-label="리플레이">
             <SectionHeader title="리플레이" tone="rust" sub={rows ? `${rows.length}` : undefined} />
             {error ? (
-                <p role="alert" className="record-empty" style={{ color: 'var(--rust)' }}>{error}</p>
+                <p role="alert" className="record-empty page-error">{error}</p>
             ) : rows == null ? (
                 <p className="record-empty">불러오는 중...</p>
             ) : rows.length === 0 ? (

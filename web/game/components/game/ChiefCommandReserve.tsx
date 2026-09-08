@@ -57,7 +57,7 @@ function CommandPalette({
             }}
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>명령 선택</span>
+                <span className="text-xs-muted">명령 선택</span>
                 <button onClick={onClose} aria-label="닫기" style={{ fontSize: 'var(--text-xs)', padding: '0 var(--space-xs)' }}>
                     ×
                 </button>
@@ -138,7 +138,7 @@ export default function ChiefCommandReserve({
                                 cursor: 'pointer',
                             }}
                         >
-                            <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{idx + 1}</span>
+                            <span className="text-xs-muted">{idx + 1}</span>
                             {/* brief는 색/태그 마크업을 담을 수 있어 verbatim 렌더(troop/chief read 경로와 동일). */}
                             <span
                                 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
@@ -161,7 +161,7 @@ export default function ChiefCommandReserve({
             {/* P0-10 — 당기기/미루기/반복 (legacy PushCommand/RepeatCommand). */}
             {generalId != null && (
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>당기기/미루기</label>
+                    <label className="text-xs-muted">당기기/미루기</label>
                     <input
                         type="number"
                         value={pushAmount}
@@ -170,7 +170,7 @@ export default function ChiefCommandReserve({
                     />
                     <button
                         type="button"
-                        style={{ fontSize: 'var(--text-xs)' }}
+                        className="text-xs"
                         onClick={async () => {
                             try {
                                 const out = await api.commandQueue.nationPush(generalId, pushAmount);
@@ -195,7 +195,7 @@ export default function ChiefCommandReserve({
                     />
                     <button
                         type="button"
-                        style={{ fontSize: 'var(--text-xs)' }}
+                        className="text-xs"
                         onClick={async () => {
                             try {
                                 const out = await api.commandQueue.nationRepeat(generalId, repeatAmount);

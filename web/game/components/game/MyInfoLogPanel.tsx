@@ -28,7 +28,7 @@ interface LogSectionProps {
 
 function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore, loading, error }: LogSectionProps) {
     return (
-        <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+        <GameCard className="gap-md">
             <div
                 style={{
                     textAlign: 'center',
@@ -47,7 +47,7 @@ function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore,
                     {error}
                 </p>
             )}
-            <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
+            <div className="text-sm lh-lg">
                 {loading ? (
                     <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
                         불러오는 중...
@@ -75,7 +75,7 @@ function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore,
                     <button
                         onClick={() => onLoadMore(logType)}
                         disabled={loadingMore}
-                        style={{ fontSize: 'var(--text-xs)' }}
+                        className="text-xs"
                     >
                         {loadingMore ? '불러오는 중...' : '이전 로그 불러오기'}
                     </button>

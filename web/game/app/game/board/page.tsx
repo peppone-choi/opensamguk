@@ -345,8 +345,8 @@ function BoardContent() {
                 }
                 actions={
                     <>
-                        <button type="button" className="os-button os-button--sm os-button--ghost" onClick={() => fetchBoard(secret)}>새로고침</button>
-                        <a className="os-button os-button--sm os-button--ghost" href={COMMUNITY_HREF}>커뮤니티는 서버 밖 ↗</a>
+                        <button type="button" className="os-button os-button--sm os-button--ghost os-button os-button--sm os-button--ghost"onClick={() => fetchBoard(secret)}>새로고침</button>
+                        <a href={COMMUNITY_HREF}>커뮤니티는 서버 밖 ↗</a>
                     </>
                 }
             />
@@ -457,7 +457,7 @@ function BoardContent() {
                     />
 
                     {loading && <p className="text-muted">로딩 중...</p>}
-                    {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
+                    {error && <p role="alert" className="page-error">{error}</p>}
                     {/* 권한 / 차단 사유 — INFO, read endpoint에서 그대로 */}
                     {!loading && !error && blockedReason && (
                         <Panel className="record-panel" frame="rust">

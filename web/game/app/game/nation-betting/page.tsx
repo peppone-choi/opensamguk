@@ -101,23 +101,23 @@ export default function NationBettingPage() {
         <Shell>
             <PageHead title="국가 베팅장" />
 
-            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="u-row-md gap-md">
                 <button onClick={() => void fetchData()}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
 
             {/* 베팅 목록 — legacy PageNationBetting.vue bettingList 순회 패러티. */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+            <div className="u-row-sm gap-md">
                 {list.length === 0 && !loading && (
-                    <p style={{ color: 'var(--text-muted)' }}>진행 중인 국가 베팅이 없습니다.</p>
+                    <p className="text-muted">진행 중인 국가 베팅이 없습니다.</p>
                 )}
                 {list.map(b => {
                     const [openYear, openMon] = parseYearMonth(b.openYearMonth);
@@ -139,14 +139,14 @@ export default function NationBettingPage() {
                                 border: selectedId === b.id ? '1px solid var(--gold)' : undefined,
                             }}
                         >
-                            <div onClick={() => setSelectedId(b.id)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                            <div onClick={() => setSelectedId(b.id)} className="u-row-sm">
                                 <StatusBadge variant={b.finished ? 'muted' : 'gold'}>
                                     {statusLabel}
                                 </StatusBadge>
-                                <span style={{ fontWeight: 500 }}>
+                                <span className="fw-500">
                                     [{openYear}년 {openMon}월] {b.name}
                                 </span>
-                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                                <span className="text-xs-muted">
                                     총액 {b.totalAmount.toLocaleString()}
                                 </span>
                             </div>

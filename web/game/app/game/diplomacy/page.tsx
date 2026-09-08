@@ -251,7 +251,7 @@ export default function DiplomacyPage() {
         <Shell>
             <PageHead title="외교부" />
 
-            <div className="dip-toolbar">
+            <div className="u-row-md gap-md">
                 <button onClick={() => void fetchData()}>새로고침</button>
             </div>
 

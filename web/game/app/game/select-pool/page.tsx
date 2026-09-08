@@ -171,7 +171,7 @@ export default function SelectPoolPage() {
                                 .join(' / ');
                             return (
                                 <GameCard key={card.uniqueName}>
-                                    <article style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+                                    <article className="u-grid-sm">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
                                             <Portrait picture={card.picture} imageServer={card.imageServer} size="card-56" alt="" />
                                             <div>

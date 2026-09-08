@@ -113,7 +113,7 @@ export default function GameMapPage() {
                 <PageHead title="세계 지도" />
                 <div className="map-page">
                     <div className="map-page__stage">
-                        {mapError && <p role="alert" className="map-rail__msg" style={{ color: 'var(--rust)' }}>{mapError}</p>}
+                        {mapError && <p role="alert" className="map-rail__msg page-error">{mapError}</p>}
                         {!mapError && mapName === null && <p className="map-rail__msg">지도 설정을 불러오는 중입니다.</p>}
                         {!mapError && mapName !== null && (
                             <MapViewer
@@ -161,7 +161,7 @@ export default function GameMapPage() {
 
                         {/* ── 세력 현황 — 중원정보(diplomacy/conflict) 국가·성·장수·국력·관계 ── */}
                         <SectionHeader title="세력 현황" sub={conflict ? `${nations.length}국` : undefined} />
-                        {conflictError && <p role="alert" className="map-rail__msg" style={{ color: 'var(--rust)' }}>{conflictError}</p>}
+                        {conflictError && <p role="alert" className="map-rail__msg page-error">{conflictError}</p>}
                         {!conflictError && conflict === null && <p className="map-rail__msg">불러오는 중...</p>}
                         {conflict && nations.length === 0 && <p className="map-rail__msg">세력이 없습니다.</p>}
                         {conflict && nations.length > 0 && (
@@ -197,7 +197,7 @@ export default function GameMapPage() {
 
                         {/* ── 부대 — /api/troops 부대명·부대장·소재·인원(초상 원천 없음 → 아이콘 없이) ── */}
                         <SectionHeader title="부대" tone="info" sub={troops ? `${troops.length}` : undefined} />
-                        {troopsError && <p role="alert" className="map-rail__msg" style={{ color: 'var(--rust)' }}>{troopsError}</p>}
+                        {troopsError && <p role="alert" className="map-rail__msg page-error">{troopsError}</p>}
                         {!troopsError && troops === null && <p className="map-rail__msg">불러오는 중...</p>}
                         {troops && troops.length === 0 && <p className="map-rail__msg">편성된 부대가 없습니다.</p>}
                         {troops && troops.map((t) => (
@@ -217,7 +217,7 @@ export default function GameMapPage() {
                         <SectionHeader title="중원 정세" tone="rust" sub={logData ? `${entries.length}` : undefined} />
                         <div className="map-rail__feed">
                             {logLoading && <p className="map-rail__msg">로딩 중...</p>}
-                            {logError && <p role="alert" className="map-rail__msg" style={{ color: 'var(--rust)' }}>{logError}</p>}
+                            {logError && <p role="alert" className="map-rail__msg page-error">{logError}</p>}
                             {!logLoading && !logError && entries.length === 0 && <p className="map-rail__msg">기록이 없습니다.</p>}
                             {!logLoading && !logError && entries.map((item) => (
                                 // text 는 서버 패러티 로그 원문(색/태그 토큰) — 연감·작전실과 같은 LogText 렌더.

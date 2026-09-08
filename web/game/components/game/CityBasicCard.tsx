@@ -46,10 +46,9 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
         <Panel className="war-card war-card--city" aria-label="도시 정보">
             {/* 시안 03 아트보드의 32px 국가색 sec-h — 배경만 국가색이고 구조는 공유 SectionHeader 다. */}
             <SectionHeader
-                className="war-card__head war-card__head--nation"
-                style={{ backgroundColor: nationColor, color: headText }}
+                className="war-card__head war-card__head--nation war-card__head-right"style={{ backgroundColor: nationColor, color: headText }}
                 title={`【${city.regionName ? `${city.regionName} | ` : ''}${city.levelName ?? `Lv.${city.level}`}】 ${city.name}`}
-                actions={<span className="war-card__head-right">{nationLabel}</span>}
+                actions={<span >{nationLabel}</span>}
             />
 
             <div className="war-card__gauges">

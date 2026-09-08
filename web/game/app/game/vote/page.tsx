@@ -268,7 +268,7 @@ export default function VotePage() {
             <PageHead title={<>설문 조사{voteReward != null && `(${voteReward.toLocaleString()}금과 추첨으로 유니크템 증정!)`}</>} />
 
             <div
-                className="control-bar dip-toolbar"
+                className="control-bar u-row-md gap-md"
             >
                 <button onClick={() => fetchList()}>새로고침</button>
             </div>

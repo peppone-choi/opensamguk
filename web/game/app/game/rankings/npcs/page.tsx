@@ -78,7 +78,7 @@ export default function NpcsPage() {
     return (
       <Shell>
         <PageHead title="빙의 일람" tabs={<RecordsTabs />} />
-        <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+        <p className="text-muted">로딩 중...</p>
       </Shell>
     );
 
@@ -86,7 +86,7 @@ export default function NpcsPage() {
     return (
       <Shell>
         <PageHead title="빙의 일람" tabs={<RecordsTabs />} />
-        <p style={{ color: 'var(--crimson)' }}>{error}</p>
+        <p className="page-error">{error}</p>
       </Shell>
     );
 
@@ -131,9 +131,9 @@ export default function NpcsPage() {
     <Shell>
       <PageHead title="빙의 일람" tabs={<RecordsTabs />} />
 
-      <div style={{ marginBottom: 'var(--space-md)' }}>
+      <div className="gap-md">
         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>정렬순서:</span>
+          <span className="text-secondary">정렬순서:</span>
           <select value={sortType} onChange={(e) => setSortType(Number(e.target.value) as SortType)} style={{ minWidth: 120 }}>
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -141,7 +141,7 @@ export default function NpcsPage() {
               </option>
             ))}
           </select>
-          <span style={{ color: 'var(--text-muted)' }}>{sorted.length}명</span>
+          <span className="text-muted">{sorted.length}명</span>
         </label>
       </div>
 

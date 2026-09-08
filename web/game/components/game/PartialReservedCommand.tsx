@@ -159,7 +159,7 @@ export default function PartialReservedCommand({
                 <span className="os-chip os-chip--bronze">조작 대상: 본인</span>
             </div>
             {loading && <div className="rcp-flag">불러오는 중…</div>}
-            {error && <div className="rcp-flag" role="alert" style={{ color: 'var(--rust-2)' }}>{error}</div>}
+            {error && <div className="rcp-flag page-error"role="alert" >{error}</div>}
             <div className="rcp-head" aria-hidden="true">
                 <span>#</span>
                 <span>순 · 실행</span>

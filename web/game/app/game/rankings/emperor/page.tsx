@@ -35,14 +35,14 @@ export default function EmperorPage() {
   if (loading) return (
     <Shell>
       <PageHead title="황제 정보" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      <p className="text-muted">로딩 중...</p>
     </Shell>
   );
 
   if (error) return (
     <Shell>
       <PageHead title="황제 정보" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--crimson)' }}>{error}</p>
+      <p className="page-error">{error}</p>
     </Shell>
   );
 
@@ -51,7 +51,7 @@ export default function EmperorPage() {
     e.id <= 3
       ? <StatusBadge variant={e.id === 1 ? 'gold' : e.id === 2 ? 'jade' : 'muted'}>{e.id}</StatusBadge>
       : e.id,
-    <a key="emperor" href={`${emperorBaseHref}/${encodeURIComponent(String(e.id))}`} style={{ color: 'var(--gold)' }}>{e.name}</a>,
+    <a key="emperor" href={`${emperorBaseHref}/${encodeURIComponent(String(e.id))}`} className="dip-letter__opt">{e.name}</a>,
     <span key="nation" style={{ color: e.nationColor }}>{e.nation}</span>,
     formatDate(e.unifiedAt),
     `${e.year}년 ${e.month}월`,

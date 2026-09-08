@@ -78,8 +78,7 @@ export default function SearchableSelect({
                             type="button"
                             role="option"
                             aria-selected={o.value === value}
-                            className={`cmd-select-opt${o.value === value ? ' selected' : ''}`}
-                            style={o.notAvailable ? { color: 'red' } : undefined}
+                            className={`cmd-select-opt${o.value === value ? ' selected' : ''}${o.notAvailable ? ' opt--unavailable' : ''}`}
                             onClick={() => onChange(o.value)}
                         >
                             {o.label}

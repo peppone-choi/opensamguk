@@ -81,7 +81,7 @@ export default function WorldLogPage() {
         <Shell>
             <PageHead title="전황" tabs={<RecordsTabs />} />
             {loading && <p className="text-muted">로딩 중...</p>}
-            {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
+            {error && <p role="alert" className="page-error">{error}</p>}
             {!loading && !error && (
                 <Panel className="chron record-panel">
                     <SectionHeader title="중원 정세 · 편년체" sub={range} />

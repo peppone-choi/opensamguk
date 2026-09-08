@@ -56,7 +56,7 @@ function TroopMembers({
     // 레거시 same-city 판정은 부대장 소재 도시 한글명과 비교(BE가 cityName으로 emit, bug #11).
     const leaderCityName = troop.leaderCityName;
     return (
-        <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
+        <div className="text-sm lh-lg">
             {troop.members.map((member: TroopMember, idx: number) => {
                 // Legacy: leader → troopLeader style; same-city → plain; other-city → red + (city).
                 const isLeader = member.generalId === troop.troopLeader;
@@ -69,7 +69,7 @@ function TroopMembers({
                       : 'var(--crimson)'; // troopDiffCityMemeber
                 return (
                     <span key={member.generalId}>
-                        {idx !== 0 && <span style={{ color: 'var(--text-muted)' }}>, </span>}
+                        {idx !== 0 && <span className="text-muted">, </span>}
                         <GeneralName
                             name={member.name}
                             npcType={member.npc}
@@ -81,7 +81,7 @@ function TroopMembers({
                         />
                         <span>
                             {!isLeader && !sameCity && (
-                                <span style={{ color: 'var(--crimson)' }}> ({member.cityName})</span>
+                                <span className="page-error"> ({member.cityName})</span>
                             )}
                         </span>
                         {/* 추방 (KickFromTroop): leader-only, never on the leader row. */}
@@ -208,7 +208,7 @@ function TroopItem({
             >
                 {/* Leader + reserved-command brief column. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                    <strong style={{ fontSize: 'var(--text-sm)' }}>
+                    <strong className="text-sm">
                         <GeneralName name={troop.leaderName} npcType={troop.leaderNpc} />
                     </strong>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
@@ -223,7 +223,7 @@ function TroopItem({
                                     whiteSpace: 'nowrap',
                                 }}
                             >
-                                <span style={{ color: 'var(--text-muted)' }}>{idx + 1}: </span>
+                                <span className="text-muted">{idx + 1}: </span>
                                 <span dangerouslySetInnerHTML={{ __html: brief }} />
                             </div>
                         ))}
@@ -317,19 +317,19 @@ export default function TroopPage() {
             >
                 <PageHead title="부대 편성" />
                 {data && (
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{troops.length}개 부대</span>
+                    <span className="text-sm-muted">{troops.length}개 부대</span>
                 )}
                 <button onClick={() => void fetchData()} style={{ marginLeft: 'auto' }}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* 부대 창설 (NewTroop) — shown only when I am troopless. */}
             {iAmTroopless && (
-                <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                <GameCard className="gap-md">
                     <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <strong style={{ fontSize: 'var(--text-sm)' }}>부대 창설</strong>
+                        <strong className="text-sm">부대 창설</strong>
                         <input
                             type="text"
                             maxLength={18}
@@ -347,7 +347,7 @@ export default function TroopPage() {
 
             {data && troops.length === 0 && (
                 <GameCard>
-                    <p style={{ color: 'var(--text-secondary)' }}>편성된 부대가 없습니다.</p>
+                    <p className="text-secondary">편성된 부대가 없습니다.</p>
                 </GameCard>
             )}
 
@@ -390,15 +390,7 @@ export default function TroopPage() {
             {toast && (
                 <div
                     role="status"
-                    style={{
-                        position: 'fixed',
-                        bottom: 16,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: 'var(--surface-raised)',
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                    }}
+                    className="toast-floating"
                     onClick={() => setToast(null)}
                 >
                     {toast}

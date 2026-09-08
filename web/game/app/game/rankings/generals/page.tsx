@@ -120,7 +120,7 @@ export default function GeneralsListPage() {
         return (
             <Shell>
                 <PageHead title="장수 일람" tabs={<RecordsTabs />} />
-                <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+                <p className="text-muted">로딩 중...</p>
             </Shell>
         );
     }
@@ -129,7 +129,7 @@ export default function GeneralsListPage() {
         return (
             <Shell>
                 <PageHead title="장수 일람" tabs={<RecordsTabs />} />
-                <p style={{ color: 'var(--crimson)' }}>{error}</p>
+                <p className="page-error">{error}</p>
             </Shell>
         );
     }
@@ -142,7 +142,7 @@ export default function GeneralsListPage() {
         const str = injuredStat(g.strength, g.injury);
         const intel = injuredStat(g.intel, g.injury);
         const roundedRefreshScoreTotal = Math.round(g.refreshScoreTotal / 10) * 10;
-        const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
+        const lbonusText = g.lbonus > 0 ? <span className="stat-bonus"> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상 아이콘 28(초상 3종 규칙: 표는 96 아이콘 변형). resolver 가 imgsvr/picture 계약을 지킨다.
             <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
@@ -161,10 +161,10 @@ export default function GeneralsListPage() {
             g.officerLevelText,                 // 관직(getOfficerLevelText)
             // 통솔 — 부상 시 적색 + 통솔보너스(cyan "+N").
             <span key={`l-${g.generalId}`}>
-                <span style={{ color: wounded ? 'red' : undefined }}>{lead}</span>{lbonusText}
+                <span className={wounded ? 'stat--wounded' : undefined}>{lead}</span>{lbonusText}
             </span>,
-            <span key={`s-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{str}</span>,
-            <span key={`i-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{intel}</span>,
+            <span key={`s-${g.generalId}`} className={wounded ? 'stat--wounded' : undefined}>{str}</span>,
+            <span key={`i-${g.generalId}`} className={wounded ? 'stat--wounded' : undefined}>{intel}</span>,
             // 정치/매력 — RTK14 divergence(부상/통솔보너스 미적용, 평문 표시). 필드 OPTIONAL이라 '-' 폴백.
             g.politics ?? '-',                  // 정치
             g.charm ?? '-',                     // 매력

@@ -416,8 +416,8 @@ export default function MailboxPage() {
         <Shell>
             <PageHead title="메일함" />
 
-            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+            <div className="u-row-md gap-md">
+                <div className="u-row-sm">
                     {([
                         ['private', '개인'],
                         ['national', '국가'],
@@ -440,20 +440,20 @@ export default function MailboxPage() {
                 <button onClick={fetchMessages}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
 
             {/* 서신 발송 폼 — legacy MessagePanel.vue sendMessage(): { mailbox, text } */}
-            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+            <GameCard className="gap-md">
                 <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>서신 발송</p>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>대상</label>
+                    <label className="text-xs-muted">대상</label>
                     {scope === 'private' && (
                         <>
                             <input
@@ -472,7 +472,7 @@ export default function MailboxPage() {
                                     if (event.target.value) setRecipientSearch('');
                                 }}
                                 disabled={sending || identity.generalId == null}
-                                style={{ fontSize: 'var(--text-sm)', padding: '2px var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                                className="mail-tag"
                             >
                                 <option value="">수신 장수를 선택하세요</option>
                                 {filteredPrivateRecipients.map(recipient => (
@@ -526,7 +526,7 @@ export default function MailboxPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                 {messages.length === 0 && !loading && (
-                    <p style={{ color: 'var(--text-muted)' }}>메시지가 없습니다.</p>
+                    <p className="text-muted">메시지가 없습니다.</p>
                 )}
                 {messages.map(msg => {
                     const isDiplomacy = msg.type === 'diplomacy';
@@ -539,9 +539,9 @@ export default function MailboxPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap' }}>
                                 <StatusBadge variant={variant}>{TYPE_LABEL[msg.type] ?? msg.type}</StatusBadge>
                                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{messageName(msg)}</span>
-                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{messageTime(msg.time)}</span>
+                                <span className="text-xs-muted">{messageTime(msg.time)}</span>
                                 {showValidUntil(msg.validUntil) && (
-                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{messageTime(msg.validUntil)}</span>
+                                    <span className="text-xs-muted">~{messageTime(msg.validUntil)}</span>
                                 )}
                                 {/* 삭제 — 발신자 본인이 보낸 5분 이내 메시지만. 진행 중엔 비활성(이중 제출 방지). */}
                                 {deletable && (
@@ -559,7 +559,7 @@ export default function MailboxPage() {
                                 <SafeHtml html={msg.text ?? ''} />
                             </div>
                             {isDiplomacy && hasAction && (
-                                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                <div className="u-row-sm">
                                     {/* 요청 진행 중에는 수락/거절 모두 비활성화 — 이중 제출 방지 */}
                                     <button onClick={() => handleAgree(msg)} disabled={pendingId !== null || identity.generalId == null}>수락</button>
                                     <button onClick={() => handleDecline(msg)} disabled={pendingId !== null || identity.generalId == null}>거절</button>

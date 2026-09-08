@@ -21,7 +21,7 @@ vi.mock('@opensamguk/ui', async () => {
   } };
 });
 
-import MapViewer, { mapTitleColor, mapTitleTooltip, seasonOf } from '@/components/game/MapViewer';
+import MapViewer, { mapTitleClass, mapTitleTooltip, seasonOf } from '@/components/game/MapViewer';
 
 const MAP: MapPreviewResponse = {
   serverName: '테스트섭', startYear: 200, year: 200, month: 5, turnPhase: 1, turnPhaseText: '상순',
@@ -54,8 +54,9 @@ describe('MapViewer pure title contracts', () => {
   });
 
   it('keeps opening-year title colors and limit tooltip', () => {
-    expect([200, 201, 202, 203].map((year) => mapTitleColor(200, year))).toEqual([
-      'magenta', 'orange', 'yellow', undefined,
+    // 색은 팔레트 클래스로 바뀌었다(구 magenta/orange/yellow) — 개시 3년 경계는 그대로다.
+    expect([200, 201, 202, 203].map((year) => mapTitleClass(200, year))).toEqual([
+      'map-title--y1', 'map-title--y2', 'map-title--y3', undefined,
     ]);
     expect(mapTitleTooltip(200, 200, 5, 1, {
       maxTechLevel: 12, initialAllowedTechLevel: 1, techLevelIncYear: 5, openingLimitTurns: 36,

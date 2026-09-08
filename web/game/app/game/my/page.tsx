@@ -240,9 +240,9 @@ export default function MyPage() {
                     {anyInstantAction ? (
                         <GameCard>
                             <div className="basic-card-name">즉시 실행</div>
-                            <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+                            <div className="u-grid-sm">
                                 {droppableItems.length > 0 ? (
-                                    <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+                                    <div className="u-row-sm">
                                         <select
                                             aria-label="버릴 아이템"
                                             value={selectedDropItem?.type ?? ''}
