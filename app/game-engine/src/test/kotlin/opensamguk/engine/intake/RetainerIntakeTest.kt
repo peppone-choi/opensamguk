@@ -42,7 +42,7 @@ class RetainerIntakeTest {
     private fun world(vararg generals: TurnGeneral): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
             state = state(),
-            generals = generals.toList().ifEmpty { listOf(general()) },
+            generals = generals.toList().ifEmpty { listOf(general()) } + listOf(20 to "홍길동", 21 to "막료갑", 22 to "부장을", 23 to "부장병").map { (id, name) -> general(id).copy(name = name, npcState = 2) },
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
             worldId = opensamguk.common.world.WorldId(1),
         ),
@@ -55,10 +55,23 @@ class RetainerIntakeTest {
         recorder.generalPatches().first { it.id == generalId }.columns.keys
 
     @Test
+    fun `name only pledge cannot synthesize another character`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        val result = RetainerHandler(world, recorder).handlePledge(
+            TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest"),
+        ) as RetainerActionResult
+        assertFalse(result.ok)
+        assertEquals(RetainerRules.REASON_INPUT, result.reason)
+        assertTrue(world.listRetainers().isEmpty())
+        assertTrue(recorder.generalPatches().isEmpty())
+    }
+
+    @Test
     fun `npc generals are denied at the pre-gate for every retinue command`() {
         // PR 비평 S6 — F2 전환기의 `?generalId=` 신뢰 구멍으로 NPC crew/rice 가 부곡으로 새는 것을 엔진이 막는다.
         val world = world(general().copy(npcState = 2)); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
-        val pledge = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "lieutenant", role = "GUARD")) as RetainerActionResult
+        val pledge = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "lieutenant", role = "GUARD")) as RetainerActionResult
         assertEquals(RetainerRules.REASON_NPC, pledge.reason)
         val form = h.handleBugokForm(TurnDaemonCommand.BugokForm(generalId = 10, troops = 100, rice = 0)) as RetainerActionResult
         assertEquals(RetainerRules.REASON_NPC, form.reason)
@@ -66,18 +79,18 @@ class RetainerIntakeTest {
         assertTrue(recorder.generalPatches().isEmpty())
         // npcState 1(플레이어 NPC 빙의 등)은 막지 않는다 — 임계는 2.
         val human = world(general().copy(npcState = 1)); val h2 = RetainerHandler(human, ChangeRecorder())
-        assertTrue((h2.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "lieutenant", role = "GUARD")) as RetainerActionResult).ok)
+        assertTrue((h2.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "lieutenant", role = "GUARD")) as RetainerActionResult).ok)
     }
 
     @Test
-    fun `pledge deducts gold through the recorder patch and creates a RECRUITED retainer with an allocated id`() {
+    fun `pledge deducts gold through the recorder patch and creates an EXISTING retainer with an allocated id`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
-        val res = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = " 홍길동 ", relation = "lieutenant", role = "GUARD")) as RetainerActionResult
+        val res = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "lieutenant", role = "GUARD")) as RetainerActionResult
         assertTrue(res.ok); assertNotNull(res.id)
         assertEquals(2000 - RetainerRules.PLEDGE_COST_GOLD, world.getGeneralById(10)!!.gold)
         assertTrue("gold" in patchColumns(recorder, 10), "gold 는 recorder 패치로 기록돼야 한다(F1)")
         val r = world.getRetainerById(res.id!!)!!
-        assertEquals("홍길동", r.name); assertEquals(RetainerRules.ORIGIN_RECRUITED, r.origin); assertEquals(50, r.loyalty)
+        assertEquals("홍길동", r.name); assertEquals(RetainerRules.ORIGIN_EXISTING, r.origin); assertEquals(50, r.loyalty)
         val payload = flush(world, recorder)
         assertEquals(1, payload.createdRetainers.size); assertEquals(0, payload.updatedRetainers.size)
         assertEquals(res.id, payload.worldStateUpdate["max_retainer_id"])
@@ -88,18 +101,18 @@ class RetainerIntakeTest {
     fun `pledge gates are ordered input then full then duplicate then gold`() {
         val world = world(general(gold = 10)); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
         assertEquals(RetainerRules.REASON_INPUT, (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "x", relation = "lieutenant")) as RetainerActionResult).reason)
-        assertEquals(RetainerRules.REASON_INPUT, (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "boss")) as RetainerActionResult).reason)
-        assertEquals(RetainerRules.REASON_NO_GOLD, (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest")) as RetainerActionResult).reason)
-        assertEquals("장수가 존재하지 않습니다.", (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 99, name = "홍길동", relation = "guest")) as RetainerActionResult).reason)
+        assertEquals(RetainerRules.REASON_INPUT, (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "boss")) as RetainerActionResult).reason)
+        assertEquals(RetainerRules.REASON_NO_GOLD, (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "guest")) as RetainerActionResult).reason)
+        assertEquals("장수가 존재하지 않습니다.", (h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 99, targetGeneralId = 20, relation = "guest")) as RetainerActionResult).reason)
     }
 
     @Test
     fun `release then pledge the same name in one tick works in memory and yields DELETE plus CREATE`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
-        val first = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest")) as RetainerActionResult
+        val first = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "guest")) as RetainerActionResult
         world.consumeDirtyState() // 이전 틱에 flush 됐다고 치자
         assertTrue((h.handleRelease(TurnDaemonCommand.RetainerRelease(generalId = 10, retainerId = first.id)) as RetainerActionResult).ok)
-        val second = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest")) as RetainerActionResult
+        val second = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "guest")) as RetainerActionResult
         assertTrue(second.ok); assertTrue(second.id!! > first.id!!, "삭제된 최대 id 재사용 없음")
         val payload = flush(world, recorder)
         assertEquals(listOf(first.id), payload.deletedRetainerIds)
@@ -109,7 +122,7 @@ class RetainerIntakeTest {
     @Test
     fun `create then remove in the same tick emits no DB work`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
-        val r = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest")) as RetainerActionResult
+        val r = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "guest")) as RetainerActionResult
         h.handleRelease(TurnDaemonCommand.RetainerRelease(generalId = 10, retainerId = r.id))
         val payload = flush(world, recorder)
         assertTrue(payload.createdRetainers.isEmpty()); assertTrue(payload.updatedRetainers.isEmpty()); assertTrue(payload.deletedRetainerIds.isEmpty())
@@ -150,8 +163,8 @@ class RetainerIntakeTest {
     fun `assign commander requires an owned lieutenant, adds morale once, and release clears the commander`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
         val bugok = h.handleBugokForm(TurnDaemonCommand.BugokForm(generalId = 10, troops = 300, rice = 0)) as RetainerActionResult
-        val staff = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "막료갑", relation = "staff")) as RetainerActionResult
-        val lieutenant = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "부장을", relation = "lieutenant")) as RetainerActionResult
+        val staff = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 21, relation = "staff")) as RetainerActionResult
+        val lieutenant = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 22, relation = "lieutenant")) as RetainerActionResult
         assertEquals(RetainerRules.REASON_NOT_LIEUTENANT, (h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = staff.id)) as RetainerActionResult).reason)
         assertEquals(RetainerRules.REASON_NO_RETAINER, (h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = 999)) as RetainerActionResult).reason)
         assertTrue((h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id)) as RetainerActionResult).ok)
@@ -162,7 +175,7 @@ class RetainerIntakeTest {
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = null))
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
         assertEquals(66, world.getBugokById(bugok.id!!)!!.morale)
-        val second = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "부장병", relation = "lieutenant")) as RetainerActionResult
+        val second = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 23, relation = "lieutenant")) as RetainerActionResult
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = second.id))
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
         assertEquals(66, world.getBugokById(bugok.id!!)!!.morale)
@@ -180,7 +193,7 @@ class RetainerIntakeTest {
     fun `assign plus settle in one tick keeps the morale bonus`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
         val bugok = h.handleBugokForm(TurnDaemonCommand.BugokForm(generalId = 10, troops = 300, rice = 0)) as RetainerActionResult
-        val lieutenant = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "부장을", relation = "lieutenant")) as RetainerActionResult
+        val lieutenant = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 22, relation = "lieutenant")) as RetainerActionResult
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
         RetainerMonthlyService().settle(world, recorder)
         // 군량 0 → 부족 −5 이 +6 뒤에 적용: 66 − 5 = 61(유실 없음)
@@ -191,7 +204,7 @@ class RetainerIntakeTest {
     fun `owner death prunes retinue immediately leaving no pending work`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
         h.handleBugokForm(TurnDaemonCommand.BugokForm(generalId = 10, troops = 300, rice = 0))
-        h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "guest"))
+        h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "guest"))
         world.consumeDirtyState()
         assertTrue(world.removeGeneral(10))
         assertTrue(world.listRetainers().isEmpty()); assertTrue(world.listBugoks().isEmpty())

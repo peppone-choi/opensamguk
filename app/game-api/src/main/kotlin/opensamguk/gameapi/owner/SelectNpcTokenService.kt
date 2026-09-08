@@ -7,6 +7,7 @@ import opensamguk.common.rng.serializeSeed
 import opensamguk.gameapi.dto.ClaimableGeneral
 import opensamguk.gameapi.dto.ClaimableResponse
 import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -30,6 +31,7 @@ class SelectNpcTokenService(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val worldStates: WorldStateReadRepository,
+    private val retainers: RetainerReadRepository,
     private val clock: Clock = Clock.systemUTC(),
     private val nonceRandom: SecureRandom = SecureRandom(),
 ) {
@@ -93,9 +95,10 @@ class SelectNpcTokenService(
             .toSet()
         val nationNames = nations.findAll().associate { it.id to it.name }
 
+        val boundIds = retainers.boundGeneralIds()
         val candidates = generals
             .findByNpcStateOrderByIdAsc(GeneralPossessionService.CLAIMABLE_NPC_STATE)
-            .filter { it.id !in claimedIds && it.id !in reservedIds }
+            .filter { it.id !in claimedIds && it.id !in reservedIds && it.id !in boundIds }
         val weights = LinkedHashMap<String, Double>()
         for (candidate in candidates) {
             weights[candidate.id.toString()] =
@@ -138,6 +141,7 @@ class SelectNpcTokenService(
 
     private fun SelectNpcTokenEntity.toResponse(hasGeneral: Boolean, reason: String? = null): ClaimableResponse {
         val metadata = pickResult
+        val boundIds = retainers.boundGeneralIds()
         val pickMoreSeconds = intOf(metadata[PICK_MORE_SECONDS_KEY]) ?: 0
         return ClaimableResponse(
             result = true,
@@ -145,7 +149,8 @@ class SelectNpcTokenService(
             candidates = metadata
                 .filterKeys { it != PICK_MORE_SECONDS_KEY }
                 .values
-                .mapNotNull { pick -> (pick as? Map<*, *>)?.toClaimableGeneral() },
+                .mapNotNull { pick -> (pick as? Map<*, *>)?.toClaimableGeneral() }
+                .filter { it.generalId !in boundIds },
             validUntil = validUntil.toString(),
             pickMoreFrom = pickMoreFrom.toString(),
             pickMoreSeconds = pickMoreSeconds,

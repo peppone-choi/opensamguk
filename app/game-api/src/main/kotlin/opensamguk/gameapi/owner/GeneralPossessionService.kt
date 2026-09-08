@@ -1,5 +1,6 @@
 package opensamguk.gameapi.owner
 
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.stereotype.Service
@@ -31,6 +32,7 @@ class GeneralPossessionService(
     private val ownership: GeneralOwnershipClassifier,
     private val npcTokens: SelectNpcTokenRepository,
     private val worldStates: WorldStateReadRepository,
+    private val retainers: RetainerReadRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) {
 
@@ -124,7 +126,7 @@ class GeneralPossessionService(
 
         // 2. target must exist and be a claimable NPC candidate (npc_state == 2 pool, legacy npc=2).
         val general = generals.findById(generalId).orElse(null) ?: return ClaimResult.NotClaimable
-        if (general.npcState != CLAIMABLE_NPC_STATE) return ClaimResult.NotClaimable
+        if (general.npcState != CLAIMABLE_NPC_STATE || retainers.isBound(generalId)) return ClaimResult.NotClaimable
 
         val now = Instant.now(clock)
         val token = npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(userId, now)

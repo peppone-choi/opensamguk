@@ -75,6 +75,18 @@ object RetainerRules {
     const val REASON_CREW_TYPE = "병종이 다릅니다."
     const val REASON_NOT_LIEUTENANT = "부장만 배정할 수 있습니다."
 
+    const val REASON_NO_CANDIDATE = "서약 가능한 NPC 장수가 없습니다."
+    const val REASON_INVALID_CANDIDATE = "서약 가능한 NPC 장수가 아닙니다."
+
+    /** The same current-world eligibility predicate is used by the read API and intake. */
+    fun existingCandidateEligible(
+        masterId: Int, masterNationId: Int, candidateId: Int, candidateNationId: Int,
+        npcState: Int, userId: String?, officerLevel: Int, alreadyBound: Boolean,
+    ): Boolean = candidateId != masterId && npcState == 2 &&
+        (userId.isNullOrBlank() || userId.toLongOrNull()?.let { it <= 0 } == true) &&
+        officerLevel < 12 && !alreadyBound &&
+        (candidateNationId == 0 || candidateNationId == masterNationId)
+
     // ── 이름 정규화 (S8): NFC → trim → 내부 공백 거부 → 2~12 코드포인트 ──
     sealed interface NameOutcome {
         data class Ok(val name: String) : NameOutcome

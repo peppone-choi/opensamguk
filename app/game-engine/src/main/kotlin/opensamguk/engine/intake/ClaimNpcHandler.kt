@@ -48,7 +48,7 @@ class ClaimNpcHandler(
 
         // PHP WHERE: owner <= 0 AND npc = 2 AND no = $pick
         val currentOwner = pre.userId?.toLongOrNull() ?: 0L
-        if (pre.npcState != 2 || currentOwner > 0) {
+        if (pre.npcState != 2 || currentOwner > 0 || world.listRetainers().any { it.generalId == generalId }) {
             return GeneralBoolResult(type = "claimNpc", ok = false, generalId = generalId, reason = "빙의 가능한 장수가 아닙니다.")
         }
 

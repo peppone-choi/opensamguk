@@ -20,7 +20,7 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
     const [error, setError] = useState('');
     const [busy, setBusy] = useState('');
     const [message, setMessage] = useState('');
-    const [pledge, setPledge] = useState({ name: '', relation: 'lieutenant', role: 'NONE' });
+    const [pledge, setPledge] = useState({ targetGeneralId: '', relation: 'lieutenant', role: 'NONE' });
     const [form, setForm] = useState({ troops: '', rice: '' });
 
     const load = useCallback(() => {
@@ -59,12 +59,15 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
     const retainersFull = data.retainers.length >= rules.maxRetainers;
     const bugokFull = data.bugoks.length >= rules.maxBugok;
     const lieutenants = data.retainers.filter((r) => r.relation === 'lieutenant');
-    const pledgeDisabledReason = retainersFull ? '가신이 가득 찼습니다' : data.gold < rules.pledgeCostGold ? '자금이 부족합니다' : null;
+    const candidates = data.candidates ?? [];
+    const selectedCandidate = candidates.find((candidate) => String(candidate.generalId) === pledge.targetGeneralId);
+    const pledgeDisabledReason = retainersFull ? '가신이 가득 찼습니다' : data.gold < rules.pledgeCostGold ? '자금이 부족합니다' : candidates.length === 0 ? '서약 가능한 NPC 장수가 없습니다.' : null;
     const formDisabledReason = bugokFull ? '부곡이 가득 찼습니다' : data.crew < rules.minBugokTroops ? `병력이 ${rules.minBugokTroops} 미만입니다` : null;
 
     const submitPledge = (e: FormEvent) => {
         e.preventDefault();
-        void run('pledge', 'retainerPledge', { name: pledge.name, relation: pledge.relation, role: pledge.role });
+        if (selectedCandidate == null) return;
+        void run('pledge', 'retainerPledge', { targetGeneralId: selectedCandidate.generalId, relation: pledge.relation, role: pledge.role });
     };
     const submitForm = (e: FormEvent) => {
         e.preventDefault();
@@ -85,7 +88,7 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
                     <ul className="retinue__list">
                         {data.retainers.map((r) => (
                             <li key={r.id} className="retinue__person">
-                                <Portrait picture={null} imageServer={0} size="card-44" alt={r.name} frameClassName="retinue__portrait" />
+                                <Portrait picture={r.picture ?? null} imageServer={r.imageServer ?? 0} size="card-44" alt={r.name} frameClassName="retinue__portrait" />
                                 <div className="retinue__body">
                                     <div className="retinue__name">
                                         <b>{r.name}</b>
@@ -120,7 +123,12 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
                     </ul>
                 )}
                 <form className="retinue__form" onSubmit={submitPledge} aria-label="가신 서약">
-                    <label>이름<input value={pledge.name} maxLength={12} onChange={(e) => setPledge({ ...pledge, name: e.target.value })} placeholder="2~12자" /></label>
+                    <label>NPC 장수
+                        <select value={selectedCandidate == null ? '' : pledge.targetGeneralId} disabled={busy !== ''} onChange={(e) => setPledge({ ...pledge, targetGeneralId: e.target.value })}>
+                            <option value="">장수를 선택하세요</option>
+                            {candidates.map((candidate) => <option key={candidate.generalId} value={candidate.generalId}>{candidate.name} · {candidate.nationId === 0 ? '재야' : '같은 국가'}</option>)}
+                        </select>
+                    </label>
                     <label>관계
                         <select value={pledge.relation} onChange={(e) => setPledge({ ...pledge, relation: e.target.value })}>
                             {rules.relations.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -131,9 +139,19 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
                             {rules.roles.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                     </label>
-                    <span className="retinue__cost">비용 <b className="os-num">{rules.pledgeCostGold.toLocaleString()}</b> 금 · 유지 월 {rules.retainerUpkeepGold} 금 / {rules.retainerUpkeepRice} 쌀</span>
-                    <GateButton type="submit" variant="primary" size="sm" reason={busy !== '' ? '처리 중' : pledgeDisabledReason}>서약</GateButton>
+                    <span className="retinue__cost">비용 <b className="os-num">{rules.pledgeCostGold.toLocaleString()}</b> 금 · 기존 장수 유지비 없음</span>
+                    <GateButton type="submit" variant="primary" size="sm" reason={busy !== '' ? '처리 중' : pledgeDisabledReason ?? (selectedCandidate == null ? 'NPC 장수를 선택하세요' : null)}>서약</GateButton>
+                    <GateButton type="button" variant="ghost" size="sm" reason={busy !== '' ? '처리 중' : pledgeDisabledReason}
+                        onClick={() => void run('pledge-random', 'retainerPledge', { random: true, relation: pledge.relation, role: pledge.role })}>무작위 서약</GateButton>
                 </form>
+                {candidates.length === 0 && <p className="text-muted retinue__candidate-note">서약 가능한 NPC 장수가 없습니다.</p>}
+                {selectedCandidate != null && (
+                    <div className="retinue__person retinue__candidate-preview">
+                        <Portrait picture={selectedCandidate.picture} imageServer={selectedCandidate.imageServer} size="card-44" alt={selectedCandidate.name} />
+                        <div><b>{selectedCandidate.name}</b><p className="text-muted">통솔 {selectedCandidate.leadership} · 무력 {selectedCandidate.strength} · 지력 {selectedCandidate.intel}</p></div>
+                    </div>
+                )}
+                <p className="text-muted retinue__candidate-note">기존 장수와 서약합니다. 소속과 병력은 유지되며 NPC는 계속 스스로 행동합니다. 해제해도 장수는 남습니다.</p>
             </Panel>
 
             <Panel className="retinue__panel" aria-label="부곡">

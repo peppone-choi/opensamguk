@@ -16,8 +16,9 @@ class RetainerIntakeWireTest {
     @Test
     fun `six retainer commands round-trip and keep nullable args`() {
         val cmds = listOf(
-            TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "lieutenant", role = "GUARD"),
+            TurnDaemonCommand.RetainerPledge(generalId = 10, targetGeneralId = 20, relation = "lieutenant", role = "GUARD"),
             TurnDaemonCommand.RetainerPledge(generalId = 10),
+            TurnDaemonCommand.RetainerPledge(generalId = 10, random = true, relation = "guest"),
             TurnDaemonCommand.RetainerRelease(generalId = 10, retainerId = 3),
             TurnDaemonCommand.RetainerTask(generalId = 10, retainerId = 3, task = "train"),
             TurnDaemonCommand.BugokForm(generalId = 10, troops = 300, rice = 900),

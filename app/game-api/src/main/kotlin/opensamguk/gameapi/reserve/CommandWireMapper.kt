@@ -356,6 +356,7 @@ object CommandWireMapper {
             "retainerPledge" -> TurnDaemonCommand.RetainerPledge(
                 requestId = requestId, generalId = generalId,
                 name = args.str("name"), relation = args.str("relation"), role = args.str("role"),
+                targetGeneralId = args.int("targetGeneralId"), random = args.bool("random") ?: false,
             )
             "retainerRelease" -> TurnDaemonCommand.RetainerRelease(requestId = requestId, generalId = generalId, retainerId = args.int("retainerId"))
             "retainerTask" -> TurnDaemonCommand.RetainerTask(

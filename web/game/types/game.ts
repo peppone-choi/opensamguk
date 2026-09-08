@@ -1329,10 +1329,18 @@ export interface MailboxMessage {
 }
 
 // ── Phase 4X-A 가신(휘하 인물)·부곡 — /api/my-retinue (spec v3 §6) ──
+export interface RetinueCandidate {
+    generalId: number; name: string; picture: string | null; imageServer: number; nationId: number;
+    leadership: number; strength: number; intel: number;
+}
+
 export interface RetinueRetainer {
     id: number;
     name: string;
     origin: 'EXISTING' | 'RECRUITED';
+    generalId?: number | null;
+    picture?: string | null;
+    imageServer?: number;
     relation: 'staff' | 'lieutenant' | 'guest';
     relationLabel: string;
     role: string;
@@ -1385,6 +1393,7 @@ export interface RetinueResponse {
     crewTypeId: number;
     crewTypeName: string;
     retainers: RetinueRetainer[];
+    candidates: RetinueCandidate[];
     bugoks: RetinueBugok[];
     rules: RetinueRules;
 }

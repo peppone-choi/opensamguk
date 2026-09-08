@@ -13,6 +13,14 @@ data class RetinueRetainerDto(
     val task: String,
     val taskLabel: String,
     val hasOwnBugok: Boolean,
+    val generalId: Int? = null,
+    val picture: String? = null,
+    val imageServer: Int = 0,
+)
+
+data class RetinueCandidateDto(
+    val generalId: Int, val name: String, val picture: String?, val imageServer: Int,
+    val nationId: Int, val leadership: Int, val strength: Int, val intel: Int,
 )
 
 data class RetinueBugokDto(
@@ -57,4 +65,5 @@ data class RetinueResponse(
     val retainers: List<RetinueRetainerDto>,
     val bugoks: List<RetinueBugokDto>,
     val rules: RetinueRulesDto,
+    val candidates: List<RetinueCandidateDto> = emptyList(),
 )
