@@ -1200,7 +1200,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── F2 Wave 5 — main-screen assembly (#ingameBoard legacy grid) ─────────────── */
-/* ===== 작전실 보드 (ADR-LITE-049 · 03) — 좌 지난 순 330 / 중앙 지도 1fr / 우 명령 목록 360 ===== */
+/* ===== 작전실 보드 (ADR-LITE-049 · 03) — 좁은 화면은 세로 스택, 1232px 이상은 아래 지도 전면 스테이지 ===== */
 .ingame-board {
   display: grid;
   grid-template-columns: 1fr;
@@ -1218,13 +1218,61 @@ input:focus, select:focus, textarea:focus {
   .ingame-board > .ib-records { grid-row: 4; }
   .ingame-board > .ib-messages { grid-row: 5; }
 }
+/* ===== 작전실 지도 전면 스테이지 — 지도가 배경 전면, 지난 순·명령 목록은 그 위 오버레이 =====
+   이전 3열 보드(330 / 1fr / 360)는 .shell-main 의 1100px 상한 안에 갇혀 지도 열이 382px 밖에
+   안 나왔다. 넓은 화면에서는 작전실만 폭 상한을 풀고 지도를 스테이지로 깔며, 좌·우 레일을
+   그 위에 띄운다. 지도(중앙)와 명령 목록이 메인에 남는다는 규칙(ADR-LITE-049)은 그대로다. */
+.war-room {
+  --stage-inset: 14px;
+  --map-stage-height: clamp(520px, calc(100vh - 240px), 1040px);
+  --stage-overlay-bg: rgb(18 22 20 / 88%); /* color-mix 미지원 브라우저 폴백 */
+  --stage-overlay-bg: color-mix(in srgb, var(--bg-card) 86%, transparent);
+}
 @media (min-width: 1232px) {
-  .ingame-board { grid-template-columns: 330px minmax(0, 1fr) 360px; gap: 14px; }
-  .ingame-board > .ib-records { grid-column: 1; grid-row: 1 / 3; }
-  .ingame-board > .ib-map { grid-column: 2; grid-row: 1; }
-  .ingame-board > .ib-reserved { grid-column: 3; grid-row: 1 / 3; }
-  .ingame-board > .ib-subject-panel { grid-column: 2; grid-row: 2; }
-  .ingame-board > .ib-messages { grid-column: 1 / 4; grid-row: 3; }
+  .shell-main > .game-chrome.war-room { max-width: none; }
+  .war-room > .ingame-board { position: relative; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ingame-board > .ib-map { grid-row: 1; height: var(--map-stage-height); }
+  .ingame-board > .ib-subject-panel { grid-row: 2; }
+  .ingame-board > .ib-messages { grid-row: 3; }
+  /* 넓어지는 것은 지도뿐이다 — 스테이지 아래 흐름 콘텐츠는 읽기 폭을 유지한다. */
+  .ingame-board > .ib-subject-panel,
+  .ingame-board > .ib-messages,
+  .war-room > .game-info,
+  .war-room > .main-page-content { max-width: 1440px; margin-inline: auto; }
+
+  /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(HanMapCanvas 가 ResizeObserver 로 따라온다). */
+  .ib-map .map-viewer { display: flex; flex-direction: column; height: 100%; }
+  .ib-map .map-viewer-canvas,
+  .ib-map .map-viewer-ph { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
+
+  /* 오버레이 레일 — 폭은 고정하고 스스로 스크롤해서 지도 조작 영역을 더 먹지 않는다. */
+  .ingame-board > .ib-records,
+  .ingame-board > .ib-reserved {
+    position: absolute;
+    top: calc(12px + var(--stage-inset));
+    z-index: 2;
+    max-height: calc(var(--map-stage-height) - var(--stage-inset) * 2);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--stage-overlay-bg);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 50%);
+  }
+  .ingame-board > .ib-records { left: var(--stage-inset); width: 330px; }
+  .ingame-board > .ib-reserved { right: var(--stage-inset); width: 360px; }
+  /* 레일이 스테이지보다 길면 스스로 스크롤하므로, 주 행동 버튼은 레일 바닥에 붙여 둔다.
+     os-panel 의 overflow:hidden 은 그 자체로 스크롤 컨테이너라 sticky 가 레일이 아니라 패널에
+     묶인다 — 레일 안에서만 걷어 낸다. */
+  .ib-reserved .reserved-command-panel { overflow: visible; }
+  .ib-reserved .rcp-add {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    box-shadow: 0 -8px 16px var(--stage-overlay-bg);
+  }
 }
 .ib-map .map-viewer { border-radius: 0; }
 .subject-target-bar {
