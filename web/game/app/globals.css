@@ -2500,3 +2500,183 @@ input:focus, select:focus, textarea:focus {
 .rcp-seal { margin-left: 6px; font-size: 10px; text-decoration: none; }
 .rcp-seal--sealed { border-style: solid; }
 .rcp-seal--autorun { border-style: dashed; color: var(--muted); }
+
+/* ===== 화면 일체화 — 일회용 인라인 스타일을 걷어낸 공통 규칙 (Phase 6 웨이브 1) =====
+   원칙: 데이터에서 오는 값(국가색 등)만 인라인으로 남기고, 나머지는 여기서 토큰으로 쓴다.
+   토큰은 정본 이름(--line/--text/--text-2/--muted/--bronze)을 쓴다 — 구 별칭은 새로 쓰지 않는다. */
+.stack-card { margin-bottom: 14px; }
+.page-error { color: var(--rust); }
+.page-error__retry { margin-top: 12px; }
+
+/* 국가 정보 — 국가 이름 띠 · 19필드 격자 · 속령/열전 줄 */
+.nation-banner { text-align: center; font-weight: 700; padding: 4px 0; margin-bottom: 8px; }
+.nation-stat-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.nation-stat-grid__k { color: var(--text-2); font-weight: 600; text-align: center; white-space: nowrap; }
+.nation-stat-grid__v { text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.nation-stat-grid__v--wide { grid-column: span 3; }
+.nation-list-line { font-size: 12px; margin-top: 8px; }
+.nation-list-line__k { color: var(--text-2); font-weight: 600; }
+.nation-list-line__capital { color: var(--info); }
+
+/* 유산 버프 구매 */
+.buff-list { display: flex; flex-direction: column; gap: 8px; }
+.buff-row { border: 1px solid var(--line); padding: 8px; }
+.buff-row__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+.buff-row__desc { font-size: 11px; color: var(--muted); margin-left: 8px; }
+.buff-row__level { font-size: 12px; white-space: nowrap; }
+.buff-row__level-now { color: var(--bronze); }
+.buff-row__levels { display: flex; gap: 4px; flex-wrap: wrap; }
+.buff-actions { display: flex; gap: 8px; }
+
+/* 장수 생성(임관) — 알림 · 국가 목록 · 폼 · 유산 포인트 */
+.join-notice { padding: 10px 12px; margin-bottom: 12px; border: 1px solid var(--line); background: var(--raised); color: var(--text); font-size: 12px; }
+.join-notice--error { border-color: var(--rust); color: var(--rust); }
+.join-nations { margin-bottom: 16px; border: 1px solid var(--line); overflow: hidden; }
+.join-nations__head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--raised); font-weight: 600; }
+.join-nations__title { flex: 1; }
+.join-nations__empty { padding: 12px; color: var(--muted); font-size: 12px; }
+.join-nations__row { display: grid; grid-template-columns: 130px minmax(0, 1fr); border-top: 1px solid var(--line); }
+.join-nations__name { display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; font-size: 14px; }
+.join-nations__scout { padding: 8px 12px; align-self: center; color: var(--muted); font-size: 12px; }
+.join-nations__scout--zoom { font-size: 14px; }
+.join-form { display: flex; flex-direction: column; gap: 12px; max-width: 560px; }
+.join-field__label { display: block; font-weight: 600; margin-bottom: 4px; }
+.join-field__control { width: 100%; padding: 8px; }
+.join-field__hint { display: block; margin-top: 4px; color: var(--muted); }
+.join-pic { display: flex; align-items: center; gap: 12px; }
+.join-check { display: inline-flex; align-items: center; gap: 8px; }
+.join-check--sm { font-size: 12px; gap: 6px; }
+.join-presets { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.join-stat { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.join-stat__label { width: 48px; font-weight: 500; }
+.join-stat__range { flex: 1; }
+.join-stat__number { width: 64px; text-align: center; padding: 4px; }
+.join-section { border-top: 1px solid var(--line); padding-top: 8px; }
+.join-warn { text-align: center; margin: 0; color: var(--focus); } /* 원래 리터럴 orange — 팔레트의 경고/주목 색으로 사상 */
+.join-note { text-align: center; margin: 8px 0 0; color: var(--muted); }
+.join-inherit__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.join-inherit__title { flex: 1; }
+.join-inherit { display: grid; gap: 8px; color: var(--muted); font-size: 12px; }
+.join-inherit__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.join-inherit__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.join-inherit__label { display: block; margin-bottom: 4px; }
+.join-bonus { border: 1px solid var(--line); padding: 8px; }
+.join-bonus__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.join-submit { display: flex; gap: 8px; margin-top: 4px; }
+.join-submit__go { flex: 1; min-height: 44px; }
+.join-submit__reset { min-height: 44px; padding: 0 16px; }
+
+/* 외교 — 도구줄 · 서신 작성 폼 · 서신 카드 */
+.text-secondary { color: var(--text-2); }
+.toast--pinned { position: fixed; top: 12px; right: 12px; z-index: 200; }
+.dip-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.dip-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.dip-label { font-size: 12px; color: var(--text-2); }
+.dip-control { width: 100%; margin-top: 4px; }
+.dip-form__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.dip-form__body { display: flex; flex-direction: column; gap: 8px; }
+.dip-form__editor { margin-top: 4px; }
+.dip-form__actions { display: flex; justify-content: flex-end; }
+.dip-letters { display: flex; flex-direction: column; gap: 12px; }
+.dip-letter { padding: 0; overflow: hidden; }
+.dip-letter__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
+.dip-letter__nation { font-weight: 600; }
+.dip-letter__meta { font-size: 12px; opacity: 0.85; }
+.dip-letter__body { padding: 12px; }
+.dip-letter__row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.dip-letter__row--sign { font-size: 12px; }
+.dip-letter__opt { font-size: 12px; color: var(--bronze); }
+.dip-letter__prev { font-size: 12px; color: var(--muted); }
+.dip-letter__section { margin-bottom: 8px; }
+.dip-letter__label { font-size: 12px; color: var(--text-2); }
+.dip-letter__text { margin: 4px 0 0; white-space: pre-wrap; }
+.dip-letter__text--secret { color: var(--text-2); font-size: 12px; }
+.dip-letter__secret { border-top: 1px solid var(--line); padding-top: 8px; }
+.dip-letter__actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
+.dip-letter__btn, .dip-btn { font-size: 12px; }
+.dip-signer { display: inline-flex; gap: 4px; align-items: center; }
+.dip-signer__icon { width: 20px; height: 20px; object-fit: contain; }
+
+/* 표·수치 정렬 유틸 — 표 셀 정렬은 화면마다 이름을 새로 지을 값이 아니라 공통 규칙이다.
+   (.text-muted 와 같은 결의 최소 유틸만 둔다 — 레이아웃은 의미 클래스로 쓴다.) */
+.u-center { text-align: center; }
+.u-right { text-align: right; }
+.u-num { text-align: right; font-variant-numeric: tabular-nums; }
+.u-full { width: 100%; }
+.u-scroll-x { overflow-x: auto; }
+.u-stack-xs { display: flex; flex-direction: column; gap: 4px; }
+.u-stack-sm { display: flex; flex-direction: column; gap: 8px; }
+.u-row-sm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* 설문(투표) — 띠 제목 · 목록 링크 버튼 · 떠 있는 알림 */
+.band-title { background: var(--raised); color: var(--text); text-align: center; font-size: 14px; font-weight: 600; padding: 4px 8px; margin-bottom: 8px; }
+.link-button { background: none; border: none; padding: 0; color: var(--moss-2); cursor: pointer; text-align: left; }
+.link-button:hover { text-decoration: underline; }
+.link-button--current { color: var(--bronze); }
+/* 이전에는 정의되지 않은 --surface-raised 를 써서 배경이 아예 그려지지 않았다. */
+.toast-floating { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line); padding: 8px 16px; z-index: 200; }
+.vote-section { margin-bottom: 16px; }
+.vote-section-foot { margin-top: 16px; }
+.vote-count { width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
+.vote-text { white-space: pre-wrap; word-break: break-word; }
+.vote-small { font-size: 11px; }
+.vote-empty { margin: 0; }
+.vote-form { margin-top: 8px; }
+.vote-textarea { resize: vertical; }
+.vote-width-120 { width: 120px; }
+
+/* 유산(계승) — 구분선 · 격자 · 항목 줄 */
+.inh-hr { border-top: 1px solid var(--line); opacity: 0.5; margin: 12px 0; }
+.inh-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.inh-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.inh-note { margin-top: 4px; font-size: 12px; }
+.inh-hint { margin-top: 4px; font-size: 11px; color: var(--muted); }
+.inh-num { width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
+.inh-subhead { color: var(--text-2); margin-bottom: 4px; }
+.inh-subhead--spaced { margin-top: 8px; }
+.inh-grid { display: grid; gap: 12px; }
+.inh-grid--gap-lg { gap: 16px; }
+.inh-grid--240 { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.inh-grid--260 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.inh-grid--280 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.inh-line { display: flex; gap: 8px; align-items: baseline; }
+.inh-line__k { flex-basis: 14ch; flex-shrink: 0; text-align: right; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.inh-line__v { flex: 1; }
+.inh-k { font-size: 12px; color: var(--text-2); font-weight: 500; }
+.inh-v { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.inh-info { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
+.inh-cost { font-size: 11px; color: var(--bronze); }
+
+/* 중원 정보(세계 외교) — 띠 제목 강조 · 외교 행렬 · 분쟁 막대 */
+.band-title--info { border-left: 3px solid var(--info); color: var(--info); }
+.band-title--alert { border-left: 3px solid var(--rust); color: var(--rust); }
+.band-title--field { border-left: 3px solid var(--moss-2); color: var(--moss-2); }
+.gd-section { margin-bottom: 20px; }
+.gd-state--war { color: var(--rust); }
+.gd-state--declared { color: var(--log-m); }
+.gd-state--pact { color: var(--moss-2); }
+.gd-matrix { margin: auto; min-width: 400px; }
+.gd-matrix__col { text-align: center; min-width: 1ch; max-width: 3ch; font-weight: normal; }
+.gd-matrix__row { text-align: right; padding: 0 1ch; min-width: 10ch; font-weight: normal; }
+.gd-matrix__cell--mine { background-color: rgba(201, 107, 93, 0.22); }
+.gd-conflicts { gap: 12px; }
+.gd-conflict { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.gd-conflict__city { flex-basis: 16ch; text-align: right; padding-right: 1ch; align-self: center; color: var(--text-2); }
+.gd-conflict__bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.gd-bar { display: flex; gap: 4px; align-items: center; }
+.gd-bar__name { flex-basis: 16ch; padding-left: 1ch; }
+.gd-bar__pct { flex-basis: 6ch; text-align: right; padding-right: 0.5ch; font-variant-numeric: tabular-nums; }
+.gd-bar__track { flex: 1; align-self: center; }
+.gd-bar__fill { height: 1.2em; margin-left: 0; }
+.gd-nation-tag { padding: 0 0.5ch; }
+.gd-split { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.gd-split__map { flex: 2 1 360px; min-width: 0; }
+.gd-split__list { flex: 1 1 260px; min-width: 240px; }
+.gd-w25 { width: 25%; }
+.gd-w50 { width: 50%; }

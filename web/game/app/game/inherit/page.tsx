@@ -73,37 +73,6 @@ const INHERIT_BUFF_HELP: InheritBuffDef[] = [
 ];
 
 
-const labelStyle: React.CSSProperties = {
-    fontSize: 'var(--text-sm)',
-    color: 'var(--text-secondary)',
-    fontWeight: 500,
-};
-
-const valueStyle: React.CSSProperties = {
-    fontVariantNumeric: 'tabular-nums',
-    textAlign: 'right',
-    fontWeight: 600,
-};
-
-const infoStyle: React.CSSProperties = {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--text-muted)',
-    textAlign: 'right',
-    marginTop: 'var(--space-xs)',
-};
-
-const costStyle: React.CSSProperties = {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--gold)',
-};
-
-const hr: React.CSSProperties = {
-    border: 'none',
-    borderTop: '1px solid var(--border-subtle)',
-    opacity: 0.5,
-    margin: 'var(--space-md) 0',
-};
-
 // Buy*/reset action descriptor — drives the CommandModal launch. P6-registered codes
 // (BuyHiddenBuff / BuyRandomUnique) + F4 Wave C2 inheritance resets (inheritResetTurnTime /
 // inheritResetSpecialWar / inheritSetNextSpecialWar). nextSpecial carries the picked specialWar key
@@ -306,25 +275,25 @@ export default function InheritPage() {
         <Shell>
             <PageHead title="유산 관리" />
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
 
             {/* ── 유산 포인트 항목 (inheritanceViewText) ─────────────────────────── */}
             <GameCard>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
+                <div className="inh-grid inh-grid--240">
                     {INHERIT_VIEW_TEXT.map((def) => (
                         <div key={def.key}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-sm)' }}>
-                                <span style={labelStyle}>{def.title}</span>
-                                <span style={valueStyle}>{itemValue(def.key).toLocaleString()}</span>
+                            <div className="inh-head">
+                                <span className="inh-k">{def.title}</span>
+                                <span className="inh-v">{itemValue(def.key).toLocaleString()}</span>
                             </div>
-                            <div style={infoStyle} dangerouslySetInnerHTML={{ __html: def.info }} />
+                            <div className="inh-info" dangerouslySetInnerHTML={{ __html: def.info }} />
                         </div>
                     ))}
                 </div>
@@ -333,66 +302,60 @@ export default function InheritPage() {
             {/* ── 유산 포인트 상점 (read-only display; purchase deferred) ──────────── */}
             <SectionHeader title="유산 포인트 상점" />
             <GameCard>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-lg)' }}>
+                <div className="inh-grid inh-grid--260 inh-grid--gap-lg">
                     <div>
-                        <div style={labelStyle}>다음 전투 특기 선택</div>
+                        <div className="inh-k">다음 전투 특기 선택</div>
                         <select
-                            className="form-select"
-                            value={nextSpecialPick}
+                            className="form-select dip-control" value={nextSpecialPick}
                             onChange={(e) => setNextSpecialPick(e.target.value)}
-                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
-                        >
+                            >
                             <option value="">특기 선택</option>
                             {Object.entries(availableSpecialWar).map(([key, info]) => (
                                 <option key={key} value={key}>{info.title}</option>
                             ))}
                         </select>
-                        <div style={infoStyle}>
+                        <div className="inh-info">
                             다음에 얻을 전투 특기를 정합니다.<br />
-                            <span style={costStyle}>필요 포인트: {(cost?.nextSpecial ?? 0).toLocaleString()}</span>
+                            <span className="inh-cost">필요 포인트: {(cost?.nextSpecial ?? 0).toLocaleString()}</span>
                         </div>
                         <button
                             type="button"
                             disabled={!nextSpecialPick}
-                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            className="inh-note"
                             onClick={() => openBuy({ command: 'inheritSetNextSpecialWar', label: '다음 전투 특기 지정', extraArgs: { specialWar: nextSpecialPick } })}
                         >
                             구입
                         </button>
                     </div>
                     <div>
-                        <div style={labelStyle}>유니크 경매</div>
+                        <div className="inh-k">유니크 경매</div>
                         <select
-                            className="form-select"
-                            value={selectedUnique}
+                            className="form-select dip-control" value={selectedUnique}
                             onChange={(e) => setSelectedUnique(e.target.value)}
-                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
-                        >
+                            >
                             <option value="">유니크 선택</option>
                             {Object.entries(availableUnique).map(([key, info]) => (
                                 <option key={key} value={key}>{info.title}</option>
                             ))}
                         </select>
-                        <div style={infoStyle}>
+                        <div className="inh-info">
                             얻고자 하는 유니크 아이템으로 경매를 시작합니다. 24턴 동안 진행됩니다.<br />
-                            <span style={costStyle}>입찰 포인트(최소): {(cost?.minSpecificUnique ?? 0).toLocaleString()}</span>
+                            <span className="inh-cost">입찰 포인트(최소): {(cost?.minSpecificUnique ?? 0).toLocaleString()}</span>
                         </div>
                         {/* 입찰 포인트 — legacy PageInheritPoint.vue:622-648 specificUniqueAmount 입력. */}
                         <input
                             type="number"
-                            className="form-input"
-                            min={cost?.minSpecificUnique ?? 0}
+                            className="form-input dip-control" min={cost?.minSpecificUnique ?? 0}
                             max={previousPoint}
                             step={1}
                             value={uniqueAmount || ''}
                             placeholder={`입찰 포인트 (최소 ${(cost?.minSpecificUnique ?? 0).toLocaleString()})`}
                             onChange={(e) => setUniqueAmount(Math.floor(Number(e.target.value) || 0))}
-                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
-                        />
+                            />
                         <button
                             type="button"
                             disabled={!selectedUnique || uniqueAmount <= 0}
-                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            className="inh-note"
                             onClick={() => {
                                 // legacy 가드(PageInheritPoint.vue:624-627): 보유 유산 포인트 부족.
                                 if (previousPoint < uniqueAmount) {
@@ -410,42 +373,42 @@ export default function InheritPage() {
                         </button>
                     </div>
                     <div>
-                        <div style={labelStyle}>랜덤 턴 초기화</div>
-                        <div style={infoStyle}>
+                        <div className="inh-k">랜덤 턴 초기화</div>
+                        <div className="inh-info">
                             다다음턴부터 시간이 랜덤하게 바뀝니다. (필요 포인트가 피보나치식으로 증가합니다)<br />
-                            <span style={costStyle}>필요 포인트: {(cost?.resetTurnTime ?? 0).toLocaleString()}</span>
+                            <span className="inh-cost">필요 포인트: {(cost?.resetTurnTime ?? 0).toLocaleString()}</span>
                         </div>
                         <button
                             type="button"
-                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            className="inh-note"
                             onClick={() => openBuy({ command: 'inheritResetTurnTime', label: '랜덤 턴 초기화', extraArgs: {} })}
                         >
                             구입
                         </button>
                     </div>
                     <div>
-                        <div style={labelStyle}>랜덤 유니크 획득</div>
-                        <div style={infoStyle}>
+                        <div className="inh-k">랜덤 유니크 획득</div>
+                        <div className="inh-info">
                             다음 턴에 랜덤 유니크를 얻습니다.<br />
-                            <span style={costStyle}>필요 포인트: {(cost?.randomUnique ?? 0).toLocaleString()}</span>
+                            <span className="inh-cost">필요 포인트: {(cost?.randomUnique ?? 0).toLocaleString()}</span>
                         </div>
                         <button
                             type="button"
-                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            className="inh-note"
                             onClick={() => openBuy({ command: 'BuyRandomUnique', label: '랜덤 유니크 획득', extraArgs: {} })}
                         >
                             구입
                         </button>
                     </div>
                     <div>
-                        <div style={labelStyle}>즉시 전투 특기 초기화</div>
-                        <div style={infoStyle}>
+                        <div className="inh-k">즉시 전투 특기 초기화</div>
+                        <div className="inh-info">
                             즉시 전투 특기를 초기화합니다. (필요 포인트가 피보나치식으로 증가합니다)<br />
-                            <span style={costStyle}>필요 포인트: {(cost?.resetSpecialWar ?? 0).toLocaleString()}</span>
+                            <span className="inh-cost">필요 포인트: {(cost?.resetSpecialWar ?? 0).toLocaleString()}</span>
                         </div>
                         <button
                             type="button"
-                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            className="inh-note"
                             onClick={() => openBuy({ command: 'inheritResetSpecialWar', label: '즉시 전투 특기 초기화', extraArgs: {} })}
                         >
                             구입
@@ -455,32 +418,32 @@ export default function InheritPage() {
             </GameCard>
 
             {/* ── 유산 버프 (inheritBuffHelpText) — current levels, read-only ─────── */}
-            <div style={{ ...hr }} />
+            <div className="inh-hr" />
             <GameCard>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-md)' }}>
+                <div className="inh-grid inh-grid--260">
                     {INHERIT_BUFF_HELP.map((def) => {
                         const level = currentBuff[def.key] ?? 0;
                         const step = cost?.buff ?? [];
                         const nextCost = step[level + 1] != null && step[level] != null ? step[level + 1] - step[level] : null;
                         return (
                             <div key={def.key}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-sm)' }}>
-                                    <span style={labelStyle}>{def.title}</span>
-                                    <span style={valueStyle}>{level} / {(data?.maxInheritBuff ?? 0).toLocaleString()}</span>
+                                <div className="inh-head">
+                                    <span className="inh-k">{def.title}</span>
+                                    <span className="inh-v">{level} / {(data?.maxInheritBuff ?? 0).toLocaleString()}</span>
                                 </div>
-                                <div style={infoStyle}>
+                                <div className="inh-info">
                                     {def.info}
                                     {nextCost != null && (
                                         <>
                                             <br />
-                                            <span style={costStyle}>다음 등급 필요 포인트: {nextCost.toLocaleString()}</span>
+                                            <span className="inh-cost">다음 등급 필요 포인트: {nextCost.toLocaleString()}</span>
                                         </>
                                     )}
                                 </div>
                                 {level < (data?.maxInheritBuff ?? 0) && (
                                     <button
                                         type="button"
-                                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                                        className="inh-note"
                                         onClick={() => openBuy({
                                             command: 'BuyHiddenBuff',
                                             label: `${def.title} 구매`,
@@ -497,23 +460,23 @@ export default function InheritPage() {
             </GameCard>
 
             {/* ── 장수 소유자 확인 / 능력치 초기화 ──────────────────────────────── */}
-            <div style={{ ...hr }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
+            <div className="inh-hr" />
+            <div className="inh-grid inh-grid--280 inh-grid--gap-lg">
                 <GameCard>
-                    <div style={labelStyle}>장수 소유자 확인</div>
-                    <select className="form-select" value={ownerTarget} onChange={(e) => setOwnerTarget(e.target.value)} style={{ width: '100%', marginTop: 'var(--space-xs)' }}>
+                    <div className="inh-k">장수 소유자 확인</div>
+                    <select className="form-select dip-control" value={ownerTarget} onChange={(e) => setOwnerTarget(e.target.value)} >
                         <option value="">장수 선택</option>
                         {Object.entries(availableTargetGeneral).map(([key, name]) => (
                             <option key={key} value={key}>{name}</option>
                         ))}
                     </select>
-                    <div style={infoStyle}>
+                    <div className="inh-info">
                         장수의 소유자를 찾습니다.<br />
-                        <span style={costStyle}>필요 포인트: {(cost?.checkOwner ?? 0).toLocaleString()}</span>
+                        <span className="inh-cost">필요 포인트: {(cost?.checkOwner ?? 0).toLocaleString()}</span>
                     </div>
                     <button
                         type="button"
-                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                        className="inh-note"
                         onClick={handleCheckOwner}
                         disabled={generalId == null || !ownerTarget}
                     >
@@ -521,97 +484,85 @@ export default function InheritPage() {
                     </button>
                 </GameCard>
                 <GameCard>
-                    <div style={labelStyle}>능력치 초기화</div>
-                    <div style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
-                        <div style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>기본 능력치</div>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                    <div className="inh-k">능력치 초기화</div>
+                    <div className="inh-note">
+                        <div className="inh-subhead">기본 능력치</div>
+                        <div className="inh-row">
+                            <label className="u-row-sm">
                                 통
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={baseLeadership}
+                                    className="form-input inh-num" value={baseLeadership}
                                     min={currentStat?.statMin ?? 15}
                                     max={currentStat?.statMax ?? 80}
                                     onChange={(e) => setBaseLeadership(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                            <label className="u-row-sm">
                                 무
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={baseStrength}
+                                    className="form-input inh-num" value={baseStrength}
                                     min={currentStat?.statMin ?? 15}
                                     max={currentStat?.statMax ?? 80}
                                     onChange={(e) => setBaseStrength(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                            <label className="u-row-sm">
                                 지
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={baseIntel}
+                                    className="form-input inh-num" value={baseIntel}
                                     min={currentStat?.statMin ?? 15}
                                     max={currentStat?.statMax ?? 80}
                                     onChange={(e) => setBaseIntel(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
                         </div>
-                        <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)', fontSize: 'var(--text-xs)' }}>
+                        <div className="inh-hint">
                             범위: {currentStat?.statMin ?? 0} ~ {currentStat?.statMax ?? 0} / 합 {currentStat ? currentStat.leadership + currentStat.strength + currentStat.intel : 0}
                         </div>
-                        <div style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>추가 능력치</div>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                        <div className="inh-subhead inh-subhead--spaced">추가 능력치</div>
+                        <div className="inh-row">
+                            <label className="u-row-sm">
                                 통+
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={bonusLeadership}
+                                    className="form-input inh-num" value={bonusLeadership}
                                     min={0}
                                     onChange={(e) => setBonusLeadership(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                            <label className="u-row-sm">
                                 무+
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={bonusStrength}
+                                    className="form-input inh-num" value={bonusStrength}
                                     min={0}
                                     onChange={(e) => setBonusStrength(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                            <label className="u-row-sm">
                                 지+
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={bonusIntel}
+                                    className="form-input inh-num" value={bonusIntel}
                                     min={0}
                                     onChange={(e) => setBonusIntel(Number(e.target.value))}
-                                    style={{ width: '5ch' }}
-                                />
+                                    />
                             </label>
                         </div>
-                        <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)', fontSize: 'var(--text-xs)' }}>
+                        <div className="inh-hint">
                             합 3~5 (0이면 랜덤 배분)
                         </div>
                     </div>
-                    <div style={infoStyle}>
+                    <div className="inh-info">
                         시즌 당 1회에 한 해 능력치를 초기화합니다.<br />
-                        <span style={costStyle}>추가 능력치 필요 포인트: {(cost?.bornStatPoint ?? 0).toLocaleString()}</span>
+                        <span className="inh-cost">추가 능력치 필요 포인트: {(cost?.bornStatPoint ?? 0).toLocaleString()}</span>
                     </div>
                     <button
                         type="button"
-                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                        className="inh-note"
                         onClick={handleResetStat}
                         disabled={generalId == null}
                     >
@@ -624,15 +575,15 @@ export default function InheritPage() {
             <SectionHeader title="유산 포인트 변경 내역" />
             <GameCard>
                 {logs.length === 0 && !loading ? (
-                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>변경 내역이 없습니다.</p>
+                    <p className="u-center text-muted vote-empty">변경 내역이 없습니다.</p>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    <div className="u-stack-xs">
                         {logs.map((log) => (
-                            <div key={log.id} style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'baseline' }}>
-                                <span style={{ flexBasis: '14ch', flexShrink: 0, textAlign: 'right', color: 'var(--text-muted)', fontSize: 'var(--text-xs)', fontVariantNumeric: 'tabular-nums' }}>
+                            <div key={log.id} className="inh-line">
+                                <span className="inh-line__k">
                                     [{log.date}]
                                 </span>
-                                <span style={{ flex: 1 }}><LogText text={log.text} /></span>
+                                <span className="inh-line__v"><LogText text={log.text} /></span>
                             </div>
                         ))}
                     </div>

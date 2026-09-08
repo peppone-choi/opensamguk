@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { Button, SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
-import StatusBadge from '../../../components/StatusBadge';
+import PageHead from '../../../components/PageHead';
+import Toast from '../../../components/Toast';
+import { useToast } from '../../../hooks/useToast';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
@@ -43,7 +46,7 @@ export default function NationPage() {
     const [generalId, setGeneralId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
-    const [toast, setToast] = useState<string>('');
+    const { toasts, show, remove } = useToast();
 
     // OPENSAM-196: background=true면 로딩 스피너를 건너뛴다(턴 갱신 시 화면이 잠깐 비는 것을 방지).
     const fetchData = useCallback(async (background = false) => {
@@ -81,60 +84,55 @@ export default function NationPage() {
     async function buyBuff(buffKey: string, level: number) {
         const prevLevel = myBuffs[buffKey] ?? 0;
         if (prevLevel >= level) {
-            setToast('이미 구입했거나 더 높은 등급을 보유 중입니다.');
-            setTimeout(() => setToast(''), 3000);
+            show('이미 구입했거나 더 높은 등급을 보유 중입니다.', 'error');
             return;
         }
         // P0-50 — generalId 없이 보내면 CommandController @RequestParam 400으로 매번 실패했었다.
         if (generalId == null) {
-            setToast('장수 정보가 없습니다.');
-            setTimeout(() => setToast(''), 3000);
+            show('장수 정보가 없습니다.', 'error');
             return;
         }
         try {
             const out = await submitCommandAndAwaitResult(() =>
                 api.command('BuyHiddenBuff', { buffKey, level, prevLevel }, generalId));
             if (out.status === 'applied') {
-                setToast('구매가 처리되었습니다.');
+                show('구매가 처리되었습니다.', 'success');
                 fetchData();
             } else if (out.status === 'rejected') {
-                setToast(out.reason ?? '구매할 수 없습니다.');
+                show(out.reason ?? '구매할 수 없습니다.', 'error');
             } else {
-                setToast(out.reason);
+                show(out.reason, 'error');
             }
         } catch {
-            setToast('구매 요청에 실패했습니다.');
+            show('구매 요청에 실패했습니다.', 'error');
         }
-        setTimeout(() => setToast(''), 3000);
     }
 
     async function buyRandomUnique() {
         if (generalId == null) {
-            setToast('장수 정보가 없습니다.');
-            setTimeout(() => setToast(''), 3000);
+            show('장수 정보가 없습니다.', 'error');
             return;
         }
         try {
             const out = await submitCommandAndAwaitResult(() => api.command('BuyRandomUnique', {}, generalId));
             if (out.status === 'applied') {
-                setToast('구매가 처리되었습니다.');
+                show('구매가 처리되었습니다.', 'success');
                 fetchData();
             } else if (out.status === 'rejected') {
-                setToast(out.reason ?? '구매할 수 없습니다.');
+                show(out.reason ?? '구매할 수 없습니다.', 'error');
             } else {
-                setToast(out.reason);
+                show(out.reason, 'error');
             }
         } catch {
-            setToast('구매 요청에 실패했습니다.');
+            show('구매 요청에 실패했습니다.', 'error');
         }
-        setTimeout(() => setToast(''), 3000);
     }
 
     if (loading) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
-                <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+                <PageHead title="국가 정보" />
+                <p className="text-muted">로딩 중...</p>
             </Shell>
         );
     }
@@ -142,9 +140,9 @@ export default function NationPage() {
     if (error) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
-                <p style={{ color: 'var(--crimson)' }}>{error}</p>
-                <button onClick={() => fetchData()} style={{ marginTop: 'var(--space-md)' }}>다시 시도</button>
+                <PageHead title="국가 정보" />
+                <p className="page-error">{error}</p>
+                <Button onClick={() => fetchData()} className="page-error__retry">다시 시도</Button>
             </Shell>
         );
     }
@@ -152,92 +150,70 @@ export default function NationPage() {
     if (!data || !data.hasNation) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
-                <p style={{ color: 'var(--text-muted)' }}>재야입니다.</p>
+                <PageHead title="국가 정보" />
+                <p className="text-muted">재야입니다.</p>
             </Shell>
         );
     }
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
+            <PageHead title="국가 정보" />
 
-            {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
-                    {toast}
-                </div>
-            )}
 
             {/* 국가 헤더 + 19필드 단일표(8열) — PHP b_myKingdomInfo.php 동치 */}
-            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-                <div
-                    style={{
-                        background: data.color,
-                        color: newColor(data.color),
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        padding: 'var(--space-xs) 0',
-                        marginBottom: 'var(--space-sm)',
-                    }}
-                >
+            <GameCard className="stack-card">
+                <div className="nation-banner" style={{ background: data.color, color: newColor(data.color) }}>
                     【{data.name}】
                 </div>
 
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'auto 1fr auto 1fr auto 1fr',
-                        gap: '2px var(--space-sm)',
-                        fontSize: 'var(--text-sm)',
-                        alignItems: 'center',
-                    }}
-                >
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>총주민</span>
-                    <span style={{ textAlign: 'center' }}>{formatNumber(data.population)}/{formatNumber(data.populationMax)}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>총병사</span>
-                    <span style={{ textAlign: 'center' }}>{formatNumber(data.crew)}/{formatNumber(data.crewMax)}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국 력</span>
-                    <span style={{ textAlign: 'center' }}>{data.power}</span>
+                <div className="nation-stat-grid">
+                    <span className="nation-stat-grid__k">총주민</span>
+                    <span className="nation-stat-grid__v">{formatNumber(data.population)}/{formatNumber(data.populationMax)}</span>
+                    <span className="nation-stat-grid__k">총병사</span>
+                    <span className="nation-stat-grid__v">{formatNumber(data.crew)}/{formatNumber(data.crewMax)}</span>
+                    <span className="nation-stat-grid__k">국 력</span>
+                    <span className="nation-stat-grid__v">{data.power}</span>
 
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국 고</span>
-                    <span style={{ textAlign: 'center' }}>{formatNumber(data.gold)}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>병 량</span>
-                    <span style={{ textAlign: 'center' }}>{formatNumber(data.rice)}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세 율</span>
-                    <span style={{ textAlign: 'center' }}>{data.taxRate == null ? '-' : `${data.taxRate} %`}</span>
+                    <span className="nation-stat-grid__k">국 고</span>
+                    <span className="nation-stat-grid__v">{formatNumber(data.gold)}</span>
+                    <span className="nation-stat-grid__k">병 량</span>
+                    <span className="nation-stat-grid__v">{formatNumber(data.rice)}</span>
+                    <span className="nation-stat-grid__k">세 율</span>
+                    <span className="nation-stat-grid__v">{data.taxRate == null ? '-' : `${data.taxRate} %`}</span>
 
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세금/단기</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세곡/둔전</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>지급률</span>
-                    <span style={{ textAlign: 'center' }}>{data.bill == null ? '-' : `${data.bill} %`}</span>
+                    <span className="nation-stat-grid__k">세금/단기</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">세곡/둔전</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">지급률</span>
+                    <span className="nation-stat-grid__v">{data.bill == null ? '-' : `${data.bill} %`}</span>
 
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>수입/지출</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>수입/지출</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>속 령</span>
-                    <span style={{ textAlign: 'center' }}>{data.cityCount}</span>
+                    <span className="nation-stat-grid__k">수입/지출</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">수입/지출</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">속 령</span>
+                    <span className="nation-stat-grid__v">{data.cityCount}</span>
 
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국고 예산</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>병량 예산</span>
-                    <span style={{ textAlign: 'center' }}>-</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>장 수</span>
-                    <span style={{ textAlign: 'center' }}>{data.generalCount}</span>
+                    <span className="nation-stat-grid__k">국고 예산</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">병량 예산</span>
+                    <span className="nation-stat-grid__v">-</span>
+                    <span className="nation-stat-grid__k">장 수</span>
+                    <span className="nation-stat-grid__v">{data.generalCount}</span>
 
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>기술력</span>
-                    <span style={{ textAlign: 'center' }}>{formatNumber(data.tech)}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>작 위</span>
-                    <span style={{ textAlign: 'center', gridColumn: 'span 3' }}>{data.levelText}</span>
+                    <span className="nation-stat-grid__k">기술력</span>
+                    <span className="nation-stat-grid__v">{formatNumber(data.tech)}</span>
+                    <span className="nation-stat-grid__k">작 위</span>
+                    <span className="nation-stat-grid__v nation-stat-grid__v--wide">{data.levelText}</span>
                 </div>
 
                 {/* 속령일람 */}
-                <div style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-sm)' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>속령일람 : </span>
+                <div className="nation-list-line">
+                    <span className="nation-list-line__k">속령일람 : </span>
                     {data.cities.map((c: MyNationCityRef, i: number) => (
-                        <span key={c.cityId} style={{ color: c.isCapital ? 'cyan' : undefined }}>
+                        <span key={c.cityId} className={c.isCapital ? 'nation-list-line__capital' : undefined}>
                             {c.isCapital ? `[${c.name}]` : c.name}
                             {i < data.cities.length - 1 ? ', ' : ''}
                         </span>
@@ -245,33 +221,30 @@ export default function NationPage() {
                 </div>
 
                 {/* 국가열전 */}
-                <div style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-sm)' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>국가열전 : </span>
-                    <span style={{ color: 'var(--text-muted)' }}>-</span>
+                <div className="nation-list-line">
+                    <span className="nation-list-line__k">국가열전 : </span>
+                    <span className="text-muted">-</span>
                 </div>
             </GameCard>
 
             {/* 유산 버프 구매 */}
-            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>유산 버프 구매</h2>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>
-                    각 버프는 레벨 1~5까지 구매 가능합니다. 비용은 누적 차액입니다.
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <GameCard className="stack-card">
+                <SectionHeader title="유산 버프 구매" sub="레벨 1~5 · 비용은 누적 차액" />
+                <div className="buff-list">
                     {INHERIT_BUFFS.map(buff => {
                         const currentLevel = myBuffs[buff.key] ?? 0;
                         return (
-                            <div key={buff.key} style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-sm)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-xs)' }}>
+                            <div key={buff.key} className="buff-row">
+                                <div className="buff-row__head">
                                     <div>
                                         <strong>{buff.label}</strong>
-                                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginLeft: 'var(--space-sm)' }}>{buff.desc}</span>
+                                        <span className="buff-row__desc">{buff.desc}</span>
                                     </div>
-                                    <span style={{ fontSize: 'var(--text-sm)' }}>
-                                        현재 레벨: <strong style={{ color: 'var(--gold)' }}>{currentLevel}</strong>/5
+                                    <span className="buff-row__level">
+                                        현재 레벨: <strong className="buff-row__level-now">{currentLevel}</strong>/5
                                     </span>
                                 </div>
-                                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+                                <div className="buff-row__levels">
                                     {[1, 2, 3, 4, 5].map(lvl => {
                                         // 비용 = 누적 차액(BuyHiddenBuff: inheritBuffPoints[lvl] - [prevLevel]).
                                         // API 배열 미수신 시 비용 표기를 생략(날조 금지 — 사본 폴백 없음).
@@ -280,20 +253,15 @@ export default function NationPage() {
                                             : null;
                                         const disabled = currentLevel >= lvl;
                                         return (
-                                            <button
-                                                key={lvl}
-                                                onClick={() => buyBuff(buff.key, lvl)}
-                                                disabled={disabled}
-                                                style={{
-                                                    fontSize: 'var(--text-xs)',
-                                                    padding: 'var(--space-xs) var(--space-sm)',
-                                                    border: `1px solid ${disabled ? 'var(--border-subtle)' : 'var(--gold-dim)'}`,
-                                                    background: disabled ? 'var(--bg-hover)' : 'rgba(201,162,39,0.1)',
-                                                    color: disabled ? 'var(--text-muted)' : 'var(--gold)',
-                                                }}
-                                            >
-                                                L{lvl}{cost != null ? ` (${cost.toLocaleString()}P)` : ''}
-                                            </button>
+                                            disabled ? (
+                                                <Button key={lvl} size="sm" disabled reason="이미 보유한 레벨입니다.">
+                                                    L{lvl}
+                                                </Button>
+                                            ) : (
+                                                <Button key={lvl} size="sm" onClick={() => buyBuff(buff.key, lvl)}>
+                                                    L{lvl}{cost != null ? ` (${cost.toLocaleString()}P)` : ''}
+                                                </Button>
+                                            )
                                         );
                                     })}
                                 </div>
@@ -304,11 +272,12 @@ export default function NationPage() {
             </GameCard>
 
             <GameCard>
-                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>기타 유산 구매</h2>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                    <button onClick={buyRandomUnique}>랜덤 유니크 아이템 구매</button>
+                <SectionHeader title="기타 유산 구매" />
+                <div className="buff-actions">
+                    <Button onClick={buyRandomUnique}>랜덤 유니크 아이템 구매</Button>
                 </div>
             </GameCard>
+            <Toast toasts={toasts} onRemove={remove} />
         </Shell>
     );
 }
