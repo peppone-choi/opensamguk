@@ -126,9 +126,9 @@ function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
                                 {/* 국가색은 깃발에만(ADR-LITE-049) — 밝기 판정 텍스트 배경은 깃발로 대체. */}
                                 <span className="nation-list__cell"><Flag color={n.color} />{n.name}</span>
                             </td>
-                            <td className="os-num" style={{ textAlign: 'right' }}>{(n.power ?? 0).toLocaleString()}</td>
-                            <td className="os-num" style={{ textAlign: 'right' }}>{(n.gennum ?? 0).toLocaleString()}</td>
-                            <td className="os-num" style={{ textAlign: 'right' }} title={(n.cities ?? []).join(', ')}>{(n.cities ?? []).length}</td>
+                            <td className="os-num u-right">{(n.power ?? 0).toLocaleString()}</td>
+                            <td className="os-num u-right">{(n.gennum ?? 0).toLocaleString()}</td>
+                            <td className="os-num u-right"title={(n.cities ?? []).join(', ')}>{(n.cities ?? []).length}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -257,7 +257,7 @@ export default function HistoryPage() {
             </div>
 
             {loading && <p className="text-muted">로딩 중...</p>}
-            {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
+            {error && <p role="alert" className="page-error">{error}</p>}
             {!loading && !error && record === null && (
                 <Panel className="record-panel">
                     <EmptyState illustration="records" title="기록이 없습니다." />

@@ -45,15 +45,17 @@ function floor(n: number): number {
     return Math.floor(n);
 }
 
-// 외교 상태 → {표시명, 색}. legacy defs/index.ts `diplomacyStateInfo` 충실 포팅(0/1/2/7만 정의,
-// 그 외는 통상 폴백). 색 미지정(통상)은 기본 텍스트색.
-const diplomacyStateInfo: Record<number, { name: string; color?: string }> = {
-    0: { name: '교전', color: 'red' },
-    1: { name: '선포중', color: 'magenta' },
+// 외교 상태 → {표시명, 클래스}. legacy defs/index.ts `diplomacyStateInfo` 충실 포팅(0/1/2/7만 정의,
+// 그 외는 통상 폴백). 색은 중원 정보·어드민 외교 정보와 같은 `.gd-state--*` 를 쓴다 —
+// 같은 뜻을 세 화면이 서로 다른 리터럴 색(red/magenta/green)으로 칠하던 것을 하나로 모았다.
+// 통상은 클래스 없음(기본 텍스트색).
+const diplomacyStateInfo: Record<number, { name: string; className?: string }> = {
+    0: { name: '교전', className: 'gd-state--war' },
+    1: { name: '선포중', className: 'gd-state--declared' },
     2: { name: '통상' },
-    7: { name: '불가침', color: 'green' },
+    7: { name: '불가침', className: 'gd-state--pact' },
 };
-function diplomacyStateText(state: number): { name: string; color?: string } {
+function diplomacyStateText(state: number): { name: string; className?: string } {
     return diplomacyStateInfo[state] ?? diplomacyStateInfo[2];
 }
 
@@ -335,8 +337,8 @@ export default function NationFinancePage() {
                     <>
                         <SectionHeader as="h2" title="외교관계" />
                         <GameCard>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table className="game-table" style={{ width: '100%' }}>
+                            <div className="u-scroll-x">
+                                <table className="game-table u-full">
                                     <thead>
                                         <tr>
                                             <th>국가명</th>
@@ -364,10 +366,10 @@ export default function NationFinancePage() {
                                                     <td>{formatNumber(n.cityCnt)}</td>
                                                     {isSelf ? (
                                                         // 자국 행은 외교 상태/기간/종료시점을 '-'(legacy v-if 자국 분기).
-                                                        <td colSpan={3} style={{ textAlign: 'center' }}>-</td>
+                                                        <td colSpan={3} className="u-center">-</td>
                                                     ) : (
                                                         <>
-                                                            <td style={{ color: st.color }}>{st.name}</td>
+                                                            <td className={st.className}>{st.name}</td>
                                                             <td>{term === 0 ? '-' : `${term}개월`}</td>
                                                             <td>{term === 0 ? '-' : `${endYear}년 ${endMonth}월`}</td>
                                                         </>
@@ -400,7 +402,7 @@ export default function NationFinancePage() {
                         </div>
                     )}
                     {editable && (editingNotice ? (
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                        <div className="u-row-sm">
                             <button disabled={savingMessages.notice || noticeTooLong} onClick={() => void saveMessage('notice')}>저장</button>
                             <button disabled={savingMessages.notice} onClick={() => { setNoticeDraft(data.nationMsg ?? ''); setEditingNotice(false); }}>취소</button>
                         </div>
@@ -426,7 +428,7 @@ export default function NationFinancePage() {
                         </div>
                     )}
                     {editable && (editingScout ? (
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                        <div className="u-row-sm">
                             <button disabled={savingMessages.scout || scoutTooLong} onClick={() => void saveMessage('scout')}>저장</button>
                             <button disabled={savingMessages.scout} onClick={() => { setScoutDraft(data.scoutMsg ?? ''); setEditingScout(false); }}>취소</button>
                         </div>
@@ -543,7 +545,7 @@ export default function NationFinancePage() {
                 />
             )}
             {toast && (
-                <div role="status" style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-raised)', padding: '8px 16px', borderRadius: 8 }} onClick={() => setToast(null)}>
+                <div role="status" className="toast-floating" onClick={() => setToast(null)}>
                     {toast}
                 </div>
             )}

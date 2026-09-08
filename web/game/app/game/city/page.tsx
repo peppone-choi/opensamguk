@@ -29,7 +29,7 @@ import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 function StatCell({ value, injury }: { value: number; injury: number }) {
     if (injury > 0) {
         const woundedValue = Math.trunc(value * (100 - injury) / 100);
-        return <span style={{ color: 'var(--rust-2)' }}>{woundedValue}</span>;
+        return <span className="page-error">{woundedValue}</span>;
     }
     return <>{value}</>;
 }
@@ -117,7 +117,7 @@ function CityDetail() {
                 title="도시 정보"
                 actions={city.citySelector.length > 0 ? (
                     // ── 1) 도시선택 셀렉터(b_currentCity.php:73-159) ──────────────────────────
-                    <label className="city-select">
+                    <label className="city-select text-muted">
                         <span>도시선택:</span>
                         <select
                             value={city.id}
@@ -129,7 +129,7 @@ function CityDetail() {
                                 </option>
                             ))}
                         </select>
-                        <span className="text-muted">명령 화면에서 도시를 클릭하셔도 됩니다.</span>
+                        <span >명령 화면에서 도시를 클릭하셔도 됩니다.</span>
                     </label>
                 ) : undefined}
             />

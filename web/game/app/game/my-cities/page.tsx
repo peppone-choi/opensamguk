@@ -54,7 +54,7 @@ function CityCard({ city, nationColor }: { city: MyCitySummary; nationColor: str
                 }}
             >
                 【 {city.regionText} | {city.levelText} 】{' '}
-                <span style={{ color: city.isCapital ? 'cyan' : 'inherit' }}>{city.name}</span>
+                <span className={city.isCapital ? 'text-capital' : undefined}>{city.name}</span>
             </div>
 
             {/* 행1: 주민 / 인구율 / 자금 수입 / 군량 수입 / 둔전 수입 (수입 3종 §2 BLOCKED → "-") */}
@@ -303,8 +303,8 @@ export default function MyCitiesPage() {
                                         style={{
                                             padding: '2px 8px',
                                             borderRadius: 4,
-                                            border: '1px solid var(--border-color)',
-                                            background: active ? 'var(--accent)' : 'transparent',
+                                            border: '1px solid var(--line)',
+                                            background: active ? 'var(--bronze-glow)' : 'transparent',
                                             color: active ? '#fff' : 'var(--text-primary)',
                                             cursor: 'pointer',
                                             fontSize: 'inherit',

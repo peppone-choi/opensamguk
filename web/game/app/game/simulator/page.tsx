@@ -89,14 +89,14 @@ export default function SimulatorPage() {
     <Shell>
       <PageHead title="전투 시뮬레이터" />
 
-      <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="u-row-md gap-md">
         <button onClick={fetchGenerals}>장수 목록 불러오기</button>
       </div>
 
-      {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+      {error && <p className="page-error">{error}</p>}
 
       {toast && (
-        <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+        <div className="toast toast--pinned">
           {toast}
         </div>
       )}
@@ -127,21 +127,21 @@ export default function SimulatorPage() {
           </label>
           {attacker && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>통솔</span>
+              <span className="text-muted">통솔</span>
               <strong>{attacker.leadership}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>무력</span>
+              <span className="text-muted">무력</span>
               <strong>{attacker.strength}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>지력</span>
+              <span className="text-muted">지력</span>
               <strong>{attacker.intel}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>정치</span>
+              <span className="text-muted">정치</span>
               <strong>{attacker.politics ?? '-'}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>매력</span>
+              <span className="text-muted">매력</span>
               <strong>{attacker.charm ?? '-'}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>병력</span>
+              <span className="text-muted">병력</span>
               <strong>{attacker.crew.toLocaleString()}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>소속</span>
+              <span className="text-muted">소속</span>
               <strong>{attacker.nationName}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>도시</span>
+              <span className="text-muted">도시</span>
               <strong>{attacker.cityName}</strong>
             </div>
           )}
@@ -172,28 +172,28 @@ export default function SimulatorPage() {
           </label>
           {defender && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>통솔</span>
+              <span className="text-muted">통솔</span>
               <strong>{defender.leadership}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>무력</span>
+              <span className="text-muted">무력</span>
               <strong>{defender.strength}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>지력</span>
+              <span className="text-muted">지력</span>
               <strong>{defender.intel}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>정치</span>
+              <span className="text-muted">정치</span>
               <strong>{defender.politics ?? '-'}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>매력</span>
+              <span className="text-muted">매력</span>
               <strong>{defender.charm ?? '-'}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>병력</span>
+              <span className="text-muted">병력</span>
               <strong>{defender.crew.toLocaleString()}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>소속</span>
+              <span className="text-muted">소속</span>
               <strong>{defender.nationName}</strong>
-              <span style={{ color: 'var(--text-muted)' }}>도시</span>
+              <span className="text-muted">도시</span>
               <strong>{defender.cityName}</strong>
             </div>
           )}
         </GameCard>
       </div>
 
-      <div style={{ marginBottom: 'var(--space-md)' }}>
+      <div className="gap-md">
         <button
           onClick={simulate}
           disabled={loading || !attackerId || !defenderId}
@@ -213,7 +213,7 @@ export default function SimulatorPage() {
           <SectionHeader as="h2" title="시뮬레이션 결과" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             <StatusBadge variant={result.conquerCity ? 'gold' : 'muted'}>{result.conquerCity ? '공성 성공' : '교전 종료'}</StatusBadge>
-            <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>{result.reason}</span>
+            <span className="text-sm-muted">{result.reason}</span>
           </div>
           <div
             style={{
@@ -287,7 +287,7 @@ export default function SimulatorPage() {
                   <div>
                     <div style={{ color: 'var(--crimson)', fontWeight: 600, marginBottom: 2 }}>공격자</div>
                     {attackerSkillEntries.map(([name, count]) => (
-                      <div key={name} style={{ color: 'var(--text-secondary)' }}>
+                      <div key={name} className="text-secondary">
                         {name}: {count.toLocaleString()}
                       </div>
                     ))}
@@ -297,7 +297,7 @@ export default function SimulatorPage() {
                   <div key={group.idx}>
                     <div style={{ color: 'var(--jade)', fontWeight: 600, marginBottom: 2 }}>방어자 {group.idx + 1}</div>
                     {group.entries.map(([name, count]) => (
-                      <div key={name} style={{ color: 'var(--text-secondary)' }}>
+                      <div key={name} className="text-secondary">
                         {name}: {count.toLocaleString()}
                       </div>
                     ))}

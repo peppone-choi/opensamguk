@@ -112,14 +112,6 @@ input:focus, select:focus, textarea:focus {
 
 .shell-body { display: flex; flex: 1; }
 
-.game-sidebar {
-  width: 200px;
-  background: var(--bg-elevated);
-  border-right: 1px solid var(--border-subtle);
-  padding: var(--space-md) 0;
-  display: flex;
-  flex-direction: column;
-}
 
 .game-sidebar-item.active {
   background: var(--bg-hover);
@@ -169,7 +161,6 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
 }
 .game-bottom-item.active { color: var(--gold); }
-.game-bottom-icon { font-size: var(--text-lg); }
 
 /* Cards */
 .game-card {
@@ -364,7 +355,6 @@ input:focus, select:focus, textarea:focus {
 
 /* Responsive */
 @media (max-width: 1023px) {
-  .game-sidebar { display: none; }
   .game-bottom-nav { display: flex; }
   .shell {
     height: 100dvh;
@@ -420,11 +410,6 @@ input:focus, select:focus, textarea:focus {
 .text-muted { color: var(--text-muted); }
 
 /* Page grid */
-.page-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-md);
-}
 
 /* Card header */
 .card-header {
@@ -527,14 +512,11 @@ input:focus, select:focus, textarea:focus {
 .boss-card { max-width: 480px; }
 
 /* City detail */
-.city-detail { width: 100%; max-width: none; }
 
 /* Nation overview */
-.nation-overview { margin-bottom: var(--space-lg); }
 
 /* Responsive */
 @media (max-width: 1023px) {
-  .game-sidebar { display: none; }
   .game-bottom-nav { display: flex; }
   .shell-main {
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-lg));
@@ -543,7 +525,6 @@ input:focus, select:focus, textarea:focus {
   .toast { min-width: auto; }
   .cmd-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .page-grid { grid-template-columns: 1fr; }
   .bracket { flex-direction: column; }
 }
 
@@ -918,22 +899,7 @@ input:focus, select:focus, textarea:focus {
   overflow: hidden;
   background: #000;
 }
-/* 맵 좌표계(che=700×500 native)를 캔버스 폭에 맞추는 정적 스케일 레이어(줌/팬 없음). transform-origin 좌상단. */
-.map-world {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: 0 0;
-}
-.map-bg,
-.map-road {
-  position: absolute;
-  left: 0;
-  top: 0;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-.map-road { opacity: 0.5; }
+/* 지도 자리비움(타일 미준비) */
 .map-viewer-ph {
   display: flex;
   align-items: center;
@@ -946,54 +912,12 @@ input:focus, select:focus, textarea:focus {
 
 /* ── 도시 마커 (gateway 로비 MapPreview와 구조·CSS 동일한 정적 마커) ──────────── */
 /* city_base — 40×30, 중심이 도시 좌표. 클릭 시 도시 정보 페이지로 이동하는 링크. */
-.city-base {
-  position: absolute;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  display: block;
-  text-decoration: none;
-}
-.city-base:hover { text-decoration: none; }
-.city-base:focus { outline: none; }
-.city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
-.city-base.supply-off { opacity: 0.6; }
-.city-selectable { cursor: pointer; }
-.city-selected .city-cast {
-  filter: drop-shadow(0 0 3px var(--gold)) drop-shadow(0 0 6px #ffffff);
-}
 /* 1) 오오라(city_bg) — 소유국만(레거시 b<color>.png radial glow를 CSS radial-gradient로). 인라인 style. */
-.city-aura { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%; }
 /* 아이콘 컨테이너(city_img) — 깃발/상태/이름의 위치 기준(레거시 .city_img position:absolute). */
-.city-img { position: absolute; z-index: 2; }
-.city-filler {
-  position: absolute;
-  z-index: 6;
-  left: -1px;
-  top: -1px;
-  width: calc(100% + 2px);
-  height: calc(100% + 2px);
-  pointer-events: none;
-}
 /* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */
-.city-cast {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
-}
-.city-flag { position: absolute; z-index: 3; width: 9px; height: 9px; pointer-events: none; }
 
 /* 4) 수도 별 event51.gif — 깃발 우상단(top:0,right:-1). */
-.city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 7px; height: 7px; image-rendering: pixelated; -webkit-user-drag: none; }
 /* 5) 상태 아이콘 event<state>.gif — city_img 기준(top:5,left:0). */
-.city-state { position: absolute; z-index: 3; top: 5px; left: 0; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; }
 /* 6) 도시명(city_detail_name) — left:70%, bottom:-10px, 10px, 반투명 검정 bg. 항상 표시. */
 .city-name {
   position: absolute;
@@ -1043,25 +967,7 @@ input:focus, select:focus, textarea:focus {
    1) 도시명 표기 토글: 레거시 .world_map.hide_cityname .city_detail_name(map.scss:149-151). */
 .hide-cityname .city-name { display: none; }
 /* 2) 클릭 비활성(disallowClick) — 레거시 clickable=0 → cursor default(MapCityDetail.vue:23). */
-.city-noclick { cursor: default; }
 /* 3) 내(현재) 도시 blink 링 — 레거시 .my_city before/after outline 점멸(map.scss:231-262). */
-.city-filler.my-city { border-radius: 33%; }
-.city-filler.my-city::before {
-  content: "";
-  position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
-  border-radius: 33%;
-  animation: blink-my-city-d1 3.9s infinite;
-  pointer-events: none;
-}
-.city-filler.my-city::after {
-  content: "";
-  position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
-  border-radius: 33%;
-  animation: blink-my-city-d2 3.9s infinite;
-  pointer-events: none;
-}
 /* 레거시 map.scss:86-112 keyframes 그대로(d1 빨강 solid / d2 은색 double, 반주기 점멸). */
 @keyframes blink-my-city-d1 {
   0% { outline: solid 4px transparent; }
@@ -1159,15 +1065,6 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   color: var(--text-primary);
 }
-.mcd-bar {
-  height: 7px;
-  width: 100%;
-  background: var(--border-subtle);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 2px;
-}
-.mcd-bar-fill { height: 100%; background: var(--gold); }
 .sammo-bar {
   position: relative;
   width: 100%;
@@ -1294,31 +1191,9 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   font-weight: 700;
 }
-.subject-target-tabs {
-  min-height: 36px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--border-subtle);
-}
-.subject-target-tab {
-  border: 0;
-  border-radius: 0;
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 160ms ease, color 160ms ease;
-}
 .subject-target-tab.active {
   background: var(--gold);
   color: #17130a;
-}
-.subject-target-tab:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 .subject-target-current {
   justify-content: flex-end;
@@ -1379,12 +1254,6 @@ input:focus, select:focus, textarea:focus {
   padding: 2px var(--space-sm);
   border-bottom: 1px solid var(--border-subtle);
   word-break: break-word;
-}
-.main-record-date {
-  flex: 0 0 auto;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 .main-record-text { min-width: 0; }
 .main-record-row:last-child { border-bottom: 0; }
@@ -1818,7 +1687,6 @@ input:focus, select:focus, textarea:focus {
 .os-topbar__res { display: flex; align-items: center; gap: 10px; font-size: 13px; white-space: nowrap; }
 .os-topbar__res b { font-weight: 700; }
 .os-topbar__online { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; }
-.os-topbar__nav { display: flex; align-items: stretch; gap: 2px; }
 
 .dept-nav {
   min-height: 44px;
@@ -2019,16 +1887,7 @@ input:focus, select:focus, textarea:focus {
   font-size: 12px;
 }
 .war-card__head--nation { border-bottom-color: var(--line-2); }
-.war-card__title {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .war-card__head--nation .war-card__title { color: inherit; }
-.war-card__sub { font-size: 11px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .war-card__head-right { margin-left: auto; font-size: 11px; white-space: nowrap; }
 .war-card__spacer { flex: 1; }
 .war-card__chip { height: 18px; font-size: 10px; }
@@ -2575,7 +2434,6 @@ input:focus, select:focus, textarea:focus {
 /* 외교 — 도구줄 · 서신 작성 폼 · 서신 카드 */
 .text-secondary { color: var(--text-2); }
 .toast--pinned { position: fixed; top: 12px; right: 12px; z-index: 200; }
-.dip-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .dip-chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .dip-label { font-size: 12px; color: var(--text-2); }
 .dip-control { width: 100%; margin-top: 4px; }
@@ -2594,12 +2452,11 @@ input:focus, select:focus, textarea:focus {
 .dip-letter__opt { font-size: 12px; color: var(--bronze); }
 .dip-letter__prev { font-size: 12px; color: var(--muted); }
 .dip-letter__section { margin-bottom: 8px; }
-.dip-letter__label { font-size: 12px; color: var(--text-2); }
 .dip-letter__text { margin: 4px 0 0; white-space: pre-wrap; }
 .dip-letter__text--secret { color: var(--text-2); font-size: 12px; }
 .dip-letter__secret { border-top: 1px solid var(--line); padding-top: 8px; }
 .dip-letter__actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
-.dip-letter__btn, .dip-btn { font-size: 12px; }
+.dip-btn { font-size: 12px; }
 .dip-signer { display: inline-flex; gap: 4px; align-items: center; }
 .dip-signer__icon { width: 20px; height: 20px; object-fit: contain; }
 
@@ -2607,7 +2464,6 @@ input:focus, select:focus, textarea:focus {
    (.text-muted 와 같은 결의 최소 유틸만 둔다 — 레이아웃은 의미 클래스로 쓴다.) */
 .u-center { text-align: center; }
 .u-right { text-align: right; }
-.u-num { text-align: right; font-variant-numeric: tabular-nums; }
 .u-full { width: 100%; }
 .u-scroll-x { overflow-x: auto; }
 .u-stack-xs { display: flex; flex-direction: column; gap: 4px; }
@@ -2736,3 +2592,37 @@ input:focus, select:focus, textarea:focus {
 /* 좁은 수치 입력 — .adm-text-input 뒤에 와야 max-width 를 덮는다. */
 .adm-num { text-align: right; max-width: 80px; }
 .adm-num--wide { text-align: right; max-width: 260px; }
+
+/* 본문 텍스트 최소 유틸 — 「작은 회색 글씨」를 화면마다 다시 적지 않는다. */
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 12px; }
+.text-xs-muted { font-size: 11px; color: var(--muted); }
+.text-sm-muted { font-size: 12px; color: var(--muted); }
+.h-xl { font-size: 16px; font-weight: 600; }
+.h-lg { font-size: 14px; font-weight: 600; }
+.gap-md { margin-bottom: 12px; }
+.gap-md-top { margin-top: 12px; }
+.u-grid-sm { display: grid; gap: 8px; }
+.gap-sm-top { margin-top: 8px; }
+.lh-lg { line-height: 1.7; }
+.fw-500 { font-weight: 500; }
+/* 서신 태그 — 정의되지 않은 --bg-surface/--border 를 쓰고 있었다. */
+.mail-tag { font-size: 12px; padding: 2px 4px; background: var(--raised); color: var(--text); border: 1px solid var(--line); }
+
+/* 팔레트 밖 리터럴 색을 걷어낸 자리 — 같은 뜻은 한 클래스로만 부른다. */
+.stat--wounded { color: var(--rust); }        /* 부상 능력치 (구 'red') */
+.stat-bonus { color: var(--log-c); }          /* 통솔 보너스 (구 'cyan') */
+.text-capital { color: var(--info); }         /* 수도 표시 (구 'cyan') */
+.opt--unavailable { color: var(--rust); }     /* 선택 불가 옵션 (구 'red') */
+.outcome--ok { color: var(--moss-2); }        /* 처리됨 (구 'green') */
+.outcome--bad { color: var(--rust); }         /* 거절됨 (구 'crimson') */
+.bet--hit { color: var(--moss-2); }
+.bet--partial { color: var(--focus); }
+.bet--miss { color: var(--rust); }
+.fw-bold { font-weight: 700; }
+.auction-band { padding: 4px 8px; font-weight: 600; }
+.auction-band--buy { background: var(--log-o); color: var(--bg); }   /* 구 orange */
+.auction-band--sell { background: var(--log-s); color: var(--bg); }  /* 구 skyblue */
+.map-title--y1 { color: var(--log-m); }   /* 개시 1년 (구 magenta) */
+.map-title--y2 { color: var(--log-o); }   /* 개시 2년 (구 orange) */
+.map-title--y3 { color: var(--focus); }   /* 개시 3년 (구 yellow) */

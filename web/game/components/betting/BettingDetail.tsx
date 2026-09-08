@@ -143,7 +143,7 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
             myBettings.set(bettingType, sumAmount);
         }
 
-        // calcMatchPointWithColor(legacy).
+        // calcMatchPointWithColor(legacy). 색은 리터럴 green/red/yellow 대신 팔레트 클래스로 준다.
         function calcMatchPointWithColor(type: string): [number, string | undefined] {
             if (!info!.finished) return [0, undefined];
             const subTypes = JSON.parse(type) as number[];
@@ -151,11 +151,11 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
             let matchPoint = 0;
             for (const subType of subTypes) if (winner.has(subType)) matchPoint += 1;
             if (info!.isExclusive) {
-                return matchPoint === info!.selectCnt ? [matchPoint, 'green'] : [matchPoint, 'red'];
+                return matchPoint === info!.selectCnt ? [matchPoint, 'bet--hit'] : [matchPoint, 'bet--miss'];
             }
-            let color = 'green';
-            if (matchPoint === 0) color = 'red';
-            else if (matchPoint < info!.selectCnt) color = 'yellow';
+            let color = 'bet--hit';
+            if (matchPoint === 0) color = 'bet--miss';
+            else if (matchPoint < info!.selectCnt) color = 'bet--partial';
             return [matchPoint, color];
         }
 
@@ -264,7 +264,7 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
     }
 
     if (!detail || !info || !derived) {
-        return <div style={{ color: 'var(--text-muted)' }}>베팅 정보를 불러오는 중...</div>;
+        return <div className="text-muted">베팅 정보를 불러오는 중...</div>;
     }
 
     const {
@@ -345,7 +345,7 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
                         const myReward = reward === 0 ? '0' : ((subPoint * reward) / subAmount).toFixed(1);
                         return (
                             <div key={betType} className="oddsRow">
-                                <div style={{ fontWeight: mine ? 'bold' : undefined, color: color ?? undefined }}>
+                                <div className={`${mine ? 'fw-bold' : ''}${color ? ` ${color}` : ''}`.trim() || undefined}>
                                     {getTypeStr(betType)}
                                 </div>
                                 <div className="text-end">{amount.toLocaleString()}</div>

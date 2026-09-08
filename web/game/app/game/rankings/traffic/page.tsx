@@ -32,14 +32,14 @@ export default function TrafficPage() {
   if (loading) return (
     <Shell>
       <PageHead title="접속 통계" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      <p className="text-muted">로딩 중...</p>
     </Shell>
   );
 
   if (error || !data) return (
     <Shell>
       <PageHead title="접속 통계" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--crimson)' }}>{error || '데이터를 찾을 수 없습니다.'}</p>
+      <p className="page-error">{error || '데이터를 찾을 수 없습니다.'}</p>
     </Shell>
   );
 
@@ -68,23 +68,23 @@ export default function TrafficPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 'var(--space-lg)' }}>
         <section>
-          <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-sm)' }}>접 속 량</h2>
+          <h2 className="h-xl adm-h2">접 속 량</h2>
           <GameTable headers={['연월', '시각', '갱신']} rows={refreshRows} />
-          <p style={{ marginTop: 'var(--space-sm)', color: 'var(--text-muted)' }}>
+          <p className="text-muted gap-sm-top">
             현재 {formatNumber(data.refresh)} · 최고 {formatNumber(data.maxRefresh)}
           </p>
         </section>
         <section>
-          <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-sm)' }}>접 속 자</h2>
+          <h2 className="h-xl adm-h2">접 속 자</h2>
           <GameTable headers={['연월', '시각', '접속자']} rows={onlineRows} />
-          <p style={{ marginTop: 'var(--space-sm)', color: 'var(--text-muted)' }}>
+          <p className="text-muted gap-sm-top">
             현재 {formatNumber(data.currentOnline)} · 최고 {formatNumber(data.maxOnline)}
           </p>
         </section>
       </div>
 
       <section style={{ marginTop: 'var(--space-xl)' }}>
-        <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>주 의 대 상 자 (순간과도갱신)</h2>
+        <h2 className="h-xl gap-md">주 의 대 상 자 (순간과도갱신)</h2>
         <GameTable headers={['장수', '누적 벌점', '갱신']} rows={refresherRows} />
       </section>
     </Shell>

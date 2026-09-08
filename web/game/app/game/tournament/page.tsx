@@ -92,7 +92,7 @@ export default function TournamentPage() {
         return (
             <Shell>
                 <PageHead title="토너먼트" />
-                <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+                <p className="text-muted">로딩 중...</p>
             </Shell>
         );
     }
@@ -101,7 +101,7 @@ export default function TournamentPage() {
         return (
             <Shell>
                 <PageHead title="토너먼트" />
-                <p style={{ color: 'var(--crimson)' }}>{error}</p>
+                <p className="page-error">{error}</p>
                 <button
                     onClick={() => fetchData()}
                     style={{
@@ -201,7 +201,7 @@ export default function TournamentPage() {
             </GameCard>
 
             {/* 16강 승자전 */}
-            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+            <h2 className="adm-h2">
                 16강 승자전
             </h2>
             {hasBracket ? (
@@ -246,7 +246,7 @@ export default function TournamentPage() {
             )}
 
             {entrants.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)' }}>참가자가 없습니다.</p>
+                <p className="text-muted">참가자가 없습니다.</p>
             ) : (
                 standingSections.map((section) => (
                     <section key={section.stage}>
@@ -279,7 +279,7 @@ export default function TournamentPage() {
                                         {group.label}
                                     </h3>
                                     {group.rows.length === 0 ? (
-                                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>-</p>
+                                        <p className="text-sm-muted">-</p>
                                     ) : (
                                         <GameTable headers={groupHeaders} rows={group.rows.map(groupRow)} />
                                     )}
@@ -320,7 +320,7 @@ export default function TournamentPage() {
                             {board.type}
                         </h3>
                         {board.rows.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                            <p className="text-sm-muted">
                                 순위 정보가 없습니다.
                             </p>
                         ) : (
@@ -378,7 +378,7 @@ export default function TournamentPage() {
                 />
             )}
             {toast && (
-                <div role="status" style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-raised)', padding: '8px 16px', borderRadius: 8 }} onClick={() => setToast(null)}>
+                <div role="status" className="toast-floating" onClick={() => setToast(null)}>
                     {toast}
                 </div>
             )}

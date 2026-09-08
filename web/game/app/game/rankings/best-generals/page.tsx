@@ -33,14 +33,14 @@ export default function BestGeneralsPage() {
   if (loading) return (
     <Shell>
       <PageHead title="명장 순위" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      <p className="text-muted">로딩 중...</p>
     </Shell>
   );
 
   if (error) return (
     <Shell>
       <PageHead title="명장 순위" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--crimson)' }}>{error}</p>
+      <p className="page-error">{error}</p>
     </Shell>
   );
 

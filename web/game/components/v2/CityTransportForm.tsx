@@ -200,10 +200,7 @@ export default function CityTransportForm() {
             {outcome && (
                 <p
                     role="status"
-                    style={{
-                        marginTop: 'var(--space-sm)',
-                        color: outcome.kind === 'applied' ? 'green' : outcome.kind === 'rejected' ? 'crimson' : undefined,
-                    }}
+                    className={`gap-sm-top${outcome.kind === 'applied' ? ' outcome--ok' : outcome.kind === 'rejected' ? ' outcome--bad' : ''}`}
                 >
                     {outcome.message}
                 </p>

@@ -214,7 +214,7 @@ function LogPanel({
     <Panel className="record-panel" id={id} aria-label={title}>
       <SectionHeader title={title} tone={tone} sub={loading || error ? undefined : `${logs.length}`} />
       {error ? (
-        <p role="alert" className="record-empty" style={{ color: 'var(--rust)' }}>
+        <p role="alert" className="record-empty page-error">
           {error}
         </p>
       ) : loading ? (

@@ -30,7 +30,7 @@ function AuctionContent() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
                 <PageHead title={isResAuction ? '경매장' : '유니크 경매장'} />
-                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                <div className="u-row-sm">
                     <button
                         aria-pressed={isResAuction}
                         style={{ fontWeight: isResAuction ? 700 : 400 }}
@@ -45,7 +45,7 @@ function AuctionContent() {
             </div>
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
@@ -60,7 +60,7 @@ function AuctionContent() {
 export default function AuctionPage() {
     return (
         <Shell>
-            <Suspense fallback={<p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}>
+            <Suspense fallback={<p className="text-muted">로딩 중...</p>}>
                 <AuctionContent />
             </Suspense>
         </Shell>

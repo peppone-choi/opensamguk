@@ -23,7 +23,7 @@ const tableStyle: CSSProperties = {
 const thStyle: CSSProperties = {
   textAlign: 'left',
   padding: 'var(--space-xs)',
-  borderBottom: '1px solid var(--border)',
+  borderBottom: '1px solid var(--line)',
   color: 'var(--text-secondary)',
 };
 
@@ -331,7 +331,7 @@ export default function MyBossPage() {
 
             <GameCard>
               <SectionHeader as="h2" title="권한" />
-              <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+              <div className="u-grid-sm">
                 <PermissionPicker
                   title="외교권자"
                   candidates={ambassadorCandidates}
@@ -356,12 +356,12 @@ export default function MyBossPage() {
             </GameCard>
           </div>
         ) : (
-          <GameCard style={{ marginTop: 'var(--space-md)' }}>
+          <GameCard className="gap-md-top">
             <p className="text-muted">수뇌부만 인사 명령을 실행할 수 있습니다.</p>
           </GameCard>
         )}
 
-        <GameCard style={{ marginTop: 'var(--space-md)' }}>
+        <GameCard className="gap-md-top">
           <SectionHeader as="h2" title="직책 현황" />
           {allSlots.length === 0 ? (
             <p className="text-muted">표시할 직책이 없습니다.</p>
@@ -391,7 +391,7 @@ export default function MyBossPage() {
           )}
         </GameCard>
 
-        <GameCard style={{ marginTop: 'var(--space-md)' }}>
+        <GameCard className="gap-md-top">
           <SectionHeader as="h2" title="세력 장수" />
           {roster.length === 0 ? (
             <p className="text-muted">소속 장수가 없습니다.</p>
@@ -449,12 +449,12 @@ function PermissionPicker({
   onChange: (generalId: number, checked: boolean) => void;
 }) {
   return (
-    <fieldset style={{ border: '1px solid var(--border)', padding: 'var(--space-sm)', borderRadius: 'var(--radius-sm)' }}>
+    <fieldset className="adm-card">
       <legend style={{ padding: '0 var(--space-xs)', color: 'var(--text-secondary)' }}>{title}</legend>
       {candidates.length === 0 ? (
         <p className="text-muted">선택 가능한 장수가 없습니다.</p>
       ) : (
-        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+        <div className="u-row-sm">
           {candidates.map((g) => (
             <label key={g.generalId} style={{ display: 'inline-flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
               <input type="checkbox" checked={selected.includes(g.generalId)} disabled={disabled} onChange={(e) => onChange(g.generalId, e.target.checked)} />

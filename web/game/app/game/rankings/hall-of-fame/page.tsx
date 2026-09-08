@@ -37,14 +37,14 @@ export default function HallOfFamePage() {
   if (loading) return (
     <Shell>
       <PageHead title="명예의 전당" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      <p className="text-muted">로딩 중...</p>
     </Shell>
   );
 
   if (error) return (
     <Shell>
       <PageHead title="명예의 전당" tabs={<RecordsTabs />} />
-      <p style={{ color: 'var(--crimson)' }}>{error}</p>
+      <p className="page-error">{error}</p>
     </Shell>
   );
 
@@ -63,9 +63,9 @@ export default function HallOfFamePage() {
     <Shell>
       <PageHead title="명예의 전당" tabs={<RecordsTabs />} />
 
-      <div style={{ marginBottom: 'var(--space-md)' }}>
+      <div className="gap-md">
         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>분류 필터:</span>
+          <span className="text-secondary">분류 필터:</span>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
@@ -76,7 +76,7 @@ export default function HallOfFamePage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <span style={{ color: 'var(--text-muted)' }}>{filtered.length}건</span>
+          <span className="text-muted">{filtered.length}건</span>
         </label>
       </div>
 

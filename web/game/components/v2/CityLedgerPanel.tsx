@@ -60,7 +60,7 @@ export default function CityLedgerPanel({ cityId, refreshKey = 0 }: Props) {
         <div data-testid="v2-city-ledger" style={{ marginBottom: 'var(--space-sm)' }}>
             <strong>도시 원장{valid ? ` · ${cityId}번 도시` : ''}</strong>
             {!valid && <p>도시 ID를 입력하면 그 도시의 금·병량·도시병사를 보여줍니다.</p>}
-            {valid && error && <p role="status" style={{ color: 'crimson' }}>{error}</p>}
+            {valid && error && <p role="status" className="page-error">{error}</p>}
             {valid && !error && (
                 <table>
                     <tbody>

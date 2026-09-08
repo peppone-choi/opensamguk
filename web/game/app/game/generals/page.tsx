@@ -188,7 +188,7 @@ export default function GeneralsPage() {
         return (
             <Shell>
                 <PageHead title="전체 장수" />
-                <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+                <p className="text-muted">로딩 중...</p>
             </Shell>
         );
     }
@@ -197,7 +197,7 @@ export default function GeneralsPage() {
         return (
             <Shell>
                 <PageHead title="전체 장수" />
-                <p style={{ color: 'var(--crimson)' }}>{error}</p>
+                <p className="page-error">{error}</p>
                 <button
                     onClick={() => fetchData()}
                     style={{
@@ -274,7 +274,7 @@ export default function GeneralsPage() {
         // 계급 = "{dedLevelText}" + 봉록(bill) 둘째 줄(레거시 GeneralList.vue:666 valueGetter).
         <span key={`ded-${g.generalId}`} style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2 }}>
             <span>{g.dedLevelText}</span>
-            <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>({formatNumber(g.bill)})</small>
+            <small className="text-xs-muted">({formatNumber(g.bill)})</small>
         </span>,
         // 관직 — officerLevelText (a_genList.php:136)
         g.officerLevelText || '-',
@@ -340,13 +340,13 @@ export default function GeneralsPage() {
                     }}
                 />
 
-                <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                <span className="text-sm-muted">
                     {formatNumber(filtered.length)} / {formatNumber(data.length)}명
                 </span>
             </div>
 
             {filtered.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)' }}>
+                <p className="text-muted">
                     {data.length === 0 ? '등록된 장수가 없습니다.' : '검색 결과가 없습니다.'}
                 </p>
             ) : (

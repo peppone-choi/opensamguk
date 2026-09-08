@@ -148,7 +148,7 @@ export default function GlobalDiplomacyPage() {
         <Shell>
             <PageHead title="중원 정보" />
 
-            <div className="control-bar dip-toolbar">
+            <div className="control-bar u-row-md gap-md">
                 <button onClick={fetchData}>새로고침</button>
             </div>
 

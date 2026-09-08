@@ -204,7 +204,7 @@ export default function AuctionResource({ generalId, onToast }: Props) {
             <div className="bg2">거래장</div>
 
             {/* ── 쌀 구매 ── */}
-            <div style={{ backgroundColor: 'orange', color: '#000', padding: 'var(--space-xs) var(--space-sm)' }}>쌀 구매</div>
+            <div className="auction-band auction-band--buy">쌀 구매</div>
             {header}
             {buyRice.map(a => renderRow(a, '쌀', '금', () => selectBuyRice(a)))}
             {selectedBuyRice !== undefined && (
@@ -225,7 +225,7 @@ export default function AuctionResource({ generalId, onToast }: Props) {
             )}
 
             {/* ── 쌀 판매 ── */}
-            <div style={{ backgroundColor: 'skyblue', color: '#000', padding: 'var(--space-xs) var(--space-sm)' }}>쌀 판매</div>
+            <div className="auction-band auction-band--sell">쌀 판매</div>
             {header}
             {sellRice.map(a => renderRow(a, '금', '쌀', () => selectSellRice(a)))}
             {selectedSellRice !== undefined && (

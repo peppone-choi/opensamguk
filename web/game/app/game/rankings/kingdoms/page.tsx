@@ -91,7 +91,7 @@ export default function KingdomsPage() {
     return (
       <Shell>
         <PageHead title="세력 일람" tabs={<RecordsTabs />} />
-        <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+        <p className="text-muted">로딩 중...</p>
       </Shell>
     );
 
@@ -99,7 +99,7 @@ export default function KingdomsPage() {
     return (
       <Shell>
         <PageHead title="세력 일람" tabs={<RecordsTabs />} />
-        <p style={{ color: 'var(--crimson)' }}>{error || '데이터가 없습니다.'}</p>
+        <p className="page-error">{error || '데이터가 없습니다.'}</p>
       </Shell>
     );
 
@@ -125,15 +125,15 @@ export default function KingdomsPage() {
 
           {/* 성향 / 작위 / 국력 / 장수·속령 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>성 향</span>
+            <span className="text-secondary">성 향</span>
             {/* 성향 한글명 = gameConst nationType typeName(legacy getName 등가). map 미스/미로드시에도
                 `che_` 접두사는 절대 화면에 노출하지 않음 — 접두사 제거 폴백(표준 타입은 클래스명=che_+name). */}
-            <span style={{ color: 'var(--gold)' }}>{typeNameMap.get(n.typeCode) || n.typeCode.replace(/^che_/, '')}</span>
-            <span style={{ color: 'var(--text-secondary)' }}>작 위</span>
+            <span className="dip-letter__opt">{typeNameMap.get(n.typeCode) || n.typeCode.replace(/^che_/, '')}</span>
+            <span className="text-secondary">작 위</span>
             <span>{n.levelText}</span>
-            <span style={{ color: 'var(--text-secondary)' }}>국 력</span>
+            <span className="text-secondary">국 력</span>
             <span>{n.power}</span>
-            <span style={{ color: 'var(--text-secondary)' }}>장수 / 속령</span>
+            <span className="text-secondary">장수 / 속령</span>
             <span>{n.genNum} / {n.cityCount}</span>
           </div>
 
@@ -141,7 +141,7 @@ export default function KingdomsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto 1fr)', gap: '2px var(--space-sm)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
             {n.chiefs.map((c, i) => (
               <span key={i} style={{ display: 'contents' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>{c.officerLevelText}</span>
+                <span className="text-secondary">{c.officerLevelText}</span>
                 <GenName g={{ name: c.name, npc: c.npc }} />
               </span>
             ))}
@@ -149,17 +149,17 @@ export default function KingdomsPage() {
 
           {/* 외교권자 / 조언자 — BLOCKED(permission 컬럼 부재) → 공란 / 0명 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>외교권자</span>
+            <span className="text-secondary">외교권자</span>
             <span>{n.ambassadors.join(', ')}</span>
-            <span style={{ color: 'var(--text-secondary)' }}>조언자</span>
+            <span className="text-secondary">조언자</span>
             <span>{n.auditorCount}명</span>
           </div>
 
           {/* 속령 일람 (수도 cyan 강조) — level==0이면 PHP는 '현재 위치'를 보이지만 동일 도시목록으로 렌더 */}
-          <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>속령 일람 : </span>
+          <div className="text-sm adm-h3">
+            <span className="text-secondary">속령 일람 : </span>
             {n.cities.map((c, i) => (
-              <span key={c.cityId} style={{ color: c.cityId === n.capitalCityId ? 'cyan' : undefined }}>
+              <span key={c.cityId} className={c.cityId === n.capitalCityId ? 'text-capital' : undefined}>
                 {c.cityId === n.capitalCityId ? `[${c.name}]` : c.name}
                 {i < n.cities.length - 1 ? ', ' : ''}
               </span>
@@ -167,8 +167,8 @@ export default function KingdomsPage() {
           </div>
 
           {/* 장수 일람 (dedication DESC, npc색) */}
-          <div style={{ fontSize: 'var(--text-sm)' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>장수 일람 : </span>
+          <div className="text-sm">
+            <span className="text-secondary">장수 일람 : </span>
             {n.generals.map((g, i) => (
               <span key={i}>
                 <GenName g={g} />
@@ -185,13 +185,13 @@ export default function KingdomsPage() {
           【 재 야 】
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>장 수</span>
+          <span className="text-secondary">장 수</span>
           <span>{data.neutral.genNum}</span>
-          <span style={{ color: 'var(--text-secondary)' }}>속 령</span>
+          <span className="text-secondary">속 령</span>
           <span>{data.neutral.cityCount}</span>
         </div>
-        <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>속령 일람 : </span>
+        <div className="text-sm adm-h3">
+          <span className="text-secondary">속령 일람 : </span>
           {data.neutral.cities.map((c, i) => (
             <span key={c.cityId}>
               {c.name}
@@ -199,8 +199,8 @@ export default function KingdomsPage() {
             </span>
           ))}
         </div>
-        <div style={{ fontSize: 'var(--text-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>장수 일람 : </span>
+        <div className="text-sm">
+          <span className="text-secondary">장수 일람 : </span>
           {data.neutral.generals.map((g, i) => (
             <span key={i}>
               <GenName g={g} />

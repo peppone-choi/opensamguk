@@ -21,11 +21,12 @@ export function seasonOf(month: number): string {
     return 'winter';
 }
 
-export function mapTitleColor(startYear: number | undefined, year: number): string | undefined {
+// 개시 3년 강조 — 리터럴 magenta/orange/yellow 대신 팔레트 클래스를 준다.
+export function mapTitleClass(startYear: number | undefined, year: number): string | undefined {
     if (startYear == null) return undefined;
-    if (year < startYear + 1) return 'magenta';
-    if (year < startYear + 2) return 'orange';
-    if (year < startYear + 3) return 'yellow';
+    if (year < startYear + 1) return 'map-title--y1';
+    if (year < startYear + 2) return 'map-title--y2';
+    if (year < startYear + 3) return 'map-title--y3';
     return undefined;
 }
 
@@ -372,8 +373,7 @@ export default function MapViewer({
     return (
         <section className={`map-viewer${hideCityNames ? ' hide-cityname' : ''}`} aria-label="세계 지도">
             <div
-                className="map-viewer-title"
-                style={{ color: mapTitleColor(data.startYear, data.year) }}
+                className={`map-viewer-title${mapTitleClass(data.startYear, data.year) ? ` ${mapTitleClass(data.startYear, data.year)}` : ''}`}
                 title={tooltip}
                 aria-label={tooltip ? `${title} ${tooltip.replace(/\n/g, ' ')}` : title}
             >

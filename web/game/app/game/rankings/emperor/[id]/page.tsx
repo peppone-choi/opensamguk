@@ -45,14 +45,14 @@ export default function EmperorDetailPage() {
   if (loading) return (
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>황제 상세</h1>
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      <p className="text-muted">로딩 중...</p>
     </Shell>
   );
 
   if (error || !data) return (
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>황제 상세</h1>
-      <p style={{ color: 'var(--crimson)' }}>{error || '데이터를 찾을 수 없습니다.'}</p>
+      <p className="page-error">{error || '데이터를 찾을 수 없습니다.'}</p>
       <a href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-md)', display: 'inline-block' }}>
         ← 황제 목록으로
       </a>
@@ -83,28 +83,28 @@ export default function EmperorDetailPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
         <GameCard>
-          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>국가</div>
+          <div className="text-sm-muted">국가</div>
           <div style={{ color: data.nationColor, fontSize: 'var(--text-xl)', fontWeight: 600 }}>{data.nation}</div>
         </GameCard>
         <GameCard>
-          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>통일 시기</div>
-          <div style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{formatDate(data.unifiedAt)}</div>
+          <div className="text-sm-muted">통일 시기</div>
+          <div className="h-xl">{formatDate(data.unifiedAt)}</div>
         </GameCard>
         <GameCard>
-          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>턴</div>
-          <div style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{data.year}년 {data.month}월</div>
+          <div className="text-sm-muted">턴</div>
+          <div className="h-xl">{data.year}년 {data.month}월</div>
         </GameCard>
         <GameCard>
-          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>장수 / 도시</div>
-          <div style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{data.generalCount} / {data.cityCount}</div>
+          <div className="text-sm-muted">장수 / 도시</div>
+          <div className="h-xl">{data.generalCount} / {data.cityCount}</div>
         </GameCard>
         <GameCard>
-          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>금 / 쌀 / 인구</div>
-          <div style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{formatNumber(data.totalGold)} / {formatNumber(data.totalRice)} / {formatNumber(data.totalPop)}</div>
+          <div className="text-sm-muted">금 / 쌀 / 인구</div>
+          <div className="h-xl">{formatNumber(data.totalGold)} / {formatNumber(data.totalRice)} / {formatNumber(data.totalPop)}</div>
         </GameCard>
       </div>
 
-      <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>수하 장수</h2>
+      <h2 className="h-xl gap-md">수하 장수</h2>
       <GameTable headers={genHeaders} rows={genRows} />
 
       <h2 style={{ fontSize: 'var(--text-xl)', margin: 'var(--space-lg) 0 var(--space-md)' }}>지배 도시</h2>
