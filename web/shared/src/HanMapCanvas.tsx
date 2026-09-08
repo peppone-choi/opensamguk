@@ -2248,9 +2248,10 @@ export function HanMapCanvas({
             : '서버 경로가 현재 지도와 일치하지 않아 표시하지 않습니다.'}</p>}
         </section>
       )}
-      {projectedBattlefields.length > 0 && <div role="group" aria-label="전장 선택" style={{position:'absolute',right:8,top:8,display:'flex',gap:4}}>
+      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
         {projectedBattlefields.map(({target}) => <button key={target.id} type="button" aria-label={`${target.name} 전장 선택`} onClick={() => onBattlefieldActivate?.(target)}
-          style={{background:'#24231f',color:'#e7dcc1',border:'1px solid #8e836a',padding:'4px 8px'}}>
+          className="os-button os-button--ghost os-button--sm"
+          style={{background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
           ◇ {target.name}{target.current ? ' · 주둔' : ''}
         </button>)}
       </div>}

@@ -32,7 +32,7 @@ export default function BattlefieldPanel({ data, siteId, serverId, onRefresh, on
             setMessage(error instanceof Error ? error.message : '예약 요청을 처리하지 못했습니다.');
         } finally { setBusy(false); }
     }
-    return <Panel aria-label={`${site.name} 전장`}>
+    return <Panel className="battlefield-panel" aria-label={`${site.name} 전장`}>
         <div style={{display:'flex',justifyContent:'space-between',gap:12}}>
             <strong>{site.name} · 전장</strong>
             <button type="button" className="os-button os-button--ghost os-button--sm" onClick={onClose}>닫기</button>
