@@ -1,5 +1,7 @@
 # 휘하 인물(가신) · 부곡 수직 절편 (Phase 4X-A) 설계 — v3.1
 
+> 2026-09-08 후속 구현: 신규 서약 입력과 생성 규칙은 [기존 NPC 가신 서약](2026-09-08-retainer-existing-npc.md)이 대체한다. 이 문서의 RECRUITED 계약은 저장된 기존 행의 호환·정산 기준으로 남는다.
+
 - Date: 2026-09-06 (v1 → v2 → v3 같은 날)
 - Status: REVISED v3 — 교차 비평 1차(fix-required 6 · should-fix 10 · 질문 7)와 2차(v2 재판정: fix-required N1·N2 · should-fix N3~N8, 같은 파일 `docs/superpowers/reviews/2026-09-06-retinue-spec-critique.md`)를 전부 반영. **v3 재판정 `cleared`**(should-fix P1·P2 비차단, 아래 반영). 구현 진행(ADR-LITE-049 Phase 4X 규칙: spec → 비평 → 구현 → 게이트).
 - Scope: 로드맵 「휘하 인물과 부곡」의 첫 수직 절편 — 장수 개인의 휘하 인물(= ADR-LITE-017 의 **가신**, `origin=RECRUITED` 만)과 부곡(개인 사병)을 만들고·부리고·달마다 정산한다. 07 아트보드 「휘하 인물 · 부곡」 구획을 실제 원천에 연결한다.

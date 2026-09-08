@@ -12,6 +12,8 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
+import kotlin.test.assertFailsWith
+import org.springframework.dao.DataIntegrityViolationException
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -77,6 +79,35 @@ class RetainerFlushIT {
 
     private fun count(table: String, where: String = "world_id = 1"): Int =
         jdbc.queryForObject("SELECT count(*) FROM $table WHERE $where", MapSqlParameterSource(), Int::class.java)!!
+
+    @Test
+    fun `existing NPC has one master per world and release allows another master`() {
+        for (world in listOf(2, 3)) {
+            val params = MapSqlParameterSource("world", world)
+            jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (:world, 'sc', 200, 1, 3600)", params)
+            for (id in listOf(10, 11, 20)) {
+                jdbc.update("INSERT INTO general (world_id, id, name, nation_id, city_id, turn_time) VALUES (:world, :id, :name, 0, 1, now())",
+                    MapSqlParameterSource("world", world).addValue("id", id).addValue("name", "장수$id"))
+            }
+        }
+        fun payload(world: Int, vararg rows: RetainerRow) = FlushPayload(
+            worldId = opensamguk.common.world.WorldId(world),
+            worldStateUpdate = mapOf("id" to world, "current_year" to 200, "current_month" to 1),
+            createdRetainers = rows.toList(),
+        )
+        val first = RetainerRow(1, 10, "EXISTING", 20, "장수20", "lieutenant", "NONE", true, "MUTUAL", 50, "none")
+        executor.flush(payload(2, first))
+        executor.flush(payload(3, first))
+        assertEquals(1, count("general_retainers", "world_id = 2 AND general_id = 20"))
+        assertEquals(1, count("general_retainers", "world_id = 3 AND general_id = 20"))
+        assertFailsWith<DataIntegrityViolationException> { executor.flush(payload(2, first.copy(id = 2, masterGeneralId = 11))) }
+        executor.flush(payload(2, first.copy(id = 2, masterGeneralId = 11)).copy(deletedRetainerIds = listOf(1)))
+        assertEquals(1, count("general_retainers", "world_id = 2 AND general_id = 20 AND master_general_id = 11"))
+        assertEquals(1, count("general", "world_id = 2 AND id = 20"))
+        executor.flush(payload(2).copy(deletedGenerals = listOf(20)))
+        assertEquals(0, count("general_retainers", "world_id = 2"))
+        assertEquals(1, count("general_retainers", "world_id = 3"))
+    }
 
     @Test
     fun `8g order plus SET NULL column plus cascade plus meta high-water keys`() {

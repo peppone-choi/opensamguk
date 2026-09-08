@@ -1,6 +1,7 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.common.constants.UnitCatalog
+import opensamguk.gameapi.dto.RetinueCandidateDto
 import opensamguk.gameapi.dto.RetinueBugokDto
 import opensamguk.gameapi.dto.RetinueResponse
 import opensamguk.gameapi.dto.RetinueRetainerDto
@@ -36,7 +37,7 @@ class RetinueController(
     fun myRetinue(@AuthenticationPrincipal userId: Long?): ResponseEntity<RetinueResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val me = resolver.resolve(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        return ResponseEntity.ok(build(me.general))
+        return ResponseEntity.ok(build(me.general, includeCandidates = true))
     }
 
     @GetMapping("/generals/{id}/retinue")
@@ -47,13 +48,16 @@ class RetinueController(
         val allowed = target.id == me.general.id ||
             (me.nationId != 0 && target.nationId != 0 && me.nationId == target.nationId)
         if (!allowed) return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        return ResponseEntity.ok(build(target))
+        return ResponseEntity.ok(build(target, includeCandidates = target.id == me.general.id))
     }
 
-    private fun build(g: GeneralReadEntity): RetinueResponse {
-        val retainers = retinue.retainersOf(g.id).map {
+    private fun build(g: GeneralReadEntity, includeCandidates: Boolean): RetinueResponse {
+        val mine = retinue.retainersOf(g.id)
+        val retainers = mine.map {
+            val linked = it.generalId?.let { id -> generals.findById(id).orElse(null) }
             RetinueRetainerDto(
-                id = it.id, name = it.name, origin = it.origin,
+                id = it.id, name = linked?.name ?: it.name, origin = it.origin,
+                generalId = it.generalId, picture = linked?.picture, imageServer = linked?.imageServer ?: 0,
                 relation = it.relation, relationLabel = RetainerRules.RELATION_LABELS[it.relation] ?: it.relation,
                 role = it.role, roleLabel = RetainerRules.ROLE_LABELS[it.role] ?: it.role,
                 loyalty = it.loyalty, task = it.task, taskLabel = RetainerRules.TASK_LABELS[it.task] ?: it.task,
@@ -69,10 +73,21 @@ class RetinueController(
                 commanderRetainerId = it.commanderRetainerId,
             )
         }
+        val bound = if (includeCandidates) retinue.boundGeneralIds() else emptySet()
+        val candidates = if (!includeCandidates || g.npcState >= 2) emptyList() else generals
+            .findByNpcStateOrderByIdAsc(2)
+            .filter { candidate ->
+                RetainerRules.existingCandidateEligible(g.id, g.nationId, candidate.id, candidate.nationId,
+                    candidate.npcState, candidate.userId, candidate.officerLevel, candidate.id in bound) &&
+                    mine.none { it.name == candidate.name }
+            }.sortedBy { it.id }.map { candidate ->
+                RetinueCandidateDto(candidate.id, candidate.name, candidate.picture, candidate.imageServer,
+                    candidate.nationId, candidate.leadership, candidate.strength, candidate.intel)
+            }
         return RetinueResponse(
             generalId = g.id, generalName = g.name, crew = g.crew, rice = g.rice, gold = g.gold,
             crewTypeId = g.crewTypeId, crewTypeName = crewTypeName(g.crewTypeId),
-            retainers = retainers, bugoks = bugoks, rules = RULES,
+            retainers = retainers, bugoks = bugoks, rules = RULES, candidates = candidates,
         )
     }
 

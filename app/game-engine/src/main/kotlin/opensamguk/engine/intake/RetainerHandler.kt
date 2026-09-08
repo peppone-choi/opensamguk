@@ -1,5 +1,8 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.rng.LiteHashDrbg
+import opensamguk.common.rng.RandUtil
+import opensamguk.common.rng.serializeSeed
 import opensamguk.common.wire.RetainerActionResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -51,9 +54,8 @@ class RetainerHandler(
         val type = "retainerPledge"
         val (me, denied) = preGate(type, c.generalId)
         if (denied != null || me == null) return denied!!
-        val name = when (val n = RetainerRules.normalizeName(c.name)) {
-            is RetainerRules.NameOutcome.Denied -> return fail(type, c.generalId, n.reason)
-            is RetainerRules.NameOutcome.Ok -> n.name
+        if ((c.targetGeneralId != null) == c.random || c.targetGeneralId?.let { it <= 0 } == true || c.name != null) {
+            return fail(type, c.generalId, RetainerRules.REASON_INPUT)
         }
         val relation = c.relation ?: return fail(type, c.generalId, RetainerRules.REASON_INPUT)
         if (relation !in RetainerRules.RELATIONS) return fail(type, c.generalId, RetainerRules.REASON_INPUT)
@@ -61,15 +63,33 @@ class RetainerHandler(
         if (role !in RetainerRules.ROLES) return fail(type, c.generalId, RetainerRules.REASON_INPUT)
 
         val mine = world.retainersOf(me.id)
+        if (mine.size >= RetainerRules.MAX_RETAINERS) return fail(type, c.generalId, RetainerRules.REASON_RETAINERS_FULL)
+        val boundIds = world.listRetainers().mapNotNull { it.generalId }.toSet()
+        val candidates = world.listGenerals().filter { candidate ->
+            RetainerRules.existingCandidateEligible(me.id, me.nationId, candidate.id, candidate.nationId,
+                candidate.npcState, candidate.userId, candidate.officerLevel, candidate.id in boundIds)
+        }.sortedBy { it.id }
+        val target = if (c.random) {
+            val pool = candidates.filter { candidate -> mine.none { it.name == candidate.name } }
+            if (pool.isEmpty()) return fail(type, c.generalId, RetainerRules.REASON_NO_CANDIDATE)
+            val state = world.getState()
+            val rng = RandUtil(LiteHashDrbg(serializeSeed(
+                state.meta["hiddenSeed"]?.toString().orEmpty(), "retainerPledge", world.worldId.value,
+                state.currentYear, state.currentMonth, me.id, state.meta["maxRetainerId"] ?: 0,
+            )))
+            pool[rng.nextInt(0, pool.size)]
+        } else candidates.firstOrNull { it.id == c.targetGeneralId }
+            ?: return fail(type, c.generalId, RetainerRules.REASON_INVALID_CANDIDATE)
+        val name = target.name
         RetainerRules.pledgeDeny(mine.size, mine.map { it.name }, name, me.gold)?.let { return fail(type, c.generalId, it) }
 
         applyGeneral(me, me.copy(gold = me.gold - RetainerRules.PLEDGE_COST_GOLD))
         val id = world.allocateRetainerId()
         world.createRetainer(
             Retainer(
-                id = id, masterGeneralId = me.id, origin = RetainerRules.ORIGIN_RECRUITED, generalId = null,
-                name = name, relation = relation, role = role, hasOwnBugok = false,
-                releasePolicy = RetainerRules.RELEASE_MASTER_ONLY, loyalty = 50, task = RetainerRules.TASK_NONE,
+                id = id, masterGeneralId = me.id, origin = RetainerRules.ORIGIN_EXISTING, generalId = target.id,
+                name = name, relation = relation, role = role, hasOwnBugok = true,
+                releasePolicy = RetainerRules.RELEASE_MUTUAL, loyalty = 50, task = RetainerRules.TASK_NONE,
             ),
         )
         return RetainerActionResult(type, ok = true, generalId = c.generalId, id = id)

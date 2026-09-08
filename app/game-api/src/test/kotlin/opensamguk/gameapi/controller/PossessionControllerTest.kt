@@ -19,6 +19,7 @@ import opensamguk.gameapi.owner.SelectNpcTokenEntity
 import opensamguk.gameapi.owner.SelectNpcTokenRepository
 import opensamguk.gameapi.owner.SelectNpcTokenService
 import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
@@ -29,6 +30,7 @@ import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.`when`
@@ -61,6 +63,7 @@ class PossessionControllerTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val npcTokens = mock(SelectNpcTokenRepository::class.java)
+    private val retainers = mock(RetainerReadRepository::class.java)
     private val worldStates = mock(WorldStateReadRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
     private val reserve = mock(CommandReserveService::class.java)
@@ -77,10 +80,11 @@ class PossessionControllerTest {
         ownership,
         npcTokens,
         worldStates,
+        retainers,
         fixedClock,
     )
     private val selectNpcTokens =
-        SelectNpcTokenService(npcTokens, owners, ownership, generals, nations, worldStates, fixedClock)
+        SelectNpcTokenService(npcTokens, owners, ownership, generals, nations, worldStates, retainers, fixedClock)
 
     /** 로그인한 호출자는 항상 `users` 행이 있다 — 표시 이름은 토큰이 아니라 여기서 온다(OPENSAM-220). */
     @org.junit.jupiter.api.BeforeEach
@@ -133,6 +137,24 @@ class PossessionControllerTest {
         `when`(worldStates.findById(1)).thenReturn(
             Optional.of(WorldStateReadEntity(id = 1, scenarioCode = "scenario_1010", tickSeconds = 3600, config = mapOf("npcmode" to mode))),
         )
+    }
+
+    @Test
+    fun `bound retainer is filtered from cached candidate token and cannot be claimed`() {
+        seedNpcMode()
+        `when`(npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(7L, fixedClock.instant())).thenReturn(activeToken(20))
+        `when`(generals.findById(20)).thenReturn(Optional.of(npc(20, "여포")))
+        `when`(retainers.boundGeneralIds()).thenReturn(setOf(20))
+        `when`(retainers.isBound(20)).thenReturn(true)
+        val mvc = mockMvc()
+        mvc.perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.candidates.length()").value(0))
+        mvc.perform(post("/api/general/claim").with(principal(7L))
+            .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":20}"""))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 장수가 아닙니다."))
+        verifyNoInteractions(reserve)
     }
 
     @Test

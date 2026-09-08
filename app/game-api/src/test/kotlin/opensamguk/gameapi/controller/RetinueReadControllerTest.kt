@@ -63,6 +63,35 @@ class RetinueReadControllerTest {
     }
 
     @Test
+    fun `candidate pool is stable eligible and linked retainer displays the current identity`() {
+        val me = gen(10, 1)
+        val resolver = mock(GeneralResolver::class.java)
+        `when`(resolver.resolve(7L)).thenReturn(resolved(me))
+        val generals = mock(GeneralReadRepository::class.java)
+        val candidates = (20..27).map { gen(it, 1).apply { npcState = 2 } }
+        candidates[0].apply { name = "실제 이름"; picture = "20"; imageServer = 1 }
+        candidates[2].nationId = 2
+        candidates[3].userId = "8"
+        candidates[4].officerLevel = 12
+        candidates[5].nationId = 0
+        candidates[6].npcState = 1
+        val retinue = mock(RetainerReadRepository::class.java)
+        `when`(retinue.boundGeneralIds()).thenReturn(setOf(20, 21))
+        `when`(retinue.retainersOf(10)).thenReturn(listOf(GeneralRetainerReadEntity(id = 1, masterGeneralId = 10, origin = "EXISTING", generalId = 20, name = "과거 이름")))
+        `when`(generals.findById(20)).thenReturn(Optional.of(candidates[0]))
+        `when`(generals.findByNpcStateOrderByIdAsc(2)).thenReturn(candidates.reversed())
+        mvc(RetinueController(resolver, generals, retinue)).perform(get("/api/my-retinue").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.candidates.length()").value(2))
+            .andExpect(jsonPath("$.candidates[0].generalId").value(25))
+            .andExpect(jsonPath("$.candidates[1].generalId").value(27))
+            .andExpect(jsonPath("$.retainers[0].generalId").value(20))
+            .andExpect(jsonPath("$.retainers[0].name").value("실제 이름"))
+            .andExpect(jsonPath("$.retainers[0].picture").value("20"))
+            .andExpect(jsonPath("$.retainers[0].imageServer").value(1))
+    }
+
+    @Test
     fun `my-retinue is 401 anonymous and 200 with rules for the owner`() {
         val me = gen(10, nationId = 1, crewTypeId = 0)
         val m = harness(me)

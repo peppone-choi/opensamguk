@@ -145,7 +145,9 @@ sealed class TurnDaemonCommand {
     data class RetainerPledge(
         val requestId: String? = null,
         val generalId: Int,
-        val name: String? = null,
+        val name: String? = null, // Legacy wire field: new pledges require an NPC target or random mode.
+        val targetGeneralId: Int? = null,
+        val random: Boolean = false,
         val relation: String? = null,
         val role: String? = null,
     ) : TurnDaemonCommand() {

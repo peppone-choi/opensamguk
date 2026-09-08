@@ -25,6 +25,7 @@ const base = (over: Partial<RetinueResponse> = {}): RetinueResponse => ({
     generalId: 10, generalName: '유비', crew: 1000, rice: 3000, gold: 2000, crewTypeId: 1100, crewTypeName: '보병',
     retainers: [{ id: 3, name: '홍길동', origin: 'RECRUITED', relation: 'lieutenant', relationLabel: '부장', role: 'GUARD', roleLabel: '호위', loyalty: 51, task: 'train', taskLabel: '훈련', hasOwnBugok: false }],
     bugoks: [{ id: 2, name: '부곡 1', troops: 300, crewTypeId: 1100, crewTypeName: '보병', training: 70, morale: 66, fatigue: 5, provisions: 900, provisionMonths: 3, commanderRetainerId: 3 }],
+    candidates: [{ generalId: 20, name: '임꺽정', picture: '10020', imageServer: 0, nationId: 1, leadership: 80, strength: 70, intel: 60 }],
     rules: RULES,
     ...over,
 });
@@ -55,10 +56,10 @@ describe('RetinuePanels (07 휘하 인물 · 부곡)', () => {
         const onChanged = vi.fn();
         render(<RetinuePanels generalId={10} onChanged={onChanged} />);
         await screen.findAllByText('홍길동');
-        fireEvent.change(screen.getByLabelText('이름'), { target: { value: '임꺽정' } });
+        fireEvent.change(screen.getByLabelText('NPC 장수'), { target: { value: '20' } });
         fireEvent.change(screen.getByLabelText('관계'), { target: { value: 'guest' } });
         fireEvent.click(screen.getByRole('button', { name: '서약' }));
-        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('retainerPledge', { name: '임꺽정', relation: 'guest', role: 'NONE' }, 10));
+        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('retainerPledge', { targetGeneralId: 20, relation: 'guest', role: 'NONE' }, 10));
         fireEvent.change(screen.getByLabelText('병력'), { target: { value: '300' } });
         fireEvent.change(screen.getByLabelText('군량'), { target: { value: '900' } });
         fireEvent.click(screen.getByRole('button', { name: '편성' }));
@@ -67,6 +68,41 @@ describe('RetinuePanels (07 휘하 인물 · 부곡)', () => {
         await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('bugokAssignCommander', { bugokId: 2, retainerId: null }, 10));
         expect(onChanged).toHaveBeenCalled();
         expect(mocks.myRetinue.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    it('uses actual existing NPC portraits for both the retainer and selected candidate', async () => {
+        const data = base();
+        data.retainers[0] = { ...data.retainers[0], origin: 'EXISTING', generalId: 21, picture: '10021', imageServer: 0 };
+        mocks.myRetinue.mockResolvedValue(data);
+        render(<RetinuePanels generalId={10} />);
+        expect(await screen.findByAltText('홍길동')).toHaveAttribute('src', expect.stringContaining('10021'));
+        fireEvent.change(screen.getByLabelText('NPC 장수'), { target: { value: '20' } });
+        expect(screen.getByAltText('임꺽정')).toHaveAttribute('src', expect.stringContaining('10020'));
+    });
+
+    it('offers random from the same candidate pool and disables it when empty', async () => {
+        mocks.myRetinue.mockResolvedValue(base());
+        const { unmount } = render(<RetinuePanels generalId={10} />);
+        fireEvent.click(await screen.findByRole('button', { name: '무작위 서약' }));
+        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('retainerPledge', { random: true, relation: 'lieutenant', role: 'NONE' }, 10));
+        unmount();
+        mocks.myRetinue.mockResolvedValue(base({ candidates: [] }));
+        render(<RetinuePanels generalId={10} />);
+        expect(await screen.findByRole('button', { name: '무작위 서약' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: '서약' })).toBeDisabled();
+        expect(screen.getByText('서약 가능한 NPC 장수가 없습니다.')).toBeInTheDocument();
+    });
+
+    it('keeps the failure reason and never reports a rejected pledge as applied', async () => {
+        mocks.myRetinue.mockResolvedValue(base());
+        mocks.submit.mockResolvedValue({ status: 'rejected', reason: '서약 가능한 NPC 장수가 아닙니다.' });
+        const onChanged = vi.fn();
+        render(<RetinuePanels generalId={10} onChanged={onChanged} />);
+        fireEvent.change(await screen.findByLabelText('NPC 장수'), { target: { value: '20' } });
+        fireEvent.click(screen.getByRole('button', { name: '서약' }));
+        expect(await screen.findByText('서약 가능한 NPC 장수가 아닙니다.')).toBeInTheDocument();
+        expect(onChanged).not.toHaveBeenCalled();
+        expect(screen.queryByText('처리되었습니다.')).not.toBeInTheDocument();
     });
 
     it('disables pledge and form with reasons when full or short, and shows the intake reason on rejection', async () => {
