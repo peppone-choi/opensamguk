@@ -383,11 +383,11 @@
 
 ## Phase 6 — 마감 (PR `ui-p6-closeout`)
 
-- [ ] 두 앱 `globals.css`에서 이관 완료된 죽은 클래스 제거(사용처 grep 0건만).
-- [ ] 브라우저 매트릭스: macOS Chrome·Safari·Firefox + Windows Chrome(가능한 것만, 못 한 것은 UNKNOWN 기록), 키보드 포커스 순회, reduced-motion, 390px.
-- [ ] 접근성 스모크: Playwright + axe로 로그인·로비·작전실·커뮤니티·콘솔 5화면 critical 0.
-- [ ] `docs/user/**` 화면 안내·README 스크린샷 교체, `docs/design/roadmap.md` 「세계와 지도」 아래에 UI 정본 링크.
-- [ ] 최종 스크린샷 리포트 + 교차 비평.
+- [x] 두 앱 `globals.css`에서 이관 완료된 죽은 클래스 제거(사용처 grep 0건만). game 40규칙(2,772→2,629줄, #681) · gateway 22규칙(1,599→1,480줄). 동적 조립 클래스(`status-${variant}`·`toast-${type}`·`war-card__v--${tone}`·`portrait-editor__preview--${key}`)는 제외.
+- [~] 브라우저 매트릭스: **macOS Chromium 통과**, 키보드 포커스 순회·reduced-motion·390px 는 `e2e/mobile-focus-trap-live.spec.ts` 3건으로 자동화(빨간 프로브 확인). macOS Safari/Firefox·Windows Chrome 은 **UNKNOWN** — Playwright 브라우저 바이너리 설치가 이 환경에서 완료되지 않았고 Windows 호스트가 없다.
+- [x] 접근성 스모크: `e2e/a11y-smoke.spec.ts` — 로그인·로비·작전실·커뮤니티·콘솔 5화면 **critical 0**(serious 도 0). 빨간 프로브(`alt` 없는 `<img>` 주입)로 게이트가 실제로 빨개지는 것을 확인했다.
+- [~] `docs/design/roadmap.md` 「세계와 지도」의 UI 정본 항목을 지도 전면 스테이지 결정으로 갱신했다. `docs/user/**` 화면 안내·README 스크린샷 교체는 **미착수** — 로컬은 시나리오가 `che` 라 지도 타일이 없어 실화면이 「지도 데이터 준비 중」으로 찍힌다. 프로덕션 배포 뒤에 찍는 게 맞다.
+- [~] 리포트 `docs/superpowers/reports/2026-09-08-ui-phase-6-closeout.md`. 교차 비평은 **미실시**.
 
 ## Phase 7 — 3D (가능하면, PR `ui-p7-3d`)
 
