@@ -1,5 +1,6 @@
 'use client';
 import { LogText } from '@opensamguk/ui';
+import PageHead from '../PageHead';
 
 // ── 로그정보 (Admin7) — READ-ONLY 장수 상세 + 로그 패널 + 정렬/대상선택 ────────────────
 // Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/_admin7.php. game-api `GET /api/admin/general-log?gen=&query_type=`
@@ -44,11 +45,11 @@ const logRowStyle: React.CSSProperties = {
 // 로그 패널 1개 — text가 패러티 원문(색/태그)이라 v-html 렌더(world-log/history와 동일).
 function LogPanel({ title, lines }: { title: string; lines: string[] }) {
     return (
-        <div style={{ flex: '1 1 320px', minWidth: 280 }}>
+        <div className="adm-col">
             <div style={panelTitleStyle}>{title}</div>
             <GameCard>
                 {lines.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
+                    <p className="adm-empty">기록이 없습니다.</p>
                 ) : (
                     <div>
                         {lines.map((line, i) => (
@@ -119,12 +120,12 @@ export default function GeneralLogPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>로그 정보</h1>
+            <PageHead title="로그 정보" />
 
             {/* ── 정렬/대상선택 form (_admin7.php:103-118) ───────────────────────── */}
-            <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>정렬순서 :</span>
+            <GameCard className="adm-section">
+                <div className="u-row-md">
+                    <span className="text-secondary">정렬순서 :</span>
                     <select
                         value={data?.queryType ?? ''}
                         onChange={(e) => onSortChange(e.target.value)}
@@ -133,7 +134,7 @@ export default function GeneralLogPanel() {
                             <option key={o.queryType} value={o.queryType}>{o.label}</option>
                         ))}
                     </select>
-                    <span style={{ color: 'var(--text-secondary)' }}>대상장수 :</span>
+                    <span className="text-secondary">대상장수 :</span>
                     <select
                         value={data?.gen ?? 0}
                         onChange={(e) => onGenChange(Number(e.target.value))}
@@ -147,25 +148,25 @@ export default function GeneralLogPanel() {
                 </div>
             </GameCard>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* ── 장수 정보 (스칼라 평면 노출 — generalInfo HTML 패러티는 백로그) ───── */}
             {!error && detail && (
-                <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
+                <GameCard className="adm-section">
                     <div style={panelTitleStyle}>장 수 정 보</div>
-                    <table className="game-table" style={{ width: '100%' }}>
+                    <table className="game-table u-full">
                         <tbody>
                             <tr>
-                                <th style={{ textAlign: 'left', width: '12ch' }}>장수명</th>
+                                <th className="adm-w12ch">장수명</th>
                                 <td>{detail.name}{detail.npc >= 2 ? ' (NPC)' : ''}</td>
-                                <th style={{ textAlign: 'left', width: '12ch' }}>관직</th>
+                                <th className="adm-w12ch">관직</th>
                                 <td>{detail.officerLevel}</td>
                             </tr>
                             <tr>
-                                <th style={{ textAlign: 'left' }}>통솔 / 무력 / 지력 / 정치 / 매력</th>
+                                <th className="u-left">통솔 / 무력 / 지력 / 정치 / 매력</th>
                                 <td>{detail.leadership} / {detail.strength} / {detail.intel} / {detail.politics ?? '-'} / {detail.charm ?? '-'}</td>
-                                <th style={{ textAlign: 'left' }}>최근 턴</th>
+                                <th className="u-left">최근 턴</th>
                                 <td>{detail.turnTime ?? '-'}</td>
                             </tr>
                         </tbody>
@@ -173,14 +174,14 @@ export default function GeneralLogPanel() {
                 </GameCard>
             )}
             {!error && !loading && !detail && (
-                <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>대상 장수가 없습니다.</p>
+                <GameCard className="adm-section">
+                    <p className="adm-empty">대상 장수가 없습니다.</p>
                 </GameCard>
             )}
 
             {/* ── 4개 로그 패널 (_admin7.php:139-170) ───────────────────────────── */}
             {!error && detail && (
-                <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div className="gd-split">
                     <LogPanel title="개인 기록" lines={detail.actionLog} />
                     <LogPanel title="전투 기록" lines={detail.battleDetailLog} />
                     <LogPanel title="장수 열전" lines={detail.historyLog} />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import GameTable from '@/components/GameTable';
 import StatusBadge from '@/components/StatusBadge';
@@ -147,36 +148,29 @@ export default function TournamentAdminPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
-                토너먼트 관리
-            </h1>
+            <PageHead title="토너먼트 관리" />
 
-            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="u-row-md adm-section">
                 <button onClick={() => fetchData()}>새로고침</button>
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p role="alert" style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p role="alert" className="page-error">{error}</p>}
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 'var(--space-xs)', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div className="adm-tabs">
                 {(['entries', 'matches', 'admin'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        style={{
-                            background: 'transparent',
-                            borderBottom: activeTab === tab ? '2px solid var(--gold)' : '2px solid transparent',
-                            color: activeTab === tab ? 'var(--gold)' : 'var(--text-secondary)',
-                            borderRadius: 0,
-                            padding: 'var(--space-sm) var(--space-md)',
-                        }}
+                        className={`adm-tab${activeTab === tab ? ' adm-tab--on' : ''}`}
+                        aria-current={activeTab === tab ? 'page' : undefined}
                     >
                         {tab === 'entries' && '참가자'}
                         {tab === 'matches' && '대진표'}
@@ -187,9 +181,9 @@ export default function TournamentAdminPanel() {
 
             {activeTab === 'entries' && (
                 <>
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+                    <h2 className="adm-h2">
                         참가자 목록
-                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginLeft: 'var(--space-sm)' }}>
+                        <span className="buff-row__desc">
                             ({activeEntries.length}명 생존 / {eliminatedEntries.length}명 탈락)
                         </span>
                     </h2>
@@ -199,12 +193,12 @@ export default function TournamentAdminPanel() {
                             rows={entryRows}
                         />
                     ) : (
-                        <p style={{ color: 'var(--text-muted)' }}>참가자가 없습니다.</p>
+                        <p className="text-muted">참가자가 없습니다.</p>
                     )}
 
                     {eliminatedEntries.length > 0 && (
                         <>
-                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', marginTop: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
+                            <h2 className="adm-h2 adm-h2--spaced text-secondary">
                                 탈락자
                             </h2>
                             <GameTable
@@ -224,7 +218,7 @@ export default function TournamentAdminPanel() {
 
             {activeTab === 'matches' && (
                 <>
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
+                    <h2 className="adm-h2">
                         대진표
                     </h2>
                     {matchRows.length > 0 ? (
@@ -233,34 +227,34 @@ export default function TournamentAdminPanel() {
                             rows={matchRows}
                         />
                     ) : (
-                        <p style={{ color: 'var(--text-muted)' }}>대진이 없습니다.</p>
+                        <p className="text-muted">대진이 없습니다.</p>
                     )}
                 </>
             )}
 
             {activeTab === 'admin' && (
                 <GameCard>
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-md)' }}>
+                    <h2 className="adm-h2">
                         토너먼트 관리
                     </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    <div className="u-stack-sm">
+                        <div className="u-row-sm">
                             <button
                                 onClick={startTournament}
                                 disabled={!canManageTournament || actionLoading != null}
-                                style={{ background: 'var(--jade)', color: 'white', fontWeight: 600 }}
+                                className="adm-ok"
                             >
                                 {actionLoading === 'start' ? '시작 요청 중...' : '토너먼트 시작'}
                             </button>
                             <button
                                 onClick={resetTournament}
                                 disabled={!canManageTournament || actionLoading != null}
-                                style={{ background: 'var(--crimson)', color: 'white', fontWeight: 600 }}
+                                className="adm-bad"
                             >
                                 {actionLoading === 'reset' ? '초기화 요청 중...' : '초기화'}
                             </button>
                         </div>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                        <p className="vote-small text-muted">
                             토너먼트 시작: 참가자 등록 및 1라운드 대진 생성<br />
                             진행: 토너먼트는 턴 처리에서 자동 진행<br />
                             초기화: 토너먼트 상태 초기화

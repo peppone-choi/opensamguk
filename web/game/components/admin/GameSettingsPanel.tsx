@@ -1,16 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminGameSettingsResponse } from '@/lib/api';
-
-const inputStyle: React.CSSProperties = {
-    width: '100%',
-    maxWidth: 720,
-    background: '#000',
-    color: '#fff',
-};
 
 function errorText(e: unknown): string {
     const msg = e instanceof Error ? e.message : '';
@@ -71,85 +65,85 @@ export default function GameSettingsPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>게임 관리</h1>
+            <PageHead title="게임 관리" />
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
-            {notice && <p style={{ color: 'var(--gold)' }}>{notice}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
+            {notice && <p className="dip-letter__opt">{notice}</p>}
 
             {data && !error && (
                 <>
-                    <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                        <table className="game-table" style={{ width: '100%' }}>
+                    <GameCard className="adm-section">
+                        <table className="game-table u-full">
                             <tbody>
                                 <tr>
-                                    <th style={{ width: 140, textAlign: 'right' }}>운영자메세지</th>
+                                    <th className="adm-w140">운영자메세지</th>
                                     <td>
-                                        <input aria-label="운영자메세지" value={draft.msg ?? ''} onChange={(e) => setValue('msg', e.target.value)} style={inputStyle} />
+                                        <input aria-label="운영자메세지" value={draft.msg ?? ''} onChange={(e) => setValue('msg', e.target.value)} className="adm-text-input" />
                                     </td>
-                                    <td style={{ width: 100 }}>
+                                    <td className="adm-w100">
                                         <button disabled={saving !== ''} onClick={() => save('msg', draft.msg ?? '')}>변경</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>중원정세추가</th>
+                                    <th className="u-right">중원정세추가</th>
                                     <td>
-                                        <input aria-label="중원정세추가" readOnly value="" maxLength={80} style={inputStyle} />
+                                        <input aria-label="중원정세추가" readOnly value="" maxLength={80} className="adm-text-input" />
                                     </td>
                                     <td>
                                         <button disabled>로그쓰기</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>시작시간변경</th>
+                                    <th className="u-right">시작시간변경</th>
                                     <td>
-                                        <input aria-label="시작시간변경" value={draft.starttime ?? ''} onChange={(e) => setValue('starttime', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 260 }} />
+                                        <input aria-label="시작시간변경" value={draft.starttime ?? ''} onChange={(e) => setValue('starttime', e.target.value)} className="adm-text-input adm-num--wide" />
                                     </td>
                                     <td>
                                         <button disabled={saving !== ''} onClick={() => save('starttime', draft.starttime ?? '')}>변경1</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>최대 장수</th>
+                                    <th className="u-right">최대 장수</th>
                                     <td>
-                                        <input aria-label="최대 장수" type="number" min={1} max={9999} value={draft.maxgeneral ?? ''} onChange={(e) => setValue('maxgeneral', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="최대 장수" type="number" min={1} max={9999} value={draft.maxgeneral ?? ''} onChange={(e) => setValue('maxgeneral', e.target.value)} className="adm-text-input adm-num" />
                                     </td>
                                     <td>
                                         <button disabled={saving !== '' || draft.maxgeneral === ''} onClick={() => save('maxgeneral', Number(draft.maxgeneral))}>변경2</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>최대 국가</th>
+                                    <th className="u-right">최대 국가</th>
                                     <td>
-                                        <input aria-label="최대 국가" type="number" min={1} max={999} value={draft.maxnation ?? ''} onChange={(e) => setValue('maxnation', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="최대 국가" type="number" min={1} max={999} value={draft.maxnation ?? ''} onChange={(e) => setValue('maxnation', e.target.value)} className="adm-text-input adm-num" />
                                     </td>
                                     <td>
                                         <button disabled={saving !== '' || draft.maxnation === ''} onClick={() => save('maxnation', Number(draft.maxnation))}>변경3</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>시작 년도</th>
+                                    <th className="u-right">시작 년도</th>
                                     <td>
-                                        <input aria-label="시작 년도" type="number" min={1} max={9999} value={draft.startyear ?? ''} onChange={(e) => setValue('startyear', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="시작 년도" type="number" min={1} max={9999} value={draft.startyear ?? ''} onChange={(e) => setValue('startyear', e.target.value)} className="adm-text-input adm-num" />
                                     </td>
                                     <td>
                                         <button disabled={saving !== '' || draft.startyear === ''} onClick={() => save('startyear', Number(draft.startyear))}>변경4</button>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>최근 갱신 시간</th>
+                                    <th className="u-right">최근 갱신 시간</th>
                                     <td colSpan={2}>{data.turntime ?? '-'}</td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>현재 연월</th>
+                                    <th className="u-right">현재 연월</th>
                                     <td colSpan={2}>
                                         {data.year ?? '-'}년 {data.month ?? '-'}월 · {data.scenarioCode ?? '-'}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'right' }}>턴시간</th>
+                                    <th className="u-right">턴시간</th>
                                     <td colSpan={2}>
-                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                        <div className="u-row-sm">
                                             {data.turnOptions.map((m) => (
                                                 <button key={m} disabled={saving !== '' || m === data.turnterm} onClick={() => save('turnterm', m)} style={m === data.turnterm ? { borderColor: 'var(--gold)' } : undefined}>
                                                     {m}분턴
@@ -163,7 +157,7 @@ export default function GameSettingsPanel() {
                     </GameCard>
 
                     <GameCard>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <div className="u-row-sm">
                             <button onClick={load}>새로고침</button>
                             {data.blockedWrites.map((w) => (
                                 <button key={w.label} disabled title={w.reason}>

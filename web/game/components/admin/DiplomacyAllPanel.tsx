@@ -20,6 +20,7 @@
 // EMPTY-SAFE: relations [] → 빈-상태 행. 절대 크래시하지 않는다.
 
 import { useEffect, useState, useCallback } from 'react';
+import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminDiplomacyAllResponse } from '@/lib/api';
@@ -36,13 +37,14 @@ function contrastText(color: string): string {
     return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD ? '#000' : '#fff';
 }
 
-// 상태 텍스트 색 — legacy <font color=...>(0 교전 red / 1 선포중 magenta / 2 통상 무색 / 7 불가침 green).
+// 상태 텍스트 색 — legacy <font color=...>(0 교전 / 1 선포중 / 2 통상 무색 / 7 불가침).
+// 중원 정보와 같은 .gd-state--* 클래스를 쓴다(리터럴 red/magenta/green 을 팔레트로 사상).
 // (state==2는 BE에서 이미 제외되지만 안전상 매핑은 유지.)
-function stateColor(state: number): string | undefined {
+function stateClass(state: number): string | undefined {
     switch (state) {
-        case 0: return 'red';
-        case 1: return 'magenta';
-        case 7: return 'green';
+        case 0: return 'gd-state--war';
+        case 1: return 'gd-state--declared';
+        case 7: return 'gd-state--pact';
         default: return undefined;
     }
 }
@@ -83,12 +85,12 @@ export default function DiplomacyAllPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교 정보</h1>
+            <PageHead title="외교 정보" />
 
             {/* ── 정렬 form (_admin8.php:48-54, 단일 '상태' 옵션) ─────────────────── */}
-            <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>정렬순서 :</span>
+            <GameCard className="adm-section">
+                <div className="u-row-md">
+                    <span className="text-secondary">정렬순서 :</span>
                     {/* legacy는 옵션이 '상태' 하나뿐 → 정렬 분기 없음(고정). 형태만 노출. */}
                     <select value={0} disabled>
                         <option value={0}>상태</option>
@@ -97,45 +99,45 @@ export default function DiplomacyAllPanel() {
                 </div>
             </GameCard>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* ── 외교 관계 리스트 (_admin8.php:58-114) ──────────────────────────── */}
             {!error && (
                 <GameCard>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="game-table" style={{ margin: 'auto', minWidth: 480 }}>
+                    <div className="u-scroll-x">
+                        <table className="game-table adm-matrix">
                             <thead>
                                 <tr>
-                                    <th colSpan={4} style={{ textAlign: 'center', background: 'blue', color: '#fff' }}>
+                                    <th colSpan={4} className="u-center band-title band-title--info">
                                         외 교 관 계
                                     </th>
                                 </tr>
                                 <tr>
-                                    <th style={{ textAlign: 'center' }}>국 가 명</th>
-                                    <th style={{ textAlign: 'center' }}>국 가 명</th>
-                                    <th style={{ textAlign: 'center' }}>상 태</th>
-                                    <th style={{ textAlign: 'center' }}>기 간</th>
+                                    <th className="u-center">국 가 명</th>
+                                    <th className="u-center">국 가 명</th>
+                                    <th className="u-center">상 태</th>
+                                    <th className="u-center">기 간</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {relations.map((d) => (
                                     <tr key={`${d.me}-${d.you}`}>
-                                        <td style={{ textAlign: 'center', color: contrastText(d.meColor), backgroundColor: d.meColor }}>
+                                        <td className="u-center" style={{ color: contrastText(d.meColor), backgroundColor: d.meColor }}>
                                             {d.meName}
                                         </td>
-                                        <td style={{ textAlign: 'center', color: contrastText(d.youColor), backgroundColor: d.youColor }}>
+                                        <td className="u-center" style={{ color: contrastText(d.youColor), backgroundColor: d.youColor }}>
                                             {d.youName}
                                         </td>
-                                        <td style={{ textAlign: 'center', color: stateColor(d.state) }}>
+                                        <td className={`u-center${stateClass(d.state) ? ` ${stateClass(d.state)}` : ''}`}>
                                             {d.stateText}
                                         </td>
-                                        <td style={{ textAlign: 'center' }}>{d.term} 개월</td>
+                                        <td className="u-center">{d.term} 개월</td>
                                     </tr>
                                 ))}
                                 {relations.length === 0 && !loading && (
                                     <tr>
-                                        <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        <td colSpan={4} className="u-center text-muted">
                                             외교 관계가 없습니다.
                                         </td>
                                     </tr>

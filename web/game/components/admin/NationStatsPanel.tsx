@@ -22,6 +22,7 @@
 // EMPTY-SAFE: rows [] → 빈-상태 행. 절대 크래시하지 않는다.
 
 import { useEffect, useState, useCallback } from 'react';
+import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminNationStatsResponse } from '@/lib/api';
@@ -87,12 +88,12 @@ export default function NationStatsPanel() {
 
     return (
         <>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>일제 정보</h1>
+            <PageHead title="일제 정보" />
 
             {/* ── 정렬 form (_admin5.php:56-85) ──────────────────────────────────── */}
-            <GameCard style={{ marginBottom: 'var(--space-lg)' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>정렬순서 :</span>
+            <GameCard className="adm-section">
+                <div className="u-row-md">
+                    <span className="text-secondary">정렬순서 :</span>
                     <select value={type} onChange={(e) => setType(Number(e.target.value))}>
                         {sortOptions.map((o) => (
                             <option key={o.value} value={o.value}>{o.label}</option>
@@ -107,18 +108,18 @@ export default function NationStatsPanel() {
                 </div>
             </GameCard>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {/* ── 국가별 통계 테이블 (_admin5.php:103-263) ───────────────────────── */}
             {!error && (
-                <GameCard style={{ marginBottom: 'var(--space-xl)' }}>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="game-table" style={{ minWidth: 1200, whiteSpace: 'nowrap' }}>
+                <GameCard className="adm-section--xl">
+                    <div className="u-scroll-x">
+                        <table className="game-table adm-table--xwide">
                             <thead>
                                 <tr>
                                     {COLUMNS.map((c, i) => (
-                                        <th key={i} style={{ textAlign: 'center' }}>{c}</th>
+                                        <th key={i} className="u-center">{c}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -126,41 +127,41 @@ export default function NationStatsPanel() {
                                 {rows.map((n) => {
                                     const fg = contrastText(n.color);
                                     const nameCell = (
-                                        <td style={{ textAlign: 'center', color: fg, backgroundColor: n.color }}>
+                                        <td className="u-center" style={{ color: fg, backgroundColor: n.color }}>
                                             {n.name}
                                         </td>
                                     );
                                     return (
                                         <tr key={n.nationId}>
                                             {nameCell}
-                                            <td style={{ textAlign: 'center' }}>{n.power}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.genCnt}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.cityCnt}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.tech.toFixed(1)}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.strategicCmdLimit}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.gold}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.rice}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgGold}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgRice}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgLeadership.toFixed(1)}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgStrength.toFixed(1)}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgIntel.toFixed(1)}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.avgExpLevel.toFixed(1)}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.dex1}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.dex2}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.dex3}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.dex4}</td>
-                                            <td style={{ textAlign: 'right' }}>{n.dex5}</td>
+                                            <td className="u-center">{n.power}</td>
+                                            <td className="u-center">{n.genCnt}</td>
+                                            <td className="u-center">{n.cityCnt}</td>
+                                            <td className="u-right">{n.tech.toFixed(1)}</td>
+                                            <td className="u-center">{n.strategicCmdLimit}</td>
+                                            <td className="u-center">{n.gold}</td>
+                                            <td className="u-center">{n.rice}</td>
+                                            <td className="u-right">{n.avgGold}</td>
+                                            <td className="u-right">{n.avgRice}</td>
+                                            <td className="u-right">{n.avgLeadership.toFixed(1)}</td>
+                                            <td className="u-right">{n.avgStrength.toFixed(1)}</td>
+                                            <td className="u-right">{n.avgIntel.toFixed(1)}</td>
+                                            <td className="u-right">{n.avgExpLevel.toFixed(1)}</td>
+                                            <td className="u-right">{n.dex1}</td>
+                                            <td className="u-right">{n.dex2}</td>
+                                            <td className="u-right">{n.dex3}</td>
+                                            <td className="u-right">{n.dex4}</td>
+                                            <td className="u-right">{n.dex5}</td>
                                             {/* legacy `{crew}/{leadership}00` (총병/통솔합00). */}
-                                            <td style={{ textAlign: 'right' }}>{n.sumCrew}/{n.sumLeadership}00</td>
-                                            <td style={{ textAlign: 'center' }}>{n.pop}/{n.popMax}</td>
-                                            <td style={{ textAlign: 'center' }}>{n.popRate.toFixed(1)}%</td>
-                                            <td style={{ textAlign: 'center' }}>{n.agri}%</td>
-                                            <td style={{ textAlign: 'center' }}>{n.comm}%</td>
-                                            <td style={{ textAlign: 'center' }}>{n.secu}%</td>
-                                            <td style={{ textAlign: 'center' }}>{n.wall}%</td>
-                                            <td style={{ textAlign: 'center' }}>{n.def}%</td>
-                                            <td style={{ textAlign: 'center', color: fg, backgroundColor: n.color }}>
+                                            <td className="u-right">{n.sumCrew}/{n.sumLeadership}00</td>
+                                            <td className="u-center">{n.pop}/{n.popMax}</td>
+                                            <td className="u-center">{n.popRate.toFixed(1)}%</td>
+                                            <td className="u-center">{n.agri}%</td>
+                                            <td className="u-center">{n.comm}%</td>
+                                            <td className="u-center">{n.secu}%</td>
+                                            <td className="u-center">{n.wall}%</td>
+                                            <td className="u-center">{n.def}%</td>
+                                            <td className="u-center" style={{ color: fg, backgroundColor: n.color }}>
                                                 {n.name}
                                             </td>
                                         </tr>
@@ -168,7 +169,7 @@ export default function NationStatsPanel() {
                                 })}
                                 {rows.length === 0 && !loading && (
                                     <tr>
-                                        <td colSpan={COLUMNS.length} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        <td colSpan={COLUMNS.length} className="u-center text-muted">
                                             통계가 없습니다.
                                         </td>
                                     </tr>
@@ -182,7 +183,7 @@ export default function NationStatsPanel() {
             {/* ── BLOCKED: 첩보 로그 / 역사 통계 (스키마 원천 부재) ─────────────────── */}
             {!error && (data?.sabotageLogBlocked || data?.historyStatsBlocked) && (
                 <GameCard>
-                    <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
+                    <p className="adm-note">
                         {/* legacy _admin5.php:264-268(getSabotageLogRecent) + :270-342(statistic 역사통계)는
                             opensamguk 스키마에 원천(_sabotagelog.txt / statistic 테이블)이 없어 미제공(값 날조 금지). */}
                         첩보 기록·역사 통계는 현재 데이터 원천이 없어 제공되지 않습니다.
