@@ -71,7 +71,8 @@ class CityConstRegistryTest {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(graph.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        assertEquals("59232774d1bbdb0a9141ee96688c8997d398745ca97291a299174f1a4c7cdfe7", digest)
+        // Geuk relocation: 8 removed and 9 added physical edges; v2 remains frozen above.
+        assertEquals("2c5a07d780407ae2c08ce2024e48271b3de2d65980db792b3852d122315345ac", digest)
     }
 
     @Test
