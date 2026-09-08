@@ -273,6 +273,157 @@ class AiTurnAdapterE2ETest {
         assertEquals("do건국", chosen.reason)
     }
 
+    @Test fun `Han wandering ruler recruits before founding and replays the resolved state`() {
+        fun replay(): Pair<List<String>, List<Any?>> {
+            val world = hanWanderingWorld(crew = 0)
+            val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+            val handler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+                aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
+            val actions = (1..2).map { month ->
+                world.setCurrentDate(YEAR, month)
+                adapter.beginGeneralTurn(20)
+                val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, month, "12:34")
+                assertFalse(outcome.fellBack)
+                if (month == 1) {
+                    assertTrue(outcome.definition.key in setOf("che_징병", "che_모병"),
+                        "a ruler short of assault troops must recruit instead of disbanding: ${outcome.definition.key}")
+                    assertTrue(world.getGeneralById(20)!!.crew >= 4000)
+                    assertEquals(0, world.getNationById(20)!!.level)
+                }
+                outcome.definition.key
+            }
+            assertEquals("che_건국", actions.last())
+            assertEquals(1, world.getNationById(20)!!.level)
+            assertEquals(20, world.listCities().single().nationId)
+            return actions to listOf(world.getGeneralById(20), world.getNationById(20), world.listCities(), world.peekLogs())
+        }
+        assertEquals(replay(), replay())
+    }
+
+    @Test fun `Han wandering ruler with troops keeps searching while awaiting a follower`() {
+        val world = hanWanderingWorld(crew = 7000, followers = false)
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+        val handler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+            aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
+        val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+        assertFalse(outcome.fellBack)
+        assertEquals("che_인재탐색", outcome.definition.key)
+        assertEquals(0, world.getNationById(20)!!.level)
+        assertEquals(20, world.getGeneralById(20)!!.nationId)
+    }
+
+    @Test fun `Han non-round assault deficit respects retained troops and type replacement`() {
+        val probeWorld = hanWanderingWorld(crew = 0)
+        val probe = AiTurnAdapter(probeWorld, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+            .chooseGeneralTurn(20, ReservedTurn("휴식", ""))
+        val availableType = probe.args["crewType"] as Int
+        // The Han default type needs tech 1000; the wandering nation has tech 0 and must replace it.
+        for (crewType in listOf(availableType, 2006)) {
+            val world = hanWanderingWorld(crew = 3000, defense = 1501)
+            world.updateGeneral(world.getGeneralById(20)!!.copy(crewTypeId = crewType))
+            val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+            val handler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+                aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
+            val recruit = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+            assertFalse(recruit.fellBack)
+            assertTrue(recruit.definition.key in setOf("che_징병", "che_모병"))
+            assertTrue(world.getGeneralById(20)!!.crew >= 3002)
+            if (crewType == availableType) {
+                assertEquals(crewType, world.getGeneralById(20)!!.crewTypeId)
+                assertEquals(3100, world.getGeneralById(20)!!.crew, "the existing 100-troop minimum covers a two-troop deficit")
+            } else {
+                assertNotEquals(crewType, world.getGeneralById(20)!!.crewTypeId)
+                assertEquals(3002, world.getGeneralById(20)!!.crew, "replacement must recruit the whole assault force")
+            }
+            val beforeFound = world.getGeneralById(20)!!.crew
+            adapter.beginGeneralTurn(20)
+            val found = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+            assertFalse(found.fellBack)
+            assertEquals("che_건국", found.definition.key)
+            assertEquals(beforeFound - 3002, world.getGeneralById(20)!!.crew)
+        }
+    }
+
+    @Test fun `fresh Han uprising recruits with starting resources and founds after ordinary joining`() {
+        fun replay(): List<Any?> {
+            val base = hanWanderingWorld(crew = 0)
+            val world = InMemoryTurnWorld(WorldSnapshot(
+                base.getState(), base.listGenerals().map { it.copy(nationId = 0, officerLevel = 1, gold = 1000, rice = 1000) },
+                base.listCities(), emptyList(), worldId = opensamguk.common.world.WorldId(1)))
+            val reservedHandler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR)
+            val uprising = reservedHandler.handle(20, ReservedTurn("che_거병", ""), YEAR, MONTH, "12:34")
+            assertFalse(uprising.fellBack)
+            assertEquals("che_거병", uprising.definition.key)
+            val nationId = world.getGeneralById(20)!!.nationId
+            assertTrue(nationId != 0)
+            assertEquals(0, world.getNationById(nationId)!!.level)
+            val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+            val handler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+                aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
+            val recruit = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+            assertFalse(recruit.fellBack)
+            assertTrue(recruit.definition.key in setOf("che_징병", "che_모병"), recruit.definition.key)
+            assertTrue(world.getGeneralById(20)!!.gold < 1000)
+            val join = reservedHandler.handle(21, ReservedTurn("che_임관", "{\"destNationID\":$nationId}"), YEAR, MONTH, "12:34")
+            assertFalse(join.fellBack)
+            assertEquals(nationId, world.getGeneralById(21)!!.nationId)
+            adapter.beginGeneralTurn(20)
+            val found = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+            assertFalse(found.fellBack)
+            assertEquals("che_건국", found.definition.key)
+            assertEquals(1, world.getNationById(nationId)!!.level)
+            return listOf(world.listGenerals(), world.listNations(), world.listCities(), world.peekLogs())
+        }
+        assertEquals(replay(), replay())
+    }
+
+    @Test fun `Han preparation keeps execution denials and existing disband fallback`() {
+        val world = hanWanderingWorld(crew = 0)
+        world.updateGeneral(world.getGeneralById(20)!!.copy(gold = 0, rice = 0))
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+        assertEquals("che_해산", adapter.chooseGeneralTurn(20, ReservedTurn("휴식", "")).actionCode)
+    }
+
+    @Test fun `AI founding opening guard follows global initialization even with stale nation metadata`() {
+        val world = hanWanderingWorld(crew = 7000)
+        world.setGameEnvValue("init_year", YEAR)
+        world.setGameEnvValue("init_month", MONTH)
+        world.updateNation(world.getNationById(20)!!.copy(meta = linkedMapOf("gennum" to 2, "init_year" to START_YEAR)))
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+        val chosen = adapter.chooseGeneralTurn(20, ReservedTurn("휴식", ""))
+        assertNotEquals("che_건국", chosen.actionCode, "the handler would reject founding as an initial-month no-op")
+        world.setCurrentDate(YEAR, MONTH + 2)
+        adapter.beginGeneralTurn(20)
+        assertEquals("che_건국", adapter.chooseGeneralTurn(20, ReservedTurn("휴식", "")).actionCode)
+    }
+
+    @Test fun `Han scholar ruler prepares founding using the active unit catalog`() {
+        val world = hanWanderingWorld(crew = 0)
+        world.updateGeneral(world.getGeneralById(20)!!.copy(stats = GeneralStats(70, 30, 100)))
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+        val handler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+            aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
+        val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+        assertFalse(outcome.fellBack)
+        assertTrue(outcome.definition.key in setOf("che_징병", "che_모병"), outcome.definition.key)
+        assertTrue(world.getGeneralById(20)!!.crew >= 4000)
+    }
+
+    private fun hanWanderingWorld(crew: Int, followers: Boolean = true, defense: Int = 2000): InMemoryTurnWorld {
+        val county = CityConstRegistry.of("han-world-v3").all().values.first { it.level >= 10 }
+        val state = baseState().copy(config = linkedMapOf("mapName" to "han-world-v3", "unitSet" to "han"))
+        val ruler = general(id = 20, nationId = 20, cityId = county.id, officerLevel = 12).copy(crew = crew)
+        val follower = general(id = 21, nationId = 20, cityId = county.id)
+        return InMemoryTurnWorld(WorldSnapshot(
+            state, if (followers) listOf(ruler, follower) else listOf(ruler),
+            listOf(city(county.id, 0).copy(level = county.level, defence = defense, supplyState = 0,
+                population = 100_000, populationMax = 100_000,
+                meta = linkedMapOf("trust" to 100, "pop" to 100_000, "pop_max" to 100_000))),
+            listOf(nation(20, 0).copy(level = 0, meta = linkedMapOf("gennum" to if (followers) 2 else 1))),
+            worldId = opensamguk.common.world.WorldId(state.id),
+        ))
+    }
+
     @Test fun `a war-ready NPC chooses and resolves sortie through the live adapter gate`() {
         val attackerCity = city(id = 7, nationId = 1).copy(level = 8, supplyState = 1, frontState = 3)
         val targetCity = city(id = 31, nationId = 2).copy(level = 6, supplyState = 1, frontState = 3)

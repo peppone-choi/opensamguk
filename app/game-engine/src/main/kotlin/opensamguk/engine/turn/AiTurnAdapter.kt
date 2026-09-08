@@ -860,6 +860,7 @@ class AiTurnAdapter(
             fullIntel = AiSeed.genTypeIntel(statCalc),
             nationTech = nationTech,
             selfCrew = general.crew,
+            selfCrewTypeId = general.crewTypeId,
             selfCity = logicCity,
             cityDevelRate = cityDevelRateMap(logicCity), // S3 — acting-city ratios (index-0 of the triples).
             techLimited = techLimit(startYear, year, nationTech.toDouble()),        // S5
@@ -1890,8 +1891,11 @@ class AiTurnAdapter(
     ): GeneralAiInput {
         val nation = world.getNationById(general.nationId)
         val capital = nation?.capitalCityId != null && nation.capitalCityId != 0
-        val initYear = (nation?.meta?.get("init_year") as? Number)?.toInt() ?: startYear
-        val initMonth = (nation?.meta?.get("init_month") as? Number)?.toInt() ?: 1
+        // Global initialization owns the resolver's opening guard. Retain the historical fallback
+        // only for snapshots without that global timestamp.
+        val initMeta = world.getState().meta.takeIf { it["init_year"] is Number } ?: nation?.meta.orEmpty()
+        val initYear = (initMeta["init_year"] as? Number)?.toInt() ?: startYear
+        val initMonth = (initMeta["init_month"] as? Number)?.toInt() ?: 1
         val relYearMonth = (year * 12 + month) - (initYear * 12 + initMonth)
         val npcMessageProb = GameConst.npcMessageFreqByDay * turnTerm / (60.0 * 24.0)
         return GeneralAiInput(

@@ -10,6 +10,8 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.world.isFoundableCityLevel
+import opensamguk.logic.world.isHanMapName
+import opensamguk.logic.world.foundAssaultCrewCost
 
 /**
  * L-GENFOUND — the founding / nation-selection `do<한글>` command family (거병/해산/건국/선양/국가선택/사망대비/중립).
@@ -451,6 +453,46 @@ object GenFoundFamily {
         // PHP `:3315` — setAuxVar('movingTargetCityID', null) AFTER the gate.
         ctx.recordGeneralKv(ctx.selfGeneralId, MOVING_TARGET_KEY, MOVING_TARGET_CLEARED_VALUE)
         return ChosenCommand(FOUND_NATION_ACTION, args) // :3317
+    }
+
+    /** Prepare a Han wandering nation without changing the execution gates or legacy decisions. */
+    fun do건국준비(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ ->
+        prepareHanFounding(ctx)
+    }
+
+    private fun prepareHanFounding(ctx: GeneralAiContext): ChosenCommand? {
+        if (!isHanMapName(ctx.cityConst.mapName)) return null
+        val city = ctx.selfCity ?: return null
+        if (ctx.instance.nation.level != 0 || ctx.instance.nation.nation == 0 ||
+            ctx.selfOfficerLevel != 12 || city.nationId != 0 || !isFoundableCityLevel(city.level) ||
+            ctx.dupLordAtSelfCity > 1
+        ) return null
+
+        val assaultCrew = foundAssaultCrewCost(ctx.cityConst.mapName, city.defense)
+        if (ctx.selfCrew < assaultCrew && assaultCrew <= ctx.leadershipWithInjury.toInt() * 100) {
+            // Reuse the active catalog's available units, preserving score order and stable ties.
+            // Founding needs the assault deficit, not the war policy's full troop target or wartime gate.
+            val armTypes = (listOfNotNull(ctx.recruitArmType) + ctx.recruitArmTypeWeights.map { it.first }).distinct()
+            val crewTypes = armTypes.flatMap(ctx.recruitCrewScoresFor).distinctBy { it.first }
+                .sortedByDescending { it.second }
+            val actions = buildList {
+                if (ctx.generalPolicy.can징병) add(GenDomesticFamily.RECRUIT_ACTION)
+                if (ctx.generalPolicy.can모병) add(GenDomesticFamily.RECRUIT_HIRE_ACTION)
+            }
+            for ((crewType, _) in crewTypes) {
+                val retainedCrew = if (crewType == ctx.selfCrewTypeId) ctx.selfCrew else 0
+                val args = linkedMapOf<String, Any?>("crewType" to crewType, "amount" to assaultCrew - retainedCrew)
+                for (action in actions) {
+                    if (ctx.candidateAllowed(action, args)) return ChosenCommand(action, args)
+                }
+            }
+        }
+
+        // Search creates a neutral NPC; joining remains a separate normal action. No free follower.
+        if (ctx.world.nationGenerals.isEmpty() && ctx.candidateAllowed(TALENT_SEARCH_ACTION, emptyMap())) {
+            return ChosenCommand(TALENT_SEARCH_ACTION, emptyMap())
+        }
+        return null
     }
 
     // --- do선양 (PHP `:3320-3332`) — ZERO draws; che_선양 {destGeneralID = min(no) F-QUAR substitute} ---
