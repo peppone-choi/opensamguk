@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import { api } from '../../../lib/api';
 import type { JoinFormResponse } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
@@ -452,71 +453,49 @@ export default function JoinPage() {
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-lg)' }}>
-        장수 생성
-      </h1>
+      <PageHead title="장수 생성" />
 
       {error && (
-        <div style={{
-          background: 'var(--color-danger-bg, #fee2e2)',
-          color: 'var(--color-danger, #dc2626)',
-          padding: 'var(--space-md)',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: 'var(--space-md)',
-        }}>
-          {error}
-        </div>
+        <div className="join-notice join-notice--error" role="alert">{error}</div>
       )}
 
       {joinStatus && (
-        <div style={{
-          background: 'var(--color-surface-2, #1f2937)',
-          color: 'var(--color-text)',
-          padding: 'var(--space-md)',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: 'var(--space-md)',
-        }}>
-          {joinStatus}
-        </div>
+        <div className="join-notice" role="status">{joinStatus}</div>
       )}
 
       {/* 국가 목록 — 국가명(색상배경) + 임관권유문. 표시 전용(입장 안 함, 재야로 시작). 레거시 PageJoin nation-list. */}
-      <section style={{ marginBottom: 'var(--space-lg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-surface-2, #1f2937)', fontWeight: 600 }}>
-          <span style={{ flex: 1 }}>국가 목록</span>
-          <button type="button" onClick={() => setDisplayTable((v) => !v)} style={{ fontSize: 'var(--text-sm)', padding: '4px 10px' }}>
+      <section className="join-nations">
+        <div className="join-nations__head">
+          <span className="join-nations__title">국가 목록</span>
+          <Button size="sm" onClick={() => setDisplayTable((v) => !v)}>
             {displayTable ? '숨기기' : '보이기'}
-          </button>
-          <button type="button" disabled={!displayTable} onClick={() => setToggleZoom((v) => !v)} style={{ fontSize: 'var(--text-sm)', padding: '4px 10px', opacity: displayTable ? 1 : 0.5 }}>
-            {toggleZoom ? '작게 보기' : '크게 보기'}
-          </button>
+          </Button>
+          {displayTable ? (
+            <Button size="sm" onClick={() => setToggleZoom((v) => !v)}>
+              {toggleZoom ? '작게 보기' : '크게 보기'}
+            </Button>
+          ) : (
+            <Button size="sm" disabled reason="국가 목록을 먼저 보이기 해야 합니다.">
+              {toggleZoom ? '작게 보기' : '크게 보기'}
+            </Button>
+          )}
         </div>
         {displayTable && (
           <div>
             {shuffledNations.length === 0 ? (
-              <div style={{ padding: 'var(--space-md)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>표시할 국가가 없습니다.</div>
+              <div className="join-nations__empty">표시할 국가가 없습니다.</div>
             ) : (
               shuffledNations.map((nation) => {
                 const scoutText = nation.scoutMsg ?? '-';
                 return (
-                  <div key={nation.id} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', borderTop: '1px solid var(--color-border)' }}>
-                    <div style={{
-                      backgroundColor: nation.color,
-                      color: isBrightColor(nation.color) ? '#000' : '#fff',
-                      fontSize: '1.1em',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      padding: 'var(--space-sm)', textAlign: 'center',
-                    }}>
+                  <div key={nation.id} className="join-nations__row">
+                    <div
+                      className="join-nations__name"
+                      style={{ backgroundColor: nation.color, color: isBrightColor(nation.color) ? '#000' : '#fff' }}
+                    >
                       {nation.name}
                     </div>
-                    <div
-                      style={{
-                        padding: 'var(--space-sm) var(--space-md)',
-                        fontSize: toggleZoom ? 'var(--text-base)' : 'var(--text-sm)',
-                        color: 'var(--color-text-muted)',
-                        alignSelf: 'center',
-                      }}
-                    >
+                    <div className={`join-nations__scout${toggleZoom ? ' join-nations__scout--zoom' : ''}`}>
                       <SafeHtml html={scoutText} />
                     </div>
                   </div>
@@ -527,9 +506,9 @@ export default function JoinPage() {
         )}
       </section>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <form onSubmit={handleSubmit} className="join-form">
         <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>장수명</label>
+          <label className="join-field__label">장수명</label>
           {/* blockCustomGeneralName(block_general_create & 2)은 FE에 노출되지 않아 '무작위' 전환을 감지할 수 없다(backlog). */}
           <input
             type="text"
@@ -537,16 +516,16 @@ export default function JoinPage() {
             onChange={(e) => setName(e.target.value)}
             maxLength={18}
             required
-            style={{ width: '100%', padding: 'var(--space-sm)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+            className="join-field__control"
           />
         </div>
 
         {/* 전콘 사용 — 레거시 PageJoin.vue: 아이콘 미리보기 + 'args.pic' 체크박스(Join.php 'pic' 필드로 전송) */}
         <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+          <label className="join-field__label">전콘 사용</label>
+          <div className="join-pic">
             <Portrait picture={pic ? joinForm?.member.picture : null} imageServer={pic ? joinForm?.member.imageServer : 0} size="card-126" alt="전콘" />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <label className="join-check">
               <input
                 type="checkbox"
                 checked={pic}
@@ -559,28 +538,28 @@ export default function JoinPage() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>성격</label>
+          <label className="join-field__label">성격</label>
           <select
             value={character}
             onChange={(e) => setCharacter(e.target.value)}
-            style={{ width: '100%', padding: 'var(--space-sm)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+            className="join-field__control"
           >
             {PERSONALITIES.map((p) => (
               <option key={p} value={p}>{PERSONALITY_INFO[p]?.name ?? p}</option>
             ))}
           </select>
           {/* 선택 성격 설명 — 레거시 availablePersonality[args.character].info */}
-          <small style={{ display: 'block', marginTop: 'var(--space-xs)', color: 'var(--color-text-muted)' }}>
+          <small className="join-field__hint">
             {PERSONALITY_INFO[character]?.info ?? ''}
           </small>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
-            능력치 <small style={{ color: 'var(--color-text-muted)' }}>(통/무/지/정/매)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
+          <label className="join-field__label">
+            능력치 <small className="text-muted">(통/무/지/정/매)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span className="page-error">초과 {-remaining}</span>}
           </label>
 
-          <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <div className="join-presets">
             {([
               ['random', '랜덤형'],
               ['leadpow', '통솔무력형'],
@@ -588,9 +567,9 @@ export default function JoinPage() {
               ['powint', '무력지력형'],
               ['allRandom', '전체 랜덤형'],
             ] as const).map(([t, label]) => (
-              <button key={t} type="button" onClick={() => preset(t)} style={{ fontSize: 'var(--text-sm)', padding: '4px 8px' }}>
+              <Button key={t} size="sm" onClick={() => preset(t)}>
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -601,15 +580,15 @@ export default function JoinPage() {
             { label: '정치', value: politics, set: setPolitics },
             { label: '매력', value: charm, set: setCharm },
           ].map(({ label, value, set }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
-              <span style={{ width: 48, fontWeight: 500 }}>{label}</span>
+            <div key={label} className="join-stat">
+              <span className="join-stat__label">{label}</span>
               <input
                 type="range"
                 min={STAT_MIN}
                 max={STAT_MAX}
                 value={value}
                 onChange={(e) => set(parseInt(e.target.value))}
-                style={{ flex: 1 }}
+                className="join-stat__range"
               />
               <input
                 type="number"
@@ -617,50 +596,50 @@ export default function JoinPage() {
                 max={STAT_MAX}
                 value={value}
                 onChange={(e) => set(Math.max(STAT_MIN, Math.min(STAT_MAX, parseInt(e.target.value) || STAT_MIN)))}
-                style={{ width: 64, textAlign: 'center', padding: '4px' }}
+                className="join-stat__number"
               />
             </div>
           ))}
         </div>
 
         {/* 능력치 안내문 2종 — 레거시 PageJoin.vue 충실 이식 */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)' }}>
-          <p style={{ textAlign: 'center', color: 'orange', margin: 0 }}>
+        <div className="join-section">
+          <p className="join-warn">
             모든 능력치는 ( {STAT_MIN} &lt;= 능력치 &lt;= {STAT_MAX} ) 사이로 잡으셔야 합니다.<br />그 외의 능력치는 가입되지 않습니다.
           </p>
-          <p style={{ textAlign: 'center', margin: 'var(--space-sm) 0 0', color: 'var(--color-text-muted)' }}>
+          <p className="join-note">
             능력치의 총합은 {DEFAULT_STAT_TOTAL} 입니다. 가입후 {BORN_MIN_STAT_BONUS} ~ {BORN_MAX_STAT_BONUS} 의 능력치 보너스를 받게 됩니다.<br />임의의 도시에서 재야로 시작하며 건국과 임관은 게임 내에서 실행합니다.
           </p>
         </div>
 
-        <section style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-            <strong style={{ flex: 1 }}>유산 포인트 사용</strong>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-sm)' }}>
+        <section className="join-section">
+          <div className="join-inherit__head">
+            <strong className="join-inherit__title">유산 포인트 사용</strong>
+            <label className="join-check join-check--sm">
               <input type="checkbox" checked={displayInherit} onChange={(e) => setDisplayInherit(e.target.checked)} />
               {displayInherit ? '숨기기' : '보이기'}
             </label>
           </div>
           {displayInherit && (
-            <div style={{ display: 'grid', gap: 'var(--space-sm)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+            <div className="join-inherit">
+              <div className="join-inherit__pair">
                 <label>
-                  <span style={{ display: 'block', marginBottom: 4 }}>보유한 유산 포인트</span>
-                  <input type="text" value={joinForm?.inheritTotalPoint ?? 0} readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                  <span className="join-inherit__label">보유한 유산 포인트</span>
+                  <input type="text" value={joinForm?.inheritTotalPoint ?? 0} readOnly className="join-field__control" />
                 </label>
                 <label>
-                  <span style={{ display: 'block', marginBottom: 4 }}>필요 유산 포인트</span>
-                  <input type="text" value={inheritRequiredPoint} readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                  <span className="join-inherit__label">필요 유산 포인트</span>
+                  <input type="text" value={inheritRequiredPoint} readOnly className="join-field__control" />
                 </label>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-sm)' }}>
+              <div className="join-inherit__grid">
                 <label>
-                  <span style={{ display: 'block', marginBottom: 4 }}>천재로 생성</span>
+                  <span className="join-inherit__label">천재로 생성</span>
                   <select
                     value={inheritSpecial ?? ''}
                     disabled={joinForm === null || joinForm.geniusRemaining <= 0}
                     onChange={(e) => setInheritSpecial(e.target.value || undefined)}
-                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                    className="join-field__control"
                   >
                     <option value="">사용안함</option>
                     {Object.entries(joinForm?.availableSpecialWar ?? {}).map(([key, special]) => (
@@ -672,12 +651,12 @@ export default function JoinPage() {
                   )}
                 </label>
                 <label>
-                  <span style={{ display: 'block', marginBottom: 4 }}>도시</span>
+                  <span className="join-inherit__label">도시</span>
                   <select
                     value={inheritCity ?? ''}
                     disabled={joinForm === null}
                     onChange={(e) => setInheritCity(e.target.value === '' ? undefined : Number(e.target.value))}
-                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                    className="join-field__control"
                   >
                     <option value="">사용안함</option>
                     {(joinForm?.cities ?? []).map((city) => (
@@ -686,12 +665,12 @@ export default function JoinPage() {
                   </select>
                 </label>
                 <label>
-                  <span style={{ display: 'block', marginBottom: 4 }}>턴 시간 지정</span>
+                  <span className="join-inherit__label">턴 시간 지정</span>
                   <select
                     value={inheritTurntimeZone ?? ''}
                     disabled={joinForm === null}
                     onChange={(e) => setInheritTurntimeZone(e.target.value === '' ? undefined : Number(e.target.value))}
-                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                    className="join-field__control"
                   >
                     <option value="">사용안함</option>
                     {turnTimeZoneList.map((zone, index) => (
@@ -699,9 +678,9 @@ export default function JoinPage() {
                     ))}
                   </select>
                 </label>
-                <fieldset disabled={joinForm === null} style={{ border: '1px solid var(--color-border)', padding: 'var(--space-sm)' }}>
+                <fieldset disabled={joinForm === null} className="join-bonus">
                   <legend>추가 능력치 고정(통/무/지)</legend>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-xs)' }}>
+                  <div className="join-bonus__grid">
                     {(['통솔', '무력', '지력'] as const).map((statName, index) => (
                       <input
                         key={statName}
@@ -727,20 +706,20 @@ export default function JoinPage() {
           )}
         </section>
 
-        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
+        <div className="join-submit">
           {(() => {
             const block = loading ? '생성 중입니다' : total > DEFAULT_STAT_TOTAL ? `능력치 합계가 ${DEFAULT_STAT_TOTAL}을 넘습니다` : null;
             const label = loading ? '생성 중...' : '장수 생성';
             return block ? (
-              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }} disabled reason={block}>{label}</Button>
+              <Button type="submit" variant="primary" className="join-submit__go" disabled reason={block}>{label}</Button>
             ) : (
-              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }}>{label}</Button>
+              <Button type="submit" variant="primary" className="join-submit__go">{label}</Button>
             );
           })()}
           {loading ? (
-            <Button type="button" variant="ghost" style={{ minHeight: 44, padding: '0 var(--space-lg)' }} disabled reason="생성 중입니다">다시 입력</Button>
+            <Button type="button" variant="ghost" className="join-submit__reset" disabled reason="생성 중입니다">다시 입력</Button>
           ) : (
-            <Button type="button" variant="ghost" onClick={resetArgs} style={{ minHeight: 44, padding: '0 var(--space-lg)' }}>다시 입력</Button>
+            <Button type="button" variant="ghost" onClick={resetArgs} className="join-submit__reset">다시 입력</Button>
           )}
         </div>
       </form>

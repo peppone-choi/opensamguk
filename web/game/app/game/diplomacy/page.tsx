@@ -241,7 +241,7 @@ export default function DiplomacyPage() {
             <Shell>
                 <PageHead title="외교부" />
                 <GameCard>
-                    <p style={{ color: 'var(--text-secondary)' }}>권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
+                    <p className="text-secondary">권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
                 </GameCard>
             </Shell>
         );
@@ -251,14 +251,14 @@ export default function DiplomacyPage() {
         <Shell>
             <PageHead title="외교부" />
 
-            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="dip-toolbar">
                 <button onClick={() => void fetchData()}>새로고침</button>
             </div>
 
             {/* 외교 빠른 명령 — route each through CommandModal (nation-target SelectNationField). */}
-            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+            <GameCard className="stack-card">
                 <SectionHeader as="h2" title="외교 명령" />
-                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                <div className="dip-chips">
                     {DIPLO_QUICK_ACTIONS.map(act => (
                         <button
                             key={act.code}
@@ -278,21 +278,21 @@ export default function DiplomacyPage() {
 
             {/* 서신 작성 폼 — 수뇌부 전용 */}
             {canWrite && (
-                <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+                <GameCard className="stack-card">
+                    <div className="dip-form__head">
                         <SectionHeader as="h2" title="외교 서신 작성" />
                         <button onClick={() => setShowWriteForm(!showWriteForm)}>
                             {showWriteForm ? '접기' : '펼치기'}
                         </button>
                     </div>
                     {showWriteForm && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                        <div className="dip-form__body">
                             <div>
-                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>수신국</label>
+                                <label className="dip-label">수신국</label>
                                 <select
                                     value={destNationId}
                                     onChange={(e) => setDestNationId(Number(e.target.value))}
-                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                    className="dip-control"
                                 >
                                     <option value={0}>선택하세요</option>
                                     {candidateNations.map(n => (
@@ -303,14 +303,14 @@ export default function DiplomacyPage() {
                                 </select>
                             </div>
                             <div>
-                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>이전 문서</label>
+                                <label className="dip-label">이전 문서</label>
                                 <select
                                     value={prevNo ?? ''}
                                     onChange={(e) => {
                                         const v = e.target.value;
                                         setPrevNo(v === '' ? null : Number(v));
                                     }}
-                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                    className="dip-control"
                                 >
                                     <option value="">신규</option>
                                     {letters
@@ -323,18 +323,18 @@ export default function DiplomacyPage() {
                                 </select>
                             </div>
                             <div>
-                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>요약</label>
+                                <label className="dip-label">요약</label>
                                 <input
                                     type="text"
                                     value={briefDraft}
                                     onChange={(e) => setBriefDraft(e.target.value)}
                                     placeholder="요약문을 입력하세요"
-                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                    className="dip-control"
                                 />
                             </div>
                             <div>
-                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>본문</label>
-                                <div style={{ marginTop: 'var(--space-xs)' }}>
+                                <label className="dip-label">본문</label>
+                                <div className="dip-form__editor">
                                     <RichTextEditor
                                         ariaLabel="외교 서신 본문"
                                         maxTextLength={DIPLOMACY_DETAIL_MAX_CODE_POINTS}
@@ -343,7 +343,7 @@ export default function DiplomacyPage() {
                                     />
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <div className="dip-form__actions">
                                 <button
                                     disabled={briefDraft.trim().length === 0 || detailDraftTooLong || destNationId === 0}
                                     onClick={handleSendLetter}
@@ -356,11 +356,11 @@ export default function DiplomacyPage() {
                 </GameCard>
             )}
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p className="page-error">{error}</p>}
 
             {toast && (
-                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                <div className="toast toast--pinned">
                     {toast}
                 </div>
             )}
@@ -368,12 +368,12 @@ export default function DiplomacyPage() {
             {!loading && !error && (
                 <>
                     {/* 외교 대상 국가 — candidate counter-nations (excludes self & 재야). */}
-                    <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                    <GameCard className="stack-card">
                         <SectionHeader as="h2" title="외교 대상 국가" />
                         {nations.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>외교 대상 국가가 없습니다.</p>
+                            <p className="text-muted">외교 대상 국가가 없습니다.</p>
                         ) : (
-                            <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                            <div className="dip-chips">
                                 {nations.map(n => {
                                     const textColor = isBrightColor(n.color) ? '#000000' : '#ffffff';
                                     return (
@@ -394,10 +394,10 @@ export default function DiplomacyPage() {
                     <SectionHeader as="h2" title="외교 서신" />
                     {letters.length === 0 ? (
                         <GameCard>
-                            <p style={{ color: 'var(--text-muted)' }}>주고받은 외교 서신이 없습니다.</p>
+                            <p className="text-muted">주고받은 외교 서신이 없습니다.</p>
                         </GameCard>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                        <div className="dip-letters">
                             {letters.map(letter => (
                                 <LetterCard
                                     key={letter.no}
@@ -482,33 +482,22 @@ function LetterCard({
     };
 
     return (
-        <GameCard style={{ padding: 0, overflow: 'hidden' }}>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 'var(--space-sm)',
-                    padding: 'var(--space-sm) var(--space-md)',
-                    backgroundColor: headerBg,
-                    color: headerColor,
-                    flexWrap: 'wrap',
-                }}
-            >
-                <span style={{ fontWeight: 600 }}>{counter.nationName}</span>
-                <span style={{ fontSize: 'var(--text-sm)', opacity: 0.85 }}>
+        <GameCard className="dip-letter">
+            <div className="dip-letter__head" style={{ backgroundColor: headerBg, color: headerColor }}>
+                <span className="dip-letter__nation">{counter.nationName}</span>
+                <span className="dip-letter__meta">
                     #{letter.no} · {letter.date}
                 </span>
             </div>
 
-            <div style={{ padding: 'var(--space-md)' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap', marginBottom: 'var(--space-sm)' }}>
+            <div className="dip-letter__body">
+                <div className="dip-letter__row">
                     <StatusBadge variant={variant}>{stateText}</StatusBadge>
                     {stateOptText && (
-                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--gold)' }}>({stateOptText})</span>
+                        <span className="dip-letter__opt">({stateOptText})</span>
                     )}
                     {/* 이전 문서 — legacy t_diplomacy.php th '이전 문서' / value '#N' 또는 '신규' */}
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                    <span className="dip-letter__prev">
                         이전 문서: {letter.prev_no != null ? `#${letter.prev_no}` : '신규'}
                     </span>
                 </div>
@@ -516,16 +505,16 @@ function LetterCard({
                 {/* 송신 → 수신 서명인 — legacy t_diplomacy.php .letterSrc/.letterDest:
                    signerImg(generalIcon) + signerNation(nationName) + signerName(generalName).
                    미서명 수신측(generalName 부재)은 nation만 표시(legacy `'generalName' in dest` 분기). */}
-                <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap', marginBottom: 'var(--space-sm)', fontSize: 'var(--text-sm)' }}>
+                <div className="dip-letter__row dip-letter__row--sign">
                     <Signer party={letter.src} />
-                    <span style={{ color: 'var(--text-muted)' }}>→</span>
+                    <span className="text-muted">→</span>
                     <Signer party={letter.dest} />
                 </div>
 
                 {/* 내용(국가 내 공개) — legacy t_diplomacy.php th, 항상 표시(평문, 개행 보존) */}
-                <div style={{ marginBottom: letter.detail ? 'var(--space-sm)' : 0 }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(국가 내 공개)</span>
-                    <div style={{ margin: 'var(--space-xs) 0 0', whiteSpace: 'pre-wrap' }}>
+                <div className={letter.detail ? 'dip-letter__section' : undefined}>
+                    <span className="dip-label">내용(국가 내 공개)</span>
+                    <div className="dip-letter__text">
                         <SafeHtml html={letter.brief} />
                     </div>
                 </div>
@@ -533,19 +522,11 @@ function LetterCard({
                 {/* 내용(외교권자 전용) — legacy th. detail은 permission<3 시 BE에서 '(권한이 부족합니다)'로 마스킹됨 */}
                 {letter.detail && (
                     <div
-                        style={{
-                            borderTop: '1px solid var(--border-subtle)',
-                            paddingTop: 'var(--space-sm)',
-                        }}
+                        className="dip-letter__secret"
                     >
-                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(외교권자 전용)</span>
+                        <span className="dip-label">내용(외교권자 전용)</span>
                         <div
-                            style={{
-                                whiteSpace: 'pre-wrap',
-                                color: 'var(--text-secondary)',
-                                fontSize: 'var(--text-sm)',
-                                margin: 'var(--space-xs) 0 0',
-                            }}
+                            className="dip-letter__text dip-letter__text--secret"
                         >
                             <SafeHtml html={letter.detail} />
                         </div>
@@ -553,11 +534,11 @@ function LetterCard({
                 )}
 
                 {(canRollback || canRespond || showDestroy) && (
-                    <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)', justifyContent: 'flex-end' }}>
+                    <div className="dip-letter__actions">
                         {canRollback && (
                             <button
                                 onClick={() => onRollback(letter.no)}
-                                style={{ fontSize: 'var(--text-sm)' }}
+                                className="dip-btn"
                             >
                                 회수
                             </button>
@@ -566,13 +547,13 @@ function LetterCard({
                             <>
                                 <button
                                     onClick={approve}
-                                    style={{ fontSize: 'var(--text-sm)' }}
+                                    className="dip-btn"
                                 >
                                     승인
                                 </button>
                                 <button
                                     onClick={reject}
-                                    style={{ fontSize: 'var(--text-sm)' }}
+                                    className="dip-btn"
                                 >
                                     거부
                                 </button>
@@ -582,7 +563,7 @@ function LetterCard({
                             <button
                                 onClick={() => onDestroy(letter.no)}
                                 disabled={destroyDisabled}
-                                style={{ fontSize: 'var(--text-sm)' }}
+                                className="dip-btn"
                             >
                                 파기
                             </button>
@@ -600,14 +581,13 @@ function LetterCard({
 function Signer({ party }: { party: DiplomacyLetterParty }) {
     const nationColor = party.nationColor || 'var(--text-secondary)';
     return (
-        <span style={{ display: 'inline-flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
+        <span className="dip-signer">
             {party.generalIcon && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={party.generalIcon}
                     alt=""
-                    className="generalIcon"
-                    style={{ width: 20, height: 20, borderRadius: 2, objectFit: 'contain' }}
+                    className="generalIcon dip-signer__icon"
                 />
             )}
             <span style={{ color: nationColor, fontWeight: 500 }}>{party.nationName}</span>
