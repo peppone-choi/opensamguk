@@ -1568,3 +1568,31 @@ textarea:focus {
 .admin-report__empty { margin: 0; padding: 12px; font-size: 12px; color: var(--muted); }
 .admin-report__actions { display: inline-flex; gap: 4px; }
 @media (max-width: 900px) { .board-layout { grid-template-columns: 1fr; } }
+
+/* 전콘 편집 — 승인된 각진 프레임과 기존 색상 토큰을 사용한다. */
+.portrait-editor { width: 100%; min-width: 0; display: grid; gap: var(--space-md); }
+.portrait-editor__choices { display: flex; gap: var(--space-sm); }
+.portrait-editor__choices > button { flex: 1; border: 1px solid var(--border-medium); border-radius: 0; }
+.portrait-editor__choices > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); background: var(--bg-hover); }
+.portrait-editor__workspace { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: var(--space-lg); align-items: flex-start; }
+.portrait-editor__viewport { position: relative; width: 100%; overflow: hidden; background: #fff; border: 1px solid var(--gold); touch-action: none; cursor: grab; }
+.portrait-editor__viewport:active { cursor: grabbing; }
+.portrait-editor__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33%, #ffffff55 33%, #ffffff55 33.3%, transparent 33.3%, transparent 66%, #ffffff55 66%, #ffffff55 66.3%, transparent 66.3%), linear-gradient(to bottom, transparent 33%, #ffffff55 33%, #ffffff55 33.3%, transparent 33.3%, transparent 66%, #ffffff55 66%, #ffffff55 66.3%, transparent 66.3%); }
+.portrait-editor__controls { min-width: 0; border: 0; display: grid; gap: var(--space-md); }
+.portrait-editor__controls legend { font-weight: 700; margin-bottom: var(--space-sm); }
+.portrait-editor__controls label { display: grid; gap: var(--space-sm); }
+.portrait-editor__controls input { width: 100%; min-height: 32px; accent-color: var(--gold); }
+.portrait-editor__controls p, .portrait-editor__hint { font-size: 0.85rem; color: var(--text-secondary); }
+.portrait-editor__previews { display: flex; align-items: flex-start; gap: var(--space-md); flex-wrap: wrap; }
+.portrait-editor__previews figure { margin: 0; }
+.portrait-editor__preview { width: 96px; overflow: hidden; position: relative; background: #fff; border: 1px solid var(--border-medium); }
+.portrait-editor__preview--hero { width: 112px; }
+.portrait-editor__preview--card { width: 106px; }
+.portrait-editor__previews figcaption { margin-top: var(--space-xs); font-size: 0.85rem; }
+.portrait-editor__previews small { display: block; color: var(--text-secondary); }
+@media (max-width: 600px) {
+    .portrait-editor__workspace { grid-template-columns: minmax(0, 1fr); }
+    .portrait-editor__viewport { max-width: 280px; justify-self: center; }
+    .portrait-editor__previews { gap: var(--space-sm); }
+    .portrait-editor__preview, .portrait-editor__preview--hero, .portrait-editor__preview--card { width: 80px; }
+}

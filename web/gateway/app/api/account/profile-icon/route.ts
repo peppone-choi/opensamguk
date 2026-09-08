@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     if (!access) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
     if ((req.headers.get('content-type') ?? '').includes('multipart/form-data')) {
-        // 업로드: 브라우저 body에서 file part만 추려 재구성한다. 임의 필드(userId/path/imgsvr/URL) 주입을
+        // 업로드: 브라우저 body에서 file·crops part만 추려 재구성한다. 임의 필드(userId/path/imgsvr/URL) 주입을
         // 원천 차단하고, 신원은 오직 httpOnly 쿠키의 Bearer에서만 파생된다.
         const form = await req.formData().catch(() => null);
         const file = form?.get('file');
@@ -36,6 +36,11 @@ export async function POST(req: Request) {
         }
         const forward = new FormData();
         forward.append('file', file, file.name);
+        const crops = form?.get('crops');
+        if (crops !== null && crops !== undefined) {
+            if (typeof crops !== 'string' || crops.length > 4096) return NextResponse.json({ error: '자르기 정보가 올바르지 않습니다.' }, { status: 400 });
+            forward.append('crops', crops);
+        }
         try {
             const upstream = await fetch(ICON_URL, {
                 method: 'POST',

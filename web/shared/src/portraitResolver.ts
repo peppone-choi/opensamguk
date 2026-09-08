@@ -23,6 +23,7 @@ const HAS_EXT = /\.(jpg|jpeg|png|gif|webp)$/i;
 const SHARED_ICON = /^[A-Za-z0-9_-]+(\.(jpg|jpeg|png|gif|webp))?$/i;
 const RTK14_PORTRAIT = /^(\d{5})(?:\.png)?$/;
 /** gateway-api canonical managed 파일명(LocalProfileIconStorage MANAGED_FILE): 8자리 hex + 관리 확장자. */
+const MANAGED_BUNDLE = /^[0-9a-f]{8}\.portrait$/;
 const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
 
 export interface PortraitResolver {
@@ -50,6 +51,8 @@ export function createPortraitResolver(cdnBase: string, options: { readonly defa
   function rtk14OfficerId(picture?: string | null): number | null {
     const normalizedPicture = picture?.trim();
     if (!normalizedPicture) return null;
+    // Verified legacy alias: 1678 is 희지재 in all 20 referencing scenarios; registry10380 is 戯志才.
+    if (normalizedPicture === '1678' || normalizedPicture === '1678.jpg' || normalizedPicture === '1678.png') return 10380;
     const match = RTK14_PORTRAIT.exec(normalizedPicture);
     if (!match) return null;
     const officerId = Number(match[1]);
@@ -61,6 +64,7 @@ export function createPortraitResolver(cdnBase: string, options: { readonly defa
     const normalizedPicture = picture?.trim();
     if (!normalizedPicture) return DEFAULT_PORTRAIT;
     if (imageServer) {
+      if (MANAGED_BUNDLE.test(normalizedPicture)) return `/profile-icons/${normalizedPicture}/card.jpg`;
       return MANAGED_ICON.test(normalizedPicture) ? `/d_pic/${normalizedPicture}` : DEFAULT_PORTRAIT;
     }
     const officerId = rtk14OfficerId(normalizedPicture);
@@ -75,7 +79,14 @@ export function createPortraitResolver(cdnBase: string, options: { readonly defa
     imageServer: number | null | undefined,
     variant: PortraitVariant,
   ): string {
-    if (imageServer) return portraitUrl(picture, imageServer);
+    if (imageServer) {
+      const name = picture?.trim() ?? '';
+      if (MANAGED_BUNDLE.test(name)) {
+        const kind = { original: 'hero', portrait: 'card', icon: 'icon' }[variant];
+        return `/profile-icons/${name}/${kind}.jpg`;
+      }
+      return portraitUrl(picture, imageServer);
+    }
     const officerId = rtk14OfficerId(picture);
     if (officerId !== null) return variantFile[variant](officerId);
     return portraitUrl(picture, imageServer);

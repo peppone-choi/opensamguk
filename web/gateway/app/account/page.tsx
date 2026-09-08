@@ -7,15 +7,13 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import { useAuth } from '@/lib/auth-context';
 import { changeNickname, changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
-import { normalizeProfileIcon } from '@/lib/profileIcon';
+import PortraitCropEditor from '@/components/account/PortraitCropEditor';
+import type { PortraitCrops } from '@/lib/portraitCrop';
 import RepresentativeSection from '@/components/account/RepresentativeSection';
 import { Portrait } from '@opensamguk/ui';
 
-// 규격 밖 이미지는 브라우저에서 128x128로 크롭·축소해 보낸다(lib/profileIcon). 그건 편의일 뿐
-// 최종 보안 경계는 서버다 — 우회해도 서버 거부를 성공으로 위장하지 않는다.
-const ICON_GUIDE = 'jpg·png·gif·webp·avif 이미지를 올리면 위쪽 중앙을 기준으로 잘라 카드 규격(148×210)으로 자동 변환합니다. 크기·비율을 미리 맞출 필요는 없습니다.';
-// image/* 대신 서버가 받는 타입만 나열한다 — iOS 사진 선택기가 HEIC를 jpeg로 변환해 넘겨준다.
-const ICON_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,image/avif';
+const ICON_GUIDE = '원본을 올린 뒤 히어로·카드·아이콘의 구도를 각각 조절하세요. jpg·png·webp, 최대 8MB. 원본은 보관되어 다시 편집할 수 있습니다.';
+const ICON_ACCEPT = 'image/jpeg,image/png,image/webp';
 
 // 피드백은 그 액션을 일으킨 컨트롤 옆에서만 뜬다 — 화면 밖 전역 배너로 밀어내지 않는다.
 type Scope = 'nickname' | 'password' | 'icon' | 'shared' | 'delete';
@@ -30,6 +28,8 @@ function AccountSettings() {
     const [picture, setPicture] = useState(user?.picture ?? '');
     const [imgsvr, setImgsvr] = useState(user?.imageServer ?? 0);
     const [file, setFile] = useState<File | null>(null);
+    const [crops, setCrops] = useState<PortraitCrops | null>(null);
+    const [savedCrops, setSavedCrops] = useState<PortraitCrops | undefined>();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [busy, setBusy] = useState(false);
@@ -75,16 +75,41 @@ function AccountSettings() {
             setFeedback({ scope: 'icon', ok: false, text: '업로드할 이미지를 선택하세요.' });
             return;
         }
+        if (!crops) {
+            setFeedback({ scope: 'icon', ok: false, text: '원본을 불러온 뒤 세 구도를 확인하세요.' });
+            return;
+        }
         await run('icon', async () => {
-            // 규격 밖이면 128x128로 변환, 이미 맞으면 원본 그대로. 실패는 throw로 드러난다.
-            const updated = await uploadProfileIcon(await normalizeProfileIcon(file));
+            const updated = await uploadProfileIcon(file, crops);
             // preview·상태는 서버 canonical 값에서만 갱신한다(클라이언트 파일명 아님).
             setPicture(updated.picture ?? '');
             setImgsvr(updated.imageServer ?? 0);
             setFile(null);
+            setCrops(null);
+            setSavedCrops(undefined);
             if (fileInputRef.current) fileInputRef.current.value = '';
             await refresh();
         }, '전콘을 업로드했습니다.');
+    };
+
+    const editSaved = async () => {
+        await run('icon', async () => {
+            const [sourceResponse, cropsResponse] = await Promise.all([
+                fetch('/api/account/profile-icon/source', { cache: 'no-store' }),
+                fetch('/api/account/profile-icon/crops', { cache: 'no-store' }),
+            ]);
+            for (const response of [sourceResponse, cropsResponse]) {
+                if (!response.ok) {
+                    const error = await response.json().catch(() => null);
+                    throw new Error(error?.error ?? '보관된 원본을 불러오지 못했습니다.');
+                }
+            }
+            if (!sourceResponse.headers.get('X-Portrait-Id') || sourceResponse.headers.get('X-Portrait-Id') !== cropsResponse.headers.get('X-Portrait-Id')) throw new Error('다른 창에서 전콘이 변경됐습니다. 원본을 다시 불러오세요.');
+            const original = await sourceResponse.blob();
+            setSavedCrops(await cropsResponse.json() as PortraitCrops);
+            setCrops(null);
+            setFile(new File([original], 'original', { type: original.type }));
+        }, '원본을 불러왔습니다. 세 구도를 조절한 뒤 업로드하세요.');
     };
 
     const removeUpload = async () => {
@@ -142,14 +167,13 @@ function AccountSettings() {
             </section>
             <section className="game-panel">
                 <h2>전콘</h2>
-                {/* 전콘은 게임에서 장수 얼굴로 쓰인다 — 실제 렌더 규격(card-126 = 126×178)으로 미리 보여준다.
-                    초상 규칙(ADR-LITE-049): 3종은 원본 히어로 / 148×210 카드 / 96 아이콘이고, 업로드본은
-                    서버가 카드 규격으로 변환해 저장한다(ProfileIconTransformer). */}
                 <Portrait picture={picture.trim() || null} imageServer={imgsvr} size="card-126" alt="현재 전콘" />
                 <form className="account-form" onSubmit={submitUpload}>
                     <p>{ICON_GUIDE}</p>
-                    <label className="account-field">이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept={ICON_ACCEPT} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
-                    <button className="btn-primary" type="submit" disabled={busy}>업로드</button>
+                    <label className="account-field">이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept={ICON_ACCEPT} disabled={busy} onChange={(e) => { setSavedCrops(undefined); setCrops(null); setFeedback(null); setFile(e.target.files?.[0] ?? null); }} /></label>
+                    {file && <PortraitCropEditor file={file} initial={savedCrops} disabled={busy} onChange={setCrops} />}
+                    {imgsvr === 1 && /^[0-9a-f]{8}\.portrait$/.test(picture) && <button className="btn-ghost" type="button" disabled={busy} onClick={() => void editSaved()}>보관된 원본으로 다시 편집</button>}
+                    <button className="btn-primary" type="submit" disabled={busy || (!!file && !crops)}>업로드</button>
                     <button className="btn-ghost" type="button" onClick={() => void removeUpload()} disabled={busy || imgsvr !== 1}>삭제</button>
                     {message('icon')}
                 </form>

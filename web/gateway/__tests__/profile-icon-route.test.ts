@@ -68,6 +68,15 @@ describe('profile-icon route proxy', () => {
         expect(forwarded.get('file')).toBeInstanceOf(File);
     });
 
+    it('forwards crop instructions alongside source, never injected ownership', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 200 })));
+        const crops = JSON.stringify({ hero: { x: 0, y: 0, width: 1, height: 1 } });
+        await POST(multipartRequest(fileForm({ crops, userId: '999' })));
+        const forwarded = lastFetchInit().body as FormData;
+        expect([...forwarded.keys()]).toEqual(['file', 'crops']);
+        expect(forwarded.get('crops')).toBe(crops);
+    });
+
     it('rejects a multipart upload without an auth cookie and never calls upstream', async () => {
         cookieValue = undefined;
         vi.stubGlobal('fetch', vi.fn());

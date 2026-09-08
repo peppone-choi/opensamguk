@@ -1,3 +1,4 @@
+import type { PortraitCrops } from './portraitCrop';
 'use client';
 
 import type { User } from './types';
@@ -94,10 +95,11 @@ export async function updateProfileIcon(picture: string | null, imgsvr: number):
 }
 
 // multipart 업로드 — Content-Type은 브라우저가 boundary와 함께 설정하게 둔다(직접 지정 금지).
-// body엔 file part만 담고, 신원(Bearer)은 route proxy가 httpOnly 쿠키에서만 붙인다.
-export async function uploadProfileIcon(file: File): Promise<User> {
+// body엔 file과 선택적 crops part만 담고, 신원(Bearer)은 route proxy가 httpOnly 쿠키에서만 붙인다.
+export async function uploadProfileIcon(file: File, crops?: PortraitCrops): Promise<User> {
     const form = new FormData();
     form.append('file', file);
+    if (crops) form.append('crops', JSON.stringify(crops));
     const res = await fetch('/api/account/profile-icon', { method: 'POST', body: form });
     const data = await readJson(res);
     if (!res.ok) throw new Error((data.error as string) ?? '전콘 업로드에 실패했습니다.');

@@ -19,6 +19,7 @@ class ProfileIconDecoder(
     private val maxBytes: Int,
     private val minDimension: Int = 64,
     private val maxDimension: Int = 128,
+    private val maxPixels: Long = Long.MAX_VALUE,
 ) {
     fun decode(source: ByteArray): DecodedProfileIcon {
         if (source.isEmpty() || source.size > maxBytes) {
@@ -72,6 +73,9 @@ class ProfileIconDecoder(
      * 「정사각 64~128」을 따로 강제한다(`SharedProfileIconCatalog`).
      */
     private fun validateDimensions(width: Int, height: Int) {
+        if (width.toLong() * height > maxPixels) {
+            throw InvalidProfileIconException("초상 원본은 ${maxPixels / 1_000_000}MP 이하여야 합니다.")
+        }
         if (width !in minDimension..maxDimension || height !in minDimension..maxDimension) {
             throw InvalidProfileIconException(
                 "프로필 아이콘은 가로·세로 ${minDimension}~${maxDimension}px 범위여야 합니다.",
@@ -164,13 +168,39 @@ class ProfileIconDecoder(
     }
 
     private fun hasExactJpegBounds(source: ByteArray): Boolean {
-        if (source.size < 4 || source[0] != 0xff.toByte() || source[1] != 0xd8.toByte()) {
-            return false
-        }
-        for (index in 2 until source.size - 1) {
-            if (source[index] == 0xff.toByte() && source[index + 1] == 0xd9.toByte()) {
-                return index + 2 == source.size
+        if (source.size < 4 || source[0] != 0xff.toByte() || source[1] != 0xd8.toByte()) return false
+        var offset = 2
+        var inScan = false
+        var sawScan = false
+        while (offset < source.size) {
+            val fromScan = inScan
+            if (inScan) {
+                // Entropy bytes may contain stuffed FF00 and standalone restart markers.
+                while (offset < source.size) {
+                    if (source[offset].toInt() and 255 != 255) { offset++; continue }
+                    if (offset + 1 >= source.size) return false
+                    val following = source[offset + 1].toInt() and 255
+                    if (following == 0 || following in 0xd0..0xd7) { offset += 2; continue }
+                    if (following == 255) { offset++; continue }
+                    break
+                }
+                inScan = false
             }
+            if (offset >= source.size || source[offset].toInt() and 255 != 255) return false
+            while (offset < source.size && source[offset].toInt() and 255 == 255) offset++
+            if (offset >= source.size) return false
+            val marker = source[offset++].toInt() and 255
+            if (marker == 0xd9) return sawScan && offset == source.size
+            if (marker == 0 || marker == 0xd8 || marker in 0xd0..0xd7) return false
+            if (marker == 0x01) { inScan = fromScan; continue }
+            if (offset + 2 > source.size) return false
+            val length = ((source[offset].toInt() and 255) shl 8) or (source[offset + 1].toInt() and 255)
+            if (length < 2 || offset.toLong() + length > source.size) return false
+            // APP/EXIF bodies may contain a complete thumbnail JPEG, including its own EOI.
+            // Skip their declared bytes; only structural markers terminate the main image.
+            offset += length
+            if (marker == 0xda) { sawScan = true; inScan = true }
+            if (marker == 0xdc && fromScan) inScan = true // DNL can occur inside a scan.
         }
         return false
     }

@@ -81,6 +81,26 @@ class ProfileIconDecoderTest {
         assertInvalid(gif + "payload-after-trailer".toByteArray() + byteArrayOf(0x3b))
     }
 
+    @Test
+    fun `progressive JPEG scans and stuffed entropy bytes remain supported with exact end bounds`() {
+        val image = java.awt.image.BufferedImage(128, 128, java.awt.image.BufferedImage.TYPE_INT_RGB)
+        val random = java.util.Random(23)
+        for (y in 0 until 128) for (x in 0 until 128) image.setRGB(x, y, random.nextInt())
+        val writer = javax.imageio.ImageIO.getImageWritersByFormatName("jpeg").next()
+        val output = java.io.ByteArrayOutputStream()
+        try {
+            javax.imageio.ImageIO.createImageOutputStream(output).use { stream ->
+                writer.output = stream
+                val params = writer.defaultWriteParam.apply { progressiveMode = javax.imageio.ImageWriteParam.MODE_DEFAULT }
+                writer.write(null, javax.imageio.IIOImage(image, null, null), params)
+            }
+        } finally { writer.dispose() }
+        val bytes = output.toByteArray()
+        assertEquals(128, decoder.decode(bytes).width)
+        assertInvalid(bytes + byteArrayOf(0))
+        assertInvalid(bytes.copyOf(bytes.size - 2))
+    }
+
     private fun assertInvalid(bytes: ByteArray) {
         assertThrows(InvalidProfileIconException::class.java) { decoder.decode(bytes) }
     }

@@ -28,19 +28,24 @@ function response(status = 200, body = '{}'): Response {
 }
 
 // jsdom의 file input에 파일을 얹는다 (직접 .files 대입은 막혀 defineProperty로 우회).
-function selectFile(file: File): void {
+async function selectFile(file: File): Promise<void> {
     const input = screen.getByLabelText('전콘 이미지 파일') as HTMLInputElement;
     Object.defineProperty(input, 'files', { value: [file], configurable: true });
     fireEvent.change(input);
+    await waitFor(() => expect(screen.queryByText('원본을 불러오는 중…')).toBeNull());
 }
 
 function iconFile(bytes: number, name = 'icon.png', type = 'image/png'): File {
     return new File([new Uint8Array(bytes)], name, { type });
 }
 
-// createImageBitmap은 jsdom에 없어 스텁 — 정규화가 읽는 width/height만 제공.
+// Browser image decoding: the crop editor uses oriented natural dimensions.
 function stubBitmap(width: number, height: number): void {
-    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ width, height, close: vi.fn() }));
+    vi.stubGlobal('Image', class {
+        naturalWidth = width; naturalHeight = height;
+        onload: (() => void) | null = null;
+        set src(_value: string) { queueMicrotask(() => this.onload?.()); }
+    });
 }
 
 // jsdom엔 canvas 인코더가 없다 — 규격 밖 이미지가 실제로 재인코딩돼 전송되는지만 본다.
@@ -64,6 +69,8 @@ describe('account settings interactions', () => {
         vi.clearAllMocks();
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response()));
         vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
+        URL.createObjectURL = vi.fn(() => 'blob:portrait');
+        URL.revokeObjectURL = vi.fn();
         stubBitmap(96, 96);
         stubCanvas(new Blob([new Uint8Array(8_000)], { type: 'image/jpeg' }));
     });
@@ -123,7 +130,7 @@ describe('account settings interactions', () => {
         }))));
         const original = iconFile(2048);
         render(<AccountPage />);
-        selectFile(original);
+        await selectFile(original);
         fireEvent.click(screen.getByRole('button', { name: '업로드' }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/account/profile-icon', expect.objectContaining({ method: 'POST' })));
@@ -139,44 +146,33 @@ describe('account settings interactions', () => {
     });
 
     it.each([
-        ['오버사이즈', iconFile(51_201), 96, 96],
-        ['64px 미만', iconFile(2048), 32, 32],
-        ['128px 초과', iconFile(2048), 4000, 3000],
+        ['50KB 초과', iconFile(51_201), 96, 96],
+        ['큰 원본', iconFile(2048), 4000, 3000],
         ['비정사각형', iconFile(2048), 64, 128],
-    ] as const)('converts %s instead of silently refusing it', async (_label, file, w, h) => {
+    ] as const)('preserves %s and sends three user-adjustable crops', async (_label, file, w, h) => {
         stubBitmap(w, h);
         render(<AccountPage />);
-        selectFile(file);
+        await selectFile(file);
         fireEvent.click(screen.getByRole('button', { name: '업로드' }));
-
         await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/account/profile-icon', expect.objectContaining({ method: 'POST' })));
-        const sent = uploadedFile();
-        expect(sent).not.toBe(file);
-        expect(sent.type).toBe('image/jpeg');
-        expect(sent.size).toBeLessThanOrEqual(51_200);
-        expect(await within(panel('전콘')).findByRole('status')).toHaveTextContent('전콘을 업로드했습니다.');
+        expect(uploadedFile()).toBe(file);
+        const body = (fetch as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0][1].body as FormData;
+        expect(Object.keys(JSON.parse(body.get('crops') as string))).toEqual(['hero', 'card', 'icon']);
     });
 
-    it('explains it in the 전콘 panel when the image cannot be shrunk under 50KB', async () => {
-        stubBitmap(4000, 3000);
-        stubCanvas(new Blob([new Uint8Array(60_000)], { type: 'image/webp' }));
+    it('rejects oversized originals before upload and explains the limit', async () => {
         render(<AccountPage />);
-        selectFile(iconFile(3_000_000));
-        fireEvent.click(screen.getByRole('button', { name: '업로드' }));
-
-        expect(await within(panel('전콘')).findByRole('alert'))
-            .toHaveTextContent('이미지를 50KB 이하로 줄이지 못했습니다.');
+        await selectFile(iconFile(8 * 1024 * 1024 + 1));
+        expect(await within(panel('전콘')).findByRole('alert')).toHaveTextContent('8MB 이하');
+        expect(screen.getByRole('button', { name: '업로드' })).toBeDisabled();
         expect(fetch).not.toHaveBeenCalled();
     });
 
-    it('explains it in the 전콘 panel when the browser cannot convert at all', async () => {
-        vi.stubGlobal('createImageBitmap', undefined);
+    it('rejects originals below the supported dimensions', async () => {
+        stubBitmap(32, 32);
         render(<AccountPage />);
-        selectFile(iconFile(3_000_000));
-        fireEvent.click(screen.getByRole('button', { name: '업로드' }));
-
-        expect(await within(panel('전콘')).findByRole('alert'))
-            .toHaveTextContent('이 브라우저는 이미지 자동 변환을 지원하지 않습니다.');
+        await selectFile(iconFile(2048));
+        expect(await within(panel('전콘')).findByRole('alert')).toHaveTextContent('64~8192px');
         expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -194,37 +190,59 @@ describe('account settings interactions', () => {
         }))));
         render(<AccountPage />);
         const before = screen.getByRole('img', { name: '현재 전콘' }).getAttribute('src');
-        selectFile(iconFile(2048));
+        await selectFile(iconFile(2048));
         fireEvent.click(screen.getByRole('button', { name: '업로드' }));
 
         expect(await within(panel('전콘')).findByRole('alert')).toHaveTextContent('프로필 아이콘은 하루에 한 번만 변경할 수 있습니다.');
-        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.queryByText('전콘을 업로드했습니다.')).toBeNull();
         expect(screen.getByRole('img', { name: '현재 전콘' })).toHaveAttribute('src', before!);
     });
 
-    it('never reports a server reject as success even when the client converted the image', async () => {
+    it('never reports a server reject as success while preserving the user-selected source and crop', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(400, JSON.stringify({
             error: '올바른 프로필 아이콘 이미지가 아닙니다.',
         }))));
         stubBitmap(4000, 3000);
         render(<AccountPage />);
-        selectFile(iconFile(3_000_000));
+        await selectFile(iconFile(3_000_000));
         fireEvent.click(screen.getByRole('button', { name: '업로드' }));
 
         expect(await within(panel('전콘')).findByRole('alert')).toHaveTextContent('올바른 프로필 아이콘 이미지가 아닙니다.');
-        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.queryByText('전콘을 업로드했습니다.')).toBeNull();
     });
 
     it('surfaces the 401 boundary message without leaking a token', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(401, JSON.stringify({ error: '로그인이 필요합니다.' }))));
         render(<AccountPage />);
-        selectFile(iconFile(2048));
+        await selectFile(iconFile(2048));
         fireEvent.click(screen.getByRole('button', { name: '업로드' }));
 
         const alert = await within(panel('전콘')).findByRole('alert');
         expect(alert).toHaveTextContent('로그인이 필요합니다.');
         expect(alert.textContent).not.toMatch(/Bearer|eyJ/);
-        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.queryByText('전콘을 업로드했습니다.')).toBeNull();
+    });
+
+    it('reopens the retained source with its own saved crop positions', async () => {
+        const saved = { hero: { x: 0.1, y: 0.1, width: 0.3, height: 0.3 * 900 / 633 }, card: { x: 0, y: 0, width: 148 / 210, height: 1 }, icon: { x: 0.2, y: 0.2, width: 0.5, height: 0.5 } };
+        vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url.endsWith('/source')
+            ? new Response(new Blob(['source'], { type: 'image/png' }), { headers: { 'Content-Type': 'image/png', 'X-Portrait-Id': 'aabbccdd.portrait' } })
+            : new Response(JSON.stringify(saved), { headers: { 'Content-Type': 'application/json', 'X-Portrait-Id': 'aabbccdd.portrait' } }))));
+        render(<AccountPage />);
+        fireEvent.change(screen.getByLabelText('전콘 파일명'), { target: { value: 'aabbccdd.portrait' } });
+        fireEvent.click(screen.getByRole('button', { name: '보관된 원본으로 다시 편집' }));
+        const preview = await screen.findByAltText('아이콘 저장 미리보기');
+        expect(preview.style.left).toBe('-40%');
+        expect(screen.getByRole('button', { name: '업로드' })).toBeEnabled();
+    });
+
+    it('rejects mismatched original and crop identities instead of editing a mixed version', async () => {
+        vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response('{}', { headers: { 'Content-Type': 'application/json', 'X-Portrait-Id': url.endsWith('/source') ? 'aabbccdd.portrait' : 'bbccddee.portrait' } }))));
+        render(<AccountPage />);
+        fireEvent.change(screen.getByLabelText('전콘 파일명'), { target: { value: 'aabbccdd.portrait' } });
+        fireEvent.click(screen.getByRole('button', { name: '보관된 원본으로 다시 편집' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('다른 창에서 전콘이 변경됐습니다');
+        expect(screen.queryByLabelText('히어로 확대·축소')).toBeNull();
     });
 
     it('deletes the uploaded icon through the DELETE endpoint and converges to the default', async () => {

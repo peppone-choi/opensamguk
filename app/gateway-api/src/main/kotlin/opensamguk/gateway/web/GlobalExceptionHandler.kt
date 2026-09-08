@@ -72,7 +72,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(ProfileIconPayloadTooLargeException::class, MaxUploadSizeExceededException::class)
     fun profileIconTooLarge(e: Exception): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-            .body(ApiError("프로필 아이콘은 50KB 이하여야 합니다.", HttpStatus.PAYLOAD_TOO_LARGE.value()))
+            .body(ApiError(if (e is ProfileIconPayloadTooLargeException) e.message!! else "초상 원본은 8MiB 이하여야 합니다.", HttpStatus.PAYLOAD_TOO_LARGE.value()))
 
     @ExceptionHandler(ProfileIconStorageException::class, ProfileIconPersistenceException::class)
     fun profileIconInternal(e: Exception): ResponseEntity<ApiError> =

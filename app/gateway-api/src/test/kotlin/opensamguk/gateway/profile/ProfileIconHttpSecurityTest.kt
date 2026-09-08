@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -182,6 +183,44 @@ class ProfileIconHttpSecurityTest {
         assertEquals(ProfileIconService.DEFAULT_ICON, reloadedNonOwner.picture)
         assertEquals(false, reloadedNonOwner.profileIconManaged)
         assertEquals(true, Files.exists(storageRoot.resolve(duplicateFileName)))
+    }
+
+    @Test
+    fun `manual bundle serves public variants but source and crop metadata belong only to the authenticated owner`() {
+        // Larger than the legacy 50KB cap; the manual route retains the full validated source.
+        val source = TestImageFixtures.exactSizePng(80_000)
+        val cropsJson = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(PortraitBundleTest.crops())
+        val result = mockMvc.perform(multipart(PATH)
+            .file(MockMultipartFile("file", "original.png", "image/png", source))
+            .file(MockMultipartFile("crops", "", "text/plain", cropsJson.toByteArray()))
+            .with(user(CustomUserDetails(savedUser))))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.picture", matchesPattern("[0-9a-f]{8}\\.portrait")))
+            .andReturn()
+        val picture = com.fasterxml.jackson.databind.ObjectMapper().readTree(result.response.contentAsString)["picture"].asText()
+        for (variant in listOf("hero", "card", "icon")) {
+            mockMvc.perform(get("/profile-icons/$picture/$variant.jpg"))
+                .andExpect(status().isOk).andExpect(content().contentType(MediaType.IMAGE_JPEG))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+        }
+        mockMvc.perform(get("/profile-icons/$picture/source.jpg")).andExpect(status().isNotFound)
+        mockMvc.perform(get("/profile-icons/$picture")).andExpect(status().isUnauthorized)
+        mockMvc.perform(get("$PATH/source")).andExpect(status().isUnauthorized)
+        mockMvc.perform(get("$PATH/crops")).andExpect(status().isUnauthorized)
+        mockMvc.perform(get("$PATH/source").with(user(CustomUserDetails(savedUser))))
+            .andExpect(status().isOk).andExpect(content().bytes(source))
+            .andExpect(header().string("X-Portrait-Id", picture))
+            .andExpect(header().string("Cache-Control", "private, no-store"))
+        mockMvc.perform(get("$PATH/crops").with(user(CustomUserDetails(savedUser))))
+            .andExpect(status().isOk).andExpect(jsonPath("$.icon.x").value(2.0 / 3))
+            .andExpect(header().string("X-Portrait-Id", picture))
+        val other = userRepository.saveAndFlush(UserEntity(username = "other", password = "encoded"))
+        mockMvc.perform(get("$PATH/source").with(user(CustomUserDetails(other)))).andExpect(status().isNotFound)
+        mockMvc.perform(multipart(PATH)
+            .file(MockMultipartFile("file", "original.png", "image/png", source))
+            .file(MockMultipartFile("crops", "", "text/plain", cropsJson.toByteArray()))
+            .with(user(CustomUserDetails(savedUser))))
+            .andExpect(status().isConflict)
     }
 
     companion object {
