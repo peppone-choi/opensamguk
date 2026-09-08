@@ -888,7 +888,7 @@ class AiTurnAdapter(
             cityGeneralCountOf = { cityId -> worldView.nationCities[cityId]?.generals?.size ?: 0 }, // S7
             wanderOccupiedCities = occupiedCities, // S8
             movingTargetCityId = (auxVar(general, "movingTargetCityID") as? Number)?.toInt(), // S9
-            dupLordAtSelfCity = world.listGenerals().count { it.officerLevel == 12 && it.cityId == general.cityId }, // S9
+            dupLordAtSelfCity = world.listGenerals().count { it.officerLevel == 12 && world.isGeneralPhysicallyInCity(it.id, general.cityId) }, // S9
             selfCityLevel = selfCity?.level ?: 0, // S9
             // --- L-GENFOUND scalars + world inputs ---
             selfMakeLimit = (general.meta["makelimit"] as? Number)?.toInt() ?: 0, // S10

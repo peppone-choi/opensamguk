@@ -24,6 +24,7 @@ import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.WaterControlRowCodec
 import opensamguk.infra.persistence.ProvinceControlRowCodec
+import opensamguk.infra.seed.HistoricalBattlefieldCatalog
 import opensamguk.infra.persistence.GeneralPositionRowCodec
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.world.ActiveWorldMap
@@ -219,10 +220,12 @@ class WorldSnapshotLoader(
 
     private fun loadGeneralPositionSnapshot(topology: StrategicTopologySnapshot): GeneralPositionSnapshot {
         val rows = jdbc.query(
-            "SELECT general_id, topology_revision, topology_hash, node_kind, node_id, revision " +
+            "SELECT general_id, topology_revision, topology_hash, node_kind, node_id, revision, " +
+                "battlefield_id, battlefield_catalog_hash, battlefield_return_city_id " +
                 "FROM general_spatial_position WHERE world_id = ? ORDER BY general_id",
             { rs, _ -> GeneralPositionRowCodec.decode(rs) }, worldId.value,
         )
+        rows.forEach { row -> row.battlefield?.let { HistoricalBattlefieldCatalog.validatePresence(row.node, it) } }
         // WorldSnapshot checks these IDs against the same world's loaded core generals.
         return GeneralPositionSnapshot.fromTopology(topology, rows)
     }

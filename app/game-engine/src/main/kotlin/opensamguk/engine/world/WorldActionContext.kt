@@ -1221,7 +1221,7 @@ class WorldActionContext(
             val newCapital = rng.choice(candidates).id
             updateNationForInvader(nation, nation.copy(capitalCityId = newCapital))
             world.listGenerals()
-                .filter { it.nationId == nation.id && it.cityId == oldCapital }
+                .filter { it.nationId == nation.id && world.isGeneralPhysicallyInCity(it.id, oldCapital) }
                 .forEach { general -> updateGeneralForInvader(general, general.copy(cityId = newCapital)) }
         }
         world.listGenerals()
@@ -2245,7 +2245,7 @@ class WorldActionContext(
 
     override fun incrementAllGeneralAge() {
         for (g in world.listGenerals().sortedBy { it.id }) {
-            world.applyGeneralDirtyFree(g.copy(age = g.age + 1))
+            opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, g.copy(age = g.age + 1))
         }
     }
 
@@ -2253,7 +2253,7 @@ class WorldActionContext(
         for (g in world.listGenerals().sortedBy { it.id }) {
             if (g.nationId == 0) continue
             val newBelong = metaInt(g.meta, "belong") + 1
-            world.applyGeneralDirtyFree(g.copy(meta = withMeta(g.meta, "belong" to newBelong)))
+            opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, g.copy(meta = withMeta(g.meta, "belong" to newBelong)))
         }
     }
 
@@ -2277,7 +2277,7 @@ class WorldActionContext(
         for (g in world.listGenerals().sortedBy { it.id }) {
             val betray = metaInt(g.meta, "betray")
             if (betray > ifMax) continue
-            world.applyGeneralDirtyFree(g.copy(meta = withMeta(g.meta, "betray" to betray + cnt)))
+            opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, g.copy(meta = withMeta(g.meta, "betray" to betray + cnt)))
         }
     }
 
@@ -2296,7 +2296,7 @@ class WorldActionContext(
     private fun updateGeneralForInvader(before: TurnGeneral, after: TurnGeneral) {
         if (before == after) return
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
-        world.applyGeneralDirtyFree(after)
+        opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, after)
     }
 
     private fun BuiltGeneral.toInvaderTurnGeneral(id: Int): TurnGeneral {

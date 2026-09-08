@@ -37,6 +37,28 @@ class WorldScopedReadRepositoryIT {
     @Autowired lateinit var nationTurns: NationTurnReadRepository
 
     @Test
+    fun `field troops remain in national roster but leave physical city reads`() {
+        seedWorld(1)
+        seedWorld(2)
+        insertNation(id = 11, worldId = 1)
+        insertCity(id = 31, worldId = 1, nationId = 11)
+        insertGeneral(id = 51, worldId = 1, nationId = 11, cityId = 31)
+        insertGeneral(id = 52, worldId = 1, nationId = 11, cityId = 31)
+        jdbc.update("""
+            INSERT INTO general_spatial_position
+                (world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision,
+                 battlefield_id,battlefield_catalog_hash,battlefield_return_city_id)
+            VALUES (1,51,'r1',?,'LAND_PROVINCE','45776',1,'changban',?,31)
+        """.trimIndent(), "a".repeat(64), "b".repeat(64))
+        assertEquals(listOf(52), generals.findByCityIdOrderByTurnTimeAsc(31).map { it.id })
+        assertEquals(1L, generals.countByCityId(31))
+        assertEquals(2L, generals.countByNationId(11))
+        assertEquals(listOf(31), generals.findDistinctCityIdByNationId(11))
+        jdbc.update("UPDATE general SET city_id = 0 WHERE world_id = 1 AND id = 52")
+        assertTrue(31 !in generals.findDistinctCityIdByNationId(11))
+    }
+
+    @Test
     fun `process world returns only its own cohort rows`() {
         seedWorld(1)
         seedWorld(2)

@@ -180,4 +180,38 @@ class SpatialStateRecorderTest {
         assertFailsWith<IllegalArgumentException> { base.copy(generalPositionSnapshot = base.generalPositionSnapshot!!.withState(
             GeneralPositionState("r1", hash, 99, land, 1))) }
     }
+    @Test fun `position delete cancels new inserts and persisted delete reentry retains original CAS`() {
+        val world = InMemoryTurnWorld(snapshot())
+        val recorder = ChangeRecorder()
+        recorder.applyGeneralPositionAssessment(world, null, position(land))
+        assertTrue(recorder.removeGeneralPosition(world, 7))
+        assertTrue(recorder.generalPositionWrites().isEmpty())
+        assertNull(world.generalPositionSnapshot()!!.stateFor(7))
+
+        val original = GeneralPositionState("r1", hash, 7, land, 4)
+        val persisted = InMemoryTurnWorld(snapshot().copy(generalPositionSnapshot =
+            GeneralPositionSnapshot("r1", hash, setOf("p1"), setOf("lake"), listOf(original))))
+        val writes = ChangeRecorder()
+        assertTrue(writes.removeGeneralPosition(persisted, 7))
+        val deletion = writes.generalPositionWrites().single()
+        assertTrue(deletion.delete)
+        assertEquals(4L, deletion.expectedRevision)
+        writes.applyGeneralPositionAssessment(persisted, null, position(water))
+        val restored = writes.generalPositionWrites().single()
+        assertFalse(restored.delete)
+        assertEquals(4L, restored.expectedRevision)
+        assertEquals(5L, restored.state.revision)
+        assertEquals(water, persisted.generalPositionSnapshot()!!.stateFor(7)!!.node)
+        assertTrue(deletion.delete, "retained rollback payload stays immutable")
+    }
+
+    @Test fun `position deletion obeys world fence`() {
+        val world = InMemoryTurnWorld(snapshot())
+        val other = InMemoryTurnWorld(snapshot(2))
+        val recorder = ChangeRecorder()
+        recorder.applyGeneralPositionAssessment(world, null, position(land))
+        assertFailsWith<IllegalStateException> { recorder.removeGeneralPosition(other, 7) }
+        assertNotNull(world.generalPositionSnapshot()!!.stateFor(7))
+    }
+
 }

@@ -37,6 +37,9 @@ class V2GarrisonRecruitHandler(
     private val ledger: V2CityLedgerStore,
 ) {
     fun handle(command: CityGarrisonRecruit): TurnDaemonCommandResult {
+        if (world.isGeneralAtBattlefield(command.generalId)) {
+            return rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
+        }
         val general = world.getGeneralById(command.generalId)
         val city = world.getCityById(command.cityId)
         val ledgerGold = city?.let { ledger.entry(world.worldId, it.id).gold } ?: 0

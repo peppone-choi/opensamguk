@@ -422,7 +422,17 @@ export function isIntakeDenied(o: IntakeOutcome): o is IntakeDenied {
     return o.status === 'BLOCKED' || o.status === 'UNKNOWN';
 }
 
+export interface BattlefieldSiteResponse {
+    id: string; name: string; latitude: number; longitude: number;
+    confidence: 'APPROXIMATE'; canEnter: boolean; reason: string | null;
+}
+export interface BattlefieldsResponse {
+    generalId: number; catalogHash: string; positionRevision: string;
+    currentSiteId: string | null; canExit: boolean; sites: BattlefieldSiteResponse[];
+}
+
 export const api = {
+    battlefields: () => get<BattlefieldsResponse>('/api/battlefields'),
     get,
     post,
     patch,

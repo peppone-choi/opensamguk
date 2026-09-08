@@ -259,7 +259,10 @@ interface GeneralReadRawRepository : SpringDataRepository<GeneralReadEntity, Int
     fun countByWorldIdAndNpcStateGreaterThan(worldId: Int, npcState: Int): Long
 
     /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
-    fun countByWorldIdAndCityId(worldId: Int, cityId: Int): Long
+    @Query(value = "SELECT count(*) FROM general g WHERE g.world_id = :worldId AND g.city_id = :cityId " +
+        "AND NOT EXISTS (SELECT 1 FROM general_spatial_position p WHERE p.world_id = g.world_id " +
+        "AND p.general_id = g.id AND p.battlefield_id IS NOT NULL)", nativeQuery = true)
+    fun countByWorldIdAndCityId(@Param("worldId") worldId: Int, @Param("cityId") cityId: Int): Long
 
     /**
      * b_currentCity(도시정보) 장수 상세 테이블 원천 — PHP `b_currentCity.php:217`의
@@ -270,8 +273,10 @@ interface GeneralReadRawRepository : SpringDataRepository<GeneralReadEntity, Int
      * (§6 결정적 tie-break — 패러티 순서 불변).
      */
     @Query(
-        "select g from GeneralReadEntity g where g.worldId = :worldId and g.cityId = :cityId " +
-            "order by g.turnTime asc nulls first, g.id asc",
+        value = "SELECT g.* FROM general g WHERE g.world_id = :worldId AND g.city_id = :cityId " +
+            "AND NOT EXISTS (SELECT 1 FROM general_spatial_position p WHERE p.world_id = g.world_id " +
+            "AND p.general_id = g.id AND p.battlefield_id IS NOT NULL) " +
+            "ORDER BY g.turn_time ASC NULLS FIRST, g.id ASC", nativeQuery = true,
     )
     fun findByWorldIdAndCityIdOrderByTurnTimeAsc(
         @Param("worldId") worldId: Int,
@@ -319,7 +324,9 @@ interface GeneralReadRawRepository : SpringDataRepository<GeneralReadEntity, Int
      * PHP `func_map.php:135-138`: `select distinct city from general where nation=%i`.
      * PHP는 무순서지만 deterministic 출력을 위해 cityId-ascending 정렬(표시 전용, 패러티 무관).
      */
-    @Query("select distinct g.cityId from GeneralReadEntity g where g.worldId = :worldId and g.nationId = :nationId order by g.cityId asc")
+    @Query(value = "SELECT DISTINCT g.city_id FROM general g WHERE g.world_id = :worldId AND g.nation_id = :nationId " +
+        "AND NOT EXISTS (SELECT 1 FROM general_spatial_position p WHERE p.world_id = g.world_id " +
+        "AND p.general_id = g.id AND p.battlefield_id IS NOT NULL) ORDER BY g.city_id ASC", nativeQuery = true)
     fun findDistinctCityIdByWorldIdAndNationId(
         @Param("worldId") worldId: Int,
         @Param("nationId") nationId: Int,

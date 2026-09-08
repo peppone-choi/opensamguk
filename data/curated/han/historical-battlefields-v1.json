@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "historical-battlefields-v1",
+  "scope": "PRIMARY_IDENTITY_AND_SECONDARY_APPROXIMATE_POSITIONS",
+  "referenceContextYear": 260,
+  "canonicalAdministrativeReferenceYear": 140,
+  "eventYearMeaning": "ATTESTED_EVENT_NOT_FOUNDATION_YEAR",
+  "battlefields": [
+    {
+      "id": "chibi",
+      "nameKo": "적벽",
+      "nameHan": "赤壁",
+      "role": "NAVAL",
+      "eventYear": 208,
+      "eventDescription": "조조와 손권·유비 연합군의 적벽 전투",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "lat": 29.88533,
+        "lon": 113.61877
+      },
+      "boundaryStatus": "NOT_RECONSTRUCTED",
+      "historicalDecimalCoordinatesVerified": false,
+      "primaryEvidence": [
+        {
+          "book": "三國志·魏書·武帝紀",
+          "volume": 1,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-01.txt",
+          "sha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "line": 152,
+          "quote": "十三年春正月，公還鄴，作玄武池以肄舟師。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·魏書·武帝紀",
+          "volume": 1,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-01.txt",
+          "sha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "line": 154,
+          "quote": "公至赤壁，與備戰，不利。於是大疫，吏士多死者，乃引軍還。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·吳書·周瑜傳",
+          "volume": 54,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-54.txt",
+          "sha256": "391eeacf65d214ce53d6fba4c9d39933b20b8b7d10509f88e5f323eda96c7912",
+          "line": 23,
+          "quote": "蓋放諸船，同時發火。時風盛猛，悉延燒岸上營落。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "NAVAL_FIRE",
+            "SHORE_CAMPS"
+          ]
+        },
+        {
+          "book": "元和郡縣圖志·江南道三",
+          "volume": 27,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/yhjx-27.txt",
+          "sha256": "f92bda7bcfe05c1634f094bc525823a506418e681c2090505a0886b0dcab64eb",
+          "line": 40,
+          "quote": "赤壁山，在縣西一百二十里。北臨大江，其北岸即烏林，與赤壁相對，",
+          "evidenceKind": "LATER_HISTORICAL_GEOGRAPHY",
+          "supports": [
+            "REGIONAL_IDENTIFICATION"
+          ]
+        }
+      ],
+      "modernEvidence": [
+        {
+          "sourceId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896",
+          "recordId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896:1003",
+          "title": "삼국지/지명/형주",
+          "sourceUrl": "https://namu.wiki/w/삼국지/지명/형주",
+          "headingLine": 1003,
+          "coordinateLine": 1003,
+          "identityLines": [
+            1003
+          ],
+          "quote": "적벽(赤壁): 《29.88533, 113.61877》",
+          "relation": "DIRECT_NAMED_SITE"
+        }
+      ],
+      "placementNote": "첨부의 蒲圻 계통 대표점이다. 정확한 전장 경계·함선 위치·다른 동명 赤壁의 동일성을 확정하지 않는다."
+    },
+    {
+      "id": "guandu",
+      "nameKo": "관도",
+      "nameHan": "官渡",
+      "role": "FIELD",
+      "eventYear": 200,
+      "eventDescription": "조조와 원소의 관도 대치·전투",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "lat": 34.75145,
+        "lon": 114.05092
+      },
+      "boundaryStatus": "NOT_RECONSTRUCTED",
+      "historicalDecimalCoordinatesVerified": false,
+      "primaryEvidence": [
+        {
+          "book": "三國志·魏書·武帝紀",
+          "volume": 1,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-01.txt",
+          "sha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "line": 100,
+          "quote": "五年春正月，董承等謀泄，皆伏誅。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·魏書·武帝紀",
+          "volume": 1,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-01.txt",
+          "sha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "line": 102,
+          "quote": "公還軍官渡。紹進保陽武。關羽亡歸劉備。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·魏書·武帝紀",
+          "volume": 1,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-01.txt",
+          "sha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "line": 104,
+          "quote": "紹復進臨官渡，起土山地道。公亦於內作之，以相應。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "FIELD_CAMPS",
+            "EARTHWORKS"
+          ]
+        }
+      ],
+      "modernEvidence": [
+        {
+          "sourceId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f",
+          "recordId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f:198",
+          "title": "삼국지/지명/사례교위부",
+          "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부",
+          "headingLine": 198,
+          "coordinateLine": 198,
+          "identityLines": [
+            198
+          ],
+          "quote": "관도(官渡): 《34.75145, 114.05092》",
+          "relation": "DIRECT_NAMED_SITE"
+        }
+      ],
+      "placementNote": "전투 지역 대표점이며 烏巢·白馬·延津이나 실제 진영·토산 위치를 이 점에 합치지 않는다."
+    },
+    {
+      "id": "changban",
+      "nameKo": "장판",
+      "nameHan": "長坂",
+      "role": "FIELD",
+      "eventYear": 208,
+      "eventDescription": "당양 장판의 추격과 후위 저지",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "lat": 30.98367,
+        "lon": 112.199583
+      },
+      "boundaryStatus": "NOT_RECONSTRUCTED",
+      "historicalDecimalCoordinatesVerified": false,
+      "primaryEvidence": [
+        {
+          "book": "三國志·蜀書·先主傳",
+          "volume": 32,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-32.txt",
+          "sha256": "769cb60d6e8a361571ac998da01ee24ff1c768f8b8eb8bdb10b569af3a7ae332",
+          "line": 32,
+          "quote": "曹公將精騎五千急追之，一日一夜行三百餘里，及於當陽之長坂。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·蜀書·張飛傳",
+          "volume": 36,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-36.txt",
+          "sha256": "b0afa89b0104a4b021520fc247bc3e632ca8ad3452f6b2b94be8b25540757b2e",
+          "line": 27,
+          "quote": "先主聞曹公卒至，棄妻子走，使飛將二十騎拒後。飛據水斷橋，",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "PURSUIT",
+            "REARGUARD",
+            "WATER_AND_BRIDGE"
+          ]
+        }
+      ],
+      "modernEvidence": [
+        {
+          "sourceId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896",
+          "recordId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896:661",
+          "title": "삼국지/지명/형주",
+          "sourceUrl": "https://namu.wiki/w/삼국지/지명/형주",
+          "headingLine": 661,
+          "coordinateLine": 661,
+          "identityLines": [
+            661
+          ],
+          "quote": "장판(長坂·長阪): 《30.98367, 112.199583》",
+          "relation": "DIRECT_NAMED_SITE"
+        }
+      ],
+      "placementNote": "長坂 일대의 대표점이다. 좌표를 장비가 서 있던 자리나 끊은 다리의 정확한 위치로 해석하지 않는다."
+    },
+    {
+      "id": "baidicheng",
+      "nameKo": "백제성",
+      "nameHan": "白帝城",
+      "role": "FORTRESS",
+      "eventYear": 222,
+      "eventDescription": "유비의 백제 체류와 영안 방어 거점",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "lat": 31.04339,
+        "lon": 109.57039
+      },
+      "boundaryStatus": "NOT_RECONSTRUCTED",
+      "historicalDecimalCoordinatesVerified": false,
+      "primaryEvidence": [
+        {
+          "book": "三國志·蜀書·先主傳",
+          "volume": 32,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-32.txt",
+          "sha256": "769cb60d6e8a361571ac998da01ee24ff1c768f8b8eb8bdb10b569af3a7ae332",
+          "line": 71,
+          "quote": "先主自猇亭還秭歸，收合離散兵，遂棄船舫，由步道還魚复，改魚复縣曰永安。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·蜀書·先主傳",
+          "volume": 32,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-32.txt",
+          "sha256": "769cb60d6e8a361571ac998da01ee24ff1c768f8b8eb8bdb10b569af3a7ae332",
+          "line": 71,
+          "quote": "孫權聞先主住白帝，甚懼，遣使請和。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "IDENTITY",
+            "EVENT"
+          ]
+        },
+        {
+          "book": "三國志·蜀書·宗預傳",
+          "volume": 45,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-45.txt",
+          "sha256": "5032d71e897261c4304cbec160bc75db0b8d69a3c67be6c678b8c3998c281033",
+          "line": 29,
+          "quote": "蜀聞之，亦益永安之守，以防非常。",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "DEFENSIVE_GARRISON"
+          ]
+        },
+        {
+          "book": "三國志·蜀書·宗預傳",
+          "volume": 45,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-45.txt",
+          "sha256": "5032d71e897261c4304cbec160bc75db0b8d69a3c67be6c678b8c3998c281033",
+          "line": 29,
+          "quote": "而聞西更增白帝之守，何也？",
+          "evidenceKind": "DYNASTIC_HISTORY",
+          "supports": [
+            "BAIDI_YONGAN_RELATION"
+          ]
+        }
+      ],
+      "modernEvidence": [
+        {
+          "sourceId": "3dbff015f0a87b906a744ced72e233177de6a5323271b4e53f4dbdab5d1d60e0",
+          "recordId": "3dbff015f0a87b906a744ced72e233177de6a5323271b4e53f4dbdab5d1d60e0:546",
+          "title": "삼국지/지명/익주",
+          "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주",
+          "headingLine": 546,
+          "coordinateLine": 550,
+          "identityLines": [
+            547,
+            550
+          ],
+          "quote": "위치: 《31.04339, 109.57039》 충칭시 펑제현 바이디진(重庆市奉节县白帝镇) 백제성",
+          "relation": "EXPLICIT_ALIAS_LOCATION"
+        }
+      ],
+      "placementNote": "이 항목만의 별칭 白帝城(547행)과 명시적인 현대 위치 白帝城(550행)을 대조했다. 다른 현 별칭으로의 일반적인 좌표 상속은 금지한다. 특정 백제성 전투 발생이나 永安宮 건물 위치는 주장하지 않는다."
+    },
+    {
+      "id": "hulaoguan",
+      "nameKo": "호뢰관",
+      "nameHan": "虎牢關",
+      "role": "PASS",
+      "eventYear": null,
+      "eventDescription": "虎牢·成皋 지역 관계; 관문 전장 위치 보류",
+      "positionStatus": "WITHHELD",
+      "coordinates": null,
+      "boundaryStatus": "NOT_RECONSTRUCTED",
+      "historicalDecimalCoordinatesVerified": false,
+      "primaryEvidence": [
+        {
+          "book": "後漢書·志十九·郡國一·成睾注",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 46,
+          "quote": "杜預曰「北制，一名虎牢」，亦即此縣也。",
+          "evidenceKind": "LATER_COMMENTARY",
+          "supports": [
+            "REGIONAL_NAME_RELATION"
+          ]
+        }
+      ],
+      "modernEvidence": [
+        {
+          "sourceId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f",
+          "recordId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f:129",
+          "title": "삼국지/지명/사례교위부",
+          "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부",
+          "headingLine": 129,
+          "coordinateLine": 132,
+          "identityLines": [
+            130
+          ],
+          "quote": "위치: 《34.84736, 113.19887》 허난성 정저우시 싱양시 쓰수이진 후라오관촌(河南省郑州市荥阳市汜水镇虎牢关村)",
+          "relation": "UNASSIGNED_COUNTY_REFERENCE"
+        }
+      ],
+      "placementNote": "成皋 현 좌표를 독립 관문 점으로 배정하지 않는다. 杜預 주석은 지역 관계의 근거다. 190년 연의의 호뢰관 전투를 정사 사건으로 표시하지 않는다."
+    }
+  ]
+}

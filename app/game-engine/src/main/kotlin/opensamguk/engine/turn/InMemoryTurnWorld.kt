@@ -226,6 +226,13 @@ class InMemoryTurnWorld(
 
     fun generalPositionSnapshot(): GeneralPositionSnapshot? = generalPosition
 
+    fun isGeneralAtBattlefield(generalId: Int): Boolean =
+        generalPosition?.stateFor(generalId)?.battlefield != null
+
+    fun isGeneralPhysicallyInCity(generalId: Int, cityId: Int): Boolean =
+        !isGeneralAtBattlefield(generalId) && getGeneralById(generalId)?.cityId == cityId
+
+
     /** The recorder owns dirtiness; these setters preserve the immutable topology boundary. */
     internal fun applyProvinceControlDirtyFree(snapshot: ProvinceControlSnapshot) {
         val current = requireNotNull(provinceControl) { "World has no province topology" }

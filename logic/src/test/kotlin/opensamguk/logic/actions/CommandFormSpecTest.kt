@@ -12,9 +12,10 @@ class CommandFormSpecTest {
     private val registry = CommandRegistry(GeneralActionPipeline())
 
     @Test
-    fun `all 92 unique PHP command definitions retain ordered form fields`() {
+    fun `legacy commands and independent battlefield command retain ordered form fields`() {
         val codes = registryKeys()
-        assertEquals(92, codes.size)
+        assertEquals(92, codes.count { it != "che_전장이동" })
+        assertEquals(1, codes.count { it == "che_전장이동" })
 
         val failures = codes.mapNotNull { code ->
             val definition = registry.resolve(code)

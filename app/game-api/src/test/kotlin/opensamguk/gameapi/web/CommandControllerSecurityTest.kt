@@ -42,7 +42,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
  * mocked precheck/reserve/resolver. Verifies:
  *   - an authenticated caller passing SOMEONE ELSE'S generalId → 403, precheck NEVER invoked;
  *   - an authenticated caller passing their OWN generalId → the normal flow runs;
- *   - the unauthenticated transition fallback (no principal) → the ?generalId= value is honored.
+ *   - anonymous mutations, including queue operations, are rejected before services run.
  */
 class CommandControllerSecurityTest {
 
@@ -81,6 +81,64 @@ class CommandControllerSecurityTest {
     fun clearAuth() = SecurityContextHolder.clearContext()
 
     @Test
+    fun `anonymous battlefield single reservation is rejected before any service call`() {
+        mockMvc().perform(post("/api/command/che_전장이동").param("generalId", "10")
+            .contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isUnauthorized)
+        verifyNoInteractions(precheck, reserve, queue, resolver)
+    }
+
+    @Test
+    fun `anonymous mixed bulk battlefield reservation is rejected before partial queue writes`() {
+        mockMvc().perform(post("/api/command/bulk").param("generalId", "10")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""[{"action":"che_농지개간","turnList":[0]},{"action":"che_전장이동","turnList":[1],"arg":{"siteId":"changban"}}]"""))
+            .andExpect(status().isUnauthorized)
+        verifyNoInteractions(precheck, reserve, queue, resolver)
+    }
+
+    @Test
+    fun `battlefield single and bulk reject another owners general`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        mockMvc().perform(post("/api/command/che_전장이동").param("generalId", "999")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isForbidden)
+        mockMvc().perform(post("/api/command/bulk").param("generalId", "999")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON)
+            .content("""[{"action":"che_전장이동","turnList":[0]}]"""))
+            .andExpect(status().isForbidden)
+        verifyNoInteractions(precheck, reserve, queue)
+    }
+
+    @Test
+    fun `owned battlefield bulk preserves the spatial arguments`() {
+        val args = linkedMapOf<String, Any?>("siteId" to "guandu", "catalogHash" to "a".repeat(64), "expectedRevision" to "9007199254740993")
+        val items = listOf(CommandQueueService.CommandBulkItem("che_전장이동", listOf(0), args))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(queue.reserveBulkGeneral(10, items)).thenReturn(CommandQueueService.BulkReserveResult(true, listOf("전장 이동"), "success", requestId="bulk-field"))
+        val body = ObjectMapper().writeValueAsString(listOf(mapOf("action" to "che_전장이동", "turnList" to listOf(0), "arg" to args)))
+        mockMvc().perform(post("/api/command/bulk").param("generalId", "10").with(principal(7L))
+            .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted).andExpect(jsonPath("$.requestId").value("bulk-field"))
+        verify(queue).reserveBulkGeneral(10, items)
+    }
+
+    @Test
+    fun `owned battlefield reservation admits the command and preserves exact spatial revision`() {
+        val code = "che_전장이동"
+        val args = linkedMapOf<String, Any?>("siteId" to "changban", "catalogHash" to "a".repeat(64),
+            "expectedRevision" to "9007199254740993")
+        val json = ObjectMapper().writeValueAsString(args)
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(precheck.precheck(10, code, args)).thenReturn(PrecheckResult.Available)
+        `when`(reserve.reserve(10, code, 0, json)).thenReturn(ReserveResult("field-request", 0))
+        mockMvc().perform(post("/api/command/{code}", code).param("generalId", "10")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(json))
+            .andExpect(status().isAccepted).andExpect(jsonPath("$.requestId").value("field-request"))
+        verify(reserve).reserve(10, code, 0, json)
+    }
+
+    @Test
     fun `403 and no precheck when authenticated caller targets another generals id`() {
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
 
@@ -109,25 +167,27 @@ class CommandControllerSecurityTest {
     }
 
     @Test
-    fun `unauthenticated caller keeps the generalId transition fallback and can reserve blocked forecast commands`() {
-        `when`(precheck.precheck(10, "che_농지개간")).thenReturn(
-            PrecheckResult.Blocked("아국이 아닙니다.", "OccupiedCity"),
-        )
-        `when`(reserve.reserve(10, "che_농지개간", 0, null)).thenReturn(ReserveResult("req-2", 0))
+    fun `anonymous general command cannot use the former transition fallback`() {
+        mockMvc().perform(post("/api/command/che_농지개간").param("generalId", "10"))
+            .andExpect(status().isUnauthorized)
+        verifyNoInteractions(precheck, reserve, queue, resolver)
+    }
 
-        mockMvc().perform(
-            post("/api/command/{code}", "che_농지개간").param("generalId", "10"),
-        )
-            .andExpect(status().isAccepted)
-            .andExpect(jsonPath("$.status").value("AVAILABLE"))
-
-        verify(precheck).precheck(10, "che_농지개간")
+    @Test
+    fun `anonymous queue mutation routes reject before any queue or general read`() {
+        for (route in listOf("push", "repeat", "nation/push", "nation/repeat", "nation/bulk", "bulk")) {
+            val body = if (route.endsWith("bulk")) "[]" else """{"amount":1}"""
+            mockMvc().perform(post("/api/command/$route").param("generalId", "10")
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isUnauthorized)
+        }
+        verifyNoInteractions(queue, generals, resolver, reserve)
     }
 
     @Test
     fun `unknown v2 id fails closed before the legacy registry`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         mockMvc().perform(
-            post("/api/command/{code}", "personal.travel.teleport").param("generalId", "10"),
+            post("/api/command/{code}", "personal.travel.teleport").param("generalId", "10").with(principal(7L)),
         )
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.status").value("UNKNOWN"))
@@ -187,6 +247,7 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `selected recruit args reach precheck while forecast reservation stays queued`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         val argJson = """{"crewType":1104,"amount":100}"""
         val args = linkedMapOf<String, Any?>("crewType" to 1104, "amount" to 100)
         `when`(precheck.precheck(10, "che_징병", args)).thenReturn(
@@ -196,7 +257,7 @@ class CommandControllerSecurityTest {
 
         mockMvc().perform(
             post("/api/command/{code}", "che_징병")
-                .param("generalId", "10")
+                .param("generalId", "10").with(principal(7L))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(argJson),
         )
@@ -210,11 +271,12 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `immediate intake commands are accepted even when precheck has no catalog definition`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(precheck.precheck(10, "sendMessage")).thenReturn(PrecheckResult.Unknown(emptyList()))
         `when`(reserve.reserve(10, "sendMessage", 0, null)).thenReturn(ReserveResult("req-msg", 0))
 
         mockMvc().perform(
-            post("/api/command/{code}", "sendMessage").param("generalId", "10"),
+            post("/api/command/{code}", "sendMessage").param("generalId", "10").with(principal(7L)),
         )
             .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.status").value("AVAILABLE"))
@@ -279,12 +341,13 @@ class CommandControllerSecurityTest {
     }
 
     private fun assertRejectedBeforePrecheckAndReservation(code: String) {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(precheck.precheck(10, code)).thenReturn(PrecheckResult.Available)
         `when`(reserve.reserve(10, code, 0, null)).thenReturn(ReserveResult("req-$code", 0))
         clearInvocations(precheck, reserve)
 
         mockMvc().perform(
-            post("/api/command/{code}", code).param("generalId", "10"),
+            post("/api/command/{code}", code).param("generalId", "10").with(principal(7L)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("BLOCKED"))

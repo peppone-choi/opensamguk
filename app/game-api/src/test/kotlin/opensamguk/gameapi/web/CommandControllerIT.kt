@@ -3,6 +3,9 @@ package opensamguk.gameapi.web
 import opensamguk.common.world.WorldId
 
 import opensamguk.common.wire.TurnDaemonStreamKeys
+import org.junit.jupiter.api.AfterEach
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -68,7 +71,11 @@ class CommandControllerIT {
         jdbc.update("DELETE FROM world_state")
         redis.delete(commandStream)
         seedBaseline(ownerNationId = 1)
+        jdbc.update("UPDATE general SET user_id=7, npc_state=0 WHERE world_id=1 AND id=10")
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(7L, null, emptyList())
     }
+
+    @AfterEach fun clearIdentity() = SecurityContextHolder.clearContext()
 
     @Test
     fun `AVAILABLE command returns 202 with a requestId`() {

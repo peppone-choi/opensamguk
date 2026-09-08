@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "accessBasis": "RECONSTRUCTED_SAME_PROVINCE_DEPLOYMENT_NOT_HISTORICAL_ROAD",
+  "sites": [
+    {
+      "id": "changban",
+      "name": "장판",
+      "role": "FIELD",
+      "provinceId": "45776",
+      "ingressCityId": 405,
+      "latitude": 30.98367,
+      "longitude": 112.199583,
+      "confidence": "APPROXIMATE",
+      "sourceId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896",
+      "sourceLine": 661
+    },
+    {
+      "id": "guandu",
+      "name": "관도",
+      "role": "FIELD",
+      "provinceId": "82531",
+      "ingressCityId": 51,
+      "latitude": 34.75145,
+      "longitude": 114.05092,
+      "confidence": "APPROXIMATE",
+      "sourceId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f",
+      "sourceLine": 198
+    }
+  ]
+}

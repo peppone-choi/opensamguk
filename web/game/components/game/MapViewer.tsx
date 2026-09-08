@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState } from '@opensamguk/ui';
-import { api } from '@/lib/api';
+import { api, type BattlefieldsResponse } from '@/lib/api';
+import BattlefieldPanel from './BattlefieldPanel';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
@@ -156,6 +157,10 @@ export default function MapViewer({
     onCityPick,
     onNavigate,
 }: MapViewerProps = {}) {
+    const battlefieldServer = useRef<string | undefined>(undefined);
+    const [battlefields, setBattlefields] = useState<BattlefieldsResponse | null>(null);
+    const [selectedBattlefield, setSelectedBattlefield] = useState<string | null>(null);
+    const [battlefieldRefresh, setBattlefieldRefresh] = useState(0);
     const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(mapData ?? null);
     const [failed, setFailed] = useState(false);
@@ -173,6 +178,19 @@ export default function MapViewer({
     bindingCallback.current = onStrategicBindingChange;
     const touchArmedId = useRef<number | null>(null);
     const dataRef = useRef<MapPreviewResponse | null>(data);
+
+    useEffect(() => {
+        let active = true;
+        if (!live || mapData != null || data?.mapCode !== 'han-world-v3' || disallowClick) {
+            setBattlefields(null); setSelectedBattlefield(null); return;
+        }
+        const requestServer = readServerCookie();
+        if (battlefieldServer.current !== requestServer) { setBattlefields(null); setSelectedBattlefield(null); }
+        Promise.resolve().then(() => api.battlefields()).then(result => {
+            if (active && readServerCookie() === requestServer) { battlefieldServer.current = requestServer; setBattlefields(result); }
+        }).catch(() => { if (active) setBattlefields(null); });
+        return () => { active = false; };
+    }, [live, mapData, data?.mapCode, disallowClick, refreshKey, battlefieldRefresh]);
 
     useEffect(() => {
         dataRef.current = data;
@@ -382,13 +400,15 @@ export default function MapViewer({
             <div className="map-viewer-canvas">
                 <HanMapCanvas
                     mapCode={data.mapCode}
+                    battlefieldTargets={battlefields?.sites.map(site => ({...site, current: site.id === battlefields.currentSiteId}))}
+                    onBattlefieldActivate={target => setSelectedBattlefield(target.id)}
                     terrainUrl={terrainUrl}
                     provinceUrl={provinceUrl}
                     cities={cities}
                     administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
                         ? administrativeOwnership : undefined}
                     sourceSize={sourceSize}
-                    currentCityId={currentCityId ?? liveMyCity}
+                    currentCityId={battlefields?.currentSiteId ? null : currentCityId ?? liveMyCity}
                     initialFocus={initialFocus}
                     selectedCityId={selectedCityId}
                     strategicTopology={strategicTopology ?? undefined}
@@ -407,6 +427,10 @@ export default function MapViewer({
                     {touchDevice && <button type="button" className={`map-toggle-singletap${singleTap ? ' active' : ''}`} aria-pressed={singleTap} onClick={toggleSingleTap}>두번 탭 해 도시 이동</button>}
                 </div>
             </div>
+            {battlefields && selectedBattlefield && <BattlefieldPanel key={selectedBattlefield}
+                data={battlefields} siteId={selectedBattlefield} serverId={battlefieldServer.current}
+                onRefresh={() => setBattlefieldRefresh(value => value + 1)}
+                onClose={() => setSelectedBattlefield(null)} />}
             {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
                     <div className="map-tooltip-name">{hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}</div>

@@ -43,6 +43,9 @@ class V2CityTransportHandler(
     private val loadTopology: () -> HanStrategicRouteProjection = HanStrategicTopologyJson::loadDefault,
 ) {
     fun handle(command: CityTransport): TurnDaemonCommandResult {
+        if (world.isGeneralAtBattlefield(command.generalId)) {
+            return rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
+        }
         val general = world.getGeneralById(command.generalId)
         val from = world.getCityById(command.fromCityId)
         val to = world.getCityById(command.toCityId)

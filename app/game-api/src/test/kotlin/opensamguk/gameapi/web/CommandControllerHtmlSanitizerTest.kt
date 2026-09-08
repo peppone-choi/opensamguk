@@ -24,10 +24,11 @@ class CommandControllerHtmlSanitizerTest {
     private val objectMapper = ObjectMapper()
     private val precheck = mock(CommandPrecheckService::class.java)
     private val reserve = mock(CommandReserveService::class.java)
+    private val resolver = mock(GeneralResolver::class.java).also { `when`(it.resolveGeneralId(7L)).thenReturn(10) }
     private val controller = CommandController(
         precheck = precheck,
         reserve = reserve,
-        resolver = mock(GeneralResolver::class.java),
+        resolver = resolver,
         queue = mock(CommandQueueService::class.java),
         generals = mock(GeneralReadRepository::class.java),
         commandResults = mock(CommandResultRepository::class.java),
@@ -47,7 +48,7 @@ class CommandControllerHtmlSanitizerTest {
         `when`(precheck.precheck(10, "setNotice", expectedArgs)).thenReturn(PrecheckResult.Available)
         `when`(reserve.reserve(10, "setNotice", 0, expectedBody)).thenReturn(ReserveResult("req-safe", 0))
 
-        val response = controller.command(userId = null, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
+        val response = controller.command(userId = 7L, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
 
         assertEquals(202, response.statusCode.value())
         verify(precheck).precheck(10, "setNotice", expectedArgs)
@@ -58,7 +59,7 @@ class CommandControllerHtmlSanitizerTest {
     fun `rejects an over limit raw request before sanitization precheck and reservation`() {
         val raw = objectMapper.writeValueAsString(mapOf("msg" to "<script>${"😀".repeat(1001)}</script>"))
 
-        val response = controller.command(userId = null, code = "setScoutMsg", generalId = 10, turnIdx = 0, argJson = raw)
+        val response = controller.command(userId = 7L, code = "setScoutMsg", generalId = 10, turnIdx = 0, argJson = raw)
 
         assertEquals(200, response.statusCode.value())
         assertEquals(
@@ -79,7 +80,7 @@ class CommandControllerHtmlSanitizerTest {
         `when`(precheck.precheck(10, "setNotice", expectedArgs)).thenReturn(PrecheckResult.Available)
         `when`(reserve.reserve(10, "setNotice", 0, raw)).thenReturn(ReserveResult("req-notice-max", 0))
 
-        val response = controller.command(userId = null, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
+        val response = controller.command(userId = 7L, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
 
         assertEquals(202, response.statusCode.value())
         verify(precheck).precheck(10, "setNotice", expectedArgs)
@@ -90,7 +91,7 @@ class CommandControllerHtmlSanitizerTest {
     fun `rejects the setNotice raw 16385 code point boundary before reservation`() {
         val raw = objectMapper.writeValueAsString(mapOf("msg" to "😀".repeat(16385)))
 
-        val response = controller.command(userId = null, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
+        val response = controller.command(userId = 7L, code = "setNotice", generalId = 10, turnIdx = 0, argJson = raw)
 
         assertEquals(200, response.statusCode.value())
         assertEquals(

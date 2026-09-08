@@ -305,6 +305,21 @@ describe('shared HanMapCanvas viewport interaction', () => {
     vi.unstubAllGlobals();
   });
 
+  it('activates a separate battlefield identity and withholds missing projection', () => {
+    const activate = vi.fn(); const cityActivate = vi.fn();
+    const target = { id: 'changban', name: '장판', latitude: 1, longitude: 1, current: true };
+    const tiles = { ...CHE_TILES_FIXTURE, _meta: { ...CHE_TILES_FIXTURE._meta,
+      projection: { cell: 1, k: 1, x0: 0, y1: 2, pad: 0 } } };
+    const { rerender } = render(<HanMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
+      battlefieldTargets={[target]} onBattlefieldActivate={activate} onCityActivate={cityActivate} />);
+    fireEvent.click(screen.getByRole('button', { name: '장판 전장 선택' }));
+    expect(activate).toHaveBeenCalledWith(target);
+    expect(cityActivate).not.toHaveBeenCalled();
+    expect(screen.getByText('◇ 장판 · 주둔')).toBeInTheDocument();
+    rerender(<HanMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null} battlefieldTargets={[target]} />);
+    expect(screen.queryByRole('button', { name: '장판 전장 선택' })).not.toBeInTheDocument();
+  });
+
   it('shows isolated water independently with keyboard controls and no invented ports', () => {
     const views: IsoView[] = [];
     const tiles = { ...CHE_TILES_FIXTURE, terrain: ['0110', '1231', '0114'],

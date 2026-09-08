@@ -46,6 +46,9 @@ export { Tile, type TileProps, type TileState } from './Tile';
 export {
   CITY_MARKER_SPECS,
   HanMapCanvas,
+  projectBattlefieldTarget,
+  type BattlefieldMapTarget,
+  type BattlefieldMapProjection,
   cityFallbackHitBox,
   cityLabelMetrics,
   cityMarkerDrawBox,

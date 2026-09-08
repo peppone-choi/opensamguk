@@ -54,8 +54,7 @@ import org.springframework.web.bind.annotation.RestController
  * **Task 4 — generalId ownership.** The `?generalId=` param was previously TRUSTED, letting any caller
  * reserve a command on ANY general. When a verified JWT principal is present, the passed `generalId`
  * MUST equal the principal's OWN general (via [GeneralResolver]); a mismatch → `403 Forbidden`. The
- * `?generalId=` value is honored unchanged ONLY when there is no principal (the F2 unauthenticated
- * transition) — once web/game always carries the Bearer, the param becomes purely confirmatory.
+ * `?generalId=` is confirmatory: all mutation routes require a verified principal.
  */
 @RestController
 @RequestMapping("/api/command")
@@ -93,6 +92,7 @@ class CommandController(
         @RequestParam(required = false, defaultValue = "0") turnIdx: Int,
         @RequestBody(required = false) argJson: String? = null,
     ): ResponseEntity<Any> {
+        if (userId == null || userId <= 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val ownerUserId = if (code in SELECT_POOL_COMMANDS) {
             if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
@@ -436,9 +436,11 @@ class CommandController(
         else -> null
     }
 
-    /** 인증된 principal이 있을 때 generalId가 본인 소유가 아니면 403. 없으면 null(통과). */
+    /** Mutating queues require a verified principal and its currently owned general. */
     private fun ownershipGuard(userId: Long?, generalId: Int): ResponseEntity<Any>? =
-        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
+        if (userId == null || userId <= 0) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        } else if (generalId != resolver.resolveGeneralId(userId)) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         } else {
             null

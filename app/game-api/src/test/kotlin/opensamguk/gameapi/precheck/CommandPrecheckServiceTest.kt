@@ -79,6 +79,18 @@ class CommandPrecheckServiceTest {
     }
 
     @Test
+    fun `field deployment blocks city work before legacy city constraints`() {
+        val factory = mock(PrecheckStateViewFactory::class.java)
+        val actor = general().toLogic()
+        val env = mapOf<String, Any?>("battlefieldPresent" to true)
+        val state = PrecheckStateViewFactory.PrecheckState(actor,
+            opensamguk.logic.statview.MemoryStateView(generals = mapOf(actor.id to actor), cities = emptyMap(), nations = emptyMap(), env = env), env, emptyList())
+        `when`(factory.build(10, emptyMap(), false)).thenReturn(state)
+        val result = CommandPrecheckService(factory, registry).precheck(10, "che_농지개간")
+        assertEquals("전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", assertIs<PrecheckResult.Blocked>(result).reason)
+    }
+
+    @Test
     fun `owned supplied funded city with che_농지개간 is AVAILABLE`() {
         val result = service().precheck(generalId = 10, actionCode = "che_농지개간")
         assertEquals(PrecheckResult.Available, result)

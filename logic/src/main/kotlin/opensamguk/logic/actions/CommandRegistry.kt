@@ -147,6 +147,7 @@ class CommandRegistry(
         "che_사기진작" -> CheSagiJinjak(pipeline, maxLevel)
         "che_소집해제" -> CheSojipHaeje(pipeline)
         "che_이동" -> CheIdong(pipeline)
+        "che_전장이동" -> opensamguk.logic.actions.military.CheJeonjangIdong()
         "che_집합" -> CheJiphap(pipeline)
         "che_임관" -> CheImgwan(pipeline)
         "che_장수대상임관" -> CheJangsuDaesangImgwan(pipeline)

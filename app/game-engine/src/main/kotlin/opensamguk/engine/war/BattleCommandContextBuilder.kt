@@ -65,7 +65,7 @@ object BattleCommandContextBuilder {
         // per-city defender generals (same-nation, non-neutral) (process_war.php:40-41).
         val defenderGeneralsByCity = LinkedHashMap<Int, MutableList<opensamguk.logic.domain.General>>()
         for (g in world.listGenerals()) {
-            if (g.nationId == 0) continue
+            if (g.nationId == 0 || world.isGeneralAtBattlefield(g.id)) continue
             val c = world.getCityById(g.cityId) ?: continue
             if (c.nationId != g.nationId) continue
             defenderGeneralsByCity.getOrPut(g.cityId) { mutableListOf() }

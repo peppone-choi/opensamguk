@@ -113,6 +113,9 @@ class CommandPrecheckService(
         definition: GeneralActionDefinition,
         args: Map<String, Any?> = emptyMap(),
     ): PrecheckResult {
+        if (state.env["battlefieldPresent"] == true && definition.key !in setOf("che_전장이동", "che_휴식")) {
+            return PrecheckResult.Blocked("전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BattlefieldLocation")
+        }
         val ctx = context(state, args)
         val constraints = definition.buildConstraints(ctx)
         return when (val r = evaluateConstraints(constraints, ctx, state.view)) {

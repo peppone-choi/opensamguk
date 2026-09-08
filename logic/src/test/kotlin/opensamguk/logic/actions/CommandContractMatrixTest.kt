@@ -572,6 +572,12 @@ class CommandContractMatrixTest {
             "che_사기진작" to CommandContract(),
             "che_소집해제" to CommandContract(failureFixture = StateFixture.NO_CREW_FAILURE),
             "che_이동" to CommandContract(COMMON_DEST_CITY),
+            // Spatial eligibility and execution are covered by BattlefieldMovementRules/TurnHandler tests.
+            "che_전장이동" to CommandContract(
+                mapOf("siteId" to "changban", "catalogHash" to "a".repeat(64), "expectedRevision" to ""),
+                failureMode = FailureMode.ARG_REJECTED,
+                envOverride = mapOf("mapName" to "han-world-v3"),
+            ),
             "che_집합" to CommandContract(COMMON_DEST_CITY, successFixture = StateFixture.TROOP_MEMBER_SUCCESS),
             "che_임관" to CommandContract(COMMON_DEST_NATION + COMMON_LATE_REL_YEAR, successFixture = StateFixture.NEUTRAL_SUCCESS),
             "che_장수대상임관" to CommandContract(COMMON_FOREIGN_GENERAL + COMMON_DEST_NATION + COMMON_LATE_REL_YEAR, successFixture = StateFixture.NEUTRAL_SUCCESS),
