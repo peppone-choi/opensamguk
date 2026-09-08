@@ -757,6 +757,33 @@ def _apply_source(arr, source, rtk14_added, legacy_active_at_start):
     arr[24] = False if rtk14_added else bool(legacy_active_at_start)
 
 
+# Reviewed legacy identities; deliberately separate from stat/source assignment.
+# Source scenario fingerprints and RTK14 registry: 楼班 / 郭女王.
+LEGACY_PORTRAIT_IDENTITIES = {
+    ("루반", 65, 76, 39, 178, 207): ("누반", 10502),
+    ("곽씨", 42, 4, 55, 184, 235): ("곽여왕", 10815),
+}
+
+
+def _fill_reviewed_legacy_portrait(entry, rtk):
+    if entry["arr"][2] not in (None, ""):
+        return
+    identity = tuple(entry[key] for key in ("name", "L", "S", "I", "birth", "death"))
+    target = LEGACY_PORTRAIT_IDENTITIES.get(identity)
+    if target is None:
+        return
+    name, portrait_id = target
+    candidates = rtk.get(name, [])
+    if len(candidates) != 1:
+        return
+    source = candidates[0]
+    if (source.get("name"), source.get("portraitId"), source.get("birth"), source.get("death")) != (
+        name, portrait_id, entry["birth"], entry["death"],
+    ):
+        return
+    entry["arr"][2] = f"{portrait_id}.png"
+
+
 def _apply_override(arr, override, legacy_active_at_start):
     while len(arr) <= 24:
         arr.append(None)
@@ -1018,6 +1045,7 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
                 legacy_active,
             )
         elif choice["kind"] == "override":
+            _fill_reviewed_legacy_portrait(entry, rtk)
             _apply_override(entry["arr"], choice["override"], legacy_active)
             reviewed_legacy_by_key[entry["key"]] = {
                 "identity": choice["identity"],
