@@ -5,6 +5,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   drawCityFlag,
+  drawCityName,
+  drawExternalPlaceMark,
+  drawExternalPlaceName,
+  dropOverlappingLabels,
+  externalPlaceLabelBox,
   luminancePreserving,
   markerScale,
   normaliseNationColor,
@@ -26,6 +31,13 @@ function fakeContext() {
     arc: record('arc'),
     fill: record('fill'),
     stroke: record('stroke'),
+    // 글자는 그 순간의 fillStyle 까지 같이 적는다 — 흐린 글씨인지가 검사 대상이다.
+    fillText: (...args: unknown[]) => { calls.push(['fillText', [...args, context.fillStyle]]); },
+    strokeText: record('strokeText'),
+    font: '' as string,
+    textAlign: '' as CanvasTextAlign,
+    textBaseline: '' as CanvasTextBaseline,
+    lineJoin: '' as CanvasLineJoin,
     fillStyle: '' as string,
     strokeStyle: '' as string,
     lineWidth: 0,
@@ -107,5 +119,80 @@ describe('luminancePreserving', () => {
 
   it('검정은 흰색으로 떨어진다 — 0 을 곱해 땅을 지우지 않는다', () => {
     expect(luminancePreserving(parseHex('#000000')!)).toEqual({ r: 1, g: 1, b: 1 });
+  });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 郡國 밖 세력. 지형 응답의 EXTERNAL_PLACE 37 곳(백제국·사로국·부여·야마일국·흉노 …)이
+// 여태 한 번도 그려지지 않아 한반도·일본이 빈 땅으로 보였다. 城 과 **다르게** 보여야 한다.
+describe('drawExternalPlaceMark / drawExternalPlaceName', () => {
+  it('칸 비례 마름모다 — 가로가 세로의 두 배고 (x, y) 가 중심이다', () => {
+    const context = fakeContext();
+    drawExternalPlaceMark(context, 100, 200, 2);
+    const path = context.calls
+      .filter(([name]) => name === 'moveTo' || name === 'lineTo')
+      .map(([, args]) => args as [number, number]);
+    // rx = 7k = 14, ry = rx / 2 = 7. 타일 마름모(2:1)와 같은 비례다.
+    expect(path).toEqual([
+      [100, 193], [114, 200], [100, 207], [86, 200],
+    ]);
+  });
+
+  it('속을 비운다 — 채우면 전장 마름모와 구별이 안 된다', () => {
+    const context = fakeContext();
+    drawExternalPlaceMark(context, 0, 0, 1);
+    expect(context.calls.some(([name]) => name === 'fill')).toBe(false);
+    // 두 번 긋는다: 어두운 테 위에 흐린 테.
+    expect(context.calls.filter(([name]) => name === 'stroke')).toHaveLength(2);
+  });
+
+  it('표식은 글자를 쓰지 않는다 — 이름은 따로 얹어야 마름모에 안 묻힌다', () => {
+    const context = fakeContext();
+    drawExternalPlaceMark(context, 0, 0, 1);
+    expect(context.calls.some(([name]) => name === 'fillText')).toBe(false);
+    expect(context.calls.some(([name]) => name === 'strokeText')).toBe(false);
+  });
+
+  it('이름은 마름모 아래에 --muted 로 — 城 이름(--text)보다 한 단 흐리다', () => {
+    const context = fakeContext();
+    drawExternalPlaceName(context, '야마일국', 100, 200, 1);
+    const [, args] = context.calls.find(([name]) => name === 'fillText')!;
+    // ry(3.5) + 3 = 6.5 아래.
+    expect(args).toEqual(['야마일국', 100, 206.5, '#8e8879']);
+
+    const city = fakeContext();
+    drawCityName(city, '낙양', 100, 200, 1);
+    const [, cityArgs] = city.calls.find(([name]) => name === 'fillText')!;
+    expect(cityArgs[3]).toBe('#ece6d8');
+    expect(cityArgs[3]).not.toBe(args[3]);
+  });
+});
+
+describe('externalPlaceLabelBox / dropOverlappingLabels', () => {
+  it('상자는 마름모 바로 아래에 붙고 글자 수를 따라 넓어진다', () => {
+    // k = 1 → 글자 10px, ry = 3.5, 3px 띄운다.
+    expect(externalPlaceLabelBox(100, 200, '백제국', 1))
+      .toEqual({ x0: 85, x1: 115, y0: 206.5, y1: 216.5 });
+    expect(externalPlaceLabelBox(100, 200, '예', 1))
+      .toEqual({ x0: 95, x1: 105, y0: 206.5, y1: 216.5 });
+  });
+
+  it('겹치면 앞엣것만 남긴다 — 부르는 쪽이 순서로 우선순위를 준다', () => {
+    const boxes = [
+      externalPlaceLabelBox(100, 200, '사로국', 1),
+      externalPlaceLabelBox(104, 201, '구야국', 1), // 4px 옆 — 겹친다
+      externalPlaceLabelBox(300, 200, '야마일국', 1), // 멀다
+    ];
+    expect(dropOverlappingLabels(boxes)).toEqual([true, false, true]);
+  });
+
+  it('벌어지면 버렸던 것이 되살아난다 — 당길수록 하나씩 나온다', () => {
+    // 같은 두 곳을 배율만 키워 벌린다(화면 좌표 간격이 40px 로 벌어진다).
+    const boxes = [
+      externalPlaceLabelBox(100, 200, '사로국', 1),
+      externalPlaceLabelBox(140, 201, '구야국', 1),
+    ];
+    expect(dropOverlappingLabels(boxes)).toEqual([true, true]);
   });
 });

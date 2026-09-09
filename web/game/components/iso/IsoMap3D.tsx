@@ -26,6 +26,10 @@ import {
   drawCityFlag,
   drawCityName,
   drawCityRing,
+  drawExternalPlaceMark,
+  drawExternalPlaceName,
+  dropOverlappingLabels,
+  externalPlaceLabelBox,
   indexTint,
   isWater,
   luminancePreserving,
@@ -209,6 +213,11 @@ export function IsoMap3D({
       const OUT_OF_PLAY: Rgb = { r: 0.38, g: 0.38, b: 0.38 };
       const halfCols = (cols - 1) / 2;
       const halfRows = (rows - 1) / 2;
+      // 郡國 밖 세력(백제국·사로국·부여·야마일국·흉노 …). 게임 城 이 아니라 모델이 없다 —
+      // 2D 판과 같이 겹판에 속 빈 마름모로만 얹는다.
+      const externals = data.cities
+        .filter((city) => city.kind === 'EXTERNAL_PLACE')
+        .sort((a, b) => Number(b.seat) - Number(a.seat));
       const y = (level: number) => level * HEIGHT_STEP_WORLD;
 
       const scene = new THREE.Scene();
@@ -610,6 +619,31 @@ export function IsoMap3D({
         const lift = Math.max(12, (h / span) * 1.1);
         const half = Math.max(15 * k, tileWidth * 0.22);
         const below = Math.max(9, tileWidth * 0.22);
+
+        // 郡國 밖 세력을 먼저 깐다 — 城 표식보다 뒤에 있어야 한다.
+        const outsiders: { name: string; sx: number; sy: number }[] = [];
+        for (const place of externals) {
+          const i = Math.min(rows - 1, Math.max(0, place.row)) * cols
+            + Math.min(cols - 1, Math.max(0, place.col));
+          projected.set(place.col - halfCols, y(baseHeight[i]), place.row - halfRows);
+          projected.project(camera);
+          if (projected.z > 1) continue;
+          const sx = (projected.x * 0.5 + 0.5) * w;
+          const sy = (-projected.y * 0.5 + 0.5) * h;
+          if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
+          outsiders.push({ name: place.name, sx, sy });
+          drawExternalPlaceMark(overlayContext, sx, sy, k);
+        }
+        if (!hideCityNames) {
+          const keepOutsiderName = dropOverlappingLabels(
+            outsiders.map((o) => externalPlaceLabelBox(o.sx, o.sy, o.name, k)),
+          );
+          outsiders.forEach((place, n) => {
+            if (keepOutsiderName[n]) {
+              drawExternalPlaceName(overlayContext, place.name, place.sx, place.sy, k);
+            }
+          });
+        }
 
         const drawn: { city: PlacedCity; sx: number; sy: number }[] = [];
         for (const city of cities) {

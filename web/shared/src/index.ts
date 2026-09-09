@@ -213,7 +213,12 @@ export {
   drawCityFlag,
   drawCityName,
   drawCityRing,
+  drawExternalPlaceMark,
+  drawExternalPlaceName,
+  dropOverlappingLabels,
+  externalPlaceLabelBox,
   markerScale,
   type CityFlagOptions,
+  type LabelBox,
 } from './iso/marker';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';
