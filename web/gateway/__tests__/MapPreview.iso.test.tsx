@@ -35,8 +35,21 @@ vi.mock('@opensamguk/ui', async () => {
       shared.props = props;
       return (
         <div data-testid="iso2d" aria-label={props.ariaLabel}>
-          <button type="button" onClick={() => props.onPickCity?.(props.cities![0])}>
+          <button
+            type="button"
+            onClick={() => props.onPickCity?.(props.cities![0], { pointerType: 'mouse' })}
+          >
             첫 城 누르기
+          </button>
+          {/* 진짜 판은 캔버스 위 좌표로 부른다. 여기서는 그 호출만 흉내낸다. */}
+          <button
+            type="button"
+            onClick={() => props.onHoverCity?.(props.cities![0], { x: 40, y: 60 })}
+          >
+            첫 城 얹기
+          </button>
+          <button type="button" onClick={() => props.onHoverCity?.(null, { x: 0, y: 0 })}>
+            城 밖으로
           </button>
         </div>
       );
@@ -120,6 +133,23 @@ describe('MapPreview 아이소 2D 판', () => {
     expect(screen.getByRole('status')).toHaveTextContent('낙양');
     expect(screen.getByRole('status')).toHaveTextContent('위 · 수도');
     expect(shared.props?.selectedCityId).toBe(11);
+  });
+
+  it('城 에 마우스를 얹기만 해도 그 城 정보가 뜨고, 벗어나면 사라진다', () => {
+    render(<MapPreview mapData={MAP} />);
+    expect(screen.queryByRole('status')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '첫 城 얹기' }));
+    const tip = screen.getByRole('status');
+    expect(tip).toHaveTextContent('낙양');
+    expect(tip).toHaveTextContent('위 · 수도');
+    // 얹은 툴팁은 커서를 따라간다 — 왼위에 붙는 건 눌러서 고른 쪽이다.
+    expect(tip).toHaveStyle({ left: '54px', top: '74px' });
+    // 얹은 것만으로는 城 이 선택되지 않는다.
+    expect(shared.props?.selectedCityId).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '城 밖으로' }));
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('도시명 표기 토글이 캔버스까지 간다', () => {

@@ -200,9 +200,18 @@ export {
   normaliseNationColor,
   indexTint,
   mixToward,
+  luminancePreserving,
   hslToRgb,
   parseHex,
   type Rgb,
   type TintMode,
 } from './iso/tint';
+export {
+  drawBattlefieldMark,
+  drawCityFlag,
+  drawCityName,
+  drawCityRing,
+  markerScale,
+  type CityFlagOptions,
+} from './iso/marker';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';

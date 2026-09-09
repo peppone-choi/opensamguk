@@ -87,6 +87,8 @@ export default function MapPreview({
     const [failed, setFailed] = useState(false);
     const [hideCityName, setHideCityName] = useState(false);
     const [picked, setPicked] = useState<PlacedCity | null>(null);
+    // 마우스를 얹은 城. 툴팁은 이걸로 뜬다 — 눌러야 나오는 건 지도가 아니다.
+    const [hover, setHover] = useState<{ city: PlacedCity; x: number; y: number } | null>(null);
 
     useEffect(() => {
         if (mapData != null) {
@@ -153,6 +155,9 @@ export default function MapPreview({
             : []
     ), [data, grid.data, nationById, sourceSize]);
     const handlePickCity = useCallback((city: PlacedCity) => setPicked(city), []);
+    const handleHoverCity = useCallback((city: PlacedCity | null, at: { x: number; y: number }) => {
+        setHover(city ? { city, x: at.x, y: at.y } : null);
+    }, []);
 
     if (failed || grid.status === 'error' || (data && data.cities.length === 0)) {
         return (
@@ -183,6 +188,7 @@ export default function MapPreview({
                     selectedCityId={picked?.id ?? null}
                     hideCityNames={hideCityName}
                     onPickCity={handlePickCity}
+                    onHoverCity={handleHoverCity}
                     ariaLabel={`${data.mapCode} 서버 아이소 지도`}
                 />
                 <div className="map-btn-stack">
@@ -200,16 +206,21 @@ export default function MapPreview({
                         도시명 표기
                     </button>
                 </div>
-            </div>
-            {picked && (
-                <div className="map-preview-tooltip map-preview-tooltip--pinned" role="status">
-                    <div className="map-preview-tooltip-name">{picked.name}</div>
-                    <div className="map-preview-tooltip-meta">
-                        {picked.nationName ?? '재야'}
-                        {picked.isCapital ? ' · 수도' : ''}
+                {/* 얹으면 커서를 따라오고, 누르면 왼위에 붙는다(손가락에는 hover 가 없다). */}
+                {(hover ?? picked) && (
+                    <div
+                        className={`map-preview-tooltip${hover ? '' : ' map-preview-tooltip--pinned'}`}
+                        role="status"
+                        style={hover ? { left: hover.x + 14, top: hover.y + 14 } : undefined}
+                    >
+                        <div className="map-preview-tooltip-name">{(hover?.city ?? picked)!.name}</div>
+                        <div className="map-preview-tooltip-meta">
+                            {(hover?.city ?? picked)!.nationName ?? '재야'}
+                            {(hover?.city ?? picked)!.isCapital ? ' · 수도' : ''}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
             <div className="map-preview-cap">
                 {`${serverName ?? data.serverName} · ${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`}
             </div>

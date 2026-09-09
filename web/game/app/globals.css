@@ -2670,3 +2670,20 @@ input:focus, select:focus, textarea:focus {
 .iso-zoom { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px; }
 .iso-zoom button { min-width: 28px; padding: 3px 7px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); font-size: 12px; line-height: 1.4; cursor: pointer; }
 .iso-zoom button:hover { border-color: var(--bronze); }
+
+/* 지도 위 城 툴팁 — 커서를 따라온다. 누를 필요 없이 얹으면 뜬다. */
+.iso-tip {
+    position: absolute;
+    z-index: 9;
+    display: grid;
+    gap: 1px;
+    padding: 4px 7px;
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.35;
+    white-space: nowrap;
+    pointer-events: none;
+}
+.iso-tip span { color: var(--text-2); }

@@ -22,8 +22,14 @@ import {
   SEAT_ONLY_TILE_PIXELS,
   TERRAIN,
   TERRAIN_ASSET_NAME,
+  drawBattlefieldMark,
+  drawCityFlag,
+  drawCityName,
+  drawCityRing,
   indexTint,
   isWater,
+  luminancePreserving,
+  markerScale,
   mixToward,
   normaliseNationColor,
   type IsoMapData,
@@ -64,6 +70,11 @@ export interface IsoMap3DProps {
   /** 城 을 눌렀을 때. 붙어 있으면 城 이 지형보다 먼저 집힌다. */
   /** pointerType 은 직전 pointerdown 의 것이다 — 2D 판과 같은 계약이다. */
   onPickCity?: (city: PlacedCity, activation: { pointerType: string }) => void;
+  /**
+   * 城 위에 마우스를 **얹었을 때**. 좌표는 겹판 왼위 기준 화면 좌표다.
+   * 城 밖으로 나가면 null 로 한 번 더 부른다. 툴팁은 이걸로 뜬다 — 2D 판과 같은 계약이다.
+   */
+  onHoverCity?: (city: PlacedCity | null, at: { x: number; y: number }) => void;
   /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
   battlefields?: readonly IsoBattlefieldMarker[];
   onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
@@ -139,6 +150,7 @@ export function IsoMap3D({
   selectedCityId = null,
   onPickTile,
   onPickCity,
+  onHoverCity,
   battlefields = EMPTY_BATTLEFIELDS,
   onPickBattlefield,
   showStats = false,
@@ -151,7 +163,11 @@ export function IsoMap3D({
   >(null);
 
   // 색 갱신만 따로 할 수 있게 씬 핸들을 남긴다.
-  const tintRef = useRef<{ apply: (strength: number, mode: TintMode) => void } | null>(null);
+  const tintRef = useRef<{
+    apply: (strength: number, mode: TintMode) => void;
+    // 국경은 세력색으로 가르므로 색이 바뀌면 같이 다시 구워야 한다.
+    rebuildBorders: () => void;
+  } | null>(null);
   // 색 인자는 씬을 다시 짓지 않는다 — 그래서 주 effect 의 의존성에 없다. 클로저로 읽으면
   // 씬을 지을 때의 옛 값에 붙박이고, 세력색이 지형보다 늦게 도착하면(IsoWorldMap 은
   // 그럴 수 있다) 국가색 대신 郡 인덱스 색이 그대로 남는다. 항상 최신 것을 ref 로 읽는다.
@@ -206,31 +222,75 @@ export function IsoMap3D({
         else byCode.set(code[i], [i]);
       }
 
+      // 縣 경계는 축소 상태에서 끈다 — 縣 건물이 사라지는 배율에서 금만 남으면 지저분하다.
+      let countyBorders: THREE.LineSegments | null = null;
+      let commanderyBorders: THREE.Mesh | null = null;
+      // 국경은 세력색이 정해져야 그을 수 있는데 색은 지형보다 늦게 올 수 있다(IsoWorldMap).
+      // 그래서 한 그룹에 담아 두고 색이 바뀌면 통째로 다시 굽는다.
+      const borderGroup = new THREE.Group();
+
       const material = tileMaterial();
       disposables.push(material);
       const dummy = new THREE.Object3D();
       const tileMeshes: { mesh: THREE.InstancedMesh; tiles: number[] }[] = [];
       let tileTotal = 0;
 
-      for (const [terrainCode, tiles] of byCode) {
-        const geometry = loaded.terrain.get(terrainCode);
-        if (!geometry) continue;
-        const mesh = new THREE.InstancedMesh(geometry, material, tiles.length);
+      const addTiles = (
+        geometry: THREE.BufferGeometry,
+        instances: { i: number; rotY: number }[],
+      ) => {
+        if (instances.length === 0) return;
+        const mesh = new THREE.InstancedMesh(geometry, material, instances.length);
         mesh.frustumCulled = false;
-        for (let n = 0; n < tiles.length; n += 1) {
-          const i = tiles[n];
-          const c = i % cols;
-          const r = (i / cols) | 0;
-          dummy.position.set(c - halfCols, y(baseHeight[i]), r - halfRows);
-          dummy.rotation.set(0, 0, 0);
+        for (let n = 0; n < instances.length; n += 1) {
+          const { i, rotY } = instances[n];
+          dummy.position.set(
+            (i % cols) - halfCols, y(baseHeight[i]), ((i / cols) | 0) - halfRows,
+          );
+          dummy.rotation.set(0, rotY, 0);
           dummy.scale.set(1, 1, 1);
           dummy.updateMatrix();
           mesh.setMatrixAt(n, dummy.matrix);
         }
         mesh.instanceMatrix.needsUpdate = true;
         scene.add(mesh);
-        tileMeshes.push({ mesh, tiles });
-        tileTotal += tiles.length;
+        tileMeshes.push({ mesh, tiles: instances.map((x) => x.i) });
+        tileTotal += instances.length;
+      };
+
+      // 강줄기는 **물길 방향으로 돌려서** 놓는다.
+      //
+      // river.gltf 는 X 축(동서)으로 파인 수로 한 벌뿐이다(실측: 둑이 z ±0.3..±0.5 에서
+      // 솟고 가운데 |z| < 0.3 만 −0.04 로 내려앉는다). 전부 같은 각으로 깔면 남북으로
+      // 흐르는 강이 동서 도랑 여럿으로 끊겨 「막혀 보인다」(2026-09-09 지적).
+      //
+      // 굽이·합류 조각은 없다. 둑이 X 축용 한 벌뿐이라 두 각을 겹쳐 놓으면 둑의 합집합이
+      // 네 변을 둘러싸 **웅덩이**가 된다 — 막힌 것처럼 보이는 그 모양이 바로 그것이다.
+      // 그래서 꺾이는 칸에는 둑이 없는 lake 조각을 깐다. 물이 그대로 지나간다.
+      const riverGeometry = loaded.terrain.get(TERRAIN.RIVER);
+      const lakeGeometry = loaded.terrain.get(TERRAIN.LAKE);
+      const water = (c: number, r: number) => c >= 0 && c < cols && r >= 0 && r < rows
+        && isWater(code[r * cols + c]);
+
+      for (const [terrainCode, tiles] of byCode) {
+        const geometry = loaded.terrain.get(terrainCode);
+        if (!geometry) continue;
+        if (terrainCode === TERRAIN.RIVER && riverGeometry && lakeGeometry) {
+          const straight: { i: number; rotY: number }[] = [];
+          const junction: { i: number; rotY: number }[] = [];
+          for (const i of tiles) {
+            const c = i % cols;
+            const r = (i / cols) | 0;
+            const ew = water(c - 1, r) || water(c + 1, r);
+            const ns = water(c, r - 1) || water(c, r + 1);
+            if (ew && ns) junction.push({ i, rotY: 0 });
+            else straight.push({ i, rotY: ns ? Math.PI / 2 : 0 });
+          }
+          addTiles(riverGeometry, straight);
+          addTiles(lakeGeometry, junction);
+          continue;
+        }
+        addTiles(geometry, tiles.map((i) => ({ i, rotY: 0 })));
       }
 
       // ── 흙벽(skirt) ──────────────────────────────────────────────────
@@ -300,6 +360,103 @@ export function IsoMap3D({
       }
       scene.add(skirtMesh);
 
+      // ── 縣·郡·국가 경계 ──────────────────────────────────────────────
+      //
+      // 색만으로는 어디까지가 한 세력인지 안 읽힌다(2026-09-09 지적). 2D 판과 같은 판정을
+      // 쓰되 여기서는 씬에 **한 번** 굽고 그대로 둔다 — 프레임마다 32,064 칸을 화면으로
+      // 투영하면 끌기가 무거워진다.
+      //
+      // 선 굵기(linewidth)는 WebGL 에서 항상 1px 이라 등급이 안 갈린다. 그래서 국가·郡 는
+      // 띠(삼각형 두 장)로 깔고 縣 만 선으로 둔다. 띠는 타일 윗면보다 살짝 띄운다.
+      scene.add(borderGroup);
+      const rebuildBorders = () => {
+        for (const child of borderGroup.children.slice()) {
+          borderGroup.remove(child);
+          const mesh = child as THREE.Mesh;
+          (mesh.geometry as THREE.BufferGeometry | undefined)?.dispose();
+          (mesh.material as THREE.Material | undefined)?.dispose();
+        }
+        countyBorders = null;
+        commanderyBorders = null;
+        const LIFT = 0.02;
+        const nationBand: number[] = [];
+        const commanderyBand: number[] = [];
+        const countyLine: number[] = [];
+        const paint = paintRef.current;
+        // 세력 판정은 2D 와 같다 — 색 문자열이 같으면 같은 나라다(같은 나라의 두 縣
+        // 사이에는 국경이 안 서고 郡 경계가 남는다).
+        const nationKey = (i: number): string | null => {
+          if (playable[i] === 0 || isWater(code[i])) return null;
+          const o = owner[i];
+          if (o < 0) return '';
+          return paint?.[o] ?? '';
+        };
+        // 축에 나란한 변 하나를 폭 w 의 띠로 편다.
+        const band = (out: number[], x1: number, z1: number, x2: number, z2: number,
+          h: number, w: number) => {
+          const dx = x2 - x1;
+          const dz = z2 - z1;
+          const len = Math.hypot(dx, dz) || 1;
+          const nx = (-dz / len) * (w / 2);
+          const nz = (dx / len) * (w / 2);
+          const ax = x1 - nx; const az = z1 - nz;
+          const bx = x1 + nx; const bz = z1 + nz;
+          const cx = x2 + nx; const cz = z2 + nz;
+          const ex = x2 - nx; const ez = z2 - nz;
+          out.push(ax, h, az, bx, h, bz, cx, h, cz, ax, h, az, cx, h, cz, ex, h, ez);
+        };
+        for (let r = 0; r < rows; r += 1) {
+          for (let c = 0; c < cols; c += 1) {
+            const i = r * cols + c;
+            const key = nationKey(i);
+            if (key === null) continue;
+            const wx = c - halfCols;
+            const wz = r - halfRows;
+            const edges: [number, number, number, number, number][] = [];
+            // (c+1, r) 과 나누는 변은 x = wx+0.5 위의 세로 금이다.
+            if (c + 1 < cols) edges.push([i + 1, wx + 0.5, wz - 0.5, wx + 0.5, wz + 0.5]);
+            // (c, r+1) 과 나누는 변은 z = wz+0.5 위의 가로 금이다.
+            if (r + 1 < rows) edges.push([i + cols, wx - 0.5, wz + 0.5, wx + 0.5, wz + 0.5]);
+            for (const [j, x1, z1, x2, z2] of edges) {
+              const other = nationKey(j);
+              if (other === null) continue;
+              const h = Math.max(surface(i), surface(j)) + LIFT;
+              if (other !== key) band(nationBand, x1, z1, x2, z2, h, 0.16);
+              else if (parentOwner[j] !== parentOwner[i]) {
+                band(commanderyBand, x1, z1, x2, z2, h, 0.08);
+              } else if (owner[j] !== owner[i]) {
+                countyLine.push(x1, h, z1, x2, h, z2);
+              }
+            }
+          }
+        }
+        const bandMesh = (data3: number[], color: number, opacity: number) => {
+          if (data3.length === 0) return null;
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(data3, 3));
+          const bandMaterial = new THREE.MeshBasicMaterial({
+            color, transparent: opacity < 1, opacity, depthWrite: false,
+          });
+          const mesh = new THREE.Mesh(geometry, bandMaterial);
+          mesh.frustumCulled = false;
+          borderGroup.add(mesh);
+          return mesh;
+        };
+        bandMesh(nationBand, 0x0c0f0e, 0.9);
+        commanderyBorders = bandMesh(commanderyBand, 0x0c0f0e, 0.55);
+        if (countyLine.length > 0) {
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(countyLine, 3));
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x0c0f0e, transparent: true, opacity: 0.32, depthWrite: false,
+          });
+          countyBorders = new THREE.LineSegments(geometry, lineMaterial);
+          countyBorders.frustumCulled = false;
+          borderGroup.add(countyBorders);
+        }
+      };
+      rebuildBorders();
+
       // ── 城 ───────────────────────────────────────────────────────────
       // 郡治(seat)와 縣을 따로 세운다. 축소 상태에서는 縣 쪽 메시를 통째로 끈다
       // (SEAT_ONLY_TILE_PIXELS 주석 참조). 2D 와 같은 눈금이라 두 판이 같이 움직인다.
@@ -310,6 +467,8 @@ export function IsoMap3D({
       const cityMeshes: { mesh: THREE.InstancedMesh; cities: PlacedCity[] }[] = [];
       // 전장은 3D 물체가 아니라 겹판 위 화면 좌표다. drawLabels 가 채우고 집기가 읽는다.
       const fieldHits: { target: IsoBattlefieldMarker; x: number; y: number; radius: number }[] = [];
+      // 城 집기 상자도 겹판 화면 좌표다 — 마우스를 얹으면 툴팁이 여기서 뜬다.
+      const cityHits: { city: PlacedCity; x0: number; x1: number; y0: number; y1: number }[] = [];
       let seatTotal = 0;
       let countyTotal = 0;
       const inGrid = (city: PlacedCity) => city.col >= 0 && city.col < cols
@@ -351,20 +510,29 @@ export function IsoMap3D({
       });
 
       // ── 세력색 합성 ───────────────────────────────────────────────────
-      // 덮어쓰기가 아니라 곱하기다. 지형 정점색이 그대로 살아 있고 그 위에 국가 색조가 얹힌다.
+      // 곱하기이되 **밝기를 보존하는** 색을 곱한다(luminancePreserving). 정규화색을 그대로
+      // 곱하면 국가색 밝기만큼 땅이 통째로 어두워진다 — 「세력색이 너무 짙다」(2026-09-09).
+      // 2D 판은 같은 일을 캔버스 합성 모드 'color' 로 한다.
       const white: Rgb = { r: 1, g: 1, b: 1 };
       const color = new THREE.Color();
       const applyTint = (strength: number, mode: TintMode) => {
         const paint = paintRef.current;
+        // 같은 세기 값이라도 3D 는 2D 보다 색이 약하게 읽힌다. 2D 는 합성 모드 'color' 로
+        // 색상을 통째로 바꾸는데 여기는 정점색에 곱하는 것뿐이기 때문이다. 두 판을 나란히
+        // 두고 맞춘 보정값이다 — 부르는 쪽은 한 숫자만 준다.
+        const tint = Math.min(1, strength * 1.6);
         for (const { mesh, tiles } of tileMeshes) {
           for (let n = 0; n < tiles.length; n += 1) {
             const i = tiles[n];
             let rgb = playable[i] === 0 ? OUT_OF_PLAY : white;
-            if (playable[i] === 1 && mode !== 'none' && strength > 0 && !isWater(code[i])) {
+            if (playable[i] === 1 && mode !== 'none' && tint > 0 && !isWater(code[i])) {
               const key = mode === 'commandery' ? parentOwner[i] : owner[i];
               if (key >= 0) {
                 const hex = paint?.[key];
-                rgb = mixToward(hex ? normaliseNationColor(hex) : indexTint(key), strength);
+                rgb = mixToward(
+                  luminancePreserving(hex ? normaliseNationColor(hex) : indexTint(key)),
+                  tint,
+                );
               }
             }
             color.setRGB(rgb.r, rgb.g, rgb.b);
@@ -374,7 +542,7 @@ export function IsoMap3D({
         }
         renderOnce();
       };
-      tintRef.current = { apply: applyTint };
+      tintRef.current = { apply: applyTint, rebuildBorders };
 
       // ── 조명 ─────────────────────────────────────────────────────────
       // 해는 카메라 쪽 어깨 너머에 둔다. 흙벽은 남면(+Z)·동면(+X)만 카메라에 보이는데
@@ -431,10 +599,17 @@ export function IsoMap3D({
         overlayContext.setTransform(dpr, 0, 0, dpr, 0, 0);
         overlayContext.clearRect(0, 0, w, h);
         const showNames = !hideCityNames && !seatOnly;
-        overlayContext.font = '600 12px "Pretendard Variable", Pretendard, sans-serif';
-        overlayContext.textAlign = 'center';
-        overlayContext.textBaseline = 'top';
-        overlayContext.lineJoin = 'round';
+
+        // 표식은 **화면 크기**로 그린다. 세계 물체로 세우면 전체 보기에서 1px 로 줄어
+        // 사라지고 당기면 화면을 덮는다 — 2D 판이 그래서 「깃발이 없다」는 소리를 들었다.
+        const tileWidth = (Math.SQRT2 * h) / span;
+        const k = markerScale(tileWidth / 256);
+        // 깃대 밑동을 건물 꼭대기쯤으로 올린다(건물이 대략 한 세계 단위다).
+        const lift = Math.max(12, (h / span) * 1.1);
+        const half = Math.max(15 * k, tileWidth * 0.22);
+        const below = Math.max(9, tileWidth * 0.22);
+
+        const drawn: { city: PlacedCity; sx: number; sy: number }[] = [];
         for (const city of cities) {
           if (seatOnly && !city.seat) continue;
           const i = city.tileRow * cols + city.tileCol;
@@ -443,38 +618,35 @@ export function IsoMap3D({
           if (projected.z > 1) continue;
           const sx = (projected.x * 0.5 + 0.5) * w;
           const sy = (-projected.y * 0.5 + 0.5) * h;
-          if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) continue;
+          if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
+          drawn.push({ city, sx, sy });
+        }
+        // 뒤쪽 城 부터 그린다 — 화면 아래일수록 앞이다.
+        drawn.sort((a, b) => a.sy - b.sy);
+
+        cityHits.length = 0;
+        for (const { city, sx, sy } of drawn) {
+          const top = drawCityFlag(overlayContext, sx, sy - lift, {
+            color: city.nationColor ? rgbCss(normaliseNationColor(city.nationColor)) : null,
+            capital: city.isCapital,
+            k,
+          });
+          // 집기 상자는 깃발 꼭대기부터 칸 아래까지 — 깃발을 얹어도 城 을 얹어도 잡힌다.
+          cityHits.push({ city, x0: sx - half, x1: sx + half, y0: top - 2, y1: sy + below });
+        }
+
+        // 선택·주둔 테는 깃발 위에 얹는다 — 가려지면 어디가 내 城 인지 못 찾는다.
+        for (const { city, sx, sy } of drawn) {
           const ring = city.id === currentCityId
             ? '#ffd36d' // --focus
             : city.id === selectedCityId ? '#ece6d8' : null; // --text
-          if (city.nationColor) {
-            overlayContext.fillStyle = rgbCss(normaliseNationColor(city.nationColor));
-            overlayContext.strokeStyle = 'rgba(12, 15, 14, 0.85)';
-            overlayContext.lineWidth = 1.5;
-            overlayContext.beginPath();
-            overlayContext.arc(sx, sy - 14, city.isCapital ? 6 : 4, 0, Math.PI * 2);
-            overlayContext.fill();
-            overlayContext.stroke();
-            if (city.isCapital) {
-              overlayContext.fillStyle = '#ece6d8';
-              overlayContext.beginPath();
-              overlayContext.arc(sx, sy - 14, 2, 0, Math.PI * 2);
-              overlayContext.fill();
-            }
+          if (ring) drawCityRing(overlayContext, sx, sy, { color: ring, k });
+        }
+
+        if (showNames) {
+          for (const { city, sx, sy } of drawn) {
+            drawCityName(overlayContext, city.name, sx, sy + below + 2, k);
           }
-          if (ring) {
-            overlayContext.strokeStyle = ring;
-            overlayContext.lineWidth = 2;
-            overlayContext.beginPath();
-            overlayContext.arc(sx, sy - 14, 10, 0, Math.PI * 2);
-            overlayContext.stroke();
-          }
-          if (!showNames) continue;
-          overlayContext.strokeStyle = 'rgba(12, 15, 14, 0.92)';
-          overlayContext.lineWidth = 3;
-          overlayContext.strokeText(city.name, sx, sy + 2);
-          overlayContext.fillStyle = '#ece6d8';
-          overlayContext.fillText(city.name, sx, sy + 2);
         }
 
         // 전장 — 城 위에 마름모. 3D 는 인스턴스 메시가 아니라 이 겹판에 그리고,
@@ -489,19 +661,11 @@ export function IsoMap3D({
           const sx = (projected.x * 0.5 + 0.5) * w;
           const sy = (-projected.y * 0.5 + 0.5) * h;
           if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) continue;
-          const radius = 9;
-          overlayContext.fillStyle = '#1b201d'; // --panel
-          overlayContext.strokeStyle = field.current ? '#ffd36d' : '#d3b064'; // --focus / --bronze
-          overlayContext.lineWidth = 2.5;
-          overlayContext.beginPath();
-          overlayContext.moveTo(sx, sy - radius);
-          overlayContext.lineTo(sx + radius, sy);
-          overlayContext.lineTo(sx, sy + radius);
-          overlayContext.lineTo(sx - radius, sy);
-          overlayContext.closePath();
-          overlayContext.fill();
-          overlayContext.stroke();
-          fieldHits.push({ target: field, x: sx, y: sy, radius: radius + 6 });
+          const radius = drawBattlefieldMark(overlayContext, sx, sy, {
+            current: field.current === true,
+            k,
+          });
+          fieldHits.push({ target: field, x: sx, y: sy, radius });
         }
       };
 
@@ -530,8 +694,12 @@ export function IsoMap3D({
         if (frame) return;
         frame = requestAnimationFrame(() => {
           frame = 0;
-          const seatOnly = tilePixels() < SEAT_ONLY_TILE_PIXELS;
+          const px = tilePixels();
+          const seatOnly = px < SEAT_ONLY_TILE_PIXELS;
           for (const mesh of countyMeshes) mesh.visible = !seatOnly;
+          // 축소하면 아래 등급 경계부터 끈다 — 2D 판과 같은 눈금이다.
+          if (countyBorders) countyBorders.visible = px >= 26;
+          if (commanderyBorders) commanderyBorders.visible = px >= 16;
           canvas.dataset.seatOnly = String(seatOnly);
           layout();
           place();
@@ -555,8 +723,29 @@ export function IsoMap3D({
         canvas.style.cursor = 'grabbing';
         canvas.setPointerCapture(e.pointerId);
       };
+      // 마우스를 얹기만 해도 城 정보가 나와야 한다 — 눌러야 나오는 건 지도가 아니라 목록이다.
+      let hovered: number | null = null;
       const onMove = (e: PointerEvent) => {
-        if (!dragging) return;
+        if (!dragging) {
+          if (!onHoverCity) return;
+          const rect = canvas.getBoundingClientRect();
+          const px = e.clientX - rect.left;
+          const py = e.clientY - rect.top;
+          let found: PlacedCity | null = null;
+          // 위에 그려진 쪽을 먼저 집는다.
+          for (let n = cityHits.length - 1; n >= 0; n -= 1) {
+            const box = cityHits[n];
+            if (px >= box.x0 && px <= box.x1 && py >= box.y0 && py <= box.y1) {
+              found = box.city;
+              break;
+            }
+          }
+          canvas.style.cursor = found ? 'pointer' : 'grab';
+          // 같은 城 위에서 움직이는 동안에도 좌표는 계속 준다 — 툴팁이 커서를 따라간다.
+          if (found || hovered !== null) onHoverCity(found, { x: px, y: py });
+          hovered = found ? found.id : null;
+          return;
+        }
         const h = host.clientHeight || 1;
         const perPixel = span / h;
         // 화면 x·y 를 카메라 오른쪽·위 축으로 되돌린다.
@@ -596,7 +785,13 @@ export function IsoMap3D({
       canvas.addEventListener('pointermove', onMove);
       canvas.addEventListener('pointerup', onUp);
       canvas.addEventListener('pointercancel', onUp);
+      const onLeave = () => {
+        if (hovered === null) return;
+        hovered = null;
+        onHoverCity?.(null, { x: 0, y: 0 });
+      };
       canvas.addEventListener('wheel', onWheel, { passive: false });
+      canvas.addEventListener('pointerleave', onLeave);
 
       // ── 집기 ─────────────────────────────────────────────────────────
       // 지형 윗면 자체를 레이캐스트한다. 인스턴스 인덱스가 그대로 타일 인덱스로 풀린다.
@@ -666,9 +861,15 @@ export function IsoMap3D({
           canvas.removeEventListener('pointerup', onUp);
           canvas.removeEventListener('pointercancel', onUp);
           canvas.removeEventListener('wheel', onWheel);
+          canvas.removeEventListener('pointerleave', onLeave);
           canvas.removeEventListener('click', onClick);
           canvas.remove();
           overlay.remove();
+          for (const child of borderGroup.children) {
+            const mesh = child as THREE.Mesh;
+            (mesh.geometry as THREE.BufferGeometry | undefined)?.dispose();
+            (mesh.material as THREE.Material | undefined)?.dispose();
+          }
           scene.traverse((node) => {
             const mesh = node as THREE.InstancedMesh;
             if (mesh.isInstancedMesh) mesh.dispose();
@@ -692,10 +893,11 @@ export function IsoMap3D({
       renderer?.dispose();
     };
   }, [data, cities, hideCityNames, currentCityId, selectedCityId, onPickTile, onPickCity,
-    battlefields, onPickBattlefield]);
+    onHoverCity, battlefields, onPickBattlefield]);
 
   // 색 세기·모드만 바뀌면 씬을 다시 짓지 않고 instanceColor 만 갈아 끼운다.
   useEffect(() => {
+    tintRef.current?.rebuildBorders();
     tintRef.current?.apply(tintStrength, tintMode);
   }, [tintStrength, tintMode, nationColorByOwner]);
 

@@ -105,3 +105,23 @@ export function mixToward(color: Rgb, strength: number): Rgb {
  *   commandery — 郡(parentOwner) 인덱스. 국가색 표가 없을 때 합성 방식만 보여 주는 랩용이다.
  */
 export type TintMode = 'none' | 'nation' | 'commandery';
+
+/**
+ * 밝기를 보존하는 세력색. 곱해도 땅이 어두워지지 않고 **색상만** 얹힌다.
+ *
+ * 2D 판은 캔버스 합성 모드 'color' 로 같은 일을 한다(휘도는 지형 것, 색상·채도는 세력 것).
+ * 3D 는 instanceColor 곱하기밖에 못 쓰므로 색을 자기 휘도로 나눠 같은 결과를 만든다.
+ * 곱수가 1 을 넘어야 하는데 캔버스 fillStyle 은 1 을 못 넘으므로 판마다 길이 다르다.
+ *
+ * 배포본은 양쪽 다 그냥 곱해서 어두운 국가색이 땅을 통째로 눌렀다 — 「세력색이 너무
+ * 짙다」는 지적이 여기서 나왔다(2026-09-09).
+ */
+export function luminancePreserving(color: Rgb): Rgb {
+  const luma = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+  const peak = Math.max(color.r, color.g, color.b);
+  if (luma <= 0.004 || peak <= 0.004) return { r: 1, g: 1, b: 1 };
+  // 1/luma 로 올리되 어느 채널도 1.7 을 못 넘게 눌러 둔다. 그 위로 가면 밝은 쪽이
+  // 포화해 색상이 틀어진다(정규화색은 luma 0.5 안팎이라 실제로는 거의 안 걸린다).
+  const k = Math.min(1 / luma, 1.7 / peak);
+  return { r: color.r * k, g: color.g * k, b: color.b * k };
+}
