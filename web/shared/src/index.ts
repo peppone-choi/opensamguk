@@ -189,6 +189,7 @@ export {
 } from './iso/useIsoTileGrid';
 export {
   placeGameCities,
+  fitFootprintsInTile,
   placeBattlefields,
   gameXyToSourceCell,
   type GameCityInput,

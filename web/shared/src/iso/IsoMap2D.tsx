@@ -63,10 +63,12 @@ const OBJECT_ANCHOR_Y = 240;
  *
  * 배포본은 원본 크기(256px = 타일 폭 그대로)를 타일 아래 꼭짓점에 붙여 세웠다. 그러면
  * 성벽이 칸 밖으로 삐져나가고 격자와 어긋나 보인다 — 「셀과 아이콘이 안 맞는다」(2026-09-09).
- * 0.85 배로 줄이고 접지점을 중심과 아래 꼭짓점 사이(HALF_H·0.75)에 두면 바닥이 칸 안에 든다.
+ *
+ * 스프라이트 밑면 다이아몬드는 아래 꼭짓점이 (128,240), 가장 넓은 줄이 y=176 이라
+ * 반높이 64·반너비 128 — 타일과 같은 크기다(실측). 그래서 접지점을 아래 꼭짓점에서
+ * HALF_H·배율 만큼 올리면 밑면이 타일과 **동심**이 된다. 0.75 는 눈대중이었고 6px 떴다.
  */
 const OBJECT_SCALE = 0.85;
-const OBJECT_FOOT_Y = HALF_H * 0.75;
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 
@@ -222,9 +224,17 @@ export function IsoMap2D({
 
     // 소수 좌표(城)도 받는다. 높이는 그 좌표가 속한 정수 타일에서 읽는다 —
     // 城 은 타일 안 어디에 서 있든 그 타일 윗면에 얹혀야 한다.
-    const tileScreen = (c: number, r: number): [number, number] => {
-      const tc = Math.min(cols - 1, Math.max(0, Math.floor(c)));
-      const tr = Math.min(rows - 1, Math.max(0, Math.floor(r)));
+    //
+    // 높이 타일을 밖에서 줄 수 있다. 城 의 그리기 좌표는 칸 중심 기준 ±0.5 라
+    // floor 로 되짚으면 이웃 칸의 높이를 읽는다(placeGameCities.fitFootprintsInTile).
+    const tileScreen = (
+      c: number,
+      r: number,
+      hc: number = Math.floor(c),
+      hr: number = Math.floor(r),
+    ): [number, number] => {
+      const tc = Math.min(cols - 1, Math.max(0, hc));
+      const tr = Math.min(rows - 1, Math.max(0, hr));
       return [
         (c - r) * HALF_W,
         (c + r) * HALF_H - baseHeight[tr * cols + tc] * STEP_SCREEN_PIXELS,
@@ -418,7 +428,9 @@ export function IsoMap2D({
       let drawnCities = 0;
       const placedOnScreen: { city: PlacedCity; sx: number; sy: number }[] = [];
       for (const city of visible) {
-        const [x, y] = tileScreen(city.col, city.row);
+        // 깃발·이름·집기 상자는 건물이 실제로 선 자리에 붙어야 한다 — 예전엔 소수 원좌표를
+        // 써서 깃발이 옆 칸에 혼자 떠 있었다.
+        const [x, y] = tileScreen(city.drawCol, city.drawRow, city.tileCol, city.tileRow);
         placedOnScreen.push({
           city,
           sx: view.panX + x * view.scale,
@@ -428,13 +440,15 @@ export function IsoMap2D({
         if (!tier) continue;
         const sprite = sprites.get(`objects/${tier.file}`);
         if (!sprite) continue;
-        const size = sprite.naturalWidth * OBJECT_SCALE;
+        // 그리는 자리는 col/row 가 아니라 drawCol/drawRow 다 — 칸 안에 들도록 눌러 둔 값이다.
+        const [bx, by] = tileScreen(city.drawCol, city.drawRow, city.tileCol, city.tileRow);
+        const k = OBJECT_SCALE * city.drawScale;
         context.drawImage(
           sprite,
-          x - OBJECT_ANCHOR_X * OBJECT_SCALE,
-          y + OBJECT_FOOT_Y - OBJECT_ANCHOR_Y * OBJECT_SCALE,
-          size,
-          sprite.naturalHeight * OBJECT_SCALE,
+          bx - OBJECT_ANCHOR_X * k,
+          by + HALF_H * k - OBJECT_ANCHOR_Y * k,
+          sprite.naturalWidth * k,
+          sprite.naturalHeight * k,
         );
         drawnCities += 1;
       }

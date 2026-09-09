@@ -13,7 +13,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import {
-  IsoMap2D, PillTabs, TERRAIN_ASSET_NAME, useIsoTileGrid,
+  IsoMap2D, PillTabs, TERRAIN_ASSET_NAME, fitFootprintsInTile, useIsoTileGrid,
   type PlacedCity, type TintMode,
 } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
@@ -71,19 +71,27 @@ export default function IsoLabPage() {
 
   // 랩은 게임 도시가 아니라 지형 응답의 CHGIS 지명(1,138 곳)을 세운다. 게임 번호가
   // 없으므로 id 를 -1 로 두고 집히지 않게 한다 — 없는 번호를 지어내지 않는다.
-  const atlasCities = useMemo<PlacedCity[]>(() => (data?.cities ?? []).map((city) => ({
-    id: -1,
-    name: city.name,
-    level: city.level,
-    nationId: 0,
-    col: city.col,
-    row: city.row,
-    tileCol: city.col,
-    tileRow: city.row,
-    seat: city.seat,
-    isCapital: false,
-    exact: true,
-  })), [data]);
+  const atlasCities = useMemo<PlacedCity[]>(() => {
+    const places: PlacedCity[] = (data?.cities ?? []).map((city) => ({
+      id: -1,
+      name: city.name,
+      level: city.level,
+      nationId: 0,
+      col: city.col,
+      row: city.row,
+      tileCol: city.col,
+      tileRow: city.row,
+      drawCol: city.col,
+      drawRow: city.row,
+      drawScale: 1,
+      seat: city.seat,
+      isCapital: false,
+      exact: true,
+    }));
+    // 게임창과 같은 규칙으로 칸에 앉힌다 — 랩만 다른 자리에 세우면 눈으로 비교가 안 된다.
+    fitFootprintsInTile(places);
+    return places;
+  }, [data]);
 
   const detail = useMemo(() => {
     if (!data || !picked) return null;
