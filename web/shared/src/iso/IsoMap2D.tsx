@@ -29,18 +29,16 @@ import {
 } from '../isoTileGrid';
 import type { IsoMapData } from './useIsoTileGrid';
 import {
+  cityLabelBox,
   drawBattlefieldMark,
   drawCityFlag,
   drawCityName,
   drawCityRing,
-  drawExternalPlaceMark,
-  drawExternalPlaceName,
   dropOverlappingLabels,
-  externalPlaceLabelBox,
   markerScale,
 } from './marker';
 import { indexTint, normaliseNationColor, rgbCss, type TintMode } from './tint';
-import type { IsoBattlefieldMarker, PlacedCity } from './placeGameCities';
+import { isExternalPlace, type IsoBattlefieldMarker, type PlacedCity } from './placeGameCities';
 
 const SPRITE_BASE = '/sprites/iso2d';
 const HALF_W = TILE_SCREEN_WIDTH / 2;
@@ -236,14 +234,6 @@ export function IsoMap2D({
 
     const { grid, owner, parentOwner } = data;
     const { cols, rows, code, mask, baseHeight, playable } = grid;
-
-    // 郡國 밖 세력. 지형 응답이 처음부터 들고 있던 EXTERNAL_PLACE 다(백제국·사로국·부여·
-    // 야마일국·흉노 …). 게임 城 이 아니라서 placeGameCities 를 안 거치고, 그래서 여태
-    // 아무도 안 그렸다 — 한반도·일본이 빈 땅으로 보인 이유가 이거다.
-    // 이름표는 몰린 곳에서 솎아 낸다. 치소(seat) 가 먼저 자리를 잡는다.
-    const externals = data.cities
-      .filter((city) => city.kind === 'EXTERNAL_PLACE')
-      .sort((a, b) => Number(b.seat) - Number(a.seat));
 
     // 화면 변환: 배율 1 에서 타일 폭 256px. 시작 배율은 전체가 담기도록 맞춘다.
     const view = viewRef.current;
@@ -499,6 +489,9 @@ export function IsoMap2D({
           capital: city.isCapital,
           k,
         });
+        // 郡國 밖 세력은 게임 城 번호가 없다 — 그려는 주되 눌러 들어갈 데가 없으므로
+        // 집기 상자에서만 뺀다. 그림·이름·깃발은 중원의 城 과 똑같이 나간다.
+        if (isExternalPlace(city)) continue;
         // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
         const half = Math.max(15 * k, HALF_W * 0.45 * view.scale);
         hits.push({
@@ -518,35 +511,20 @@ export function IsoMap2D({
         if (ring) drawCityRing(context, sx, sy, { color: ring, k });
       }
 
+      // 이름표. 겹치면 뒤엣것을 버린다 — 한반도 남부처럼 城 이 몰린 곳에서 글씨가
+      // 한 덩어리로 뭉개진다. 郡治가 먼저 자리를 잡고 縣이 남는 틈을 쓴다.
       if (!hideCityNames && !seatOnly) {
         const below = Math.max(9, HALF_H * 0.7 * view.scale) + 2;
-        for (const { city, sx, sy } of placedOnScreen) {
-          if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
-          drawCityName(context, city.name, sx, sy + below, k);
-        }
-      }
-
-      // 郡國 밖 세력 — 城 밑에 깐다. 집히지 않으므로 hits 에는 넣지 않는다.
-      // 이름은 城 과 같은 규칙으로 감춘다(compact·전체 보기).
-      const onScreen: { name: string; sx: number; sy: number }[] = [];
-      for (const place of externals) {
-        const [x, y] = tileScreen(place.col, place.row);
-        const sx = view.panX + x * view.scale;
-        const sy = view.panY + y * view.scale;
-        if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
-        onScreen.push({ name: place.name, sx, sy });
-        drawExternalPlaceMark(context, sx, sy, k);
-      }
-      // 마름모를 다 깔고 나서 이름을 얹는다 — 순서를 섞으면 글씨가 뒤엣것 마름모에 묻힌다.
-      if (!hideCityNames) {
+        const named = placedOnScreen
+          .filter(({ sx, sy }) => sx >= -60 && sx <= w + 60 && sy >= -60 && sy <= h + 60)
+          .sort((a, b) => Number(b.city.seat) - Number(a.city.seat));
         const keepLabel = dropOverlappingLabels(
-          onScreen.map((p) => externalPlaceLabelBox(p.sx, p.sy, p.name, k)),
+          named.map(({ city, sx, sy }) => cityLabelBox(sx, sy + below, city.name, k)),
         );
-        onScreen.forEach((place, n) => {
-          if (keepLabel[n]) drawExternalPlaceName(context, place.name, place.sx, place.sy, k);
+        named.forEach(({ city, sx, sy }, n) => {
+          if (keepLabel[n]) drawCityName(context, city.name, sx, sy + below, k);
         });
       }
-      const drawnExternals = onScreen.length;
 
       // 전장 — 城 위에 얹는다. 여기서만 볼 수 있는 진행 중 전투다.
       fieldHits.length = 0;
@@ -561,7 +539,10 @@ export function IsoMap2D({
       canvas.dataset.drawnTiles = String(drawn);
       canvas.dataset.drawnCities = String(drawnCities);
       canvas.dataset.drawnBattlefields = String(battlefields.length);
-      canvas.dataset.drawnExternals = String(drawnExternals);
+      // 郡國 밖 세력이 몇 곳 섰는지. 게임 城 이 아닌 것만 센다(id 가 음수).
+      canvas.dataset.drawnExternals = String(
+        placedOnScreen.filter(({ city }) => isExternalPlace(city)).length,
+      );
       canvas.dataset.seatOnly = String(seatOnly);
     };
 

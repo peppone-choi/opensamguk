@@ -16,9 +16,15 @@ const shared = vi.hoisted(() => ({
 // 8×8 원본 셀 = 2×2 타일. 縣 0 의 治所만 셀 (5,1) 에 둔다.
 const GRID = {
   grid: { cols: 2, rows: 2 },
-  provinceSeatCell: { col: Int32Array.from([5, -1]), row: Int32Array.from([1, -1]) },
+  provinceSeatCell: {
+    col: Int32Array.from([5, -1]),
+    row: Int32Array.from([1, -1]),
+    cityIndex: Int32Array.from([-1, -1]),
+  },
   sourceCols: 8,
   sourceRows: 8,
+  // 지형 응답의 城·郡國 밖 세력 목록. 여기서는 배치만 보므로 비워 둔다.
+  cities: [],
 } as unknown as IsoMapData;
 
 vi.mock('@opensamguk/ui', async () => {

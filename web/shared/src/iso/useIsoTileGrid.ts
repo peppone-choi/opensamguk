@@ -35,6 +35,13 @@ export interface IsoCity {
   row: number;
 }
 
+/** 縣 인덱스 → 그 縣 治所의 원본 셀 좌표와 지형 cities[] 인덱스. 없으면 -1. */
+export interface ProvinceSeatCells {
+  col: Int32Array;
+  row: Int32Array;
+  cityIndex: Int32Array;
+}
+
 export interface ElevationManifest {
   dataset?: { title?: string; endpoint?: string; license?: string; retrieved?: string };
   limitations?: string[];
@@ -58,7 +65,7 @@ export interface IsoMapData {
    * 새로 지어낸 이음매가 아니다 — 기존 캔버스가 마커를 앉힐 때 쓰는 그 길이다
    * (HanMapCanvas.tsx:1546 preferredByProvince).
    */
-  provinceSeatCell: { col: Int32Array; row: Int32Array };
+  provinceSeatCell: ProvinceSeatCells;
   commanderyNames: string[];
   /** 원본 지형 격자 크기(타일이 아니라 셀). 좌표 폴백이 쓴다. */
   sourceCols: number;
@@ -92,11 +99,15 @@ async function decodeLevelPng(url: string, signal: AbortSignal): Promise<ImageDa
 /**
  * provinceRecords[i].cityIndex → cities[cityIndex] 의 원본 셀 좌표를 편다.
  * cityIndex 가 없거나(526/1,524) 범위를 벗어나면 -1 로 남긴다 — 지어내지 않는다.
+ *
+ * cityIndex 자체도 같이 편다. 게임 城 이 지형 cities[] 의 **어느 항목**인지 아는 유일한
+ * 길이라, 같은 곳을 두 번 그리는 것을 막는 데 쓴다(placeGameCities 참조).
  */
-export function buildProvinceSeatCells(tiles: HanTiles): { col: Int32Array; row: Int32Array } {
+export function buildProvinceSeatCells(tiles: HanTiles): ProvinceSeatCells {
   const records = tiles.provinceRecords ?? [];
   const col = new Int32Array(records.length).fill(-1);
   const row = new Int32Array(records.length).fill(-1);
+  const cityIndex = new Int32Array(records.length).fill(-1);
   for (let i = 0; i < records.length; i += 1) {
     const index = records[i].cityIndex;
     if (index == null || !Number.isInteger(index)) continue;
@@ -104,8 +115,9 @@ export function buildProvinceSeatCells(tiles: HanTiles): { col: Int32Array; row:
     if (!city) continue;
     col[i] = city.col;
     row[i] = city.row;
+    cityIndex[i] = index;
   }
-  return { col, row };
+  return { col, row, cityIndex };
 }
 
 export function useIsoTileGrid(terrainUrl: string): State {

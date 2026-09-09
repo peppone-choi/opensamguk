@@ -19,6 +19,9 @@
 // 남는 8 곳(구자속국·낙랑군·현도군·요동속국·요동군·구진군·교지군·일남군)은 provinceId 가
 // 없다 — 후한 縣 판정이 안 된 변경(邊境) 郡이다. 이쪽만 좌표 폴백을 쓴다. 폴백은 기존
 // 캔버스의 mapCityToTile 과 같은 선형식이고, 8 곳 모두 육지 타일에 떨어지는 것을 확인했다.
+//
+// 郡國 밖 세력(EXTERNAL_PLACE)도 여기서 같이 앉힌다 — 중원과 다른 그림으로 그리지 않는다.
+// 자세한 것은 아래 placeExternalPlaces 주석.
 
 import type { IsoMapData } from './useIsoTileGrid';
 import { RASTER_GROUP } from '../isoTileGrid';
@@ -52,6 +55,7 @@ export interface GameCityInput {
  * 아래 fitFootprintsInTile 주석 참조.
  */
 export interface PlacedCity {
+  /** 게임 도시 번호. **음수면 게임 城 이 아니다**(郡國 밖 세력) — isExternalPlace 참조. */
   id: number;
   name: string;
   level: number;
@@ -102,11 +106,14 @@ export interface PlaceGameCitiesOptions {
  */
 export function placeGameCities(
   cities: readonly GameCityInput[],
-  data: Pick<IsoMapData, 'grid' | 'provinceSeatCell' | 'sourceCols' | 'sourceRows'>,
+  data: Pick<IsoMapData, 'grid' | 'provinceSeatCell' | 'sourceCols' | 'sourceRows' | 'cities'>,
   options: PlaceGameCitiesOptions,
 ): PlacedCity[] {
   const { grid, provinceSeatCell, sourceCols, sourceRows } = data;
   const placed: PlacedCity[] = [];
+  // 게임 城 이 이미 서 있는 지형 cities[] 항목. 아래에서 郡國 밖 세력을 덧댈 때
+  // 같은 곳을 두 번 세우지 않으려고 모은다.
+  const covered = new Set<number>();
 
   for (const city of cities) {
     let cell: { col: number; row: number } | null = null;
@@ -119,6 +126,8 @@ export function placeGameCities(
       if (col >= 0 && row >= 0) {
         cell = { col, row };
         exact = true;
+        const index = provinceSeatCell.cityIndex[province];
+        if (index >= 0) covered.add(index);
       }
     }
     if (!cell) {
@@ -161,7 +170,62 @@ export function placeGameCities(
     });
   }
 
+  placed.push(...placeExternalPlaces(data.cities, grid, covered));
   fitFootprintsInTile(placed);
+  return placed;
+}
+
+/**
+ * 게임 城 이 아닌 곳에 붙는 id. 음수라 게임 도시 번호와 절대 겹치지 않는다.
+ * 이 id 를 든 城 은 눌러도 들어갈 데가 없으므로 렌더러가 집기 상자에서 뺀다.
+ */
+export function isExternalPlace(city: PlacedCity): boolean {
+  return city.id < 0;
+}
+
+/**
+ * 郡國 밖 세력을 **城 과 같은 자리에** 세운다.
+ *
+ * 지형 응답의 `EXTERNAL_PLACE` 37 곳(백제국·사로국·부여·야마일국·대마국·흉노 …)이다.
+ * 이 중 31 곳은 이미 게임 城 이라 위 루프가 세운다 — provinceRecords[provinceId].cityIndex
+ * 가 바로 그 항목을 가리킨다(실측 31/37). 그래서 예전 렌더러처럼 37 곳을 통째로 따로
+ * 그리면 **같은 곳에 城 아이콘과 속 빈 마름모가 겹쳐** 섰다. 한반도·왜가 중원과 다른
+ * 그림으로 보인 이유가 이것이다.
+ *
+ * 남는 6 곳(일대국·이도국·노국·대마국·읍루·말로국)만 게임 城 이 없다. 그 여섯도 중원과
+ * 같은 건물 아이콘으로 세운다 — 등급 4('이')라 tribal 이 붙는다. 다만 게임 도시 번호가
+ * 없으므로 id 를 음수로 두고, 렌더러는 그것만 보고 집기에서 뺀다.
+ */
+function placeExternalPlaces(
+  terrainCities: IsoMapData['cities'],
+  grid: { cols: number; rows: number },
+  covered: ReadonlySet<number>,
+): PlacedCity[] {
+  const placed: PlacedCity[] = [];
+  for (let index = 0; index < terrainCities.length; index += 1) {
+    const city = terrainCities[index];
+    if (city.kind !== 'EXTERNAL_PLACE' || covered.has(index)) continue;
+    // 지형 cities[] 의 col/row 는 이미 **정수 타일**이다(sourceCellToTile).
+    const { col, row } = city;
+    if (col < 0 || col >= grid.cols || row < 0 || row >= grid.rows) continue;
+    placed.push({
+      id: -(index + 1),
+      name: city.name,
+      level: city.level,
+      nationId: 0,
+      col,
+      row,
+      tileCol: col,
+      tileRow: row,
+      drawCol: col,
+      drawRow: row,
+      drawScale: 1,
+      seat: city.seat === true,
+      isCapital: false,
+      // 좌표는 CHGIS 실측 경위도에서 왔다 — x/y 선형 폴백이 아니다.
+      exact: true,
+    });
+  }
   return placed;
 }
 

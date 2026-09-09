@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { gameXyToSourceCell, placeGameCities, type GameCityInput } from '../iso/placeGameCities';
-import { buildProvinceSeatCells } from '../iso/useIsoTileGrid';
+import {
+  gameXyToSourceCell,
+  isExternalPlace,
+  placeGameCities,
+  type GameCityInput,
+} from '../iso/placeGameCities';
+import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import type { HanTiles } from '../HanMapCanvas';
 
 /** 8×8 원본 셀 = 2×2 타일. 배치 계산만 보므로 격자 내용은 필요 없다. */
@@ -10,9 +15,11 @@ const data = {
     // 縣 0 → 원본 셀 (5,1) = 타일 (1.25, 0.25) · 縣 1 → 좌표 없음
     col: Int32Array.from([5, -1]),
     row: Int32Array.from([1, -1]),
+    cityIndex: Int32Array.from([-1, -1]),
   },
   sourceCols: 8,
   sourceRows: 8,
+  cities: [] as IsoCity[],
 };
 const options = { sourceSize: { width: 100, height: 100 } };
 
@@ -31,6 +38,8 @@ describe('buildProvinceSeatCells', () => {
     const seat = buildProvinceSeatCells(tiles);
     expect([...seat.col]).toEqual([521, -1, -1]);
     expect([...seat.row]).toEqual([178, -1, -1]);
+    // 어느 지형 항목인지도 같이 편다 — 같은 곳을 두 번 그리는 것을 막는 열쇠다.
+    expect([...seat.cityIndex]).toEqual([1, -1, -1]);
   });
 
   it('provinceRecords 가 없으면 빈 표다 — 지어내지 않는다', () => {
@@ -67,7 +76,11 @@ describe('placeGameCities', () => {
     // 원본 셀 (4,0) 과 (5,1) 은 둘 다 타일 (1,0) 이다. 정수로 내리면 하나가 사라진다.
     const twoSeats = {
       ...data,
-      provinceSeatCell: { col: Int32Array.from([5, 4]), row: Int32Array.from([1, 0]) },
+      provinceSeatCell: {
+        col: Int32Array.from([5, 4]),
+        row: Int32Array.from([1, 0]),
+        cityIndex: Int32Array.from([-1, -1]),
+      },
     };
     const placed = placeGameCities(
       [city({ id: 1, provinceId: 0 }), city({ id: 2, name: '하음', provinceId: 1 })],
@@ -100,6 +113,70 @@ describe('placeGameCities', () => {
       data, options,
     );
     expect(placed.map((c) => c.id)).toEqual([3, 1, 2]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 郡國 밖 세력(EXTERNAL_PLACE). 중원과 **같은 길**로 앉아야 한다 — 예전 렌더러는 37 곳을
+// 따로 떼어 속 빈 마름모로 그렸는데, 그 중 31 곳은 이미 게임 城 이라(실측 31/37,
+// provinceRecords[provinceId].cityIndex 가 그 항목을 가리킨다) 한 자리에 城 아이콘과
+// 마름모가 겹쳐 섰다. 한반도·왜가 중원과 다른 그림으로 보인 이유가 이것이다.
+describe('郡國 밖 세력', () => {
+  const place = (over: Partial<IsoCity>): IsoCity => ({
+    id: 'X042', name: '백제국', nameCh: '伯濟國', level: 4,
+    kind: 'EXTERNAL_PLACE', seat: true, col: 0, row: 1, ...over,
+  });
+
+  it('게임 城 이 없는 곳은 城 과 같은 모양으로 앉는다 — 등급도 지형 것을 그대로 쓴다', () => {
+    const placed = placeGameCities([], { ...data, cities: [place({})] }, options);
+    expect(placed).toHaveLength(1);
+    expect(placed[0]).toMatchObject({ name: '백제국', level: 4, tileCol: 0, tileRow: 1 });
+    // 좌표는 CHGIS 실측이다 — x/y 선형 폴백이 아니다.
+    expect(placed[0].exact).toBe(true);
+  });
+
+  it('id 가 음수라 게임 도시 번호와 절대 겹치지 않는다', () => {
+    const placed = placeGameCities([], { ...data, cities: [place({})] }, options);
+    expect(placed[0].id).toBeLessThan(0);
+    expect(isExternalPlace(placed[0])).toBe(true);
+  });
+
+  it('이미 게임 城 인 곳은 덧대지 않는다 — 겹쳐 그리던 31 곳이 이 길로 걸러진다', () => {
+    const covered = {
+      ...data,
+      provinceSeatCell: {
+        col: Int32Array.from([5, -1]),
+        row: Int32Array.from([1, -1]),
+        // 縣 0 의 治所가 지형 cities[0] 이다 = 아래 external 과 같은 항목.
+        cityIndex: Int32Array.from([0, -1]),
+      },
+      cities: [place({ col: 1, row: 0 })],
+    };
+    const placed = placeGameCities([city({ id: 754, name: '백제국', provinceId: 0 })], covered, options);
+    expect(placed).toHaveLength(1);
+    expect(placed[0].id).toBe(754);
+  });
+
+  it('EXTERNAL_PLACE 가 아닌 지형 항목은 덧대지 않는다', () => {
+    const placed = placeGameCities([], { ...data, cities: [place({ kind: 'COUNTY' })] }, options);
+    expect(placed).toHaveLength(0);
+  });
+
+  it('격자 밖은 버린다', () => {
+    const placed = placeGameCities([], { ...data, cities: [place({ col: 9, row: 9 })] }, options);
+    expect(placed).toHaveLength(0);
+  });
+
+  it('城 과 같은 칸에 들면 같이 발자국을 나눈다 — 겹쳐 세우지 않는다', () => {
+    // 縣 0 의 治所는 타일 (1,0). 郡國 밖 세력도 같은 칸에 둔다.
+    const placed = placeGameCities(
+      [city({ provinceId: 0 })],
+      { ...data, cities: [place({ col: 1, row: 0 })] },
+      options,
+    );
+    expect(placed).toHaveLength(2);
+    expect(placed.map((c) => c.drawScale)).toEqual([0.5, 0.5]);
+    expect(placed[0].drawCol).not.toBeCloseTo(placed[1].drawCol);
   });
 });
 
@@ -156,6 +233,7 @@ describe('fitFootprintsInTile', () => {
       // 둘 다 타일 (1,0) 안이지만 원본 셀은 다르다 — 같은 자리에 겹치면 못 누른다.
       col: Int32Array.from([4, 7]),
       row: Int32Array.from([0, 3]),
+      cityIndex: Int32Array.from([-1, -1]),
     };
     const both = placeGameCities(
       [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
@@ -177,7 +255,11 @@ describe('fitFootprintsInTile', () => {
   });
 
   it('좌표까지 같으면 마름모 둘레로 돌려세운다 — 겹쳐 두면 뒤엣것을 못 누른다', () => {
-    const seatCell = { col: Int32Array.from([5, 5]), row: Int32Array.from([1, 1]) };
+    const seatCell = {
+      col: Int32Array.from([5, 5]),
+      row: Int32Array.from([1, 1]),
+      cityIndex: Int32Array.from([-1, -1]),
+    };
     const both = placeGameCities(
       [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
       { ...data, provinceSeatCell: seatCell },
