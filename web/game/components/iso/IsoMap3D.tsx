@@ -22,15 +22,15 @@ import {
   SEAT_ONLY_TILE_PIXELS,
   TERRAIN,
   TERRAIN_ASSET_NAME,
+  cityLabelBox,
   drawBattlefieldMark,
   drawCityFlag,
   drawCityName,
   drawCityRing,
-  drawExternalPlaceMark,
-  drawExternalPlaceName,
   dropOverlappingLabels,
-  externalPlaceLabelBox,
+  firstPickableCity,
   indexTint,
+  isExternalPlace,
   isWater,
   luminancePreserving,
   markerScale,
@@ -230,11 +230,6 @@ export function IsoMap3D({
       const OUT_OF_PLAY: Rgb = { r: 0.38, g: 0.38, b: 0.38 };
       const halfCols = (cols - 1) / 2;
       const halfRows = (rows - 1) / 2;
-      // 郡國 밖 세력(백제국·사로국·부여·야마일국·흉노 …). 게임 城 이 아니라 모델이 없다 —
-      // 2D 판과 같이 겹판에 속 빈 마름모로만 얹는다.
-      const externals = data.cities
-        .filter((city) => city.kind === 'EXTERNAL_PLACE')
-        .sort((a, b) => Number(b.seat) - Number(a.seat));
       const y = (level: number) => level * HEIGHT_STEP_WORLD;
 
       const scene = new THREE.Scene();
@@ -637,31 +632,6 @@ export function IsoMap3D({
         const half = Math.max(15 * k, tileWidth * 0.22);
         const below = Math.max(9, tileWidth * 0.22);
 
-        // 郡國 밖 세력을 먼저 깐다 — 城 표식보다 뒤에 있어야 한다.
-        const outsiders: { name: string; sx: number; sy: number }[] = [];
-        for (const place of externals) {
-          const i = Math.min(rows - 1, Math.max(0, place.row)) * cols
-            + Math.min(cols - 1, Math.max(0, place.col));
-          projected.set(place.col - halfCols, y(baseHeight[i]), place.row - halfRows);
-          projected.project(camera);
-          if (projected.z > 1) continue;
-          const sx = (projected.x * 0.5 + 0.5) * w;
-          const sy = (-projected.y * 0.5 + 0.5) * h;
-          if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
-          outsiders.push({ name: place.name, sx, sy });
-          drawExternalPlaceMark(overlayContext, sx, sy, k);
-        }
-        if (!hideCityNames) {
-          const keepOutsiderName = dropOverlappingLabels(
-            outsiders.map((o) => externalPlaceLabelBox(o.sx, o.sy, o.name, k)),
-          );
-          outsiders.forEach((place, n) => {
-            if (keepOutsiderName[n]) {
-              drawExternalPlaceName(overlayContext, place.name, place.sx, place.sy, k);
-            }
-          });
-        }
-
         const drawn: { city: PlacedCity; sx: number; sy: number }[] = [];
         for (const city of cities) {
           if (seatOnly && !city.seat) continue;
@@ -685,6 +655,9 @@ export function IsoMap3D({
             capital: city.isCapital,
             k,
           });
+          // 郡國 밖 세력은 게임 城 번호가 없다 — 그림·이름·깃발은 중원과 똑같이 나가되
+          // 눌러 들어갈 데가 없으므로 집기 상자에서만 뺀다.
+          if (isExternalPlace(city)) continue;
           // 집기 상자는 깃발 꼭대기부터 칸 아래까지 — 깃발을 얹어도 城 을 얹어도 잡힌다.
           cityHits.push({ city, x0: sx - half, x1: sx + half, y0: top - 2, y1: sy + below });
         }
@@ -697,10 +670,16 @@ export function IsoMap3D({
           if (ring) drawCityRing(overlayContext, sx, sy, { color: ring, k });
         }
 
+        // 이름표. 겹치면 뒤엣것을 버린다 — 城 이 몰린 곳(한반도 남부 12 곳)에서
+        // 글씨가 한 덩어리로 뭉개진다. 郡治가 먼저 자리를 잡는다. 2D 판과 같은 규칙이다.
         if (showNames) {
-          for (const { city, sx, sy } of drawn) {
-            drawCityName(overlayContext, city.name, sx, sy + below + 2, k);
-          }
+          const named = [...drawn].sort((a, b) => Number(b.city.seat) - Number(a.city.seat));
+          const keepName = dropOverlappingLabels(
+            named.map(({ city, sx, sy }) => cityLabelBox(sx, sy + below + 2, city.name, k)),
+          );
+          named.forEach(({ city, sx, sy }, n) => {
+            if (keepName[n]) drawCityName(overlayContext, city.name, sx, sy + below + 2, k);
+          });
         }
 
         // 전장 — 城 위에 마름모. 3D 는 인스턴스 메시가 아니라 이 겹판에 그리고,
@@ -870,19 +849,22 @@ export function IsoMap3D({
         pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
         // 城 이 그다음이다. 건물 메시를 맞히면 그 도시를 집고 지형은 보지 않는다.
+        // 郡國 밖 세력은 게임 城 번호가 없다(음수 id) — 겹판 집기 상자와 같은 규칙으로
+        // 여기서도 건너뛴다. 앞에 서 있다고 뒤의 城 까지 못 집게 만들면 안 되므로
+        // 제일 가까운 것 하나만 보지 않고 城 이 나올 때까지 훑는다.
         if (onPickCity) {
           const visibleCityMeshes = cityMeshes.filter((entry) => entry.mesh.visible);
-          const cityHits = raycaster.intersectObjects(
+          const meshHits = raycaster.intersectObjects(
             visibleCityMeshes.map((entry) => entry.mesh), false,
           );
-          const cityHit = cityHits[0];
-          if (cityHit && cityHit.instanceId != null) {
-            const entry = visibleCityMeshes.find((candidate) => candidate.mesh === cityHit.object);
-            const city = entry?.cities[cityHit.instanceId];
-            if (city) {
-              onPickCity(city, { pointerType: lastPointerType });
-              return;
-            }
+          const city = firstPickableCity(meshHits.map((meshHit) => {
+            if (meshHit.instanceId == null) return undefined;
+            const entry = visibleCityMeshes.find((candidate) => candidate.mesh === meshHit.object);
+            return entry?.cities[meshHit.instanceId];
+          }));
+          if (city) {
+            onPickCity(city, { pointerType: lastPointerType });
+            return;
           }
         }
         if (!onPickTile) return;
