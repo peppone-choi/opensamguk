@@ -4,11 +4,12 @@
 // 국가·성·장수·국력·관계) · 부대(/api/troops) · 중원 정세(/api/world-log, world-log/page.tsx 와 같은 LogText 렌더).
 // 원천이 없는 항목(이동 중 부대 경로·경로 미리보기·레이어 전환)은 그리지 않는다(수치 날조 금지).
 import { useCallback, useEffect, useState } from 'react';
-import { Chip, Flag, LogText, SectionHeader, type ChipTone, type IsoCityOverlay } from '@opensamguk/ui';
+import { Chip, Flag, LogText, PillTabs, SectionHeader, type ChipTone, type IsoCityOverlay } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import MapViewer from '../../../components/game/MapViewer';
 import MapCityDetail from '../../../components/game/MapCityDetail';
+import IsoWorldMap, { type IsoView } from '../../../components/iso/IsoWorldMap';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
@@ -23,6 +24,14 @@ const RELATION: Record<number, { label: string; tone: ChipTone }> = {
     2: { label: '통상', tone: 'neutral' },
     7: { label: '불가침', tone: 'moss' },
 };
+
+// 지도 보기. 기존 HanMapCanvas 판을 기본으로 두고, 아이소 지형판을 옆에 둔다.
+// 기존 판만 城 선택·이동을 할 수 있어 기본값을 바꾸지 않는다.
+const VIEWS: { key: 'classic' | IsoView; label: string }[] = [
+    { key: 'classic', label: '기존 지도' },
+    { key: 'iso3d', label: '3D 지형' },
+    { key: 'iso2d', label: '2D 지형' },
+];
 
 function relationOf(conflict: DiplomacyConflictResponse, nationId: number): { label: string; tone: ChipTone } | null {
     if (conflict.myNationID === 0) return null;
@@ -43,6 +52,7 @@ export default function GameMapPage() {
     const [troops, setTroops] = useState<TroopInfo[] | null>(null);
     const [troopsError, setTroopsError] = useState<string | null>(null);
     const [selected, setSelected] = useState<IsoCityOverlay | null>(null);
+    const [view, setView] = useState<'classic' | IsoView>('classic');
 
     // background=true(턴 갱신)면 로딩 문구를 다시 띄우지 않는다(OPENSAM-196).
     const fetchLog = useCallback(async (background = false) => {
@@ -110,30 +120,42 @@ export default function GameMapPage() {
     return (
         <Shell>
             <div className="page-wide">
-                <PageHead title="세계 지도" />
+                <PageHead
+                    title="세계 지도"
+                    tabs={<PillTabs tabs={VIEWS} value={view} onChange={setView} label="지도 보기" />}
+                />
                 <div className="map-page">
                     <div className="map-page__stage">
-                        {mapError && <p role="alert" className="map-rail__msg page-error">{mapError}</p>}
-                        {!mapError && mapName === null && <p className="map-rail__msg">지도 설정을 불러오는 중입니다.</p>}
-                        {!mapError && mapName !== null && (
-                            <MapViewer
-                                live
-                                showMe={1}
-                                refreshKey={mapRefreshKey}
-                                selectedCityId={selected?.id ?? null}
-                                onCityPick={onCityPick}
-                            />
+                        {view !== 'classic' && <IsoWorldMap view={view} refreshKey={mapRefreshKey} />}
+                        {view === 'classic' && (
+                            <>
+                                {mapError && <p role="alert" className="map-rail__msg page-error">{mapError}</p>}
+                                {!mapError && mapName === null && <p className="map-rail__msg">지도 설정을 불러오는 중입니다.</p>}
+                                {!mapError && mapName !== null && (
+                                    <MapViewer
+                                        live
+                                        showMe={1}
+                                        refreshKey={mapRefreshKey}
+                                        selectedCityId={selected?.id ?? null}
+                                        onCityPick={onCityPick}
+                                    />
+                                )}
+                                {/* 범례 — HanMapCanvas 가 실제로 그리는 표식만(영토 tint · 수도 점 #ffd84f · 재해 점 #b72f2f · 선택 강조). */}
+                                <div className="map-legend" aria-label="범례">
+                                    <div className="map-legend__row"><span className="map-legend__swatch" style={{ background: 'var(--bronze)', opacity: 0.6 }} />영토 tint · 국가색</div>
+                                    <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#ffd84f' }}>●</span>수도</div>
+                                    <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#b72f2f' }}>●</span>재해 · 사건</div>
+                                    <div className="map-legend__row"><span className="map-legend__swatch" style={{ border: '1px solid var(--focus)', height: 10, width: 10 }} />선택 도시</div>
+                                </div>
+                            </>
                         )}
-                        {/* 범례 — HanMapCanvas 가 실제로 그리는 표식만(영토 tint · 수도 점 #ffd84f · 재해 점 #b72f2f · 선택 강조). */}
-                        <div className="map-legend" aria-label="범례">
-                            <div className="map-legend__row"><span className="map-legend__swatch" style={{ background: 'var(--bronze)', opacity: 0.6 }} />영토 tint · 국가색</div>
-                            <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#ffd84f' }}>●</span>수도</div>
-                            <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#b72f2f' }}>●</span>재해 · 사건</div>
-                            <div className="map-legend__row"><span className="map-legend__swatch" style={{ border: '1px solid var(--focus)', height: 10, width: 10 }} />선택 도시</div>
-                        </div>
                     </div>
                     <aside className="map-rail" aria-label="지도 정보">
-                        <p className="map-rail__hint">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
+                        <p className="map-rail__hint">
+                            {view === 'classic'
+                                ? '도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.'
+                                : '지형 보기는 지형·표고·세력 경계를 봅니다. 도시 선택은 기존 지도에서 합니다.'}
+                        </p>
                         {selected && (
                             <section className="map-rail__city" aria-label="선택 도시">
                                 <MapCityDetail

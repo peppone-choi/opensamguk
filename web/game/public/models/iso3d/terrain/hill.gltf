@@ -1,0 +1,109 @@
+{
+ "asset": {
+  "version": "2.0",
+  "generator": "opensamguk tools/assets/build_iso3d_assets.py"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "terrain-hill",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "name": "terrain-hill",
+   "mesh": 0
+  }
+ ],
+ "meshes": [
+  {
+   "name": "terrain-hill",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "COLOR_0": 1
+     },
+     "indices": 2,
+     "material": 0,
+     "mode": 4
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "vertex-color",
+   "pbrMetallicRoughness": {
+    "baseColorFactor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "metallicFactor": 0.0,
+    "roughnessFactor": 0.95
+   },
+   "doubleSided": false
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 16,
+   "type": "VEC3",
+   "min": [
+    -0.5,
+    0.0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.26,
+    0.5
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 16,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5125,
+   "count": 18,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 192,
+   "byteLength": 192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 384,
+   "byteLength": 72,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 456,
+   "uri": "data:application/octet-stream;base64,AAAAvwAAAAAAAAC/AAAAPwAAAAAAAAC/AAAAPwAAAAAAAAA/AAAAvwAAAAAAAAA/16PwvgAAAADXo/C+16PwPgAAAADXo/C+AAAAALgehT4AAAAA16PwPgAAAADXo/C+16PwPgAAAADXo/A+AAAAALgehT4AAAAA16PwPgAAAADXo/A+16PwvgAAAADXo/A+AAAAALgehT4AAAAA16PwvgAAAADXo/A+16PwvgAAAADXo/C+AAAAALgehT4AAAAArkfhPmZm5j5xPYo+rkfhPmZm5j5xPYo+rkfhPmZm5j5xPYo+rkfhPmZm5j5xPYo+mN0TPylcDz+mm8Q+mN0TPylcDz+mm8Q+mN0TPylcDz+mm8Q+uB4FPwAAAD+amZk+uB4FPwAAAD+amZk+uB4FPwAAAD+amZk+sp3vPmZm5j5xPYo+sp3vPmZm5j5xPYo+sp3vPmZm5j5xPYo+9P3UPs3MzD6PwnU+9P3UPs3MzD6PwnU+9P3UPs3MzD6PwnU+AAAAAAIAAAABAAAAAAAAAAMAAAACAAAABAAAAAYAAAAFAAAABwAAAAkAAAAIAAAACgAAAAwAAAALAAAADQAAAA8AAAAOAAAA"
+  }
+ ]
+}

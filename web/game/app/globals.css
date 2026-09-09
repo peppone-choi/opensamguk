@@ -2106,6 +2106,14 @@ input:focus, select:focus, textarea:focus {
   .map-rail { border-left: 0; border-top: 1px solid var(--line); }
 }
 
+/* 05 천하 지도 · 아이소 지형 보기 — 조작 줄 / 캔버스 / 선택 타일 판독 */
+.iso-stage { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 520px; }
+.iso-stage__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); font-size: 12px; }
+.iso-stage__canvas { position: relative; min-height: 0; background: var(--bg); }
+.iso-stage__readout { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 0; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; }
+.iso-stage__readout dt { color: var(--muted); }
+.iso-stage__readout dd { margin: 0 12px 0 0; color: var(--text-2); }
+
 /* 06 도시 — 히어로 + 좌 380 게이지 / 우 주둔 장수 표 */
 .city-hero { position: relative; display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
 .city-hero__name { font-family: var(--font-serif); font-size: 30px; font-weight: 900; line-height: 1.1; color: var(--text); }
