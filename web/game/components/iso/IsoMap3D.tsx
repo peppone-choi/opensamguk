@@ -159,6 +159,8 @@ export function IsoMap3D({
   paintRef.current = nationColorByOwner;
   const tintPropsRef = useRef({ tintStrength, tintMode });
   tintPropsRef.current = { tintStrength, tintMode };
+  // 캔버스 위 +/−/전체 단추가 쥐는 손잡이. 휠이 없는 손가락 조작에서 유일한 확대 수단이다.
+  const zoomRef = useRef<{ by: (factor: number) => void; fit: () => void } | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -576,6 +578,20 @@ export function IsoMap3D({
         span = Math.max(6, Math.min(Math.max(cols, rows) * 1.2, span * (e.deltaY > 0 ? 1.12 : 1 / 1.12)));
         renderOnce();
       };
+      // 직교 카메라라 확대는 span 을 줄이는 것이다 — 휠과 같은 눈금·같은 한계를 쓴다.
+      const spanBy = (factor: number) => {
+        span = Math.max(6, Math.min(Math.max(cols, rows) * 1.2, span * factor));
+        renderOnce();
+      };
+      zoomRef.current = {
+        by: (factor: number) => spanBy(1 / factor),
+        fit: () => {
+          span = Math.max(cols, rows) * 0.9;
+          target.set(0, 0, 0);
+          renderOnce();
+        },
+      };
+
       canvas.addEventListener('pointerdown', onDown);
       canvas.addEventListener('pointermove', onMove);
       canvas.addEventListener('pointerup', onUp);
@@ -671,6 +687,7 @@ export function IsoMap3D({
       controller.abort();
       if (frame) cancelAnimationFrame(frame);
       tintRef.current = null;
+      zoomRef.current = null;
       for (const item of disposables) item.dispose();
       renderer?.dispose();
     };
@@ -693,11 +710,16 @@ export function IsoMap3D({
   return (
     <div className={className} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={hostRef} data-testid="iso3d-host" style={{ width: '100%', height: '100%' }} />
+      <div className="iso-zoom" role="group" aria-label="지도 배율">
+        <button type="button" aria-label="지도 확대" onClick={() => zoomRef.current?.by(1.4)}>+</button>
+        <button type="button" aria-label="지도 축소" onClick={() => zoomRef.current?.by(1 / 1.4)}>−</button>
+        <button type="button" aria-label="지도 전체 보기" onClick={() => zoomRef.current?.fit()}>전체</button>
+      </div>
       {stats && showStats ? (
         <p
           data-testid="iso3d-stats"
           style={{
-            position: 'absolute', left: 8, bottom: 8, margin: 0,
+            position: 'absolute', left: 8, bottom: 36, margin: 0,
             font: '11px var(--font-mono)', color: 'var(--muted)', pointerEvents: 'none',
           }}
         >
