@@ -1,5 +1,5 @@
 'use client';
-// 05 천하 지도(ADR-LITE-049) — 중앙 캔버스(HanMapCanvas 픽셀·좌표 불변) + 우측 360 레일.
+// 05 천하 지도(ADR-LITE-049) — 중앙 아이소 캔버스(3D·2D) + 우측 360 레일.
 // 레일: 선택 도시(MapCityDetail 이 /api/city/{id} 를 자체 조회) · 세력 현황(중원정보 /api/diplomacy/conflict —
 // 국가·성·장수·국력·관계) · 부대(/api/troops) · 중원 정세(/api/world-log, world-log/page.tsx 와 같은 LogText 렌더).
 // 원천이 없는 항목(이동 중 부대 경로·경로 미리보기·레이어 전환)은 그리지 않는다(수치 날조 금지).
@@ -9,7 +9,7 @@ import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import MapViewer from '../../../components/game/MapViewer';
 import MapCityDetail from '../../../components/game/MapCityDetail';
-import IsoWorldMap, { type IsoView } from '../../../components/iso/IsoWorldMap';
+import { type IsoView } from '../../../components/iso/IsoWorldMap';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
@@ -25,12 +25,11 @@ const RELATION: Record<number, { label: string; tone: ChipTone }> = {
     7: { label: '불가침', tone: 'moss' },
 };
 
-// 지도 보기. 기존 HanMapCanvas 판을 기본으로 두고, 아이소 지형판을 옆에 둔다.
-// 기존 판만 城 선택·이동을 할 수 있어 기본값을 바꾸지 않는다.
-const VIEWS: { key: 'classic' | IsoView; label: string }[] = [
-    { key: 'classic', label: '기존 지도' },
-    { key: 'iso3d', label: '3D 지형' },
-    { key: 'iso2d', label: '2D 지형' },
+// 지도 보기. 옛 평면 캔버스는 없다 — 아이소가 지도 그 자체다. 3D·2D 는 같은 격자·같은
+// 데이터를 다른 렌더러로 그린 것이고, 城 선택·이동은 양쪽 다 된다.
+const VIEWS: { key: IsoView; label: string }[] = [
+    { key: 'iso3d', label: '3D' },
+    { key: 'iso2d', label: '2D' },
 ];
 
 function relationOf(conflict: DiplomacyConflictResponse, nationId: number): { label: string; tone: ChipTone } | null {
@@ -52,7 +51,7 @@ export default function GameMapPage() {
     const [troops, setTroops] = useState<TroopInfo[] | null>(null);
     const [troopsError, setTroopsError] = useState<string | null>(null);
     const [selected, setSelected] = useState<IsoCityOverlay | null>(null);
-    const [view, setView] = useState<'classic' | IsoView>('classic');
+    const [view, setView] = useState<IsoView>('iso3d');
 
     // background=true(턴 갱신)면 로딩 문구를 다시 띄우지 않는다(OPENSAM-196).
     const fetchLog = useCallback(async (background = false) => {
@@ -126,35 +125,29 @@ export default function GameMapPage() {
                 />
                 <div className="map-page">
                     <div className="map-page__stage">
-                        {view !== 'classic' && <IsoWorldMap view={view} refreshKey={mapRefreshKey} />}
-                        {view === 'classic' && (
-                            <>
-                                {mapError && <p role="alert" className="map-rail__msg page-error">{mapError}</p>}
-                                {!mapError && mapName === null && <p className="map-rail__msg">지도 설정을 불러오는 중입니다.</p>}
-                                {!mapError && mapName !== null && (
-                                    <MapViewer
-                                        live
-                                        showMe={1}
-                                        refreshKey={mapRefreshKey}
-                                        selectedCityId={selected?.id ?? null}
-                                        onCityPick={onCityPick}
-                                    />
-                                )}
-                                {/* 범례 — HanMapCanvas 가 실제로 그리는 표식만(영토 tint · 수도 점 #ffd84f · 재해 점 #b72f2f · 선택 강조). */}
-                                <div className="map-legend" aria-label="범례">
-                                    <div className="map-legend__row"><span className="map-legend__swatch" style={{ background: 'var(--bronze)', opacity: 0.6 }} />영토 tint · 국가색</div>
-                                    <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#ffd84f' }}>●</span>수도</div>
-                                    <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: '#b72f2f' }}>●</span>재해 · 사건</div>
-                                    <div className="map-legend__row"><span className="map-legend__swatch" style={{ border: '1px solid var(--focus)', height: 10, width: 10 }} />선택 도시</div>
-                                </div>
-                            </>
+                        {mapError && <p role="alert" className="map-rail__msg page-error">{mapError}</p>}
+                        {!mapError && mapName === null && <p className="map-rail__msg">지도 설정을 불러오는 중입니다.</p>}
+                        {!mapError && mapName !== null && (
+                            <MapViewer
+                                live
+                                showMe={1}
+                                refreshKey={mapRefreshKey}
+                                view={view}
+                                selectedCityId={selected?.id ?? null}
+                                onCityPick={onCityPick}
+                            />
                         )}
+                        {/* 범례 — 아이소 렌더러가 실제로 그리는 표식만. */}
+                        <div className="map-legend" aria-label="범례">
+                            <div className="map-legend__row"><span className="map-legend__swatch" style={{ background: 'var(--bronze)', opacity: 0.6 }} />영토 · 국가색(지형에 곱하기)</div>
+                            <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: 'var(--text)' }}>◉</span>수도</div>
+                            <div className="map-legend__row"><span className="map-legend__glyph" style={{ color: 'var(--focus)' }}>○</span>내 장수 소재 도시</div>
+                            <div className="map-legend__row"><span className="map-legend__swatch" style={{ border: '1px solid var(--text)', height: 10, width: 10 }} />선택 도시</div>
+                        </div>
                     </div>
                     <aside className="map-rail" aria-label="지도 정보">
                         <p className="map-rail__hint">
-                            {view === 'classic'
-                                ? '도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.'
-                                : '지형 보기는 지형·표고·세력 경계를 봅니다. 도시 선택은 기존 지도에서 합니다.'}
+                            城을 클릭하면 해당 도시 정보를 볼 수 있습니다. 빈 땅을 누르면 지형·표고를 읽습니다.
                         </p>
                         {selected && (
                             <section className="map-rail__city" aria-label="선택 도시">

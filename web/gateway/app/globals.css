@@ -254,6 +254,16 @@ textarea:focus {
     text-align: center;
 }
 
+/* 아이소 지도판(@opensamguk/ui IsoMap2D)이 비율 상자를 채운다. */
+.map-preview-canvas > div { width: 100%; height: 100%; }
+
+/* 선택한 城 정보 — 커서 추종이 아니라 캔버스 왼쪽 위에 고정한다.
+   아이소 판은 hover 가 아니라 클릭으로 집는다. */
+.map-preview-tooltip--pinned {
+    left: var(--space-sm);
+    top: var(--space-sm);
+}
+
 /* hover 도시정보 툴팁(레거시 .city_tooltip) — 커서 추종. */
 .map-preview-tooltip {
     position: absolute;

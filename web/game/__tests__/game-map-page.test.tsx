@@ -48,7 +48,7 @@ describe('GameMapPage map selection', () => {
         mocks.gameConst.mockResolvedValue({ mapName });
         render(<GameMapPage />);
         expect(await screen.findByTestId('shared-map-viewer')).toBeInTheDocument();
-        expect(screen.getByText('도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.')).toBeInTheDocument();
+        expect(screen.getByText(/城을 클릭하면 해당 도시 정보를 볼 수 있습니다/)).toBeInTheDocument();
     });
 
     it('fills the right rail from 중원정보 relations and the troop list without fabricating rows', async () => {

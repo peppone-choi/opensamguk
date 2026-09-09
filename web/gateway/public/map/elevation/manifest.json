@@ -1,0 +1,64 @@
+{
+ "schemaVersion": 1,
+ "artifactId": "han-elevation-v1",
+ "mapCode": "han-world-v3",
+ "generator": "tools/map/build_elevation_grid.py",
+ "note": "표고는 지형 분류와 독립된 두 번째 축이다. 지형 클래스는 Natural Earth 지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 서로를 보정하지 않는다.",
+ "source": {
+  "dataset": "etopo180",
+  "title": "NOAA NCEI ETOPO1 Ice Surface, 1 arc-minute",
+  "endpoint": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/etopo180.csv",
+  "license": "public domain (U.S. federal government work)",
+  "sourceStrideArcMinutes": 2,
+  "retrieved": "2026-09-09"
+ },
+ "projection": {
+  "cell": 0.04690971,
+  "cols": 768,
+  "k": 0.866025,
+  "lat0": 30.0,
+  "pad": 0.69282,
+  "rows": 669,
+  "x0": 80.540363,
+  "y1": 45.0
+ },
+ "rasterGroup": 4,
+ "metreGrid": {
+  "file": "han-world-v3-metres.png",
+  "cols": 768,
+  "rows": 669,
+  "encoding": "uint16 PNG, metres = value - 32768",
+  "min": -7640,
+  "max": 6237,
+  "sha256": "811014f35830528e1db59f6ab3a84b12b0ba64bf89fb68cf97dca893595cb673"
+ },
+ "levelGrid": {
+  "file": "han-world-v3-levels.png",
+  "cols": 192,
+  "rows": 167,
+  "ladderMetres": [
+   0,
+   200,
+   500,
+   1000,
+   2000,
+   3500
+  ],
+  "encoding": "uint8 PNG; level i means metres >= ladder[i-1]; 0 is below sea level",
+  "histogram": {
+   "0": 10861,
+   "1": 4573,
+   "2": 3252,
+   "3": 3578,
+   "4": 6023,
+   "5": 1539,
+   "6": 2238
+  },
+  "sha256": "3ea7cc28835e45169905fdc687249bd64f4231d19ba9b5cb29399bb45930b169"
+ },
+ "limitations": [
+  "현대 지형이다. 후한대 황하 하도·운하·해안선 변화는 반영돼 있지 않다.",
+  "ETOPO1 은 빙상 표면(Ice Surface) 판이다.",
+  "레벨 사다리는 화면 단차용이며 고도 구간의 지리학적 표준이 아니다."
+ ]
+}

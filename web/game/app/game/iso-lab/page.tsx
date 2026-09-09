@@ -12,12 +12,13 @@
 // 합성 방식만 보이려는 것이고, 없는 수치를 지어내지 않으려고 그렇게 라벨을 단다.
 
 import { useCallback, useMemo, useState } from 'react';
-import { PillTabs, TERRAIN_ASSET_NAME } from '@opensamguk/ui';
+import {
+  IsoMap2D, PillTabs, TERRAIN_ASSET_NAME, useIsoTileGrid,
+  type PlacedCity, type TintMode,
+} from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
-import IsoMap3D, { type TintMode } from '../../../components/iso/IsoMap3D';
-import IsoMap2D from '../../../components/iso/IsoMap2D';
-import { useIsoTileGrid } from '../../../components/iso/useIsoTileGrid';
+import IsoMap3D from '../../../components/iso/IsoMap3D';
 
 type Track = 'iso3d' | 'iso2d';
 
@@ -68,11 +69,27 @@ export default function IsoLabPage() {
     return { count, flat, slope, cliff, outside };
   }, [data]);
 
+  // 랩은 게임 도시가 아니라 지형 응답의 CHGIS 지명(1,138 곳)을 세운다. 게임 번호가
+  // 없으므로 id 를 -1 로 두고 집히지 않게 한다 — 없는 번호를 지어내지 않는다.
+  const atlasCities = useMemo<PlacedCity[]>(() => (data?.cities ?? []).map((city) => ({
+    id: -1,
+    name: city.name,
+    level: city.level,
+    nationId: 0,
+    col: city.col,
+    row: city.row,
+    tileCol: city.col,
+    tileRow: city.row,
+    seat: city.seat,
+    isCapital: false,
+    exact: true,
+  })), [data]);
+
   const detail = useMemo(() => {
     if (!data || !picked) return null;
     const { grid, owner, parentOwner, cities } = data;
     const i = picked.row * grid.cols + picked.col;
-    const city = cities.find((c) => c.col === picked.col && c.row === picked.row);
+    const city = cities.find((entry) => entry.col === picked.col && entry.row === picked.row);
     return {
       terrain: TERRAIN_LABEL[TERRAIN_ASSET_NAME[grid.code[i]]] ?? '알 수 없음',
       playable: grid.playable[i] === 1,
@@ -141,6 +158,9 @@ export default function IsoLabPage() {
               {track === 'iso3d' ? (
                 <IsoMap3D
                   data={data}
+                  cities={atlasCities}
+                  hideCityNames
+                  showStats
                   tintMode={tintMode}
                   tintStrength={tintStrength}
                   onPickTile={onPickTile}
@@ -148,6 +168,8 @@ export default function IsoLabPage() {
               ) : (
                 <IsoMap2D
                   data={data}
+                  cities={atlasCities}
+                  hideCityNames
                   tintMode={tintMode}
                   tintStrength={tintStrength}
                   onPickTile={onPickTile}
@@ -220,7 +242,7 @@ export default function IsoLabPage() {
                       {data.elevation.dataset.license} · 받은 날 {data.elevation.dataset.retrieved}
                     </p>
                     <ul style={{ margin: 0, paddingLeft: '1.1em', color: 'var(--muted)', fontSize: 12 }}>
-                      {(data.elevation.limitations ?? []).map((line) => <li key={line}>{line}</li>)}
+                      {(data.elevation.limitations ?? []).map((line: string) => <li key={line}>{line}</li>)}
                     </ul>
                   </>
                 ) : (

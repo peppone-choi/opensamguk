@@ -22,10 +22,10 @@ import {
   TILE_SCREEN_HEIGHT,
   TILE_SCREEN_WIDTH,
   isWater,
-} from '@opensamguk/ui';
+} from '../isoTileGrid';
 import type { IsoMapData } from './useIsoTileGrid';
-import { indexTint, normaliseNationColor, type Rgb } from './tint';
-import type { TintMode } from './IsoMap3D';
+import { indexTint, normaliseNationColor, type Rgb, type TintMode } from './tint';
+import type { IsoBattlefieldMarker, PlacedCity } from './placeGameCities';
 
 const SPRITE_BASE = '/sprites/iso2d';
 const HALF_W = TILE_SCREEN_WIDTH / 2;
@@ -42,14 +42,33 @@ const BUILDING_TIERS: { file: string; from: number; to: number }[] = [
 ];
 const OBJECT_ANCHOR_X = 128;
 const OBJECT_ANCHOR_Y = 240;
+const EMPTY_CITIES: readonly PlacedCity[] = [];
+const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 
 export interface IsoMap2DProps {
   data: IsoMapData;
   tintStrength: number;
   tintMode: TintMode;
   nationColorByOwner?: Record<number, string>;
+  /** 격자에 앉힌 게임 도시. 이게 있어야 눌러서 도시로 들어갈 수 있다. */
+  cities?: readonly PlacedCity[];
+  hideCityNames?: boolean;
+  /** 내 장수가 있는 도시 — 금색 테. */
+  currentCityId?: number | null;
+  /** 선택된 도시 — 흰 테. */
+  selectedCityId?: number | null;
   onPickTile?: (tile: { col: number; row: number } | null) => void;
+  /**
+   * 城 을 눌렀을 때. 붙어 있으면 城 이 지형보다 먼저 집힌다.
+   * pointerType 은 직전 pointerdown 의 것이다 — 손가락 오조작을 막는 두 번 누르기
+   * 규칙이 이 값에 걸려 있어서 넘긴다(MapViewer activateCity 참조).
+   */
+  onPickCity?: (city: PlacedCity, activation: { pointerType: string }) => void;
+  /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
+  battlefields?: readonly IsoBattlefieldMarker[];
+  onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
   className?: string;
+  ariaLabel?: string;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -97,8 +116,16 @@ export function IsoMap2D({
   tintStrength,
   tintMode,
   nationColorByOwner,
+  cities = EMPTY_CITIES,
+  battlefields = EMPTY_BATTLEFIELDS,
+  onPickBattlefield,
+  hideCityNames = false,
+  currentCityId = null,
+  selectedCityId = null,
   onPickTile,
+  onPickCity,
   className,
+  ariaLabel,
 }: IsoMap2DProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
@@ -143,7 +170,7 @@ export function IsoMap2D({
       return undefined;
     }
 
-    const { grid, owner, parentOwner, cities } = data;
+    const { grid, owner, parentOwner } = data;
     const { cols, rows, code, mask, baseHeight, playable } = grid;
 
     // 화면 변환: 배율 1 에서 타일 폭 256px. 시작 배율은 전체가 담기도록 맞춘다.
@@ -153,10 +180,20 @@ export function IsoMap2D({
     let fitted = false;
     let frame = 0;
 
-    const tileScreen = (c: number, r: number): [number, number] => [
-      (c - r) * HALF_W,
-      (c + r) * HALF_H - baseHeight[r * cols + c] * STEP_SCREEN_PIXELS,
-    ];
+    // 城 집기 상자. 매 그리기마다 다시 채운다 — 화면 밖은 안 들어간다.
+    const hits: { city: PlacedCity; x0: number; x1: number; y0: number; y1: number }[] = [];
+    const fieldHits: { target: IsoBattlefieldMarker; x: number; y: number; radius: number }[] = [];
+
+    // 소수 좌표(城)도 받는다. 높이는 그 좌표가 속한 정수 타일에서 읽는다 —
+    // 城 은 타일 안 어디에 서 있든 그 타일 윗면에 얹혀야 한다.
+    const tileScreen = (c: number, r: number): [number, number] => {
+      const tc = Math.min(cols - 1, Math.max(0, Math.floor(c)));
+      const tr = Math.min(rows - 1, Math.max(0, Math.floor(r)));
+      return [
+        (c - r) * HALF_W,
+        (c + r) * HALF_H - baseHeight[tr * cols + tc] * STEP_SCREEN_PIXELS,
+      ];
+    };
 
     const draw = () => {
       frame = 0;
@@ -270,21 +307,119 @@ export function IsoMap2D({
       }
 
       // 城 — 세력색 위에 그린다. 아이콘까지 곱해지면 등급이 안 읽힌다.
-      // 축소 상태에서는 治所만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
+      // 축소 상태에서는 郡治만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
       const seatOnly = scale * TILE_SCREEN_WIDTH < SEAT_ONLY_TILE_PIXELS;
-      for (const city of cities) {
-        if (seatOnly && !city.seat) continue;
-        if (city.col < c0 || city.col > c1 || city.row < r0 || city.row > r1) continue;
+      // 뒤에서 앞으로. 같은 화가 순서를 집기 판정에서 거꾸로 훑어 위에 있는 城 을 먼저 집는다.
+      hits.length = 0;
+      const visible = cities
+        .filter((city) => (!seatOnly || city.seat)
+          && city.col >= c0 - 1 && city.col <= c1 + 1
+          && city.row >= r0 - 1 && city.row <= r1 + 1)
+        .sort((a, b) => (a.col + a.row) - (b.col + b.row));
+      let drawnCities = 0;
+      for (const city of visible) {
         const tier = BUILDING_TIERS.find((t) => city.level >= t.from && city.level <= t.to);
         if (!tier) continue;
         const sprite = sprites.get(`objects/${tier.file}`);
         if (!sprite) continue;
         const [x, y] = tileScreen(city.col, city.row);
-        context.drawImage(sprite, x - OBJECT_ANCHOR_X, y - OBJECT_ANCHOR_Y + HALF_H);
+        const left = x - OBJECT_ANCHOR_X;
+        const top = y - OBJECT_ANCHOR_Y + HALF_H;
+        context.drawImage(sprite, left, top);
+        drawnCities += 1;
+        // 집기 상자는 스프라이트 전체가 아니라 건물이 실제로 서 있는 아래쪽 절반이다.
+        // 오브젝트 스프라이트 256×256 은 위쪽이 대부분 빈 하늘이라, 전부를 상자로 잡으면
+        // 城 위 지형이 영영 안 집힌다.
+        hits.push({
+          city,
+          x0: x - HALF_W * 0.5,
+          x1: x + HALF_W * 0.5,
+          y0: y - OBJECT_ANCHOR_Y + HALF_H + 128,
+          y1: y + HALF_H,
+        });
+
+        // 소속·상태 표식. 스프라이트에 칠할 깃발 마스크가 없어 렌더러가 얹는다.
+        const ring = city.id === currentCityId
+          ? '#ffd36d' // --focus
+          : city.id === selectedCityId ? '#ece6d8' : null; // --text
+        if (ring) {
+          context.save();
+          context.strokeStyle = ring;
+          context.lineWidth = 6;
+          context.beginPath();
+          context.moveTo(x, y - HALF_H);
+          context.lineTo(x + HALF_W, y);
+          context.lineTo(x, y + HALF_H);
+          context.lineTo(x - HALF_W, y);
+          context.closePath();
+          context.stroke();
+          context.restore();
+        }
+        if (city.nationColor) {
+          const rgb = normaliseNationColor(city.nationColor);
+          context.save();
+          context.fillStyle = rgbCss(rgb);
+          context.strokeStyle = 'rgba(12, 15, 14, 0.8)';
+          context.lineWidth = 3;
+          context.beginPath();
+          context.arc(x, y - 150, city.isCapital ? 17 : 12, 0, Math.PI * 2);
+          context.fill();
+          context.stroke();
+          if (city.isCapital) {
+            // 수도는 안쪽에 밝은 점을 하나 더 둔다 — 색만으로는 못 가른다.
+            context.fillStyle = '#ece6d8';
+            context.beginPath();
+            context.arc(x, y - 150, 6, 0, Math.PI * 2);
+            context.fill();
+          }
+          context.restore();
+        }
+      }
+
+      // 도시명 — 城 을 다 그린 뒤 얹는다. 겹치면 이름이 건물에 잘린다.
+      if (!hideCityNames && !seatOnly) {
+        context.save();
+        context.font = '600 34px "Pretendard Variable", Pretendard, sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'top';
+        context.lineJoin = 'round';
+        // 받침 대신 외곽선. 배포본은 진홍 영토 위 검정 볼드라 판독이 어려웠다.
+        context.strokeStyle = 'rgba(12, 15, 14, 0.92)';
+        context.lineWidth = 8;
+        context.fillStyle = '#ece6d8'; // --text
+        for (const city of visible) {
+          const [x, y] = tileScreen(city.col, city.row);
+          context.strokeText(city.name, x, y + HALF_H + 6);
+          context.fillText(city.name, x, y + HALF_H + 6);
+        }
+        context.restore();
+      }
+
+      // 전장 — 城·이름 위에 얹는다. 여기서만 볼 수 있는 진행 중 전투다.
+      fieldHits.length = 0;
+      for (const target of battlefields) {
+        const [x, y] = tileScreen(target.col, target.row);
+        const radius = 26;
+        context.save();
+        context.fillStyle = '#1b201d'; // --panel
+        context.strokeStyle = target.current ? '#ffd36d' : '#d3b064'; // --focus / --bronze
+        context.lineWidth = 7;
+        context.beginPath();
+        context.moveTo(x, y - radius);
+        context.lineTo(x + radius, y);
+        context.lineTo(x, y + radius);
+        context.lineTo(x - radius, y);
+        context.closePath();
+        context.fill();
+        context.stroke();
+        context.restore();
+        fieldHits.push({ target, x, y, radius: radius + 12 });
       }
 
       context.restore();
       canvas.dataset.drawnTiles = String(drawn);
+      canvas.dataset.drawnCities = String(drawnCities);
+      canvas.dataset.drawnBattlefields = String(battlefields.length);
       canvas.dataset.seatOnly = String(seatOnly);
     };
 
@@ -295,7 +430,9 @@ export function IsoMap2D({
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
+    let lastPointerType = 'mouse';
     const onDown = (e: PointerEvent) => {
+      lastPointerType = e.pointerType || 'mouse';
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -329,10 +466,31 @@ export function IsoMap2D({
       schedule();
     };
     const onClick = (e: MouseEvent) => {
-      if (!onPickTile) return;
+      if (!onPickTile && !onPickCity && !onPickBattlefield) return;
       const rect = canvas.getBoundingClientRect();
       const x = (e.clientX - rect.left - panX) / scale;
       const y = (e.clientY - rect.top - panY) / scale;
+      // 전장이 제일 먼저다 — 城 위에 그렸으니 집기도 그 순서다.
+      if (onPickBattlefield) {
+        for (let n = fieldHits.length - 1; n >= 0; n -= 1) {
+          const hit = fieldHits[n];
+          if (Math.hypot(hit.x - x, hit.y - y) <= hit.radius) {
+            onPickBattlefield(hit.target);
+            return;
+          }
+        }
+      }
+      // 城 이 그다음이다. 화가 순서를 거꾸로 훑어 위에 그려진 쪽을 집는다.
+      if (onPickCity) {
+        for (let n = hits.length - 1; n >= 0; n -= 1) {
+          const box = hits[n];
+          if (x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1) {
+            onPickCity(box.city, { pointerType: lastPointerType });
+            return;
+          }
+        }
+      }
+      if (!onPickTile) return;
       // 높이를 무시한 지면 역변환이다. 높은 타일은 한두 칸 어긋날 수 있다.
       const c = Math.round((x / HALF_W + y / HALF_H) / 2);
       const r = Math.round((y / HALF_H - x / HALF_W) / 2);
@@ -362,7 +520,8 @@ export function IsoMap2D({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
-  }, [data, sprites, tintMode, tintStrength, nationColorByOwner, onPickTile]);
+  }, [data, sprites, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
+    currentCityId, selectedCityId, onPickTile, onPickCity, battlefields, onPickBattlefield]);
 
   if (error) {
     return (
@@ -377,6 +536,8 @@ export function IsoMap2D({
       <canvas
         ref={canvasRef}
         data-testid="iso2d-canvas"
+        role="img"
+        aria-label={ariaLabel}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
       {!sprites ? (

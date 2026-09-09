@@ -97,3 +97,11 @@ export function mixToward(color: Rgb, strength: number): Rgb {
     b: 1 + (color.b - 1) * k,
   };
 }
+
+/**
+ * 세력색을 무엇으로 칠할지.
+ *   none       — 지형만.
+ *   nation     — 縣(owner) 인덱스로 실제 국가색을 찾는다. 게임창·로비가 쓴다.
+ *   commandery — 郡(parentOwner) 인덱스. 국가색 표가 없을 때 합성 방식만 보여 주는 랩용이다.
+ */
+export type TintMode = 'none' | 'nation' | 'commandery';

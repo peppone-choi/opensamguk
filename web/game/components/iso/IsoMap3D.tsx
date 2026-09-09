@@ -22,10 +22,16 @@ import {
   SEAT_ONLY_TILE_PIXELS,
   TERRAIN,
   TERRAIN_ASSET_NAME,
+  indexTint,
   isWater,
+  mixToward,
+  normaliseNationColor,
+  type IsoMapData,
+  type IsoBattlefieldMarker,
+  type PlacedCity,
+  type Rgb,
+  type TintMode,
 } from '@opensamguk/ui';
-import type { IsoMapData } from './useIsoTileGrid';
-import { indexTint, mixToward, normaliseNationColor, type Rgb } from './tint';
 
 const MODEL_BASE = '/models/iso3d';
 
@@ -37,13 +43,10 @@ const BUILDING_TIERS: { name: string; from: number; to: number }[] = [
   { name: 'capital', from: 9, to: 11 },
 ];
 
-/**
- * 세력색을 무엇으로 칠할지.
- *   none       — 지형만.
- *   nation     — 縣(owner) 인덱스로 실제 국가색을 찾는다. 게임창이 쓴다.
- *   commandery — 郡(parentOwner) 인덱스. 국가색 표가 없을 때 합성 방식만 보여 주는 랩용이다.
- */
-export type TintMode = 'none' | 'nation' | 'commandery';
+export type { TintMode };
+
+const EMPTY_CITIES: readonly PlacedCity[] = [];
+const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 
 export interface IsoMap3DProps {
   data: IsoMapData;
@@ -52,7 +55,20 @@ export interface IsoMap3DProps {
   tintMode: TintMode;
   /** 국가색이 실제로 있을 때 쓰는 표. 郡 인덱스 → 자유 hex. 없으면 랩 색으로 떨어진다. */
   nationColorByOwner?: Record<number, string>;
+  /** 격자에 앉힌 게임 도시. 이게 있어야 눌러서 도시로 들어갈 수 있다. */
+  cities?: readonly PlacedCity[];
+  hideCityNames?: boolean;
+  currentCityId?: number | null;
+  selectedCityId?: number | null;
   onPickTile?: (tile: { col: number; row: number } | null) => void;
+  /** 城 을 눌렀을 때. 붙어 있으면 城 이 지형보다 먼저 집힌다. */
+  /** pointerType 은 직전 pointerdown 의 것이다 — 2D 판과 같은 계약이다. */
+  onPickCity?: (city: PlacedCity, activation: { pointerType: string }) => void;
+  /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
+  battlefields?: readonly IsoBattlefieldMarker[];
+  onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
+  /** 렌더 통계(타일·흙벽·治所 수)를 캔버스 왼쪽 아래에 띄운다. 랩 전용이다. */
+  showStats?: boolean;
   className?: string;
 }
 
@@ -101,6 +117,11 @@ async function loadGeometries(signal: AbortSignal): Promise<Loaded> {
   };
 }
 
+function rgbCss({ r, g, b }: Rgb): string {
+  const to = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255);
+  return `rgb(${to(r)} ${to(g)} ${to(b)})`;
+}
+
 function tileMaterial(): THREE.MeshLambertMaterial {
   // Lambert 로 충분하다 — 애셋에 텍스처가 없고 금속·거칠기 표현이 필요 없다.
   // vertexColors 와 instanceColor 가 함께 곱해진다(three color_vertex).
@@ -112,7 +133,15 @@ export function IsoMap3D({
   tintStrength,
   tintMode,
   nationColorByOwner,
+  cities = EMPTY_CITIES,
+  hideCityNames = false,
+  currentCityId = null,
+  selectedCityId = null,
   onPickTile,
+  onPickCity,
+  battlefields = EMPTY_BATTLEFIELDS,
+  onPickBattlefield,
+  showStats = false,
   className,
 }: IsoMap3DProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -146,7 +175,7 @@ export function IsoMap3D({
       const loaded = await loadGeometries(controller.signal);
       if (controller.signal.aborted) return;
 
-      const { grid, owner, parentOwner, cities } = data;
+      const { grid, owner, parentOwner } = data;
       // 높이는 DEM 단(level)을 그대로 쓴다. 2D 가 쓰는 baseHeight 는 스프라이트 계약
       // 때문에 격자 전체를 1-립시츠로 눌러 놓은 값이라 급애가 남지 않는다.
       // glTF 쪽은 윗면만 있는 타일에 벽을 임의 높이로 세우므로 그 제약이 없다.
@@ -263,12 +292,18 @@ export function IsoMap3D({
       scene.add(skirtMesh);
 
       // ── 城 ───────────────────────────────────────────────────────────
-      // 治所(seat)와 縣을 따로 세운다. 축소 상태에서는 縣 쪽 메시를 통째로 끈다
+      // 郡治(seat)와 縣을 따로 세운다. 축소 상태에서는 縣 쪽 메시를 통째로 끈다
       // (SEAT_ONLY_TILE_PIXELS 주석 참조). 2D 와 같은 눈금이라 두 판이 같이 움직인다.
+      //
+      // 자리는 **소수** 타일 좌표다. 정수로 내리면 37 곳이 다른 도시와 같은 타일에 겹쳐
+      // 통째로 가려지고, 그러면 눌러서 들어갈 수 없다(placeGameCities 주석 참조).
       const countyMeshes: THREE.InstancedMesh[] = [];
+      const cityMeshes: { mesh: THREE.InstancedMesh; cities: PlacedCity[] }[] = [];
+      // 전장은 3D 물체가 아니라 겹판 위 화면 좌표다. drawLabels 가 채우고 집기가 읽는다.
+      const fieldHits: { target: IsoBattlefieldMarker; x: number; y: number; radius: number }[] = [];
       let seatTotal = 0;
       let countyTotal = 0;
-      const inGrid = (city: { col: number; row: number }) => city.col >= 0 && city.col < cols
+      const inGrid = (city: PlacedCity) => city.col >= 0 && city.col < cols
         && city.row >= 0 && city.row < rows;
       for (const tier of BUILDING_TIERS) {
         const geometry = loaded.building.get(tier.name);
@@ -283,7 +318,7 @@ export function IsoMap3D({
           mesh.frustumCulled = false;
           for (let n = 0; n < placed.length; n += 1) {
             const city = placed[n];
-            const i = city.row * cols + city.col;
+            const i = city.tileRow * cols + city.tileCol;
             dummy.position.set(city.col - halfCols, y(baseHeight[i]), city.row - halfRows);
             dummy.rotation.set(0, 0, 0);
             dummy.scale.set(1, 1, 1);
@@ -292,6 +327,7 @@ export function IsoMap3D({
           }
           mesh.instanceMatrix.needsUpdate = true;
           scene.add(mesh);
+          cityMeshes.push({ mesh, cities: placed });
           if (seat) seatTotal += placed.length;
           else {
             countyMeshes.push(mesh);
@@ -299,6 +335,8 @@ export function IsoMap3D({
           }
         }
       }
+      // 城 은 세력색을 곱하지 않는다 — 등급별 실루엣이 색에 먹히면 城 크기가 안 읽힌다.
+      // 소속은 아래 라벨 층의 색 점이 말한다.
       setStats({
         tiles: tileTotal, skirts: walls.length, seats: seatTotal, counties: countyTotal,
       });
@@ -358,6 +396,105 @@ export function IsoMap3D({
       canvas.style.touchAction = 'none';
       host.appendChild(canvas);
 
+      // 城 라벨·소속 점을 얹는 2D 층. WebGL 캔버스 위에 같은 크기로 겹쳐 둔다.
+      // 스프라이트 텍스처나 DOM 노드 대신 이걸 쓰는 이유는 두 가지다 — 781 개 DOM 을
+      // 프레임마다 옮기지 않아도 되고, 글자 모양이 2D 판과 똑같이 나온다.
+      const overlay = document.createElement('canvas');
+      overlay.style.position = 'absolute';
+      overlay.style.inset = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.pointerEvents = 'none';
+      host.appendChild(overlay);
+      const overlayContext = overlay.getContext('2d');
+      const projected = new THREE.Vector3();
+
+      const drawLabels = (seatOnly: boolean) => {
+        if (!overlayContext) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = host.clientWidth || 1;
+        const h = host.clientHeight || 1;
+        if (overlay.width !== Math.round(w * dpr) || overlay.height !== Math.round(h * dpr)) {
+          overlay.width = Math.round(w * dpr);
+          overlay.height = Math.round(h * dpr);
+        }
+        overlayContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+        overlayContext.clearRect(0, 0, w, h);
+        const showNames = !hideCityNames && !seatOnly;
+        overlayContext.font = '600 12px "Pretendard Variable", Pretendard, sans-serif';
+        overlayContext.textAlign = 'center';
+        overlayContext.textBaseline = 'top';
+        overlayContext.lineJoin = 'round';
+        for (const city of cities) {
+          if (seatOnly && !city.seat) continue;
+          const i = city.tileRow * cols + city.tileCol;
+          projected.set(city.col - halfCols, y(baseHeight[i]), city.row - halfRows);
+          projected.project(camera);
+          if (projected.z > 1) continue;
+          const sx = (projected.x * 0.5 + 0.5) * w;
+          const sy = (-projected.y * 0.5 + 0.5) * h;
+          if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) continue;
+          const ring = city.id === currentCityId
+            ? '#ffd36d' // --focus
+            : city.id === selectedCityId ? '#ece6d8' : null; // --text
+          if (city.nationColor) {
+            overlayContext.fillStyle = rgbCss(normaliseNationColor(city.nationColor));
+            overlayContext.strokeStyle = 'rgba(12, 15, 14, 0.85)';
+            overlayContext.lineWidth = 1.5;
+            overlayContext.beginPath();
+            overlayContext.arc(sx, sy - 14, city.isCapital ? 6 : 4, 0, Math.PI * 2);
+            overlayContext.fill();
+            overlayContext.stroke();
+            if (city.isCapital) {
+              overlayContext.fillStyle = '#ece6d8';
+              overlayContext.beginPath();
+              overlayContext.arc(sx, sy - 14, 2, 0, Math.PI * 2);
+              overlayContext.fill();
+            }
+          }
+          if (ring) {
+            overlayContext.strokeStyle = ring;
+            overlayContext.lineWidth = 2;
+            overlayContext.beginPath();
+            overlayContext.arc(sx, sy - 14, 10, 0, Math.PI * 2);
+            overlayContext.stroke();
+          }
+          if (!showNames) continue;
+          overlayContext.strokeStyle = 'rgba(12, 15, 14, 0.92)';
+          overlayContext.lineWidth = 3;
+          overlayContext.strokeText(city.name, sx, sy + 2);
+          overlayContext.fillStyle = '#ece6d8';
+          overlayContext.fillText(city.name, sx, sy + 2);
+        }
+
+        // 전장 — 城 위에 마름모. 3D 는 인스턴스 메시가 아니라 이 겹판에 그리고,
+        // 집기도 화면 좌표로 한다(레이캐스트 대상이 없다).
+        fieldHits.length = 0;
+        for (const field of battlefields) {
+          const i = Math.min(rows - 1, Math.max(0, Math.floor(field.row))) * cols
+            + Math.min(cols - 1, Math.max(0, Math.floor(field.col)));
+          projected.set(field.col - halfCols, y(baseHeight[i]), field.row - halfRows);
+          projected.project(camera);
+          if (projected.z > 1) continue;
+          const sx = (projected.x * 0.5 + 0.5) * w;
+          const sy = (-projected.y * 0.5 + 0.5) * h;
+          if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) continue;
+          const radius = 9;
+          overlayContext.fillStyle = '#1b201d'; // --panel
+          overlayContext.strokeStyle = field.current ? '#ffd36d' : '#d3b064'; // --focus / --bronze
+          overlayContext.lineWidth = 2.5;
+          overlayContext.beginPath();
+          overlayContext.moveTo(sx, sy - radius);
+          overlayContext.lineTo(sx + radius, sy);
+          overlayContext.lineTo(sx, sy + radius);
+          overlayContext.lineTo(sx - radius, sy);
+          overlayContext.closePath();
+          overlayContext.fill();
+          overlayContext.stroke();
+          fieldHits.push({ target: field, x: sx, y: sy, radius: radius + 6 });
+        }
+      };
+
       const layout = () => {
         const w = host.clientWidth || 1;
         const h = host.clientHeight || 1;
@@ -389,6 +526,7 @@ export function IsoMap3D({
           layout();
           place();
           renderer!.render(scene, camera);
+          drawLabels(seatOnly);
         });
       };
 
@@ -398,7 +536,9 @@ export function IsoMap3D({
       let dragging = false;
       let lastX = 0;
       let lastY = 0;
+      let lastPointerType = 'mouse';
       const onDown = (e: PointerEvent) => {
+        lastPointerType = e.pointerType || 'mouse';
         dragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
@@ -439,11 +579,40 @@ export function IsoMap3D({
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2();
       const onClick = (e: MouseEvent) => {
-        if (!onPickTile) return;
+        if (!onPickTile && !onPickCity && !onPickBattlefield) return;
         const rect = canvas.getBoundingClientRect();
+        // 전장이 제일 먼저다 — 겹판에 제일 위로 그렸으니 집기도 그 순서다.
+        if (onPickBattlefield) {
+          const px = e.clientX - rect.left;
+          const py = e.clientY - rect.top;
+          for (let n = fieldHits.length - 1; n >= 0; n -= 1) {
+            const hit = fieldHits[n];
+            if (Math.hypot(hit.x - px, hit.y - py) <= hit.radius) {
+              onPickBattlefield(hit.target);
+              return;
+            }
+          }
+        }
         pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
+        // 城 이 그다음이다. 건물 메시를 맞히면 그 도시를 집고 지형은 보지 않는다.
+        if (onPickCity) {
+          const visibleCityMeshes = cityMeshes.filter((entry) => entry.mesh.visible);
+          const cityHits = raycaster.intersectObjects(
+            visibleCityMeshes.map((entry) => entry.mesh), false,
+          );
+          const cityHit = cityHits[0];
+          if (cityHit && cityHit.instanceId != null) {
+            const entry = visibleCityMeshes.find((candidate) => candidate.mesh === cityHit.object);
+            const city = entry?.cities[cityHit.instanceId];
+            if (city) {
+              onPickCity(city, { pointerType: lastPointerType });
+              return;
+            }
+          }
+        }
+        if (!onPickTile) return;
         const hits = raycaster.intersectObjects(tileMeshes.map((entry) => entry.mesh), false);
         const hit = hits[0];
         if (!hit || hit.instanceId == null) {
@@ -475,6 +644,7 @@ export function IsoMap3D({
           canvas.removeEventListener('wheel', onWheel);
           canvas.removeEventListener('click', onClick);
           canvas.remove();
+          overlay.remove();
           scene.traverse((node) => {
             const mesh = node as THREE.InstancedMesh;
             if (mesh.isInstancedMesh) mesh.dispose();
@@ -496,7 +666,8 @@ export function IsoMap3D({
       for (const item of disposables) item.dispose();
       renderer?.dispose();
     };
-  }, [data, onPickTile]);
+  }, [data, cities, hideCityNames, currentCityId, selectedCityId, onPickTile, onPickCity,
+    battlefields, onPickBattlefield]);
 
   // 색 세기·모드만 바뀌면 씬을 다시 짓지 않고 instanceColor 만 갈아 끼운다.
   useEffect(() => {
@@ -514,7 +685,7 @@ export function IsoMap3D({
   return (
     <div className={className} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={hostRef} data-testid="iso3d-host" style={{ width: '100%', height: '100%' }} />
-      {stats ? (
+      {stats && showStats ? (
         <p
           data-testid="iso3d-stats"
           style={{

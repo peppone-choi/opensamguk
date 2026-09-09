@@ -2113,6 +2113,18 @@ input:focus, select:focus, textarea:focus {
 .iso-stage__readout { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 0; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; }
 .iso-stage__readout dt { color: var(--muted); }
 .iso-stage__readout dd { margin: 0 12px 0 0; color: var(--text-2); }
+/* 전장 선택 — 캔버스 오른쪽 위. 마름모가 작아져도 들어갈 길이 남아야 한다. */
+.iso-stage__fields { position: absolute; right: 8px; top: 8px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: calc(100% - 16px); }
+.iso-stage__fields button { padding: 4px 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); font-size: 12px; cursor: pointer; }
+.iso-stage__fields button:hover { border-color: var(--bronze); }
+.iso-stage__msg { display: grid; place-items: center; height: 100%; min-height: 200px; margin: 0; padding: 16px; font-size: 13px; color: var(--muted); }
+/* 도시·전장 화면처럼 지도가 곁들이로 들어가는 자리 — 조작 줄과 판독 줄을 줄인다. */
+.iso-stage--compact { min-height: 320px; }
+.iso-stage--compact .iso-stage__bar,
+.iso-stage--compact .iso-stage__readout { padding: 5px 10px; font-size: 11px; }
+/* 지도판이 비율 상자(.map-viewer-canvas · .map-preview-canvas) 안에 들어갈 때는
+   상자 높이가 이미 정해져 있다. min-height 를 남기면 판독 줄이 잘린다. */
+.map-viewer-canvas .iso-stage { min-height: 0; }
 
 /* 06 도시 — 히어로 + 좌 380 게이지 / 우 주둔 장수 표 */
 .city-hero { position: relative; display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }

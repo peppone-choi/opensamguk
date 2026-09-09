@@ -1,11 +1,16 @@
 'use client';
 
+// 로비·로그인 화면의 지도. 게임창과 같은 아이소 지형판을 쓴다.
+//
+// 여기서는 2D(스프라이트) 판만 쓴다. 3D 는 three 를 끌고 오는데, 로비는 보기만 하는
+// 화면이라 600KB 짜리 런타임을 번들에 들일 이유가 없다. 격자·좌표·세력색 합성은
+// 게임창과 완전히 같은 코드(@opensamguk/ui/iso)를 쓴다.
 import {
-    formatCompactMapTooltipMeta,
-    HanMapCanvas,
+    IsoMap2D,
     isOwnedNationVisual,
-    type IsoCityOverlay,
-    type IsoCountyHover,
+    placeGameCities,
+    useIsoTileGrid,
+    type PlacedCity,
 } from '@opensamguk/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -80,22 +85,18 @@ export default function MapPreview({
 }: MapPreviewProps = {}) {
     const [data, setData] = useState<MapData | null>(null);
     const [failed, setFailed] = useState(false);
-    const [tileMissing, setTileMissing] = useState(false);
-    const [hoverCounty, setHoverCounty] = useState<IsoCountyHover | null>(null);
-    const [cursor, setCursor] = useState({ x: 0, y: 0 });
     const [hideCityName, setHideCityName] = useState(false);
+    const [picked, setPicked] = useState<PlacedCity | null>(null);
 
     useEffect(() => {
         if (mapData != null) {
             setData(mapData);
             setFailed(false);
-            setTileMissing(false);
             return;
         }
         let active = true;
         setData(null);
         setFailed(false);
-        setTileMissing(false);
         fetch(`/api/server-map/${serverId}`, { cache: 'no-store' })
             .then((response) => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
             .then((next: MapData) => {
@@ -114,62 +115,53 @@ export default function MapPreview({
     }, []);
 
     const nationById = useMemo(() => {
-        const result = new Map<number, MapNation>();
-        data?.nations.forEach((nation) => result.set(nation.id, nation));
+        const result = new Map<number, { name: string; color: string }>();
+        data?.nations.forEach((nation) => result.set(nation.id, { name: nation.name, color: nation.color }));
         return result;
     }, [data]);
 
-    const cities = useMemo<IsoCityOverlay[]>(() => data?.cities.map((city) => {
-        const nation = nationById.get(city.nationId);
-        const owned = isOwnedNationVisual(city.nationId, nation?.color);
-        return {
-            ...city,
-            nationName: owned ? nation?.name : undefined,
-            nationColor: owned ? nation?.color : undefined,
-        };
-    }) ?? [], [data, nationById]);
     const sourceSize = useMemo(() => ({
         width: data?.width || 700,
         height: data?.height || 610,
     }), [data?.height, data?.width]);
-    const administrativeOwnership = useMemo(() => ({
-        provinceOccupancy: (data?.provinceOccupancy ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-        jurisdictionOwnership: (data?.jurisdictionOwnership ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-        commanderyControl: (data?.commanderyControl ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-    }), [data?.commanderyControl, data?.jurisdictionOwnership, data?.provinceOccupancy, nationById]);
 
-    const terrainUrl = useCallback((mapCode: string) => (
-        `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
-    ), [serverId]);
-    const provinceUrl = useCallback((mapCode: string) => (
-        `/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
-    ), [serverId]);
-    const handleMissing = useCallback(() => setTileMissing(true), []);
-    const handleCountyHover = useCallback((county: IsoCountyHover | null, point?: { x: number; y: number }) => {
-        setHoverCounty(county);
-        if (point) setCursor(point);
-    }, []);
+    // 縣 → 국가색. 서버가 판정한 provinceOccupancy 가 정본이고, 없으면 도시 소속에서 짓는다.
+    const nationColorByOwner = useMemo(() => {
+        const table: Record<number, string> = {};
+        const occupancy = data?.provinceOccupancy ?? [];
+        // 城 과 같은 규칙이다 — 소유가 확실할 때만 칠한다(placeGameCities 참조).
+        const put = (provinceIndex: number | null | undefined, nationId: number) => {
+            const color = nationById.get(nationId)?.color;
+            if (!isOwnedNationVisual(nationId, color) || provinceIndex == null || provinceIndex < 0) return;
+            table[provinceIndex] = color;
+        };
+        if (occupancy.length > 0) {
+            for (const owner of occupancy) put(owner.provinceIndex, owner.nationId);
+        } else {
+            for (const city of data?.cities ?? []) put(city.provinceId, city.nationId);
+        }
+        return table;
+    }, [data, nationById]);
 
-    if (failed || tileMissing || (data && data.cities.length === 0)) {
+    const terrainUrl = data
+        ? `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`
+        : '';
+    const grid = useIsoTileGrid(terrainUrl);
+    const placed = useMemo<PlacedCity[]>(() => (
+        grid.data && data
+            ? placeGameCities(data.cities, grid.data, { sourceSize, nations: nationById })
+            : []
+    ), [data, grid.data, nationById, sourceSize]);
+    const handlePickCity = useCallback((city: PlacedCity) => setPicked(city), []);
+
+    if (failed || grid.status === 'error' || (data && data.cities.length === 0)) {
         return (
             <div className="map-preview" aria-label="서버 지도 프리뷰">
                 <div className="map-preview-ph">맵 프리뷰 (준비 중)</div>
             </div>
         );
     }
-    if (!data) {
+    if (!data || grid.status !== 'ready') {
         return (
             <div className="map-preview" aria-label="서버 지도 프리뷰">
                 <div className="map-preview-ph"><div className="spinner" /></div>
@@ -177,34 +169,20 @@ export default function MapPreview({
         );
     }
 
-    const legacyHoverOwnerName = hoverCounty?.nationName
-        && isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
-        ? hoverCounty.nationName : undefined;
-    const hoverMeta = formatCompactMapTooltipMeta({
-        hierarchyPath: hoverCounty?.hierarchyPath,
-        displayedOwnerName: hoverCounty?.displayedOwnerNationName ?? legacyHoverOwnerName,
-        ownershipMismatch: hoverCounty?.ownershipMismatch,
-        provinceOccupantNationName: hoverCounty?.provinceOccupantNationName,
-        jurisdictionOwnerNationName: hoverCounty?.jurisdictionOwnerNationName,
-        commanderyControllerNationName: hoverCounty?.commanderyControllerNationName,
-    });
-
     return (
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div className="map-preview-canvas">
-                <HanMapCanvas
-                    mapCode={data.mapCode}
-                    terrainUrl={terrainUrl}
-                    provinceUrl={provinceUrl}
-                    cities={cities}
-                    administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
-                        ? administrativeOwnership : undefined}
-                    sourceSize={sourceSize}
+                <IsoMap2D
+                    data={grid.data}
+                    cities={placed}
+                    tintMode="nation"
+                    tintStrength={0.55}
+                    nationColorByOwner={nationColorByOwner}
                     currentCityId={currentCityId}
+                    selectedCityId={picked?.id ?? null}
                     hideCityNames={hideCityName}
+                    onPickCity={handlePickCity}
                     ariaLabel={`${data.mapCode} 서버 아이소 지도`}
-                    onCountyHover={handleCountyHover}
-                    onMissing={handleMissing}
                 />
                 <div className="map-btn-stack">
                     <button
@@ -222,16 +200,13 @@ export default function MapPreview({
                     </button>
                 </div>
             </div>
-            {hoverCounty && (
-                <div
-                    className="map-preview-tooltip"
-                    role="status"
-                    style={{ left: cursor.x + 12, top: cursor.y + 16 }}
-                >
-                    <div className="map-preview-tooltip-name">
-                        {hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}
+            {picked && (
+                <div className="map-preview-tooltip map-preview-tooltip--pinned" role="status">
+                    <div className="map-preview-tooltip-name">{picked.name}</div>
+                    <div className="map-preview-tooltip-meta">
+                        {picked.nationName ?? '재야'}
+                        {picked.isCapital ? ' · 수도' : ''}
                     </div>
-                    {hoverMeta && <div className="map-preview-tooltip-meta">{hoverMeta}</div>}
                 </div>
             )}
             <div className="map-preview-cap">
