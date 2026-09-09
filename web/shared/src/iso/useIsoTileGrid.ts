@@ -128,7 +128,12 @@ export function useIsoTileGrid(terrainUrl: string): State {
       if (!tilesResponse.ok) throw new Error(`지형을 못 받았다: ${tilesResponse.status}`);
       const tiles = (await tilesResponse.json()) as HanTiles;
 
-      const grid = buildIsoTileGrid(tiles.terrain, image.data, image.width, image.height);
+      // 治所 좌표를 격자보다 먼저 편다 — buildIsoTileGrid 가 「城 이 선 칸은 뭍」을
+      // 적용하는 데 이 값을 쓴다(landUnderSeats).
+      const provinceSeatCell = buildProvinceSeatCells(tiles);
+      const grid = buildIsoTileGrid(
+        tiles.terrain, image.data, image.width, image.height, RASTER_GROUP, provinceSeatCell,
+      );
       const srcCols = tiles._meta.cols;
       const srcRows = tiles._meta.rows;
       const cellCount = srcCols * srcRows;
@@ -161,7 +166,7 @@ export function useIsoTileGrid(terrainUrl: string): State {
           owner,
           parentOwner,
           cities,
-          provinceSeatCell: buildProvinceSeatCells(tiles),
+          provinceSeatCell,
           commanderyNames: (tiles.parentRegions ?? []).map((region) => region.displayName),
           sourceCols: srcCols,
           sourceRows: srcRows,
