@@ -4,7 +4,7 @@
 //
 // 이 컴포넌트가 기존 지도(HanMapCanvas)를 대신한다. 대신하려면 세 가지가 다 있어야 했다.
 //
-//   1) 세력색 — 縣(owner) 인덱스로 국가색을 찾는다. 곱하기 합성이라 지형이 비쳐 보인다.
+//   1) 세력색 — 縣(owner) 인덱스로 국가색을 찾는다. 색상만 얹으므로 지형 음영이 살아 있다.
 //      이음매: 지형 응답 owner[i] = provinceRecords 안 縣 인덱스(0..1523, -1 은 비플레이),
 //      /api/map/preview 의 provinceOccupancy[{provinceIndex, nationId}] 가 같은 색인 공간이다
 //      (provinceMap.ts:554 가 이미 어긋나면 던진다).
@@ -106,6 +106,8 @@ export default function IsoWorldMap({
   const [ownView, setOwnView] = useState<IsoView>('iso3d');
   const [tintMode, setTintMode] = useState<TintMode>('nation');
   const [picked, setPicked] = useState<{ col: number; row: number } | null>(null);
+  // 마우스를 얹은 城. 눌러야 나오는 게 아니라 얹으면 나온다.
+  const [hover, setHover] = useState<{ city: PlacedCity; x: number; y: number } | null>(null);
 
   const view = controlledView ?? ownView;
   const setView = useCallback((next: IsoView) => {
@@ -166,6 +168,10 @@ export default function IsoWorldMap({
     if (target) onBattlefieldActivate?.(target);
   }, [byFieldId, onBattlefieldActivate]);
 
+  const onHoverCity = useCallback((city: PlacedCity | null, at: { x: number; y: number }) => {
+    setHover(city ? { city, x: at.x, y: at.y } : null);
+  }, []);
+
   const onPickTile = useCallback(
     (tile: { col: number; row: number } | null) => setPicked(tile),
     [],
@@ -201,6 +207,7 @@ export default function IsoWorldMap({
     selectedCityId,
     onPickTile,
     onPickCity: onCityActivate,
+    onHoverCity,
     battlefields: fields,
     onPickBattlefield: onBattlefieldActivate ? onPickBattlefield : undefined,
   };
@@ -221,6 +228,15 @@ export default function IsoWorldMap({
       )}
       <div className="iso-stage__canvas">
         {view === 'iso3d' ? <IsoMap3D {...shared} /> : <IsoMap2D {...shared} />}
+        {hover && (
+          <div className="iso-tip" role="status" style={{ left: hover.x + 14, top: hover.y + 14 }}>
+            <b>{hover.city.name}</b>
+            <span>
+              {hover.city.nationName ?? '재야'}
+              {hover.city.isCapital ? ' · 수도' : ''}
+            </span>
+          </div>
+        )}
         {fields.length > 0 && (
           <div className="iso-stage__fields" role="group" aria-label="전장 선택">
             {fields.map((field) => (

@@ -7,11 +7,14 @@
 //   · 코너 순서 N,E,S,W. 이미지 좌표로 N(128,32) E(256,96) S(128,160) W(0,96).
 //   · 마스크 0..14 를 미리 그려 뒀다. 한 단차 = 화면 32px.
 //   · 흙벽은 skirt-left(남서 변)·skirt-right(남동 변) 두 장, 각 128×96 = 한 단.
-//   · 국가색은 "스프라이트 전체 RGB 곱하기"로 넣으라고 매니페스트가 못박았다.
-//     칠할 수 있는 깃발 마스크는 제공되지 않는다.
+//   · 오브젝트는 256×256, 앵커 (128,240) = 알파 경계상자의 아래·가운데(넷 다 실측 일치).
+//   · 칠할 수 있는 깃발 마스크는 제공되지 않는다 — 깃발은 렌더러가 화면 좌표로 얹는다.
 //
-// 세력색을 **곱하기**로 넣는 것이 이 판의 핵심이다. 배포본은 불투명 덮어쓰기라
-// 지형이 한 픽셀도 안 보인다(reports/opensamguk/tasks/2026-09-09-design-re-review.md).
+// 세력색은 캔버스 합성 모드 **'color'** 로 넣는다. 휘도는 지형 것을 그대로 두고 색상·채도만
+// 세력 것으로 바꾸므로 산·강 음영이 살아 있고 색이 짙게 깔리지 않는다(HOI4 정치 지도와
+// 같은 방식). 배포본은 불투명 덮어쓰기였고 그다음은 곱하기였다 — 전자는 지형이 한 픽셀도
+// 안 보였고(reports/opensamguk/tasks/2026-09-09-design-re-review.md) 후자는 어두운 국가색이
+// 땅을 통째로 눌렀다. 색만으로는 세력 범위가 안 읽히므로 縣·郡·국가 경계선을 함께 긋는다.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,6 +28,13 @@ import {
   pickTileAtScreen,
 } from '../isoTileGrid';
 import type { IsoMapData } from './useIsoTileGrid';
+import {
+  drawBattlefieldMark,
+  drawCityFlag,
+  drawCityName,
+  drawCityRing,
+  markerScale,
+} from './marker';
 import { indexTint, normaliseNationColor, type Rgb, type TintMode } from './tint';
 import type { IsoBattlefieldMarker, PlacedCity } from './placeGameCities';
 
@@ -41,8 +51,22 @@ const BUILDING_TIERS: { file: string; from: number; to: number }[] = [
   { file: 'commandery', from: 7, to: 8 },
   { file: 'capital', from: 9, to: 11 },
 ];
+/**
+ * 오브젝트 접지점. 매니페스트가 말하는 (128,240) 은 넷 다 알파 경계상자의 아래·가운데와
+ * 정확히 같다(실측: capital 4..252/·240, commandery 12..244, county 20..236, hamlet 38..218 —
+ * 가로 중심이 전부 128, 아래끝이 전부 240).
+ */
 const OBJECT_ANCHOR_X = 128;
 const OBJECT_ANCHOR_Y = 240;
+/**
+ * 城 은 타일보다 조금 작게, 다이아몬드 안에 앉힌다.
+ *
+ * 배포본은 원본 크기(256px = 타일 폭 그대로)를 타일 아래 꼭짓점에 붙여 세웠다. 그러면
+ * 성벽이 칸 밖으로 삐져나가고 격자와 어긋나 보인다 — 「셀과 아이콘이 안 맞는다」(2026-09-09).
+ * 0.85 배로 줄이고 접지점을 중심과 아래 꼭짓점 사이(HALF_H·0.75)에 두면 바닥이 칸 안에 든다.
+ */
+const OBJECT_SCALE = 0.85;
+const OBJECT_FOOT_Y = HALF_H * 0.75;
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 
@@ -65,6 +89,11 @@ export interface IsoMap2DProps {
    * 규칙이 이 값에 걸려 있어서 넘긴다(MapViewer activateCity 참조).
    */
   onPickCity?: (city: PlacedCity, activation: { pointerType: string }) => void;
+  /**
+   * 城 위에 마우스를 **얹었을 때**. 좌표는 캔버스 왼위 기준 화면 좌표다.
+   * 城 밖으로 나가면 null 로 한 번 더 부른다. 툴팁은 이걸로 뜬다 — 누를 필요가 없다.
+   */
+  onHoverCity?: (city: PlacedCity | null, at: { x: number; y: number }) => void;
   /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
   battlefields?: readonly IsoBattlefieldMarker[];
   onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
@@ -125,6 +154,7 @@ export function IsoMap2D({
   selectedCityId = null,
   onPickTile,
   onPickCity,
+  onHoverCity,
   className,
   ariaLabel,
 }: IsoMap2DProps) {
@@ -191,7 +221,7 @@ export function IsoMap2D({
     const view = viewRef.current;
     let frame = 0;
 
-    // 城 집기 상자. 매 그리기마다 다시 채운다 — 화면 밖은 안 들어간다.
+    // 城 집기 상자. 표식과 같은 **화면 좌표**다. 매 그리기마다 다시 채운다.
     const hits: { city: PlacedCity; x0: number; x1: number; y0: number; y1: number }[] = [];
     const fieldHits: { target: IsoBattlefieldMarker; x: number; y: number; radius: number }[] = [];
 
@@ -291,10 +321,11 @@ export function IsoMap2D({
         }
       }
 
-      // 세력색 — 덮어쓰기가 아니라 곱하기다. 지형이 그대로 비쳐 보인다.
+      // 세력색 — 색상만 얹는다('color'). 휘도는 지형 것이 남아 산·강 음영이 살아 있고
+      // 색이 짙게 깔리지 않는다. 곱하기였을 때 「너무 짙다」는 지적을 받았다(2026-09-09).
       if (tintMode !== 'none' && tintStrength > 0) {
         context.save();
-        context.globalCompositeOperation = 'multiply';
+        context.globalCompositeOperation = 'color';
         context.globalAlpha = tintStrength;
         for (let r = r0; r <= r1; r += 1) {
           for (let c = c0; c <= c1; c += 1) {
@@ -317,117 +348,154 @@ export function IsoMap2D({
         context.restore();
       }
 
-      // 城 — 세력색 위에 그린다. 아이콘까지 곱해지면 등급이 안 읽힌다.
+      // 縣·郡·국가 경계 — 색만으로는 어디까지가 한 세력인지 안 읽힌다(2026-09-09 지적).
+      //
+      // 한 변은 한 번만 긋는다. 이웃 (c+1,r) 은 화면에서 오른아래에 있으므로 공유 변은
+      // 오른 꼭짓점—아래 꼭짓점, 이웃 (c,r+1) 은 왼아래라 아래 꼭짓점—왼 꼭짓점이다.
+      // 물·지도 밖과의 경계는 긋지 않는다 — 해안선은 지형이 이미 말한다.
+      // 세력 판정은 색 문자열로 한다. 같은 나라의 두 縣 은 같은 색을 받으므로 그 사이에는
+      // 국경이 서지 않고, 대신 郡 경계가 남는다.
+      {
+        const tilePixels = view.scale * TILE_SCREEN_WIDTH;
+        // 축소하면 아래 등급부터 끈다. 전체 보기(타일 13px)에서 郡 경계까지 다 그으면
+        // 금이 땅보다 넓어져 세력 덩어리가 안 보인다.
+        const showCounty = tilePixels >= 26;
+        const showCommandery = tilePixels >= 16;
+        const nationKey = (i: number): string | null => {
+          if (playable[i] === 0 || isWater(code[i])) return null;
+          const o = owner[i];
+          if (o < 0) return '';
+          return nationColorByOwner?.[o] ?? '';
+        };
+        const nationPath = new Path2D();
+        const commanderyPath = new Path2D();
+        const countyPath = new Path2D();
+        for (let r = r0; r <= r1; r += 1) {
+          for (let c = c0; c <= c1; c += 1) {
+            const i = r * cols + c;
+            const key = nationKey(i);
+            if (key === null) continue;
+            const [x, y] = tileScreen(c, r);
+            const edges: [number, number, number, number, number][] = [];
+            if (c + 1 < cols) edges.push([i + 1, x + HALF_W, y, x, y + HALF_H]);
+            if (r + 1 < rows) edges.push([i + cols, x, y + HALF_H, x - HALF_W, y]);
+            for (const [j, ax, ay, bx, by] of edges) {
+              const other = nationKey(j);
+              if (other === null) continue;
+              const path = other !== key
+                ? nationPath
+                : (showCommandery && parentOwner[j] !== parentOwner[i])
+                  ? commanderyPath
+                  : (showCounty && owner[j] !== owner[i]) ? countyPath : null;
+              if (!path) continue;
+              path.moveTo(ax, ay);
+              path.lineTo(bx, by);
+            }
+          }
+        }
+        context.save();
+        context.lineCap = 'round';
+        // 선 굵기는 화면 기준이다 — 확대해도 국경이 두꺼워지지 않는다. 다만 축소할수록
+        // 조금 가늘게 간다. 전체 보기에서 3px 국경은 縣 한 칸(13px)의 1/4 라 땅을 먹는다.
+        const nationWidth = Math.max(1.2, Math.min(3, tilePixels / 12));
+        const strokes: [Path2D, string, number][] = [
+          [countyPath, 'rgba(12, 15, 14, 0.26)', 1],
+          [commanderyPath, 'rgba(12, 15, 14, 0.5)', Math.min(1.8, nationWidth * 0.6)],
+          [nationPath, 'rgba(12, 15, 14, 0.88)', nationWidth],
+        ];
+        for (const [path, style, width] of strokes) {
+          context.strokeStyle = style;
+          context.lineWidth = width / view.scale;
+          context.stroke(path);
+        }
+        context.restore();
+      }
+
+      // 城 건물 — 세계 좌표. 지형과 같은 배율로 서야 등급별 크기가 뜻을 갖는다.
       // 축소 상태에서는 郡治만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
       const seatOnly = view.scale * TILE_SCREEN_WIDTH < SEAT_ONLY_TILE_PIXELS;
       // 뒤에서 앞으로. 같은 화가 순서를 집기 판정에서 거꾸로 훑어 위에 있는 城 을 먼저 집는다.
-      hits.length = 0;
       const visible = cities
         .filter((city) => (!seatOnly || city.seat)
           && city.col >= c0 - 1 && city.col <= c1 + 1
           && city.row >= r0 - 1 && city.row <= r1 + 1)
         .sort((a, b) => (a.col + a.row) - (b.col + b.row));
       let drawnCities = 0;
+      const placedOnScreen: { city: PlacedCity; sx: number; sy: number }[] = [];
       for (const city of visible) {
+        const [x, y] = tileScreen(city.col, city.row);
+        placedOnScreen.push({
+          city,
+          sx: view.panX + x * view.scale,
+          sy: view.panY + y * view.scale,
+        });
         const tier = BUILDING_TIERS.find((t) => city.level >= t.from && city.level <= t.to);
         if (!tier) continue;
         const sprite = sprites.get(`objects/${tier.file}`);
         if (!sprite) continue;
-        const [x, y] = tileScreen(city.col, city.row);
-        const left = x - OBJECT_ANCHOR_X;
-        const top = y - OBJECT_ANCHOR_Y + HALF_H;
-        context.drawImage(sprite, left, top);
+        const size = sprite.naturalWidth * OBJECT_SCALE;
+        context.drawImage(
+          sprite,
+          x - OBJECT_ANCHOR_X * OBJECT_SCALE,
+          y + OBJECT_FOOT_Y - OBJECT_ANCHOR_Y * OBJECT_SCALE,
+          size,
+          sprite.naturalHeight * OBJECT_SCALE,
+        );
         drawnCities += 1;
-        // 집기 상자는 스프라이트 전체가 아니라 건물이 실제로 서 있는 아래쪽 절반이다.
-        // 오브젝트 스프라이트 256×256 은 위쪽이 대부분 빈 하늘이라, 전부를 상자로 잡으면
-        // 城 위 지형이 영영 안 집힌다.
-        hits.push({
-          city,
-          x0: x - HALF_W * 0.5,
-          x1: x + HALF_W * 0.5,
-          y0: y - OBJECT_ANCHOR_Y + HALF_H + 128,
-          y1: y + HALF_H,
-        });
-
-        // 소속·상태 표식. 스프라이트에 칠할 깃발 마스크가 없어 렌더러가 얹는다.
-        const ring = city.id === currentCityId
-          ? '#ffd36d' // --focus
-          : city.id === selectedCityId ? '#ece6d8' : null; // --text
-        if (ring) {
-          context.save();
-          context.strokeStyle = ring;
-          context.lineWidth = 6;
-          context.beginPath();
-          context.moveTo(x, y - HALF_H);
-          context.lineTo(x + HALF_W, y);
-          context.lineTo(x, y + HALF_H);
-          context.lineTo(x - HALF_W, y);
-          context.closePath();
-          context.stroke();
-          context.restore();
-        }
-        if (city.nationColor) {
-          const rgb = normaliseNationColor(city.nationColor);
-          context.save();
-          context.fillStyle = rgbCss(rgb);
-          context.strokeStyle = 'rgba(12, 15, 14, 0.8)';
-          context.lineWidth = 3;
-          context.beginPath();
-          context.arc(x, y - 150, city.isCapital ? 17 : 12, 0, Math.PI * 2);
-          context.fill();
-          context.stroke();
-          if (city.isCapital) {
-            // 수도는 안쪽에 밝은 점을 하나 더 둔다 — 색만으로는 못 가른다.
-            context.fillStyle = '#ece6d8';
-            context.beginPath();
-            context.arc(x, y - 150, 6, 0, Math.PI * 2);
-            context.fill();
-          }
-          context.restore();
-        }
-      }
-
-      // 도시명 — 城 을 다 그린 뒤 얹는다. 겹치면 이름이 건물에 잘린다.
-      if (!hideCityNames && !seatOnly) {
-        context.save();
-        context.font = '600 34px "Pretendard Variable", Pretendard, sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'top';
-        context.lineJoin = 'round';
-        // 받침 대신 외곽선. 배포본은 진홍 영토 위 검정 볼드라 판독이 어려웠다.
-        context.strokeStyle = 'rgba(12, 15, 14, 0.92)';
-        context.lineWidth = 8;
-        context.fillStyle = '#ece6d8'; // --text
-        for (const city of visible) {
-          const [x, y] = tileScreen(city.col, city.row);
-          context.strokeText(city.name, x, y + HALF_H + 6);
-          context.fillText(city.name, x, y + HALF_H + 6);
-        }
-        context.restore();
-      }
-
-      // 전장 — 城·이름 위에 얹는다. 여기서만 볼 수 있는 진행 중 전투다.
-      fieldHits.length = 0;
-      for (const target of battlefields) {
-        const [x, y] = tileScreen(target.col, target.row);
-        const radius = 26;
-        context.save();
-        context.fillStyle = '#1b201d'; // --panel
-        context.strokeStyle = target.current ? '#ffd36d' : '#d3b064'; // --focus / --bronze
-        context.lineWidth = 7;
-        context.beginPath();
-        context.moveTo(x, y - radius);
-        context.lineTo(x + radius, y);
-        context.lineTo(x, y + radius);
-        context.lineTo(x - radius, y);
-        context.closePath();
-        context.fill();
-        context.stroke();
-        context.restore();
-        fieldHits.push({ target, x, y, radius: radius + 12 });
       }
 
       context.restore();
+
+      // ── 여기부터는 화면 좌표다 ────────────────────────────────────────
+      // 깃발·이름·전장은 배율을 따라가지 않는다. 세계 좌표로 그리면 전체 보기에서 1px 로
+      // 사라지고 당기면 화면을 덮는다 — 배포본이 그래서 전장 두 곳만 도드라져 보였다.
+      const k = markerScale(view.scale);
+      const flagLift = Math.max(11, 96 * view.scale);
+      hits.length = 0;
+      for (const { city, sx, sy } of placedOnScreen) {
+        if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
+        const top = drawCityFlag(context, sx, sy - flagLift, {
+          color: city.nationColor ? rgbCss(normaliseNationColor(city.nationColor)) : null,
+          capital: city.isCapital,
+          k,
+        });
+        // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
+        const half = Math.max(15 * k, HALF_W * 0.45 * view.scale);
+        hits.push({
+          city,
+          x0: sx - half,
+          x1: sx + half,
+          y0: top - 2,
+          y1: sy + Math.max(9, HALF_H * 0.7 * view.scale),
+        });
+      }
+
+      // 선택·주둔 테는 깃발 위에 얹는다 — 가려지면 어디가 내 城 인지 못 찾는다.
+      for (const { city, sx, sy } of placedOnScreen) {
+        const ring = city.id === currentCityId
+          ? '#ffd36d' // --focus
+          : city.id === selectedCityId ? '#ece6d8' : null; // --text
+        if (ring) drawCityRing(context, sx, sy, { color: ring, k });
+      }
+
+      if (!hideCityNames && !seatOnly) {
+        const below = Math.max(9, HALF_H * 0.7 * view.scale) + 2;
+        for (const { city, sx, sy } of placedOnScreen) {
+          if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
+          drawCityName(context, city.name, sx, sy + below, k);
+        }
+      }
+
+      // 전장 — 城 위에 얹는다. 여기서만 볼 수 있는 진행 중 전투다.
+      fieldHits.length = 0;
+      for (const target of battlefields) {
+        const [x, y] = tileScreen(target.col, target.row);
+        const sx = view.panX + x * view.scale;
+        const sy = view.panY + y * view.scale;
+        const radius = drawBattlefieldMark(context, sx, sy, { current: target.current === true, k });
+        fieldHits.push({ target, x: sx, y: sy, radius });
+      }
+
       canvas.dataset.drawnTiles = String(drawn);
       canvas.dataset.drawnCities = String(drawnCities);
       canvas.dataset.drawnBattlefields = String(battlefields.length);
@@ -436,6 +504,15 @@ export function IsoMap2D({
 
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(draw);
+    };
+
+    /** 화면 좌표 (x, y) 위에 있는 城. 위에 그려진 쪽을 먼저 집는다. */
+    const cityAt = (x: number, y: number): PlacedCity | null => {
+      for (let n = hits.length - 1; n >= 0; n -= 1) {
+        const box = hits[n];
+        if (x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1) return box.city;
+      }
+      return null;
     };
 
     let dragging = false;
@@ -450,13 +527,31 @@ export function IsoMap2D({
       canvas.style.cursor = 'grabbing';
       canvas.setPointerCapture(e.pointerId);
     };
+    // 마우스를 얹기만 해도 城 정보가 나와야 한다 — 눌러야 나오는 건 지도가 아니라 목록이다.
+    let hovered: number | null = null;
     const onMove = (e: PointerEvent) => {
-      if (!dragging) return;
-      view.panX += e.clientX - lastX;
-      view.panY += e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      schedule();
+      if (dragging) {
+        view.panX += e.clientX - lastX;
+        view.panY += e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        schedule();
+        return;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const city = cityAt(x, y);
+      canvas.style.cursor = city ? 'pointer' : 'grab';
+      if (!onHoverCity) return;
+      // 같은 城 위에서 움직이는 동안에도 좌표는 계속 준다 — 툴팁이 커서를 따라간다.
+      if (city || hovered !== null) onHoverCity(city, { x, y });
+      hovered = city ? city.id : null;
+    };
+    const onLeave = () => {
+      if (hovered === null) return;
+      hovered = null;
+      onHoverCity?.(null, { x: 0, y: 0 });
     };
     const onUp = (e: PointerEvent) => {
       dragging = false;
@@ -479,8 +574,8 @@ export function IsoMap2D({
     const onClick = (e: MouseEvent) => {
       if (!onPickTile && !onPickCity && !onPickBattlefield) return;
       const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left - view.panX) / view.scale;
-      const y = (e.clientY - rect.top - view.panY) / view.scale;
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
       // 전장이 제일 먼저다 — 城 위에 그렸으니 집기도 그 순서다.
       if (onPickBattlefield) {
         for (let n = fieldHits.length - 1; n >= 0; n -= 1) {
@@ -491,20 +586,21 @@ export function IsoMap2D({
           }
         }
       }
-      // 城 이 그다음이다. 화가 순서를 거꾸로 훑어 위에 그려진 쪽을 집는다.
       if (onPickCity) {
-        for (let n = hits.length - 1; n >= 0; n -= 1) {
-          const box = hits[n];
-          if (x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1) {
-            onPickCity(box.city, { pointerType: lastPointerType });
-            return;
-          }
+        const city = cityAt(x, y);
+        if (city) {
+          onPickCity(city, { pointerType: lastPointerType });
+          return;
         }
       }
       if (!onPickTile) return;
-      // 높이를 감안한 역변환이다(pickTileAtScreen). 높은 타일은 화면에서 위로 올라가 있어
-      // 지면 역변환만으로는 한두 칸 어긋난다.
-      onPickTile(pickTileAtScreen(x, y, grid));
+      // 지형은 세계 좌표로 되돌려서 집는다. 높이를 감안한 역변환이다(pickTileAtScreen) —
+      // 높은 타일은 화면에서 위로 올라가 있어 지면 역변환만으로는 한두 칸 어긋난다.
+      onPickTile(pickTileAtScreen(
+        (x - view.panX) / view.scale,
+        (y - view.panY) / view.scale,
+        grid,
+      ));
     };
 
     // 화면 한가운데를 기준으로 배율만 바꾼다 — 휠과 같은 식이되 커서 대신 중심을 쓴다.
@@ -531,6 +627,7 @@ export function IsoMap2D({
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointercancel', onUp);
+    canvas.addEventListener('pointerleave', onLeave);
     canvas.addEventListener('wheel', onWheel, { passive: false });
     canvas.addEventListener('click', onClick);
     const observer = new ResizeObserver(schedule);
@@ -545,11 +642,13 @@ export function IsoMap2D({
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointercancel', onUp);
+      canvas.removeEventListener('pointerleave', onLeave);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
   }, [data, sprites, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
-    currentCityId, selectedCityId, onPickTile, onPickCity, battlefields, onPickBattlefield]);
+    currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
+    battlefields, onPickBattlefield]);
 
   if (error) {
     return (

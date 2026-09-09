@@ -280,40 +280,39 @@ textarea:focus {
     cursor: pointer;
 }
 
-/* 선택한 城 정보 — 커서 추종이 아니라 캔버스 왼쪽 위에 고정한다.
-   아이소 판은 hover 가 아니라 클릭으로 집는다. */
+/* 눌러서 고른 城 정보 — 캔버스 왼쪽 위에 붙인다. hover 가 없는 손가락 조작용이다.
+   마우스로 얹었을 때는 아래 .map-preview-tooltip 이 커서를 따라간다. */
 .map-preview-tooltip--pinned {
     left: var(--space-sm);
     top: var(--space-sm);
 }
 
-/* hover 도시정보 툴팁(레거시 .city_tooltip) — 커서 추종. */
+/* hover 도시정보 툴팁 — 커서 추종. 게임창 지도의 .iso-tip 과 같은 그림이다.
+   레거시(.city_tooltip)는 형광 파랑 띠 두 장이었는데, 그 색은 이 팔레트 어디에도 없고
+   지도 위에서 혼자 튄다. 구조(이름 줄 + 소속 줄)만 남기고 상자는 패널 색으로 바꾼다. */
 .map-preview-tooltip {
     position: absolute;
     z-index: 16;
-    min-width: 120px;
-    padding: 0;
-    background: transparent;
-    border: 1px solid gray;
+    display: grid;
+    gap: 1px;
+    padding: 4px 7px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
     border-radius: 0;
     box-shadow: none;
     white-space: nowrap;
     pointer-events: none;
 }
-.map-preview-tooltip-name,
-.map-preview-tooltip-meta {
-    display: block;
-    height: 15px;
-    padding: 0 2px;
-    background-color: rgb(30, 164, 255);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 15px;
+.map-preview-tooltip-name {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
 }
 .map-preview-tooltip-meta {
-    border-top: 1px solid gray;
-    text-align: right;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 /* ── W0-6 MapPreview 능력 표면 미러 — web/game MapViewer와 동일 블록(두 맵뷰어 불변식) ──

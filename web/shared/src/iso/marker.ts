@@ -1,0 +1,147 @@
+// 城 위에 얹는 표식 — 깃발·선택 테·전장 마름모.
+//
+// 두 렌더러(2D 스프라이트판·3D 겹판)가 같은 그림을 그려야 해서 한 벌만 둔다.
+//
+// 요점은 **화면 좌표**로 그린다는 것이다. 세계 좌표로 그리면 전체 보기(타일 13px)에서
+// 표식이 1px 로 줄어 사라지고, 당기면 반대로 화면을 덮는다. 배포본 2D 판이 그랬다 —
+// 「깃발이 없고 장판·관도만 강조되어 있다」는 지적이 거기서 나왔다(2026-09-09).
+// 눈에 띄던 둘은 전장이었고, 전장만 표식이 커 보였던 게 아니라 城 표식이 안 보였던 것이다.
+
+/**
+ * 확대 배율 → 표식 배율. 1 … 2.4 사이로 눌러 둔다.
+ * 전체 보기에서도 읽히고(하한 1), 한 타일까지 당겨도 화면을 안 덮는다(상한 2.4).
+ */
+export function markerScale(viewScale: number): number {
+  return Math.max(1, Math.min(2.4, viewScale * 2));
+}
+
+const INK = 'rgba(12, 15, 14, 0.85)'; // --bg
+const NEUTRAL = '#8e8879'; // --muted
+
+export interface CityFlagOptions {
+  /** 세력색(정규화 끝난 css 색). 중립이면 null — 회색 깃발이 선다. */
+  color: string | null;
+  capital: boolean;
+  /** markerScale 의 결과. */
+  k: number;
+}
+
+/**
+ * 깃대와 깃발. (x, y) 는 깃대 **밑동**이다.
+ * 반환값은 깃발 꼭대기 y — 집기 상자를 잡는 쪽이 쓴다.
+ */
+export function drawCityFlag(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  { color, capital, k }: CityFlagOptions,
+): number {
+  const size = (capital ? 11 : 9) * k;
+  const pole = size * 2;
+  const top = y - pole;
+  const w = size * 1.5;
+  const h = size * 1.05;
+
+  context.save();
+  // 깃대. 어두운 잉크라 밝은 지형 위에서도 형태가 선다.
+  context.strokeStyle = INK;
+  context.lineWidth = Math.max(1.4, size * 0.18);
+  context.lineCap = 'round';
+  context.beginPath();
+  context.moveTo(x, y);
+  context.lineTo(x, top);
+  context.stroke();
+
+  // 깃발 — 제비꼬리. 사각형이면 도시명 상자와 헷갈린다.
+  context.beginPath();
+  context.moveTo(x, top);
+  context.lineTo(x + w, top);
+  context.lineTo(x + w - size * 0.42, top + h / 2);
+  context.lineTo(x + w, top + h);
+  context.lineTo(x, top + h);
+  context.closePath();
+  context.fillStyle = color ?? NEUTRAL;
+  context.globalAlpha = color ? 1 : 0.7;
+  context.fill();
+  context.globalAlpha = 1;
+  context.strokeStyle = INK;
+  context.lineWidth = Math.max(1, size * 0.12);
+  context.stroke();
+
+  if (capital) {
+    // 수도는 깃대 끝에 금색 구슬을 단다 — 색만으로는 못 가른다.
+    context.fillStyle = '#d3b064'; // --bronze
+    context.beginPath();
+    context.arc(x, top, Math.max(1.8, size * 0.22), 0, Math.PI * 2);
+    context.fill();
+  }
+  context.restore();
+  return top;
+}
+
+/** 선택·주둔 표시 테. 城 이 서 있는 칸을 화면 좌표 마름모로 두른다. */
+export function drawCityRing(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  { color, k }: { color: string; k: number },
+): void {
+  const rx = 17 * k;
+  const ry = rx / 2;
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(2, 1.6 * k);
+  context.beginPath();
+  context.moveTo(x, y - ry);
+  context.lineTo(x + rx, y);
+  context.lineTo(x, y + ry);
+  context.lineTo(x - rx, y);
+  context.closePath();
+  context.stroke();
+  context.restore();
+}
+
+/** 전장 마름모. 반환값은 집기 반지름이다. */
+export function drawBattlefieldMark(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  { current, k }: { current: boolean; k: number },
+): number {
+  const radius = 8 * k;
+  context.save();
+  context.fillStyle = '#1b201d'; // --panel
+  context.strokeStyle = current ? '#ffd36d' : '#d3b064'; // --focus / --bronze
+  context.lineWidth = Math.max(2, 1.6 * k);
+  context.beginPath();
+  context.moveTo(x, y - radius);
+  context.lineTo(x + radius, y);
+  context.lineTo(x, y + radius);
+  context.lineTo(x - radius, y);
+  context.closePath();
+  context.fill();
+  context.stroke();
+  context.restore();
+  return radius + 6;
+}
+
+/** 도시명. 받침 대신 외곽선을 쓴다 — 세력색 위 검정 볼드는 판독이 어려웠다. */
+export function drawCityName(
+  context: CanvasRenderingContext2D,
+  name: string,
+  x: number,
+  y: number,
+  k: number,
+): void {
+  context.save();
+  context.font = `600 ${Math.round(11 * k)}px "Pretendard Variable", Pretendard, sans-serif`;
+  context.textAlign = 'center';
+  context.textBaseline = 'top';
+  context.lineJoin = 'round';
+  context.strokeStyle = 'rgba(12, 15, 14, 0.92)';
+  context.lineWidth = Math.max(2.5, 2.4 * k);
+  context.strokeText(name, x, y);
+  context.fillStyle = '#ece6d8'; // --text
+  context.fillText(name, x, y);
+  context.restore();
+}
