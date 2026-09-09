@@ -573,9 +573,9 @@ input:focus, select:focus, textarea:focus {
 
 /* ── F2 chrome spine (GameInfo + GlobalMenu + MainControlBar) ─────────────── */
 
-.text-cyan { color: cyan; }
-.text-magenta { color: magenta; }
-.text-orange { color: orange; }
+.text-cyan { color: var(--log-c); }
+.text-magenta { color: var(--log-m); }
+.text-orange { color: var(--log-o); }
 .avoid-wrap { white-space: nowrap; }
 
 .game-chrome {
@@ -1391,9 +1391,8 @@ input:focus, select:focus, textarea:focus {
 /* Command modal additions (catalog grid item subtext, compensation tags, blocked reason). */
 .cmd-item { display: flex; flex-direction: column; gap: 2px; align-items: center; }
 .cmd-item-sub { color: var(--text-muted); font-size: var(--text-xs); }
-.cmd-impossible { color: red; text-decoration: line-through; }
-.cmd-comp-pos { color: cyan; }
-.cmd-comp-neg { color: red; }
+.cmd-comp-pos { color: var(--log-c); }
+.cmd-comp-neg { color: var(--log-r); }
 .cmd-blocked {
   margin-top: var(--space-md);
   padding: var(--space-sm);
@@ -1503,9 +1502,9 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--gold);
   color: var(--gold);
 }
-.cmd-city-distance-row.d1 button { color: magenta; }
-.cmd-city-distance-row.d2 button { color: orange; }
-.cmd-city-distance-row.d3 button { color: yellow; }
+.cmd-city-distance-row.d1 button { color: var(--log-m); }
+.cmd-city-distance-row.d2 button { color: var(--log-o); }
+.cmd-city-distance-row.d3 button { color: var(--log-y); }
 .cmd-founding select,
 .cmd-recruit select,
 .cmd-recruit input {
@@ -2134,7 +2133,7 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 960px) { .city-grid { grid-template-columns: 1fr; } }
 
 /* 12 기록 — 편년체·허브·시상대 */
-.chron { background: linear-gradient(180deg, #1f2521, var(--panel)); }
+.chron { background: linear-gradient(180deg, var(--raised), var(--panel)); }
 .chron__body { padding: 4px 20px 12px; }
 .chron__group { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .chron__group:last-child { border-bottom: 0; }

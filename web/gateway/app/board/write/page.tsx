@@ -33,7 +33,6 @@ export default function BoardWritePage(): React.ReactElement {
     <BoardShell>
       <section className="board-heading compact">
         <div>
-          <p className="board-eyebrow">NEW POST</p>
           <h1>게시글 작성</h1>
           <p>굵게, 기울임, 취소선 등 기본 서식을 사용할 수 있습니다.</p>
         </div>

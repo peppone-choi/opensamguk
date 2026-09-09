@@ -86,7 +86,6 @@ export default function BoardIndex(): React.ReactElement {
     <BoardShell>
       <section className="board-heading">
         <div>
-          <p className="board-eyebrow">OPEN SAMGUK COMMUNITY</p>
           <h1>커뮤니티 게시판</h1>
           <p>서버 밖, 계정 단위 공간입니다. 국가 회의실·기밀실과 분리됩니다.</p>
         </div>
