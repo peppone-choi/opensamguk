@@ -49,16 +49,35 @@ const HALF_H = TILE_SCREEN_HEIGHT / 2;
 const ANCHOR_X = 128;
 const ANCHOR_Y = 96;
 
+/**
+ * 城 등급 → 건물 애셋. 등급 1:1 이다 — manifest.cityLevelTiers 와 같은 표.
+ *
+ * 예전 표는 네 장을 구간으로 나눠 `capital` 에 9..11 을 줬다. 그런데 등급 번호는 크기 순이
+ * 아니다. 9 京·10 영현·11 장현은 한나라 세계 때 **뒤에 덧붙인** 값이고(後漢 百官志
+ * 「萬戶以上為令，不滿為長」), 10·11 은 縣 — 가장 작은 단위다. 그래서 774개 성 중 604개
+ * (78%)가 사탑에 깃발 꽂힌 도성으로 그려졌고 낙양이 제일 작은 장현과 구별되지 않았다.
+ * 1·2·3 은 크기가 아예 아니다: 수(水)는 물 위 거점(유구·적벽·파양·탐라), 진(鎭)은 야전
+ * 영채(관도·합비·역경), 관(關)은 관문(함곡·호로·사수)이다. 엔진도 그렇게 본다 —
+ * WarUnitCity.kt:50-51 이 등급 1·3 에만 훈련 보너스를 준다.
+ */
 const BUILDING_TIERS: { file: string; from: number; to: number }[] = [
-  { file: 'hamlet', from: 4, to: 4 },
-  { file: 'county', from: 5, to: 6 },
-  { file: 'commandery', from: 7, to: 8 },
-  { file: 'capital', from: 9, to: 11 },
+  { file: 'water', from: 1, to: 1 },
+  { file: 'garrison', from: 2, to: 2 },
+  { file: 'pass', from: 3, to: 3 },
+  { file: 'tribal', from: 4, to: 4 },
+  { file: 'commandery', from: 5, to: 5 },
+  { file: 'commandery-mid', from: 6, to: 6 },
+  { file: 'commandery-major', from: 7, to: 7 },
+  { file: 'commandery-grand', from: 8, to: 8 },
+  { file: 'capital', from: 9, to: 9 },
+  { file: 'county', from: 10, to: 10 },
+  { file: 'county-small', from: 11, to: 11 },
 ];
 /**
- * 오브젝트 접지점. 매니페스트가 말하는 (128,240) 은 넷 다 알파 경계상자의 아래·가운데와
- * 정확히 같다(실측: capital 4..252/·240, commandery 12..244, county 20..236, hamlet 38..218 —
- * 가로 중심이 전부 128, 아래끝이 전부 240).
+ * 오브젝트 접지점. 매니페스트가 말하는 (128,240) 은 이제 **설계값**이지 실측 우연이 아니다.
+ * 11장 전부 tools/assets/build_iso2d_buildings.py 의 기하 가이드에서 나오고, 밑면 다이아몬드
+ * 중심 (128,176)·반높이 64 를 그대로 쓴다. export 가 매 장 `y_bottom(x) <= 176+64(1-|x-128|/128)`
+ * 를 검사해서 타일 밖으로 새면 빨개진다.
  */
 const OBJECT_ANCHOR_X = 128;
 const OBJECT_ANCHOR_Y = 240;
