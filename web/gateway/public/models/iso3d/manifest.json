@@ -2,7 +2,7 @@
  "schemaVersion": 1,
  "artifactId": "iso3d-assets-v1",
  "generator": "tools/assets/build_iso3d_assets.py",
- "note": "저폴리 절차 3D 에셋. 타일은 XZ 평면 1×1, Y 가 위다 — 아이소 다이아몬드는 카메라가 만든다. 지형 타일은 **윗면만** 있고 측면이 없다(같은 높이 인접 타일이 이음매 없이 이어지도록). 흙벽은 terrain/skirt.gltf 한 장이며 렌더러가 높이 단차·물가·맵 가장자리에만 세운다. 정점 색만 쓰고 텍스처가 없으며, 국가색은 런타임이 재질 baseColorFactor 로 곱한다.",
+ "note": "저폴리 절차 3D 에셋. 타일은 XZ 평면 1×1, Y 가 위다 — 아이소 다이아몬드는 카메라가 만든다. 지형 타일은 **윗면만** 있고 측면이 없다(같은 높이 인접 타일이 이음매 없이 이어지도록). 흙벽은 terrain/skirt.gltf 한 장이며 렌더러가 높이 단차·물가·맵 가장자리에만 세운다. 정점 색만 쓰고 텍스처가 없으며, 국가색은 런타임이 재질 baseColorFactor 로 곱한다. 城 은 등급 1:1 로 11 단이고 모두 타일 반폭 0.5 안에 선다(빌더가 검사한다).",
  "rasterGroup": 4,
  "tileGrid": {
   "cols": 192,
@@ -23,20 +23,61 @@
  "buildingTiers": {
   "capital": {
    "cityLevelFrom": 9,
-   "cityLevelTo": 11
+   "cityLevelTo": 9
   },
   "commandery": {
-   "cityLevelFrom": 7,
+   "cityLevelFrom": 5,
+   "cityLevelTo": 5
+  },
+  "commandery-grand": {
+   "cityLevelFrom": 8,
    "cityLevelTo": 8
   },
-  "county": {
-   "cityLevelFrom": 5,
+  "commandery-major": {
+   "cityLevelFrom": 7,
+   "cityLevelTo": 7
+  },
+  "commandery-mid": {
+   "cityLevelFrom": 6,
    "cityLevelTo": 6
   },
-  "hamlet": {
+  "county": {
+   "cityLevelFrom": 10,
+   "cityLevelTo": 10
+  },
+  "county-small": {
+   "cityLevelFrom": 11,
+   "cityLevelTo": 11
+  },
+  "garrison": {
+   "cityLevelFrom": 2,
+   "cityLevelTo": 2
+  },
+  "pass": {
+   "cityLevelFrom": 3,
+   "cityLevelTo": 3
+  },
+  "tribal": {
    "cityLevelFrom": 4,
    "cityLevelTo": 4
+  },
+  "water": {
+   "cityLevelFrom": 1,
+   "cityLevelTo": 1
   }
+ },
+ "cityLevelTiers": {
+  "1": "water",
+  "2": "garrison",
+  "3": "pass",
+  "4": "tribal",
+  "5": "commandery",
+  "6": "commandery-mid",
+  "7": "commandery-major",
+  "8": "commandery-grand",
+  "9": "capital",
+  "10": "county",
+  "11": "county-small"
  },
  "unitArmTypes": {
   "0": "wall",
@@ -48,9 +89,16 @@
  },
  "files": [
   "building/capital.gltf",
+  "building/commandery-grand.gltf",
+  "building/commandery-major.gltf",
+  "building/commandery-mid.gltf",
   "building/commandery.gltf",
+  "building/county-small.gltf",
   "building/county.gltf",
-  "building/hamlet.gltf",
+  "building/garrison.gltf",
+  "building/pass.gltf",
+  "building/tribal.gltf",
+  "building/water.gltf",
   "terrain/basin.gltf",
   "terrain/desert.gltf",
   "terrain/hill.gltf",
