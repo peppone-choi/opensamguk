@@ -33,6 +33,10 @@ import {
   drawCityFlag,
   drawCityName,
   drawCityRing,
+  drawExternalPlaceMark,
+  drawExternalPlaceName,
+  dropOverlappingLabels,
+  externalPlaceLabelBox,
   markerScale,
 } from './marker';
 import { indexTint, normaliseNationColor, rgbCss, type TintMode } from './tint';
@@ -213,6 +217,14 @@ export function IsoMap2D({
 
     const { grid, owner, parentOwner } = data;
     const { cols, rows, code, mask, baseHeight, playable } = grid;
+
+    // 郡國 밖 세력. 지형 응답이 처음부터 들고 있던 EXTERNAL_PLACE 다(백제국·사로국·부여·
+    // 야마일국·흉노 …). 게임 城 이 아니라서 placeGameCities 를 안 거치고, 그래서 여태
+    // 아무도 안 그렸다 — 한반도·일본이 빈 땅으로 보인 이유가 이거다.
+    // 이름표는 몰린 곳에서 솎아 낸다. 치소(seat) 가 먼저 자리를 잡는다.
+    const externals = data.cities
+      .filter((city) => city.kind === 'EXTERNAL_PLACE')
+      .sort((a, b) => Number(b.seat) - Number(a.seat));
 
     // 화면 변환: 배율 1 에서 타일 폭 256px. 시작 배율은 전체가 담기도록 맞춘다.
     const view = viewRef.current;
@@ -495,6 +507,28 @@ export function IsoMap2D({
         }
       }
 
+      // 郡國 밖 세력 — 城 밑에 깐다. 집히지 않으므로 hits 에는 넣지 않는다.
+      // 이름은 城 과 같은 규칙으로 감춘다(compact·전체 보기).
+      const onScreen: { name: string; sx: number; sy: number }[] = [];
+      for (const place of externals) {
+        const [x, y] = tileScreen(place.col, place.row);
+        const sx = view.panX + x * view.scale;
+        const sy = view.panY + y * view.scale;
+        if (sx < -60 || sx > w + 60 || sy < -60 || sy > h + 60) continue;
+        onScreen.push({ name: place.name, sx, sy });
+        drawExternalPlaceMark(context, sx, sy, k);
+      }
+      // 마름모를 다 깔고 나서 이름을 얹는다 — 순서를 섞으면 글씨가 뒤엣것 마름모에 묻힌다.
+      if (!hideCityNames) {
+        const keepLabel = dropOverlappingLabels(
+          onScreen.map((p) => externalPlaceLabelBox(p.sx, p.sy, p.name, k)),
+        );
+        onScreen.forEach((place, n) => {
+          if (keepLabel[n]) drawExternalPlaceName(context, place.name, place.sx, place.sy, k);
+        });
+      }
+      const drawnExternals = onScreen.length;
+
       // 전장 — 城 위에 얹는다. 여기서만 볼 수 있는 진행 중 전투다.
       fieldHits.length = 0;
       for (const target of battlefields) {
@@ -508,6 +542,7 @@ export function IsoMap2D({
       canvas.dataset.drawnTiles = String(drawn);
       canvas.dataset.drawnCities = String(drawnCities);
       canvas.dataset.drawnBattlefields = String(battlefields.length);
+      canvas.dataset.drawnExternals = String(drawnExternals);
       canvas.dataset.seatOnly = String(seatOnly);
     };
 
