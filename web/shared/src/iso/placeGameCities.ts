@@ -184,6 +184,21 @@ export function isExternalPlace(city: PlacedCity): boolean {
 }
 
 /**
+ * 집기 광선이 앞에서부터 맞힌 것들 중 **들어갈 수 있는 첫 城**.
+ *
+ * 郡國 밖 세력도 중원의 城 과 똑같은 건물 메시로 서 있으므로 광선에 그대로 맞는다.
+ * 그렇다고 제일 가까운 것 하나만 보고 포기하면, 앞에 선 이민족 하나가 뒤의 城 을
+ * 통째로 못 누르게 만든다. 맞은 순서대로 훑어 게임 城 이 나오면 그것을 집는다.
+ * 맞은 게 없거나 전부 郡國 밖이면 null — 부르는 쪽은 지형 집기로 내려간다.
+ */
+export function firstPickableCity(hits: readonly (PlacedCity | undefined)[]): PlacedCity | null {
+  for (const city of hits) {
+    if (city && !isExternalPlace(city)) return city;
+  }
+  return null;
+}
+
+/**
  * 郡國 밖 세력을 **城 과 같은 자리에** 세운다.
  *
  * 지형 응답의 `EXTERNAL_PLACE` 37 곳(백제국·사로국·부여·야마일국·대마국·흉노 …)이다.

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  firstPickableCity,
   gameXyToSourceCell,
   isExternalPlace,
   placeGameCities,
   type GameCityInput,
+  type PlacedCity,
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import type { HanTiles } from '../HanMapCanvas';
@@ -266,5 +268,28 @@ describe('fitFootprintsInTile', () => {
       options,
     );
     expect(both[0].drawCol).not.toBeCloseTo(both[1].drawCol);
+  });
+});
+
+describe('firstPickableCity', () => {
+  /** 집기 광선이 맞힌 것 하나. 집기 판정에 쓰는 건 id 뿐이라 나머지는 채우기다. */
+  const hit = (id: number): PlacedCity => ({
+    id, name: id < 0 ? '백제국' : '낙양', level: 4, nationId: 0,
+    col: 0, row: 0, tileCol: 0, tileRow: 0, drawCol: 0, drawRow: 0,
+    drawScale: 1, seat: true, isCapital: false, exact: true,
+  });
+
+  it('맨 앞이 郡國 밖 세력이면 건너뛰고 뒤의 城 을 집는다', () => {
+    // 이 순서가 광선 순서다 — 앞에 선 이민족 하나가 뒤의 城 을 못 누르게 막으면 안 된다.
+    expect(firstPickableCity([hit(-3), hit(42)])?.id).toBe(42);
+  });
+
+  it('맞은 게 전부 郡國 밖이면 null — 음수 id 는 onPickCity 로 절대 나가지 않는다', () => {
+    expect(firstPickableCity([hit(-3), hit(-9)])).toBeNull();
+  });
+
+  it('빈 구멍(instanceId 없는 맞음)은 건너뛴다', () => {
+    expect(firstPickableCity([undefined, hit(7)])?.id).toBe(7);
+    expect(firstPickableCity([])).toBeNull();
   });
 });

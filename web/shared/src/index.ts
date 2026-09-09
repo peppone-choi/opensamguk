@@ -193,6 +193,7 @@ export {
 export {
   placeGameCities,
   isExternalPlace,
+  firstPickableCity,
   fitFootprintsInTile,
   placeBattlefields,
   gameXyToSourceCell,

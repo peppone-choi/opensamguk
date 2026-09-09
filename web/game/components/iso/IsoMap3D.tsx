@@ -28,6 +28,7 @@ import {
   drawCityName,
   drawCityRing,
   dropOverlappingLabels,
+  firstPickableCity,
   indexTint,
   isExternalPlace,
   isWater,
@@ -848,19 +849,22 @@ export function IsoMap3D({
         pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
         // 城 이 그다음이다. 건물 메시를 맞히면 그 도시를 집고 지형은 보지 않는다.
+        // 郡國 밖 세력은 게임 城 번호가 없다(음수 id) — 겹판 집기 상자와 같은 규칙으로
+        // 여기서도 건너뛴다. 앞에 서 있다고 뒤의 城 까지 못 집게 만들면 안 되므로
+        // 제일 가까운 것 하나만 보지 않고 城 이 나올 때까지 훑는다.
         if (onPickCity) {
           const visibleCityMeshes = cityMeshes.filter((entry) => entry.mesh.visible);
-          const cityHits = raycaster.intersectObjects(
+          const meshHits = raycaster.intersectObjects(
             visibleCityMeshes.map((entry) => entry.mesh), false,
           );
-          const cityHit = cityHits[0];
-          if (cityHit && cityHit.instanceId != null) {
-            const entry = visibleCityMeshes.find((candidate) => candidate.mesh === cityHit.object);
-            const city = entry?.cities[cityHit.instanceId];
-            if (city) {
-              onPickCity(city, { pointerType: lastPointerType });
-              return;
-            }
+          const city = firstPickableCity(meshHits.map((meshHit) => {
+            if (meshHit.instanceId == null) return undefined;
+            const entry = visibleCityMeshes.find((candidate) => candidate.mesh === meshHit.object);
+            return entry?.cities[meshHit.instanceId];
+          }));
+          if (city) {
+            onPickCity(city, { pointerType: lastPointerType });
+            return;
           }
         }
         if (!onPickTile) return;
