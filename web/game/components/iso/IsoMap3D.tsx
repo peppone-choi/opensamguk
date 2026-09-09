@@ -897,9 +897,14 @@ export function IsoMap3D({
 
   // 색 세기·모드만 바뀌면 씬을 다시 짓지 않고 instanceColor 만 갈아 끼운다.
   useEffect(() => {
-    tintRef.current?.rebuildBorders();
     tintRef.current?.apply(tintStrength, tintMode);
   }, [tintStrength, tintMode, nationColorByOwner]);
+
+  // 국경은 세력색 **표**로만 갈린다. 세기·모드에 묶어 두면 「세력색/지형만」 탭을 누를 때마다
+  // 32,064 칸을 다시 훑고 BufferGeometry·Material 을 새로 굽는다 — 표가 그대로면 다시 굽지 않는다.
+  useEffect(() => {
+    tintRef.current?.rebuildBorders();
+  }, [nationColorByOwner]);
 
   if (error) {
     return (
