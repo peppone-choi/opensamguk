@@ -172,6 +172,9 @@ export function IsoMap2D({
     viewRef.current = { scale: 1, panX: 0, panY: 0, fitted: false };
   }, [data]);
 
+  // 캔버스 위 +/−/전체 단추가 쥐는 손잡이. 휠이 없는 손가락 조작에서 유일한 확대 수단이다.
+  const zoomRef = useRef<{ by: (factor: number) => void; fit: () => void } | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !sprites) return undefined;
@@ -504,6 +507,24 @@ export function IsoMap2D({
       onPickTile(pickTileAtScreen(x, y, grid));
     };
 
+    // 화면 한가운데를 기준으로 배율만 바꾼다 — 휠과 같은 식이되 커서 대신 중심을 쓴다.
+    zoomRef.current = {
+      by: (factor: number) => {
+        const mx = canvas.clientWidth / 2;
+        const my = canvas.clientHeight / 2;
+        const next = Math.max(0.02, Math.min(2, view.scale * factor));
+        const applied = next / view.scale;
+        view.panX = mx - (mx - view.panX) * applied;
+        view.panY = my - (my - view.panY) * applied;
+        view.scale = next;
+        schedule();
+      },
+      fit: () => {
+        view.fitted = false;
+        schedule();
+      },
+    };
+
     canvas.style.cursor = 'grab';
     canvas.style.touchAction = 'none';
     canvas.addEventListener('pointerdown', onDown);
@@ -518,6 +539,7 @@ export function IsoMap2D({
 
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      zoomRef.current = null;
       observer.disconnect();
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
@@ -546,6 +568,13 @@ export function IsoMap2D({
         aria-label={ariaLabel}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
+      {sprites ? (
+        <div className="iso-zoom" role="group" aria-label="지도 배율">
+          <button type="button" aria-label="지도 확대" onClick={() => zoomRef.current?.by(1.4)}>+</button>
+          <button type="button" aria-label="지도 축소" onClick={() => zoomRef.current?.by(1 / 1.4)}>−</button>
+          <button type="button" aria-label="지도 전체 보기" onClick={() => zoomRef.current?.fit()}>전체</button>
+        </div>
+      ) : null}
       {!sprites ? (
         <p
           style={{

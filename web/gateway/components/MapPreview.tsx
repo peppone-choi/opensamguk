@@ -173,6 +173,7 @@ export default function MapPreview({
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div className="map-preview-canvas">
                 <IsoMap2D
+                    className="map-preview-iso"
                     data={grid.data}
                     cities={placed}
                     tintMode="nation"

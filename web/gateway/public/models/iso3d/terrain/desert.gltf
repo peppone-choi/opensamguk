@@ -1,0 +1,109 @@
+{
+ "asset": {
+  "version": "2.0",
+  "generator": "opensamguk tools/assets/build_iso3d_assets.py"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "terrain-desert",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "name": "terrain-desert",
+   "mesh": 0
+  }
+ ],
+ "meshes": [
+  {
+   "name": "terrain-desert",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "COLOR_0": 1
+     },
+     "indices": 2,
+     "material": 0,
+     "mode": 4
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "vertex-color",
+   "pbrMetallicRoughness": {
+    "baseColorFactor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "metallicFactor": 0.0,
+    "roughnessFactor": 0.95
+   },
+   "doubleSided": false
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 16,
+   "type": "VEC3",
+   "min": [
+    -0.5,
+    0.0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.12,
+    0.5
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 16,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5125,
+   "count": 18,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 192,
+   "byteLength": 192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 384,
+   "byteLength": 72,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 456,
+   "uri": "data:application/octet-stream;base64,AAAAvwAAAAAAAAC/AAAAPwAAAAAAAAC/AAAAPwAAAAAAAAA/AAAAvwAAAAAAAAA/hevRvgAAAAB7FC6+uB4FPgAAAAB7FC6+KVwPvo/C9T3NzMw9uB4FPgAAAAB7FC6+uB4FPgAAAACkcL0+KVwPvo/C9T3NzMw9uB4FPgAAAACkcL0+hevRvgAAAACkcL0+KVwPvo/C9T3NzMw9hevRvgAAAACkcL0+hevRvgAAAAB7FC6+KVwPvo/C9T3NzMw97FE4P65HIT+uR+E+7FE4P65HIT+uR+E+7FE4P65HIT+uR+E+7FE4P65HIT+uR+E+7utAP3qlLD/c1wE/7utAP3qlLD/c1wE/7utAP3qlLD/c1wE/7FE4P65HIT+uR+E+7FE4P65HIT+uR+E+7FE4P65HIT+uR+E+VOMlP+kmET+DwMo+VOMlP+kmET+DwMo+VOMlP+kmET+DwMo+vHQTPyUGAT9YObQ+vHQTPyUGAT9YObQ+vHQTPyUGAT9YObQ+AAAAAAIAAAABAAAAAAAAAAMAAAACAAAABAAAAAYAAAAFAAAABwAAAAkAAAAIAAAACgAAAAwAAAALAAAADQAAAA8AAAAOAAAA"
+  }
+ ]
+}

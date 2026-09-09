@@ -1,0 +1,109 @@
+{
+ "asset": {
+  "version": "2.0",
+  "generator": "opensamguk tools/assets/build_iso3d_assets.py"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "name": "terrain-mountain",
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "name": "terrain-mountain",
+   "mesh": 0
+  }
+ ],
+ "meshes": [
+  {
+   "name": "terrain-mountain",
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "COLOR_0": 1
+     },
+     "indices": 2,
+     "material": 0,
+     "mode": 4
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "vertex-color",
+   "pbrMetallicRoughness": {
+    "baseColorFactor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "metallicFactor": 0.0,
+    "roughnessFactor": 0.95
+   },
+   "doubleSided": false
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC3",
+   "min": [
+    -0.5,
+    0.0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.74,
+    0.5
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 28,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5125,
+   "count": 30,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 336,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 336,
+   "byteLength": 336,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 672,
+   "byteLength": 120,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 792,
+   "uri": "data:application/octet-stream;base64,AAAAvwAAAAAAAAC/AAAAPwAAAAAAAAC/AAAAPwAAAAAAAAA/AAAAvwAAAAAAAAA/16PwvgAAAADXo/C+16PwPgAAAADXo/C+AAAAAOxROD8AAAAA16PwPgAAAADXo/C+16PwPgAAAADXo/A+AAAAAOxROD8AAAAA16PwPgAAAADXo/A+16PwvgAAAADXo/A+AAAAAOxROD8AAAAA16PwvgAAAADXo/A+16PwvgAAAADXo/C+AAAAAOxROD8AAAAAuB4FvnE9Cj+4HgW+uB4FPnE9Cj+4HgW+AAAAAKRwPT8AAAAAuB4FPnE9Cj+4HgW+uB4FPnE9Cj+4HgU+AAAAAKRwPT8AAAAAuB4FPnE9Cj+4HgU+uB4FvnE9Cj+4HgU+AAAAAKRwPT8AAAAAuB4FvnE9Cj+4HgU+uB4FvnE9Cj+4HgW+AAAAAKRwPT8AAAAAUriePpqZmT7hepQ+UriePpqZmT7hepQ+UriePpqZmT7hepQ+UriePpqZmT7hepQ+3NcBP0ku/z5rK/Y+3NcBP0ku/z5rK/Y+3NcBP0ku/z5rK/Y+rkfhPvYo3D6F69E+rkfhPvYo3D6F69E+rkfhPvYo3D6F69E+g8DKPt0kxj6R7bw+g8DKPt0kxj6R7bw+g8DKPt0kxj6R7bw+WDm0PsUgsD6e76c+WDm0PsUgsD6e76c+WDm0PsUgsD6e76c+93VgP662Yj8/NV4/93VgP662Yj8/NV4/93VgP662Yj8/NV4/9ihcP1K4Xj+amVk/9ihcP1K4Xj+amVk/9ihcP1K4Xj+amVk/3SRGP7BySD8K10M/3SRGP7BySD8K10M/3SRGP7BySD8K10M/xSAwPw4tMj97FC4/xSAwPw4tMj97FC4/xSAwPw4tMj97FC4/AAAAAAIAAAABAAAAAAAAAAMAAAACAAAABAAAAAYAAAAFAAAABwAAAAkAAAAIAAAACgAAAAwAAAALAAAADQAAAA8AAAAOAAAAEAAAABIAAAARAAAAEwAAABUAAAAUAAAAFgAAABgAAAAXAAAAGQAAABsAAAAaAAAA"
+  }
+ ]
+}

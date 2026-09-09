@@ -2664,3 +2664,9 @@ input:focus, select:focus, textarea:focus {
 .map-title--y1 { color: var(--log-m); }   /* 개시 1년 (구 magenta) */
 .map-title--y2 { color: var(--log-o); }   /* 개시 2년 (구 orange) */
 .map-title--y3 { color: var(--focus); }   /* 개시 3년 (구 yellow) */
+
+/* 지도 배율 단추 — 캔버스 왼쪽 아래. 오른쪽 아래는 범례가 쓰고 있다.
+   휠이 없는 손가락 조작에는 이게 유일한 확대 수단이다. */
+.iso-zoom { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px; }
+.iso-zoom button { min-width: 28px; padding: 3px 7px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); font-size: 12px; line-height: 1.4; cursor: pointer; }
+.iso-zoom button:hover { border-color: var(--bronze); }
