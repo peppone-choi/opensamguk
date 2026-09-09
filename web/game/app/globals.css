@@ -1178,6 +1178,25 @@ input:focus, select:focus, textarea:focus {
   }
   .ingame-board > .ib-records { left: var(--stage-inset); width: 330px; }
   .ingame-board > .ib-reserved { right: var(--stage-inset); width: 360px; }
+  /* 두 레일은 짝이다. 「지난 순」은 내용만큼만 자라서 명령 목록(스테이지 전체 높이) 옆에
+     툴팁 한 장처럼 떠 있었다 — 같은 높이를 쓰게 못박고 안쪽 피드가 남는 높이를 먹는다. */
+  .ingame-board > .ib-records {
+    height: calc(var(--map-stage-height) - var(--stage-inset) * 2);
+    max-height: none;
+    overflow-y: hidden;
+  }
+  .ib-records .main-record-zone { flex: 1; min-height: 0; }
+
+  /* 지도 조작 줄·판독 줄이 레일 밑에 깔려 「보기/세력색」 탭과 안내문 앞부분이 잘렸다.
+     전장 패널과 같은 여백 변수를 써서 레일 사이로 물린다. */
+  .war-room .ib-map .iso-stage__bar,
+  .war-room .ib-map .iso-stage__readout {
+    padding-left: calc(var(--battlefield-left-clearance) + 12px);
+    padding-right: calc(var(--battlefield-right-clearance) + 12px);
+  }
+  /* 캔버스 위에 얹힌 조작 단추들도 레일 밑으로 들어가면 못 누른다 — 같은 여백만큼 물린다. */
+  .war-room .ib-map .iso-zoom { left: var(--battlefield-left-clearance); }
+  .war-room .ib-map .iso-stage__fields { right: var(--battlefield-right-clearance); max-width: calc(100% - var(--battlefield-left-clearance) - var(--battlefield-right-clearance)); }
   /* 레일이 스테이지보다 길면 스스로 스크롤하므로, 주 행동 버튼은 레일 바닥에 붙여 둔다.
      os-panel 의 overflow:hidden 은 그 자체로 스크롤 컨테이너라 sticky 가 레일이 아니라 패널에
      묶인다 — 레일 안에서만 걷어 낸다. */
@@ -1670,8 +1689,12 @@ input:focus, select:focus, textarea:focus {
   border-bottom: 1px solid var(--border-subtle);
   font-size: var(--text-sm);
 }
-.msg-sent { background: #5d1e1a; }
-.msg-recv { background: #5d461a; }
+/* 보낸/받은 구분이 레거시에선 통짜 갈색(#5d1e1a)·올리브(#5d461a) 배경이었다. 두 색 다 팔레트에
+   없어서 메시지 패널만 작전실에서 혼자 튀었다 — 구분은 왼쪽 3px 띠로 옮기고 바탕은 다른 목록과
+   같은 --inset 으로 맞춘다(2026-09-09). */
+.msg-plate { background: var(--inset); padding-left: 12px; box-shadow: inset 3px 0 0 var(--line-2); }
+.msg-sent { box-shadow: inset 3px 0 0 var(--bronze); }
+.msg-recv { box-shadow: inset 3px 0 0 var(--info); }
 .msg-plate-head { font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
 .msg-plate-time { font-weight: 400; color: var(--text-muted); font-size: var(--text-xs); }
 .msg-plate-body { color: var(--text-primary); word-break: break-word; }
@@ -1863,6 +1886,36 @@ input:focus, select:focus, textarea:focus {
 
 .ib-map { padding: 0; }
 .ib-map .map-viewer { border: 0; }
+/* 지도 패널 머리도 다른 넷(지난 순·명령 목록·도시·메시지)과 같은 섹션 머리로 세운다 —
+   혼자 검정 바탕에 가운데 정렬 20px 띠라 지도만 다른 화면에서 온 것처럼 보였다. */
+.war-room .ib-map .map-viewer { background: var(--panel); color: var(--text); }
+.war-room .ib-map .map-viewer-title {
+  justify-content: flex-start;
+  gap: 10px;
+  height: auto;
+  min-height: 36px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--raised), var(--panel));
+  font-family: var(--font-serif);
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+.war-room .ib-map .map-viewer-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  flex: none;
+  background: var(--bronze);
+}
+/* 넓은 화면에서만 좌우 레일이 지도 위에 뜬다 — 지도 머리도 그만큼 물려 준다.
+   (위 padding 을 덮어야 하므로 규칙 순서상 반드시 여기, 머리 모양 뒤에 온다.) */
+@media (min-width: 1232px) {
+  .war-room .ib-map .map-viewer-title {
+    padding-right: calc(var(--battlefield-right-clearance) + 12px);
+    padding-left: calc(var(--battlefield-left-clearance) + 12px);
+  }
+}
 
 .ib-subject-panel {
   display: grid;
@@ -1921,6 +1974,9 @@ input:focus, select:focus, textarea:focus {
   align-content: start;
 }
 .war-card__gauges .os-gauge { gap: 2px; font-size: 11px; }
+/* 옆 열(국가 카드 + 접속/방침)이 더 길면 도시 카드가 늘어나는데, align-content:start 라
+   게이지 8개가 위로 몰리고 관직 줄까지 60px 가 텅 비었다 — 남는 높이를 게이지 줄에 나눈다. */
+.war-card--city .war-card__gauges { align-content: space-between; }
 .war-card__gauges .os-gauge__bar { height: 5px; }
 .war-card__gauge--textonly { align-self: start; }
 .war-card__officers { display: flex; border-top: 1px solid var(--line); font-size: 11px; }

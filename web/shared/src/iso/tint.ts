@@ -88,6 +88,16 @@ export function indexTint(index: number): Rgb {
   return hslToRgb(h, SATURATION, (LIGHT_MIN + LIGHT_MAX) / 2);
 }
 
+/**
+ * 정규화한 세력색 → css. 지도·카드·깃발이 **같은 함수**를 거쳐야 같은 국가가 같은 색으로 읽힌다.
+ * 카드 헤더가 DB 원색(#0000ff)을 그대로 칠하는 바람에 같은 세력이 지도에선 흐린 청회색,
+ * 카드에선 형광 파랑으로 보였다(2026-09-09 「카드랑 컴포넌트가 따로 논다」).
+ */
+export function rgbCss({ r, g, b }: Rgb): string {
+  const to = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255);
+  return `rgb(${to(r)} ${to(g)} ${to(b)})`;
+}
+
 /** 곱하기 합성 세기. 1 이면 정규화색 그대로, 0 이면 지형만 남는다. */
 export function mixToward(color: Rgb, strength: number): Rgb {
   const k = Math.max(0, Math.min(1, strength));

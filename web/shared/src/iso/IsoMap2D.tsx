@@ -35,7 +35,7 @@ import {
   drawCityRing,
   markerScale,
 } from './marker';
-import { indexTint, normaliseNationColor, type Rgb, type TintMode } from './tint';
+import { indexTint, normaliseNationColor, rgbCss, type TintMode } from './tint';
 import type { IsoBattlefieldMarker, PlacedCity } from './placeGameCities';
 
 const SPRITE_BASE = '/sprites/iso2d';
@@ -134,11 +134,6 @@ function dimmed(image: HTMLImageElement): HTMLCanvasElement | HTMLImageElement {
   context.fillRect(0, 0, canvas.width, canvas.height);
   dimCache.set(image, canvas);
   return canvas;
-}
-
-function rgbCss({ r, g, b }: Rgb): string {
-  const to = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255);
-  return `rgb(${to(r)} ${to(g)} ${to(b)})`;
 }
 
 export function IsoMap2D({
