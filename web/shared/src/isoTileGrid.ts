@@ -96,6 +96,93 @@ export function downsampleTerrain(
   return { cols, rows, code };
 }
 
+export interface SeatCells {
+  /** 원본 셀 col. -1 은 좌표를 못 얻은 縣이다. */
+  col: Int32Array;
+  row: Int32Array;
+}
+
+/**
+* 城 이 선 타일이 통째로 물이 된 것을 그 타일의 **육지 다수결**로 되돌린다.
+* 제자리에서 code 를 고치고, 되돌린 타일 수와 손대지 못한 수를 돌려준다.
+*
+* 왜 필요한가. downsampleTerrain 은 강을 한 셀만 걸려도 강으로 친다(위 주석 참조).
+* 그런데 漢 治所는 강가에 앉힌다 — 우연이 아니라 필연으로 겹친다. 실측(196년 판):
+* 縣 治所 961 곳 중 **100 곳(10.4%)이 물 타일 위**에 섰고(강 87·호수 10·바다 3),
+* 그 중 72 곳은 城 이 선 셀 자체가 뭍이다. 열여섯 셀 중 열둘이 뭍인데 타일이 통째로
+* 강이 되어, 건업현(建業)·합비현·파양현 같은 城 이 물 위에 떠 보였다.
+* 郡國 밖 세력 37 중에도 5 곳(주호·대마국·일대국·말로국·유구)이 그랬다 — 이쪽은
+* 진짜 섬인데 4×4 다수결에서 섬이 통째로 지워진 것이다.
+*
+* 그래서 「城 이 서는 칸은 뭍이다」를 규칙으로 둔다. 물줄기는 城 자리에서 한 칸 끊기는데,
+* 강안 도시가 실제로 그렇게 보인다. 바뀌는 것은 32,064 타일 중 100 장 남짓이다.
+*
+* 열여섯 셀이 전부 물이면 손대지 않는다. 그건 다운샘플 탓이 아니라 城 좌표 자체가
+* 물에 있다는 뜻이고, 여기서 뭍으로 만들면 데이터의 결함을 화면이 덮어 버린다.
+*
+* 부르는 자리가 중요하다. downsampleTerrain·fillSeaEnclosedGaps **뒤**, flat/level
+* **앞**이다. 그래야 되돌린 타일이 물 평탄화에서 빠지고, 코너 격자는 그 뒤에
+* relaxCornerLattice 를 거치므로 1-립시츠 계약은 그대로 지켜진다.
+*/
+export function landUnderSeats(
+  code: Uint8Array,
+  cols: number,
+  rows: number,
+  sourceRows: readonly string[],
+  seats: SeatCells,
+  group: number = RASTER_GROUP,
+): { restored: number; allWater: number } {
+  const count = new Int32Array(10);
+  let restored = 0;
+  let allWater = 0;
+  for (let n = 0; n < seats.col.length; n += 1) {
+    const sc = seats.col[n];
+    const sr = seats.row[n];
+    if (sc < 0 || sr < 0) continue;
+    const [c, r] = sourceCellToTile(sc, sr, group);
+    if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+    const i = r * cols + c;
+    if (!isWater(code[i])) continue;
+    count.fill(0);
+    for (let dr = 0; dr < group; dr += 1) {
+      const line = sourceRows[r * group + dr];
+      if (line === undefined) continue;
+      for (let dc = 0; dc < group; dc += 1) {
+        const v = line.charCodeAt(c * group + dc) - 48;
+        if (v >= 0 && v < 10) count[v] += 1;
+      }
+    }
+    const land = pickLand(count);
+    if (land === TERRAIN.OUT_OF_SCOPE) {
+      allWater += 1;
+      continue;
+    }
+    code[i] = land;
+    restored += 1;
+  }
+  return { restored, allWater };
+}
+
+/** 물과 지도밖을 빼고 고르는 다수결. 동률은 TIE_ORDER 를 따른다. */
+function pickLand(count: Int32Array): number {
+  if (count[TERRAIN.HILL] >= 2) return TERRAIN.HILL;
+  let best: number = TERRAIN.OUT_OF_SCOPE;
+  let bestCount = 0;
+  let bestRank = TIE_ORDER.length;
+  for (let i = 0; i < TIE_ORDER.length; i += 1) {
+    const t = TIE_ORDER[i];
+    if (isWater(t) || t === TERRAIN.OUT_OF_SCOPE) continue;
+    const n = count[t];
+    if (n === 0) continue;
+    if (n > bestCount || (n === bestCount && i < bestRank)) {
+      best = t;
+      bestCount = n;
+      bestRank = i;
+    }
+  }
+  return best;
+}
+
 function pickTile(count: Int32Array): number {
   if (count[TERRAIN.RIVER] >= 1) return TERRAIN.RIVER;
   if (count[TERRAIN.LAKE] >= 2) return TERRAIN.LAKE;
@@ -391,11 +478,15 @@ export function buildIsoTileGrid(
   demCols: number,
   demRows: number,
   group: number = RASTER_GROUP,
+  /** 縣 治所의 원본 셀. 주면 그 칸이 물로 칠해진 것을 뭍으로 되돌린다. */
+  seats?: SeatCells,
 ): IsoTileGrid {
   const terrain = downsampleTerrain(sourceRows, group);
   // 바다에 뚫린 구멍부터 메운다. 이걸 먼저 해야 표고 유추가 바다 한가운데
   // 가짜 섬을 만들지 않는다(레벨 1 이면 평지가 돼 버린다).
   fillSeaEnclosedGaps(terrain.code, terrain.cols, terrain.rows);
+  // 城 이 선 칸은 뭍이다. 구멍 메우기 뒤라야 방금 메운 바다를 다시 뚫지 않는다.
+  if (seats) landUnderSeats(terrain.code, terrain.cols, terrain.rows, sourceRows, seats, group);
   // 지도 안팎은 지형을 채우기 **전에** 기록해 둔다. 채우고 나면 구분할 방법이 없다.
   const playable = new Uint8Array(terrain.code.length);
   for (let i = 0; i < playable.length; i += 1) {

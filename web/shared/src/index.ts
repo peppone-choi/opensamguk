@@ -164,6 +164,8 @@ export {
   buildCornerLattice,
   buildTileHeights,
   buildIsoTileGrid,
+  landUnderSeats,
+  type SeatCells,
   tileToScreen,
   tileToWorld,
   expandRunLength,

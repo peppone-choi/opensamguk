@@ -5,6 +5,7 @@ import {
   TERRAIN,
   buildCornerLattice,
   buildIsoTileGrid,
+  landUnderSeats,
   buildTileHeights,
   downsampleTerrain,
   fillSeaEnclosedGaps,
@@ -143,6 +144,103 @@ describe('buildIsoTileGrid — 지도 밖 채우기', () => {
   it('지도 밖도 DEM 높이를 그대로 받는다 — 0 으로 눌리지 않는다', () => {
     const grid = buildIsoTileGrid(source(), dem(5), 2, 2, 4);
     expect(grid.level[1]).toBe(5);
+  });
+});
+
+describe('landUnderSeats — 城 이 선 칸은 뭍이다', () => {
+  const P = String(TERRAIN.PLAIN);
+  const R = String(TERRAIN.RIVER);
+  const S = String(TERRAIN.SEA);
+  const M = String(TERRAIN.MOUNTAIN);
+
+  /** 4×4 셀 한 타일. 행 넷을 문자열로 준다. */
+  function tile(rows: string[]): { code: Uint8Array; source: string[] } {
+    const code = new Uint8Array(1);
+    code[0] = TERRAIN.SEA; // 부르는 쪽이 덮어쓴다
+    return { code, source: rows };
+  }
+
+  function seats(col: number, row: number) {
+    return { col: Int32Array.from([col]), row: Int32Array.from([row]) };
+  }
+
+  it('열여섯 중 하나만 강이어서 강이 된 칸을 평지로 되돌린다', () => {
+    // downsampleTerrain 의 「강은 한 셀만 걸려도 강」 규칙이 만든 자리 그대로다.
+    const { code, source } = tile([
+      P + P + P + P,
+      P + R + P + P,
+      P + P + P + P,
+      P + P + P + P,
+    ]);
+    code[0] = TERRAIN.RIVER;
+    // 城 은 (0,0) 셀 — 뭍이다.
+    expect(landUnderSeats(code, 1, 1, source, seats(0, 0), 4))
+      .toEqual({ restored: 1, allWater: 0 });
+    expect(code[0]).toBe(TERRAIN.PLAIN);
+  });
+
+  it('뭍 다수결을 따른다 — 평지가 아니라 산이 많으면 산이다', () => {
+    const { code, source } = tile([
+      M + M + M + M,
+      M + R + M + P,
+      M + M + M + P,
+      M + M + P + P,
+    ]);
+    code[0] = TERRAIN.RIVER;
+    landUnderSeats(code, 1, 1, source, seats(1, 1), 4);
+    expect(code[0]).toBe(TERRAIN.MOUNTAIN);
+  });
+
+  it('열여섯 셀이 전부 물이면 손대지 않는다 — 좌표 결함을 화면이 덮지 않는다', () => {
+    const { code, source } = tile([
+      S + S + S + S,
+      S + S + S + S,
+      S + S + S + S,
+      S + S + S + S,
+    ]);
+    code[0] = TERRAIN.SEA;
+    expect(landUnderSeats(code, 1, 1, source, seats(2, 2), 4))
+      .toEqual({ restored: 0, allWater: 1 });
+    expect(code[0]).toBe(TERRAIN.SEA);
+  });
+
+  it('물이 아닌 칸은 건드리지 않는다', () => {
+    const { code, source } = tile([
+      M + M + M + M,
+      M + M + M + M,
+      M + M + M + M,
+      M + M + M + M,
+    ]);
+    code[0] = TERRAIN.MOUNTAIN;
+    expect(landUnderSeats(code, 1, 1, source, seats(0, 0), 4))
+      .toEqual({ restored: 0, allWater: 0 });
+    expect(code[0]).toBe(TERRAIN.MOUNTAIN);
+  });
+
+  it('좌표를 못 얻은 縣(-1)은 건너뛴다', () => {
+    const { code, source } = tile([
+      P + P + P + P,
+      P + R + P + P,
+      P + P + P + P,
+      P + P + P + P,
+    ]);
+    code[0] = TERRAIN.RIVER;
+    expect(landUnderSeats(code, 1, 1, source, seats(-1, -1), 4))
+      .toEqual({ restored: 0, allWater: 0 });
+    expect(code[0]).toBe(TERRAIN.RIVER);
+  });
+
+  it('되돌린 칸은 물 평탄화에서 빠져 DEM 높이를 받는다', () => {
+    // 8×8 원본, 왼쪽 위 타일에 강 한 셀. 城 은 그 타일 (0,0).
+    const rows = Array.from({ length: 8 }, () => P.repeat(8));
+    rows[1] = P + R + P.repeat(6);
+    const rgba = new Uint8Array(4 * 4);
+    for (let i = 0; i < 4; i += 1) rgba[i * 4] = 3;
+    const wet = buildIsoTileGrid(rows, rgba, 2, 2, 4);
+    expect(wet.code[0]).toBe(TERRAIN.RIVER);
+    const dry = buildIsoTileGrid(rows, rgba, 2, 2, 4, seats(0, 0));
+    expect(dry.code[0]).toBe(TERRAIN.PLAIN);
+    expect(dry.level[0]).toBe(3);
   });
 });
 
