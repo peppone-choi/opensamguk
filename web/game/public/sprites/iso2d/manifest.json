@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "artifactId": "iso2d-assets-v1",
   "sourceRepository": "opensamguk-images",
-  "sourceTag": "v2026.09.08-iso2d-v1",
+  "sourceTag": "v2026.09.10-iso2d-v2",
   "authorship": "AI image generation over deterministic geometry guides; chroma removal, extraction, curation and pixel-art conversion",
   "pixelArt": {
     "scale": 2,
@@ -11,7 +11,8 @@
     "dither": "none",
     "alpha": "hard for objects; terrain and skirt alpha preserved exactly so the tiling contract still holds",
     "tool": "tools/assets/pixelize_iso2d.py",
-    "palette": "originals/iso2d/pixel/palette.json"
+    "palette": "originals/iso2d/pixel/palette.json",
+    "paletteCut": "median cut over the v1 corpus, then pinned (pixelize_iso2d.py --palette). Re-cutting after any edit re-quantises all 115 PNGs, so approved assets stay byte-stable and only edited files move."
   },
   "paletteReference": {
     "repository": "opensamguk",
@@ -316,7 +317,8 @@
     "AI painted lighting approximates the geometry guide; textures are static and direction-specific.",
     "Object colors follow the muted palette family but are darker and more textured than unlit iso3d vertex colors.",
     "Visual QA and curation selection performed by the agent; no claim of human approval.",
-    "Unit and prop sprites still come from the old sheet extraction and hang below their tile diamond (gate 48px, wall 18, siege 17.5, archer 17, mountain-rock 15.5, infantry 12, cavalry 11.5, mountain-snow 10, tower 4.5). Only the 11 building tiers are authored against a geometry guide and gated on no-spill."
+    "Unit and prop sprites are extracted from AI sheets, not authored against a geometry guide like the 11 building tiers; they are seated on the tile diamond by prepare_iso2d_objects.seat_on_tile and gated on no-spill together with the tiers.",
+    "No renderer consumes the 6 unit and 3 prop sprites yet - they ship, they are gated, and nothing draws them."
   ],
   "files": [
     {
@@ -2375,7 +2377,7 @@
         128,
         240
       ],
-      "sha256": "0c8dcd04c3cab6c10fe4dff44c4c8206ec3b6756d482c76cb1367bf37e1f17c3",
+      "sha256": "b2b59a9bafad86e6aa3fcfffaf7b96b062f074434c2ecc1f25984500d6d95918",
       "curatedSource": "originals/iso2d/curation/objects/curated/archer.png",
       "pixelSource": "originals/iso2d/pixel/objects/archer.png"
     },
@@ -2403,7 +2405,7 @@
         128,
         240
       ],
-      "sha256": "96ed1239279df5b8c19a25fc225697d72201e7034c237a0380e88e87fd5a03f1",
+      "sha256": "dd8b88ab3652f7c2b9102782d6fc2819435643764b56350d454c57522c59a64a",
       "curatedSource": "originals/iso2d/curation/objects/curated/cavalry.png",
       "pixelSource": "originals/iso2d/pixel/objects/cavalry.png"
     },
@@ -2515,7 +2517,7 @@
         128,
         240
       ],
-      "sha256": "478c429c4984f473eba55dce20e51018cc179b73c0b4f5df5d64e2372468137c",
+      "sha256": "37ec4126cfd7bdfcaf39a89db684aee466e6189100224603587dc2db873e0371",
       "curatedSource": "originals/iso2d/curation/objects/curated/gate.png",
       "pixelSource": "originals/iso2d/pixel/objects/gate.png"
     },
@@ -2529,7 +2531,7 @@
         128,
         240
       ],
-      "sha256": "e536a8f6c1fa7c02bde90d0e9fe913c7986111d60d81a8050eb27f53f131d56b",
+      "sha256": "56749fc7b24a6dd60799f8e83cfd15496845a6eada68d25059745a1dc697d141",
       "curatedSource": "originals/iso2d/curation/objects/curated/infantry.png",
       "pixelSource": "originals/iso2d/pixel/objects/infantry.png"
     },
@@ -2543,7 +2545,7 @@
         128,
         240
       ],
-      "sha256": "f3dc85b705e87851de3fa0aa6f0dab566768f54ffc1614aa08d645d447267e0c",
+      "sha256": "c20f3142e0a5e2bb32b77ae55eba69cece43960edf2e9b85592e5c1a6f22a27e",
       "curatedSource": "originals/iso2d/curation/objects/curated/mountain-rock.png",
       "pixelSource": "originals/iso2d/pixel/objects/mountain-rock.png"
     },
@@ -2557,7 +2559,7 @@
         128,
         240
       ],
-      "sha256": "ec5a9a8889f20006915dfde5081a830a819318de254eee72a202742cb5353d08",
+      "sha256": "1a9bebaf4fcd2b620021e7747dabea1d776769d2d31dbb4d2fb07986776589bc",
       "curatedSource": "originals/iso2d/curation/objects/curated/mountain-snow.png",
       "pixelSource": "originals/iso2d/pixel/objects/mountain-snow.png"
     },
@@ -2585,7 +2587,7 @@
         128,
         240
       ],
-      "sha256": "d772f004aec69079f9d7c47f8c0f3243d273fd538f9863757ebd7555eeed22b9",
+      "sha256": "7f8b3155061fc90a49034849b82c97973ca3aaaaf3bb1e14e63e6aec588831d6",
       "curatedSource": "originals/iso2d/curation/objects/curated/siege.png",
       "pixelSource": "originals/iso2d/pixel/objects/siege.png"
     },
@@ -2599,7 +2601,7 @@
         128,
         240
       ],
-      "sha256": "8ae728b4433da3f1b9805beffb21a7ed681853ea5db8c18899ec88ba57e292aa",
+      "sha256": "b2b52f71ab547db50bd4ac9046325ac9f4e970926727fa2f21ccc0e805db4d37",
       "curatedSource": "originals/iso2d/curation/objects/curated/tower.png",
       "pixelSource": "originals/iso2d/pixel/objects/tower.png"
     },
@@ -2627,7 +2629,7 @@
         128,
         240
       ],
-      "sha256": "abdf5646460434d71f865b04bb5bc4126f6aa85c67d9558860b27022304fa634",
+      "sha256": "c943754d3f017925f6dc0b6bd2b631b93035c006a1a950a802661bcaa66bc24d",
       "curatedSource": "originals/iso2d/curation/objects/curated/wall.png",
       "pixelSource": "originals/iso2d/pixel/objects/wall.png"
     },
