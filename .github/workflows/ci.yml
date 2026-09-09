@@ -55,6 +55,12 @@ jobs:
         run: |
           python3 tools/map/build_han_water_topology.py --check
           python3 tools/map/audit_han_water_topology.py --check
+      # iso3d 애셋 빌더는 결정론적이라 --check 가 곧 드리프트 게이트다. 그런데 배선된 적이
+      # 없어 여태 한 번도 돌지 않았다 — 손으로 고친 glTF 나 web/gateway 한쪽만 갱신된 상태를
+      # 아무도 잡지 못했다는 뜻이다. 두 벌 미러와 城 11단의 타일 반폭(0.5) 검사가 여기 걸린다.
+      - name: Verify iso3d asset drift (both frontends)
+        if: '!cancelled()'
+        run: python3 tools/assets/build_iso3d_assets.py --check
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'

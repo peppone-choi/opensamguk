@@ -46,18 +46,28 @@ import {
 const MODEL_BASE = '/models/iso3d';
 
 /**
- * 城 등급 → 건물 애셋. iso3d 는 아직 glTF 네 종뿐이라 2D 처럼 11단으로 못 간다.
- * 다만 구간은 바로잡는다 — 예전 표는 `capital` 에 9..11 을 줘서 한나라 세계 774개 성 중
- * 604개(78%)를 도성으로 그렸다. 9 京·10 영현·11 장현은 크기 순이 아니라 나중에 덧붙인
- * 값이고 10·11 은 縣, 즉 가장 작은 단위다. 1 수(水)·2 진(鎭)·3 관(關)도 크기가 아니라
- * 성격이 다른 거점이지만 대응 모델이 없어 가장 작은 `hamlet` 으로 떨어뜨린다.
- * 11단 glTF 는 후속 작업이다 — 정본 대응표는 sprites/iso2d/manifest.json 의 cityLevelTiers.
+ * 城 등급 → 건물 모델. **1:1, 11 단이다.** 정본 대응표는 두 곳에 같은 내용으로 있고
+ * (`models/iso3d/manifest.json` 의 `cityLevelTiers`, `sprites/iso2d/manifest.json` 의 같은 키)
+ * 이 표는 그 사본이다.
+ *
+ * 예전 표는 등급 숫자를 크기 순서로 읽었다. 그게 틀렸다 — 9 京·10 영현·11 장현은 한나라
+ * 세계용으로 뒤에 덧붙인 값이고 10·11 은 縣, 즉 가장 작은 단위다. `capital` 에 9..11 을
+ * 주는 바람에 774 성 중 604 개(78%)가 도성으로 그려졌다. 1 수(水)·2 진(鎭)·3 관(關)·
+ * 4 이(夷)는 크기가 아니라 종류다 — 水寨·營寨·關城·이민족 야영이고, 엔진도 그렇게 본다
+ * (`WarUnitCity.kt:50-51` 이 1·3 등급에만 훈련 보너스를 준다).
  */
 const BUILDING_TIERS: { name: string; from: number; to: number }[] = [
-  { name: 'hamlet', from: 1, to: 4 },
-  { name: 'county', from: 10, to: 11 },
-  { name: 'commandery', from: 5, to: 8 },
+  { name: 'water', from: 1, to: 1 },
+  { name: 'garrison', from: 2, to: 2 },
+  { name: 'pass', from: 3, to: 3 },
+  { name: 'tribal', from: 4, to: 4 },
+  { name: 'commandery', from: 5, to: 5 },
+  { name: 'commandery-mid', from: 6, to: 6 },
+  { name: 'commandery-major', from: 7, to: 7 },
+  { name: 'commandery-grand', from: 8, to: 8 },
   { name: 'capital', from: 9, to: 9 },
+  { name: 'county', from: 10, to: 10 },
+  { name: 'county-small', from: 11, to: 11 },
 ];
 
 export type { TintMode };
