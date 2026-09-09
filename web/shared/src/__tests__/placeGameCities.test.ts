@@ -138,3 +138,51 @@ describe('세력 표시 중립성', () => {
     expect(placed.nationColor).toBeUndefined();
   });
 });
+
+describe('fitFootprintsInTile', () => {
+  /** 마름모 노름. 아이소 칸은 이 값이 1 을 넘으면 칸 밖이다. */
+  const norm = (c: number, r: number) => Math.abs(c) + Math.abs(r);
+
+  it('혼자면 칸 한가운데에 세운다 — 원본 셀이 칸 모서리여도', () => {
+    // 縣 0 은 원본 셀 (5,1), 타일 (1,0) 의 오른아래 구석이다.
+    const [placed] = placeGameCities([city({ provinceId: 0 })], data, options);
+    expect(placed.drawCol).toBeCloseTo(1);
+    expect(placed.drawRow).toBeCloseTo(0);
+    expect(placed.drawScale).toBe(1);
+  });
+
+  it('같은 칸에 둘이면 발자국을 반으로 줄이고 칸 안에서 벌린다', () => {
+    const seatCell = {
+      // 둘 다 타일 (1,0) 안이지만 원본 셀은 다르다 — 같은 자리에 겹치면 못 누른다.
+      col: Int32Array.from([4, 7]),
+      row: Int32Array.from([0, 3]),
+    };
+    const both = placeGameCities(
+      [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
+      { ...data, provinceSeatCell: seatCell },
+      options,
+    );
+    expect(both).toHaveLength(2);
+    for (const placed of both) {
+      expect(placed.tileCol).toBe(1);
+      expect(placed.tileRow).toBe(0);
+      expect(placed.drawScale).toBeCloseTo(0.5);
+      // 밑면(=drawScale 타일)이 칸을 넘지 않는다: |dc|+|dr| + scale <= 1.
+      const off = norm(placed.drawCol - placed.tileCol, placed.drawRow - placed.tileRow);
+      expect(off + placed.drawScale).toBeLessThanOrEqual(1 + 1e-9);
+    }
+    // 서로 떨어져 있어야 각각 집힌다.
+    expect(norm(both[0].drawCol - both[1].drawCol, both[0].drawRow - both[1].drawRow))
+      .toBeGreaterThan(0.5);
+  });
+
+  it('좌표까지 같으면 마름모 둘레로 돌려세운다 — 겹쳐 두면 뒤엣것을 못 누른다', () => {
+    const seatCell = { col: Int32Array.from([5, 5]), row: Int32Array.from([1, 1]) };
+    const both = placeGameCities(
+      [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
+      { ...data, provinceSeatCell: seatCell },
+      options,
+    );
+    expect(both[0].drawCol).not.toBeCloseTo(both[1].drawCol);
+  });
+});

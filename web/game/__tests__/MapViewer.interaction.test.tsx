@@ -58,6 +58,7 @@ vi.mock('@/components/iso/IsoWorldMap', () => ({
     const placed: PlacedCity | null = city ? {
       id: city.id, name: city.name, level: city.level, nationId: city.nationId,
       col: 1.25, row: 0.25, tileCol: 1, tileRow: 0,
+      drawCol: 1, drawRow: 0, drawScale: 1,
       seat: false, isCapital: city.isCapital === true, exact: true,
     } : null;
     return (

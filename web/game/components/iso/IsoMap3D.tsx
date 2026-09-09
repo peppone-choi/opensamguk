@@ -463,6 +463,8 @@ export function IsoMap3D({
       //
       // 자리는 **소수** 타일 좌표다. 정수로 내리면 37 곳이 다른 도시와 같은 타일에 겹쳐
       // 통째로 가려지고, 그러면 눌러서 들어갈 수 없다(placeGameCities 주석 참조).
+      // 다만 원좌표(col/row)가 아니라 drawCol/drawRow 를 쓴다 — 밑면이 제 칸을 벗어나지
+      // 않도록 눌러 둔 값이고, 같은 칸에 여럿이면 drawScale 로 함께 줄어든다.
       const countyMeshes: THREE.InstancedMesh[] = [];
       const cityMeshes: { mesh: THREE.InstancedMesh; cities: PlacedCity[] }[] = [];
       // 전장은 3D 물체가 아니라 겹판 위 화면 좌표다. drawLabels 가 채우고 집기가 읽는다.
@@ -487,9 +489,9 @@ export function IsoMap3D({
           for (let n = 0; n < placed.length; n += 1) {
             const city = placed[n];
             const i = city.tileRow * cols + city.tileCol;
-            dummy.position.set(city.col - halfCols, y(baseHeight[i]), city.row - halfRows);
+            dummy.position.set(city.drawCol - halfCols, y(baseHeight[i]), city.drawRow - halfRows);
             dummy.rotation.set(0, 0, 0);
-            dummy.scale.set(1, 1, 1);
+            dummy.scale.set(city.drawScale, city.drawScale, city.drawScale);
             dummy.updateMatrix();
             mesh.setMatrixAt(n, dummy.matrix);
           }
@@ -613,7 +615,8 @@ export function IsoMap3D({
         for (const city of cities) {
           if (seatOnly && !city.seat) continue;
           const i = city.tileRow * cols + city.tileCol;
-          projected.set(city.col - halfCols, y(baseHeight[i]), city.row - halfRows);
+          // 깃발·이름표는 건물이 실제로 선 자리에 붙는다.
+          projected.set(city.drawCol - halfCols, y(baseHeight[i]), city.drawRow - halfRows);
           projected.project(camera);
           if (projected.z > 1) continue;
           const sx = (projected.x * 0.5 + 0.5) * w;

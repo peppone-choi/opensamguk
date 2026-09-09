@@ -47,6 +47,9 @@ export interface GameCityInput {
  * 37 곳이 다른 도시와 같은 타일(4×4 원본 셀)에 묶여 뒤에 오는 쪽이 통째로 가려진다.
  * 그러면 그 37 곳은 눌러서 들어갈 수 없다. 원본 셀 해상도를 그대로 들고 다니면
  * 확대했을 때 서로 떨어져 각각 집힌다. 높이를 볼 때만 tile 로 내린다.
+ *
+ * 다만 **그릴 때는** col/row 를 쓰지 않는다. drawCol/drawRow/drawScale 을 쓴다 —
+ * 아래 fitFootprintsInTile 주석 참조.
  */
 export interface PlacedCity {
   id: number;
@@ -59,6 +62,11 @@ export interface PlacedCity {
   /** 높이·소유를 읽을 정수 타일. */
   tileCol: number;
   tileRow: number;
+  /** 건물을 세울 자리. 발자국이 제 칸 안에 들도록 눌러 둔 소수 타일 좌표. */
+  drawCol: number;
+  drawRow: number;
+  /** 발자국 배율(타일 폭 = 1). 같은 칸에 여럿이 들면 함께 줄어든다. */
+  drawScale: number;
   /** 郡治 여부. 축소 상태에서 이것만 남긴다. */
   seat: boolean;
   isCapital: boolean;
@@ -140,6 +148,11 @@ export function placeGameCities(
       row,
       tileCol,
       tileRow,
+      // 그리기 자리는 아래에서 칸에 맞춘다. 여기서는 자리를 비워 두지 않는다 —
+      // 한 번도 안 맞춘 도시가 (0,0) 에 서는 사고를 막으려고 제자리로 채워 둔다.
+      drawCol: col,
+      drawRow: row,
+      drawScale: 1,
       seat: city.isCommanderySeat === true,
       isCapital: city.isCapital === true,
       nationColor: nation?.color,
@@ -148,7 +161,77 @@ export function placeGameCities(
     });
   }
 
+  fitFootprintsInTile(placed);
   return placed;
+}
+
+/**
+ * 건물 발자국을 제 칸 안에 앉힌다.
+ *
+ * 두 가지가 겹쳐 있었다.
+ *
+ *  1) **규약 어긋남.** 렌더러는 정수 (col,row) 를 다이아몬드 **중심**으로 쓴다
+ *     (tileToScreen · IsoMap2D 의 세력색 채우기가 x±HALF_W, y±HALF_H 로 칠한다).
+ *     그런데 여기서는 원본 셀을 `cell.col / RASTER_GROUP` 으로만 나눠 넘겼다. 그러면
+ *     한 타일에 든 4×4 셀이 중심 기준 0 … +0.75 로 **한쪽으로만** 쏠린다.
+ *  2) **발자국 크기.** 건물 스프라이트·모델의 밑면은 타일 하나 크기다. 중심이 조금만
+ *     밀려도 성벽이 옆 칸을 밟는다.
+ *
+ * 실측(han-world-v3, 縣 998 곳): 제자리는 61 곳뿐이고 620 곳(62.1%)은 건물 중심이 아예
+ * 제 칸 밖이었다. 세로로 최대 96px(1배율) 밀린다 — 「아이콘이 격자에서 삐져나온다 ·
+ * 삐뚤빼뚤하잖아」(2026-09-09).
+ *
+ * 그렇다고 소수부를 버리면 안 된다. 같은 칸에 두 城 이 든 자리가 실측 54 칸 있는데
+ * 겹쳐 세우면 뒤엣것을 못 누른다. 그래서 **칸 안에서만** 벌린다 — 혼자면 칸 한가운데,
+ * n 곳이면 발자국을 1/n 로 줄이고 남는 1-1/n 을 서로 벌리는 데 쓴다. 벌리는 방향은
+ * 실제 좌표의 상대 배치를 지키므로 어느 쪽이 동북인지도 그대로 남는다.
+ */
+export function fitFootprintsInTile(placed: PlacedCity[]): void {
+  const groups = new Map<string, PlacedCity[]>();
+  for (const city of placed) {
+    const key = `${city.tileCol},${city.tileRow}`;
+    const group = groups.get(key);
+    if (group) group.push(city);
+    else groups.set(key, [city]);
+  }
+
+  for (const group of groups.values()) {
+    const n = group.length;
+    const scale = 1 / n;
+    // 발자국이 1/n 이면 칸 안에서 중심이 움직일 수 있는 한계는 마름모 노름 1-1/n 이다.
+    const budget = 1 - scale;
+
+    // 칸 중심에서 벗어난 양. 원본 셀 s 의 한가운데는 타일 단위로 (s+0.5)/G 이고,
+    // 타일 t 의 중심은 정수 t 이므로 t 를 빼면 -0.375 … +0.375 로 고르게 퍼진다.
+    const offsets = group.map((city) => [
+      city.col + 0.5 / RASTER_GROUP - city.tileCol,
+      city.row + 0.5 / RASTER_GROUP - city.tileRow,
+    ] as [number, number]);
+    const midCol = offsets.reduce((sum, o) => sum + o[0], 0) / n;
+    const midRow = offsets.reduce((sum, o) => sum + o[1], 0) / n;
+    let peak = 0;
+    for (const offset of offsets) {
+      offset[0] -= midCol;
+      offset[1] -= midRow;
+      peak = Math.max(peak, Math.abs(offset[0]) + Math.abs(offset[1]));
+    }
+    // 좌표까지 똑같으면 벌릴 방향이 없다 — 마름모 둘레로 돌려세운다. 겹쳐 두면 못 누른다.
+    if (n > 1 && peak < 1e-6) {
+      for (let i = 0; i < n; i += 1) {
+        const angle = (Math.PI * 2 * i) / n;
+        offsets[i][0] = Math.cos(angle);
+        offsets[i][1] = Math.sin(angle);
+        peak = Math.max(peak, Math.abs(offsets[i][0]) + Math.abs(offsets[i][1]));
+      }
+    }
+
+    const k = peak > 0 ? budget / peak : 0;
+    for (let i = 0; i < n; i += 1) {
+      group[i].drawCol = group[i].tileCol + offsets[i][0] * k;
+      group[i].drawRow = group[i].tileRow + offsets[i][1] * k;
+      group[i].drawScale = scale;
+    }
+  }
 }
 
 /**
