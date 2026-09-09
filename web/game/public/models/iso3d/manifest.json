@@ -1,0 +1,71 @@
+{
+ "schemaVersion": 1,
+ "artifactId": "iso3d-assets-v1",
+ "generator": "tools/assets/build_iso3d_assets.py",
+ "note": "저폴리 절차 3D 에셋. 타일은 XZ 평면 1×1, Y 가 위다 — 아이소 다이아몬드는 카메라가 만든다. 지형 타일은 **윗면만** 있고 측면이 없다(같은 높이 인접 타일이 이음매 없이 이어지도록). 흙벽은 terrain/skirt.gltf 한 장이며 렌더러가 높이 단차·물가·맵 가장자리에만 세운다. 정점 색만 쓰고 텍스처가 없으며, 국가색은 런타임이 재질 baseColorFactor 로 곱한다.",
+ "rasterGroup": 4,
+ "tileGrid": {
+  "cols": 192,
+  "rows": 167
+ },
+ "terrain": [
+  "BASIN",
+  "DESERT",
+  "HILL",
+  "LAKE",
+  "MOUNTAIN",
+  "PLAIN",
+  "PLATEAU",
+  "RIVER",
+  "SEA"
+ ],
+ "skirt": "terrain/skirt.gltf",
+ "buildingTiers": {
+  "capital": {
+   "cityLevelFrom": 9,
+   "cityLevelTo": 11
+  },
+  "commandery": {
+   "cityLevelFrom": 7,
+   "cityLevelTo": 8
+  },
+  "county": {
+   "cityLevelFrom": 5,
+   "cityLevelTo": 6
+  },
+  "hamlet": {
+   "cityLevelFrom": 4,
+   "cityLevelTo": 4
+  }
+ },
+ "unitArmTypes": {
+  "0": "wall",
+  "1": "infantry",
+  "2": "archer",
+  "3": "cavalry",
+  "4": "siege",
+  "5": "tower"
+ },
+ "files": [
+  "building/capital.gltf",
+  "building/commandery.gltf",
+  "building/county.gltf",
+  "building/hamlet.gltf",
+  "terrain/basin.gltf",
+  "terrain/desert.gltf",
+  "terrain/hill.gltf",
+  "terrain/lake.gltf",
+  "terrain/mountain.gltf",
+  "terrain/plain.gltf",
+  "terrain/plateau.gltf",
+  "terrain/river.gltf",
+  "terrain/sea.gltf",
+  "terrain/skirt.gltf",
+  "unit/archer.gltf",
+  "unit/cavalry.gltf",
+  "unit/infantry.gltf",
+  "unit/siege.gltf",
+  "unit/tower.gltf",
+  "unit/wall.gltf"
+ ]
+}

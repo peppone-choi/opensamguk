@@ -1,10 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { HanMapCanvas as HanMapCanvasType, PlacedCity } from '@opensamguk/ui';
+import type IsoWorldMapType from '@/components/iso/IsoWorldMap';
 import type { MapPreviewResponse } from '@/lib/types';
 
-const shared = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null }));
+const shared = vi.hoisted(() => ({
+  props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  iso: null as ComponentProps<typeof IsoWorldMapType> | null,
+}));
 
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
@@ -45,6 +49,26 @@ vi.mock('@opensamguk/ui', async () => {
   };
 });
 
+// 아이소가 정본 지도다. 격자·스프라이트 없이 MapViewer 의 계약만 보므로 대역을 세운다.
+// 城 을 집었을 때 어떤 모양이 오는지는 placeGameCities 테스트가 따로 지킨다.
+vi.mock('@/components/iso/IsoWorldMap', () => ({
+  default: (props: ComponentProps<typeof IsoWorldMapType>) => {
+    shared.iso = props;
+    const city = props.cities?.[0];
+    const placed: PlacedCity | null = city ? {
+      id: city.id, name: city.name, level: city.level, nationId: city.nationId,
+      col: 1.25, row: 0.25, tileCol: 1, tileRow: 0,
+      seat: false, isCapital: city.isCapital === true, exact: true,
+    } : null;
+    return (
+      <div data-testid="iso-world-map" data-terrain={props.terrainUrl}>
+        <button type="button" onClick={() => placed && props.onCityActivate?.(placed, { pointerType: 'mouse' })}>activate mouse</button>
+        <button type="button" onClick={() => placed && props.onCityActivate?.(placed, { pointerType: 'touch' })}>activate touch</button>
+      </div>
+    );
+  },
+}));
+
 import MapViewer from '@/components/game/MapViewer';
 
 const MAP: MapPreviewResponse = {
@@ -59,6 +83,7 @@ const MAP: MapPreviewResponse = {
 
 beforeEach(() => {
   shared.props = null;
+  shared.iso = null;
   const values = new Map<string, string>();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => values.get(key) ?? null,
@@ -72,10 +97,24 @@ beforeEach(() => {
   Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
 });
 
-describe('MapViewer shared canvas overlays', () => {
-  it('passes all city visuals and removes legacy DOM assets', () => {
+describe('MapViewer 아이소 지도(정본)', () => {
+  it('城·선택 상태·지형 주소를 아이소 판에 넘기고 옛 DOM 애셋은 없다', () => {
     const mapCode = 'ha n&?';
     render(<MapViewer mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
+    expect(screen.getByTestId('iso-world-map'))
+      .toHaveAttribute('data-terrain', '/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
+    expect(screen.queryByTestId('shared-iso-map')).toBeNull();
+    expect(document.querySelector('.map-bg')).toBeNull();
+    expect(document.querySelector('.map-road')).toBeNull();
+    expect(shared.iso?.currentCityId).toBe(11);
+    expect(shared.iso?.selectedCityId).toBe(22);
+    expect(shared.iso?.cities?.map((city) => city.id)).toEqual([11, 22]);
+    expect(shared.iso?.nations).toEqual([{ id: 1, name: '위', color: '#ff0000' }]);
+  });
+
+  it('legacyCanvas 를 켰을 때만 옛 평면 캔버스가 나온다', () => {
+    const mapCode = 'ha n&?';
+    render(<MapViewer legacyCanvas mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
     expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
@@ -92,7 +131,7 @@ describe('MapViewer shared canvas overlays', () => {
   });
 
   it('shows the region commandery and county from the polygon callback', () => {
-    render(<MapViewer mapData={MAP} />);
+    render(<MapViewer legacyCanvas mapData={MAP} />);
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(screen.getByRole('status')).toHaveTextContent('경조윤 장안현');
     expect(screen.getByRole('status')).not.toHaveTextContent('사예');
@@ -107,7 +146,7 @@ describe('MapViewer shared canvas overlays', () => {
       jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 1 }],
       commanderyControl: [{ commanderyId: 'C1', nationId: 2 }],
       nations: [...MAP.nations, { id: 2, name: '한', color: '#0000ff' }],
-    }} />);
+    }} legacyCanvas />);
 
     expect(shared.props?.administrativeOwnership).toEqual({
       provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1, nationColor: '#ff0000', nationName: '위' }],
@@ -126,7 +165,7 @@ describe('MapViewer shared canvas overlays', () => {
     ['infinite id', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '위', color: '#ff0000' }]],
     ['fractional id', 1.5, [{ id: 1.5, name: '위', color: '#ff0000' }]],
   ])('keeps %s visually and semantically unowned', (_label, nationId, nations) => {
-    render(<MapViewer mapData={{
+    render(<MapViewer legacyCanvas mapData={{
       ...MAP,
       cities: [{ ...MAP.cities[0], nationId }],
       nations,
@@ -142,7 +181,7 @@ describe('MapViewer shared canvas overlays', () => {
   });
 
   it('preserves explicit nation id zero as neutral', () => {
-    render(<MapViewer mapData={{
+    render(<MapViewer legacyCanvas mapData={{
       ...MAP,
       cities: [{ ...MAP.cities[0], nationId: 0 }],
       nations: [],
@@ -192,8 +231,8 @@ describe('MapViewer shared canvas overlays', () => {
 
   it('city-name toggle controls canvas labels', () => {
     render(<MapViewer mapData={MAP} />);
-    expect(shared.props?.hideCityNames).toBe(false);
+    expect(shared.iso?.hideCityNames).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: '도시명 표기' }));
-    expect(shared.props?.hideCityNames).toBe(true);
+    expect(shared.iso?.hideCityNames).toBe(true);
   });
 });

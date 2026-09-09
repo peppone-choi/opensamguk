@@ -195,7 +195,11 @@ export default function CityTransportForm() {
                 </button>
             </div>
             {selectedRoute && <p>{transportRouteSummary(selectedRoute)}</p>}
-            <MapViewer disallowClick refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
+            {/* 지도는 전부 아이소로 갈았지만 이 화면만 옛 평면 캔버스를 쓴다. 여기서 그려야
+                하는 전략 경로선(selectedServerRoute)은 routeNodeKey 로 이어지고, 그 키가
+                지도 응답에 실려 오지 않아 아이소 격자 위에 되살릴 방법이 아직 없다.
+                없는 대조표를 지어내느니 경로가 보이는 쪽을 남긴다. */}
+            <MapViewer legacyCanvas disallowClick refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
                 onStrategicBindingChange={handleBindingChange} selectedCityId={Number(fromCityId) || null} />
             {outcome && (
                 <p

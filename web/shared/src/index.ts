@@ -142,3 +142,67 @@ export {
   isOwnedNationVisual,
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
+export {
+  TERRAIN,
+  TERRAIN_ASSET_NAME,
+  RASTER_GROUP,
+  MAX_LEVEL,
+  TILE_SCREEN_WIDTH,
+  TILE_SCREEN_HEIGHT,
+  STEP_SCREEN_PIXELS,
+  SEAT_ONLY_TILE_PIXELS,
+  CAMERA_ELEVATION_RAD,
+  CAMERA_AZIMUTH_RAD,
+  HEIGHT_STEP_WORLD,
+  isWater,
+  pickTileAtScreen,
+  downsampleTerrain,
+  levelsFromImageData,
+  fillSeaEnclosedGaps,
+  terrainFromElevation,
+  relaxCornerLattice,
+  buildCornerLattice,
+  buildTileHeights,
+  buildIsoTileGrid,
+  tileToScreen,
+  tileToWorld,
+  expandRunLength,
+  downsampleOwner,
+  sourceCellToTile,
+  type TerrainCode,
+  type TerrainTiles,
+  type TileHeights,
+  type IsoTileGrid,
+} from './isoTileGrid';
+
+// ── 아이소 지도(3D·2D 공용) ──────────────────────────────────────────────────
+// 3D 렌더러(IsoMap3D)는 three 를 쓰므로 여기서 내보내지 않는다 — web/game 안에 남는다.
+// 로비(web/gateway)는 2D 판만 쓰고 three 를 번들에 들이지 않는다.
+export {
+  useIsoTileGrid,
+  buildProvinceSeatCells,
+  LEVEL_PNG_URL,
+  ELEVATION_MANIFEST_URL,
+  type IsoMapData,
+  type IsoCity,
+  type ElevationManifest,
+} from './iso/useIsoTileGrid';
+export {
+  placeGameCities,
+  placeBattlefields,
+  gameXyToSourceCell,
+  type GameCityInput,
+  type PlacedCity,
+  type PlaceGameCitiesOptions,
+  type IsoBattlefieldMarker,
+} from './iso/placeGameCities';
+export {
+  normaliseNationColor,
+  indexTint,
+  mixToward,
+  hslToRgb,
+  parseHex,
+  type Rgb,
+  type TintMode,
+} from './iso/tint';
+export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';

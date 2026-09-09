@@ -1,0 +1,2413 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "iso2d-assets-v1",
+  "sourceRepository": "opensamguk-images",
+  "sourceTag": "v2026.09.08-iso2d-v1",
+  "authorship": "AI image generation; deterministic chroma removal, extraction and curation export",
+  "paletteReference": {
+    "repository": "opensamguk",
+    "commit": "dfec1516",
+    "path": "tools/assets/build_iso3d_assets.py",
+    "comparison": "CPU orthographic rendering of actual pinned glTF vertex colors; not engine lighting"
+  },
+  "rasterGroup": 4,
+  "tileGrid": {
+    "cols": 192,
+    "rows": 167
+  },
+  "flatFootprint": [
+    256,
+    128
+  ],
+  "height": {
+    "cornerOrder": [
+      "N",
+      "E",
+      "S",
+      "W"
+    ],
+    "stepScreenPixels": 32,
+    "baselineCorners": [
+      [
+        128,
+        32
+      ],
+      [
+        256,
+        96
+      ],
+      [
+        128,
+        160
+      ],
+      [
+        0,
+        96
+      ]
+    ],
+    "maskRange": [
+      0,
+      14
+    ],
+    "allRaisedRule": "mask 15 normalizes to mask 0 with baseHeight + 1",
+    "interpolation": "four triangles joining corners to center at mean corner height",
+    "sharedCornersRequired": true,
+    "maxWithinTileHeightDifference": 1,
+    "water": "horizontal surface only; never select a land slope mask for water",
+    "cliffs": "two visible flat-edge skirt orientations, stack at 32px intervals only at discontinuities",
+    "heightSource": "not supplied; current han-tiles.json contains terrain classes, no map-wide elevation grid"
+  },
+  "terrain": {
+    "PLAIN": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "MOUNTAIN": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "DESERT": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "PLATEAU": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "BASIN": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "HILL": {
+      "masks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "SEA": {
+      "masks": [
+        0
+      ]
+    },
+    "RIVER": {
+      "masks": [
+        0
+      ]
+    },
+    "LAKE": {
+      "masks": [
+        0
+      ]
+    }
+  },
+  "buildingTiers": {
+    "hamlet": {
+      "cityLevelFrom": 4,
+      "cityLevelTo": 4,
+      "file": "objects/hamlet.png"
+    },
+    "county": {
+      "cityLevelFrom": 5,
+      "cityLevelTo": 6,
+      "file": "objects/county.png"
+    },
+    "commandery": {
+      "cityLevelFrom": 7,
+      "cityLevelTo": 8,
+      "file": "objects/commandery.png"
+    },
+    "capital": {
+      "cityLevelFrom": 9,
+      "cityLevelTo": 11,
+      "file": "objects/capital.png"
+    }
+  },
+  "unitArmTypes": {
+    "0": {
+      "name": "wall",
+      "file": "objects/wall.png"
+    },
+    "1": {
+      "name": "infantry",
+      "file": "objects/infantry.png"
+    },
+    "2": {
+      "name": "archer",
+      "file": "objects/archer.png"
+    },
+    "3": {
+      "name": "cavalry",
+      "file": "objects/cavalry.png"
+    },
+    "4": {
+      "name": "siege",
+      "file": "objects/siege.png"
+    },
+    "5": {
+      "name": "tower",
+      "file": "objects/tower.png"
+    }
+  },
+  "strategicFeatures": {
+    "sourceCommit": "dfec1516",
+    "reviewedPassSiteCount": 3,
+    "passAsset": "objects/gate.png",
+    "deferred": [
+      "ford",
+      "port",
+      "bridge"
+    ],
+    "reason": "No reviewed river crossing or port/landing evidence in pinned water topology"
+  },
+  "runtimeRequirements": [
+    "Select prepainted slope by shared corner mask; translate by baseHeight * 32px.",
+    "Blend matching slope-material layers in continuous world coordinates at material boundaries, as QA demo shows.",
+    "Draw props separately at ground anchors and sort by ground depth; placement scale is symbolic.",
+    "Use nation UI markers or whole-sprite RGB multiplication; no isolated recolorable flag mask is supplied."
+  ],
+  "limitations": [
+    "Not a game renderer integration or reconstructed historical DEM.",
+    "No steep two-step-within-one-tile variants, overhangs, slanted cliff caps, or arbitrary shoreline bank sprite set.",
+    "AI painted lighting approximates the geometry guide; textures are static and direction-specific.",
+    "Object colors follow the muted palette family but are darker and more textured than unlit iso3d vertex colors.",
+    "Visual QA and curation selection performed by the agent; no claim of human approval."
+  ],
+  "files": [
+    {
+      "file": "terrain/basin-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e065cfef80a377521c7dc234ec603ebbfd5844e10f3fabcea62dbe4354e05ffa",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-00.png",
+      "material": "BASIN",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "dd34086585032c1c44bbca7c7745901bf3fba512a45fa88cb5ffa2270d7912e0",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-01.png",
+      "material": "BASIN",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "53bb03bb99647084768755b6d43ea9b1f416b01eec189543de7c414b43821ba8",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-02.png",
+      "material": "BASIN",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "3657d5c749c420723b2be0cc943103467b4c3ac7cb2b89de39c1e85b950fa708",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-03.png",
+      "material": "BASIN",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "1ad05061e39854a85b6ad810f56c2ed534e41f241673f593b7273a261dce7918",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-04.png",
+      "material": "BASIN",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f2bf02888fe60785d0d5a335c009f840f4242a84e8d1b254c2d2d6f17337b0a3",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-05.png",
+      "material": "BASIN",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7cb21e6bf800a9e99d262bdc69521169cba17f31287fb161e312790b8cdab027",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-06.png",
+      "material": "BASIN",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "6452c5808eb7b0a7d20c8050c0a86db79f0f9b5fd426f5f0e6044e5cfe22e9cc",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-07.png",
+      "material": "BASIN",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/basin-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "91e4e5e5fc1e3b96d939d93fe6f4e4278e1e882264be592146d25ef1ec6e7f49",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-08.png",
+      "material": "BASIN",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "b9811020ba40c6ae8732b285002f949680da25503595e4d98b76a88fdf7c7cc6",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-09.png",
+      "material": "BASIN",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f327696bbd36260e194573e35d39accf6c19a72e974825d127eb40ac881ee965",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-10.png",
+      "material": "BASIN",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f0fa5bc4a83a833787df6ab0a3f25deca551d594921427cfed4b89b68640d9f2",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-11.png",
+      "material": "BASIN",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e7870b6f120c3fcf7014470dfda32ef12232c8072be44e46083cb7842bc5102b",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-12.png",
+      "material": "BASIN",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "200c804061b4882cc24e82d9bcf7c2c368f7bc2d9a48206f0b39cc01d4874477",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-13.png",
+      "material": "BASIN",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/basin-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "b421e9ec8bbecbed085c76c471c36895dd95d6bb617ea960e3b15d7adf742b12",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/basin-14.png",
+      "material": "BASIN",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "5e71f235c8696f260a200f94b293a0c18ae038004b69ab2d0317c4b0fb86ec65",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-00.png",
+      "material": "DESERT",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "808753cc993516dc6804a1b0966fc3ecf3a685a8e3940f91ba26eb22182b4367",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-01.png",
+      "material": "DESERT",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "06beaf17915cdf37be8c42467d518773ce01aaee470847c8b70e3f41f53b29a4",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-02.png",
+      "material": "DESERT",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "d1ed15069b608c9e8b8c74754199ba59c1adbf8d87a9deeeaf8c80821c302da5",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-03.png",
+      "material": "DESERT",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "b8ca9594d6d2bfc87180f6c5ddf6a7992c152505a15961a412801551f5db628b",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-04.png",
+      "material": "DESERT",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "26ae9e66965cd4d97ea1c5a5619e214b06a4cc3b7da6e74eca47edc32522f23e",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-05.png",
+      "material": "DESERT",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e3adc61a3e190f34caaa3ed2bd0b92fcb579fe6664716d56c414148a86976d2d",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-06.png",
+      "material": "DESERT",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "c2c02518f7f3e616adac71acb68be7d1ade2d7642a8b09dc35832e5c1ccae0e2",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-07.png",
+      "material": "DESERT",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/desert-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "eadda0e79a1e1d428004148ea328e27a7bf8d7ac2982ce9a8ba257c131f513b8",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-08.png",
+      "material": "DESERT",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "8b4024e3749e0517c4ccf4d2d13d7637f99301009f2c3586ec75e8694b5a1ce4",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-09.png",
+      "material": "DESERT",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "bec6ebb054add178c336fc0830977cb4f7da94da0904fddc57f05a95b7aaad5c",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-10.png",
+      "material": "DESERT",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "0de5dd11550268f6397661a4f8e04f30616a272f9ac9ec66f889b9231709991e",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-11.png",
+      "material": "DESERT",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e6417271d7d6f41f0a2aa56808d8fa680d2c3ca1cae066d8a481e61842c1aed2",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-12.png",
+      "material": "DESERT",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7d6898f6fd31c801c99c46c1972dcb1a5f36d0af4ba0e84bd1a1a3d02ef58aac",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-13.png",
+      "material": "DESERT",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/desert-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "cfa4bc46856927431f0e3c6eb6a1430f427f8f435e3daea8730b3d91b28d66f7",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/desert-14.png",
+      "material": "DESERT",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e90e11d96a1d90674ce1a1ccfed3a247b60956ac28fcfeab4b72fb469e834fce",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-00.png",
+      "material": "HILL",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "36b9bb93298cb1a639765d50e8de1351e902ef3d58d192d3c078938da092fc63",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-01.png",
+      "material": "HILL",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "55d8ebdc3582e5b13574b883999d031463ba6d9b9719783ad66696a75090b68b",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-02.png",
+      "material": "HILL",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "31bc2bf15ce21824ff80735889d1ad23b737fe0778180c89a00975a8a5f96052",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-03.png",
+      "material": "HILL",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "28a88ff4bb694e29b954bde7d9b9ea5b491994b4785ce1cecd17447176a26588",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-04.png",
+      "material": "HILL",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "5c3f91feea9011f6b8fcafebd16fe3773e3ddfab30d3c79288891c03423c1835",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-05.png",
+      "material": "HILL",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "b63b456e9867687bea53d0325aca13d44311f005450c4009950fb3537cd13302",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-06.png",
+      "material": "HILL",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "44d543b2edd5bf4b1bc7dac1118079003fdbfab4d3972a43a07282d3ed9283ad",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-07.png",
+      "material": "HILL",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/hill-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "422433624991d0dad100b45d9bbbd6cb617ace37e09c37f02e9981761333232d",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-08.png",
+      "material": "HILL",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "d50e44a0e7f502210738cdef54099eb29c57d46d8dd1d2b430788542326085f4",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-09.png",
+      "material": "HILL",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "67af716e4fbaaf7f0aa389f7d917d029f1edc2702a1bfe84d66c5b0060f49371",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-10.png",
+      "material": "HILL",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "a598a82d7eabf3f80ea8269015f5718ef3f5488d89d41ec78ecb0294e76d44db",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-11.png",
+      "material": "HILL",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "5712414eb03d26e783a48641893f74d3d9ba212b9bc1892a70b906d4dd7a36ae",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-12.png",
+      "material": "HILL",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f8c6c518629dc60528b84b4246e89456748ed97098c51df0500e381ea0d38974",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-13.png",
+      "material": "HILL",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/hill-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "31c14ffe3d69e1749fbfc10767cf50a5a7a5fc534189b7bef25ad650ae5cdc19",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/hill-14.png",
+      "material": "HILL",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/lake-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "431e779ad42d3233d7a2f93a225fc5daf045402e8ab073617613933049850bb6",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/lake-00.png",
+      "material": "LAKE",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "af2dbf1e1b5c7d8fd89affca4fab6af792070671512afe36ae89b37d867eec9b",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-00.png",
+      "material": "MOUNTAIN",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "eeb82d77816c2708f59ae605bd9f9bf951b0c940b90e4b39ce6e86895c13037c",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-01.png",
+      "material": "MOUNTAIN",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "cc85006ef6d7dcb3e5a1a31db0d9703852dd2ecabfadf1e8ce48e0e96b3f85e1",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-02.png",
+      "material": "MOUNTAIN",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "ca22bea1dc5cde65e81d272692f8b4abd79d83b861066c5fab0fdec0a1d5fe62",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-03.png",
+      "material": "MOUNTAIN",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "595eceb4a363dbe844ec1ce74746197358930c437193fcd44df881e67d153fb8",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-04.png",
+      "material": "MOUNTAIN",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "899c570f435fd8525bc0926433d2730ea726ef5f95371e1f5a268b7c31d581d5",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-05.png",
+      "material": "MOUNTAIN",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "eb2187e370533da762fc0fad8dd8d9f323ae7e7fc60f4398593a1509e7755659",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-06.png",
+      "material": "MOUNTAIN",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e76be2cd0f8f919b532dbc08c560180def168df08a7544f9cf820882895d0b93",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-07.png",
+      "material": "MOUNTAIN",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/mountain-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "bc7f004d2374f1d096aa34271c5fcb0455ee2531e5d0ec67501ebc69c3643f89",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-08.png",
+      "material": "MOUNTAIN",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "12452a287812bf112558a843e3c181c9a35cdc644439c4b28ae08440d3b571b8",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-09.png",
+      "material": "MOUNTAIN",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "1b7e94fe45e2988a15bc3f02b1fa9a5a925ba1bd88fbbd7b5aba789f8ea20046",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-10.png",
+      "material": "MOUNTAIN",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "b555b4df4614aa8c5182f7fd9a0bf3a3dd2a66c7e08ab645c21892e65ccb1f61",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-11.png",
+      "material": "MOUNTAIN",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "9f91385992d13d3034bf2f1375c68c3951e9f92cb42992ad4527663f8fe102ea",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-12.png",
+      "material": "MOUNTAIN",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "456f9225c5be708012e5bc7b9acfdb927d90e96bd6cca0b6f917bf573e8ab4ff",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-13.png",
+      "material": "MOUNTAIN",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/mountain-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "47051e88c75ff5c5d742ced51bfbed5abfbf439ffa848975f20a62b65977234d",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/mountain-14.png",
+      "material": "MOUNTAIN",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "5af08e0d45b32e0c0d85caf2f0bdabc203322c199951f6d12145b1e637fcb10e",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-00.png",
+      "material": "PLAIN",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "ac29056aadf2dbb6bec3e4cb64bcc0b8b8ea4e70c99dd1ee3e152c4337bc5334",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-01.png",
+      "material": "PLAIN",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "a43df698e5aca7ed5af2c72e10d1d65ad5c0dbb021b58a233a5b0a015724d16a",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-02.png",
+      "material": "PLAIN",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "785e57e33fe27e2dce380b2bc4ac56e1abf1c7d10db3c4a5d4621c9121f5a6f5",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-03.png",
+      "material": "PLAIN",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "fe9a8e1a14db2df64795432d5a5d260c058c177782a074ed237ca3132edfc72d",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-04.png",
+      "material": "PLAIN",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7dd8a5dac3328b2666a4ea718c92c318105dabca3b19aa3520ed14500f4b64c5",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-05.png",
+      "material": "PLAIN",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "13170b7c79c304e57d298a442a06b4168a6c024a1a0bc0538e6a5e5643d603e3",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-06.png",
+      "material": "PLAIN",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "a8cfed84770ede6c4dee81e1adb60d09bb88f13613c8cea5e0ceefa0a33b0ef6",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-07.png",
+      "material": "PLAIN",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plain-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "0636c2b7be9381828b339cbe7993faf2de762d2774250851a0815b714719ff1e",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-08.png",
+      "material": "PLAIN",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f42939d36918fe71758ca815b75860b76d20e8cfd095e88ca9033c45789dd449",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-09.png",
+      "material": "PLAIN",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "febf7ff8f26b79222a7357b8fd68f9bb6d7f7f4e095224d20d628785f9fbcded",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-10.png",
+      "material": "PLAIN",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e2f1219701236e1000ab0eee16daddef8958c4e097da1ecd730beaa083d4015c",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-11.png",
+      "material": "PLAIN",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "d23f1abb964f5ca4b666139339ae39d39fab6ef1e4c5905f60ffdf0ae13031d9",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-12.png",
+      "material": "PLAIN",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "774806d8cd1989cac0d37135207470c137db28f9e5bc41a6ac7aca4c539d9b9c",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-13.png",
+      "material": "PLAIN",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plain-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "dcfdf5381158d02b71242e9a6c99a9c715afc5dcdda2a6ebc495d6635cc965a8",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plain-14.png",
+      "material": "PLAIN",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7f8d95ae53ab85e0fd090f370769d914e34ea07a02b894e32032e49dde749ba3",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-00.png",
+      "material": "PLATEAU",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-01.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "bc7d5b57f1e290d752ca781a45c83cfb34720e65cd9913dd853880586b34eaeb",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-01.png",
+      "material": "PLATEAU",
+      "mask": 1,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-02.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "8f2d8803954aa17edb48d0659c079c46f6e8f602088ac1eece28aad4449d3f62",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-02.png",
+      "material": "PLATEAU",
+      "mask": 2,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-03.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "f3a40879e06078b66bdbe9c8c79a5435f6a6bf1deccbb1da3b8f7bedc63d37da",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-03.png",
+      "material": "PLATEAU",
+      "mask": 3,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-04.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "d999f277f481b361450cd616fcee25ee45b45c40a00144077be16cc75f072b20",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-04.png",
+      "material": "PLATEAU",
+      "mask": 4,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-05.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7968317a62426f3e2af58c774a1015e20208b0298101bba10b80871466944bda",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-05.png",
+      "material": "PLATEAU",
+      "mask": 5,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-06.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "2bf6c1edf117aa3165f102fc0cfad20a37fa1b0c7d0744ddce6860dd89ad6f96",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-06.png",
+      "material": "PLATEAU",
+      "mask": 6,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-07.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "02c323c564d7e90e6eb765397f1122859e1052d1ce74b106285c36e41b907acc",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-07.png",
+      "material": "PLATEAU",
+      "mask": 7,
+      "cornerHeights": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "file": "terrain/plateau-08.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "621463914cc099c411bcc7434c00d201a9bca16d053e9471acd61024d29f0def",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-08.png",
+      "material": "PLATEAU",
+      "mask": 8,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-09.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "395eb4d4b8956517ca745c7da4ec3490722f1623bb0564940074c2808e82ffb5",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-09.png",
+      "material": "PLATEAU",
+      "mask": 9,
+      "cornerHeights": [
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-10.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "e9001f2912439bb2fe217a51298a40ee2773b18ee76b2590d22a7e086ed8c6ae",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-10.png",
+      "material": "PLATEAU",
+      "mask": 10,
+      "cornerHeights": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-11.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7d3b854d628b5854cb7ec53430d9be557f941efb4d9004f1ff0a11c5dad7f780",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-11.png",
+      "material": "PLATEAU",
+      "mask": 11,
+      "cornerHeights": [
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-12.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "125b3a2a463e572b3be2c5309608af2f6e6dd6d42537ae635a62b25a7d4ce888",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-12.png",
+      "material": "PLATEAU",
+      "mask": 12,
+      "cornerHeights": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-13.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "7630d79860ab1208a1140d1bd22600937f5ccd158a70f11426110fdc3b44de26",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-13.png",
+      "material": "PLATEAU",
+      "mask": 13,
+      "cornerHeights": [
+        1,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/plateau-14.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "d9e6c798efa6a879112f75588f014a297a48c220bc35068c06a4015921157f61",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/plateau-14.png",
+      "material": "PLATEAU",
+      "mask": 14,
+      "cornerHeights": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "file": "terrain/river-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "a5f1d6410d7c7da3d77ac0ed25034ffa3978ad05d1355e806649ac0e693b7f46",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/river-00.png",
+      "material": "RIVER",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "terrain/sea-00.png",
+      "size": [
+        256,
+        160
+      ],
+      "anchor": [
+        128,
+        96
+      ],
+      "sha256": "68033247b1dc8dfd8e239c3bc8e79f03892e87a76e2027c5eb46007f23c21584",
+      "curatedSource": "originals/iso2d/curation/terrain/curated/sea-00.png",
+      "material": "SEA",
+      "mask": 0,
+      "cornerHeights": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "objects/archer.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "a8c53e67a3af1ea9c059fac5d8c657e5feb8aef6242a35d0b2d485e068bef795",
+      "curatedSource": "originals/iso2d/curation/objects/curated/archer.png"
+    },
+    {
+      "file": "objects/capital.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "c0096d94c067ece81fac48ac70775ef27c147b6e9e370264b287b7f6acbac6b9",
+      "curatedSource": "originals/iso2d/curation/objects/curated/capital.png"
+    },
+    {
+      "file": "objects/cavalry.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "0dd9c2e153241aaabaf4e40c904dadf04bb3349c400b0d50eaa66d52ed2eb67d",
+      "curatedSource": "originals/iso2d/curation/objects/curated/cavalry.png"
+    },
+    {
+      "file": "objects/commandery.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "62f37fb9cbae4051387a9afee324c33fa86ca37008e95d676ba54212cd87a587",
+      "curatedSource": "originals/iso2d/curation/objects/curated/commandery.png"
+    },
+    {
+      "file": "objects/county.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "08c8cf4ff3112ddb1146afc04fde1c51b9256ea9a591426c948a189c9083855c",
+      "curatedSource": "originals/iso2d/curation/objects/curated/county.png"
+    },
+    {
+      "file": "objects/gate.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "dee26a6c1bfa1658bec03b7dedd369ee6bc2adc95853e57bfcad4773678ec88c",
+      "curatedSource": "originals/iso2d/curation/objects/curated/gate.png"
+    },
+    {
+      "file": "objects/hamlet.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "23fcf6f9405114480e1df00323ea94bbb8d994614a7cd448ff4a42ce9a161835",
+      "curatedSource": "originals/iso2d/curation/objects/curated/hamlet.png"
+    },
+    {
+      "file": "objects/infantry.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "ca93d307d42e007ba92709e7c8cdaa146669b6cf09bb6945a5e19d9996968290",
+      "curatedSource": "originals/iso2d/curation/objects/curated/infantry.png"
+    },
+    {
+      "file": "objects/mountain-rock.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "65db03535a5d701fa0b4a5c3cd084c5ab2a31ebb1fa721bc19279c4f0f620cf5",
+      "curatedSource": "originals/iso2d/curation/objects/curated/mountain-rock.png"
+    },
+    {
+      "file": "objects/mountain-snow.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "3c7d1ba75f14013bb54d68020c10f85ba011279b5f1e6c29697d9ec5eac0b7ce",
+      "curatedSource": "originals/iso2d/curation/objects/curated/mountain-snow.png"
+    },
+    {
+      "file": "objects/siege.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "008e7ecf5d12c7f0deebbecfd44ed69e1e120d69b37d1de2653fb68ffe7cf1b2",
+      "curatedSource": "originals/iso2d/curation/objects/curated/siege.png"
+    },
+    {
+      "file": "objects/tower.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "437380dbf540be4cb9f25dd6f918abb1344959c92b317cab987a36b6483f62e1",
+      "curatedSource": "originals/iso2d/curation/objects/curated/tower.png"
+    },
+    {
+      "file": "objects/wall.png",
+      "size": [
+        256,
+        256
+      ],
+      "anchor": [
+        128,
+        240
+      ],
+      "sha256": "95138ff1662d64e9884bae681c2d08021cdf60070c1adf0c5e076d485823071c",
+      "curatedSource": "originals/iso2d/curation/objects/curated/wall.png"
+    },
+    {
+      "file": "skirts/skirt-left.png",
+      "size": [
+        128,
+        96
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "sha256": "073eb41153731a2748e6d8f5385bac38f5770d035173cf4d5f01ec58af5233d8",
+      "curatedSource": "originals/iso2d/curation/skirts/curated/skirt-left.png"
+    },
+    {
+      "file": "skirts/skirt-right.png",
+      "size": [
+        128,
+        96
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "sha256": "9ba386596408a4936060513d81632c9dd3f186d6477deb74153134560fbd56d2",
+      "curatedSource": "originals/iso2d/curation/skirts/curated/skirt-right.png"
+    }
+  ]
+}

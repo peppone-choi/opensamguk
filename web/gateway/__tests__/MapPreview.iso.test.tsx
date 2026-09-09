@@ -1,47 +1,42 @@
+// 로비 지도는 게임창과 같은 아이소 2D 판을 쓴다. 여기서 지키는 것은 세 가지다.
+//   1) 지형 주소를 server·mapCode 로 정확히 만든다 (CDN 지도 노드는 쓰지 않는다).
+//   2) 게임 도시가 격자에 앉는다 — placeGameCities 는 진짜를 돌린다.
+//   3) 소유가 확실할 때만 세력색·세력명이 붙는다.
+// 격자 적재(useIsoTileGrid)는 fetch·ImageBitmap 이 필요하므로 여기서만 가짜를 세운다.
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { IsoMap2D as IsoMap2DType, IsoMapData } from '@opensamguk/ui';
 
 const shared = vi.hoisted(() => ({
-  props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  props: null as ComponentProps<typeof IsoMap2DType> | null,
+  terrainUrl: null as string | null,
 }));
+
+// 8×8 원본 셀 = 2×2 타일. 縣 0 의 治所만 셀 (5,1) 에 둔다.
+const GRID = {
+  grid: { cols: 2, rows: 2 },
+  provinceSeatCell: { col: Int32Array.from([5, -1]), row: Int32Array.from([1, -1]) },
+  sourceCols: 8,
+  sourceRows: 8,
+} as unknown as IsoMapData;
 
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return {
     ...actual,
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    useIsoTileGrid: (terrainUrl: string) => {
+      shared.terrainUrl = terrainUrl;
+      return terrainUrl
+        ? { status: 'ready' as const, data: GRID, error: null }
+        : { status: 'loading' as const, data: null, error: null };
+    },
+    IsoMap2D: (props: ComponentProps<typeof IsoMap2DType>) => {
       shared.props = props;
-      const city = props.cities?.[0];
-      const county = city ? {
-        provinceId: 1033,
-        commanderyId: 0,
-        regionName: '사예',
-        commanderyName: '경조윤',
-        countyName: '장안현',
-        level: 9,
-        nationId: city.nationId,
-        nationName: city.nationName,
-        nationColor: city.nationColor,
-        ...(props.administrativeOwnership ? {
-          hierarchyPath: '공간 낙양 → 낙양현 → 하남윤',
-          displayedOwnerNationName: '한',
-          provinceOccupantNationName: '위',
-          jurisdictionOwnerNationName: '한',
-          commanderyControllerNationName: '조',
-          provinceJurisdictionMismatch: true,
-          jurisdictionCommanderyMismatch: true,
-          ownershipMismatch: true,
-        } : {}),
-      } : null;
       return (
-        <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
-          <button
-            type="button"
-            onClick={() => props.onCountyHover?.(county, { x: 30, y: 40 })}
-          >
-            hover first county
+        <div data-testid="iso2d" aria-label={props.ariaLabel}>
+          <button type="button" onClick={() => props.onPickCity?.(props.cities![0])}>
+            첫 城 누르기
           </button>
         </div>
       );
@@ -57,16 +52,20 @@ const MAP: MapData = {
   month: 5,
   turnPhaseText: '상순',
   mapCode: 'han',
-  width: 700,
-  height: 610,
+  width: 100,
+  height: 100,
   cities: [
-    { id: 11, name: '낙양', level: 8, nationId: 1, x: 300, y: 250, state: 6, supply: true, isCapital: true },
+    {
+      id: 11, name: '낙양', level: 8, nationId: 1, x: 50, y: 50,
+      provinceId: 0, state: 6, supply: true, isCapital: true,
+    },
   ],
   nations: [{ id: 1, name: '위', color: '#ff0000' }],
 };
 
 beforeEach(() => {
   shared.props = null;
+  shared.terrainUrl = null;
   const values = new Map<string, string>();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => values.get(key) ?? null,
@@ -82,81 +81,64 @@ beforeEach(() => {
   });
 });
 
-describe('MapPreview shared isometric renderer', () => {
-  it('passes the real han map code and every city overlay without CDN map nodes', () => {
+describe('MapPreview 아이소 2D 판', () => {
+  it('지형 주소를 server·mapCode 로 만들고 CDN 지도 노드는 쓰지 않는다', () => {
     const mapCode = 'ha n&?';
     render(<MapPreview serverId="s 1&?" mapData={{ ...MAP, mapCode }} currentCityId={11} />);
 
-    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
+    expect(shared.terrainUrl).toBe('/api/game/api/map/terrain?server=s%201%26%3F&mapCode=ha%20n%26%3F');
+    expect(screen.getByTestId('iso2d')).toHaveAttribute('aria-label', `${mapCode} 서버 아이소 지도`);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(shared.props?.currentCityId).toBe(11);
-    expect(shared.props?.cities?.[0]).toMatchObject({
-      id: 11,
-      nationName: '위',
-      nationColor: '#ff0000',
-      state: 6,
-      isCapital: true,
-    });
-    const url = typeof shared.props?.terrainUrl === 'function'
-      ? shared.props.terrainUrl(mapCode)
-      : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?server=s%201%26%3F&mapCode=ha%20n%26%3F');
-    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
-      ? shared.props.provinceUrl(mapCode)
-      : shared.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=ha%20n%26%3F');
   });
 
-  it('shows the lobby region commandery and county through the polygon callback', () => {
+  it('게임 도시를 격자에 앉히고 세력색을 붙인다', () => {
     render(<MapPreview mapData={MAP} />);
-    fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
-    expect(screen.getByRole('status')).toHaveTextContent('경조윤 장안현');
-    expect(screen.getByRole('status')).not.toHaveTextContent('사예');
-    expect(screen.getByRole('status')).not.toHaveTextContent('【');
-    expect(screen.getByRole('status')).toHaveTextContent('위');
+    // 縣 0 의 治所 셀 (5,1) → 타일 (1.25, 0.25). 반올림하지 않는다.
+    expect(shared.props?.cities?.[0]).toMatchObject({
+      id: 11, name: '낙양', nationName: '위', nationColor: '#ff0000',
+      col: 1.25, row: 0.25, isCapital: true, exact: true,
+    });
+    expect(shared.props?.tintMode).toBe('nation');
   });
 
-  it('게이트웨이에서도 소유권을 전달하고 기본 툴팁은 계층 경로와 현재 레이어 소유자만 표시한다', () => {
+  it('provinceOccupancy 가 있으면 그것이 縣 색의 정본이다', () => {
     render(<MapPreview mapData={{
       ...MAP,
-      provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }],
-      jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 2 }],
-      commanderyControl: [{ commanderyId: 'C1', nationId: 3 }],
-      nations: [
-        ...MAP.nations,
-        { id: 2, name: '한', color: '#0000ff' },
-        { id: 3, name: '조', color: '#00ff00' },
-      ],
+      provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 1, nationId: 2 }],
+      nations: [...MAP.nations, { id: 2, name: '한', color: '#0000ff' }],
     }} />);
+    // 도시(縣 0)가 아니라 응답이 말한 縣 1 만 칠해진다.
+    expect(shared.props?.nationColorByOwner).toEqual({ 1: '#0000ff' });
+  });
 
-    expect(shared.props?.administrativeOwnership).toEqual({
-      provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1, nationColor: '#ff0000', nationName: '위' }],
-      jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 2, nationColor: '#0000ff', nationName: '한' }],
-      commanderyControl: [{ commanderyId: 'C1', nationId: 3, nationColor: '#00ff00', nationName: '조' }],
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
-    expect(document.querySelectorAll('.map-preview-tooltip-meta')).toHaveLength(1);
-    // #638(050058c7) 이후 기본 툴팁은 현재 레이어(현) 소유자 이름만 보여 준다 — 계층 경로/다른 레이어 소유자는 없다.
-    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent(/^한$/);
-    expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('공간:');
-    expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('군국:');
-    expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('→');
-    expect(screen.getByRole('status')).not.toHaveTextContent('공간 점유:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('현 소유:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('군국 통제:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('다릅니다.');
+  it('城 을 누르면 그 城 정보가 캔버스 위에 뜬다', () => {
+    render(<MapPreview mapData={MAP} />);
+    expect(screen.queryByRole('status')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '첫 城 누르기' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    expect(screen.getByRole('status')).toHaveTextContent('위 · 수도');
+    expect(shared.props?.selectedCityId).toBe(11);
+  });
+
+  it('도시명 표기 토글이 캔버스까지 간다', () => {
+    render(<MapPreview mapData={MAP} />);
+    expect(shared.props?.hideCityNames).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: '도시명 표기' }));
+    expect(shared.props?.hideCityNames).toBe(true);
+    expect(window.localStorage.getItem('sam.hideMapCityName')).toBe('yes');
   });
 
   it.each([
-    ['unknown nation', 2, []],
-    ['malformed color', 1, [{ id: 1, name: '표시 금지', color: 'red' }]],
-    ['NaN nation', Number.NaN, [{ id: Number.NaN, name: '표시 금지', color: '#ff0000' }]],
-    ['infinite nation', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '표시 금지', color: '#ff0000' }]],
-    ['fractional nation', 1.5, [{ id: 1.5, name: '표시 금지', color: '#ff0000' }]],
-    ['zero nation', 0, [{ id: 0, name: '표시 금지', color: '#ff0000' }]],
-    ['negative nation', -1, [{ id: -1, name: '표시 금지', color: '#ff0000' }]],
-  ])('keeps %s ownership neutral in canvas props and tooltip', (_label, nationId, nations) => {
+    ['표에 없는 세력', 2, []],
+    ['#rrggbb 가 아닌 색', 1, [{ id: 1, name: '표시 금지', color: 'red' }]],
+    ['NaN', Number.NaN, [{ id: Number.NaN, name: '표시 금지', color: '#ff0000' }]],
+    ['무한대', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '표시 금지', color: '#ff0000' }]],
+    ['비정수', 1.5, [{ id: 1.5, name: '표시 금지', color: '#ff0000' }]],
+    ['재야(0)', 0, [{ id: 0, name: '표시 금지', color: '#ff0000' }]],
+    ['음수', -1, [{ id: -1, name: '표시 금지', color: '#ff0000' }]],
+  ])('%s 소유는 城에도 縣 색에도 나타나지 않는다', (_label, nationId, nations) => {
     render(<MapPreview mapData={{
       ...MAP,
       cities: [{ ...MAP.cities[0], nationId }],
@@ -164,12 +146,11 @@ describe('MapPreview shared isometric renderer', () => {
     }} />);
 
     expect(shared.props?.cities?.[0]).toMatchObject({
-      nationId,
-      nationName: undefined,
-      nationColor: undefined,
+      nationId, nationName: undefined, nationColor: undefined,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
-    expect(screen.getByRole('status')).toHaveTextContent('장안현');
+    expect(shared.props?.nationColorByOwner).toEqual({});
+    fireEvent.click(screen.getByRole('button', { name: '첫 城 누르기' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
     expect(screen.getByRole('status')).not.toHaveTextContent('표시 금지');
   });
 });
