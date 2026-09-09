@@ -1,6 +1,6 @@
 # 아이소메트릭 PNG 에셋
 
-정본: opensamguk-images, 태그 `v2026.09.08-iso2d-v1`.
+정본: opensamguk-images, 태그 `v2026.09.10-iso2d-v2`.
 이 디렉터리는 sprite-gen의 curated 출력에서 복사한 배포본이다. 직접 수정하지 않는다.
 
 `manifest.json`이 파일·해시·앵커·도시 등급·병종·높이 조합을 정의한다.
