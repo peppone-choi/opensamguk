@@ -22,6 +22,7 @@ import {
   TILE_SCREEN_HEIGHT,
   TILE_SCREEN_WIDTH,
   isWater,
+  pickTileAtScreen,
 } from '../isoTileGrid';
 import type { IsoMapData } from './useIsoTileGrid';
 import { indexTint, normaliseNationColor, type Rgb, type TintMode } from './tint';
@@ -161,6 +162,16 @@ export function IsoMap2D({
     return () => { cancelled = true; };
   }, [needed]);
 
+  // 확대·이동은 씬을 다시 그리게 할 뿐 다시 짓게 하지는 않는다. 그런데 아래 effect 는
+  // 색 인자(tintMode 등)에도 걸려 있어서, 세력색 탭을 누르거나 국가색이 늦게 도착하면
+  // 다시 돈다. 지역 변수로 두면 그때마다 사용자의 확대·이동이 전체 맞춤으로 되돌아가고
+  // 스스로 복구되지 않는다 — ref 에 얹어 effect 를 넘겨 산다.
+  const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false });
+  // 지형이 바뀌면 배율·위치는 뜻이 없다. 다시 맞춘다.
+  useEffect(() => {
+    viewRef.current = { scale: 1, panX: 0, panY: 0, fitted: false };
+  }, [data]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !sprites) return undefined;
@@ -174,10 +185,7 @@ export function IsoMap2D({
     const { cols, rows, code, mask, baseHeight, playable } = grid;
 
     // 화면 변환: 배율 1 에서 타일 폭 256px. 시작 배율은 전체가 담기도록 맞춘다.
-    let scale = 1;
-    let panX = 0;
-    let panY = 0;
-    let fitted = false;
+    const view = viewRef.current;
     let frame = 0;
 
     // 城 집기 상자. 매 그리기마다 다시 채운다 — 화면 밖은 안 들어간다.
@@ -204,7 +212,7 @@ export function IsoMap2D({
         canvas.width = Math.round(w * dpr);
         canvas.height = Math.round(h * dpr);
       }
-      if (!fitted) {
+      if (!view.fitted) {
         // 타일 중심 x 는 −(rows−1)·128 … (cols−1)·128, y 는 0 … (cols+rows−2)·64 를 훑는다.
         // 여기에 스프라이트가 중심 밖으로 뻗는 만큼(가로 ±128, 위 96 + 최대 단차)을 더한다.
         const lift = MAX_LEVEL * STEP_SCREEN_PIXELS;
@@ -212,24 +220,24 @@ export function IsoMap2D({
         const maxX = (cols - 1) * HALF_W + HALF_W;
         const minY = -ANCHOR_Y - lift;
         const maxY = (cols + rows - 2) * HALF_H + (160 - ANCHOR_Y);
-        scale = Math.min(w / (maxX - minX), h / (maxY - minY)) * 0.95;
-        panX = w / 2 - ((minX + maxX) / 2) * scale;
-        panY = h / 2 - ((minY + maxY) / 2) * scale;
-        fitted = true;
+        view.scale = Math.min(w / (maxX - minX), h / (maxY - minY)) * 0.95;
+        view.panX = w / 2 - ((minX + maxX) / 2) * view.scale;
+        view.panY = h / 2 - ((minY + maxY) / 2) * view.scale;
+        view.fitted = true;
       }
 
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.fillStyle = '#0c0f0e'; // 팔레트 --bg
       context.fillRect(0, 0, w, h);
       context.save();
-      context.translate(panX, panY);
-      context.scale(scale, scale);
-      context.imageSmoothingEnabled = scale < 1;
+      context.translate(view.panX, view.panY);
+      context.scale(view.scale, view.scale);
+      context.imageSmoothingEnabled = view.scale < 1;
 
       // 화면에 걸리는 타일만 그린다. 화면 → 격자 역변환 네 귀퉁이로 범위를 잡는다.
       const toCell = (sx: number, sy: number): [number, number] => {
-        const x = (sx - panX) / scale;
-        const y = (sy - panY) / scale;
+        const x = (sx - view.panX) / view.scale;
+        const y = (sy - view.panY) / view.scale;
         return [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
       };
       const corners = [toCell(0, 0), toCell(w, 0), toCell(0, h), toCell(w, h)];
@@ -308,7 +316,7 @@ export function IsoMap2D({
 
       // 城 — 세력색 위에 그린다. 아이콘까지 곱해지면 등급이 안 읽힌다.
       // 축소 상태에서는 郡治만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
-      const seatOnly = scale * TILE_SCREEN_WIDTH < SEAT_ONLY_TILE_PIXELS;
+      const seatOnly = view.scale * TILE_SCREEN_WIDTH < SEAT_ONLY_TILE_PIXELS;
       // 뒤에서 앞으로. 같은 화가 순서를 집기 판정에서 거꾸로 훑어 위에 있는 城 을 먼저 집는다.
       hits.length = 0;
       const visible = cities
@@ -441,8 +449,8 @@ export function IsoMap2D({
     };
     const onMove = (e: PointerEvent) => {
       if (!dragging) return;
-      panX += e.clientX - lastX;
-      panY += e.clientY - lastY;
+      view.panX += e.clientX - lastX;
+      view.panY += e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
       schedule();
@@ -458,18 +466,18 @@ export function IsoMap2D({
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
-      const next = Math.max(0.02, Math.min(2, scale * factor));
-      const applied = next / scale;
-      panX = mx - (mx - panX) * applied;
-      panY = my - (my - panY) * applied;
-      scale = next;
+      const next = Math.max(0.02, Math.min(2, view.scale * factor));
+      const applied = next / view.scale;
+      view.panX = mx - (mx - view.panX) * applied;
+      view.panY = my - (my - view.panY) * applied;
+      view.scale = next;
       schedule();
     };
     const onClick = (e: MouseEvent) => {
       if (!onPickTile && !onPickCity && !onPickBattlefield) return;
       const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left - panX) / scale;
-      const y = (e.clientY - rect.top - panY) / scale;
+      const x = (e.clientX - rect.left - view.panX) / view.scale;
+      const y = (e.clientY - rect.top - view.panY) / view.scale;
       // 전장이 제일 먼저다 — 城 위에 그렸으니 집기도 그 순서다.
       if (onPickBattlefield) {
         for (let n = fieldHits.length - 1; n >= 0; n -= 1) {
@@ -491,11 +499,9 @@ export function IsoMap2D({
         }
       }
       if (!onPickTile) return;
-      // 높이를 무시한 지면 역변환이다. 높은 타일은 한두 칸 어긋날 수 있다.
-      const c = Math.round((x / HALF_W + y / HALF_H) / 2);
-      const r = Math.round((y / HALF_H - x / HALF_W) / 2);
-      const inside = c >= 0 && c < cols && r >= 0 && r < rows && playable[r * cols + c] === 1;
-      onPickTile(inside ? { col: c, row: r } : null);
+      // 높이를 감안한 역변환이다(pickTileAtScreen). 높은 타일은 화면에서 위로 올라가 있어
+      // 지면 역변환만으로는 한두 칸 어긋난다.
+      onPickTile(pickTileAtScreen(x, y, grid));
     };
 
     canvas.style.cursor = 'grab';

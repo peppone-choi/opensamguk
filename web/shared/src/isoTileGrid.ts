@@ -438,6 +438,42 @@ export function tileToScreen(col: number, row: number): [number, number] {
   return [(col - row) * (TILE_SCREEN_WIDTH / 2), (col + row) * (TILE_SCREEN_HEIGHT / 2)];
 }
 
+/**
+ * 화면 좌표(배율·이동을 이미 되돌린 값) → 그 점에서 실제로 보이는 타일.
+ *
+ * tileToScreen 의 역변환은 높이 0 을 가정한다. 그리기는 타일을 baseHeight 만큼 위로
+ * 올리므로 그대로 쓰면 높은 곳에서 한두 칸 어긋나고, 클릭한 것과 다른 타일이 잡힌다.
+ * 대신 높은 단부터 훑는다 — 화면 한 점을 「높이 h 의 지면」으로 되돌린 좌표가 실제로
+ * 높이 h 인 타일이면 그게 답이다. h 가 클수록 (col+row) 이 커지고 그리기 순서상
+ * (col+row) 이 큰 쪽이 앞에 있으므로, 위에서부터 찾으면 가려진 타일이 아니라
+ * 눈에 보이는 타일이 잡힌다.
+ *
+ * 지도 밖(playable 0) 타일은 잡히지 않는다 — 그 위를 눌렀으면 null 이다.
+ */
+export function pickTileAtScreen(
+  x: number,
+  y: number,
+  grid: Pick<IsoTileGrid, 'cols' | 'rows' | 'baseHeight' | 'playable'>,
+): { col: number; row: number } | null {
+  const { cols, rows, baseHeight, playable } = grid;
+  let maxHeight = 0;
+  for (let i = 0; i < baseHeight.length; i += 1) {
+    if (baseHeight[i] > maxHeight) maxHeight = baseHeight[i];
+  }
+  const halfW = TILE_SCREEN_WIDTH / 2;
+  const halfH = TILE_SCREEN_HEIGHT / 2;
+  for (let h = maxHeight; h >= 0; h -= 1) {
+    const yh = y + h * STEP_SCREEN_PIXELS;
+    const col = Math.round((x / halfW + yh / halfH) / 2);
+    const row = Math.round((yh / halfH - x / halfW) / 2);
+    if (col < 0 || col >= cols || row < 0 || row >= rows) continue;
+    const i = row * cols + col;
+    if (baseHeight[i] !== h) continue;
+    return playable[i] === 1 ? { col, row } : null;
+  }
+  return null;
+}
+
 // ── 3D 세계 좌표 ────────────────────────────────────────────────────────────
 // iso3d 계약: 타일은 XZ 평면 1×1, Y 가 위. 아이소 다이아몬드는 카메라가 만든다.
 //

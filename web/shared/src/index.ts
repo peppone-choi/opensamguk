@@ -155,6 +155,7 @@ export {
   CAMERA_AZIMUTH_RAD,
   HEIGHT_STEP_WORLD,
   isWater,
+  pickTileAtScreen,
   downsampleTerrain,
   levelsFromImageData,
   fillSeaEnclosedGaps,

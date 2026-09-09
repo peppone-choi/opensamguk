@@ -152,6 +152,13 @@ export function IsoMap3D({
 
   // 색 갱신만 따로 할 수 있게 씬 핸들을 남긴다.
   const tintRef = useRef<{ apply: (strength: number, mode: TintMode) => void } | null>(null);
+  // 색 인자는 씬을 다시 짓지 않는다 — 그래서 주 effect 의 의존성에 없다. 클로저로 읽으면
+  // 씬을 지을 때의 옛 값에 붙박이고, 세력색이 지형보다 늦게 도착하면(IsoWorldMap 은
+  // 그럴 수 있다) 국가색 대신 郡 인덱스 색이 그대로 남는다. 항상 최신 것을 ref 로 읽는다.
+  const paintRef = useRef(nationColorByOwner);
+  paintRef.current = nationColorByOwner;
+  const tintPropsRef = useRef({ tintStrength, tintMode });
+  tintPropsRef.current = { tintStrength, tintMode };
 
   useEffect(() => {
     const host = hostRef.current;
@@ -346,6 +353,7 @@ export function IsoMap3D({
       const white: Rgb = { r: 1, g: 1, b: 1 };
       const color = new THREE.Color();
       const applyTint = (strength: number, mode: TintMode) => {
+        const paint = paintRef.current;
         for (const { mesh, tiles } of tileMeshes) {
           for (let n = 0; n < tiles.length; n += 1) {
             const i = tiles[n];
@@ -353,7 +361,7 @@ export function IsoMap3D({
             if (playable[i] === 1 && mode !== 'none' && strength > 0 && !isWater(code[i])) {
               const key = mode === 'commandery' ? parentOwner[i] : owner[i];
               if (key >= 0) {
-                const hex = nationColorByOwner?.[key];
+                const hex = paint?.[key];
                 rgb = mixToward(hex ? normaliseNationColor(hex) : indexTint(key), strength);
               }
             }
@@ -530,7 +538,7 @@ export function IsoMap3D({
         });
       };
 
-      applyTint(tintStrength, tintMode);
+      applyTint(tintPropsRef.current.tintStrength, tintPropsRef.current.tintMode);
 
       // ── 조작: 끌어서 이동 · 휠로 확대 ────────────────────────────────
       let dragging = false;

@@ -10,6 +10,7 @@ import {
   fillSeaEnclosedGaps,
   levelsFromImageData,
   relaxCornerLattice,
+  pickTileAtScreen,
   terrainFromElevation,
   tileToScreen,
 } from '../isoTileGrid';
@@ -224,5 +225,50 @@ describe('화면·세계 기하', () => {
     // 화면 투영: 타일 폭 = √2, 세로 한 칸 = HEIGHT_STEP_WORLD·cos30°.
     const ratio = (HEIGHT_STEP_WORLD * Math.cos(Math.PI / 6)) / Math.SQRT2;
     expect(ratio).toBeCloseTo(32 / 256, 12);
+  });
+});
+
+describe('pickTileAtScreen — 높이를 감안한 집기', () => {
+  // 4×4 격자. (2,2) 한 곳만 두 단 높고 나머지는 지면이다.
+  const cols = 4;
+  const rows = 4;
+  const flat = () => {
+    const baseHeight = new Uint8Array(cols * rows);
+    const playable = new Uint8Array(cols * rows).fill(1);
+    return { cols, rows, baseHeight, playable };
+  };
+
+  it('평지에서는 지면 역변환과 같은 타일을 집는다', () => {
+    const grid = flat();
+    for (const [c, r] of [[0, 0], [3, 3], [1, 2], [2, 1]]) {
+      const [x, y] = tileToScreen(c, r);
+      expect(pickTileAtScreen(x, y, grid)).toEqual({ col: c, row: r });
+    }
+  });
+
+  it('높은 타일의 윗면을 누르면 그 타일이 잡힌다 — 높이를 무시하면 다른 타일이 잡힌다', () => {
+    const grid = flat();
+    grid.baseHeight[2 * cols + 2] = 4;
+    // 화면에서 (2,2) 윗면은 지면 위치보다 4×32px 만큼 올라가 있다.
+    const [x, y0] = tileToScreen(2, 2);
+    const y = y0 - 4 * 32;
+    expect(pickTileAtScreen(x, y, grid)).toEqual({ col: 2, row: 2 });
+    // 높이를 무시한 옛 역변환은 같은 점을 (1,1) 로 읽는다 — 한 칸 어긋난다.
+    const naiveCol = Math.round((x / 128 + y / 64) / 2);
+    const naiveRow = Math.round((y / 64 - x / 128) / 2);
+    expect({ col: naiveCol, row: naiveRow }).toEqual({ col: 1, row: 1 });
+  });
+
+  it('지도 밖(playable 0) 타일은 잡히지 않는다', () => {
+    const grid = flat();
+    grid.playable[1 * cols + 1] = 0;
+    const [x, y] = tileToScreen(1, 1);
+    expect(pickTileAtScreen(x, y, grid)).toBeNull();
+  });
+
+  it('격자 밖은 null 이다', () => {
+    const grid = flat();
+    const [x, y] = tileToScreen(-4, -4);
+    expect(pickTileAtScreen(x, y, grid)).toBeNull();
   });
 });

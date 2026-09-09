@@ -147,8 +147,10 @@ export function useIsoTileGrid(terrainUrl: string): State {
         return { ...city, col, row };
       });
 
+      // 매니페스트는 곁들이다(출처·한계 표시용). 못 받아도, 몸통이 JSON 이 아니어도
+      // 지도는 그려야 한다 — 여기서 던지면 아래 catch 가 지도 전체를 error 로 내린다.
       const elevation = manifestResponse?.ok
-        ? ((await manifestResponse.json()) as ElevationManifest)
+        ? await manifestResponse.json().then((json) => json as ElevationManifest).catch(() => null)
         : null;
 
       setState({
