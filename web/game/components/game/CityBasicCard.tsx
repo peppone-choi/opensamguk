@@ -6,19 +6,17 @@
 // 시세(trade)는 분모가 없으므로 레거시 tradeBarPercent=(trade-95)*10 을 그대로 쓰고, null 이면 막대 없이
 // 「상인 없음」만 쓴다. 도시 관직은 officer_city==이 도시 AND officer_level∈{4,3,2}.
 
-import { Gauge, Panel, SectionHeader } from '@opensamguk/ui';
+import { Gauge, Panel, SectionHeader, normaliseNationColor, rgbCss } from '@opensamguk/ui';
 import GeneralName from './GeneralName';
 import type { FrontCityInfo } from '@/lib/types';
 
-function isBrightColor(hex?: string): boolean {
-    if (!hex) return false;
-    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-    if (!m) return false;
-    const v = parseInt(m[1], 16);
-    const r = (v >> 16) & 0xff;
-    const g = (v >> 8) & 0xff;
-    const b = v & 0xff;
-    return (r * 299 + g * 587 + b * 114) / 1000 >= 128;
+// 헤더에 칠할 세력색. 지도와 **같은 함수**(normaliseNationColor)를 거친다 — DB 자유 hex 를 그대로
+// 칠하면 같은 국가가 지도에선 흐린 청회색, 이 카드에선 형광 파랑(#0000ff)으로 보인다. 시안(03 아트보드)의
+// 헤더 색도 #3f6fb5 처럼 눌린 값이지 순색이 아니다.
+function headColors(hex?: string | null): { background: string; color: string } {
+    const rgb = normaliseNationColor(hex ?? '#333333');
+    const luma = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+    return { background: rgbCss(rgb), color: luma >= 0.5 ? '#0f120f' : '#ece6d8' };
 }
 
 const num = (v: number): string => v.toLocaleString();
@@ -37,8 +35,7 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
         );
     }
 
-    const nationColor = city.nationColor ?? '#333333';
-    const headText = isBrightColor(nationColor) ? '#0f120f' : '#fff';
+    const head = headColors(city.nationColor);
     const nationLabel = city.nationId !== 0 ? `지배 국가 【 ${city.nationName ?? '-'} 】` : '공 백 지';
     const tradePercent = city.trade != null ? Math.min(100, Math.max(0, (city.trade - 95) * 10)) : null;
 
@@ -46,9 +43,10 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
         <Panel className="war-card war-card--city" aria-label="도시 정보">
             {/* 시안 03 아트보드의 32px 국가색 sec-h — 배경만 국가색이고 구조는 공유 SectionHeader 다. */}
             <SectionHeader
-                className="war-card__head war-card__head--nation war-card__head-right"style={{ backgroundColor: nationColor, color: headText }}
+                className="war-card__head war-card__head--nation war-card__head-right"
+                style={{ backgroundColor: head.background, color: head.color }}
                 title={`【${city.regionName ? `${city.regionName} | ` : ''}${city.levelName ?? `Lv.${city.level}`}】 ${city.name}`}
-                actions={<span >{nationLabel}</span>}
+                actions={<span>{nationLabel}</span>}
             />
 
             <div className="war-card__gauges">

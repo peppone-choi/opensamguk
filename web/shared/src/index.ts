@@ -201,6 +201,7 @@ export {
   indexTint,
   mixToward,
   luminancePreserving,
+  rgbCss,
   hslToRgb,
   parseHex,
   type Rgb,
