@@ -170,6 +170,7 @@ export {
   tileToWorld,
   expandRunLength,
   downsampleOwner,
+  stampSeatOwners,
   sourceCellToTile,
   type TerrainCode,
   type TerrainTiles,

@@ -14,6 +14,7 @@ import {
   RASTER_GROUP,
   buildIsoTileGrid,
   downsampleOwner,
+  stampSeatOwners,
   expandRunLength,
   sourceCellToTile,
   type IsoTileGrid,
@@ -156,12 +157,20 @@ export function useIsoTileGrid(terrainUrl: string): State {
       const srcRows = tiles._meta.rows;
       const cellCount = srcCols * srcRows;
 
-      const owner = downsampleOwner(
-        expandRunLength(tiles.owner, cellCount), srcCols, grid.cols, grid.rows, RASTER_GROUP,
+      // 다수결로 줄인 다음 治所 칸만 제 값으로 되돌린다 — 縣 경계에 붙어 선 城 이 남의
+      // 색 위에 서는 것을 막는다(stampSeatOwners 주석. 실측 162/773 → 0).
+      const ownerSource = expandRunLength(tiles.owner, cellCount);
+      const owner = stampSeatOwners(
+        downsampleOwner(ownerSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
+        ownerSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
       );
-      const parentOwner = tiles.parentOwner
-        ? downsampleOwner(
-          expandRunLength(tiles.parentOwner, cellCount), srcCols, grid.cols, grid.rows, RASTER_GROUP,
+      const parentSource = tiles.parentOwner
+        ? expandRunLength(tiles.parentOwner, cellCount)
+        : null;
+      const parentOwner = parentSource
+        ? stampSeatOwners(
+          downsampleOwner(parentSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
+          parentSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
         )
         : new Int32Array(grid.cols * grid.rows).fill(-1);
 

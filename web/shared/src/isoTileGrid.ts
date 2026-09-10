@@ -647,6 +647,49 @@ export function downsampleOwner(
   return out;
 }
 
+/**
+ * 城 이 선 칸의 주인은 **그 城 자신**이다.
+ *
+ * downsampleOwner 는 4×4 원본 셀의 다수결로 칸 주인을 정한다. 그래서 縣 경계에 바짝 붙어
+ * 선 治所는 제 칸을 이웃에게 넘긴다 — 원본 셀 해상도에서는 998/998 이 제 縣 땅 위에 서
+ * 있는데(실측), 4 배로 줄이고 나면 **773 중 162 곳(21%)** 이 남의 색 위에 서 있었다.
+ * 화면에서는 城 하나가 제 세력권 밖으로 한 칸 밀려 나간 것으로 보인다
+ * (2026-09-10 사용자 보고: 「현이 한칸씩 밀려서 밖으로 나가는 케이스가 있네?」).
+ *
+ * 다수결 뒤에 治所 칸만 제 값으로 되돌린다. 새 정보를 지어내는 게 아니라 이미 원본 셀에
+ * 적혀 있던 그 값이다 — 같은 이유로 `buildIsoTileGrid` 도 「城 이 선 칸은 뭍」을
+ * 따로 못박는다(landUnderSeats).
+ *
+ * 한 칸에 서로 다른 縣의 治所가 둘 이상 드는 자리가 실측 54 칸(城 108 곳) 있다. 칸은
+ * 하나뿐이라 색도 하나다 — **먼저 나온 治所가 이긴다**(= 낮은 province 인덱스).
+ * downsampleOwner 의 동수 규칙과 같은 방향이고, 무엇보다 결과가 결정적이다.
+ */
+export function stampSeatOwners(
+  tile: Int32Array,
+  source: Int32Array,
+  srcCols: number,
+  cols: number,
+  rows: number,
+  seat: { col: Int32Array; row: Int32Array },
+  group: number = RASTER_GROUP,
+): Int32Array {
+  const stamped = new Set<number>();
+  for (let i = 0; i < seat.col.length; i += 1) {
+    const sc = seat.col[i];
+    const sr = seat.row[i];
+    if (sc < 0 || sr < 0) continue;
+    const [c, r] = sourceCellToTile(sc, sr, group);
+    if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+    const index = r * cols + c;
+    if (stamped.has(index)) continue;
+    const value = source[sr * srcCols + sc];
+    if (value < 0) continue;
+    tile[index] = value;
+    stamped.add(index);
+  }
+  return tile;
+}
+
 /** 원본 셀 좌표(han-tiles col/row)를 타일 좌표로 옮긴다. */
 export function sourceCellToTile(
   col: number,
