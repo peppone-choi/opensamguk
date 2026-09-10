@@ -33,17 +33,52 @@ export interface CityNameInput {
 /** 「영현」·「장현」. 등급 이름이 곧 縣 이다. */
 const COUNTY_LEVELS: ReadonlySet<number> = new Set([10, 11]);
 
+/**
+ * nameCh 꼬리로 縣 임이 드러나는 행정 단위. 簡體·繁體 둘 다 온다.
+ *
+ * 侯國은 縣 한 급이다 — 續漢書 百官志 「列侯所食縣曰國」. 실측(han-world-v3): 侯國 14 곳 중
+ * 3 곳(낙평·곡양·안중)이 등급 5·6 을 달고 있어 등급 규칙으로는 안 잡힌다. 屬國은 縣 이
+ * 아니라 郡 한 급이므로(龜茲屬國·遼東屬國) 여기 넣지 않는다 — 「국」으로 뭉뚱그리면
+ * 屬國까지 縣 이 된다.
+ */
+const COUNTY_UNITS = ['县', '縣', '侯国', '侯國'] as const;
+
+/**
+ * nameCh 꼬리로 **縣 이 아님**이 드러나는 행정 단위. 등급보다 먼저 본다.
+ *
+ * 屬國은 郡 한 급이고(龜茲屬國·遼東屬國), 郡·國 도 縣 이 아니다. 등급만 보면 놓친다 —
+ * 龜茲屬國은 上郡의 城 하나라 縣 등급(장현)을 받는데, 그렇다고 「구자속국현」이라 적으면
+ * 없는 縣 을 만드는 것이다. 侯國은 위에서 먼저 걸러지므로 여기 걸리지 않는다.
+ */
+const NON_COUNTY_UNITS = ['属国', '屬國', '郡', '国', '國'] as const;
+
 /** 이 城 이 중국 郡縣制 안의 縣 인가. */
 export function isHanCounty(city: CityNameInput): boolean {
   // 郡國 밖 세력(EXTERNAL_PLACE)은 음수 번호로 온다. 縣 이 아니다.
   if (city.id < 0) return false;
   const nameCh = city.nameCh ?? '';
-  if (nameCh.endsWith('县') || nameCh.endsWith('縣')) return true;
+  if (COUNTY_UNITS.some((unit) => nameCh.endsWith(unit))) return true;
+  if (NON_COUNTY_UNITS.some((unit) => nameCh.endsWith(unit))) return false;
   return COUNTY_LEVELS.has(city.level);
 }
 
-/** 화면에 적을 이름. 縣 이면 「뭐뭐현」, 아니면 원 이름 그대로. */
+/**
+ * 게임 이름 뒤에 붙는 한정자 — 「의씨(河東郡)」·「영릉#123」.
+ *
+ * 같은 한글 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 달아 **식별자**를 유일하게
+ * 만든다(build_han_world.py build_v3 의 name_counts/qualified_counts). 실측(han-world-v3):
+ * 781 중 131 곳이 한정돼 있다(그중 6 곳은 번호).
+ *
+ * 화면에서는 뗀다 — 「의씨현(河東郡)」이 아니라 「의씨현」이다(2026-09-10 사용자 지시:
+ * 「군을 빼」). 식별은 계속 `id` 와 `name` 으로 하고 여기서 바뀌는 건 표기뿐이다.
+ * 대가는 알고 간다: 한정자를 떼면 60 개 표기가 130 城 에 겹친다(주현 4·기현 4·유현 4 …).
+ * 어느 城 인지는 눌러서 나오는 소속 郡으로 가른다.
+ */
+const QUALIFIER = /(\([^()]*\)|#\d+)$/;
+
+/** 화면에 적을 이름. 한정자를 떼고, 縣 이면 「뭐뭐현」. */
 export function cityDisplayName(city: CityNameInput): string {
-  if (!isHanCounty(city)) return city.name;
-  return city.name.endsWith('현') ? city.name : `${city.name}현`;
+  const stem = city.name.replace(QUALIFIER, '');
+  if (!isHanCounty(city)) return stem;
+  return stem.endsWith('현') ? stem : `${stem}현`;
 }

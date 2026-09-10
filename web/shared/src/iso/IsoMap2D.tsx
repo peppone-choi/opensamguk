@@ -39,6 +39,7 @@ import {
 } from './marker';
 import { normaliseNationColor, ownerTint, rgbCss, type TintMode } from './tint';
 import { cityDisplayName } from './cityName';
+import { cityIconLevel } from './cityIconLevel';
 import { isExternalPlace, type IsoBattlefieldMarker, type PlacedCity } from './placeGameCities';
 
 const SPRITE_BASE = '/sprites/iso2d';
@@ -459,7 +460,10 @@ export function IsoMap2D({
           sx: view.panX + x * view.scale,
           sy: view.panY + y * view.scale,
         });
-        const tier = BUILDING_TIERS.find((t) => city.level >= t.from && city.level <= t.to);
+        // 城 등급이 아니라 **그림 등급**으로 고른다 — v3 가 이민족 자리에 물려준 漢 縣이
+        // 천막으로 서는 걸 막는다(cityIconLevel.ts).
+        const iconLevel = cityIconLevel(city);
+        const tier = BUILDING_TIERS.find((t) => iconLevel >= t.from && iconLevel <= t.to);
         if (!tier) continue;
         const sprite = sprites.get(`objects/${tier.file}`);
         if (!sprite) continue;

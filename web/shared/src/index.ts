@@ -170,6 +170,7 @@ export {
   tileToWorld,
   expandRunLength,
   downsampleOwner,
+  stampSeatOwners,
   sourceCellToTile,
   type TerrainCode,
   type TerrainTiles,
@@ -223,6 +224,30 @@ export {
   externalPlaceLevel,
   type ExternalPlaceInput,
 } from './iso/externalPlaceTier';
+
+export {
+  cityIconLevel,
+  type CityIconInput,
+} from './iso/cityIconLevel';
+export {
+  PASS_LEVEL,
+  STRATEGIC_PASSES,
+  placeStrategicPasses,
+  type StrategicPass,
+} from './iso/strategicPasses';
+export {
+  FRONTIER_COUNTIES,
+  FRONTIER_COUNTY_LEVEL,
+  frontierCountyDisplayName,
+  placeFrontierCounties,
+  type FrontierCounty,
+} from './iso/frontierCounties';
+
+export {
+  CITY_SEED_RESEATS,
+  applyCitySeedReseats,
+  type CitySeedReseat,
+} from './iso/citySeedReseat';
 export {
   drawBattlefieldMark,
   drawCityFlag,

@@ -117,6 +117,12 @@ export interface HanTiles {
     seat: boolean;
     col: number;
     row: number;
+    /**
+     * CHGIS 실측 경위도. col/row 와 **다른 축**이다 — col/row 는 영역 래스터에 맞춰
+     * 옮겨 심은 씨앗이라 여기서 밀려 있을 수 있다(citySeedReseat.ts).
+     */
+    lat: number;
+    lon: number;
   }[];
 }
 

@@ -23,6 +23,7 @@ import {
   TERRAIN,
   TERRAIN_ASSET_NAME,
   cityDisplayName,
+  cityIconLevel,
   cityLabelBox,
   drawBattlefieldMark,
   drawCityFlag,
@@ -500,9 +501,11 @@ export function IsoMap3D({
       for (const tier of BUILDING_TIERS) {
         const geometry = loaded.building.get(tier.name);
         if (!geometry) continue;
-        const tierCities = cities.filter(
-          (city) => city.level >= tier.from && city.level <= tier.to && inGrid(city),
-        );
+        // 城 등급이 아니라 **그림 등급**으로 고른다 — 2D 와 같은 표를 쓴다(cityIconLevel.ts).
+        const tierCities = cities.filter((city) => {
+          const iconLevel = cityIconLevel(city);
+          return iconLevel >= tier.from && iconLevel <= tier.to && inGrid(city);
+        });
         for (const seat of [true, false]) {
           const placed = tierCities.filter((city) => city.seat === seat);
           if (placed.length === 0) continue;

@@ -213,10 +213,12 @@ class ScenarioImporterIT {
         assertEquals(122, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
         assertEquals(114, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
-        // 서성(id 75, 소도시) 은 1010 지배표에 없는 郡이라 공백지다: pop 100000·wall 2000·trust 50.
+        // 서성(id 75, 西城县) 은 1010 지배표에 없어 공백지다: pop 20000·wall 1000·trust 50.
+        // 漢中郡의 縣이지 郡이 아니다 — 등급을 legacy 780 번호에서 물려받던 동안 소도시(5)로
+        // 서 있었고, 郡國志 戶口로 다시 세운 뒤 장현(11)이 됐다(build_han_world.py v3_level).
         val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE id = 75")
-        assertEquals(100000, (sd["pop"] as Number).toInt())
-        assertEquals(2000, (sd["wall"] as Number).toInt())
+        assertEquals(20000, (sd["pop"] as Number).toInt())
+        assertEquals(1000, (sd["wall"] as Number).toInt())
         assertEquals(50.0, (sd["trust"] as Number).toDouble())
         // 점령지는 70%max 불변(parity). 낙양(id 46): pop=ratio70(754800)=528360, trust 80.
         val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE id = 46")
