@@ -26,6 +26,7 @@
 import type { IsoMapData } from './useIsoTileGrid';
 import { RASTER_GROUP } from '../isoTileGrid';
 import { isOwnedNationVisual } from '../nationVisual';
+import { externalPlaceLevel } from './externalPlaceTier';
 import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanMapCanvas';
 
 /** 배치 입력. MapPreviewCity 에서 필요한 만큼만 뽑은 모양이다. */
@@ -231,7 +232,9 @@ function placeExternalPlaces(
     placed.push({
       id: -(index + 1),
       name: city.name,
-      level: city.level,
+      // 지형이 실어 보낸 level 은 자리표시 4 다 — 그대로 쓰면 백제국도 흉노도 같은
+      // 이민족 야영으로 선다. 행정 계통으로 갈라 세운다(externalPlaceTier.ts 참조).
+      level: externalPlaceLevel(city),
       nationId: 0,
       col,
       row,
