@@ -20,6 +20,7 @@ import {
   type IsoTileGrid,
 } from '../isoTileGrid';
 import type { BattlefieldMapProjection, HanTiles } from '../HanMapCanvas';
+import { applyCitySeedReseats } from './citySeedReseat';
 
 export const LEVEL_PNG_URL = '/map/elevation/han-world-v3-levels.png';
 export const ELEVATION_MANIFEST_URL = '/map/elevation/manifest.json';
@@ -146,6 +147,11 @@ export function useIsoTileGrid(terrainUrl: string): State {
       ]);
       if (!tilesResponse.ok) throw new Error(`지형을 못 받았다: ${tilesResponse.status}`);
       const tiles = (await tilesResponse.json()) as HanTiles;
+
+      // 제 경위도에서 크게 밀려 앉은 城 을 제 영역 안으로 먼저 되돌린다 — 于山國이
+      // 울릉도 대신 오키 제도에 서 있었다(citySeedReseat.ts). 아래 모든 계산이 이
+      // col/row 를 읽으므로 여기서 한 번만 고친다.
+      applyCitySeedReseats(tiles.cities);
 
       // 治所 좌표를 격자보다 먼저 편다 — buildIsoTileGrid 가 「城 이 선 칸은 뭍」을
       // 적용하는 데 이 값을 쓴다(landUnderSeats).

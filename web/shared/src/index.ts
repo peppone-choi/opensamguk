@@ -236,6 +236,11 @@ export {
   type StrategicPass,
 } from './iso/strategicPasses';
 export {
+  CITY_SEED_RESEATS,
+  applyCitySeedReseats,
+  type CitySeedReseat,
+} from './iso/citySeedReseat';
+export {
   drawBattlefieldMark,
   drawCityFlag,
   drawCityName,
