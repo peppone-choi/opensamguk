@@ -69,19 +69,20 @@ describe('cityDisplayName', () => {
   });
 
   // 같은 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 단다(han-world-v3 781 중 131 곳).
-  // 縣 을 그냥 뒤에 붙이면 「의씨(河東郡)현」이 되어 한정자가 이름 한가운데 낀다.
-  it('한정자가 붙은 이름은 줄기에만 현을 붙인다', () => {
-    expect(cityDisplayName(city(2, '의씨(河東郡)', 11, '猗氏县'))).toBe('의씨현(河東郡)');
-    expect(cityDisplayName(city(1, '장안(京兆尹)', 9, '长安县'))).toBe('장안현(京兆尹)');
-    expect(cityDisplayName(city(222, '장(東平國)', 5, '章县'))).toBe('장현(東平國)');
+  // 그건 식별자를 유일하게 만드는 장치고, 화면에서는 뗀다(2026-09-10 「군을 빼」).
+  it('한정자를 떼고 현을 붙인다', () => {
+    expect(cityDisplayName(city(2, '의씨(河東郡)', 11, '猗氏县'))).toBe('의씨현');
+    expect(cityDisplayName(city(1, '장안(京兆尹)', 9, '长安县'))).toBe('장안현');
+    expect(cityDisplayName(city(222, '장(東平國)', 5, '章县'))).toBe('장현');
+    expect(cityDisplayName(city(311, '영릉#123', 11, '零陵县'))).toBe('영릉현');
   });
 
-  it('한정자가 붙어도 줄기가 이미 현이면 두 번 붙이지 않는다', () => {
-    expect(cityDisplayName(city(507, '문안현(涿郡)', 11, '文安县'))).toBe('문안현(涿郡)');
+  it('한정자를 떼고 나서 이미 현이면 두 번 붙이지 않는다', () => {
+    expect(cityDisplayName(city(507, '문안현(涿郡)', 11, '文安县'))).toBe('문안현');
   });
 
-  it('縣 이 아니면 한정자를 건드리지 않는다', () => {
-    expect(cityDisplayName(city(199, '감릉군(冀州)', 6, '甘陵郡'))).toBe('감릉군(冀州)');
+  it('縣 이 아니어도 한정자는 뗀다', () => {
+    expect(cityDisplayName(city(199, '감릉군(冀州)', 6, '甘陵郡'))).toBe('감릉군');
   });
 });
 
