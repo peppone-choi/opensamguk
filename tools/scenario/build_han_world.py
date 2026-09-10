@@ -71,6 +71,7 @@ OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
+ADMIN_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.
 HEIGHT = 610          # 700 * 669/768 반올림 — 격자 비율 유지.
@@ -241,6 +242,54 @@ def che_level_shares() -> list[float]:
     n = [sum(1 for c in che["cities"] if c["level"] == LEVEL_ID[lv]) for lv in HOUSEHOLD_LEVELS]
     total = sum(n)
     return [sum(n[:k]) / total for k in (1, 2, 3)]
+
+
+# --- 郡國志 戶口 — 커밋된 원장에서 읽는다 --------------------------------------
+#
+# v2 경로(build)는 `data/map/junguozhi.json` 을 읽는데 그 파일은 .gitignore 대상이라
+# 저장소에도 CI 에도 없다(data/map/* 통째로 무시). v3 는 CI 에서도 --check 가 돌아야
+# 하므로 같은 숫자를 **커밋된** 원장에서 얻는다 — `administrative-units.json` 의
+# 105 群 evidence 인용문이 郡國志 본문("…城，永和五年戶二十萬八千四百八十六，口…")을
+# 그대로 담고 있고, 縣 수는 `declaredCities` 로 이미 파싱돼 있다.
+#
+# 지어낸 경로가 아니라 **같은 사료의 다른 사본**이다. 검증: 이 표로 v2 han.json 의
+# 등급을 다시 계산하면 郡治 172 중 165 가 그대로 맞고(나머지 7 은 郡國 밖 세력이라
+# 戶數 경로를 타지 않는다), 縣 등급은 80/80 이 전부 맞는다 — tests/test_build_han_world_v3.py.
+
+_CN_DIGITS = {"〇": 0, "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
+              "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
+_CN_UNITS = {"十": 10, "百": 100, "千": 1000}
+
+
+def parse_han_numeral(text: str) -> int | None:
+    """「二十萬八千四百八十六」 → 208486. 못 읽으면 None — 짐작하지 않는다."""
+    total = section = digit = 0
+    for ch in text:
+        if ch in _CN_DIGITS:
+            digit = _CN_DIGITS[ch]
+        elif ch in _CN_UNITS:
+            section += (digit or 1) * _CN_UNITS[ch]
+            digit = 0
+        elif ch in "萬万":
+            total += (section + digit or 1) * 10000
+            section = digit = 0
+        else:
+            return None
+    return total + section + digit
+
+
+def junguozhi_groups() -> dict[str, dict[str, int | None]]:
+    """郡國志 群 이름 → {households, counties}. 戶數가 안 적힌 群은 households=None."""
+    catalog = json.loads(ADMIN_UNITS.read_text(encoding="utf-8"))
+    out: dict[str, dict[str, int | None]] = {}
+    for group in catalog["groups"]:
+        quote = " ".join(item.get("quote", "") for item in group.get("evidence", []))
+        match = re.search(r"戶([一二三四五六七八九十百千萬万〇零]+)", quote)
+        out[group["canonicalGroup"]] = {
+            "households": parse_han_numeral(match.group(1)) if match else None,
+            "counties": group.get("declaredCities"),
+        }
+    return out
 
 
 def che_max_by_level() -> dict[str, dict[str, int]]:
@@ -911,6 +960,43 @@ def build_v3() -> tuple[str, str, str, str]:
         connections[a].add(b)
         connections[b].add(a)
 
+    # --- 등급·능력치 ---------------------------------------------------------
+    #
+    # legacy 780 판에서 **번호로** 물려받으면 안 되는 세 칸이다. v3 는 같은 번호에 다른
+    # 城을 앉힌 자리가 101 곳(legacyDisposition=REPLACED)이고, 郡 자체도 172 → 100 으로
+    # 줄었다. 그래서 물려받은 level 은 「그 번호가 옛 세계에서 무엇이었는가」를 가리킨다.
+    #
+    # 실측(2026-09-10, 고치기 전): 縣 704 곳 중 93 곳이 郡 등급(소 79·중 10·대 4)을,
+    # 7 곳이 이민족 등급('이')을 달고 있었다 — 익주군 곡창현이 유주 烏桓의 등급과
+    # 능력치를 그대로 쓰는 식이다. 반대로 郡治 77 중 2 곳은 縣 등급을 달고 있었다.
+    #
+    # 규칙은 v2 와 같은 사료 규칙이다(level_of · county_level 주석 참조). 戶口만 커밋된
+    # 원장에서 읽는다 — junguozhi_groups() 주석.
+    groups = junguozhi_groups()
+    v3_maxes = che_max_by_level()
+    thresholds = level_thresholds(
+        [row["households"] for row in groups.values() if row["households"]]
+    )
+
+    def v3_level(parent_ch: str, is_seat: bool) -> str:
+        group = groups.get(parent_ch) or {}
+        if not is_seat:
+            # 續漢書 百官志 「萬戶以上為令，不滿為長」. 縣 개별 戶數는 사료에 없어
+            # 郡戶 ÷ 縣수로 경계에 댄다(v2 county_level 과 같은 한계).
+            households, counties = group.get("households"), group.get("counties")
+            if households and counties and households // counties >= LING_HOUSEHOLDS:
+                return "영현"
+            return "장현"
+        if parent_ch in CAPITALS:
+            return "경"
+        if parent_ch in FRONTIER:
+            households = FRONTIER[parent_ch][1]
+        else:
+            households = group.get("households")
+        if not households:
+            return "소"
+        return HOUSEHOLD_LEVELS[sum(households > t for t in thresholds)]
+
     legacy_by_id = {row["id"]: row for row in legacy["cities"]}
     legacy_jinan = next(
         row for row in legacy["cities"]
@@ -963,6 +1049,10 @@ def build_v3() -> tuple[str, str, str, str]:
             "nameCh": physical["nameCh"],
             "isSeat": node["seatRole"] == "COMMANDERY_SEAT",
         }
+        level_name = v3_level(parent_ch, node["seatRole"] == "COMMANDERY_SEAT")
+        out["level"] = LEVEL_ID[level_name]
+        out["max"] = dict(v3_maxes[level_name])
+        out["initial"] = dict(zip(STAT_KEYS, BUILD_INIT[level_name]))
         province = province_by_city_index.get(city_index_by_place[place])
         if province is not None:
             province_index, province_record = province

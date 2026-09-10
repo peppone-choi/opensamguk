@@ -102,15 +102,44 @@ describe('han-world-v3 의 meta.nameCh', () => {
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
+    // 縣 등급(10·11) 밖 = 郡治 77 곳. 예전에는 175 였다 — 縣 93 곳이 郡 등급을
+    // 물려받고 있었기 때문이다(build_han_world.build_v3 에서 고쳤다).
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11);
-    expect(outside.length).toBe(175);
+    expect(outside.length).toBe(77);
     const rest = outside
       .filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
     // 縣 이 아닌 채로 남는 것은 縣 기록이 없는 邊境 郡과 屬國뿐이다. 「낙랑현」을 만들지 않는다.
     expect(rest).toEqual(
-      ['구자속국', '교지군', '구진군', '낙랑군', '요동군', '요동속국', '일남군', '현도군'].sort(),
+      ['교지군', '구진군', '낙랑군', '요동군', '요동속국', '일남군', '현도군'].sort(),
     );
+  });
+
+  it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
+    // 龜茲屬國은 上郡의 城 하나라 縣 등급(장현)을 받는다. 등급만 보면 「구자속국현」이
+    // 되어 없는 縣 을 만든다 — nameCh 꼬리가 등급보다 앞선다.
+    const gucha = world.cities.find((c) => c.meta.nameCh === '龜茲屬國')!;
+    expect(gucha.level).toBe(11);
+    expect(isHanCounty({
+      id: gucha.id, name: gucha.name, level: gucha.level, nameCh: gucha.meta.nameCh,
+    })).toBe(false);
+  });
+
+  it('縣 이 아닌 꼬리를 단 城 은 한 곳도 縣 으로 잡히지 않는다', () => {
+    // 侯國은 縣 한 급이라 뺀다 — 續漢書 百官志 「列侯所食縣曰國」.
+    const tails = ['属国', '屬國', '郡', '国', '國'];
+    const sample = world.cities.filter(
+      (c) => tails.some((t) => c.meta.nameCh.endsWith(t))
+        && !c.meta.nameCh.endsWith('侯国') && !c.meta.nameCh.endsWith('侯國'),
+    );
+    const wrong = sample
+      .filter((c) => isHanCounty({
+        id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
+      }))
+      .map((c) => c.meta.nameCh);
+    expect(wrong).toEqual([]);
+    // 0 건이 「조회가 죽었다」가 아님을 같이 못박는다.
+    expect(sample.length).toBeGreaterThan(5);
   });
 });

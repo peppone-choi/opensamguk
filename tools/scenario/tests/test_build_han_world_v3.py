@@ -80,8 +80,15 @@ class HanWorldV3Test(unittest.TestCase):
         for node in retained:
             city_id = node["numericCityId"]
             self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
-            for field in ("level", "max", "initial"):
-                self.assertEqual(legacy_by_id[city_id][field], world_by_id[city_id][field], node)
+        # level·max·initial 은 더 이상 legacy 780 판에서 물려받지 않는다. 물려받으면
+        # 「그 번호가 옛 세계에서 무엇이었는가」가 등급이 되어, 郡 이 172 → 100 으로
+        # 줄면서 縣 704 중 93 이 郡 등급을 달고 있었다. 지금은 選定의 seatRole 과
+        # 郡國志 戶口에서 다시 세운다 —
+        # test_v3_levels_follow_seat_role_and_carry_matching_stats 가 그쪽을 건다.
+        self.assertNotEqual(
+            [legacy_by_id[node["numericCityId"]]["level"] for node in retained],
+            [world_by_id[node["numericCityId"]]["level"] for node in retained],
+        )
 
     def test_county_adjacency_endpoints_are_spatial_province_indices(self) -> None:
         tiles = {
@@ -214,6 +221,134 @@ class HanWorldV3Test(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_junguozhi_household_table_reproduces_the_v2_world_it_replaces(self) -> None:
+        """커밋된 원장에서 읽은 戶口가 junguozhi.json 과 같은 답을 낸다.
+
+        `data/map/junguozhi.json` 은 .gitignore 대상이라 CI 에 없다. v3 는 대신
+        `administrative-units.json` 의 郡國志 인용문에서 戶數를, `declaredCities` 에서
+        縣 수를 읽는다. 그 표가 v2 han.json 의 등급을 그대로 재현하는지 본다 —
+        v2 는 junguozhi.json 으로 만들어진 세계라, 맞으면 두 사본이 같다는 뜻이다.
+
+        검사와 대상이 출처를 공유하지 않는다: 이쪽은 위키문헌 코퍼스 인용,
+        저쪽은 ctext HTML 파싱이다.
+        """
+        groups = build_han_world.junguozhi_groups()
+        thresholds = build_han_world.level_thresholds(
+            [row["households"] for row in groups.values() if row["households"]]
+        )
+        levels = build_han_world.LEVELS
+        v2 = json.loads((ROOT / "infra/src/main/resources/map/han.json").read_text())
+
+        seat_hits = 0
+        seat_mismatch: set[str] = set()
+        county_hits = county_missing = 0
+        for city in v2["cities"]:
+            jun = city["meta"]["junCh"]
+            group = groups.get(jun) or {}
+            actual = levels[city["level"] - 1]
+            if city["meta"]["isSeat"]:
+                if jun in build_han_world.CAPITALS:
+                    expected = "경"
+                else:
+                    households = (
+                        build_han_world.FRONTIER[jun][1]
+                        if jun in build_han_world.FRONTIER
+                        else group.get("households")
+                    )
+                    expected = (
+                        build_han_world.HOUSEHOLD_LEVELS[
+                            sum(households > t for t in thresholds)
+                        ] if households else "소"
+                    )
+                seat_hits += 1
+                if expected != actual:
+                    seat_mismatch.add(jun)
+            else:
+                households, counties = group.get("households"), group.get("counties")
+                if not (households and counties):
+                    county_missing += 1
+                    continue
+                expected = (
+                    "영현"
+                    if households // counties >= build_han_world.LING_HOUSEHOLDS
+                    else "장현"
+                )
+                county_hits += 1
+                self.assertEqual(expected, actual, jun)
+
+        # 郡治 172 중 어긋나는 것은 郡國 밖 세력 7 곳뿐이다 — 그쪽은 戶數가 아니라
+        # 治所의 kind(EXTERNAL_PLACE)로 '이' 등급을 받는 가지라 이 표와 무관하다.
+        self.assertEqual(172, seat_hits)
+        self.assertEqual(
+            {"山越", "哀牢", "白馬氐", "西羌", "南匈奴", "烏桓", "鮮卑"}, seat_mismatch,
+        )
+        # 재현되는 표본이 실제로 크다는 것을 같이 못박는다 — 0 건이 통과로 읽히면 안 된다.
+        self.assertGreater(county_hits, 500)
+        self.assertLess(county_missing, 60)
+
+    def test_v3_levels_follow_seat_role_and_carry_matching_stats(self) -> None:
+        """郡治는 郡 등급, 縣은 縣 등급. max·initial 도 그 등급의 값이다.
+
+        고치기 전 실측(2026-09-10): 縣 704 중 93 이 郡 등급(소 79·중 10·대 4)을,
+        7 이 이민족 등급('이')을 legacy 780 판에서 번호째 물려받고 있었고, 郡治 77 중
+        2 는 거꾸로 縣 등급이었다.
+        """
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        seat_role = {node["numericCityId"]: node["seatRole"] for node in selection}
+        levels = build_han_world.LEVELS
+        maxes = build_han_world.che_max_by_level()
+
+        commandery_grades = {"소", "중", "대", "특", "경"}
+        county_grades = {"영현", "장현"}
+        seats = counties = 0
+        for city in world["cities"]:
+            name = levels[city["level"] - 1]
+            if seat_role[city["id"]] == "COMMANDERY_SEAT":
+                self.assertIn(name, commandery_grades, city["name"])
+                seats += 1
+            else:
+                self.assertIn(name, county_grades, city["name"])
+                counties += 1
+            self.assertEqual(maxes[name], city["max"], city["name"])
+            self.assertEqual(
+                dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name])),
+                city["initial"], city["name"],
+            )
+        self.assertEqual(77, seats)
+        self.assertEqual(704, counties)
+        # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
+        self.assertNotIn(4, {city["level"] for city in world["cities"]})
+
+    def test_23_commanderies_still_have_no_seat_in_the_world(self) -> None:
+        """아직 못 고친 결함을 숫자로 못박아 둔다.
+
+        v3 의 郡 100 중 23 은 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
+        東郡 濮陽 처럼 CHGIS 에 점 자체가 없는 곳이 있고, 齊國 臨淄(85234) ·
+        泰山郡 奉高(85697) · 東海郡 郯城(85649) · 吳郡 吳(40404) · 魯國 魯(45180) ·
+        鉅鹿郡 廮陶(87061) 처럼 지형에는 있는데 選定에서 빠진 곳이 있다.
+        치소를 새로 세우는 것은 選定 원장을 고치는 별건이라 여기서는 현황만 고정한다.
+        """
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        by_parent: dict[str, list[str]] = defaultdict(list)
+        for node in selection:
+            by_parent[node["parentName"]].append(node["seatRole"])
+        seatless = sorted(
+            parent for parent, roles in by_parent.items()
+            if "COMMANDERY_SEAT" not in roles
+        )
+        self.assertEqual(100, len(by_parent))
+        self.assertEqual(23, len(seatless))
+        self.assertIn("太原郡", seatless)
+        self.assertIn("齊國", seatless)
+
 
 
 if __name__ == "__main__":

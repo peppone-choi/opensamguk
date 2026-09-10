@@ -381,23 +381,23 @@
       "name": "호택",
       "x": 337,
       "y": 197,
-      "level": 5,
+      "level": 11,
       "region": 1,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         8,
@@ -655,23 +655,23 @@
       "name": "신안",
       "x": 451,
       "y": 340,
-      "level": 5,
+      "level": 11,
       "region": 1,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         542
@@ -3340,23 +3340,23 @@
       "name": "서성",
       "x": 283,
       "y": 252,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         5,
@@ -3427,23 +3427,23 @@
       "name": "익양(汝南郡)",
       "x": 383,
       "y": 263,
-      "level": 5,
+      "level": 10,
       "region": 2,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         82,
@@ -3645,23 +3645,23 @@
       "name": "기사",
       "x": 392,
       "y": 264,
-      "level": 11,
+      "level": 10,
       "region": 2,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         77,
@@ -4270,23 +4270,23 @@
       "name": "곡양(沛國)",
       "x": 424,
       "y": 242,
-      "level": 10,
+      "level": 11,
       "region": 2,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         109,
@@ -4315,23 +4315,23 @@
       "name": "초",
       "x": 396,
       "y": 229,
-      "level": 10,
+      "level": 11,
       "region": 2,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         81,
@@ -4452,23 +4452,23 @@
       "name": "건평",
       "x": 449,
       "y": 382,
-      "level": 10,
+      "level": 11,
       "region": 2,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         553
@@ -4582,23 +4582,23 @@
       "name": "척장",
       "x": 384,
       "y": 173,
-      "level": 10,
+      "level": 11,
       "region": 3,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         188,
@@ -6481,23 +6481,23 @@
       "name": "양안",
       "x": 366,
       "y": 251,
-      "level": 5,
+      "level": 10,
       "region": 2,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         89,
@@ -6523,23 +6523,23 @@
       "name": "무극",
       "x": 376,
       "y": 150,
-      "level": 6,
+      "level": 11,
       "region": 3,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         177,
@@ -7450,23 +7450,23 @@
       "name": "하박",
       "x": 394,
       "y": 151,
-      "level": 6,
+      "level": 11,
       "region": 3,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         171,
@@ -7721,23 +7721,23 @@
       "name": "신도(安平國)",
       "x": 393,
       "y": 158,
-      "level": 11,
+      "level": 6,
       "region": 3,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
+        "security": 6000,
+        "defence": 8100,
+        "wall": 8000
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 3000,
+        "wall": 3000
       },
       "connections": [
         168,
@@ -8394,23 +8394,23 @@
       "name": "광평",
       "x": 382,
       "y": 171,
-      "level": 5,
+      "level": 11,
       "region": 3,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         103,
@@ -8436,23 +8436,23 @@
       "name": "동무성",
       "x": 397,
       "y": 165,
-      "level": 5,
+      "level": 10,
       "region": 3,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         168,
@@ -8921,23 +8921,23 @@
       "name": "광천",
       "x": 398,
       "y": 159,
-      "level": 6,
+      "level": 10,
       "region": 3,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         172,
@@ -9146,23 +9146,23 @@
       "name": "범",
       "x": 401,
       "y": 190,
-      "level": 5,
+      "level": 11,
       "region": 4,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         250,
@@ -9419,23 +9419,23 @@
       "name": "낙평",
       "x": 396,
       "y": 180,
-      "level": 6,
+      "level": 11,
       "region": 4,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         203,
@@ -9909,23 +9909,23 @@
       "name": "장(東平國)",
       "x": 407,
       "y": 190,
-      "level": 5,
+      "level": 10,
       "region": 4,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         248,
@@ -11022,23 +11022,23 @@
       "name": "고평",
       "x": 412,
       "y": 204,
-      "level": 10,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         238,
@@ -11246,23 +11246,23 @@
       "name": "연",
       "x": 372,
       "y": 202,
-      "level": 7,
+      "level": 11,
       "region": 4,
       "max": {
-        "population": 486200,
-        "agriculture": 10000,
-        "commerce": 9800,
-        "security": 8000,
-        "defence": 10000,
-        "wall": 9900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 150000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 4000,
-        "wall": 4000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         257,
@@ -11695,23 +11695,23 @@
       "name": "축기",
       "x": 448,
       "y": 209,
-      "level": 5,
+      "level": 10,
       "region": 5,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         246,
@@ -12054,23 +12054,23 @@
       "name": "광척",
       "x": 417,
       "y": 212,
-      "level": 11,
+      "level": 10,
       "region": 5,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         111,
@@ -12763,23 +12763,23 @@
       "name": "진류",
       "x": 376,
       "y": 213,
-      "level": 7,
+      "level": 8,
       "region": 4,
       "max": {
-        "population": 486200,
-        "agriculture": 10000,
-        "commerce": 9800,
-        "security": 8000,
-        "defence": 10000,
-        "wall": 9900
+        "population": 620500,
+        "agriculture": 12000,
+        "commerce": 12300,
+        "security": 10000,
+        "defence": 11700,
+        "wall": 12200
       },
       "initial": {
         "population": 150000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 4000,
-        "wall": 4000
+        "defence": 5000,
+        "wall": 5000
       },
       "connections": [
         53,
@@ -13890,23 +13890,23 @@
       "name": "곡양(下邳國)",
       "x": 454,
       "y": 228,
-      "level": 5,
+      "level": 11,
       "region": 5,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         300,
@@ -14283,23 +14283,23 @@
       "name": "안덕",
       "x": 412,
       "y": 163,
-      "level": 11,
+      "level": 10,
       "region": 6,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         162,
@@ -14597,23 +14597,23 @@
       "name": "난릉",
       "x": 438,
       "y": 212,
-      "level": 7,
+      "level": 10,
       "region": 5,
       "max": {
-        "population": 486200,
-        "agriculture": 10000,
-        "commerce": 9800,
-        "security": 8000,
-        "defence": 10000,
-        "wall": 9900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 150000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 4000,
-        "wall": 4000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         246,
@@ -14914,23 +14914,23 @@
       "name": "박창",
       "x": 435,
       "y": 166,
-      "level": 10,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         321,
@@ -14960,23 +14960,23 @@
       "name": "동완",
       "x": 446,
       "y": 191,
-      "level": 5,
+      "level": 11,
       "region": 5,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         269,
@@ -16908,23 +16908,23 @@
       "name": "이",
       "x": 441,
       "y": 164,
-      "level": 10,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         321,
@@ -16952,23 +16952,23 @@
       "name": "천승",
       "x": 441,
       "y": 157,
-      "level": 10,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         378,
@@ -16995,23 +16995,23 @@
       "name": "수광",
       "x": 448,
       "y": 166,
-      "level": 10,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         340,
@@ -17039,23 +17039,23 @@
       "name": "익",
       "x": 448,
       "y": 171,
-      "level": 10,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         340,
@@ -17083,23 +17083,23 @@
       "name": "불기",
       "x": 474,
       "y": 182,
-      "level": 5,
+      "level": 11,
       "region": 6,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         350,
@@ -17482,23 +17482,23 @@
       "name": "서안",
       "x": 438,
       "y": 170,
-      "level": 6,
+      "level": 10,
       "region": 6,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         321,
@@ -18315,23 +18315,23 @@
       "name": "음",
       "x": 325,
       "y": 256,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         413,
@@ -19405,23 +19405,23 @@
       "name": "등",
       "x": 334,
       "y": 263,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         419,
@@ -19450,23 +19450,23 @@
       "name": "채양",
       "x": 331,
       "y": 264,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         411,
@@ -19494,23 +19494,23 @@
       "name": "안중",
       "x": 337,
       "y": 253,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         412,
@@ -19538,23 +19538,23 @@
       "name": "축양",
       "x": 320,
       "y": 257,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         411,
@@ -20921,23 +20921,23 @@
       "name": "남향",
       "x": 265,
       "y": 262,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         575
@@ -20962,23 +20962,23 @@
       "name": "장릉(南陽郡)",
       "x": 345,
       "y": 265,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         420,
@@ -21005,23 +21005,23 @@
       "name": "기춘",
       "x": 388,
       "y": 302,
-      "level": 5,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         459,
@@ -21050,23 +21050,23 @@
       "name": "양양",
       "x": 335,
       "y": 265,
-      "level": 5,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         409,
@@ -21093,23 +21093,23 @@
       "name": "사선",
       "x": 371,
       "y": 291,
-      "level": 5,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         399,
@@ -22858,23 +22858,23 @@
       "name": "합비",
       "x": 425,
       "y": 272,
-      "level": 6,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         510,
@@ -22903,23 +22903,23 @@
       "name": "주(江夏郡)",
       "x": 386,
       "y": 295,
-      "level": 7,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 486200,
-        "agriculture": 10000,
-        "commerce": 9800,
-        "security": 8000,
-        "defence": 10000,
-        "wall": 9900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 150000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 4000,
-        "wall": 4000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         458,
@@ -23290,23 +23290,23 @@
       "name": "계양",
       "x": 339,
       "y": 406,
-      "level": 5,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         440,
@@ -23335,23 +23335,23 @@
       "name": "함광",
       "x": 351,
       "y": 409,
-      "level": 4,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
         "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 1000,
-        "wall": 1000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         440,
@@ -23379,23 +23379,23 @@
       "name": "하채",
       "x": 412,
       "y": 252,
-      "level": 6,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         109,
@@ -23787,23 +23787,23 @@
       "name": "잔릉",
       "x": 335,
       "y": 303,
-      "level": 5,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         398,
@@ -23831,23 +23831,23 @@
       "name": "충",
       "x": 298,
       "y": 317,
-      "level": 5,
+      "level": 11,
       "region": 7,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         448,
@@ -24423,23 +24423,23 @@
       "name": "성덕",
       "x": 420,
       "y": 259,
-      "level": 5,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         513,
@@ -24468,23 +24468,23 @@
       "name": "서곡양",
       "x": 432,
       "y": 256,
-      "level": 5,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         308,
@@ -25026,23 +25026,23 @@
       "name": "평아",
       "x": 420,
       "y": 253,
-      "level": 10,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         96,
@@ -25246,23 +25246,23 @@
       "name": "파양",
       "x": 415,
       "y": 322,
-      "level": 5,
+      "level": 10,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         504,
@@ -25289,21 +25289,21 @@
       "name": "단양",
       "x": 446,
       "y": 273,
-      "level": 4,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
-        "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
         "defence": 1000,
         "wall": 1000
       },
@@ -25335,23 +25335,23 @@
       "name": "탕거",
       "x": 250,
       "y": 285,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         573,
@@ -25380,23 +25380,23 @@
       "name": "환",
       "x": 409,
       "y": 293,
-      "level": 5,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         509,
@@ -25813,23 +25813,23 @@
       "name": "구장",
       "x": 487,
       "y": 321,
-      "level": 5,
+      "level": 11,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         536,
@@ -26088,23 +26088,23 @@
       "name": "재동",
       "x": 218,
       "y": 273,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         583,
@@ -26214,23 +26214,23 @@
       "name": "강양",
       "x": 222,
       "y": 326,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         572,
@@ -26256,23 +26256,23 @@
       "name": "양선",
       "x": 464,
       "y": 278,
-      "level": 5,
+      "level": 10,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         500,
@@ -26301,23 +26301,23 @@
       "name": "교양",
       "x": 405,
       "y": 329,
-      "level": 5,
+      "level": 10,
       "region": 8,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         560,
@@ -26602,23 +26602,23 @@
       "name": "어복",
       "x": 291,
       "y": 284,
-      "level": 11,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         404,
@@ -26811,23 +26811,23 @@
       "name": "점강",
       "x": 236,
       "y": 305,
-      "level": 11,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         570,
@@ -26933,23 +26933,23 @@
       "name": "자중",
       "x": 218,
       "y": 310,
-      "level": 7,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 486200,
-        "agriculture": 10000,
-        "commerce": 9800,
-        "security": 8000,
-        "defence": 10000,
-        "wall": 9900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 150000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 4000,
-        "wall": 4000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         586,
@@ -27151,23 +27151,23 @@
       "name": "쌍백",
       "x": 152,
       "y": 439,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         706
@@ -27499,23 +27499,23 @@
       "name": "한가",
       "x": 165,
       "y": 286,
-      "level": 5,
+      "level": 6,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
+        "security": 6000,
+        "defence": 8100,
+        "wall": 8000
       },
       "initial": {
         "population": 100000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 3000,
+        "wall": 3000
       },
       "connections": [
         614,
@@ -27542,23 +27542,23 @@
       "name": "엄도",
       "x": 173,
       "y": 302,
-      "level": 11,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         614,
@@ -27585,23 +27585,23 @@
       "name": "사",
       "x": 179,
       "y": 305,
-      "level": 11,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         614,
@@ -27627,23 +27627,23 @@
       "name": "공도",
       "x": 168,
       "y": 346,
-      "level": 6,
+      "level": 7,
       "region": 9,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 486200,
+        "agriculture": 10000,
+        "commerce": 9800,
+        "security": 8000,
+        "defence": 10000,
+        "wall": 9900
       },
       "initial": {
-        "population": 100000,
+        "population": 150000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "defence": 4000,
+        "wall": 4000
       },
       "connections": [
         625,
@@ -27952,23 +27952,23 @@
       "name": "조나",
       "x": 243,
       "y": 188,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [],
       "meta": {
@@ -27991,23 +27991,23 @@
       "name": "광도",
       "x": 186,
       "y": 277,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         582,
@@ -28077,23 +28077,23 @@
       "name": "광유",
       "x": 178,
       "y": 260,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         613,
@@ -28588,23 +28588,23 @@
       "name": "무양(犍為郡)",
       "x": 197,
       "y": 300,
-      "level": 5,
+      "level": 7,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 486200,
+        "agriculture": 10000,
+        "commerce": 9800,
+        "security": 8000,
+        "defence": 10000,
+        "wall": 9900
       },
       "initial": {
-        "population": 100000,
+        "population": 150000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 4000,
+        "wall": 4000
       },
       "connections": [
         610,
@@ -28632,23 +28632,23 @@
       "name": "현미",
       "x": 166,
       "y": 146,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         641,
@@ -28674,23 +28674,23 @@
       "name": "저(武都郡)",
       "x": 237,
       "y": 240,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         593,
@@ -28801,23 +28801,23 @@
       "name": "남안",
       "x": 401,
       "y": 389,
-      "level": 4,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
         "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 1000,
-        "wall": 1000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         554,
@@ -28845,23 +28845,23 @@
       "name": "부절",
       "x": 229,
       "y": 327,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [],
       "meta": {
@@ -28884,21 +28884,21 @@
       "name": "무렴",
       "x": 258,
       "y": 386,
-      "level": 4,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
-        "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
         "defence": 1000,
         "wall": 1000
       },
@@ -28926,23 +28926,23 @@
       "name": "옥문",
       "x": 81,
       "y": 106,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         643,
@@ -28968,23 +28968,23 @@
       "name": "금성",
       "x": 188,
       "y": 182,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         657,
@@ -29481,23 +29481,23 @@
       "name": "무단",
       "x": 204,
       "y": 434,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         681,
@@ -30109,21 +30109,21 @@
       "name": "완온",
       "x": 202,
       "y": 455,
-      "level": 4,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
-        "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
         "defence": 1000,
         "wall": 1000
       },
@@ -30153,23 +30153,23 @@
       "name": "계휴",
       "x": 331,
       "y": 165,
-      "level": 5,
+      "level": 11,
       "region": 11,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         65,
@@ -30696,23 +30696,23 @@
       "name": "심봉",
       "x": 179,
       "y": 450,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         681,
@@ -30740,23 +30740,23 @@
       "name": "누와",
       "x": 203,
       "y": 404,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         696,
@@ -30784,23 +30784,23 @@
       "name": "구정",
       "x": 216,
       "y": 420,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         695
@@ -30825,23 +30825,23 @@
       "name": "태등",
       "x": 162,
       "y": 339,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         623,
@@ -30957,23 +30957,23 @@
       "name": "극양(鴈門郡)",
       "x": 357,
       "y": 109,
-      "level": 5,
+      "level": 11,
       "region": 11,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         702,
@@ -31128,23 +31128,23 @@
       "name": "구자속국",
       "x": 294,
       "y": 143,
-      "level": 5,
+      "level": 11,
       "region": 11,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [],
       "meta": {
@@ -31205,23 +31205,23 @@
       "name": "전지",
       "x": 160,
       "y": 417,
-      "level": 11,
+      "level": 5,
       "region": 9,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         612,
@@ -31337,23 +31337,23 @@
       "name": "대(代郡)",
       "x": 377,
       "y": 112,
-      "level": 5,
+      "level": 11,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         157,
@@ -31559,23 +31559,23 @@
       "name": "분고",
       "x": 180,
       "y": 460,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         681,
@@ -31729,23 +31729,23 @@
       "name": "건령",
       "x": 191,
       "y": 433,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         667,
@@ -31774,23 +31774,23 @@
       "name": "안차",
       "x": 411,
       "y": 119,
-      "level": 5,
+      "level": 11,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         707,
@@ -31817,23 +31817,23 @@
       "name": "낙랑군",
       "x": 564,
       "y": 129,
-      "level": 5,
+      "level": 6,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
+        "security": 6000,
+        "defence": 8100,
+        "wall": 8000
       },
       "initial": {
         "population": 100000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 3000,
+        "wall": 3000
       },
       "connections": [],
       "meta": {
@@ -32076,23 +32076,23 @@
       "name": "노(漁陽郡)",
       "x": 417,
       "y": 110,
-      "level": 6,
+      "level": 11,
       "region": 12,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [],
       "meta": {
@@ -32115,21 +32115,21 @@
       "name": "곡창",
       "x": 175,
       "y": 409,
-      "level": 4,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
-        "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
         "defence": 1000,
         "wall": 1000
       },
@@ -32264,23 +32264,23 @@
       "name": "비여",
       "x": 448,
       "y": 110,
-      "level": 5,
+      "level": 11,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         732,
@@ -32391,21 +32391,21 @@
       "name": "목미",
       "x": 195,
       "y": 414,
-      "level": 4,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 209500,
-        "agriculture": 4000,
-        "commerce": 4100,
-        "security": 2000,
-        "defence": 4300,
-        "wall": 4000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
         "defence": 1000,
         "wall": 1000
       },
@@ -33191,23 +33191,23 @@
       "name": "고량",
       "x": 332,
       "y": 459,
-      "level": 5,
+      "level": 11,
       "region": 13,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         742,
@@ -33436,23 +33436,23 @@
       "name": "미(益州郡)",
       "x": 193,
       "y": 391,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         695,
@@ -33479,23 +33479,23 @@
       "name": "곤택",
       "x": 176,
       "y": 401,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         706,
@@ -33525,23 +33525,23 @@
       "name": "동뢰",
       "x": 183,
       "y": 393,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         759,
@@ -33568,23 +33568,23 @@
       "name": "동로",
       "x": 190,
       "y": 401,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         695,
@@ -33613,23 +33613,23 @@
       "name": "연연",
       "x": 181,
       "y": 428,
-      "level": 5,
+      "level": 11,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         694,
@@ -33657,23 +33657,23 @@
       "name": "비소",
       "x": 118,
       "y": 407,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         588,
@@ -33699,23 +33699,23 @@
       "name": "접유",
       "x": 133,
       "y": 385,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         589
@@ -33740,23 +33740,23 @@
       "name": "운남",
       "x": 143,
       "y": 410,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         706
@@ -33781,23 +33781,23 @@
       "name": "애뢰",
       "x": 77,
       "y": 417,
-      "level": 5,
+      "level": 10,
       "region": 9,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [],
       "meta": {
@@ -33820,23 +33820,23 @@
       "name": "고도(武都郡)",
       "x": 250,
       "y": 221,
-      "level": 6,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         12,
@@ -33866,23 +33866,23 @@
       "name": "음반",
       "x": 286,
       "y": 219,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         1,
@@ -33909,23 +33909,23 @@
       "name": "여간",
       "x": 162,
       "y": 141,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         636,
@@ -33953,23 +33953,23 @@
       "name": "연수",
       "x": 92,
       "y": 116,
-      "level": 5,
+      "level": 11,
       "region": 10,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         654
@@ -33994,23 +33994,23 @@
       "name": "조음",
       "x": 288,
       "y": 185,
-      "level": 5,
+      "level": 11,
       "region": 11,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         20,
@@ -34036,23 +34036,23 @@
       "name": "정양(上郡)",
       "x": 437,
       "y": 342,
-      "level": 5,
+      "level": 11,
       "region": 11,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         551,
@@ -34078,23 +34078,23 @@
       "name": "주(涿郡)",
       "x": 393,
       "y": 120,
-      "level": 5,
+      "level": 10,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         159,
@@ -34123,23 +34123,23 @@
       "name": "북신성",
       "x": 393,
       "y": 130,
-      "level": 5,
+      "level": 10,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         160,
@@ -34167,23 +34167,23 @@
       "name": "영지",
       "x": 443,
       "y": 107,
-      "level": 5,
+      "level": 11,
       "region": 12,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         715,
@@ -34211,23 +34211,23 @@
       "name": "사회",
       "x": 345,
       "y": 434,
-      "level": 5,
+      "level": 10,
       "region": 13,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         737,
@@ -34253,23 +34253,23 @@
       "name": "임하",
       "x": 328,
       "y": 417,
-      "level": 5,
+      "level": 10,
       "region": 13,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         523,
@@ -34297,23 +34297,23 @@
       "name": "맹릉",
       "x": 316,
       "y": 432,
-      "level": 5,
+      "level": 10,
       "region": 13,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 100000,
+        "population": 50000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 2000,
-        "wall": 2000
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         746,
@@ -34341,23 +34341,23 @@
       "name": "아림",
       "x": 293,
       "y": 421,
-      "level": 6,
+      "level": 11,
       "region": 13,
       "max": {
-        "population": 393300,
-        "agriculture": 7850,
-        "commerce": 8000,
-        "security": 6000,
-        "defence": 8100,
-        "wall": 8000
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 3000,
-        "wall": 3000
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         755
