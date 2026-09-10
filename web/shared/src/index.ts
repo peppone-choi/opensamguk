@@ -205,6 +205,7 @@ export {
 export {
   normaliseNationColor,
   indexTint,
+  ownerTint,
   mixToward,
   luminancePreserving,
   rgbCss,
@@ -213,6 +214,11 @@ export {
   type Rgb,
   type TintMode,
 } from './iso/tint';
+export {
+  isHanCounty,
+  cityDisplayName,
+  type CityNameInput,
+} from './iso/cityName';
 export {
   drawBattlefieldMark,
   drawCityFlag,

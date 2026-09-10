@@ -37,7 +37,8 @@ import {
   dropOverlappingLabels,
   markerScale,
 } from './marker';
-import { indexTint, normaliseNationColor, rgbCss, type TintMode } from './tint';
+import { normaliseNationColor, ownerTint, rgbCss, type TintMode } from './tint';
+import { cityDisplayName } from './cityName';
 import { isExternalPlace, type IsoBattlefieldMarker, type PlacedCity } from './placeGameCities';
 
 const SPRITE_BASE = '/sprites/iso2d';
@@ -358,9 +359,10 @@ export function IsoMap2D({
             const i = r * cols + c;
             if (playable[i] === 0 || isWater(code[i])) continue;
             const key = tintMode === 'commandery' ? parentOwner[i] : owner[i];
-            if (key < 0) continue;
-            const hex = nationColorByOwner?.[key];
-            context.fillStyle = rgbCss(hex ? normaliseNationColor(hex) : indexTint(key));
+            // 주인 없는 縣 은 칠하지 않는다 — 지형이 그대로 보인다(ownerTint 주석 참조).
+            const rgb = ownerTint(key, nationColorByOwner);
+            if (!rgb) continue;
+            context.fillStyle = rgbCss(rgb);
             const [x, y] = tileScreen(c, r);
             context.beginPath();
             context.moveTo(x, y - HALF_H);
@@ -489,10 +491,10 @@ export function IsoMap2D({
           capital: city.isCapital,
           k,
         });
-        // 郡國 밖 세력은 게임 城 번호가 없다 — 그려는 주되 눌러 들어갈 데가 없으므로
-        // 집기 상자에서만 뺀다. 그림·이름·깃발은 중원의 城 과 똑같이 나간다.
-        if (isExternalPlace(city)) continue;
         // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
+        // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —
+        // 「중국 바깥엔 툴팁이 안 올라온다」(2026-09-10). 다만 게임 城 번호가 없어
+        // 눌러 들어갈 데는 없으므로 **누르는 쪽에서만** 걸러진다(onClick).
         const half = Math.max(15 * k, HALF_W * 0.45 * view.scale);
         hits.push({
           city,
@@ -518,11 +520,13 @@ export function IsoMap2D({
         const named = placedOnScreen
           .filter(({ sx, sy }) => sx >= -60 && sx <= w + 60 && sy >= -60 && sy <= h + 60)
           .sort((a, b) => Number(b.city.seat) - Number(a.city.seat));
+        // 郡縣制 안이면 「뭐뭐현」으로 적는다 — 겹침 판정도 같은 글자로 해야 맞는다.
+        const labels = named.map(({ city }) => cityDisplayName(city));
         const keepLabel = dropOverlappingLabels(
-          named.map(({ city, sx, sy }) => cityLabelBox(sx, sy + below, city.name, k)),
+          named.map(({ sx, sy }, n) => cityLabelBox(sx, sy + below, labels[n], k)),
         );
-        named.forEach(({ city, sx, sy }, n) => {
-          if (keepLabel[n]) drawCityName(context, city.name, sx, sy + below, k);
+        named.forEach(({ sx, sy }, n) => {
+          if (keepLabel[n]) drawCityName(context, labels[n], sx, sy + below, k);
         });
       }
 
@@ -586,7 +590,8 @@ export function IsoMap2D({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const city = cityAt(x, y);
-      canvas.style.cursor = city ? 'pointer' : 'grab';
+      // 郡國 밖 세력은 들어갈 데가 없으니 손가락 커서를 주지 않는다 — 읽히되 눌리지 않는다.
+      canvas.style.cursor = city && !isExternalPlace(city) ? 'pointer' : 'grab';
       if (!onHoverCity) return;
       // 같은 城 위에서 움직이는 동안에도 좌표는 계속 준다 — 툴팁이 커서를 따라간다.
       if (city || hovered !== null) onHoverCity(city, { x, y });
@@ -632,7 +637,8 @@ export function IsoMap2D({
       }
       if (onPickCity) {
         const city = cityAt(x, y);
-        if (city) {
+        // 음수 id 는 게임 城 이 아니다. 툴팁까지가 끝이고 여기서 더 가지 않는다.
+        if (city && !isExternalPlace(city)) {
           onPickCity(city, { pointerType: lastPointerType });
           return;
         }

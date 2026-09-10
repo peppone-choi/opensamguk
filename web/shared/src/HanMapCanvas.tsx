@@ -128,6 +128,8 @@ export interface IsoSourceSize {
 export interface IsoCityOverlay {
   id: number;
   name: string;
+  /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). */
+  nameCh?: string;
   level: number;
   nationId: number;
   nationName?: string;

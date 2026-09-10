@@ -16,6 +16,7 @@
 // via `cityDetail` to skip the fetch.
 
 import { useEffect, useState } from 'react';
+import { cityDisplayName } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
 import type { CityDetailResponse, MapPreviewCity } from '@/lib/types';
@@ -152,7 +153,8 @@ export default function MapCityDetail({
             <div className="mcd-header" style={{ backgroundColor: nationColor, color: headerTextColor }}>
                 <div className="mcd-city-name">
                     {/* 레거시 【지역 | 등급】 도시명 — 상세 로드되면 서버 해석 한글명(regionName|levelName) 사용. */}
-                    {`【${detail ? `${detail.regionName} | ${detail.levelName}` : levelText(city.level)}】 ${city.name}`}
+                    {/* 郡縣制 안이면 「뭐뭐현」 — 지도 이름표와 같은 함수를 쓴다(cityName.ts). */}
+                    {`【${detail ? `${detail.regionName} | ${detail.levelName}` : levelText(city.level)}】 ${cityDisplayName({ ...city, nameCh: detail?.nameCh ?? city.nameCh ?? undefined })}`}
                     {isCurrent && <span className="mcd-current-tag"> · 현재 도시</span>}
                 </div>
                 {onClose && (
@@ -168,9 +170,13 @@ export default function MapCityDetail({
                 )}
             </div>
 
-            <div className="mcd-nation" style={{ backgroundColor: nationColor, color: headerTextColor }}>
-                {city.nationId > 0 ? `지배 국가 【 ${nationName} 】` : '공 백 지'}
-            </div>
+            {/* 주인이 있을 때만 국가 줄을 낸다. 공백지에는 국가표기를 아예 두지 않는다 —
+                「공백지는 국가표기를 지워」(2026-09-10). 비어 있다는 건 아래 첩보 문구가 말한다. */}
+            {city.nationId > 0 && (
+                <div className="mcd-nation" style={{ backgroundColor: nationColor, color: headerTextColor }}>
+                    {`지배 국가 【 ${nationName} 】`}
+                </div>
+            )}
 
             {loading && (
                 <div className="mcd-empty">

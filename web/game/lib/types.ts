@@ -220,6 +220,8 @@ export interface CityOfficer {
 export interface FrontCityInfo {
   id: number;
   name: string;
+  /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). */
+  nameCh?: string;
   level: number;
   levelName?: string | null; // 치소 등급 한글명 getCityLevelList()[level] (수/진/관/이/소/중/대/특)
   nationId: number;
@@ -279,6 +281,8 @@ export interface FrontInfoResponse {
 export interface CityDetailResponse {
   id: number;
   name: string;
+  /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). 지도 프리뷰와 같은 값이다. */
+  nameCh?: string | null;
   level: number;
   levelName: string; // 치소 등급 한글명 (수/진/관/이/소/중/대/특)
   region: number;
@@ -311,6 +315,8 @@ export interface CityDetailResponse {
 export interface MapPreviewCity {
   id: number;
   name: string;
+  /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). */
+  nameCh?: string;
   level: number;
   nationId: number;
   x: number;

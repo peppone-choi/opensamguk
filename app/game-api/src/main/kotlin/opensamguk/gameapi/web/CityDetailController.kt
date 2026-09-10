@@ -11,7 +11,9 @@ import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.seed.MapJson
 import opensamguk.logic.domain.metaInt
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -51,6 +53,13 @@ class CityDetailController(
     data class CityDetailResponse(
         val id: Int,
         val name: String,
+        /**
+         * `map/<code>.json` 의 `meta.nameCh` — 그 城 자신의 행정 단위가 붙은 원 표기("长安县").
+         * 화면 이름을 「뭐뭐현」으로 통일하는 縣 판정에 쓴다(web/shared/src/iso/cityName.ts).
+         * 지도 프리뷰(MapPreviewCity.nameCh)와 **같은 값**이라 두 화면의 이름이 갈리지 않는다.
+         * 맵 리소스에 없으면 null — 그럼 클라이언트가 등급(영현/장현)만으로 가른다.
+         */
+        val nameCh: String?,
         val level: Int,
         val levelName: String,  // 치소 등급 한글명 getCityLevelList()[level] (수/진/관/이/소/중/대/특)
         val region: Int,
@@ -293,6 +302,7 @@ class CityDetailController(
         val resp = CityDetailResponse(
             id = c.id,
             name = c.name,
+            nameCh = mapNameCh()[c.id],
             level = c.level,
             levelName = getCityLevelList()[c.level] ?: "-",
             region = c.region,
@@ -355,6 +365,24 @@ class CityDetailController(
         val turntime = world.findAll().firstOrNull()?.config?.get("turntime")?.toString() ?: return null
         if (turntime.length < 5) return null
         return turntime.substring(5, minOf(19, turntime.length))
+    }
+
+    /**
+     * 城 id → `meta.nameCh`. 활성 맵 리소스의 값 그대로이고, 없으면 빈 표다(날조 없음).
+     *
+     * 지도 프리뷰가 실어 보내는 것과 **같은 값**이어야 한다 — 지도에서 「홍농현」인 城 이
+     * 도시 화면에서 「홍농」으로 보이면 안 된다(「지도나 도시 출력은 … 뭐뭐현으로 통일해」
+     * 2026-09-10). 맵 리소스는 클래스패스 정적 파일이라 요청마다 읽어도 DB 를 건드리지 않지만,
+     * 한 응답 안에서 여러 번 부르지 않도록 호출부는 한 번만 쓴다.
+     */
+    private fun mapNameCh(): Map<Int, String> {
+        val active = world.findAll().firstOrNull() ?: return emptyMap()
+        // 활성 맵 이름이 없거나 깨졌으면 던지지 않고 빈 표로 둔다 — 이름 표기 하나 때문에
+        // 도시 화면 전체가 500 이 되면 안 된다. 그럼 등급(영현/장현)만으로 가른다.
+        val mapCode = runCatching { ActiveWorldMap.requireName(active) }.getOrNull() ?: return emptyMap()
+        return MapJson.loadFromClasspath(mapCode).cities
+            .mapNotNull { city -> city.nameCh?.let { city.id to it } }
+            .toMap()
     }
 
     /**

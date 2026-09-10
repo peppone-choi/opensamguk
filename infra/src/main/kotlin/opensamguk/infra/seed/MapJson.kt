@@ -24,6 +24,15 @@ object MapJson {
         val physicalPlaceRef: String? = null,
         /** Stable route-node identity; required by han-world-v3 policy rows. */
         val routeNodeKey: String? = null,
+        /**
+         * `meta.nameCh` — 그 城 자신의 행정 단위가 붙은 원 표기("长安县" · "甘陵郡" · "伯濟國").
+         * 끝 글자가 县/縣 이면 그 城 은 縣 이다. 화면 표기를 「뭐뭐현」으로 통일하는 데 쓴다
+         * (web/shared/src/iso/cityName.ts). 소속 郡의 治所 이름인 `meta.seat` 과 다른 값이다.
+         *
+         * **맨 끝에 둔다** — 이 data class 는 위치 인자로 부르는 시험이 있어서(game-engine
+         * SpatialSupplyNetworkWiringTest 등) 가운데에 끼우면 x·y 가 밀려 컴파일이 깨진다.
+         */
+        val nameCh: String? = null,
     )
 
     data class MapCityDetail(
@@ -73,6 +82,7 @@ object MapJson {
             MapCityCoord(
                 id = id,
                 name = c["name"] as? String ?: "",
+                nameCh = (meta?.get("nameCh") as? String)?.takeIf { it.isNotBlank() },
                 x = x,
                 y = y,
                 regionName = (meta?.get("ju") as? String)?.takeIf { it.isNotBlank() },

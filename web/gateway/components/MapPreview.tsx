@@ -7,6 +7,7 @@
 // 게임창과 완전히 같은 코드(@opensamguk/ui/iso)를 쓴다.
 import {
     IsoMap2D,
+    cityDisplayName,
     isOwnedNationVisual,
     placeGameCities,
     useIsoTileGrid,
@@ -18,6 +19,8 @@ const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 interface MapCity {
     id: number;
     name: string;
+    /** meta.nameCh — 縣 판정용(cityName.ts). 없으면 level 로만 가른다. */
+    nameCh?: string;
     level: number;
     nationId: number;
     x: number;
@@ -213,11 +216,16 @@ export default function MapPreview({
                         role="status"
                         style={hover ? { left: hover.x + 14, top: hover.y + 14 } : undefined}
                     >
-                        <div className="map-preview-tooltip-name">{(hover?.city ?? picked)!.name}</div>
-                        <div className="map-preview-tooltip-meta">
-                            {(hover?.city ?? picked)!.nationName ?? '재야'}
-                            {(hover?.city ?? picked)!.isCapital ? ' · 수도' : ''}
-                        </div>
+                        <div className="map-preview-tooltip-name">{cityDisplayName((hover?.city ?? picked)!)}</div>
+                        {/* 주인이 없으면 국가 줄을 내지 않는다 — 공백지에 「재야」라고 적지 않는다(2026-09-10). */}
+                        {((hover?.city ?? picked)!.nationName || (hover?.city ?? picked)!.isCapital) && (
+                            <div className="map-preview-tooltip-meta">
+                                {(hover?.city ?? picked)!.nationName ?? ''}
+                                {(hover?.city ?? picked)!.isCapital
+                                    ? `${(hover?.city ?? picked)!.nationName ? ' · ' : ''}수도`
+                                    : ''}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

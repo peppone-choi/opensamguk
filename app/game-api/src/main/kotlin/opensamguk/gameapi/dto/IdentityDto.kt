@@ -402,6 +402,12 @@ data class FrontNationInfo(
 data class FrontCityInfo(
     val id: Int,
     val name: String,
+    /**
+     * `map/<code>.json` 의 `meta.nameCh` — 그 城 자신의 행정 단위가 붙은 원 표기("长安县").
+     * 화면 이름을 「뭐뭐현」으로 통일하는 縣 판정에 쓴다(web/shared/src/iso/cityName.ts).
+     * 지도 프리뷰·도시 상세와 **같은 값**이라 세 화면의 이름이 갈리지 않는다.
+     */
+    val nameCh: String? = null,
     val level: Int,
     // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시. 미정의 → '-'.
     val levelName: String? = null,

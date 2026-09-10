@@ -155,6 +155,7 @@ export default function GameMapPage() {
                                     city={{
                                         id: selected.id,
                                         name: selected.name,
+                                        nameCh: selected.nameCh,
                                         level: selected.level,
                                         nationId: selected.nationId,
                                         x: selected.x,
@@ -163,7 +164,7 @@ export default function GameMapPage() {
                                         supply: selected.supply ?? true,
                                         isCapital: selected.isCapital ?? false,
                                     }}
-                                    nationName={selected.nationName ?? '공 백 지'}
+                                    nationName={selected.nationName ?? ''}
                                     nationColor={selected.nationColor ?? '#2c342f'}
                                     isCurrent={false}
                                     onClose={() => setSelected(null)}
