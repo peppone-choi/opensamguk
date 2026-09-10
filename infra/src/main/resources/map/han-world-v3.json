@@ -56,7 +56,7 @@
         "junCh": "京兆尹",
         "ju": "사예",
         "seat": "장안현",
-        "nameCh": "长安",
+        "nameCh": "长安县",
         "isSeat": true
       },
       "provinceId": 503,
@@ -102,7 +102,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "猗氏",
+        "nameCh": "猗氏县",
         "isSeat": false
       },
       "provinceId": 917,
@@ -146,7 +146,7 @@
         "junCh": "京兆尹",
         "ju": "사예",
         "seat": "장안현",
-        "nameCh": "商",
+        "nameCh": "商县",
         "isSeat": false
       },
       "provinceId": 9,
@@ -189,7 +189,7 @@
         "junCh": "京兆尹",
         "ju": "사예",
         "seat": "장안현",
-        "nameCh": "新丰",
+        "nameCh": "新丰县",
         "isSeat": false
       },
       "provinceId": 513,
@@ -274,7 +274,7 @@
         "junCh": "京兆尹",
         "ju": "사예",
         "seat": "장안현",
-        "nameCh": "蓝田",
+        "nameCh": "蓝田县",
         "isSeat": false
       },
       "provinceId": 517,
@@ -319,7 +319,7 @@
         "junCh": "京兆尹",
         "ju": "사예",
         "seat": "장안현",
-        "nameCh": "郑",
+        "nameCh": "郑县",
         "isSeat": false
       },
       "provinceId": 476,
@@ -366,7 +366,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "垣",
+        "nameCh": "垣县",
         "isSeat": false
       },
       "provinceId": 898,
@@ -412,7 +412,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "濩泽",
+        "nameCh": "濩泽县",
         "isSeat": false
       },
       "provinceId": 936,
@@ -458,7 +458,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "栒邑",
+        "nameCh": "栒邑县",
         "isSeat": false
       },
       "provinceId": 474,
@@ -503,7 +503,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "武功",
+        "nameCh": "武功县",
         "isSeat": false
       },
       "provinceId": 467,
@@ -549,7 +549,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "郿",
+        "nameCh": "郿县",
         "isSeat": false
       },
       "provinceId": 521,
@@ -595,7 +595,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "鄠",
+        "nameCh": "鄠县",
         "isSeat": false
       },
       "provinceId": 516,
@@ -640,7 +640,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "陈仓",
+        "nameCh": "陈仓县",
         "isSeat": false
       },
       "provinceId": 520,
@@ -681,7 +681,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "新安",
+        "nameCh": "新安县",
         "isSeat": false
       },
       "provinceId": 61,
@@ -726,7 +726,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "고륙현",
-        "nameCh": "临晋",
+        "nameCh": "临晋县",
         "isSeat": false
       },
       "provinceId": 468,
@@ -768,7 +768,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "고륙현",
-        "nameCh": "云阳",
+        "nameCh": "云阳县",
         "isSeat": false
       },
       "provinceId": 518,
@@ -814,7 +814,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "고륙현",
-        "nameCh": "夏阳",
+        "nameCh": "夏阳县",
         "isSeat": false
       },
       "provinceId": 470,
@@ -903,7 +903,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "고륙현",
-        "nameCh": "粟邑",
+        "nameCh": "粟邑县",
         "isSeat": false
       },
       "provinceId": 473,
@@ -949,7 +949,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "고륙현",
-        "nameCh": "郃阳",
+        "nameCh": "郃阳县",
         "isSeat": false
       },
       "provinceId": 469,
@@ -994,7 +994,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "弘农",
+        "nameCh": "弘农县",
         "isSeat": true
       },
       "provinceId": 652,
@@ -1039,7 +1039,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "华阴",
+        "nameCh": "华阴县",
         "isSeat": false
       },
       "provinceId": 471,
@@ -1085,7 +1085,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "卢氏",
+        "nameCh": "卢氏县",
         "isSeat": false
       },
       "provinceId": 665,
@@ -1131,7 +1131,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "宜阳",
+        "nameCh": "宜阳县",
         "isSeat": false
       },
       "provinceId": 632,
@@ -1177,7 +1177,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "湖",
+        "nameCh": "湖县",
         "isSeat": false
       },
       "provinceId": 504,
@@ -1222,7 +1222,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "陆浑",
+        "nameCh": "陆浑县",
         "isSeat": false
       },
       "provinceId": 637,
@@ -1269,7 +1269,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "陕",
+        "nameCh": "陕县",
         "isSeat": false
       },
       "provinceId": 651,
@@ -1315,7 +1315,7 @@
         "junCh": "弘農郡",
         "ju": "사예",
         "seat": "홍농현",
-        "nameCh": "黾池",
+        "nameCh": "黾池县",
         "isSeat": false
       },
       "provinceId": 636,
@@ -1360,7 +1360,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "怀",
+        "nameCh": "怀县",
         "isSeat": true
       },
       "provinceId": 586,
@@ -1405,7 +1405,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "共",
+        "nameCh": "共县",
         "isSeat": false
       },
       "provinceId": 566,
@@ -1452,7 +1452,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "山阳",
+        "nameCh": "山阳县",
         "isSeat": false
       },
       "provinceId": 584,
@@ -1495,7 +1495,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "州",
+        "nameCh": "州县",
         "isSeat": false
       },
       "provinceId": 580,
@@ -1539,7 +1539,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "朝歌",
+        "nameCh": "朝歌县",
         "isSeat": false
       },
       "provinceId": 565,
@@ -1585,7 +1585,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "林虑",
+        "nameCh": "林虑县",
         "isSeat": false
       },
       "provinceId": 558,
@@ -1629,7 +1629,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "武德",
+        "nameCh": "武德县",
         "isSeat": false
       },
       "provinceId": 585,
@@ -1673,7 +1673,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "汲",
+        "nameCh": "汲县",
         "isSeat": false
       },
       "provinceId": 562,
@@ -1719,7 +1719,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "沁水",
+        "nameCh": "沁水县",
         "isSeat": false
       },
       "provinceId": 583,
@@ -1763,7 +1763,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "河阳",
+        "nameCh": "河阳县",
         "isSeat": false
       },
       "provinceId": 587,
@@ -1810,7 +1810,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "波",
+        "nameCh": "波县",
         "isSeat": false
       },
       "provinceId": 581,
@@ -1854,7 +1854,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "温",
+        "nameCh": "温县",
         "isSeat": false
       },
       "provinceId": 589,
@@ -1900,7 +1900,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "荡阴",
+        "nameCh": "荡阴县",
         "isSeat": false
       },
       "provinceId": 557,
@@ -1945,7 +1945,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "获嘉",
+        "nameCh": "获嘉县",
         "isSeat": false
       },
       "provinceId": 563,
@@ -1990,7 +1990,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "轵",
+        "nameCh": "轵县",
         "isSeat": false
       },
       "provinceId": 582,
@@ -2035,7 +2035,7 @@
         "junCh": "河內郡",
         "ju": "사예",
         "seat": "회현",
-        "nameCh": "野王",
+        "nameCh": "野王县",
         "isSeat": false
       },
       "provinceId": 579,
@@ -2078,7 +2078,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "雒阳",
+        "nameCh": "雒阳县",
         "isSeat": true
       },
       "provinceId": 626,
@@ -2123,7 +2123,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "中牟",
+        "nameCh": "中牟县",
         "isSeat": false
       },
       "provinceId": 314,
@@ -2168,7 +2168,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "京",
+        "nameCh": "京县",
         "isSeat": false
       },
       "provinceId": 316,
@@ -2257,7 +2257,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "卷",
+        "nameCh": "卷县",
         "isSeat": false
       },
       "provinceId": 590,
@@ -2302,7 +2302,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "原武",
+        "nameCh": "原武县",
         "isSeat": false
       },
       "provinceId": 592,
@@ -2347,7 +2347,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "密",
+        "nameCh": "密县",
         "isSeat": false
       },
       "provinceId": 576,
@@ -2393,7 +2393,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "开封",
+        "nameCh": "开封县",
         "isSeat": false
       },
       "provinceId": 306,
@@ -2436,7 +2436,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "新郑",
+        "nameCh": "新郑县",
         "isSeat": false
       },
       "provinceId": 577,
@@ -2479,7 +2479,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "河南",
+        "nameCh": "河南县",
         "isSeat": false
       },
       "provinceId": 627,
@@ -2523,7 +2523,7 @@
         "junCh": "五原郡",
         "ju": "병주",
         "seat": "구원현",
-        "nameCh": "河阴",
+        "nameCh": "河阴县",
         "isSeat": false
       },
       "provinceId": 633,
@@ -2567,7 +2567,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "缑氏",
+        "nameCh": "缑氏县",
         "isSeat": false
       },
       "provinceId": 631,
@@ -2613,7 +2613,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "穀城",
+        "nameCh": "谷城县",
         "isSeat": false
       },
       "provinceId": 629,
@@ -2657,7 +2657,7 @@
         "junCh": "河南尹",
         "ju": "사예",
         "seat": "낙양현",
-        "nameCh": "阳武",
+        "nameCh": "阳武县",
         "isSeat": false
       },
       "provinceId": 591,
@@ -2702,7 +2702,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "安邑",
+        "nameCh": "安邑县",
         "isSeat": true
       },
       "provinceId": 901,
@@ -2747,7 +2747,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "临汾",
+        "nameCh": "临汾县",
         "isSeat": false
       },
       "provinceId": 914,
@@ -2790,7 +2790,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "北屈",
+        "nameCh": "北屈县",
         "isSeat": false
       },
       "provinceId": 911,
@@ -2835,7 +2835,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "大阳",
+        "nameCh": "大阳县",
         "isSeat": false
       },
       "provinceId": 899,
@@ -2879,7 +2879,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "平阳",
+        "nameCh": "平阳县",
         "isSeat": false
       },
       "provinceId": 912,
@@ -2925,7 +2925,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "永安",
+        "nameCh": "永安县",
         "isSeat": false
       },
       "provinceId": 895,
@@ -2973,7 +2973,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "汾阴",
+        "nameCh": "汾阴县",
         "isSeat": false
       },
       "provinceId": 916,
@@ -3018,7 +3018,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "河北",
+        "nameCh": "河北县",
         "isSeat": false
       },
       "provinceId": 900,
@@ -3060,7 +3060,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "皮氏",
+        "nameCh": "皮氏县",
         "isSeat": false
       },
       "provinceId": 896,
@@ -3104,7 +3104,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "端氏",
+        "nameCh": "端氏县",
         "isSeat": false
       },
       "provinceId": 935,
@@ -3147,7 +3147,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "万年",
+        "nameCh": "万年县",
         "isSeat": false
       },
       "provinceId": 507,
@@ -3191,7 +3191,7 @@
         "junCh": "左馮翊",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "重泉",
+        "nameCh": "重泉县",
         "isSeat": false
       },
       "provinceId": 472,
@@ -3235,7 +3235,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "襄陵",
+        "nameCh": "襄陵县",
         "isSeat": false
       },
       "provinceId": 915,
@@ -3280,7 +3280,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "解",
+        "nameCh": "解县",
         "isSeat": false
       },
       "provinceId": 918,
@@ -3325,7 +3325,7 @@
         "junCh": "河東郡",
         "ju": "사예",
         "seat": "안읍현",
-        "nameCh": "闻喜",
+        "nameCh": "闻喜县",
         "isSeat": false
       },
       "provinceId": 897,
@@ -3368,7 +3368,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "西城",
+        "nameCh": "西城县",
         "isSeat": false
       },
       "provinceId": 7,
@@ -3412,7 +3412,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "槐里",
+        "nameCh": "槐里县",
         "isSeat": true
       },
       "provinceId": 511,
@@ -3456,7 +3456,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "弋陽",
+        "nameCh": "弋阳县",
         "isSeat": false
       },
       "provinceId": 593,
@@ -3500,7 +3500,7 @@
         "junCh": "梁國",
         "ju": "예주",
         "seat": "하읍현",
-        "nameCh": "下邑",
+        "nameCh": "下邑县",
         "isSeat": true
       },
       "provinceId": 226,
@@ -3543,7 +3543,7 @@
         "junCh": "梁國",
         "ju": "예주",
         "seat": "하읍현",
-        "nameCh": "寧陵",
+        "nameCh": "宁陵县",
         "isSeat": false
       },
       "provinceId": 547,
@@ -3584,7 +3584,7 @@
         "junCh": "右扶風",
         "ju": "사예",
         "seat": "괴리현",
-        "nameCh": "漆",
+        "nameCh": "漆县",
         "isSeat": false
       },
       "provinceId": 466,
@@ -3630,7 +3630,7 @@
         "junCh": "梁國",
         "ju": "예주",
         "seat": "하읍현",
-        "nameCh": "睢陽",
+        "nameCh": "睢阳县",
         "isSeat": false
       },
       "provinceId": 545,
@@ -3675,7 +3675,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "期思",
+        "nameCh": "期思县",
         "isSeat": false
       },
       "provinceId": 597,
@@ -3719,7 +3719,7 @@
         "junCh": "梁國",
         "ju": "예주",
         "seat": "하읍현",
-        "nameCh": "蒙",
+        "nameCh": "蒙县",
         "isSeat": false
       },
       "provinceId": 546,
@@ -3764,7 +3764,7 @@
         "junCh": "梁國",
         "ju": "예주",
         "seat": "하읍현",
-        "nameCh": "虞",
+        "nameCh": "虞县",
         "isSeat": false
       },
       "provinceId": 552,
@@ -3810,7 +3810,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "平輿",
+        "nameCh": "平舆县",
         "isSeat": true
       },
       "provinceId": 662,
@@ -3855,7 +3855,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "上蔡",
+        "nameCh": "上蔡县",
         "isSeat": false
       },
       "provinceId": 664,
@@ -3900,7 +3900,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "南頓",
+        "nameCh": "南顿县",
         "isSeat": false
       },
       "provinceId": 539,
@@ -3945,7 +3945,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "原鹿",
+        "nameCh": "原鹿侯国",
         "isSeat": false
       },
       "provinceId": 262,
@@ -3990,7 +3990,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "吳房",
+        "nameCh": "吴房县",
         "isSeat": false
       },
       "provinceId": 661,
@@ -4033,7 +4033,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "城父",
+        "nameCh": "城父县",
         "isSeat": false
       },
       "provinceId": 266,
@@ -4078,7 +4078,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "安城",
+        "nameCh": "安城县",
         "isSeat": false
       },
       "provinceId": 653,
@@ -4122,7 +4122,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "安陽",
+        "nameCh": "安阳县",
         "isSeat": false
       },
       "provinceId": 659,
@@ -4167,7 +4167,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "征羌",
+        "nameCh": "征羌侯国",
         "isSeat": false
       },
       "provinceId": 648,
@@ -4211,7 +4211,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "富波",
+        "nameCh": "富波侯国",
         "isSeat": false
       },
       "provinceId": 261,
@@ -4255,7 +4255,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "山桑",
+        "nameCh": "山桑县",
         "isSeat": false
       },
       "provinceId": 268,
@@ -4300,7 +4300,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "谷陽",
+        "nameCh": "谷阳县",
         "isSeat": false
       },
       "provinceId": 253,
@@ -4346,7 +4346,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "譙",
+        "nameCh": "谯县",
         "isSeat": false
       },
       "provinceId": 265,
@@ -4391,7 +4391,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "新息",
+        "nameCh": "新息县",
         "isSeat": false
       },
       "provinceId": 599,
@@ -4437,7 +4437,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "新蔡",
+        "nameCh": "新蔡县",
         "isSeat": false
       },
       "provinceId": 663,
@@ -4478,7 +4478,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "建平",
+        "nameCh": "建平县",
         "isSeat": false
       },
       "provinceId": 40,
@@ -4523,7 +4523,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "汝陽",
+        "nameCh": "汝阳县",
         "isSeat": false
       },
       "provinceId": 536,
@@ -4567,7 +4567,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "汝陰",
+        "nameCh": "汝阴县",
         "isSeat": false
       },
       "provinceId": 260,
@@ -4612,7 +4612,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "평여현",
-        "nameCh": "斥章",
+        "nameCh": "斥章县",
         "isSeat": false
       },
       "provinceId": 858,
@@ -4664,7 +4664,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "西華",
+        "nameCh": "西华县",
         "isSeat": false
       },
       "provinceId": 537,
@@ -4710,7 +4710,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "西平",
+        "nameCh": "西平县",
         "isSeat": false
       },
       "provinceId": 657,
@@ -4755,7 +4755,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "項",
+        "nameCh": "项县",
         "isSeat": false
       },
       "provinceId": 540,
@@ -4800,7 +4800,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "相",
+        "nameCh": "相县",
         "isSeat": true
       },
       "provinceId": 252,
@@ -4846,7 +4846,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "豐",
+        "nameCh": "丰县",
         "isSeat": false
       },
       "provinceId": 216,
@@ -4891,7 +4891,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "상현",
-        "nameCh": "義成",
+        "nameCh": "义成县",
         "isSeat": false
       },
       "provinceId": 246,
@@ -4933,7 +4933,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "公丘",
+        "nameCh": "公丘县",
         "isSeat": false
       },
       "provinceId": 395,
@@ -4979,7 +4979,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "杼秋",
+        "nameCh": "杼秋县",
         "isSeat": false
       },
       "provinceId": 214,
@@ -5024,7 +5024,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "沛",
+        "nameCh": "沛县",
         "isSeat": false
       },
       "provinceId": 217,
@@ -5070,7 +5070,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "洨",
+        "nameCh": "洨县",
         "isSeat": false
       },
       "provinceId": 254,
@@ -5115,7 +5115,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "竹邑",
+        "nameCh": "竹邑县",
         "isSeat": false
       },
       "provinceId": 248,
@@ -5161,7 +5161,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "符離",
+        "nameCh": "符离县",
         "isSeat": false
       },
       "provinceId": 249,
@@ -5208,7 +5208,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "蕭",
+        "nameCh": "萧县",
         "isSeat": false
       },
       "provinceId": 213,
@@ -5256,7 +5256,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "蘄",
+        "nameCh": "蕲县",
         "isSeat": false
       },
       "provinceId": 250,
@@ -5301,7 +5301,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "虹",
+        "nameCh": "虹县",
         "isSeat": false
       },
       "provinceId": 256,
@@ -5347,7 +5347,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "酇",
+        "nameCh": "酇县",
         "isSeat": false
       },
       "provinceId": 551,
@@ -5393,7 +5393,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "銍",
+        "nameCh": "銍县",
         "isSeat": false
       },
       "provinceId": 251,
@@ -5437,7 +5437,7 @@
         "junCh": "沛國",
         "ju": "예주",
         "seat": "상현",
-        "nameCh": "龍亢",
+        "nameCh": "龙亢县",
         "isSeat": false
       },
       "provinceId": 245,
@@ -5482,7 +5482,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "陽翟",
+        "nameCh": "阳翟县",
         "isSeat": true
       },
       "provinceId": 575,
@@ -5526,7 +5526,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "臨潁",
+        "nameCh": "临颍县",
         "isSeat": false
       },
       "provinceId": 645,
@@ -5571,7 +5571,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "定陵",
+        "nameCh": "定陵县",
         "isSeat": false
       },
       "provinceId": 623,
@@ -5616,7 +5616,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "新汲",
+        "nameCh": "新汲县",
         "isSeat": false
       },
       "provinceId": 543,
@@ -5662,7 +5662,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "昆陽",
+        "nameCh": "昆阳县",
         "isSeat": false
       },
       "provinceId": 624,
@@ -5708,7 +5708,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "父城",
+        "nameCh": "父城县",
         "isSeat": false
       },
       "provinceId": 641,
@@ -5752,7 +5752,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "舞陽",
+        "nameCh": "舞阳县",
         "isSeat": false
       },
       "provinceId": 622,
@@ -5797,7 +5797,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "襄城",
+        "nameCh": "襄城县",
         "isSeat": false
       },
       "provinceId": 647,
@@ -5841,7 +5841,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "許",
+        "nameCh": "许县",
         "isSeat": false
       },
       "provinceId": 643,
@@ -5884,7 +5884,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "輪氏",
+        "nameCh": "轮氏县",
         "isSeat": false
       },
       "provinceId": 635,
@@ -5929,7 +5929,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "郾",
+        "nameCh": "郾县",
         "isSeat": false
       },
       "provinceId": 649,
@@ -5973,7 +5973,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "長社",
+        "nameCh": "长社县",
         "isSeat": false
       },
       "provinceId": 650,
@@ -6017,7 +6017,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "陽城",
+        "nameCh": "阳城县",
         "isSeat": false
       },
       "provinceId": 634,
@@ -6060,7 +6060,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "潁陽",
+        "nameCh": "颍阳县",
         "isSeat": false
       },
       "provinceId": 644,
@@ -6105,7 +6105,7 @@
         "junCh": "潁川郡",
         "ju": "예주",
         "seat": "양적현",
-        "nameCh": "潁陰",
+        "nameCh": "颍阴县",
         "isSeat": false
       },
       "provinceId": 642,
@@ -6151,7 +6151,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "陳",
+        "nameCh": "陈县",
         "isSeat": true
       },
       "provinceId": 534,
@@ -6197,7 +6197,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "扶樂",
+        "nameCh": "扶乐县",
         "isSeat": false
       },
       "provinceId": 544,
@@ -6242,7 +6242,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "新平",
+        "nameCh": "新平县",
         "isSeat": false
       },
       "provinceId": 535,
@@ -6287,7 +6287,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "柘",
+        "nameCh": "柘县",
         "isSeat": false
       },
       "provinceId": 554,
@@ -6333,7 +6333,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "武平",
+        "nameCh": "武平县",
         "isSeat": false
       },
       "provinceId": 550,
@@ -6377,7 +6377,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "苦",
+        "nameCh": "苦县",
         "isSeat": false
       },
       "provinceId": 549,
@@ -6420,7 +6420,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "長平",
+        "nameCh": "长平县",
         "isSeat": false
       },
       "provinceId": 538,
@@ -6466,7 +6466,7 @@
         "junCh": "陳國",
         "ju": "예주",
         "seat": "진현",
-        "nameCh": "陽夏",
+        "nameCh": "阳夏县",
         "isSeat": false
       },
       "provinceId": 541,
@@ -6508,7 +6508,7 @@
         "junCh": "汝南郡",
         "ju": "예주",
         "seat": "평여현",
-        "nameCh": "陽安",
+        "nameCh": "阳安县",
         "isSeat": false
       },
       "provinceId": 656,
@@ -6552,7 +6552,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "毋極",
+        "nameCh": "毋极县",
         "isSeat": false
       },
       "provinceId": 866,
@@ -6595,7 +6595,7 @@
         "junCh": "魯國",
         "ju": "예주",
         "seat": "노현",
-        "nameCh": "卞",
+        "nameCh": "卞县",
         "isSeat": false
       },
       "provinceId": 379,
@@ -6637,7 +6637,7 @@
         "junCh": "魯國",
         "ju": "예주",
         "seat": "노현",
-        "nameCh": "汶陽",
+        "nameCh": "汶阳县",
         "isSeat": false
       },
       "provinceId": 393,
@@ -6681,7 +6681,7 @@
         "junCh": "魯國",
         "ju": "예주",
         "seat": "노현",
-        "nameCh": "蕃",
+        "nameCh": "蕃县",
         "isSeat": false
       },
       "provinceId": 380,
@@ -6725,7 +6725,7 @@
         "junCh": "魯國",
         "ju": "예주",
         "seat": "노현",
-        "nameCh": "薛",
+        "nameCh": "薛县",
         "isSeat": false
       },
       "provinceId": 381,
@@ -6771,7 +6771,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "盧奴",
+        "nameCh": "卢奴县",
         "isSeat": true
       },
       "provinceId": 803,
@@ -6816,7 +6816,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "上曲陽",
+        "nameCh": "上曲阳县",
         "isSeat": false
       },
       "provinceId": 781,
@@ -6860,7 +6860,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "北平",
+        "nameCh": "北平县",
         "isSeat": false
       },
       "provinceId": 815,
@@ -6906,7 +6906,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "唐",
+        "nameCh": "唐县",
         "isSeat": false
       },
       "provinceId": 814,
@@ -6951,7 +6951,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "新市",
+        "nameCh": "新市县",
         "isSeat": false
       },
       "provinceId": 865,
@@ -6993,7 +6993,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "安國",
+        "nameCh": "安国县",
         "isSeat": false
       },
       "provinceId": 807,
@@ -7038,7 +7038,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "廣昌",
+        "nameCh": "广昌县",
         "isSeat": false
       },
       "provinceId": 845,
@@ -7081,7 +7081,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "望都",
+        "nameCh": "望都县",
         "isSeat": false
       },
       "provinceId": 813,
@@ -7129,7 +7129,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "蒲陰",
+        "nameCh": "蒲阴县",
         "isSeat": false
       },
       "provinceId": 782,
@@ -7173,7 +7173,7 @@
         "junCh": "中山國",
         "ju": "기주",
         "seat": "노노현",
-        "nameCh": "蠡吾",
+        "nameCh": "蠡吾县",
         "isSeat": false
       },
       "provinceId": 829,
@@ -7216,7 +7216,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "南皮",
+        "nameCh": "南皮县",
         "isSeat": true
       },
       "provinceId": 778,
@@ -7260,7 +7260,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "東光",
+        "nameCh": "东光县",
         "isSeat": false
       },
       "provinceId": 835,
@@ -7305,7 +7305,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "浮陽",
+        "nameCh": "浮阳县",
         "isSeat": false
       },
       "provinceId": 834,
@@ -7347,7 +7347,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "重合",
+        "nameCh": "重合县",
         "isSeat": false
       },
       "provinceId": 738,
@@ -7391,7 +7391,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "陽信",
+        "nameCh": "阳信县",
         "isSeat": false
       },
       "provinceId": 737,
@@ -7435,7 +7435,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "高城",
+        "nameCh": "高城县",
         "isSeat": false
       },
       "provinceId": 837,
@@ -7481,7 +7481,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "下博",
+        "nameCh": "下博县",
         "isSeat": false
       },
       "provinceId": 800,
@@ -7527,7 +7527,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "南宮",
+        "nameCh": "南宫县",
         "isSeat": false
       },
       "provinceId": 802,
@@ -7569,7 +7569,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "堂陽",
+        "nameCh": "堂阳县",
         "isSeat": false
       },
       "provinceId": 797,
@@ -7614,7 +7614,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "扶柳",
+        "nameCh": "扶柳县",
         "isSeat": false
       },
       "provinceId": 869,
@@ -7660,7 +7660,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "武遂",
+        "nameCh": "武遂县",
         "isSeat": false
       },
       "provinceId": 874,
@@ -7706,7 +7706,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "武邑",
+        "nameCh": "武邑县",
         "isSeat": false
       },
       "provinceId": 801,
@@ -7750,7 +7750,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "信都",
+        "nameCh": "信都县",
         "isSeat": true
       },
       "provinceId": 868,
@@ -7794,7 +7794,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "觀津",
+        "nameCh": "观津县",
         "isSeat": false
       },
       "provinceId": 870,
@@ -7840,7 +7840,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "阜城",
+        "nameCh": "阜城县",
         "isSeat": false
       },
       "provinceId": 872,
@@ -7886,7 +7886,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "饒陽",
+        "nameCh": "饶阳县",
         "isSeat": false
       },
       "provinceId": 832,
@@ -7931,7 +7931,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "元氏",
+        "nameCh": "元氏县",
         "isSeat": true
       },
       "provinceId": 804,
@@ -7975,7 +7975,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "上艾",
+        "nameCh": "上艾县",
         "isSeat": false
       },
       "provinceId": 909,
@@ -8019,7 +8019,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "九門",
+        "nameCh": "九门县",
         "isSeat": false
       },
       "provinceId": 809,
@@ -8065,7 +8065,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "井陘",
+        "nameCh": "井陉县",
         "isSeat": false
       },
       "provinceId": 780,
@@ -8111,7 +8111,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "南行唐",
+        "nameCh": "南行唐县",
         "isSeat": false
       },
       "provinceId": 812,
@@ -8155,7 +8155,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "平棘",
+        "nameCh": "平棘县",
         "isSeat": false
       },
       "provinceId": 808,
@@ -8200,7 +8200,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "房子",
+        "nameCh": "房子县",
         "isSeat": false
       },
       "provinceId": 805,
@@ -8244,7 +8244,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "靈壽",
+        "nameCh": "灵寿县",
         "isSeat": false
       },
       "provinceId": 810,
@@ -8289,7 +8289,7 @@
         "junCh": "安平國",
         "ju": "기주",
         "seat": "신도현",
-        "nameCh": "安平",
+        "nameCh": "安平县",
         "isSeat": false
       },
       "provinceId": 776,
@@ -8334,7 +8334,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "蒲吾",
+        "nameCh": "蒲吾县",
         "isSeat": false
       },
       "provinceId": 811,
@@ -8379,7 +8379,7 @@
         "junCh": "常山國",
         "ju": "기주",
         "seat": "원씨현",
-        "nameCh": "高邑",
+        "nameCh": "高邑县",
         "isSeat": false
       },
       "provinceId": 771,
@@ -8421,7 +8421,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "광평현",
-        "nameCh": "廣平",
+        "nameCh": "广平县",
         "isSeat": false
       },
       "provinceId": 791,
@@ -8465,7 +8465,7 @@
         "junCh": "清河國",
         "ju": "기주",
         "seat": "낙평현",
-        "nameCh": "東武城",
+        "nameCh": "东武城县",
         "isSeat": false
       },
       "provinceId": 689,
@@ -8510,7 +8510,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "樂成",
+        "nameCh": "乐成县",
         "isSeat": true
       },
       "provinceId": 817,
@@ -8553,7 +8553,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "東平舒",
+        "nameCh": "东平舒县",
         "isSeat": false
       },
       "provinceId": 839,
@@ -8598,7 +8598,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "中水",
+        "nameCh": "中水县",
         "isSeat": false
       },
       "provinceId": 833,
@@ -8643,7 +8643,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "弓高",
+        "nameCh": "弓高县",
         "isSeat": false
       },
       "provinceId": 875,
@@ -8687,7 +8687,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "成平",
+        "nameCh": "成平县",
         "isSeat": false
       },
       "provinceId": 838,
@@ -8730,7 +8730,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "文安",
+        "nameCh": "文安县",
         "isSeat": false
       },
       "provinceId": 0,
@@ -8775,7 +8775,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "束州",
+        "nameCh": "束州县",
         "isSeat": false
       },
       "provinceId": 841,
@@ -8819,7 +8819,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "武垣",
+        "nameCh": "武垣县",
         "isSeat": false
       },
       "provinceId": 777,
@@ -8862,7 +8862,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "鄚",
+        "nameCh": "鄚县",
         "isSeat": false
       },
       "provinceId": 830,
@@ -8906,7 +8906,7 @@
         "junCh": "河閒國",
         "ju": "기주",
         "seat": "낙성현",
-        "nameCh": "高陽",
+        "nameCh": "高阳县",
         "isSeat": false
       },
       "provinceId": 819,
@@ -8950,7 +8950,7 @@
         "junCh": "清河國",
         "ju": "기주",
         "seat": "감릉군",
-        "nameCh": "廣川",
+        "nameCh": "广川县",
         "isSeat": false
       },
       "provinceId": 871,
@@ -8994,7 +8994,7 @@
         "junCh": "勃海郡",
         "ju": "기주",
         "seat": "남피현",
-        "nameCh": "章武",
+        "nameCh": "章武县",
         "isSeat": false
       },
       "provinceId": 818,
@@ -9040,7 +9040,7 @@
         "junCh": "清河國",
         "ju": "기주",
         "seat": "감릉군",
-        "nameCh": "繹幕",
+        "nameCh": "绎幕县",
         "isSeat": false
       },
       "provinceId": 373,
@@ -9087,7 +9087,7 @@
         "junCh": "清河國",
         "ju": "기주",
         "seat": "감릉군",
-        "nameCh": "貝丘",
+        "nameCh": "贝丘县",
         "isSeat": false
       },
       "provinceId": 403,
@@ -9131,7 +9131,7 @@
         "junCh": "清河國",
         "ju": "기주",
         "seat": "감릉군",
-        "nameCh": "鄃",
+        "nameCh": "鄃侯国",
         "isSeat": false
       },
       "provinceId": 372,
@@ -9176,7 +9176,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "장무군",
-        "nameCh": "范",
+        "nameCh": "范县",
         "isSeat": false
       },
       "provinceId": 679,
@@ -9224,7 +9224,7 @@
         "junCh": "趙國",
         "ju": "기주",
         "seat": "감단현",
-        "nameCh": "邯鄲",
+        "nameCh": "邯郸县",
         "isSeat": true
       },
       "provinceId": 768,
@@ -9269,7 +9269,7 @@
         "junCh": "趙國",
         "ju": "기주",
         "seat": "감단현",
-        "nameCh": "中丘",
+        "nameCh": "中丘县",
         "isSeat": false
       },
       "provinceId": 806,
@@ -9315,7 +9315,7 @@
         "junCh": "趙國",
         "ju": "기주",
         "seat": "감단현",
-        "nameCh": "易陽",
+        "nameCh": "易阳县",
         "isSeat": false
       },
       "provinceId": 772,
@@ -9359,7 +9359,7 @@
         "junCh": "趙國",
         "ju": "기주",
         "seat": "감단현",
-        "nameCh": "柏人",
+        "nameCh": "柏人县",
         "isSeat": false
       },
       "provinceId": 770,
@@ -9404,7 +9404,7 @@
         "junCh": "趙國",
         "ju": "기주",
         "seat": "감단현",
-        "nameCh": "襄國",
+        "nameCh": "襄国县",
         "isSeat": false
       },
       "provinceId": 769,
@@ -9450,7 +9450,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "영도현",
-        "nameCh": "樂平",
+        "nameCh": "乐平侯国",
         "isSeat": false
       },
       "provinceId": 399,
@@ -9493,7 +9493,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "下曲陽",
+        "nameCh": "下曲阳县",
         "isSeat": false
       },
       "provinceId": 795,
@@ -9538,7 +9538,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "任",
+        "nameCh": "任县",
         "isSeat": false
       },
       "provinceId": 794,
@@ -9585,7 +9585,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "列人",
+        "nameCh": "列人县",
         "isSeat": false
       },
       "provinceId": 857,
@@ -9627,7 +9627,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "南和",
+        "nameCh": "南和县",
         "isSeat": false
       },
       "provinceId": 856,
@@ -9670,7 +9670,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "平鄉",
+        "nameCh": "平乡县",
         "isSeat": false
       },
       "provinceId": 862,
@@ -9715,7 +9715,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "廣宗",
+        "nameCh": "广宗县",
         "isSeat": false
       },
       "provinceId": 799,
@@ -9761,7 +9761,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "廣年",
+        "nameCh": "广年县",
         "isSeat": false
       },
       "provinceId": 863,
@@ -9807,7 +9807,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "曲周",
+        "nameCh": "曲周县",
         "isSeat": false
       },
       "provinceId": 859,
@@ -9850,7 +9850,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "楊氏",
+        "nameCh": "杨氏县",
         "isSeat": false
       },
       "provinceId": 793,
@@ -9894,7 +9894,7 @@
         "junCh": "鉅鹿郡",
         "ju": "기주",
         "seat": "영도현",
-        "nameCh": "鄡",
+        "nameCh": "鄡县",
         "isSeat": false
       },
       "provinceId": 796,
@@ -9937,7 +9937,7 @@
         "junCh": "東平國",
         "ju": "연주",
         "seat": "무염현",
-        "nameCh": "章",
+        "nameCh": "章县",
         "isSeat": false
       },
       "provinceId": 764,
@@ -9981,7 +9981,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "鄴",
+        "nameCh": "邺县",
         "isSeat": true
       },
       "provinceId": 556,
@@ -10027,7 +10027,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "元城",
+        "nameCh": "元城县",
         "isSeat": false
       },
       "provinceId": 790,
@@ -10072,7 +10072,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "內黃",
+        "nameCh": "内黄县",
         "isSeat": false
       },
       "provinceId": 560,
@@ -10118,7 +10118,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "平恩",
+        "nameCh": "平恩县",
         "isSeat": false
       },
       "provinceId": 690,
@@ -10165,7 +10165,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "斥丘",
+        "nameCh": "斥丘县",
         "isSeat": false
       },
       "provinceId": 788,
@@ -10210,7 +10210,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "曲梁",
+        "nameCh": "曲梁县",
         "isSeat": false
       },
       "provinceId": 860,
@@ -10254,7 +10254,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "梁期",
+        "nameCh": "梁期县",
         "isSeat": false
       },
       "provinceId": 825,
@@ -10296,7 +10296,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "武安",
+        "nameCh": "武安县",
         "isSeat": false
       },
       "provinceId": 559,
@@ -10340,7 +10340,7 @@
         "junCh": "濟北國",
         "ju": "연주",
         "seat": "노현",
-        "nameCh": "成",
+        "nameCh": "成县",
         "isSeat": false
       },
       "provinceId": 394,
@@ -10384,7 +10384,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "清淵",
+        "nameCh": "清渊县",
         "isSeat": false
       },
       "provinceId": 688,
@@ -10427,7 +10427,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "繁陽",
+        "nameCh": "繁阳县",
         "isSeat": false
       },
       "provinceId": 561,
@@ -10472,7 +10472,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "陰安",
+        "nameCh": "阴安县",
         "isSeat": false
       },
       "provinceId": 792,
@@ -10517,7 +10517,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "館陶",
+        "nameCh": "馆陶县",
         "isSeat": false
       },
       "provinceId": 405,
@@ -10561,7 +10561,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "魏",
+        "nameCh": "魏县",
         "isSeat": false
       },
       "provinceId": 789,
@@ -10608,7 +10608,7 @@
         "junCh": "魏郡",
         "ju": "기주",
         "seat": "업현",
-        "nameCh": "黎陽",
+        "nameCh": "黎阳县",
         "isSeat": false
       },
       "provinceId": 570,
@@ -10652,7 +10652,7 @@
         "junCh": "任城國",
         "ju": "연주",
         "seat": "임성현",
-        "nameCh": "任城",
+        "nameCh": "任城县",
         "isSeat": true
       },
       "provinceId": 686,
@@ -10696,7 +10696,7 @@
         "junCh": "任城國",
         "ju": "연주",
         "seat": "임성현",
-        "nameCh": "亢父",
+        "nameCh": "亢父县",
         "isSeat": false
       },
       "provinceId": 682,
@@ -10740,7 +10740,7 @@
         "junCh": "任城國",
         "ju": "연주",
         "seat": "임성현",
-        "nameCh": "樊",
+        "nameCh": "樊县",
         "isSeat": false
       },
       "provinceId": 374,
@@ -10784,7 +10784,7 @@
         "junCh": "山陽郡",
         "ju": "연주",
         "seat": "창읍현",
-        "nameCh": "昌邑",
+        "nameCh": "昌邑县",
         "isSeat": true
       },
       "provinceId": 683,
@@ -10827,7 +10827,7 @@
         "junCh": "山陽郡",
         "ju": "연주",
         "seat": "창읍현",
-        "nameCh": "南平陽",
+        "nameCh": "南平阳县",
         "isSeat": false
       },
       "provinceId": 376,
@@ -10874,7 +10874,7 @@
         "junCh": "山陽郡",
         "ju": "연주",
         "seat": "창읍현",
-        "nameCh": "方與",
+        "nameCh": "方与县",
         "isSeat": false
       },
       "provinceId": 685,
@@ -10920,7 +10920,7 @@
         "junCh": "山陽郡",
         "ju": "연주",
         "seat": "창읍현",
-        "nameCh": "湖陸",
+        "nameCh": "湖陆县",
         "isSeat": false
       },
       "provinceId": 684,
@@ -10963,7 +10963,7 @@
         "junCh": "山陽郡",
         "ju": "연주",
         "seat": "창읍현",
-        "nameCh": "瑕丘",
+        "nameCh": "瑕丘县",
         "isSeat": false
       },
       "provinceId": 390,
@@ -11007,7 +11007,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "창읍현",
-        "nameCh": "利城",
+        "nameCh": "利城县",
         "isSeat": false
       },
       "provinceId": 233,
@@ -11051,7 +11051,7 @@
         "junCh": "安定郡",
         "ju": "량주",
         "seat": "창읍현",
-        "nameCh": "高平",
+        "nameCh": "高平县",
         "isSeat": false
       },
       "provinceId": 378,
@@ -11097,7 +11097,7 @@
         "junCh": "東平國",
         "ju": "연주",
         "seat": "무염현",
-        "nameCh": "無鹽",
+        "nameCh": "无盐县",
         "isSeat": true
       },
       "provinceId": 762,
@@ -11141,7 +11141,7 @@
         "junCh": "東平國",
         "ju": "연주",
         "seat": "무염현",
-        "nameCh": "東平陸",
+        "nameCh": "东平陆县",
         "isSeat": false
       },
       "provinceId": 388,
@@ -11185,7 +11185,7 @@
         "junCh": "東平國",
         "ju": "연주",
         "seat": "무염현",
-        "nameCh": "壽張",
+        "nameCh": "寿张县",
         "isSeat": false
       },
       "provinceId": 389,
@@ -11231,7 +11231,7 @@
         "junCh": "東平國",
         "ju": "연주",
         "seat": "무염현",
-        "nameCh": "須昌",
+        "nameCh": "须昌县",
         "isSeat": false
       },
       "provinceId": 763,
@@ -11275,7 +11275,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "燕",
+        "nameCh": "燕县",
         "isSeat": false
       },
       "provinceId": 568,
@@ -11319,7 +11319,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "東武陽",
+        "nameCh": "东武阳县",
         "isSeat": false
       },
       "provinceId": 678,
@@ -11364,7 +11364,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "東阿",
+        "nameCh": "东阿县",
         "isSeat": false
       },
       "provinceId": 398,
@@ -11408,7 +11408,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "臨邑",
+        "nameCh": "临邑县",
         "isSeat": false
       },
       "provinceId": 368,
@@ -11453,7 +11453,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "博平",
+        "nameCh": "博平县",
         "isSeat": false
       },
       "provinceId": 401,
@@ -11497,7 +11497,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "白馬",
+        "nameCh": "白马县",
         "isSeat": false
       },
       "provinceId": 571,
@@ -11544,7 +11544,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "聊城",
+        "nameCh": "聊城县",
         "isSeat": false
       },
       "provinceId": 396,
@@ -11589,7 +11589,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "穀城",
+        "nameCh": "谷城县",
         "isSeat": false
       },
       "provinceId": 765,
@@ -11634,7 +11634,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "陽平",
+        "nameCh": "阳平县",
         "isSeat": false
       },
       "provinceId": 404,
@@ -11680,7 +11680,7 @@
         "junCh": "東郡",
         "ju": "연주",
         "seat": "연현",
-        "nameCh": "頓丘",
+        "nameCh": "顿丘县",
         "isSeat": false
       },
       "provinceId": 569,
@@ -11724,7 +11724,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "봉고현",
-        "nameCh": "祝其",
+        "nameCh": "祝其县",
         "isSeat": false
       },
       "provinceId": 232,
@@ -11769,7 +11769,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "南城",
+        "nameCh": "南城县",
         "isSeat": false
       },
       "provinceId": 744,
@@ -11814,7 +11814,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "南武陽",
+        "nameCh": "南武阳侯国",
         "isSeat": false
       },
       "provinceId": 746,
@@ -11859,7 +11859,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "博",
+        "nameCh": "博县",
         "isSeat": false
       },
       "provinceId": 755,
@@ -11904,7 +11904,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "嬴",
+        "nameCh": "嬴县",
         "isSeat": false
       },
       "provinceId": 761,
@@ -11949,7 +11949,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "梁甫",
+        "nameCh": "梁甫县",
         "isSeat": false
       },
       "provinceId": 756,
@@ -11992,7 +11992,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "牟",
+        "nameCh": "牟县",
         "isSeat": false
       },
       "provinceId": 760,
@@ -12039,7 +12039,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "蓋",
+        "nameCh": "盖县",
         "isSeat": false
       },
       "provinceId": 753,
@@ -12083,7 +12083,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "廣戚",
+        "nameCh": "广戚县",
         "isSeat": false
       },
       "provinceId": 218,
@@ -12129,7 +12129,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "萊蕪",
+        "nameCh": "莱芜县",
         "isSeat": false
       },
       "provinceId": 354,
@@ -12174,7 +12174,7 @@
         "junCh": "泰山郡",
         "ju": "연주",
         "seat": "봉고현",
-        "nameCh": "費",
+        "nameCh": "费县",
         "isSeat": false
       },
       "provinceId": 745,
@@ -12219,7 +12219,7 @@
         "junCh": "濟北國",
         "ju": "연주",
         "seat": "노현",
-        "nameCh": "盧",
+        "nameCh": "卢县",
         "isSeat": true
       },
       "provinceId": 359,
@@ -12262,7 +12262,7 @@
         "junCh": "濟北國",
         "ju": "연주",
         "seat": "노현",
-        "nameCh": "剛",
+        "nameCh": "刚县",
         "isSeat": false
       },
       "provinceId": 392,
@@ -12305,7 +12305,7 @@
         "junCh": "濟北國",
         "ju": "연주",
         "seat": "노현",
-        "nameCh": "茌平",
+        "nameCh": "茌平县",
         "isSeat": false
       },
       "provinceId": 402,
@@ -12349,7 +12349,7 @@
         "junCh": "濟北國",
         "ju": "연주",
         "seat": "노현",
-        "nameCh": "蛇丘",
+        "nameCh": "蛇丘县",
         "isSeat": false
       },
       "provinceId": 758,
@@ -12393,7 +12393,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "定陶",
+        "nameCh": "定陶县",
         "isSeat": true
       },
       "provinceId": 672,
@@ -12438,7 +12438,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "乘氏",
+        "nameCh": "乘氏县",
         "isSeat": false
       },
       "provinceId": 666,
@@ -12483,7 +12483,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "冤句",
+        "nameCh": "冤句县",
         "isSeat": false
       },
       "provinceId": 667,
@@ -12528,7 +12528,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "單父",
+        "nameCh": "单父县",
         "isSeat": false
       },
       "provinceId": 669,
@@ -12573,7 +12573,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "句陽",
+        "nameCh": "句阳县",
         "isSeat": false
       },
       "provinceId": 668,
@@ -12617,7 +12617,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "廩丘",
+        "nameCh": "廪丘县",
         "isSeat": false
       },
       "provinceId": 676,
@@ -12662,7 +12662,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "成武",
+        "nameCh": "成武县",
         "isSeat": false
       },
       "provinceId": 681,
@@ -12705,7 +12705,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "成陽",
+        "nameCh": "成阳县",
         "isSeat": false
       },
       "provinceId": 675,
@@ -12748,7 +12748,7 @@
         "junCh": "濟陰郡",
         "ju": "연주",
         "seat": "정도현",
-        "nameCh": "鄄城",
+        "nameCh": "鄄城县",
         "isSeat": false
       },
       "provinceId": 674,
@@ -12793,7 +12793,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "陳留",
+        "nameCh": "陈留县",
         "isSeat": true
       },
       "provinceId": 307,
@@ -12839,7 +12839,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "圉",
+        "nameCh": "圉县",
         "isSeat": false
       },
       "provinceId": 312,
@@ -12884,7 +12884,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "外黃",
+        "nameCh": "外黄县",
         "isSeat": false
       },
       "provinceId": 310,
@@ -12930,7 +12930,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "封丘",
+        "nameCh": "封丘县",
         "isSeat": false
       },
       "provinceId": 572,
@@ -12975,7 +12975,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "尉氏",
+        "nameCh": "尉氏县",
         "isSeat": false
       },
       "provinceId": 309,
@@ -13021,7 +13021,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "小黃",
+        "nameCh": "小黄县",
         "isSeat": false
       },
       "provinceId": 311,
@@ -13066,7 +13066,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "扶溝",
+        "nameCh": "扶沟县",
         "isSeat": false
       },
       "provinceId": 542,
@@ -13112,7 +13112,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "濟陽",
+        "nameCh": "济阳县",
         "isSeat": false
       },
       "provinceId": 315,
@@ -13159,7 +13159,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "浚儀",
+        "nameCh": "浚仪县",
         "isSeat": false
       },
       "provinceId": 318,
@@ -13205,7 +13205,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "考城",
+        "nameCh": "考城县",
         "isSeat": false
       },
       "provinceId": 573,
@@ -13251,7 +13251,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "襄邑",
+        "nameCh": "襄邑县",
         "isSeat": false
       },
       "provinceId": 553,
@@ -13295,7 +13295,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "酸棗",
+        "nameCh": "酸枣县",
         "isSeat": false
       },
       "provinceId": 567,
@@ -13341,7 +13341,7 @@
         "junCh": "陳留郡",
         "ju": "연주",
         "seat": "진류현",
-        "nameCh": "雍丘",
+        "nameCh": "雍丘县",
         "isSeat": false
       },
       "provinceId": 308,
@@ -13386,7 +13386,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "下邳",
+        "nameCh": "下邳县",
         "isSeat": true
       },
       "provinceId": 220,
@@ -13431,7 +13431,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "下相",
+        "nameCh": "下相县",
         "isSeat": false
       },
       "provinceId": 224,
@@ -13476,7 +13476,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "僮",
+        "nameCh": "僮县",
         "isSeat": false
       },
       "provinceId": 257,
@@ -13523,7 +13523,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "取慮",
+        "nameCh": "取虑县",
         "isSeat": false
       },
       "provinceId": 228,
@@ -13569,7 +13569,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "司吾",
+        "nameCh": "司吾侯国",
         "isSeat": false
       },
       "provinceId": 225,
@@ -13613,7 +13613,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "夏丘",
+        "nameCh": "夏丘县",
         "isSeat": false
       },
       "provinceId": 255,
@@ -13652,7 +13652,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "徐",
+        "nameCh": "徐县",
         "isSeat": false
       },
       "provinceId": 258,
@@ -13696,7 +13696,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "淮浦",
+        "nameCh": "淮浦县",
         "isSeat": false
       },
       "provinceId": 210,
@@ -13741,7 +13741,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "淮陰",
+        "nameCh": "淮阴县",
         "isSeat": false
       },
       "provinceId": 209,
@@ -13785,7 +13785,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "淮陵",
+        "nameCh": "淮陵县",
         "isSeat": false
       },
       "provinceId": 259,
@@ -13829,7 +13829,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "睢陵",
+        "nameCh": "睢陵县",
         "isSeat": false
       },
       "provinceId": 227,
@@ -13875,7 +13875,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "良成",
+        "nameCh": "良成县",
         "isSeat": false
       },
       "provinceId": 221,
@@ -13920,7 +13920,7 @@
         "junCh": "下邳國",
         "ju": "서주",
         "seat": "하비현",
-        "nameCh": "曲陽",
+        "nameCh": "曲阳侯国",
         "isSeat": false
       },
       "provinceId": 230,
@@ -13963,7 +13963,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "廣陵",
+        "nameCh": "广陵县",
         "isSeat": true
       },
       "provinceId": 202,
@@ -14007,7 +14007,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "堂邑",
+        "nameCh": "堂邑县",
         "isSeat": false
       },
       "provinceId": 53,
@@ -14054,7 +14054,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "射陽",
+        "nameCh": "射阳县",
         "isSeat": false
       },
       "provinceId": 207,
@@ -14098,7 +14098,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "平安",
+        "nameCh": "平安县",
         "isSeat": false
       },
       "provinceId": 203,
@@ -14140,7 +14140,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "江都",
+        "nameCh": "江都县",
         "isSeat": false
       },
       "provinceId": 201,
@@ -14182,7 +14182,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "海西",
+        "nameCh": "海西县",
         "isSeat": false
       },
       "provinceId": 235,
@@ -14227,7 +14227,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "淩",
+        "nameCh": "淩县",
         "isSeat": false
       },
       "provinceId": 223,
@@ -14268,7 +14268,7 @@
         "junCh": "廣陵郡",
         "ju": "서주",
         "seat": "광릉현",
-        "nameCh": "鹽瀆",
+        "nameCh": "盐渎县",
         "isSeat": false
       },
       "provinceId": 208,
@@ -14313,7 +14313,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "安德",
+        "nameCh": "安德县",
         "isSeat": false
       },
       "provinceId": 767,
@@ -14358,7 +14358,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "樂安",
+        "nameCh": "乐安县",
         "isSeat": false
       },
       "provinceId": 698,
@@ -14402,7 +14402,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "彭城",
+        "nameCh": "彭城县",
         "isSeat": true
       },
       "provinceId": 211,
@@ -14448,7 +14448,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "傅陽",
+        "nameCh": "傅阳县",
         "isSeat": false
       },
       "provinceId": 387,
@@ -14494,7 +14494,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "呂",
+        "nameCh": "吕县",
         "isSeat": false
       },
       "provinceId": 212,
@@ -14537,7 +14537,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "武原",
+        "nameCh": "武原县",
         "isSeat": false
       },
       "provinceId": 222,
@@ -14582,7 +14582,7 @@
         "junCh": "彭城國",
         "ju": "서주",
         "seat": "팽성현",
-        "nameCh": "留",
+        "nameCh": "留县",
         "isSeat": false
       },
       "provinceId": 219,
@@ -14626,7 +14626,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "蘭陵",
+        "nameCh": "兰陵县",
         "isSeat": false
       },
       "provinceId": 384,
@@ -14671,7 +14671,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "厚丘",
+        "nameCh": "厚丘县",
         "isSeat": false
       },
       "provinceId": 234,
@@ -14719,7 +14719,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "戚",
+        "nameCh": "戚县",
         "isSeat": false
       },
       "provinceId": 383,
@@ -14766,7 +14766,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "承",
+        "nameCh": "承县",
         "isSeat": false
       },
       "provinceId": 385,
@@ -14809,7 +14809,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "昌慮",
+        "nameCh": "昌虑县",
         "isSeat": false
       },
       "provinceId": 382,
@@ -14853,7 +14853,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "朐",
+        "nameCh": "朐县",
         "isSeat": false
       },
       "provinceId": 229,
@@ -14899,7 +14899,7 @@
         "junCh": "東海郡",
         "ju": "서주",
         "seat": "난릉현",
-        "nameCh": "襄賁",
+        "nameCh": "襄贲县",
         "isSeat": false
       },
       "provinceId": 741,
@@ -14945,7 +14945,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "博昌",
+        "nameCh": "博昌县",
         "isSeat": false
       },
       "provinceId": 697,
@@ -14991,7 +14991,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "東莞",
+        "nameCh": "东莞县",
         "isSeat": false
       },
       "provinceId": 750,
@@ -15035,7 +15035,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "開陽",
+        "nameCh": "开阳县",
         "isSeat": true
       },
       "provinceId": 743,
@@ -15080,7 +15080,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "東安",
+        "nameCh": "东安县",
         "isSeat": false
       },
       "provinceId": 751,
@@ -15125,7 +15125,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "東武",
+        "nameCh": "东武县",
         "isSeat": false
       },
       "provinceId": 711,
@@ -15168,7 +15168,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "臨沂",
+        "nameCh": "临沂县",
         "isSeat": false
       },
       "provinceId": 742,
@@ -15213,7 +15213,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "淳於",
+        "nameCh": "淳于县",
         "isSeat": false
       },
       "provinceId": 710,
@@ -15258,7 +15258,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "姑幕",
+        "nameCh": "姑幕县",
         "isSeat": false
       },
       "provinceId": 714,
@@ -15301,7 +15301,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "琅邪",
+        "nameCh": "琅邪县",
         "isSeat": false
       },
       "provinceId": 712,
@@ -15345,7 +15345,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "繒",
+        "nameCh": "缯县",
         "isSeat": false
       },
       "provinceId": 386,
@@ -15390,7 +15390,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "莒",
+        "nameCh": "莒县",
         "isSeat": false
       },
       "provinceId": 748,
@@ -15435,7 +15435,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "諸",
+        "nameCh": "诸县",
         "isSeat": false
       },
       "provinceId": 713,
@@ -15479,7 +15479,7 @@
         "junCh": "琅邪國",
         "ju": "서주",
         "seat": "개양현",
-        "nameCh": "陽都",
+        "nameCh": "阳都县",
         "isSeat": false
       },
       "provinceId": 752,
@@ -15525,7 +15525,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "劇",
+        "nameCh": "剧县",
         "isSeat": true
       },
       "provinceId": 703,
@@ -15569,7 +15569,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "下密",
+        "nameCh": "下密县",
         "isSeat": false
       },
       "provinceId": 730,
@@ -15613,7 +15613,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "東安平",
+        "nameCh": "东安平县",
         "isSeat": false
       },
       "provinceId": 693,
@@ -15657,7 +15657,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "即墨",
+        "nameCh": "即墨县",
         "isSeat": false
       },
       "provinceId": 728,
@@ -15703,7 +15703,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "夷安",
+        "nameCh": "夷安县",
         "isSeat": false
       },
       "provinceId": 733,
@@ -15749,7 +15749,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "安丘",
+        "nameCh": "安丘县",
         "isSeat": false
       },
       "provinceId": 709,
@@ -15793,7 +15793,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "平壽",
+        "nameCh": "平寿县",
         "isSeat": false
       },
       "provinceId": 729,
@@ -15839,7 +15839,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "昌安",
+        "nameCh": "昌安县",
         "isSeat": false
       },
       "provinceId": 708,
@@ -15881,7 +15881,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "朱虛",
+        "nameCh": "朱虚县",
         "isSeat": false
       },
       "provinceId": 707,
@@ -15924,7 +15924,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "膠東",
+        "nameCh": "胶东县",
         "isSeat": false
       },
       "provinceId": 727,
@@ -15969,7 +15969,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "營陵",
+        "nameCh": "营陵县",
         "isSeat": false
       },
       "provinceId": 706,
@@ -16013,7 +16013,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "挺",
+        "nameCh": "挺县",
         "isSeat": false
       },
       "provinceId": 719,
@@ -16058,7 +16058,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "都昌",
+        "nameCh": "都昌县",
         "isSeat": false
       },
       "provinceId": 731,
@@ -16104,7 +16104,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "高密",
+        "nameCh": "高密县",
         "isSeat": false
       },
       "provinceId": 734,
@@ -16148,7 +16148,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "平原",
+        "nameCh": "平原县",
         "isSeat": true
       },
       "provinceId": 360,
@@ -16192,7 +16192,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "樂陵",
+        "nameCh": "乐陵县",
         "isSeat": false
       },
       "provinceId": 739,
@@ -16233,7 +16233,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "厭次",
+        "nameCh": "厌次县",
         "isSeat": false
       },
       "provinceId": 736,
@@ -16276,7 +16276,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "祝阿",
+        "nameCh": "祝阿县",
         "isSeat": false
       },
       "provinceId": 366,
@@ -16321,7 +16321,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "般",
+        "nameCh": "般县",
         "isSeat": false
       },
       "provinceId": 371,
@@ -16366,7 +16366,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "高唐",
+        "nameCh": "高唐县",
         "isSeat": false
       },
       "provinceId": 358,
@@ -16411,7 +16411,7 @@
         "junCh": "平原郡",
         "ju": "청주",
         "seat": "평원현",
-        "nameCh": "鬲",
+        "nameCh": "鬲县",
         "isSeat": false
       },
       "provinceId": 369,
@@ -16455,7 +16455,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "黃",
+        "nameCh": "黄县",
         "isSeat": true
       },
       "provinceId": 715,
@@ -16498,7 +16498,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "東牟",
+        "nameCh": "东牟县",
         "isSeat": false
       },
       "provinceId": 724,
@@ -16543,7 +16543,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "盧鄉",
+        "nameCh": "卢乡县",
         "isSeat": false
       },
       "provinceId": 720,
@@ -16587,7 +16587,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "當利",
+        "nameCh": "当利县",
         "isSeat": false
       },
       "provinceId": 725,
@@ -16630,7 +16630,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "掖",
+        "nameCh": "掖县",
         "isSeat": false
       },
       "provinceId": 2,
@@ -16672,7 +16672,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "昌陽",
+        "nameCh": "昌阳县",
         "isSeat": false
       },
       "provinceId": 718,
@@ -16716,7 +16716,7 @@
         "junCh": "北海國",
         "ju": "청주",
         "seat": "극현",
-        "nameCh": "觀陽",
+        "nameCh": "观阳县",
         "isSeat": false
       },
       "provinceId": 722,
@@ -16760,7 +16760,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "牟平",
+        "nameCh": "牟平县",
         "isSeat": false
       },
       "provinceId": 723,
@@ -16804,7 +16804,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "長廣",
+        "nameCh": "长广县",
         "isSeat": false
       },
       "provinceId": 721,
@@ -16847,7 +16847,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "黔陬",
+        "nameCh": "黔陬县",
         "isSeat": false
       },
       "provinceId": 732,
@@ -16893,7 +16893,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "臨濟",
+        "nameCh": "临济县",
         "isSeat": true
       },
       "provinceId": 699,
@@ -16937,7 +16937,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "利",
+        "nameCh": "利县",
         "isSeat": false
       },
       "provinceId": 696,
@@ -16980,7 +16980,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "千乘",
+        "nameCh": "千乘县",
         "isSeat": false
       },
       "provinceId": 700,
@@ -17024,7 +17024,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "壽光",
+        "nameCh": "寿光县",
         "isSeat": false
       },
       "provinceId": 702,
@@ -17068,7 +17068,7 @@
         "junCh": "樂安國",
         "ju": "청주",
         "seat": "임제현",
-        "nameCh": "益",
+        "nameCh": "益侯国",
         "isSeat": false
       },
       "provinceId": 704,
@@ -17111,7 +17111,7 @@
         "junCh": "東萊郡",
         "ju": "청주",
         "seat": "황현",
-        "nameCh": "不其",
+        "nameCh": "不其县",
         "isSeat": false
       },
       "provinceId": 735,
@@ -17156,7 +17156,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "東平陵",
+        "nameCh": "东平陵县",
         "isSeat": true
       },
       "provinceId": 348,
@@ -17201,7 +17201,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "東朝陽",
+        "nameCh": "东朝阳县",
         "isSeat": false
       },
       "provinceId": 1,
@@ -17246,7 +17246,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "於陵",
+        "nameCh": "于陵县",
         "isSeat": false
       },
       "provinceId": 364,
@@ -17290,7 +17290,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "土鼓",
+        "nameCh": "土鼓县",
         "isSeat": false
       },
       "provinceId": 353,
@@ -17335,7 +17335,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "梁鄒",
+        "nameCh": "梁邹县",
         "isSeat": false
       },
       "provinceId": 352,
@@ -17380,7 +17380,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "菅",
+        "nameCh": "菅县",
         "isSeat": false
       },
       "provinceId": 350,
@@ -17424,7 +17424,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "著",
+        "nameCh": "著县",
         "isSeat": false
       },
       "provinceId": 357,
@@ -17467,7 +17467,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "鄒平",
+        "nameCh": "邹平县",
         "isSeat": false
       },
       "provinceId": 351,
@@ -17511,7 +17511,7 @@
         "junCh": "齊國",
         "ju": "청주",
         "seat": "서안현",
-        "nameCh": "西安",
+        "nameCh": "西安县",
         "isSeat": false
       },
       "provinceId": 694,
@@ -17555,7 +17555,7 @@
         "junCh": "齊國",
         "ju": "청주",
         "seat": "서안현",
-        "nameCh": "臨朐",
+        "nameCh": "临朐县",
         "isSeat": false
       },
       "provinceId": 356,
@@ -17599,7 +17599,7 @@
         "junCh": "齊國",
         "ju": "청주",
         "seat": "서안현",
-        "nameCh": "廣",
+        "nameCh": "广县",
         "isSeat": false
       },
       "provinceId": 692,
@@ -17644,7 +17644,7 @@
         "junCh": "齊國",
         "ju": "청주",
         "seat": "서안현",
-        "nameCh": "昌國",
+        "nameCh": "昌国县",
         "isSeat": false
       },
       "provinceId": 355,
@@ -17688,7 +17688,7 @@
         "junCh": "齊國",
         "ju": "청주",
         "seat": "서안현",
-        "nameCh": "般陽",
+        "nameCh": "般阳县",
         "isSeat": false
       },
       "provinceId": 363,
@@ -17732,7 +17732,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "江陵",
+        "nameCh": "江陵县",
         "isSeat": true
       },
       "provinceId": 285,
@@ -17775,7 +17775,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "臨沮",
+        "nameCh": "临沮县",
         "isSeat": false
       },
       "provinceId": 442,
@@ -17819,7 +17819,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "華容",
+        "nameCh": "华容县",
         "isSeat": false
       },
       "provinceId": 287,
@@ -17862,7 +17862,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "夷道",
+        "nameCh": "夷道县",
         "isSeat": false
       },
       "provinceId": 290,
@@ -17903,7 +17903,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "夷陵",
+        "nameCh": "夷陵县",
         "isSeat": false
       },
       "provinceId": 443,
@@ -17949,7 +17949,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "宜城",
+        "nameCh": "宜城县",
         "isSeat": false
       },
       "provinceId": 431,
@@ -17992,7 +17992,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "州陵",
+        "nameCh": "州陵县",
         "isSeat": false
       },
       "provinceId": 276,
@@ -18034,7 +18034,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "巫",
+        "nameCh": "巫县",
         "isSeat": false
       },
       "provinceId": 330,
@@ -18078,7 +18078,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "當陽",
+        "nameCh": "当阳县",
         "isSeat": false
       },
       "provinceId": 441,
@@ -18124,7 +18124,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "枝江",
+        "nameCh": "枝江县",
         "isSeat": false
       },
       "provinceId": 288,
@@ -18165,7 +18165,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "秭歸",
+        "nameCh": "秭归县",
         "isSeat": false
       },
       "provinceId": 444,
@@ -18209,7 +18209,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "編",
+        "nameCh": "编县",
         "isSeat": false
       },
       "provinceId": 440,
@@ -18254,7 +18254,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "邔",
+        "nameCh": "邔县",
         "isSeat": false
       },
       "provinceId": 430,
@@ -18300,7 +18300,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "鄀",
+        "nameCh": "鄀县",
         "isSeat": false
       },
       "provinceId": 432,
@@ -18345,7 +18345,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "陰",
+        "nameCh": "阴县",
         "isSeat": false
       },
       "provinceId": 438,
@@ -18392,7 +18392,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "宛",
+        "nameCh": "宛县",
         "isSeat": true
       },
       "provinceId": 602,
@@ -18435,7 +18435,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "冠軍",
+        "nameCh": "冠军县",
         "isSeat": false
       },
       "provinceId": 616,
@@ -18479,7 +18479,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "博望",
+        "nameCh": "博望县",
         "isSeat": false
       },
       "provinceId": 604,
@@ -18526,7 +18526,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "叶",
+        "nameCh": "叶县",
         "isSeat": false
       },
       "provinceId": 625,
@@ -18571,7 +18571,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "堵陽",
+        "nameCh": "堵阳县",
         "isSeat": false
       },
       "provinceId": 621,
@@ -18615,7 +18615,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "山都",
+        "nameCh": "山都县",
         "isSeat": false
       },
       "provinceId": 429,
@@ -18659,7 +18659,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "平氏",
+        "nameCh": "平氏县",
         "isSeat": false
       },
       "provinceId": 611,
@@ -18705,7 +18705,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "新野",
+        "nameCh": "新野县",
         "isSeat": false
       },
       "provinceId": 617,
@@ -18751,7 +18751,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "朝陽",
+        "nameCh": "朝阳县",
         "isSeat": false
       },
       "provinceId": 615,
@@ -18795,7 +18795,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "析",
+        "nameCh": "析县",
         "isSeat": false
       },
       "provinceId": 619,
@@ -18843,7 +18843,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "棘陽",
+        "nameCh": "棘阳县",
         "isSeat": false
       },
       "provinceId": 618,
@@ -18884,7 +18884,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "武當",
+        "nameCh": "武当县",
         "isSeat": false
       },
       "provinceId": 439,
@@ -18929,7 +18929,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "比陽",
+        "nameCh": "比阳县",
         "isSeat": false
       },
       "provinceId": 608,
@@ -18975,7 +18975,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "湖陽",
+        "nameCh": "湖阳县",
         "isSeat": false
       },
       "provinceId": 607,
@@ -19021,7 +19021,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "犨",
+        "nameCh": "犨县",
         "isSeat": false
       },
       "provinceId": 639,
@@ -19068,7 +19068,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "穰",
+        "nameCh": "穰县",
         "isSeat": false
       },
       "provinceId": 614,
@@ -19115,7 +19115,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "育陽",
+        "nameCh": "育阳县",
         "isSeat": false
       },
       "provinceId": 603,
@@ -19161,7 +19161,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "舞陰",
+        "nameCh": "舞阴县",
         "isSeat": false
       },
       "provinceId": 609,
@@ -19208,7 +19208,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "西鄂",
+        "nameCh": "西鄂县",
         "isSeat": false
       },
       "provinceId": 605,
@@ -19253,7 +19253,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "酈",
+        "nameCh": "郦县",
         "isSeat": false
       },
       "provinceId": 620,
@@ -19299,7 +19299,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "隨",
+        "nameCh": "随县",
         "isSeat": false
       },
       "provinceId": 284,
@@ -19345,7 +19345,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "雉",
+        "nameCh": "雉县",
         "isSeat": false
       },
       "provinceId": 606,
@@ -19390,7 +19390,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "魯陽",
+        "nameCh": "鲁阳县",
         "isSeat": false
       },
       "provinceId": 638,
@@ -19435,7 +19435,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "鄧",
+        "nameCh": "邓县",
         "isSeat": false
       },
       "provinceId": 428,
@@ -19479,7 +19479,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "蔡陽",
+        "nameCh": "蔡阳县",
         "isSeat": false
       },
       "provinceId": 434,
@@ -19523,7 +19523,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "安眾",
+        "nameCh": "安众侯国",
         "isSeat": false
       },
       "provinceId": 612,
@@ -19566,7 +19566,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "築陽",
+        "nameCh": "筑阳县",
         "isSeat": false
       },
       "provinceId": 436,
@@ -19612,7 +19612,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "郴",
+        "nameCh": "郴县",
         "isSeat": true
       },
       "provinceId": 139,
@@ -19657,7 +19657,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "臨武",
+        "nameCh": "临武县",
         "isSeat": false
       },
       "provinceId": 156,
@@ -19702,7 +19702,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "便",
+        "nameCh": "便县",
         "isSeat": false
       },
       "provinceId": 140,
@@ -19749,7 +19749,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "南平",
+        "nameCh": "南平县",
         "isSeat": false
       },
       "provinceId": 155,
@@ -19794,7 +19794,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "曲江",
+        "nameCh": "曲江县",
         "isSeat": false
       },
       "provinceId": 188,
@@ -19837,7 +19837,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "漢寧",
+        "nameCh": "汉宁县",
         "isSeat": false
       },
       "provinceId": 141,
@@ -19879,7 +19879,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "湞陽",
+        "nameCh": "浈阳县",
         "isSeat": false
       },
       "provinceId": 189,
@@ -19925,7 +19925,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "耒陽",
+        "nameCh": "耒阳县",
         "isSeat": false
       },
       "provinceId": 160,
@@ -19967,7 +19967,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "陰山",
+        "nameCh": "阴山县",
         "isSeat": false
       },
       "provinceId": 157,
@@ -20012,7 +20012,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "臨沅",
+        "nameCh": "临沅县",
         "isSeat": true
       },
       "provinceId": 165,
@@ -20056,7 +20056,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "作唐",
+        "nameCh": "作唐县",
         "isSeat": false
       },
       "provinceId": 168,
@@ -20100,7 +20100,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "漢壽",
+        "nameCh": "汉寿县",
         "isSeat": false
       },
       "provinceId": 164,
@@ -20145,7 +20145,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "沅南",
+        "nameCh": "沅南县",
         "isSeat": false
       },
       "provinceId": 166,
@@ -20190,7 +20190,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "沅陵",
+        "nameCh": "沅陵县",
         "isSeat": false
       },
       "provinceId": 153,
@@ -20235,7 +20235,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "辰陽",
+        "nameCh": "辰阳县",
         "isSeat": false
       },
       "provinceId": 154,
@@ -20280,7 +20280,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "遷陵",
+        "nameCh": "迁陵县",
         "isSeat": false
       },
       "provinceId": 179,
@@ -20323,7 +20323,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "酉陽",
+        "nameCh": "酉阳县",
         "isSeat": false
       },
       "provinceId": 180,
@@ -20366,7 +20366,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "鐔成",
+        "nameCh": "镡成县",
         "isSeat": false
       },
       "provinceId": 163,
@@ -20411,7 +20411,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "零陽",
+        "nameCh": "零阳县",
         "isSeat": false
       },
       "provinceId": 167,
@@ -20455,7 +20455,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "西陵",
+        "nameCh": "西陵县",
         "isSeat": true
       },
       "provinceId": 277,
@@ -20499,7 +20499,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "下雉",
+        "nameCh": "下雉县",
         "isSeat": false
       },
       "provinceId": 273,
@@ -20543,7 +20543,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "雲杜",
+        "nameCh": "云杜县",
         "isSeat": false
       },
       "provinceId": 275,
@@ -20588,7 +20588,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "南新市",
+        "nameCh": "南新市县",
         "isSeat": false
       },
       "provinceId": 280,
@@ -20632,7 +20632,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "安陸",
+        "nameCh": "安陆县",
         "isSeat": false
       },
       "provinceId": 282,
@@ -20677,7 +20677,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "平春",
+        "nameCh": "平春县",
         "isSeat": false
       },
       "provinceId": 654,
@@ -20721,7 +20721,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "竟陵",
+        "nameCh": "竟陵县",
         "isSeat": false
       },
       "provinceId": 281,
@@ -20769,7 +20769,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "西陽",
+        "nameCh": "西阳县",
         "isSeat": false
       },
       "provinceId": 594,
@@ -20815,7 +20815,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "軑",
+        "nameCh": "轪县",
         "isSeat": false
       },
       "provinceId": 595,
@@ -20861,7 +20861,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "鄂",
+        "nameCh": "鄂县",
         "isSeat": false
       },
       "provinceId": 271,
@@ -20906,7 +20906,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "鄳",
+        "nameCh": "鄳县",
         "isSeat": false
       },
       "provinceId": 655,
@@ -20947,7 +20947,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "南鄉",
+        "nameCh": "南乡县",
         "isSeat": false
       },
       "provinceId": 525,
@@ -20990,7 +20990,7 @@
         "junCh": "南陽郡",
         "ju": "형주",
         "seat": "완현",
-        "nameCh": "章陵",
+        "nameCh": "章陵县",
         "isSeat": false
       },
       "provinceId": 435,
@@ -21035,7 +21035,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "蘄春",
+        "nameCh": "蕲春县",
         "isSeat": false
       },
       "provinceId": 279,
@@ -21078,7 +21078,7 @@
         "junCh": "南郡",
         "ju": "형주",
         "seat": "강릉현",
-        "nameCh": "襄陽",
+        "nameCh": "襄阳县",
         "isSeat": false
       },
       "provinceId": 427,
@@ -21125,7 +21125,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "沙羨",
+        "nameCh": "沙羡县",
         "isSeat": false
       },
       "provinceId": 270,
@@ -21171,7 +21171,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "臨湘",
+        "nameCh": "临湘县",
         "isSeat": true
       },
       "provinceId": 142,
@@ -21214,7 +21214,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "下雋",
+        "nameCh": "下隽县",
         "isSeat": false
       },
       "provinceId": 272,
@@ -21256,7 +21256,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "安城",
+        "nameCh": "安城县",
         "isSeat": false
       },
       "provinceId": 93,
@@ -21301,7 +21301,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "容陵",
+        "nameCh": "容陵县",
         "isSeat": false
       },
       "provinceId": 152,
@@ -21346,7 +21346,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "攸",
+        "nameCh": "攸县",
         "isSeat": false
       },
       "provinceId": 147,
@@ -21391,7 +21391,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "昭陵",
+        "nameCh": "昭陵县",
         "isSeat": false
       },
       "provinceId": 176,
@@ -21437,7 +21437,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "湘南",
+        "nameCh": "湘南县",
         "isSeat": false
       },
       "provinceId": 151,
@@ -21480,7 +21480,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "益陽",
+        "nameCh": "益阳县",
         "isSeat": false
       },
       "provinceId": 146,
@@ -21524,7 +21524,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "羅",
+        "nameCh": "罗县",
         "isSeat": false
       },
       "provinceId": 149,
@@ -21567,7 +21567,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "連道",
+        "nameCh": "连道县",
         "isSeat": false
       },
       "provinceId": 150,
@@ -21613,7 +21613,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "酃",
+        "nameCh": "酃县",
         "isSeat": false
       },
       "provinceId": 161,
@@ -21656,7 +21656,7 @@
         "junCh": "長沙郡",
         "ju": "형주",
         "seat": "임상현",
-        "nameCh": "醴陵",
+        "nameCh": "醴陵县",
         "isSeat": false
       },
       "provinceId": 143,
@@ -21703,7 +21703,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "泉陵",
+        "nameCh": "泉陵县",
         "isSeat": true
       },
       "provinceId": 170,
@@ -21744,7 +21744,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "夫夷",
+        "nameCh": "夫夷侯国",
         "isSeat": false
       },
       "provinceId": 175,
@@ -21789,7 +21789,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "始安",
+        "nameCh": "始安县",
         "isSeat": false
       },
       "provinceId": 291,
@@ -21837,7 +21837,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "昭陽",
+        "nameCh": "昭阳县",
         "isSeat": false
       },
       "provinceId": 178,
@@ -21882,7 +21882,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "泠道",
+        "nameCh": "泠道县",
         "isSeat": false
       },
       "provinceId": 169,
@@ -21927,7 +21927,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "洮陽",
+        "nameCh": "洮阳县",
         "isSeat": false
       },
       "provinceId": 293,
@@ -21974,7 +21974,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "湘鄉",
+        "nameCh": "湘乡县",
         "isSeat": false
       },
       "provinceId": 145,
@@ -22019,7 +22019,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "烝陽",
+        "nameCh": "烝阳侯国",
         "isSeat": false
       },
       "provinceId": 162,
@@ -22060,7 +22060,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "營浦",
+        "nameCh": "营浦县",
         "isSeat": false
       },
       "provinceId": 173,
@@ -22108,7 +22108,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "營道",
+        "nameCh": "营道县",
         "isSeat": false
       },
       "provinceId": 174,
@@ -22153,7 +22153,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "都梁",
+        "nameCh": "都梁县",
         "isSeat": false
       },
       "provinceId": 177,
@@ -22199,7 +22199,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "重安",
+        "nameCh": "重安侯国",
         "isSeat": false
       },
       "provinceId": 158,
@@ -22242,7 +22242,7 @@
         "junCh": "零陵郡",
         "ju": "형주",
         "seat": "천릉현",
-        "nameCh": "零陵",
+        "nameCh": "零陵县",
         "isSeat": false
       },
       "provinceId": 292,
@@ -22286,7 +22286,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "宛陵",
+        "nameCh": "宛陵县",
         "isSeat": true
       },
       "provinceId": 123,
@@ -22331,7 +22331,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "句容",
+        "nameCh": "句容县",
         "isSeat": false
       },
       "provinceId": 52,
@@ -22372,7 +22372,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "故鄣",
+        "nameCh": "故鄣县",
         "isSeat": false
       },
       "provinceId": 37,
@@ -22411,7 +22411,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "於潛",
+        "nameCh": "於潜县",
         "isSeat": false
       },
       "provinceId": 31,
@@ -22455,7 +22455,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "春穀",
+        "nameCh": "春榖县",
         "isSeat": false
       },
       "provinceId": 137,
@@ -22496,7 +22496,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "歙",
+        "nameCh": "歙县",
         "isSeat": false
       },
       "provinceId": 129,
@@ -22540,7 +22540,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "江乘",
+        "nameCh": "江乘县",
         "isSeat": false
       },
       "provinceId": 51,
@@ -22583,7 +22583,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "涇",
+        "nameCh": "泾县",
         "isSeat": false
       },
       "provinceId": 127,
@@ -22628,7 +22628,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "湖熟",
+        "nameCh": "湖熟县",
         "isSeat": false
       },
       "provinceId": 49,
@@ -22672,7 +22672,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "溧陽",
+        "nameCh": "溧阳县",
         "isSeat": false
       },
       "provinceId": 56,
@@ -22715,7 +22715,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "石城",
+        "nameCh": "石城县",
         "isSeat": false
       },
       "provinceId": 133,
@@ -22762,7 +22762,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "蕪湖",
+        "nameCh": "芜湖县",
         "isSeat": false
       },
       "provinceId": 136,
@@ -22804,7 +22804,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "陵陽",
+        "nameCh": "陵阳县",
         "isSeat": false
       },
       "provinceId": 134,
@@ -22843,7 +22843,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "黝",
+        "nameCh": "黝县",
         "isSeat": false
       },
       "provinceId": 130,
@@ -22888,7 +22888,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "합비현",
-        "nameCh": "合肥",
+        "nameCh": "合肥县",
         "isSeat": false
       },
       "provinceId": 238,
@@ -22934,7 +22934,7 @@
         "junCh": "江夏郡",
         "ju": "형주",
         "seat": "서릉현",
-        "nameCh": "邾",
+        "nameCh": "邾县",
         "isSeat": false
       },
       "provinceId": 278,
@@ -22978,7 +22978,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "丹徒",
+        "nameCh": "丹徒县",
         "isSeat": false
       },
       "provinceId": 54,
@@ -23021,7 +23021,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "烏程",
+        "nameCh": "乌程县",
         "isSeat": false
       },
       "provinceId": 33,
@@ -23062,7 +23062,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "婁",
+        "nameCh": "娄县",
         "isSeat": false
       },
       "provinceId": 45,
@@ -23105,7 +23105,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "富春",
+        "nameCh": "富春县",
         "isSeat": false
       },
       "provinceId": 29,
@@ -23146,7 +23146,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "無錫",
+        "nameCh": "无锡县",
         "isSeat": false
       },
       "provinceId": 46,
@@ -23190,7 +23190,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "曲阿",
+        "nameCh": "曲阿县",
         "isSeat": false
       },
       "provinceId": 55,
@@ -23232,7 +23232,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "海鹽",
+        "nameCh": "海盐县",
         "isSeat": false
       },
       "provinceId": 26,
@@ -23275,7 +23275,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "오현",
-        "nameCh": "由拳",
+        "nameCh": "由拳县",
         "isSeat": false
       },
       "provinceId": 25,
@@ -23320,7 +23320,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "桂陽",
+        "nameCh": "桂阳县",
         "isSeat": false
       },
       "provinceId": 200,
@@ -23364,7 +23364,7 @@
         "junCh": "桂陽郡",
         "ju": "형주",
         "seat": "침현",
-        "nameCh": "含洭",
+        "nameCh": "含洭县",
         "isSeat": false
       },
       "provinceId": 190,
@@ -23409,7 +23409,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "下蔡",
+        "nameCh": "下蔡县",
         "isSeat": false
       },
       "provinceId": 247,
@@ -23456,7 +23456,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "六安",
+        "nameCh": "六安县",
         "isSeat": false
       },
       "provinceId": 242,
@@ -23503,7 +23503,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "安豐",
+        "nameCh": "安丰县",
         "isSeat": false
       },
       "provinceId": 596,
@@ -23549,7 +23549,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "安風",
+        "nameCh": "安风县",
         "isSeat": false
       },
       "provinceId": 269,
@@ -23595,7 +23595,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "尋陽",
+        "nameCh": "寻阳县",
         "isSeat": false
       },
       "provinceId": 122,
@@ -23639,7 +23639,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "居巢",
+        "nameCh": "居巢县",
         "isSeat": false
       },
       "provinceId": 237,
@@ -23684,7 +23684,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "蓼",
+        "nameCh": "蓼县",
         "isSeat": false
       },
       "provinceId": 598,
@@ -23726,7 +23726,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "陽泉",
+        "nameCh": "阳泉县",
         "isSeat": false
       },
       "provinceId": 264,
@@ -23772,7 +23772,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "하채현",
-        "nameCh": "雩婁",
+        "nameCh": "雩娄县",
         "isSeat": false
       },
       "provinceId": 601,
@@ -23816,7 +23816,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "孱陵",
+        "nameCh": "孱陵县",
         "isSeat": false
       },
       "provinceId": 286,
@@ -23861,7 +23861,7 @@
         "junCh": "武陵郡",
         "ju": "형주",
         "seat": "임원현",
-        "nameCh": "充",
+        "nameCh": "充县",
         "isSeat": false
       },
       "provinceId": 181,
@@ -23905,7 +23905,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "山陰",
+        "nameCh": "山阴县",
         "isSeat": true
       },
       "provinceId": 72,
@@ -23947,7 +23947,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "上虞",
+        "nameCh": "上虞县",
         "isSeat": false
       },
       "provinceId": 74,
@@ -23988,7 +23988,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "烏傷",
+        "nameCh": "乌伤县",
         "isSeat": false
       },
       "provinceId": 67,
@@ -24030,7 +24030,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "餘姚",
+        "nameCh": "余姚县",
         "isSeat": false
       },
       "provinceId": 77,
@@ -24072,7 +24072,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "餘暨",
+        "nameCh": "余暨县",
         "isSeat": false
       },
       "provinceId": 76,
@@ -24113,7 +24113,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "剡",
+        "nameCh": "剡县",
         "isSeat": false
       },
       "provinceId": 73,
@@ -24156,7 +24156,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "太末",
+        "nameCh": "太末县",
         "isSeat": false
       },
       "provinceId": 60,
@@ -24202,7 +24202,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "壽春",
+        "nameCh": "寿春县",
         "isSeat": false
       },
       "provinceId": 243,
@@ -24244,7 +24244,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "永寧",
+        "nameCh": "永宁县",
         "isSeat": false
       },
       "provinceId": 64,
@@ -24286,7 +24286,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "章安",
+        "nameCh": "章安县",
         "isSeat": false
       },
       "provinceId": 62,
@@ -24328,7 +24328,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "諸暨",
+        "nameCh": "诸暨县",
         "isSeat": false
       },
       "provinceId": 78,
@@ -24369,7 +24369,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "鄞",
+        "nameCh": "鄞县",
         "isSeat": false
       },
       "provinceId": 71,
@@ -24408,7 +24408,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "鄮",
+        "nameCh": "鄮县",
         "isSeat": false
       },
       "provinceId": 70,
@@ -24453,7 +24453,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "비릉전농교위",
-        "nameCh": "成德",
+        "nameCh": "成德县",
         "isSeat": false
       },
       "provinceId": 239,
@@ -24501,7 +24501,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "유구",
-        "nameCh": "西曲陽",
+        "nameCh": "西曲阳县",
         "isSeat": false
       },
       "provinceId": 240,
@@ -24545,7 +24545,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "南昌",
+        "nameCh": "南昌县",
         "isSeat": true
       },
       "provinceId": 101,
@@ -24587,7 +24587,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "臨汝",
+        "nameCh": "临汝县",
         "isSeat": false
       },
       "provinceId": 100,
@@ -24629,7 +24629,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "南城",
+        "nameCh": "南城县",
         "isSeat": false
       },
       "provinceId": 99,
@@ -24672,7 +24672,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "南野",
+        "nameCh": "南野县",
         "isSeat": false
       },
       "provinceId": 85,
@@ -24714,7 +24714,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "歷陵",
+        "nameCh": "历陵县",
         "isSeat": false
       },
       "provinceId": 121,
@@ -24757,7 +24757,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "宜春",
+        "nameCh": "宜春县",
         "isSeat": false
       },
       "provinceId": 98,
@@ -24800,7 +24800,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "平都",
+        "nameCh": "平都侯国",
         "isSeat": false
       },
       "provinceId": 90,
@@ -24839,7 +24839,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "建城",
+        "nameCh": "建城县",
         "isSeat": false
       },
       "provinceId": 118,
@@ -24882,7 +24882,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "建昌",
+        "nameCh": "建昌县",
         "isSeat": false
       },
       "provinceId": 105,
@@ -24926,7 +24926,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "彭澤",
+        "nameCh": "彭泽县",
         "isSeat": false
       },
       "provinceId": 110,
@@ -24969,7 +24969,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "新淦",
+        "nameCh": "新淦县",
         "isSeat": false
       },
       "provinceId": 95,
@@ -25011,7 +25011,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "柴桑",
+        "nameCh": "柴桑县",
         "isSeat": false
       },
       "provinceId": 109,
@@ -25059,7 +25059,7 @@
         "junCh": "九江郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "平阿",
+        "nameCh": "平阿县",
         "isSeat": false
       },
       "provinceId": 244,
@@ -25104,7 +25104,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "石陽",
+        "nameCh": "石阳县",
         "isSeat": false
       },
       "provinceId": 87,
@@ -25146,7 +25146,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "艾",
+        "nameCh": "艾县",
         "isSeat": false
       },
       "provinceId": 106,
@@ -25190,7 +25190,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "贛",
+        "nameCh": "赣县",
         "isSeat": false
       },
       "provinceId": 81,
@@ -25231,7 +25231,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "雩都",
+        "nameCh": "雩都县",
         "isSeat": false
       },
       "provinceId": 82,
@@ -25274,7 +25274,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "鄱陽",
+        "nameCh": "鄱阳县",
         "isSeat": false
       },
       "provinceId": 111,
@@ -25320,7 +25320,7 @@
         "junCh": "丹陽郡",
         "ju": "양주",
         "seat": "완릉현",
-        "nameCh": "丹陽",
+        "nameCh": "丹阳县",
         "isSeat": false
       },
       "provinceId": 138,
@@ -25365,7 +25365,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "宕渠",
+        "nameCh": "宕渠县",
         "isSeat": false
       },
       "provinceId": 15,
@@ -25408,7 +25408,7 @@
         "junCh": "廬江郡",
         "ju": "양주",
         "seat": "파서군",
-        "nameCh": "皖",
+        "nameCh": "皖县",
         "isSeat": false
       },
       "provinceId": 236,
@@ -25452,7 +25452,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "江州",
+        "nameCh": "江州县",
         "isSeat": true
       },
       "provinceId": 344,
@@ -25498,7 +25498,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "临江",
+        "nameCh": "临江县",
         "isSeat": false
       },
       "provinceId": 335,
@@ -25541,7 +25541,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "安汉",
+        "nameCh": "安汉县",
         "isSeat": false
       },
       "provinceId": 337,
@@ -25585,7 +25585,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "宣汉",
+        "nameCh": "宣汉县",
         "isSeat": false
       },
       "provinceId": 947,
@@ -25627,7 +25627,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "平都",
+        "nameCh": "平都县",
         "isSeat": false
       },
       "provinceId": 336,
@@ -25669,7 +25669,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "朐忍",
+        "nameCh": "朐忍县",
         "isSeat": false
       },
       "provinceId": 331,
@@ -25712,7 +25712,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "枳",
+        "nameCh": "枳县",
         "isSeat": false
       },
       "provinceId": 345,
@@ -25755,7 +25755,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "汉昌",
+        "nameCh": "汉昌县",
         "isSeat": false
       },
       "provinceId": 341,
@@ -25798,7 +25798,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "阆中",
+        "nameCh": "阆中县",
         "isSeat": false
       },
       "provinceId": 338,
@@ -25841,7 +25841,7 @@
         "junCh": "會稽郡",
         "ju": "양주",
         "seat": "산음현",
-        "nameCh": "句章",
+        "nameCh": "句章县",
         "isSeat": false
       },
       "provinceId": 69,
@@ -25888,7 +25888,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "雒",
+        "nameCh": "雒县",
         "isSeat": true
       },
       "provinceId": 325,
@@ -25934,7 +25934,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "什邡",
+        "nameCh": "什邡县",
         "isSeat": false
       },
       "provinceId": 324,
@@ -25978,7 +25978,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "新都",
+        "nameCh": "新都县",
         "isSeat": false
       },
       "provinceId": 323,
@@ -26026,7 +26026,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "绵竹",
+        "nameCh": "绵竹县",
         "isSeat": false
       },
       "provinceId": 944,
@@ -26073,7 +26073,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "郪",
+        "nameCh": "郪县",
         "isSeat": false
       },
       "provinceId": 948,
@@ -26116,7 +26116,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "梓潼",
+        "nameCh": "梓潼县",
         "isSeat": false
       },
       "provinceId": 942,
@@ -26157,7 +26157,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "不韦",
+        "nameCh": "不韦县",
         "isSeat": true
       },
       "provinceId": 411,
@@ -26199,7 +26199,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "博南",
+        "nameCh": "博南县",
         "isSeat": false
       },
       "provinceId": 410,
@@ -26241,7 +26241,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "江阳",
+        "nameCh": "江阳县",
         "isSeat": false
       },
       "provinceId": 939,
@@ -26286,7 +26286,7 @@
         "junCh": "吳郡",
         "ju": "양주",
         "seat": "문산군",
-        "nameCh": "陽羨",
+        "nameCh": "阳羡县",
         "isSeat": false
       },
       "provinceId": 48,
@@ -26328,7 +26328,7 @@
         "junCh": "豫章郡",
         "ju": "양주",
         "seat": "남창현",
-        "nameCh": "鄡陽",
+        "nameCh": "鄡阳县",
         "isSeat": false
       },
       "provinceId": 114,
@@ -26372,7 +26372,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "南郑",
+        "nameCh": "南郑县",
         "isSeat": true
       },
       "provinceId": 523,
@@ -26415,7 +26415,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "上庸",
+        "nameCh": "上庸县",
         "isSeat": false
       },
       "provinceId": 448,
@@ -26458,7 +26458,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "安阳",
+        "nameCh": "安阳县",
         "isSeat": false
       },
       "provinceId": 24,
@@ -26502,7 +26502,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "成固",
+        "nameCh": "成固县",
         "isSeat": false
       },
       "provinceId": 5,
@@ -26545,7 +26545,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "房陵",
+        "nameCh": "房陵县",
         "isSeat": false
       },
       "provinceId": 446,
@@ -26587,7 +26587,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "沔阳",
+        "nameCh": "沔阳县",
         "isSeat": false
       },
       "provinceId": 527,
@@ -26629,7 +26629,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "鱼复",
+        "nameCh": "鱼复县",
         "isSeat": false
       },
       "provinceId": 329,
@@ -26672,7 +26672,7 @@
         "junCh": "漢中郡",
         "ju": "익주",
         "seat": "남정현",
-        "nameCh": "锡",
+        "nameCh": "锡县",
         "isSeat": false
       },
       "provinceId": 8,
@@ -26713,7 +26713,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "故且兰",
+        "nameCh": "故且兰县",
         "isSeat": true
       },
       "provinceId": 956,
@@ -26755,7 +26755,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "夜郎",
+        "nameCh": "夜郎县",
         "isSeat": false
       },
       "provinceId": 955,
@@ -26796,7 +26796,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "谈指",
+        "nameCh": "谈指县",
         "isSeat": false
       },
       "provinceId": 958,
@@ -26840,7 +26840,7 @@
         "junCh": "巴郡",
         "ju": "익주",
         "seat": "강주현",
-        "nameCh": "垫江",
+        "nameCh": "垫江县",
         "isSeat": false
       },
       "provinceId": 346,
@@ -26879,7 +26879,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "鄨",
+        "nameCh": "鄨县",
         "isSeat": false
       },
       "provinceId": 960,
@@ -26918,7 +26918,7 @@
         "junCh": "犍為屬國",
         "ju": "익주",
         "seat": "주제현",
-        "nameCh": "朱提",
+        "nameCh": "朱提县",
         "isSeat": true
       },
       "provinceId": 412,
@@ -26962,7 +26962,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "资中",
+        "nameCh": "资中县",
         "isSeat": false
       },
       "provinceId": 952,
@@ -27004,7 +27004,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "僰道",
+        "nameCh": "僰道县",
         "isSeat": false
       },
       "provinceId": 23,
@@ -27045,7 +27045,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "南广",
+        "nameCh": "南广县",
         "isSeat": false
       },
       "provinceId": 11,
@@ -27090,7 +27090,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "汉安",
+        "nameCh": "汉安县",
         "isSeat": false
       },
       "provinceId": 953,
@@ -27136,7 +27136,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "牛鞞",
+        "nameCh": "牛鞞县",
         "isSeat": false
       },
       "provinceId": 328,
@@ -27177,7 +27177,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "双柏",
+        "nameCh": "双柏县",
         "isSeat": false
       },
       "provinceId": 424,
@@ -27219,7 +27219,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "成都",
+        "nameCh": "成都县",
         "isSeat": true
       },
       "provinceId": 319,
@@ -27266,7 +27266,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "临邛",
+        "nameCh": "临邛县",
         "isSeat": false
       },
       "provinceId": 326,
@@ -27308,7 +27308,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "江原",
+        "nameCh": "江原县",
         "isSeat": false
       },
       "provinceId": 322,
@@ -27351,7 +27351,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "涪",
+        "nameCh": "涪县",
         "isSeat": false
       },
       "provinceId": 943,
@@ -27397,7 +27397,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "繁",
+        "nameCh": "繁县",
         "isSeat": false
       },
       "provinceId": 327,
@@ -27441,7 +27441,7 @@
         "junCh": "廣漢郡",
         "ju": "익주",
         "seat": "낙현",
-        "nameCh": "德阳",
+        "nameCh": "德阳县",
         "isSeat": false
       },
       "provinceId": 945,
@@ -27484,7 +27484,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "郫",
+        "nameCh": "郫县",
         "isSeat": false
       },
       "provinceId": 320,
@@ -27527,7 +27527,7 @@
         "junCh": "蜀郡屬國",
         "ju": "익주",
         "seat": "한가현",
-        "nameCh": "汉嘉",
+        "nameCh": "汉嘉县",
         "isSeat": true
       },
       "provinceId": 950,
@@ -27570,7 +27570,7 @@
         "junCh": "蜀郡屬國",
         "ju": "익주",
         "seat": "한가현",
-        "nameCh": "严道",
+        "nameCh": "严道县",
         "isSeat": false
       },
       "provinceId": 949,
@@ -27612,7 +27612,7 @@
         "junCh": "蜀郡屬國",
         "ju": "익주",
         "seat": "한가현",
-        "nameCh": "徙",
+        "nameCh": "徙县",
         "isSeat": false
       },
       "provinceId": 951,
@@ -27654,7 +27654,7 @@
         "junCh": "越巂郡",
         "ju": "익주",
         "seat": "공도현",
-        "nameCh": "邛都",
+        "nameCh": "邛都县",
         "isSeat": true
       },
       "provinceId": 18,
@@ -27693,7 +27693,7 @@
         "junCh": "越巂郡",
         "ju": "익주",
         "seat": "공도현",
-        "nameCh": "遂久",
+        "nameCh": "遂久县",
         "isSeat": false
       },
       "provinceId": 409,
@@ -27735,7 +27735,7 @@
         "junCh": "越巂郡",
         "ju": "익주",
         "seat": "공도현",
-        "nameCh": "阐",
+        "nameCh": "阐县",
         "isSeat": false
       },
       "provinceId": 22,
@@ -27774,7 +27774,7 @@
         "junCh": "越巂郡",
         "ju": "익주",
         "seat": "공도현",
-        "nameCh": "青蛉",
+        "nameCh": "青蛉县",
         "isSeat": false
       },
       "provinceId": 530,
@@ -27815,7 +27815,7 @@
         "junCh": "北地郡",
         "ju": "량주",
         "seat": "부평현",
-        "nameCh": "富平",
+        "nameCh": "富平县",
         "isSeat": true
       },
       "provinceId": 480,
@@ -27857,7 +27857,7 @@
         "junCh": "北地郡",
         "ju": "량주",
         "seat": "부평현",
-        "nameCh": "廉",
+        "nameCh": "廉县",
         "isSeat": false
       },
       "provinceId": 496,
@@ -27898,7 +27898,7 @@
         "junCh": "北地郡",
         "ju": "량주",
         "seat": "부평현",
-        "nameCh": "弋居",
+        "nameCh": "弋居县",
         "isSeat": false
       },
       "provinceId": 498,
@@ -27937,7 +27937,7 @@
         "junCh": "北地郡",
         "ju": "량주",
         "seat": "부평현",
-        "nameCh": "泥阳",
+        "nameCh": "泥阳县",
         "isSeat": false
       },
       "provinceId": 497,
@@ -27976,7 +27976,7 @@
         "junCh": "安定郡",
         "ju": "량주",
         "seat": "조나현",
-        "nameCh": "朝那",
+        "nameCh": "朝那县",
         "isSeat": false
       },
       "provinceId": 464,
@@ -28023,7 +28023,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "广都",
+        "nameCh": "广都县",
         "isSeat": false
       },
       "provinceId": 321,
@@ -28062,7 +28062,7 @@
         "junCh": "張掖居延屬國",
         "ju": "량주",
         "seat": "거연현",
-        "nameCh": "居延",
+        "nameCh": "居延县",
         "isSeat": true
       },
       "provinceId": 478,
@@ -28104,7 +28104,7 @@
         "junCh": "蜀郡",
         "ju": "익주",
         "seat": "성도현",
-        "nameCh": "广柔",
+        "nameCh": "广柔县",
         "isSeat": false
       },
       "provinceId": 941,
@@ -28147,7 +28147,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "觻得",
+        "nameCh": "觻得县",
         "isSeat": true
       },
       "provinceId": 487,
@@ -28190,7 +28190,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "删丹",
+        "nameCh": "删丹县",
         "isSeat": false
       },
       "provinceId": 491,
@@ -28234,7 +28234,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "屋兰",
+        "nameCh": "屋兰县",
         "isSeat": false
       },
       "provinceId": 489,
@@ -28279,7 +28279,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "日勒",
+        "nameCh": "日勒县",
         "isSeat": false
       },
       "provinceId": 490,
@@ -28323,7 +28323,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "昭武",
+        "nameCh": "昭武县",
         "isSeat": false
       },
       "provinceId": 488,
@@ -28365,7 +28365,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "氐池",
+        "nameCh": "氐池县",
         "isSeat": false
       },
       "provinceId": 492,
@@ -28408,7 +28408,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "番和",
+        "nameCh": "番和县",
         "isSeat": false
       },
       "provinceId": 494,
@@ -28450,7 +28450,7 @@
         "junCh": "敦煌郡",
         "ju": "량주",
         "seat": "돈황현",
-        "nameCh": "敦煌",
+        "nameCh": "敦煌县",
         "isSeat": true
       },
       "provinceId": 481,
@@ -28491,7 +28491,7 @@
         "junCh": "敦煌郡",
         "ju": "량주",
         "seat": "돈황현",
-        "nameCh": "冥安",
+        "nameCh": "冥安县",
         "isSeat": false
       },
       "provinceId": 484,
@@ -28532,7 +28532,7 @@
         "junCh": "敦煌郡",
         "ju": "량주",
         "seat": "돈황현",
-        "nameCh": "效穀",
+        "nameCh": "效谷县",
         "isSeat": false
       },
       "provinceId": 482,
@@ -28573,7 +28573,7 @@
         "junCh": "敦煌郡",
         "ju": "량주",
         "seat": "돈황현",
-        "nameCh": "龙勒",
+        "nameCh": "龙勒县",
         "isSeat": false
       },
       "provinceId": 483,
@@ -28617,7 +28617,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "武阳",
+        "nameCh": "武阳县",
         "isSeat": true
       },
       "provinceId": 946,
@@ -28659,7 +28659,7 @@
         "junCh": "武威郡",
         "ju": "량주",
         "seat": "현미현",
-        "nameCh": "显美",
+        "nameCh": "显美县",
         "isSeat": false
       },
       "provinceId": 495,
@@ -28702,7 +28702,7 @@
         "junCh": "武都郡",
         "ju": "량주",
         "seat": "저현",
-        "nameCh": "沮",
+        "nameCh": "沮县",
         "isSeat": false
       },
       "provinceId": 6,
@@ -28743,7 +28743,7 @@
         "junCh": "漢陽郡",
         "ju": "량주",
         "seat": "기현",
-        "nameCh": "冀",
+        "nameCh": "冀县",
         "isSeat": true
       },
       "provinceId": 454,
@@ -28786,7 +28786,7 @@
         "junCh": "漢陽郡",
         "ju": "량주",
         "seat": "기현",
-        "nameCh": "西",
+        "nameCh": "西县",
         "isSeat": false
       },
       "provinceId": 455,
@@ -28830,7 +28830,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "南安",
+        "nameCh": "南安县",
         "isSeat": false
       },
       "provinceId": 84,
@@ -28869,7 +28869,7 @@
         "junCh": "犍為郡",
         "ju": "익주",
         "seat": "무양현",
-        "nameCh": "符节",
+        "nameCh": "符节县",
         "isSeat": false
       },
       "provinceId": 940,
@@ -28911,7 +28911,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "毋敛",
+        "nameCh": "毋敛县",
         "isSeat": false
       },
       "provinceId": 957,
@@ -28953,7 +28953,7 @@
         "junCh": "酒泉郡",
         "ju": "량주",
         "seat": "옥문현",
-        "nameCh": "玉门",
+        "nameCh": "玉门县",
         "isSeat": false
       },
       "provinceId": 486,
@@ -28996,7 +28996,7 @@
         "junCh": "金城郡",
         "ju": "량주",
         "seat": "금성현",
-        "nameCh": "金城",
+        "nameCh": "金城县",
         "isSeat": false
       },
       "provinceId": 457,
@@ -29035,7 +29035,7 @@
         "junCh": "金城郡",
         "ju": "량주",
         "seat": "금성현",
-        "nameCh": "临羌",
+        "nameCh": "临羌县",
         "isSeat": false
       },
       "provinceId": 499,
@@ -29079,7 +29079,7 @@
         "junCh": "金城郡",
         "ju": "량주",
         "seat": "금성현",
-        "nameCh": "安夷",
+        "nameCh": "安夷县",
         "isSeat": false
       },
       "provinceId": 501,
@@ -29121,7 +29121,7 @@
         "junCh": "金城郡",
         "ju": "량주",
         "seat": "금성현",
-        "nameCh": "榆中",
+        "nameCh": "榆中县",
         "isSeat": false
       },
       "provinceId": 458,
@@ -29162,7 +29162,7 @@
         "junCh": "金城郡",
         "ju": "량주",
         "seat": "금성현",
-        "nameCh": "破羌",
+        "nameCh": "破羌县",
         "isSeat": false
       },
       "provinceId": 500,
@@ -29207,7 +29207,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "狄道",
+        "nameCh": "狄道县",
         "isSeat": true
       },
       "provinceId": 459,
@@ -29252,7 +29252,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "临洮",
+        "nameCh": "临洮县",
         "isSeat": false
       },
       "provinceId": 456,
@@ -29295,7 +29295,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "枹罕",
+        "nameCh": "枹罕县",
         "isSeat": false
       },
       "provinceId": 461,
@@ -29338,7 +29338,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "白石",
+        "nameCh": "白石县",
         "isSeat": false
       },
       "provinceId": 462,
@@ -29380,7 +29380,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "襄武",
+        "nameCh": "襄武县",
         "isSeat": false
       },
       "provinceId": 451,
@@ -29423,7 +29423,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "鄣",
+        "nameCh": "鄣县",
         "isSeat": false
       },
       "provinceId": 452,
@@ -29466,7 +29466,7 @@
         "junCh": "隴西郡",
         "ju": "량주",
         "seat": "적도현",
-        "nameCh": "首阳",
+        "nameCh": "首阳县",
         "isSeat": false
       },
       "provinceId": 460,
@@ -29508,7 +29508,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "毋单",
+        "nameCh": "毋单县",
         "isSeat": false
       },
       "provinceId": 533,
@@ -29555,7 +29555,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "长子",
+        "nameCh": "长子县",
         "isSeat": true
       },
       "provinceId": 904,
@@ -29600,7 +29600,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "壶关",
+        "nameCh": "壶关县",
         "isSeat": false
       },
       "provinceId": 903,
@@ -29645,7 +29645,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "屯留",
+        "nameCh": "屯留县",
         "isSeat": false
       },
       "provinceId": 906,
@@ -29689,7 +29689,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "沾",
+        "nameCh": "沾县",
         "isSeat": false
       },
       "provinceId": 908,
@@ -29735,7 +29735,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "泫氏",
+        "nameCh": "泫氏县",
         "isSeat": false
       },
       "provinceId": 934,
@@ -29780,7 +29780,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "涅",
+        "nameCh": "涅县",
         "isSeat": false
       },
       "provinceId": 922,
@@ -29825,7 +29825,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "潞",
+        "nameCh": "潞县",
         "isSeat": false
       },
       "provinceId": 905,
@@ -29870,7 +29870,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "穀远",
+        "nameCh": "穀远县",
         "isSeat": false
       },
       "provinceId": 921,
@@ -29914,7 +29914,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "襄垣",
+        "nameCh": "襄垣县",
         "isSeat": false
       },
       "provinceId": 907,
@@ -29960,7 +29960,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "铜鞮",
+        "nameCh": "铜鞮县",
         "isSeat": false
       },
       "provinceId": 920,
@@ -30005,7 +30005,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "阳阿",
+        "nameCh": "阳阿县",
         "isSeat": false
       },
       "provinceId": 937,
@@ -30050,7 +30050,7 @@
         "junCh": "上黨郡",
         "ju": "병주",
         "seat": "장자현",
-        "nameCh": "高都",
+        "nameCh": "高都县",
         "isSeat": false
       },
       "provinceId": 933,
@@ -30094,7 +30094,7 @@
         "junCh": "五原郡",
         "ju": "병주",
         "seat": "구원현",
-        "nameCh": "九原",
+        "nameCh": "九原县",
         "isSeat": true
       },
       "provinceId": 932,
@@ -30138,7 +30138,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "宛温",
+        "nameCh": "宛温县",
         "isSeat": false
       },
       "provinceId": 422,
@@ -30182,7 +30182,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "界休",
+        "nameCh": "界休县",
         "isSeat": false
       },
       "provinceId": 892,
@@ -30228,7 +30228,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "中都",
+        "nameCh": "中都县",
         "isSeat": false
       },
       "provinceId": 893,
@@ -30273,7 +30273,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "京陵",
+        "nameCh": "京陵县",
         "isSeat": false
       },
       "provinceId": 894,
@@ -30318,7 +30318,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "大陵",
+        "nameCh": "大陵县",
         "isSeat": false
       },
       "provinceId": 925,
@@ -30364,7 +30364,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "榆次",
+        "nameCh": "榆次县",
         "isSeat": false
       },
       "provinceId": 929,
@@ -30411,7 +30411,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "狼孟",
+        "nameCh": "狼孟县",
         "isSeat": false
       },
       "provinceId": 928,
@@ -30455,7 +30455,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "盂",
+        "nameCh": "盂县",
         "isSeat": false
       },
       "provinceId": 926,
@@ -30499,7 +30499,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "祁",
+        "nameCh": "祁县",
         "isSeat": false
       },
       "provinceId": 923,
@@ -30545,7 +30545,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "虑虒",
+        "nameCh": "虑虒县",
         "isSeat": false
       },
       "provinceId": 890,
@@ -30592,7 +30592,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "邬",
+        "nameCh": "邬县",
         "isSeat": false
       },
       "provinceId": 891,
@@ -30636,7 +30636,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "阳曲",
+        "nameCh": "阳曲县",
         "isSeat": false
       },
       "provinceId": 927,
@@ -30681,7 +30681,7 @@
         "junCh": "太原郡",
         "ju": "병주",
         "seat": "계휴현",
-        "nameCh": "阳邑",
+        "nameCh": "阳邑县",
         "isSeat": false
       },
       "provinceId": 924,
@@ -30725,7 +30725,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "镡封",
+        "nameCh": "镡封县",
         "isSeat": false
       },
       "provinceId": 421,
@@ -30769,7 +30769,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "漏卧",
+        "nameCh": "漏卧县",
         "isSeat": false
       },
       "provinceId": 529,
@@ -30810,7 +30810,7 @@
         "junCh": "牂牁郡",
         "ju": "익주",
         "seat": "고차란현",
-        "nameCh": "句町",
+        "nameCh": "句町县",
         "isSeat": false
       },
       "provinceId": 12,
@@ -30852,7 +30852,7 @@
         "junCh": "越巂郡",
         "ju": "익주",
         "seat": "공도현",
-        "nameCh": "台登",
+        "nameCh": "台登县",
         "isSeat": false
       },
       "provinceId": 19,
@@ -30895,7 +30895,7 @@
         "junCh": "雲中郡",
         "ju": "병주",
         "seat": "운중현",
-        "nameCh": "云中",
+        "nameCh": "云中县",
         "isSeat": true
       },
       "provinceId": 888,
@@ -30942,7 +30942,7 @@
         "junCh": "雲中郡",
         "ju": "병주",
         "seat": "운중현",
-        "nameCh": "定襄",
+        "nameCh": "定襄县",
         "isSeat": false
       },
       "provinceId": 931,
@@ -30985,7 +30985,7 @@
         "junCh": "鴈門郡",
         "ju": "병주",
         "seat": "극양현",
-        "nameCh": "剧阳",
+        "nameCh": "剧阳县",
         "isSeat": false
       },
       "provinceId": 886,
@@ -31030,7 +31030,7 @@
         "junCh": "鴈門郡",
         "ju": "병주",
         "seat": "극양현",
-        "nameCh": "原平",
+        "nameCh": "原平县",
         "isSeat": false
       },
       "provinceId": 889,
@@ -31071,7 +31071,7 @@
         "junCh": "鴈門郡",
         "ju": "병주",
         "seat": "극양현",
-        "nameCh": "平城",
+        "nameCh": "平城县",
         "isSeat": false
       },
       "provinceId": 882,
@@ -31113,7 +31113,7 @@
         "junCh": "鴈門郡",
         "ju": "병주",
         "seat": "극양현",
-        "nameCh": "广武",
+        "nameCh": "广武县",
         "isSeat": false
       },
       "provinceId": 887,
@@ -31152,7 +31152,7 @@
         "junCh": "上郡",
         "ju": "병주",
         "seat": "구자속국",
-        "nameCh": "龜茲",
+        "nameCh": "龜茲屬國",
         "isSeat": false
       },
       "routeNodeKey": "9e8250ce-7619-4da4-8924-929bd0260db1",
@@ -31190,7 +31190,7 @@
         "junCh": "上谷郡",
         "ju": "유주",
         "seat": "저양현",
-        "nameCh": "沮阳",
+        "nameCh": "沮阳县",
         "isSeat": true
       },
       "provinceId": 783,
@@ -31233,7 +31233,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "滇池",
+        "nameCh": "滇池县",
         "isSeat": true
       },
       "provinceId": 414,
@@ -31277,7 +31277,7 @@
         "junCh": "上谷郡",
         "ju": "유주",
         "seat": "저양현",
-        "nameCh": "涿鹿",
+        "nameCh": "涿鹿县",
         "isSeat": false
       },
       "provinceId": 786,
@@ -31322,7 +31322,7 @@
         "junCh": "上谷郡",
         "ju": "유주",
         "seat": "저양현",
-        "nameCh": "潘",
+        "nameCh": "潘县",
         "isSeat": false
       },
       "provinceId": 784,
@@ -31368,7 +31368,7 @@
         "junCh": "代郡",
         "ju": "유주",
         "seat": "대현",
-        "nameCh": "代",
+        "nameCh": "代县",
         "isSeat": false
       },
       "provinceId": 842,
@@ -31411,7 +31411,7 @@
         "junCh": "代郡",
         "ju": "유주",
         "seat": "대현",
-        "nameCh": "北平邑",
+        "nameCh": "北平邑县",
         "isSeat": false
       },
       "provinceId": 881,
@@ -31456,7 +31456,7 @@
         "junCh": "代郡",
         "ju": "유주",
         "seat": "대현",
-        "nameCh": "平舒",
+        "nameCh": "平舒县",
         "isSeat": false
       },
       "provinceId": 883,
@@ -31500,7 +31500,7 @@
         "junCh": "代郡",
         "ju": "유주",
         "seat": "대현",
-        "nameCh": "当城",
+        "nameCh": "当城县",
         "isSeat": false
       },
       "provinceId": 844,
@@ -31544,7 +31544,7 @@
         "junCh": "代郡",
         "ju": "유주",
         "seat": "대현",
-        "nameCh": "狋氏",
+        "nameCh": "狋氏县",
         "isSeat": false
       },
       "provinceId": 885,
@@ -31586,7 +31586,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "贲古",
+        "nameCh": "贲古县",
         "isSeat": false
       },
       "provinceId": 425,
@@ -31630,7 +31630,7 @@
         "junCh": "右北平郡",
         "ju": "유주",
         "seat": "토은현",
-        "nameCh": "土垠",
+        "nameCh": "土垠县",
         "isSeat": true
       },
       "provinceId": 849,
@@ -31671,7 +31671,7 @@
         "junCh": "右北平郡",
         "ju": "유주",
         "seat": "토은현",
-        "nameCh": "俊靡",
+        "nameCh": "俊靡县",
         "isSeat": false
       },
       "provinceId": 847,
@@ -31714,7 +31714,7 @@
         "junCh": "右北平郡",
         "ju": "유주",
         "seat": "토은현",
-        "nameCh": "徐无",
+        "nameCh": "徐无县",
         "isSeat": false
       },
       "provinceId": 848,
@@ -31759,7 +31759,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "建伶",
+        "nameCh": "建伶县",
         "isSeat": false
       },
       "provinceId": 420,
@@ -31802,7 +31802,7 @@
         "junCh": "廣陽郡",
         "ju": "유주",
         "seat": "안차현",
-        "nameCh": "安次",
+        "nameCh": "安次县",
         "isSeat": false
       },
       "provinceId": 840,
@@ -31841,7 +31841,7 @@
         "junCh": "樂浪郡",
         "ju": "유주",
         "seat": "낙랑군",
-        "nameCh": "朝鲜",
+        "nameCh": "樂浪郡",
         "isSeat": true
       },
       "routeNodeKey": "5714a4c1-dc87-4583-9c4e-5ac5fe7e89ca",
@@ -31883,7 +31883,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "涿",
+        "nameCh": "涿县",
         "isSeat": true
       },
       "provinceId": 823,
@@ -31928,7 +31928,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "故安",
+        "nameCh": "故安县",
         "isSeat": false
       },
       "provinceId": 827,
@@ -31972,7 +31972,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "方城",
+        "nameCh": "方城县",
         "isSeat": false
       },
       "provinceId": 824,
@@ -32017,7 +32017,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "良乡",
+        "nameCh": "良乡县",
         "isSeat": false
       },
       "provinceId": 831,
@@ -32061,7 +32061,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "范阳",
+        "nameCh": "范阳县",
         "isSeat": false
       },
       "provinceId": 820,
@@ -32100,7 +32100,7 @@
         "junCh": "漁陽郡",
         "ju": "유주",
         "seat": "노현",
-        "nameCh": "潞",
+        "nameCh": "潞县",
         "isSeat": false
       },
       "provinceId": 846,
@@ -32141,7 +32141,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "穀昌",
+        "nameCh": "谷昌县",
         "isSeat": false
       },
       "provinceId": 417,
@@ -32180,7 +32180,7 @@
         "junCh": "玄菟郡",
         "ju": "유주",
         "seat": "현도군",
-        "nameCh": "高句骊",
+        "nameCh": "玄菟郡",
         "isSeat": true
       },
       "routeNodeKey": "a3b3e15e-3073-4657-a3c9-e504849e123e",
@@ -32216,7 +32216,7 @@
         "junCh": "遼東屬國",
         "ju": "유주",
         "seat": "요동속국",
-        "nameCh": "昌辽",
+        "nameCh": "遼東屬國",
         "isSeat": true
       },
       "routeNodeKey": "75a12c31-b00d-4f29-8818-0eed70a9494b",
@@ -32252,7 +32252,7 @@
         "junCh": "遼東郡",
         "ju": "유주",
         "seat": "요동군",
-        "nameCh": "襄平",
+        "nameCh": "遼東郡",
         "isSeat": true
       },
       "routeNodeKey": "954b8de5-8f5b-45a3-9261-0ce4f21cfcd2",
@@ -32292,7 +32292,7 @@
         "junCh": "遼西郡",
         "ju": "유주",
         "seat": "비여현",
-        "nameCh": "肥如",
+        "nameCh": "肥如县",
         "isSeat": false
       },
       "provinceId": 853,
@@ -32333,7 +32333,7 @@
         "junCh": "遼西郡",
         "ju": "유주",
         "seat": "비여현",
-        "nameCh": "临渝",
+        "nameCh": "临渝县",
         "isSeat": false
       },
       "provinceId": 851,
@@ -32376,7 +32376,7 @@
         "junCh": "遼西郡",
         "ju": "유주",
         "seat": "비여현",
-        "nameCh": "海阳",
+        "nameCh": "海阳县",
         "isSeat": false
       },
       "provinceId": 850,
@@ -32421,7 +32421,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "牧靡",
+        "nameCh": "牧靡县",
         "isSeat": false
       },
       "provinceId": 416,
@@ -32460,7 +32460,7 @@
         "junCh": "九真郡",
         "ju": "교주",
         "seat": "구진군",
-        "nameCh": "胥浦",
+        "nameCh": "九真郡",
         "isSeat": true
       },
       "routeNodeKey": "7687355f-9389-4afc-8d27-c64a8bd93400",
@@ -32496,7 +32496,7 @@
         "junCh": "交趾郡",
         "ju": "교주",
         "seat": "교지군",
-        "nameCh": "龙编",
+        "nameCh": "交趾郡",
         "isSeat": true
       },
       "routeNodeKey": "9b216aca-43b5-433b-9049-e01ab5d8956a",
@@ -32536,7 +32536,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "番禺",
+        "nameCh": "番禺县",
         "isSeat": true
       },
       "provinceId": 186,
@@ -32578,7 +32578,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "博罗",
+        "nameCh": "博罗县",
         "isSeat": false
       },
       "provinceId": 184,
@@ -32621,7 +32621,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "增城",
+        "nameCh": "增城县",
         "isSeat": false
       },
       "provinceId": 187,
@@ -32662,7 +32662,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "揭阳",
+        "nameCh": "揭阳县",
         "isSeat": false
       },
       "provinceId": 183,
@@ -32705,7 +32705,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "龙川",
+        "nameCh": "龙川县",
         "isSeat": false
       },
       "provinceId": 185,
@@ -32746,7 +32746,7 @@
         "junCh": "合浦郡",
         "ju": "교주",
         "seat": "합포현",
-        "nameCh": "合浦",
+        "nameCh": "合浦县",
         "isSeat": true
       },
       "provinceId": 199,
@@ -32787,7 +32787,7 @@
         "junCh": "合浦郡",
         "ju": "교주",
         "seat": "합포현",
-        "nameCh": "徐闻",
+        "nameCh": "徐闻县",
         "isSeat": false
       },
       "provinceId": 197,
@@ -32828,7 +32828,7 @@
         "junCh": "合浦郡",
         "ju": "교주",
         "seat": "합포현",
-        "nameCh": "朱崖",
+        "nameCh": "朱崖县",
         "isSeat": false
       },
       "provinceId": 198,
@@ -32867,7 +32867,7 @@
         "junCh": "日南郡",
         "ju": "교주",
         "seat": "일남군",
-        "nameCh": "西卷",
+        "nameCh": "日南郡",
         "isSeat": true
       },
       "routeNodeKey": "86c2cd01-60c1-4467-9cc5-4f2f25156ae2",
@@ -32907,7 +32907,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "广信",
+        "nameCh": "广信县",
         "isSeat": true
       },
       "provinceId": 301,
@@ -32953,7 +32953,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "冯乘",
+        "nameCh": "冯乘县",
         "isSeat": false
       },
       "provinceId": 172,
@@ -32999,7 +32999,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "富川",
+        "nameCh": "富川县",
         "isSeat": false
       },
       "provinceId": 296,
@@ -33044,7 +33044,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "封阳",
+        "nameCh": "封阳县",
         "isSeat": false
       },
       "provinceId": 298,
@@ -33088,7 +33088,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "荔浦",
+        "nameCh": "荔浦县",
         "isSeat": false
       },
       "provinceId": 299,
@@ -33133,7 +33133,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "谢沐",
+        "nameCh": "谢沐县",
         "isSeat": false
       },
       "provinceId": 171,
@@ -33176,7 +33176,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "高要",
+        "nameCh": "高要县",
         "isSeat": false
       },
       "provinceId": 191,
@@ -33218,7 +33218,7 @@
         "junCh": "合浦郡",
         "ju": "교주",
         "seat": "합포현",
-        "nameCh": "高凉",
+        "nameCh": "高凉县",
         "isSeat": false
       },
       "provinceId": 194,
@@ -33259,7 +33259,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "布山",
+        "nameCh": "布山县",
         "isSeat": true
       },
       "provinceId": 304,
@@ -33302,7 +33302,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "中溜",
+        "nameCh": "中溜县",
         "isSeat": false
       },
       "provinceId": 305,
@@ -33343,7 +33343,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "安广",
+        "nameCh": "安广县",
         "isSeat": false
       },
       "provinceId": 295,
@@ -33382,7 +33382,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "潭中",
+        "nameCh": "潭中县",
         "isSeat": false
       },
       "provinceId": 294,
@@ -33421,7 +33421,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "领方",
+        "nameCh": "领方县",
         "isSeat": false
       },
       "provinceId": 300,
@@ -33464,7 +33464,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "味",
+        "nameCh": "味县",
         "isSeat": false
       },
       "provinceId": 418,
@@ -33510,7 +33510,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "昆泽",
+        "nameCh": "昆泽县",
         "isSeat": false
       },
       "provinceId": 419,
@@ -33553,7 +33553,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "同濑",
+        "nameCh": "同濑县",
         "isSeat": false
       },
       "provinceId": 531,
@@ -33598,7 +33598,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "同劳",
+        "nameCh": "同劳县",
         "isSeat": false
       },
       "provinceId": 532,
@@ -33642,7 +33642,7 @@
         "junCh": "益州郡",
         "ju": "익주",
         "seat": "전지현",
-        "nameCh": "连然",
+        "nameCh": "连然县",
         "isSeat": false
       },
       "provinceId": 415,
@@ -33684,7 +33684,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "比苏",
+        "nameCh": "比苏县",
         "isSeat": false
       },
       "provinceId": 407,
@@ -33725,7 +33725,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "楪榆",
+        "nameCh": "楪榆县",
         "isSeat": false
       },
       "provinceId": 426,
@@ -33766,7 +33766,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "云南",
+        "nameCh": "云南县",
         "isSeat": false
       },
       "provinceId": 406,
@@ -33805,7 +33805,7 @@
         "junCh": "永昌郡",
         "ju": "익주",
         "seat": "불위현",
-        "nameCh": "哀牢",
+        "nameCh": "哀牢县",
         "isSeat": false
       },
       "provinceId": 528,
@@ -33851,7 +33851,7 @@
         "junCh": "武都郡",
         "ju": "량주",
         "seat": "부여",
-        "nameCh": "故道",
+        "nameCh": "故道县",
         "isSeat": false
       },
       "provinceId": 526,
@@ -33894,7 +33894,7 @@
         "junCh": "安定郡",
         "ju": "량주",
         "seat": "안야국",
-        "nameCh": "阴盘",
+        "nameCh": "阴盘县",
         "isSeat": false
       },
       "provinceId": 514,
@@ -33938,7 +33938,7 @@
         "junCh": "張掖郡",
         "ju": "량주",
         "seat": "역득현",
-        "nameCh": "骊靬",
+        "nameCh": "骊靬县",
         "isSeat": false
       },
       "provinceId": 493,
@@ -33979,7 +33979,7 @@
         "junCh": "酒泉郡",
         "ju": "량주",
         "seat": "실직국",
-        "nameCh": "延寿",
+        "nameCh": "延寿县",
         "isSeat": false
       },
       "provinceId": 477,
@@ -34021,7 +34021,7 @@
         "junCh": "上郡",
         "ju": "병주",
         "seat": "압독국",
-        "nameCh": "雕阴",
+        "nameCh": "雕阴县",
         "isSeat": false
       },
       "provinceId": 475,
@@ -34063,7 +34063,7 @@
         "junCh": "上郡",
         "ju": "병주",
         "seat": "사로국",
-        "nameCh": "定阳",
+        "nameCh": "定阳县",
         "isSeat": false
       },
       "provinceId": 59,
@@ -34108,7 +34108,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "逎",
+        "nameCh": "逎县",
         "isSeat": false
       },
       "provinceId": 826,
@@ -34152,7 +34152,7 @@
         "junCh": "涿郡",
         "ju": "유주",
         "seat": "탁현",
-        "nameCh": "北新城",
+        "nameCh": "北新城县",
         "isSeat": false
       },
       "provinceId": 864,
@@ -34196,7 +34196,7 @@
         "junCh": "遼西郡",
         "ju": "유주",
         "seat": "예",
-        "nameCh": "令支",
+        "nameCh": "令支县",
         "isSeat": false
       },
       "provinceId": 852,
@@ -34238,7 +34238,7 @@
         "junCh": "南海郡",
         "ju": "교주",
         "seat": "번옹현",
-        "nameCh": "四会",
+        "nameCh": "四会县",
         "isSeat": false
       },
       "provinceId": 192,
@@ -34282,7 +34282,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "临贺",
+        "nameCh": "临贺县",
         "isSeat": false
       },
       "provinceId": 297,
@@ -34326,7 +34326,7 @@
         "junCh": "蒼梧郡",
         "ju": "교주",
         "seat": "광신현",
-        "nameCh": "猛陵",
+        "nameCh": "猛陵县",
         "isSeat": false
       },
       "provinceId": 302,
@@ -34367,7 +34367,7 @@
         "junCh": "鬱林郡",
         "ju": "교주",
         "seat": "포산현",
-        "nameCh": "阿林",
+        "nameCh": "阿林县",
         "isSeat": false
       },
       "provinceId": 303,
@@ -34411,7 +34411,7 @@
         "junCh": "濟南國",
         "ju": "청주",
         "seat": "동평릉현",
-        "nameCh": "歷城",
+        "nameCh": "历城县",
         "isSeat": false
       },
       "provinceId": 349,

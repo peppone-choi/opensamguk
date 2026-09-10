@@ -33,17 +33,40 @@ export interface CityNameInput {
 /** 「영현」·「장현」. 등급 이름이 곧 縣 이다. */
 const COUNTY_LEVELS: ReadonlySet<number> = new Set([10, 11]);
 
+/**
+ * nameCh 꼬리로 縣 임이 드러나는 행정 단위. 簡體·繁體 둘 다 온다.
+ *
+ * 侯國은 縣 한 급이다 — 續漢書 百官志 「列侯所食縣曰國」. 실측(han-world-v3): 侯國 14 곳 중
+ * 3 곳(낙평·곡양·안중)이 등급 5·6 을 달고 있어 등급 규칙으로는 안 잡힌다. 屬國은 縣 이
+ * 아니라 郡 한 급이므로(龜茲屬國·遼東屬國) 여기 넣지 않는다 — 「국」으로 뭉뚱그리면
+ * 屬國까지 縣 이 된다.
+ */
+const COUNTY_UNITS = ['县', '縣', '侯国', '侯國'] as const;
+
 /** 이 城 이 중국 郡縣制 안의 縣 인가. */
 export function isHanCounty(city: CityNameInput): boolean {
   // 郡國 밖 세력(EXTERNAL_PLACE)은 음수 번호로 온다. 縣 이 아니다.
   if (city.id < 0) return false;
   const nameCh = city.nameCh ?? '';
-  if (nameCh.endsWith('县') || nameCh.endsWith('縣')) return true;
+  if (COUNTY_UNITS.some((unit) => nameCh.endsWith(unit))) return true;
   return COUNTY_LEVELS.has(city.level);
 }
+
+/**
+ * 게임 이름 뒤에 붙는 한정자 — 「의씨(河東郡)」·「영릉#123」.
+ *
+ * 같은 한글 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 달아 유일하게 만든다
+ * (build_han_world.py build_v3 의 name_counts/qualified_counts). 실측(han-world-v3):
+ * 781 중 131 곳이 한정돼 있다. 그래서 縣 을 그냥 뒤에 붙이면 「의씨(河東郡)현」이 되어
+ * 한정자가 이름 한가운데 낀 꼴이 된다. 줄기에만 붙이고 한정자는 뒤에 그대로 둔다.
+ */
+const QUALIFIER = /(\([^()]*\)|#\d+)$/;
 
 /** 화면에 적을 이름. 縣 이면 「뭐뭐현」, 아니면 원 이름 그대로. */
 export function cityDisplayName(city: CityNameInput): string {
   if (!isHanCounty(city)) return city.name;
-  return city.name.endsWith('현') ? city.name : `${city.name}현`;
+  const qualifier = QUALIFIER.exec(city.name)?.[1] ?? '';
+  const stem = qualifier ? city.name.slice(0, -qualifier.length) : city.name;
+  if (stem.endsWith('현')) return city.name;
+  return `${stem}현${qualifier}`;
 }
