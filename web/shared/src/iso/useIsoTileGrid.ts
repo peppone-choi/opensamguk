@@ -158,7 +158,8 @@ export function useIsoTileGrid(terrainUrl: string): State {
       const cellCount = srcCols * srcRows;
 
       // 다수결로 줄인 다음 治所 칸만 제 값으로 되돌린다 — 縣 경계에 붙어 선 城 이 남의
-      // 색 위에 서는 것을 막는다(stampSeatOwners 주석. 실측 162/773 → 0).
+      // 색 위에 서는 것을 막는다(stampSeatOwners 주석). 실측 162/773 → 44 이고,
+      // 남은 44 는 한 칸을 둘 이상이 나눠 써서 물리적으로 못 줄이는 몫이다.
       const ownerSource = expandRunLength(tiles.owner, cellCount);
       const owner = stampSeatOwners(
         downsampleOwner(ownerSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
