@@ -109,6 +109,7 @@ class MapPreviewController(
                 MapPreviewCity(
                     id = city.id,
                     name = coord.name,
+                    nameCh = coord.nameCh,
                     level = city.level,
                     nationId = city.nationId,
                     x = coord.x,

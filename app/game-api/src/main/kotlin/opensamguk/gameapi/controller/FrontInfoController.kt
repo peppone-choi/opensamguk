@@ -39,6 +39,7 @@ import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.VotePollReadEntity
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.WorldLogReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -60,6 +61,7 @@ import opensamguk.logic.traits.SpecialDomesticRegistry
 import opensamguk.logic.war.specialty.SpecialWarRegistry
 import opensamguk.logic.world.SpecialityHelper
 import opensamguk.infra.read.GameKvRepository
+import opensamguk.infra.seed.MapJson
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -558,6 +560,19 @@ class FrontInfoController(
     // city
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
+    /**
+     * 城 id → `meta.nameCh`. 활성 맵 리소스의 값 그대로다. 화면 이름을 「뭐뭐현」으로 통일하는
+     * 縣 판정에 쓰고(cityName.ts), 지도 프리뷰·도시 상세가 싣는 것과 **같은 값**이다.
+     * 활성 맵을 못 읽으면 던지지 않고 빈 표 — 이름 표기 하나로 본화면이 500 이 되면 안 된다.
+     */
+    private fun mapNameCh(): Map<Int, String> {
+        val active = world.findAll().firstOrNull() ?: return emptyMap()
+        val mapCode = runCatching { ActiveWorldMap.requireName(active) }.getOrNull() ?: return emptyMap()
+        return MapJson.loadFromClasspath(mapCode).cities
+            .mapNotNull { city -> city.nameCh?.let { city.id to it } }
+            .toMap()
+    }
+
     private fun buildCity(c: CityReadEntity): FrontCityInfo {
         val cityNation = if (c.nationId == 0) {
             null
@@ -567,6 +582,7 @@ class FrontInfoController(
         return FrontCityInfo(
             id = c.id,
             name = c.name,
+            nameCh = mapNameCh()[c.id],
             level = c.level,
             // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시(레거시
             // CityBasicCard.vue cityConstMap.level[level]). 미정의 레벨 → '-'.

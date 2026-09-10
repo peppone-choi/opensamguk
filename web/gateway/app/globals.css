@@ -398,6 +398,11 @@ textarea:focus {
     border-radius: var(--radius-md);
     background: var(--bg-card);
     overflow: hidden;
+    /* 옆의 세력 현황이 키운 칸 높이를 그대로 쓴다. 머리줄만 두고 목록이 나머지를 다 먹는다 —
+       「전황 보고는 세로 공간을 컨테이너 전체로」(2026-09-10). */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 .server-log-head {
     padding: var(--space-xs) var(--space-sm);
@@ -411,6 +416,7 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
     min-height: 64px;
     color: var(--text-muted);
     font-size: var(--text-sm);
@@ -419,7 +425,10 @@ textarea:focus {
     list-style: none;
     margin: 0;
     padding: 0;
-    max-height: 160px;
+    /* 160px 로 잘라 두면 칸이 아무리 높아도 목록은 그 자리에 멈추고 아래가 빈다.
+       칸이 주는 만큼 쓰고 넘칠 때만 스크롤한다. */
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 .server-log-item {
@@ -1374,7 +1383,7 @@ textarea:focus {
 @media (min-width: 1000px) { .login-status { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } }
 
 .server-board { max-width: none; gap: 10px; }
-.server-board__side { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.server-board__side { display: grid; grid-template-columns: 1fr; gap: 10px; align-items: stretch; }
 @media (min-width: 760px) { .server-board__side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .server-tab { border-radius: 0; background: var(--inset); }
 .server-tab.is-active { color: var(--bronze); border-bottom: 2px solid var(--bronze); }

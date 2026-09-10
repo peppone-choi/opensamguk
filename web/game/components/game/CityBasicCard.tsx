@@ -6,7 +6,7 @@
 // 시세(trade)는 분모가 없으므로 레거시 tradeBarPercent=(trade-95)*10 을 그대로 쓰고, null 이면 막대 없이
 // 「상인 없음」만 쓴다. 도시 관직은 officer_city==이 도시 AND officer_level∈{4,3,2}.
 
-import { Gauge, Panel, SectionHeader, normaliseNationColor, rgbCss } from '@opensamguk/ui';
+import { Gauge, Panel, SectionHeader, cityDisplayName, normaliseNationColor, rgbCss } from '@opensamguk/ui';
 import GeneralName from './GeneralName';
 import type { FrontCityInfo } from '@/lib/types';
 
@@ -36,7 +36,8 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
     }
 
     const head = headColors(city.nationColor);
-    const nationLabel = city.nationId !== 0 ? `지배 국가 【 ${city.nationName ?? '-'} 】` : '공 백 지';
+    // 주인이 없으면 국가표기를 붙이지 않는다 — 공백지에 「공 백 지」라고 적지 않는다(2026-09-10).
+    const nationLabel = city.nationId !== 0 ? `지배 국가 【 ${city.nationName ?? '-'} 】` : null;
     const tradePercent = city.trade != null ? Math.min(100, Math.max(0, (city.trade - 95) * 10)) : null;
 
     return (
@@ -45,8 +46,8 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
             <SectionHeader
                 className="war-card__head war-card__head--nation war-card__head-right"
                 style={{ backgroundColor: head.background, color: head.color }}
-                title={`【${city.regionName ? `${city.regionName} | ` : ''}${city.levelName ?? `Lv.${city.level}`}】 ${city.name}`}
-                actions={<span>{nationLabel}</span>}
+                title={`【${city.regionName ? `${city.regionName} | ` : ''}${city.levelName ?? `Lv.${city.level}`}】 ${cityDisplayName({ ...city, nameCh: city.nameCh ?? undefined })}`}
+                actions={nationLabel ? <span>{nationLabel}</span> : undefined}
             />
 
             <div className="war-card__gauges">

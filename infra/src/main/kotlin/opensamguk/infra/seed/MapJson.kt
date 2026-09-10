@@ -13,6 +13,12 @@ object MapJson {
     data class MapCityCoord(
         val id: Int,
         val name: String,
+        /**
+         * `meta.nameCh` — 그 城 자신의 행정 단위가 붙은 원 표기("长安县" · "甘陵郡" · "伯濟國").
+         * 끝 글자가 县/縣 이면 그 城 은 縣 이다. 화면 표기를 「뭐뭐현」으로 통일하는 데 쓴다
+         * (web/shared/src/iso/cityName.ts). 소속 郡의 治所 이름인 `meta.seat` 과 다른 값이다.
+         */
+        val nameCh: String? = null,
         val x: Double,
         val y: Double,
         val regionName: String? = null,
@@ -73,6 +79,7 @@ object MapJson {
             MapCityCoord(
                 id = id,
                 name = c["name"] as? String ?: "",
+                nameCh = (meta?.get("nameCh") as? String)?.takeIf { it.isNotBlank() },
                 x = x,
                 y = y,
                 regionName = (meta?.get("ju") as? String)?.takeIf { it.isNotBlank() },

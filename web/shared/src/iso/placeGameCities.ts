@@ -32,6 +32,8 @@ import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanM
 export interface GameCityInput {
   id: number;
   name: string;
+  /** han.json meta.nameCh. 縣 판정에만 쓴다 — cityName.ts 참조. */
+  nameCh?: string;
   level: number;
   nationId: number;
   x: number;
@@ -58,6 +60,8 @@ export interface PlacedCity {
   /** 게임 도시 번호. **음수면 게임 城 이 아니다**(郡國 밖 세력) — isExternalPlace 참조. */
   id: number;
   name: string;
+  /** 행정 단위가 붙은 원 표기("长安县"). 화면 이름을 「뭐뭐현」으로 짓는 데 쓴다. */
+  nameCh?: string;
   level: number;
   nationId: number;
   /** 소수 타일 좌표(원본 셀 / rasterGroup). */
@@ -151,6 +155,7 @@ export function placeGameCities(
     placed.push({
       id: city.id,
       name: city.name,
+      nameCh: city.nameCh,
       level: city.level,
       nationId: city.nationId,
       col,

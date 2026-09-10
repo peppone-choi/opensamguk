@@ -19,6 +19,7 @@ import {
   IsoMap2D,
   PillTabs,
   TERRAIN_ASSET_NAME,
+  cityDisplayName,
   isOwnedNationVisual,
   placeBattlefields,
   placeGameCities,
@@ -230,11 +231,15 @@ export default function IsoWorldMap({
         {view === 'iso3d' ? <IsoMap3D {...shared} /> : <IsoMap2D {...shared} />}
         {hover && (
           <div className="iso-tip" role="status" style={{ left: hover.x + 14, top: hover.y + 14 }}>
-            <b>{hover.city.name}</b>
-            <span>
-              {hover.city.nationName ?? '재야'}
-              {hover.city.isCapital ? ' · 수도' : ''}
-            </span>
+            <b>{cityDisplayName(hover.city)}</b>
+            {/* 주인이 없으면 국가 줄 자체를 내지 않는다 — 「재야」라고 적지 않는다(2026-09-10).
+                공백지는 비어 있다는 것이 사실이고, 「재야」는 주군 없는 **장수**를 가리키는 말이다. */}
+            {(hover.city.nationName || hover.city.isCapital) && (
+              <span>
+                {hover.city.nationName ?? ''}
+                {hover.city.isCapital ? `${hover.city.nationName ? ' · ' : ''}수도` : ''}
+              </span>
+            )}
           </div>
         )}
         {fields.length > 0 && (

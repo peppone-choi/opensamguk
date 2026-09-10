@@ -135,3 +135,24 @@ export function luminancePreserving(color: Rgb): Rgb {
   const k = Math.min(1 / luma, 1.7 / peak);
   return { r: color.r * k, g: color.g * k, b: color.b * k };
 }
+
+/**
+ * 이 縣(또는 郡)을 무슨 색으로 칠할 것인가. **칠하지 않을 곳은 null** 이다.
+ *
+ * 국가색 표(paint)를 받은 화면에서 표에 없는 縣 은 주인이 없다는 뜻이다 — 그런 縣 은
+ * 칠하지 않고 지형을 그대로 둔다. 배포본은 여기서 indexTint 로 넘어가는 바람에 무소속
+ * 縣 마다 황금각으로 돌린 무지개색이 깔렸다. 「현 소유 국가색을 기본으로 뿌리니까,
+ * 무소속 현에도 색상이 칠해지잖아」(2026-09-10) — 그 색은 게임 데이터가 아니다.
+ *
+ * 표 자체가 없는 화면(연구용 랩)에서만 indexTint 로 소속 구분을 보여 준다. 그쪽은
+ * 국가색이 아예 없어서 색인 색 말고 보여 줄 것이 없고, 랩이라고 밝히고 쓴다.
+ */
+export function ownerTint(
+  key: number,
+  paint: Readonly<Record<number, string>> | undefined,
+): Rgb | null {
+  if (key < 0) return null;
+  const hex = paint?.[key];
+  if (hex) return normaliseNationColor(hex);
+  return paint ? null : indexTint(key);
+}

@@ -52,6 +52,12 @@ data class MapPreviewResponse(
 data class MapPreviewCity(
     val id: Int,
     val name: String,
+    /**
+     * `map/<code>.json` 의 `meta.nameCh` — 그 城 자신의 행정 단위가 붙은 원 표기("长安县").
+     * 클라이언트가 縣 판정에 쓴다(cityName.ts). 값이 없는 맵이면 생략된다.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val nameCh: String? = null,
     val level: Int,
     val nationId: Int,
     val x: Double,
