@@ -343,16 +343,25 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
     expect(passes.every(isExternalPlace)).toBe(true);
   });
 
+  // 발자국 규약은 「정수 (col,row) 가 다이아몬드 **중심**」이다(fitFootprintsInTile 주석).
+  // 그래서 중심에서 벗어난 양의 마름모 노름이 1-drawScale 을 넘지 않아야 제 칸 안이다.
+  // 한 칸에 혼자면 drawScale 1 · 예산 0 이라 정확히 칸 한가운데에 선다.
+  const insideOwnTile = (city: PlacedCity) => {
+    const budget = 1 - city.drawScale + 1e-9;
+    expect(
+      Math.abs(city.drawCol - city.tileCol) + Math.abs(city.drawRow - city.tileRow),
+      city.name,
+    ).toBeLessThanOrEqual(budget);
+  };
+
   it('關 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
     const passes = placeGameCities([], real, options).filter((c) => c.level === PASS_LEVEL);
-    for (const pass of passes) {
-      expect(Math.abs(pass.drawCol - (pass.tileCol + 0.5))).toBeLessThanOrEqual(0.5);
-      expect(Math.abs(pass.drawRow - (pass.tileRow + 0.5))).toBeLessThanOrEqual(0.5);
-    }
+    expect(passes.length).toBeGreaterThan(0);
+    for (const pass of passes) insideOwnTile(pass);
   });
 
   // placeGameCities 에서 placeFrontierCounties 를 빼면 이 둘이 빨개진다.
-  it('게임 城 이 하나도 없어도 변경 縣 25 곳은 선다', () => {
+  it('게임 城 이 하나도 없어도 변경 縣 51 곳은 선다', () => {
     const placed = placeGameCities([], real, options);
     const names = new Set(placed.map((c) => c.name));
     for (const county of FRONTIER_COUNTIES) {
@@ -366,10 +375,10 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
 
   it('변경 縣 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
     const counties = placeGameCities([], real, options).filter((c) => c.id < -1_000_008);
-    expect(counties.length).toBeGreaterThan(0);
-    for (const county of counties) {
-      expect(Math.abs(county.drawCol - (county.tileCol + 0.5))).toBeLessThanOrEqual(0.5);
-      expect(Math.abs(county.drawRow - (county.tileRow + 0.5))).toBeLessThanOrEqual(0.5);
-    }
+    expect(counties).toHaveLength(FRONTIER_COUNTIES.length);
+    for (const county of counties) insideOwnTile(county);
+    // 한 칸을 나눠 쓰는 縣이 실제로 있다 — 없으면 이 게이트가 아무것도 안 본다.
+    // 실측: 麋泠·西于·封谿가 交趾 한 칸에 들고, 居風은 九真郡 노드와 같은 칸이다.
+    expect(counties.some((c) => c.drawScale < 1)).toBe(true);
   });
 });
