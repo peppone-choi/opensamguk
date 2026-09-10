@@ -8,6 +8,9 @@ import {
   type PlacedCity,
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
+import { PASS_LEVEL, STRATEGIC_PASSES } from '../iso/strategicPasses';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { HanTiles } from '../HanMapCanvas';
 
 /** 8×8 원본 셀 = 2×2 타일. 배치 계산만 보므로 격자 내용은 필요 없다. */
@@ -22,6 +25,8 @@ const data = {
   sourceCols: 8,
   sourceRows: 8,
   cities: [] as IsoCity[],
+  // 투영이 없으면 關 은 한 곳도 안 선다 — 이 묶음은 게임 城 배치만 본다.
+  projection: undefined,
 };
 const options = { sourceSize: { width: 100, height: 100 } };
 
@@ -306,5 +311,42 @@ describe('firstPickableCity', () => {
   it('빈 구멍(instanceId 없는 맞음)은 건너뛴다', () => {
     expect(firstPickableCity([undefined, hit(7)])?.id).toBe(7);
     expect(firstPickableCity([])).toBeNull();
+  });
+});
+
+describe('placeGameCities 가 關 을 같이 세운다', () => {
+  // 투영·격자는 저장소의 실제 지형 표에서 읽는다. 여기가 배선 게이트다 —
+  // placeGameCities 에서 placeStrategicPasses 를 빼면 이 묶음이 빨개진다.
+  const tiles = JSON.parse(
+    readFileSync(resolve(__dirname, '../../../..', 'data/map/han-tiles.json'), 'utf-8'),
+  ) as { _meta: { projection: unknown; cols: number; rows: number } };
+  const real = {
+    ...data,
+    sourceCols: tiles._meta.cols,
+    sourceRows: tiles._meta.rows,
+    grid: {
+      cols: Math.ceil(tiles._meta.cols / 4),
+      rows: Math.ceil(tiles._meta.rows / 4),
+    } as never,
+    projection: tiles._meta.projection,
+  } as typeof data;
+
+  it('게임 城 이 하나도 없어도 關 8 곳은 선다', () => {
+    const placed = placeGameCities([], real, options);
+    const passes = placed.filter((c) => c.level === PASS_LEVEL);
+    expect(passes).toHaveLength(STRATEGIC_PASSES.length);
+    expect(passes.map((p) => p.name).sort()).toEqual(
+      STRATEGIC_PASSES.map((p) => p.nameKo).sort(),
+    );
+    // 전부 음수 id — 눌러도 들어갈 데가 없다.
+    expect(passes.every(isExternalPlace)).toBe(true);
+  });
+
+  it('關 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
+    const passes = placeGameCities([], real, options).filter((c) => c.level === PASS_LEVEL);
+    for (const pass of passes) {
+      expect(Math.abs(pass.drawCol - (pass.tileCol + 0.5))).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(pass.drawRow - (pass.tileRow + 0.5))).toBeLessThanOrEqual(0.5);
+    }
   });
 });
