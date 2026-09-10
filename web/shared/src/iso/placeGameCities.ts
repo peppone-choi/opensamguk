@@ -21,13 +21,14 @@
 // 캔버스의 mapCityToTile 과 같은 선형식이고, 8 곳 모두 육지 타일에 떨어지는 것을 확인했다.
 //
 // 郡國 밖 세력(EXTERNAL_PLACE)도 여기서 같이 앉힌다 — 중원과 다른 그림으로 그리지 않는다.
-// 자세한 것은 아래 placeExternalPlaces 주석.
+// 자세한 것은 아래 placeExternalPlaces 주석. 關(관문) 도 마찬가지로 덧댄다(strategicPasses.ts).
 
 import type { IsoMapData } from './useIsoTileGrid';
 import { RASTER_GROUP } from '../isoTileGrid';
 import { isOwnedNationVisual } from '../nationVisual';
 import { externalPlaceLevel } from './externalPlaceTier';
 import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanMapCanvas';
+import { placeStrategicPasses } from './strategicPasses';
 
 /** 배치 입력. MapPreviewCity 에서 필요한 만큼만 뽑은 모양이다. */
 export interface GameCityInput {
@@ -111,7 +112,10 @@ export interface PlaceGameCitiesOptions {
  */
 export function placeGameCities(
   cities: readonly GameCityInput[],
-  data: Pick<IsoMapData, 'grid' | 'provinceSeatCell' | 'sourceCols' | 'sourceRows' | 'cities'>,
+  data: Pick<
+    IsoMapData,
+    'grid' | 'provinceSeatCell' | 'sourceCols' | 'sourceRows' | 'cities' | 'projection'
+  >,
   options: PlaceGameCitiesOptions,
 ): PlacedCity[] {
   const { grid, provinceSeatCell, sourceCols, sourceRows } = data;
@@ -177,6 +181,11 @@ export function placeGameCities(
   }
 
   placed.push(...placeExternalPlaces(data.cities, grid, covered));
+  // 關(관문)도 같이 세운다. 게임 城 목록에 없는 길목이라 여기서 덧대는 수밖에 없다 —
+  // 자세한 것과 근거는 strategicPasses.ts.
+  placed.push(...placeStrategicPasses(
+    data.projection, { cols: sourceCols, rows: sourceRows }, grid,
+  ));
   fitFootprintsInTile(placed);
   return placed;
 }

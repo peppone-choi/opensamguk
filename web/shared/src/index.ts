@@ -229,6 +229,12 @@ export {
   type CityIconInput,
 } from './iso/cityIconLevel';
 export {
+  PASS_LEVEL,
+  STRATEGIC_PASSES,
+  placeStrategicPasses,
+  type StrategicPass,
+} from './iso/strategicPasses';
+export {
   drawBattlefieldMark,
   drawCityFlag,
   drawCityName,
