@@ -9,6 +9,7 @@ import {
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import { PASS_LEVEL, STRATEGIC_PASSES } from '../iso/strategicPasses';
+import { FRONTIER_COUNTIES, frontierCountyDisplayName } from '../iso/frontierCounties';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { HanTiles } from '../HanMapCanvas';
@@ -347,6 +348,28 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
     for (const pass of passes) {
       expect(Math.abs(pass.drawCol - (pass.tileCol + 0.5))).toBeLessThanOrEqual(0.5);
       expect(Math.abs(pass.drawRow - (pass.tileRow + 0.5))).toBeLessThanOrEqual(0.5);
+    }
+  });
+
+  // placeGameCities 에서 placeFrontierCounties 를 빼면 이 둘이 빨개진다.
+  it('게임 城 이 하나도 없어도 변경 縣 25 곳은 선다', () => {
+    const placed = placeGameCities([], real, options);
+    const names = new Set(placed.map((c) => c.name));
+    for (const county of FRONTIER_COUNTIES) {
+      expect(names.has(frontierCountyDisplayName(county)), county.id).toBe(true);
+    }
+    const counties = placed.filter((c) => c.id < -1_000_008);
+    expect(counties).toHaveLength(FRONTIER_COUNTIES.length);
+    // 전부 음수 id — 눌러도 들어갈 데가 없다.
+    expect(counties.every(isExternalPlace)).toBe(true);
+  });
+
+  it('변경 縣 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
+    const counties = placeGameCities([], real, options).filter((c) => c.id < -1_000_008);
+    expect(counties.length).toBeGreaterThan(0);
+    for (const county of counties) {
+      expect(Math.abs(county.drawCol - (county.tileCol + 0.5))).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(county.drawRow - (county.tileRow + 0.5))).toBeLessThanOrEqual(0.5);
     }
   });
 });
