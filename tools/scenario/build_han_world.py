@@ -953,7 +953,14 @@ def build_v3() -> tuple[str, str, str, str]:
             "junCh": parent_ch,
             "ju": region_name,
             "seat": seat_name_by_parent.get(parent_ch, out["meta"].get("seat")),
-            "nameCh": node["canonicalName"],
+            # 화면 표기용 원 표기다. **행정 단위 꼬리가 붙은 채로** 실어야 한다
+            # ("长安县"·"甘陵郡"·"原鹿侯国"). 選定 원장의 canonicalName 은 꼬리를 뗀
+            # 줄기라(「长安」), 그걸 실으면 프런트의 縣 판정(web/shared/src/iso/cityName.ts)
+            # 이 첫 규칙에서 한 곳도 못 걸러 郡治 175 곳이 「뭐뭐현」을 못 받는다
+            # (2026-09-10 프로덕션 실측: 781 중 县/縣 로 끝나는 nameCh 0 건).
+            # 781 번 가지가 이미 physical["nameCh"] 를 쓰고 있고 v2 han.json 도 같은 값이라,
+            # 여기만 줄기를 쓰던 것이 어긋난 쪽이었다.
+            "nameCh": physical["nameCh"],
             "isSeat": node["seatRole"] == "COMMANDERY_SEAT",
         }
         province = province_by_city_index.get(city_index_by_place[place])

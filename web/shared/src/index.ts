@@ -223,6 +223,11 @@ export {
   externalPlaceLevel,
   type ExternalPlaceInput,
 } from './iso/externalPlaceTier';
+
+export {
+  cityIconLevel,
+  type CityIconInput,
+} from './iso/cityIconLevel';
 export {
   drawBattlefieldMark,
   drawCityFlag,
