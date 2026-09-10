@@ -30,6 +30,12 @@ export interface IsoCity {
   level: number;
   kind: string;
   seat: boolean;
+  /**
+   * 이 城 을 가리키는 `provinceRecords[]` 의 행정 계통(BAEKJE · XIONGNU · WA …).
+   * 郡國 밖 세력이 무슨 그림으로 설지 가르는 축이다(externalPlaceTier.ts).
+   * 가리키는 record 가 없으면 undefined — 漢 郡縣은 전부 HAN_COMMANDERY 다.
+   */
+  administrativeSystem?: string;
   /** 타일 좌표. 원본 셀 좌표를 rasterGroup 으로 나눈 것. */
   col: number;
   row: number;
@@ -159,9 +165,20 @@ export function useIsoTileGrid(terrainUrl: string): State {
         )
         : new Int32Array(grid.cols * grid.rows).fill(-1);
 
-      const cities: IsoCity[] = tiles.cities.map((city) => {
+      // provinceRecords[i].cityIndex → cities[i] 의 역색인. 郡國 밖 세력이 무슨 계통인지는
+      // 城 행이 아니라 그 城 을 가리키는 record 에만 적혀 있다(실측: 밖 세력 37 곳 전부
+      // 정확히 하나씩 가리켜진다). 여기서 한 번 펴 두면 렌더러가 매번 되짚지 않는다.
+      const systemByCity = new Map<number, string>();
+      for (const record of tiles.provinceRecords ?? []) {
+        const index = record.cityIndex;
+        const system = record.administrativeSystem;
+        if (index == null || !Number.isInteger(index) || !system) continue;
+        if (!systemByCity.has(index)) systemByCity.set(index, system);
+      }
+
+      const cities: IsoCity[] = tiles.cities.map((city, index) => {
         const [col, row] = sourceCellToTile(city.col, city.row, RASTER_GROUP);
-        return { ...city, col, row };
+        return { ...city, administrativeSystem: systemByCity.get(index), col, row };
       });
 
       // 매니페스트는 곁들이다(출처·한계 표시용). 못 받아도, 몸통이 JSON 이 아니어도

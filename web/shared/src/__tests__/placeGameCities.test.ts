@@ -129,12 +129,27 @@ describe('郡國 밖 세력', () => {
     kind: 'EXTERNAL_PLACE', seat: true, col: 0, row: 1, ...over,
   });
 
-  it('게임 城 이 없는 곳은 城 과 같은 모양으로 앉는다 — 등급도 지형 것을 그대로 쓴다', () => {
+  it('게임 城 이 없는 곳은 城 과 같은 모양으로 앉는다', () => {
     const placed = placeGameCities([], { ...data, cities: [place({})] }, options);
     expect(placed).toHaveLength(1);
-    expect(placed[0]).toMatchObject({ name: '백제국', level: 4, tileCol: 0, tileRow: 1 });
+    expect(placed[0]).toMatchObject({ name: '백제국', tileCol: 0, tileRow: 1 });
     // 좌표는 CHGIS 실측이다 — x/y 선형 폴백이 아니다.
     expect(placed[0].exact).toBe(true);
+  });
+
+  // 지형의 level 4 는 등급이 아니라 자리표시다(build_external_places.py 주석). 그대로
+  // 쓰면 백제국도 흉노도 같은 이민족 야영으로 선다 — 행정 계통으로 갈라야 한다.
+  it('지형이 실어 보낸 자리표시 등급을 그대로 쓰지 않는다', () => {
+    const placed = placeGameCities([], { ...data, cities: [place({})] }, options);
+    expect(placed[0].level).not.toBe(4);
+    expect(placed[0].level).toBe(5);
+  });
+
+  it('유목 세력만 야영(4)으로 선다', () => {
+    const tribal = place({ name: '흉노', nameCh: '南匈奴', administrativeSystem: 'XIONGNU' });
+    const settled = place({ administrativeSystem: 'BAEKJE' });
+    expect(placeGameCities([], { ...data, cities: [tribal] }, options)[0].level).toBe(4);
+    expect(placeGameCities([], { ...data, cities: [settled] }, options)[0].level).toBe(5);
   });
 
   it('id 가 음수라 게임 도시 번호와 절대 겹치지 않는다', () => {
