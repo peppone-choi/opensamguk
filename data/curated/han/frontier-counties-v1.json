@@ -1,64 +1,390 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "ledgerId": "frontier-counties-v1",
   "scope": "COUNTY_IDENTITY_AND_APPROXIMATE_POSITION",
-  "note": "續漢書 郡國五 交州·幽州 변경 4 郡의 縣. 郡國志가 이름을 적어 두었는데 지도에는 한 곳도 서 있지 않던 자리다 — CHGIS 縣 점이 이 지역에 없어 세계 생성기가 郡 하나만 세웠고, 그 결과 樂浪 18城·遼東 11城·玄菟 6城·交趾 12城 이 화면에서는 郡 표식 하나로 보였다. 여기 실린 縣은 郡國志에 이름이 있고 저장소 안의 현대 좌표 수확본에 좌표가 있는 것만이다. 게임 城 이 아니다 — id 가 음수라 눌러도 들어갈 데가 없고 소유도 보급도 없다. 게임 城 으로 만들려면 세계 생성기를 다시 돌려야 하는데 그 입력(terrain-grid.json·han-places.json)이 ADR-LITE-039 로 저장소 밖이라 지금은 표시까지만 한다(strategic-passes-v1 과 같은 자리).",
-  "positionBasis": "좌표는 나무위키 「삼국지/지명」 수확본(namu-place-locations-v1)의 명시 좌표다. 關(관문)·전장 표식이 쓰는 것과 같은 출처·같은 투영(han-tiles _meta.projection)이라 새로 세운 이음매가 없다. 전부 APPROXIMATE 이다.",
-  "levelBasis": "등급은 생성기와 같은 규칙으로 정했다(build_han_world.py v3_level: 郡治가 아니면 戶÷城 이 10,000 이상일 때만 영현, 아니면 장현). 실측 樂浪 61,492÷18=3,416 · 遼東 64,158÷11=5,832 · 玄菟 1,594÷6=265 이고 交趾는 郡國志에 戶口가 없다 — 넷 다 장현(11)이다.",
+  "note": "續漢書 郡國五 交州·幽州 변경 7 郡의 縣. 郡國志가 이름을 적어 두었는데 지도에는 한 곳도 서 있지 않던 자리다 — CHGIS 縣 점이 이 지역에 없어 세계 생성기가 郡 하나만 세웠고, 그 결과 樂浪 18城·遼東 11城·玄菟 6城·遼東屬國 6城·交趾 12城·九真 5城·日南 5城 이 화면에서는 郡 표식 일곱 개로 보였다. 게임 城 이 아니다 — id 가 음수라 눌러도 들어갈 데가 없고 소유도 보급도 없다. 게임 城 으로 만들려면 세계 생성기를 다시 돌려야 하는데 그 입력(terrain-grid.json·han-places.json)이 ADR-LITE-039 로 저장소 밖이라 지금은 표시까지만 한다(strategic-passes-v1 과 같은 자리).",
+  "revision": {
+    "schemaVersion": 2,
+    "changedFrom": "schemaVersion 1 (25 縣, 4 郡)",
+    "changes": [
+      "縣 목록을 郡國志 원문에서 직접 뽑는다 — 7 郡 63 縣을 한 줄씩 훑고 이름·행번호·인용을 원문에서 읽는다. 나무위키 목차 순서를 따르지 않는다.",
+      "좌표 출처를 namu-place-locations-v1(227행 요약본)에서 namu-source-records-v1(2,658 레코드 원본)로 바꿨다. 앞엣것은 이 지역에 31행밖에 없고 그중 沓氏 한 행이 遼隧縣의 좌표를 물고 있었다.",
+      "이름 대조를 NFKC 로 정규화한다 — 遼(U+F9C3, CJK 호환 한자)가 遼(U+907C)와 안 맞아 遼陽·上殷台·西蓋馬·象林이 통째로 빠져 있었다.",
+      "𧦦邯·樂都·盧容·昌遼·扶黎처럼 표기가 다른 縣을 別稱表와 校勘記로 잇는다.",
+      "결속 축을 둘로 둔다 — 레코드의 affiliations(「[한]유주자사부 요동군」)와 section 제목. 나무위키가 晉代 郡으로 묶어 둔 대목이 있어 한 축만으로는 결속이 끊긴다.",
+      "沓氏 좌표를 41.25893/122.78741 → 39.5046/121.6582 로 고쳤다(216.33km). 자세한 것은 corrections.",
+      "세운 縣 25 → 51."
+    ]
+  },
+  "positionBasis": "좌표는 나무위키 「삼국지/지명」 수확본(namu-source-records-v1)의 명시 좌표다. 關(관문)·전장 표식이 쓰는 것과 같은 출처·같은 투영(han-tiles _meta.projection)이라 새로 세운 이음매가 없다. 전부 APPROXIMATE 이다. 51 縣 중 24 곳은 같은 수확에서 뽑은 두 번째 원장(namu-place-locations-v1)에도 행이 있어 교차 검증했고 — 沓氏 한 곳을 뺀 23 곳이 소수점까지 같다(positionEvidence.crossCheck). 나머지 27 곳은 그 원장에 행이 없어 modernLocation 이 null 이다 — 현대 지명을 지어내지 않는다.",
+  "levelBasis": "등급은 생성기와 같은 규칙으로 정했다(build_han_world.py v3_level: 郡治가 아니면 戶÷城 이 10,000 이상일 때만 영현, 아니면 장현). 실측 樂浪 61,492÷18=3,416 · 遼東 64,158÷11=5,832 · 玄菟 1,594÷6=265 · 九真 46,513÷5=9,302 · 日南 18,263÷5=3,652 이고 交趾와 遼東屬國은 郡國志에 戶口가 없다(遼東屬國은 校勘記도 「此郡獨無戶口」라 적는다). 일곱 郡 모두 장현(11)이다.",
+  "webAndSourceSweep": "「못 세운 것은 웹과 사료에서 찾아」(2026-09-10)에 대한 답이다. 세 축을 다 썼다. (1) 사료 — 讀史方輿紀要·元和郡縣圖志를 shiliao 색인으로 훑었다. 방위는 준다(「沓氏城，在衛東南」·「在王京南境」) 지만 좌표는 한 줄도 없다. 대신 校勘記가 候城·無慮 중복과 昌遼=昌黎를 판정해 줬고, 卷031 「三國魏景初三年以遼東沓氏縣吏民渡海來歸」가 沓氏가 바닷가임을 못박아 좌표 교정의 두 번째 축이 됐다. (2) 웹 — ko/zh/vi/ja 위키백과는 郡 단위 현대 지명까지만 주고 縣別 좌표가 없다. 서로 어긋나기도 한다(누방을 ko위키는 성천군, 나무위키는 강동군에 둔다; vi위키 日南郡은 Nghệ An–Hà Tĩnh 로 흔한 Quảng Bình–Quảng Nam 설과 어긋난다). 좌표원으로 못 쓴다. (3) 저장소 — 이미 커밋돼 있던 namu-source-records-v1 이 63 縣 중 58 곳의 명시 좌표를 갖고 있었다. 못 세운 진짜 이유는 사료의 침묵이 아니라 이름 대조(NFKC)와 결속 축(晉代 郡으로 묶인 목차)이었다.",
   "coverage": {
-    "commanderiesWithCoordinates": 4,
-    "commanderiesWithoutCoordinates": [
-      "九真郡",
-      "日南郡",
-      "遼東屬國"
-    ],
+    "commanderies": 7,
     "junguozhiDeclaredCounties": {
-      "樂浪郡": 18,
       "遼東郡": 11,
       "玄菟郡": 6,
+      "樂浪郡": 18,
+      "遼東屬國": 6,
       "交趾郡": 12,
       "九真郡": 5,
       "日南郡": 5
     },
-    "placed": 25,
-    "note": "九真郡 5城·日南郡 5城 은 수확본에 좌표가 한 줄도 없어 한 곳도 세우지 못한다 — 자리를 지어내지 않는다. 좌표가 있는 4 郡도 郡國志가 적은 47 城 중 25 곳만 선다."
+    "junguozhiDeclaredTotal": 63,
+    "placed": 51,
+    "placedByCommandery": {
+      "遼東郡": 9,
+      "玄菟郡": 5,
+      "樂浪郡": 14,
+      "遼東屬國": 4,
+      "交趾郡": 11,
+      "九真郡": 4,
+      "日南郡": 4
+    },
+    "alreadyStandingAsCommanderyNode": 7,
+    "excludedCounties": 5,
+    "modernLocationKnown": 24,
+    "crossChecked": 25,
+    "sourceFlagged": {
+      "UNCERTAIN": 22,
+      "DISPUTED": 1
+    },
+    "note": "63 縣 중 7 곳은 郡治라 이미 郡 노드로 서 있고, 5 곳은 뺐다(중복 2 · 郡 노드 중복 1 · 좌표 미확정 1 · 바다 타일 1). 남은 51 곳을 세운다. 자리를 지어내지 않는다 — 좌표가 없거나 둘인 縣은 excludedCounties 에 이유와 함께 남긴다."
   },
+  "corrections": [
+    {
+      "id": "hhs:113:遼東郡:011",
+      "nameHan": "沓氏",
+      "nameKo": "답씨",
+      "wasCoordinates": {
+        "latitude": 41.25893,
+        "longitude": 122.78741
+      },
+      "nowCoordinates": {
+        "latitude": 39.5046,
+        "longitude": 121.6582
+      },
+      "deltaKm": 216.33,
+      "shippedIn": "schemaVersion 1 (PR #697)",
+      "cause": "앞판이 쓰던 namu-place-locations-v1 의 「遼東郡 沓氏」 행이 遼隧縣의 좌표를 물고 있었다. namu-source-records-v1 record 827 遼隧縣이 정확히 41.25893/122.78741 이다.",
+      "evidence": [
+        {
+          "kind": "REPOSITORY_LEDGER",
+          "ref": "namu-source-records-v1 record 839",
+          "quote": "東沓縣 / 별칭 「[전한]답지현(沓氏縣)→[190?]동답현→[서진]낙취현(樂就縣)」 / 소속 「[한]유주자사부 요동군」 / 39.5046, 121.6582"
+        },
+        {
+          "kind": "REPOSITORY_AUDITOR",
+          "ref": "tools/map/audit_namu_sources.py",
+          "quote": "GROUP_UNRESOLVED 遼東郡 沓氏 [41.25893, 122.78741] [[[39.5046, 121.6582]]] — 저장소 감사기가 이미 이 행을 걸어 두고 있었다."
+        },
+        {
+          "kind": "RECEIVED_TEXT",
+          "book": "讀史方輿紀要 卷037 山東八 遼東行都司",
+          "sourceRepository": "shiliao",
+          "quote": "《沓氏》城，在衛東南。漢縣，屬遼東郡。"
+        },
+        {
+          "kind": "RECEIVED_TEXT",
+          "book": "讀史方輿紀要 卷031 山東二 濟南府",
+          "sourceRepository": "shiliao",
+          "quote": "三國魏景初三年以遼東《沓氏》縣吏民渡海來歸，因僑置新沓縣於此，亦謂之新沓城。",
+          "supports": [
+            "沓氏는 바다를 건널 수 있는 해안이다 — 遼陽 내륙이 아니다."
+          ]
+        }
+      ]
+    }
+  ],
   "excluded": [
     {
+      "id": "hhs:113:遼東郡:001",
       "nameHan": "襄平",
+      "nameSimplified": "襄平",
+      "commanderyHan": "遼東郡",
+      "commanderyKo": "요동군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東郡 襄平",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 832,
+          "quote": "〖襄平〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 830,
+          "quote": "◎　辽东郡秦置。雒阳东北三千六百里。十一城，户六万四千一百五十八，口八万一千七百一十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
       "nameKo": "양평",
-      "commanderyHan": "遼東郡",
-      "reason": "이미 지도에 서 있다 — 郡治라 遼東郡 노드(han-tiles X005)가 이 자리를 쓴다. 실측 거리 약 1.5km 로 같은 타일이며, 넣으면 표식이 겹쳐 선다."
+      "reason": "이미 지도에 서 있다 — 郡治라 遼東郡 노드(han-tiles X005)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X005 의 治所를 「襄平縣」으로 못박아 뒀다(실측 거리 약 1.5km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X005"
     },
     {
+      "id": "hhs:113:玄菟郡:001",
       "nameHan": "高句驪",
+      "nameSimplified": "高句骊",
+      "commanderyHan": "玄菟郡",
+      "commanderyKo": "현도군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·玄菟郡 高句驪",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 856,
+          "quote": "〖高句骊〗辽山，辽水出。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·玄菟郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 854,
+          "quote": "◎　玄菟郡武帝置。雒阳东北四千里。六城，户一千五百九十四，口四万三千一百六十三。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
       "nameKo": "고구려",
-      "commanderyHan": "玄菟郡",
-      "reason": "이미 지도에 서 있다 — 郡治라 玄菟郡 노드(han-tiles X006)가 이 자리를 쓴다. 실측 거리 약 2.5km 로 같은 타일이며, 넣으면 표식이 겹쳐 선다."
+      "reason": "이미 지도에 서 있다 — 郡治라 玄菟郡 노드(han-tiles X006)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X006 의 治所를 「高句驪縣」으로 못박아 뒀다(실측 거리 약 2.5km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X006"
     },
     {
-      "nameHan": "望平",
-      "nameKo": "망평",
-      "commanderyHan": "玄菟郡",
-      "reason": "續漢書 郡國志 玄菟郡 縣 목록에 없다 — 나무위키가 玄菟郡에도 실었지만 郡國志는 다른 郡에 둔다. 그쪽 행으로 세운다."
-    },
-    {
+      "id": "hhs:113:樂浪郡:001",
       "nameHan": "朝鮮",
-      "nameKo": "조선",
+      "nameSimplified": "朝鲜",
       "commanderyHan": "樂浪郡",
-      "reason": "이미 지도에 서 있다 — 郡治라 樂浪郡 노드(han-tiles X003)가 이 자리를 쓴다. 실측 거리 약 4.0km 로 같은 타일이며, 넣으면 표식이 겹쳐 선다."
+      "commanderyKo": "낙랑군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 朝鮮",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 870,
+          "quote": "〖朝鲜〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "nameKo": "조선",
+      "reason": "이미 지도에 서 있다 — 郡治라 樂浪郡 노드(han-tiles X003)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X003 의 治所를 「朝鮮縣」으로 못박아 뒀다(실측 거리 약 4.0km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X003"
     },
     {
+      "id": "hhs:113:遼東屬國:001",
+      "nameHan": "昌遼",
+      "nameSimplified": "昌辽",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 昌遼",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 908,
+          "quote": "〖昌辽〗故天辽，属辽西。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "nameKo": "창료",
+      "reason": "이미 지도에 서 있다 — 郡治라 遼東屬國 노드(han-tiles X007)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X007 의 治所를 「昌遼縣」으로 못박아 뒀다.",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X007"
+    },
+    {
+      "id": "hhs:113:交趾郡:001",
       "nameHan": "龍編",
-      "nameKo": "용편",
+      "nameSimplified": "龙编",
       "commanderyHan": "交趾郡",
-      "reason": "이미 지도에 서 있다 — 郡治라 交趾郡 노드(han-tiles X000)가 이 자리를 쓴다. 실측 거리 약 1.4km 로 같은 타일이며, 넣으면 표식이 겹쳐 선다."
+      "commanderyKo": "교지군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·交趾郡 龍編",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1001,
+          "quote": "〖龙编〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·交趾郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 999,
+          "quote": "◎　交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "nameKo": "용편",
+      "reason": "이미 지도에 서 있다 — 郡治라 交趾郡 노드(han-tiles X000)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X000 의 治所를 「龍編縣」으로 못박아 뒀다(실측 거리 약 1.4km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X000"
     },
     {
-      "nameHan": "候城",
+      "id": "hhs:113:九真郡:001",
+      "nameHan": "胥浦",
+      "nameSimplified": "胥浦",
+      "commanderyHan": "九真郡",
+      "commanderyKo": "구진군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·九真郡 胥浦",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1027,
+          "quote": "〖胥浦〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·九真郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1025,
+          "quote": "◎　九真郡武帝置，雒阳南万一千五百八十里。五城，户四万六千五百一十三，口二十万九千八百九十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "nameKo": "서포",
+      "reason": "이미 지도에 서 있다 — 郡治라 九真郡 노드(han-tiles X001)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X001 의 治所를 「胥浦縣」으로 못박아 뒀다(실측 거리 약 9.5km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X001"
+    },
+    {
+      "id": "hhs:113:日南郡:001",
+      "nameHan": "西卷",
+      "nameSimplified": "西卷",
+      "commanderyHan": "日南郡",
+      "commanderyKo": "일남군",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·日南郡 西卷",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1039,
+          "quote": "〖西卷〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·日南郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1037,
+          "quote": "◎　日南郡秦象郡，武帝更名。雒阳南万三千四百里。五城，户万八千二百六十三，口十万六百七十六。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "nameKo": "서권",
+      "reason": "이미 지도에 서 있다 — 郡治라 日南郡 노드(han-tiles X002)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X002 의 治所를 「西卷縣」으로 못박아 뒀다(실측 거리 약 17.5km).",
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "seatPlaceId": "X002"
+    }
+  ],
+  "excludedCounties": [
+    {
+      "id": "hhs:113:遼東郡:005",
       "nameKo": "후성",
+      "nameHan": "候城",
+      "nameSimplified": "候城",
       "commanderyHan": "遼東郡",
-      "reason": "郡國志가 遼東郡 11城과 玄菟郡 6城 양쪽에 적어 둔 유일한 縣이다. 校勘記가 이 중복을 遼東 쪽 衍文으로 판정한다 — hhs-113.txt:1345 「三五二九頁　七行　候城　按：集解引錢大昕說，謂玄菟郡有候城，云故屬遼東，則此「候城」為衍文矣。王先謙謂錢說是。」. 玄菟郡 행(hhs:113:玄菟郡:005)으로 한 곳만 세운다.",
+      "commanderyKo": "요동군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "excludedBecause": "DUPLICATE_IS_SPURIOUS",
+      "reason": "郡國志가 遼東郡 11城과 玄菟郡 6城 양쪽에 적어 둔 縣이다. 校勘記가 이 중복을 遼東 쪽 衍文으로 판정한다. 玄菟郡 행(hhs:113:玄菟郡:005)으로 한 곳만 세운다.",
+      "placedAs": "hhs:113:玄菟郡:005",
       "evidence": [
         {
           "book": "續漢書·郡國五 校勘記",
@@ -71,6 +397,292 @@
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "DUPLICATE_IS_SPURIOUS"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五 校勘記",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1353,
+          "quote": "三五二九頁一二行　候城故屬遼東　按：殿本考證齊召南引顧炎武說，謂候城改屬玄菟，而遼東復出一候城，無慮改屬遼東屬國，而遼東復出一無慮，必有一焉宜刪者，然則天下郡國少二城矣。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "DUPLICATE_IS_SPURIOUS"
+          ]
+        }
+      ],
+      "harvestedCoordinates": {
+        "latitude": 41.82015,
+        "longitude": 123.66851
+      },
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東郡 候城",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 840,
+          "quote": "〖候城〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 830,
+          "quote": "◎　辽东郡秦置。雒阳东北三千六百里。十一城，户六万四千一百五十八，口八万一千七百一十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hhs:113:樂浪郡:002",
+      "nameKo": "남감",
+      "nameHan": "𧦦邯",
+      "nameSimplified": "𧦦邯",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "excludedBecause": "TILE_IS_WATER",
+      "reason": "좌표(39.12654/125.34453)가 든 4×4 타일(152,34)이 원본 격자 열여섯 칸 중 열다섯이 바다다. downsampleTerrain 다수결이 이 타일을 SEA 로 줄이므로 縣 표식이 바다 위에 떠 선다. 게임 城 은 landUnderSeats 가 「城 이 서는 칸은 뭍」으로 되돌려 주지만(isoTileGrid.ts) 그 목록은 tiles.provinceRecords 라 변경 縣은 들어가지 않는다. 자리를 지어내지 않고 빼 둔다 — 좌표 자체는 여기 남겨 둔다.",
+      "harvestedCoordinates": {
+        "latitude": 39.12654,
+        "longitude": 125.34453
+      },
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 𧦦邯",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 872,
+          "quote": "〖𧦦邯〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hhs:113:樂浪郡:008",
+      "nameKo": "대방",
+      "nameHan": "帶方",
+      "nameSimplified": "带方",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "excludedBecause": "ALREADY_STANDING_AS_COMMANDERY_NODE",
+      "reason": "이미 지도에 서 있다 — 帶方縣은 建安 연간에 세운 帶方郡의 治所이고, 세계(220년)에는 그 郡 노드(han-tiles X004, 38.50198/125.75871)가 이 자리를 쓴다. jurisdiction-seat-recoveries-v1 이 X004 의 治所를 「帶方縣」으로 못박아 뒀다(讀史方輿紀要 corpus/dsfy-003.txt:135 「帶方，即魏舊治。」). 실측 거리 약 6.4km 로 이웃 타일이지만, 같은 縣을 두 번 세우게 된다.",
+      "harvestedCoordinates": {
+        "latitude": 38.4571,
+        "longitude": 125.80516
+      },
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 帶方",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 884,
+          "quote": "〖带方〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hhs:113:樂浪郡:018",
+      "nameKo": "낙도",
+      "nameHan": "樂都",
+      "nameSimplified": "乐都",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "excludedBecause": "POSITION_UNRESOLVED",
+      "reason": "수확본이 후보 좌표를 둘 싣고(40.09486/126.93261 · 39.65814/126.50918) 스스로 「탄열현과 낙도현은 동일한 위치에 있었다고 할 수 없는 것 같다」고 적어 둔다(record 883, coordinateStatus MULTIPLE). 둘 중 하나를 고를 근거가 없어 자리를 세우지 않는다 — UNKNOWN 이다.",
+      "harvestedCoordinates": [
+        {
+          "latitude": 40.09486,
+          "longitude": 126.93261
+        },
+        {
+          "latitude": 39.65814,
+          "longitude": 126.50918
+        }
+      ],
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 樂都",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 904,
+          "quote": "〖乐都〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hhs:113:遼東屬國:004",
+      "nameKo": "무려",
+      "nameHan": "無慮",
+      "nameSimplified": "无虑",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "excludedBecause": "DUPLICATE_IS_SPURIOUS",
+      "reason": "候城과 같은 짝의 중복이다 — 郡國志가 無慮를 遼東郡과 遼東屬國 양쪽에 적었다. 校勘記가 遼東屬國 쪽을 「扶黎」의 傳寫 오류로 판정하고, 「有醫無慮山」 다섯 자도 遼東郡 無慮 아래로 옮겨야 한다고 본다. 遼東郡 행(hhs:113:遼東郡:003)으로 한 곳만 세운다. 나무위키 수확본은 반대로 後漢 무려현을 遼東屬國都尉部에 두지만(record 853 affiliations), 좌표는 같은 자리(41.48977/121.82245)라 位置는 달라지지 않는다. 扶黎는 수확본에 한 줄도 없어 자리를 못 세운다.",
+      "placedAs": "hhs:113:遼東郡:003",
+      "evidence": [
+        {
+          "book": "續漢書·郡國五 校勘記",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1343,
+          "quote": "三五二九頁　七行　無慮　集解引錢大昕說，謂此下當有「有醫無慮山」五字。今按：後遼東屬國「無慮」下「有醫巫慮山」五字當移此。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "DUPLICATE_IS_SPURIOUS"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五 校勘記",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1367,
+          "quote": "三五三０頁　五行　無慮　按：無慮已見前遼東郡，此當作「扶黎」，後人傳寫之誤。說詳惠棟補注。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "DUPLICATE_IS_SPURIOUS"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五 校勘記",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1369,
+          "quote": "三五三０頁　五行　有醫無慮山　按：此五字當移於前遼東郡「無慮」之下。說詳前。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "DUPLICATE_IS_SPURIOUS"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五 校勘記",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1353,
+          "quote": "三五二九頁一二行　候城故屬遼東　按：殿本考證齊召南引顧炎武說，謂候城改屬玄菟，而遼東復出一候城，無慮改屬遼東屬國，而遼東復出一無慮，必有一焉宜刪者，然則天下郡國少二城矣。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "DUPLICATE_IS_SPURIOUS"
+          ]
+        }
+      ],
+      "harvestedCoordinates": {
+        "latitude": 41.48977,
+        "longitude": 121.82245
+      },
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 無慮",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 914,
+          "quote": "〖无虑〗有医无虑山。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
           ]
         }
       ]
@@ -88,6 +700,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 41.07035,
         "longitude": 122.95277
@@ -122,8 +735,88 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:509",
+        "recordNameHan": "新昌縣",
+        "recordNameKo": "신창현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 요동군→[서진]평주 요동국",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 41.07035,
+          "longitude": 122.95277,
+          "modernLocation": "랴오닝성 안산시 첸산구",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:遼東郡:003",
+      "nameKo": "무려",
+      "nameHan": "無慮",
+      "nameSimplified": "无虑",
+      "commanderyHan": "遼東郡",
+      "commanderyKo": "요동군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 41.48977,
+        "longitude": 121.82245
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東郡 無慮",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 836,
+          "quote": "〖无虑〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 830,
+          "quote": "◎　辽东郡秦置。雒阳东北三千六百里。十一城，户六万四千一百五十八，口八万一千七百一十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:603",
+        "recordNameHan": "無慮縣",
+        "recordNameKo": "무려현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[전한]유주자사부 요동군→[후한]요동속국도위부→[190?]평주 요서군?→[204]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -137,6 +830,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 42.1162,
         "longitude": 123.60954
@@ -171,8 +865,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:638",
+        "recordNameHan": "望平縣",
+        "recordNameKo": "망평현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[전한]유주자사부 요동군→[106?]현도군→[후한]현도군→[서진]평주 현도군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 42.1162,
+          "longitude": 123.60954,
+          "modernLocation": "랴오닝성 톄링시 톄링현",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -186,6 +897,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 40.80142,
         "longitude": 122.6179
@@ -220,8 +932,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:520",
+        "recordNameHan": "安市縣",
+        "recordNameKo": "안시현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 요동군→[서진]평주 요동국",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 40.80142,
+          "longitude": 122.6179,
+          "modernLocation": "랴오닝성 안산시 하이청시",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -235,6 +964,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 40.40111,
         "longitude": 122.36578
@@ -269,8 +999,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:530",
+        "recordNameHan": "平郭縣",
+        "recordNameKo": "평곽현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 요동군→[서진]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 40.40111,
+          "longitude": 122.36578,
+          "modernLocation": "랴오닝성 잉커우시 가이저우시",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -284,6 +1031,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 40.19671,
         "longitude": 124.47495
@@ -318,8 +1066,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:549",
+        "recordNameHan": "西安平縣",
+        "recordNameKo": "서안평현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[-128]창해군?→[-126]요동군→[한]유주자사부 요동군→[190?]평주 중료군?→[204?]요동군→[서진]평주 요동국",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 40.19671,
+          "longitude": 124.47495,
+          "modernLocation": "랴오닝성 단둥시 전안구",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -333,6 +1098,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 40.54297,
         "longitude": 122.65474
@@ -367,8 +1133,89 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:526",
+        "recordNameHan": "汶縣",
+        "recordNameKo": "문현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 요동군→[서진]평주 요동국",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 40.54297,
+          "longitude": 122.65474,
+          "modernLocation": "랴오닝성 잉커우시 다스차오시",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:遼東郡:010",
+      "nameKo": "번한",
+      "nameHan": "番汗",
+      "nameSimplified": "番汗",
+      "commanderyHan": "遼東郡",
+      "commanderyKo": "요동군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "DISPUTED",
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 40.02095,
+        "longitude": 123.74679
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東郡 番汗",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 850,
+          "quote": "〖番汗〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 830,
+          "quote": "◎　辽东郡秦置。雒阳东北三千六百里。十一城，户六万四千一百五十八，口八万一千七百一十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:538",
+        "recordNameHan": "番汗縣",
+        "recordNameKo": "번한현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[-128]창해군?→[-126]요동군→[전한]유주자사부 요동군→[후한]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -382,11 +1229,12 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
-        "latitude": 41.25893,
-        "longitude": 122.78741
+        "latitude": 39.5046,
+        "longitude": 121.6582
       },
-      "modernLocation": "랴오닝성 랴오양시 랴오양현",
+      "modernLocation": null,
       "primaryEvidence": [
         {
           "book": "續漢書·郡國五·遼東郡 沓氏",
@@ -416,8 +1264,151 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:554",
+        "recordNameHan": "東沓縣",
+        "recordNameKo": "동답현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 요동군→[190?]평주 중료군?→[204?]요동군→[서진]평주 요동국",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 41.25893,
+          "longitude": 122.78741,
+          "modernLocation": "랴오닝성 랴오양시 랴오양현",
+          "deltaKm": 216.33
+        }
+      }
+    },
+    {
+      "id": "hhs:113:玄菟郡:002",
+      "nameKo": "서개마",
+      "nameHan": "西蓋馬",
+      "nameSimplified": "西盖马",
+      "commanderyHan": "玄菟郡",
+      "commanderyKo": "현도군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 40.5044,
+        "longitude": 125.00278
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·玄菟郡 西蓋馬",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 858,
+          "quote": "〖西盖马〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·玄菟郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 854,
+          "quote": "◎　玄菟郡武帝置。雒阳东北四千里。六城，户一千五百九十四，口四万三千一百六十三。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:659",
+        "recordNameHan": "西蓋馬縣",
+        "recordNameKo": "서개마현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "SECTION",
+        "bindingQuote": "현도군(玄菟郡)",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:玄菟郡:003",
+      "nameKo": "상은태",
+      "nameHan": "上殷台",
+      "nameSimplified": "上殷台",
+      "commanderyHan": "玄菟郡",
+      "commanderyKo": "현도군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 40.63848,
+        "longitude": 124.31611
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·玄菟郡 上殷台",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 860,
+          "quote": "〖上殷台〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·玄菟郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 854,
+          "quote": "◎　玄菟郡武帝置。雒阳东北四千里。六城，户一千五百九十四，口四万三千一百六十三。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:656",
+        "recordNameHan": "上殷台縣",
+        "recordNameKo": "상은태현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "SECTION",
+        "bindingQuote": "현도군(玄菟郡)",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -431,6 +1422,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 41.60318,
         "longitude": 123.43453
@@ -465,8 +1457,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:642",
+        "recordNameHan": "高顯縣",
+        "recordNameKo": "고현현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[전한]유주자사부 요동군→[106]현도군→[후한]현도군→[서진]평주 현도군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 41.60318,
+          "longitude": 123.43453,
+          "modernLocation": "랴오닝성 선양시 쑤자툰구",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -480,6 +1489,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 41.82015,
         "longitude": 123.66851
@@ -514,8 +1524,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:645",
+        "recordNameHan": "候城縣",
+        "recordNameKo": "후성현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[진]요동군→[전한]유주자사부 요동군→[106]현도군→[후한]현도군→[서진]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 41.82015,
+          "longitude": 123.66851,
+          "modernLocation": "랴오닝성 선양시 훈난구",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -529,6 +1556,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 41.53592,
         "longitude": 122.92814
@@ -563,8 +1591,151 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:648",
+        "recordNameHan": "遼陽縣",
+        "recordNameKo": "요양현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[전한]유주자사부 요동군→[106]현도군→[후한]현도군→[서진]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 41.53592,
+          "longitude": 122.92814,
+          "modernLocation": "랴오닝성 선양시 랴오중구",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:003",
+      "nameKo": "패수",
+      "nameHan": "浿水",
+      "nameSimplified": "浿水",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 39.86992,
+        "longitude": 126.02502
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 浿水",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 874,
+          "quote": "〖浿水〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:722",
+        "recordNameHan": "浿水縣",
+        "recordNameKo": "패수현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진?]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:004",
+      "nameKo": "함자",
+      "nameHan": "含資",
+      "nameSimplified": "含资",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 38.53897,
+        "longitude": 125.58951
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 含資",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 876,
+          "quote": "〖含资〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:808",
+        "recordNameHan": "含資縣",
+        "recordNameKo": "함자현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -578,6 +1749,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 38.86008,
         "longitude": 125.25723
@@ -612,8 +1784,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:717",
+        "recordNameHan": "占蟬縣",
+        "recordNameKo": "점제현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진?]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 38.86008,
+          "longitude": 125.25723,
+          "modernLocation": "남포시 온천군",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -627,6 +1816,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 39.26227,
         "longitude": 126.12192
@@ -661,8 +1851,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:692",
+        "recordNameHan": "遂城縣",
+        "recordNameKo": "수성현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진]평주 낙랑군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 39.26227,
+          "longitude": 126.12192,
+          "modernLocation": "평안북도 성천군",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -676,6 +1883,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 39.61897,
         "longitude": 125.6587
@@ -710,8 +1920,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:713",
+        "recordNameHan": "增地縣",
+        "recordNameKo": "증지현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진?]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 39.61897,
+          "longitude": 125.6587,
+          "modernLocation": "평안남도 안주·문덕군",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -725,6 +1952,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 39.40332,
         "longitude": 125.50904
@@ -759,8 +1989,210 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:686",
+        "recordNameHan": "駟望縣",
+        "recordNameKo": "사망현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진]평주 낙랑군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 39.40332,
+          "longitude": 125.50904,
+          "modernLocation": "평안남도 숙천군",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:010",
+      "nameKo": "해명",
+      "nameHan": "海冥",
+      "nameSimplified": "海冥",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 38.24951,
+        "longitude": 125.09306
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 海冥",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 888,
+          "quote": "〖海冥〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:796",
+        "recordNameHan": "海冥縣",
+        "recordNameKo": "해명현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:011",
+      "nameKo": "열구",
+      "nameHan": "列口",
+      "nameSimplified": "列口",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 38.52651,
+        "longitude": 125.11155
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 列口",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 890,
+          "quote": "〖列口〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:787",
+        "recordNameHan": "列口縣",
+        "recordNameKo": "열구현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:012",
+      "nameKo": "장잠",
+      "nameHan": "長岑",
+      "nameSimplified": "长岑",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 38.23799,
+        "longitude": 125.79218
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 長岑",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 892,
+          "quote": "〖长岑〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:791",
+        "recordNameHan": "長岑縣",
+        "recordNameKo": "장잠현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -774,6 +2206,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 38.78307,
         "longitude": 125.86294
@@ -808,8 +2241,86 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:689",
+        "recordNameHan": "屯有縣",
+        "recordNameKo": "둔유현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진]평주 낙랑군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 38.78307,
+          "longitude": 125.86294,
+          "modernLocation": "황해북도 황주군",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:014",
+      "nameKo": "소명",
+      "nameHan": "昭明",
+      "nameSimplified": "昭明",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 38.40806,
+        "longitude": 125.463
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 昭明",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 896,
+          "quote": "〖昭明〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:800",
+        "recordNameHan": "昭明縣",
+        "recordNameKo": "소명현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -823,6 +2334,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 38.99804,
         "longitude": 126.18098
@@ -857,8 +2371,88 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:701",
+        "recordNameHan": "鏤方縣",
+        "recordNameKo": "누방현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진]평주 낙랑군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 38.99804,
+          "longitude": 126.18098,
+          "modernLocation": "평양시 강동군",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:樂浪郡:016",
+      "nameKo": "제해",
+      "nameHan": "提奚",
+      "nameSimplified": "提奚",
+      "commanderyHan": "樂浪郡",
+      "commanderyKo": "낙랑군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 38.42327,
+        "longitude": 126.22751
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·樂浪郡 提奚",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 900,
+          "quote": "〖提奚〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·樂浪郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 868,
+          "quote": "◎　乐浪郡武帝置。雒阳东北五千里。十八城，户六万一千四百九十二，口二十五万七千五十。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:805",
+        "recordNameHan": "提奚縣",
+        "recordNameKo": "제해현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[204?]평주 대방군→[서진]평주 대방군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -872,6 +2466,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 39.6138,
         "longitude": 125.965
@@ -906,8 +2503,277 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:705",
+        "recordNameHan": "渾彌縣",
+        "recordNameKo": "혼미현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]유주자사부 낙랑군→[서진]평주 낙랑군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 39.6138,
+          "longitude": 125.965,
+          "modernLocation": "평안남도 개천시",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:遼東屬國:002",
+      "nameKo": "빈도",
+      "nameHan": "賓徒",
+      "nameSimplified": "宾徒",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 41.06742,
+        "longitude": 120.85823
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 賓徒",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 910,
+          "quote": "〖宾徒〗故属辽西。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:590",
+        "recordNameHan": "賓徒縣",
+        "recordNameKo": "빈도현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[전한]유주자사부 요서군→[후한]요동속국도위부→[190?]평주 요서군?→[204?]폐지, [244]유주 요동속국도위부→[서진]평주 창려군",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:遼東屬國:003",
+      "nameKo": "도하",
+      "nameHan": "徒河",
+      "nameSimplified": "徒河",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 41.01857,
+        "longitude": 121.23808
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 徒河",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 912,
+          "quote": "〖徒河〗故属辽西。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:600",
+        "recordNameHan": "徒河縣",
+        "recordNameKo": "도하현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[진]요서군→[전한]유주자사부 요서군→[후한]요동속국도위부→[190?]평주 요서군?→[204]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:遼東屬國:005",
+      "nameKo": "험독",
+      "nameHan": "險瀆",
+      "nameSimplified": "险渎",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 41.3317,
+        "longitude": 122.51595
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 險瀆",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 916,
+          "quote": "〖险渎〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:607",
+        "recordNameHan": "險瀆縣",
+        "recordNameKo": "험독현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[진]요동군→[전한]유주자사부 요동군→[후한]요동속국도위부→[190?]평주 요서군?→[204]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:遼東屬國:006",
+      "nameKo": "방",
+      "nameHan": "房",
+      "nameSimplified": "房",
+      "commanderyHan": "遼東屬國",
+      "commanderyKo": "요동속국",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 41.02235,
+        "longitude": 121.98654
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·遼東屬國 房",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 918,
+          "quote": "〖房〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·遼東屬國",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 906,
+          "quote": "◎　辽东属国故邯乡，西部都尉，安帝时以为属国都尉，别领六城。雒阳东北三千二百六十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:610",
+        "recordNameHan": "房縣",
+        "recordNameKo": "방현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[전한]유주자사부 요동군→[후한]요동속국도위부→[190?]평주 요서군?→[204]폐지",
+        "sourceTitle": "삼국지/지명/유주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+        "sourceSha256": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+        "sourceLastModified": "2026-07-15 07:47:15",
+        "crossCheck": null
       }
     },
     {
@@ -921,6 +2787,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 21.08389,
         "longitude": 105.80848
@@ -955,8 +2822,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:443",
+        "recordNameHan": "羸𨻻縣",
+        "recordNameKo": "이루현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 21.08389,
+          "longitude": 105.80848,
+          "modernLocation": "하노이직할시 떠이호군 푸트엉방",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -970,6 +2854,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 20.65468,
         "longitude": 106.05784
@@ -1004,8 +2891,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:465",
+        "recordNameHan": "定安縣",
+        "recordNameKo": "정안현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 20.65468,
+          "longitude": 106.05784,
+          "modernLocation": "흥옌성 흥옌시(추정)",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -1019,6 +2923,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 21.05049,
         "longitude": 105.57406
@@ -1053,8 +2958,86 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:436",
+        "recordNameHan": "苟屚縣",
+        "recordNameKo": "구루현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 21.05049,
+          "longitude": 105.57406,
+          "modernLocation": "하노이직할시 탁텟현",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:交趾郡:005",
+      "nameKo": "미령",
+      "nameHan": "麋泠",
+      "nameSimplified": "麋泠",
+      "commanderyHan": "交趾郡",
+      "commanderyKo": "교지군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 21.17953,
+        "longitude": 105.63381
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·交趾郡 麋泠",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1009,
+          "quote": "〖麋泠〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·交趾郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 999,
+          "quote": "◎　交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:486",
+        "recordNameHan": "麊泠縣",
+        "recordNameKo": "미령현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]교지자사부 교지군→[271]교주 신창군→[서진]교주 신창군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
       }
     },
     {
@@ -1068,6 +3051,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 20.93734,
         "longitude": 106.31455
@@ -1102,8 +3088,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:451",
+        "recordNameHan": "曲昜縣",
+        "recordNameKo": "곡양현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 20.93734,
+          "longitude": 106.31455,
+          "modernLocation": "하이즈엉성 하이즈엉시(추정)",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -1117,6 +3120,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 20.98546,
         "longitude": 106.04637
@@ -1151,8 +3157,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:455",
+        "recordNameHan": "北帶縣",
+        "recordNameKo": "북대현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 20.98546,
+          "longitude": 106.04637,
+          "modernLocation": "흥옌성 반럼현(추정)",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -1166,6 +3189,9 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
       "coordinates": {
         "latitude": 20.88306,
         "longitude": 106.14412
@@ -1200,8 +3226,25 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:462",
+        "recordNameHan": "稽徐縣",
+        "recordNameKo": "계서현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 20.88306,
+          "longitude": 106.14412,
+          "modernLocation": "흥옌성 언티현(추정)",
+          "deltaKm": 0.0
+        }
       }
     },
     {
@@ -1215,6 +3258,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 21.11594,
         "longitude": 105.75689
@@ -1249,8 +3293,147 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:447",
+        "recordNameHan": "西於縣",
+        "recordNameKo": "서어현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 21.11594,
+          "longitude": 105.75689,
+          "modernLocation": "하노이직할시 동아인현 다이막사",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:交趾郡:010",
+      "nameKo": "주연",
+      "nameHan": "朱䳒",
+      "nameSimplified": "朱[B42B]",
+      "commanderyHan": "交趾郡",
+      "commanderyKo": "교지군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 20.87271,
+        "longitude": 105.89655
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·交趾郡 朱䳒",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1019,
+          "quote": "〖朱[B42B]〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·交趾郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 999,
+          "quote": "◎　交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:458",
+        "recordNameHan": "朱䳒縣",
+        "recordNameKo": "주연현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:交趾郡:011",
+      "nameKo": "봉계",
+      "nameHan": "封谿",
+      "nameSimplified": "封谿",
+      "commanderyHan": "交趾郡",
+      "commanderyKo": "교지군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 21.211374,
+        "longitude": 105.71751
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·交趾郡 封谿",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1021,
+          "quote": "〖封谿〗{{YL|建武十九年}}置。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·交趾郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 999,
+          "quote": "◎　交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:506",
+        "recordNameHan": "封谿縣",
+        "recordNameKo": "봉계현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[43]교지자사부 교지군→[후한]교지군→[271]무평군→[서진]교주 무평군?",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
       }
     },
     {
@@ -1264,6 +3447,7 @@
       "levelName": "장현",
       "level": 11,
       "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
       "coordinates": {
         "latitude": 21.24807,
         "longitude": 105.94722
@@ -1298,8 +3482,517 @@
         }
       ],
       "positionEvidence": {
-        "ledger": "namu-place-locations-v1",
-        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:440",
+        "recordNameHan": "望海縣",
+        "recordNameKo": "망해현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[43]교지자사부 교지군→[후한]교지군→[서진]교주 교지군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": {
+          "ledger": "namu-place-locations-v1",
+          "latitude": 21.24807,
+          "longitude": 105.94722,
+          "modernLocation": "박장성 박장시",
+          "deltaKm": 0.0
+        }
+      }
+    },
+    {
+      "id": "hhs:113:九真郡:002",
+      "nameKo": "거풍",
+      "nameHan": "居風",
+      "nameSimplified": "居风",
+      "commanderyHan": "九真郡",
+      "commanderyKo": "구진군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 19.95441,
+        "longitude": 105.74391
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·九真郡 居風",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1029,
+          "quote": "〖居风〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·九真郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1025,
+          "quote": "◎　九真郡武帝置，雒阳南万一千五百八十里。五城，户四万六千五百一十三，口二十万九千八百九十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:545",
+        "recordNameHan": "移風縣",
+        "recordNameKo": "이풍현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 구진군→[서진]교주 구진군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:九真郡:003",
+      "nameKo": "함환",
+      "nameHan": "咸懽",
+      "nameSimplified": "咸懽",
+      "commanderyHan": "九真郡",
+      "commanderyKo": "구진군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 19.00923,
+        "longitude": 105.55476
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·九真郡 咸懽",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1031,
+          "quote": "〖咸懽〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·九真郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1025,
+          "quote": "◎　九真郡武帝置，雒阳南万一千五百八十里。五城，户四万六千五百一十三，口二十万九千八百九十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:581",
+        "recordNameHan": "咸驩縣",
+        "recordNameKo": "함환현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION",
+        "bindingQuote": "[한]교지자사부 구진군→[278]교주 구덕군→[서진]교주 구진군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:九真郡:004",
+      "nameKo": "무공",
+      "nameHan": "無功",
+      "nameSimplified": "无功",
+      "commanderyHan": "九真郡",
+      "commanderyKo": "구진군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 20.2783,
+        "longitude": 105.90536
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·九真郡 無功",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1033,
+          "quote": "〖无功〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·九真郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1025,
+          "quote": "◎　九真郡武帝置，雒阳南万一千五百八十里。五城，户四万六千五百一十三，口二十万九千八百九十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:555",
+        "recordNameHan": "無功縣",
+        "recordNameKo": "무공현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 구진군→[삼국]폐지",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:九真郡:005",
+      "nameKo": "무편",
+      "nameHan": "無編",
+      "nameSimplified": "无编",
+      "commanderyHan": "九真郡",
+      "commanderyKo": "구진군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 19.53305,
+        "longitude": 105.71027
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·九真郡 無編",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1035,
+          "quote": "〖无编〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·九真郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1025,
+          "quote": "◎　九真郡武帝置，雒阳南万一千五百八十里。五城，户四万六千五百一十三，口二十万九千八百九十四。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:549",
+        "recordNameHan": "無編縣",
+        "recordNameKo": "무편현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 구진군→[서진]폐지",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:日南郡:002",
+      "nameKo": "주오",
+      "nameHan": "朱吾",
+      "nameSimplified": "朱吾",
+      "commanderyHan": "日南郡",
+      "commanderyKo": "일남군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 17.22405,
+        "longitude": 106.78626
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·日南郡 朱吾",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1041,
+          "quote": "〖朱吾〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·日南郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1037,
+          "quote": "◎　日南郡秦象郡，武帝更名。雒阳南万三千四百里。五城，户万八千二百六十三，口十万六百七十六。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:624",
+        "recordNameHan": "朱吾縣",
+        "recordNameKo": "주오현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 일남군→[278]교주 구덕군→[서진]교주 일남군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:日南郡:003",
+      "nameKo": "노용",
+      "nameHan": "盧容",
+      "nameSimplified": "卢容",
+      "commanderyHan": "日南郡",
+      "commanderyKo": "일남군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 16.52715,
+        "longitude": 107.571318
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·日南郡 盧容",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1043,
+          "quote": "〖卢容〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·日南郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1037,
+          "quote": "◎　日南郡秦象郡，武帝更名。雒阳南万三千四百里。五城，户万八千二百六十三，口十万六百七十六。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:634",
+        "recordNameHan": "日南屬國都尉",
+        "recordNameKo": "일남속국도위",
+        "recordKind": "OTHER_NAMED_SITE",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 일남군→[삼국]폐지, [248]교주 일남군→[278]구덕군→[서진]교주 일남군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:日南郡:004",
+      "nameKo": "상림",
+      "nameHan": "象林",
+      "nameSimplified": "象林",
+      "commanderyHan": "日南郡",
+      "commanderyKo": "일남군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [
+        "UNCERTAIN"
+      ],
+      "coordinates": {
+        "latitude": 16.44045,
+        "longitude": 107.71482
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·日南郡 象林",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1045,
+          "quote": "〖象林〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·日南郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1037,
+          "quote": "◎　日南郡秦象郡，武帝更名。雒阳南万三千四百里。五城，户万八千二百六十三，口十万六百七十六。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:638",
+        "recordNameHan": "象林縣",
+        "recordNameKo": "상림현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "SECTION",
+        "bindingQuote": "일남군(日南郡)",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
+      }
+    },
+    {
+      "id": "hhs:113:日南郡:005",
+      "nameKo": "비경",
+      "nameHan": "比景",
+      "nameSimplified": "比景",
+      "commanderyHan": "日南郡",
+      "commanderyKo": "일남군",
+      "role": "COUNTY",
+      "levelName": "장현",
+      "level": 11,
+      "positionStatus": "APPROXIMATE",
+      "sourceFlags": [],
+      "coordinates": {
+        "latitude": 17.7049,
+        "longitude": 106.408198
+      },
+      "modernLocation": null,
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國五·日南郡 比景",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1047,
+          "quote": "〖比景〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        },
+        {
+          "book": "續漢書·郡國五·日南郡",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 1037,
+          "quote": "◎　日南郡秦象郡，武帝更名。雒阳南万三千四百里。五城，户万八千二百六十三，口十万六百七十六。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COMMANDERY_COUNTY_COUNT"
+          ]
+        }
+      ],
+      "positionEvidence": {
+        "ledger": "namu-source-records-v1",
+        "recordId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8:631",
+        "recordNameHan": "比景縣",
+        "recordNameKo": "비경현",
+        "recordKind": "COUNTY_HEADING",
+        "coordinateStatus": "EXPLICIT",
+        "binding": "AFFILIATION_AND_SECTION",
+        "bindingQuote": "[한]교지자사부 일남군→[278]교주 구덕군→[서진]교주 일남군",
+        "sourceTitle": "삼국지/지명/교주",
+        "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+        "sourceSha256": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+        "sourceLastModified": "2026-08-25 08:11:21",
+        "crossCheck": null
       }
     }
   ]
