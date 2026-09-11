@@ -10,7 +10,9 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 5 분으로는 모자란다 — 縣 51 곳이 城으로 서면서 han-tiles 가 커져 tools/map 스위트
+    # 한 단계만으로 5 분을 넘겼다(런 34574079528, 첫 단계에서 취소). 로컬 실측 약 11 분.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
