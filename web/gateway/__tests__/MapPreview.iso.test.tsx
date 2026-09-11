@@ -6,6 +6,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
+import { RASTER_GROUP } from '@opensamguk/ui';
 import type { IsoMap2D as IsoMap2DType, IsoMapData } from '@opensamguk/ui';
 
 const shared = vi.hoisted(() => ({
@@ -13,16 +14,19 @@ const shared = vi.hoisted(() => ({
   terrainUrl: null as string | null,
 }));
 
-// 8×8 원본 셀 = 2×2 타일. 縣 0 의 治所만 셀 (5,1) 에 둔다.
+// 2×2 타일짜리 장난감 격자. 원본 셀은 2G×2G 다(G = RASTER_GROUP).
+// 縣 0 의 治所만 셀 (G+1, 1) — 타일 (1,0) 의 구석 — 에 둔다. 셀 번호를 숫자로 박으면
+// rasterGroup 을 바꿀 때 이 묶음이 통째로 빨개진다.
+const G = RASTER_GROUP;
 const GRID = {
   grid: { cols: 2, rows: 2 },
   provinceSeatCell: {
-    col: Int32Array.from([5, -1]),
+    col: Int32Array.from([G + 1, -1]),
     row: Int32Array.from([1, -1]),
     cityIndex: Int32Array.from([-1, -1]),
   },
-  sourceCols: 8,
-  sourceRows: 8,
+  sourceCols: 2 * G,
+  sourceRows: 2 * G,
   // 지형 응답의 城·郡國 밖 세력 목록. 여기서는 배치만 보므로 비워 둔다.
   cities: [],
 } as unknown as IsoMapData;
@@ -114,10 +118,10 @@ describe('MapPreview 아이소 2D 판', () => {
 
   it('게임 도시를 격자에 앉히고 세력색을 붙인다', () => {
     render(<MapPreview mapData={MAP} />);
-    // 縣 0 의 治所 셀 (5,1) → 타일 (1.25, 0.25). 반올림하지 않는다.
+    // 縣 0 의 治所 셀 (G+1,1) → 타일 (1+1/G, 1/G). 반올림하지 않는다.
     expect(shared.props?.cities?.[0]).toMatchObject({
       id: 11, name: '낙양', nationName: '위', nationColor: '#ff0000',
-      col: 1.25, row: 0.25, isCapital: true, exact: true,
+      col: 1 + 1 / G, row: 1 / G, isCapital: true, exact: true,
     });
     expect(shared.props?.tintMode).toBe('nation');
   });

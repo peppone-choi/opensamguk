@@ -6,7 +6,7 @@
 //   지형·소유·城  → /api/game/api/map/terrain (HanMapCanvas 와 같은 응답)
 //   높낮이        → /map/elevation/han-world-v3-levels.png (NOAA ETOPO1 파생, 정적)
 //
-// 둘을 192×167 타일 격자 하나로 합치는 계산은 전부 isoTileGrid.ts 에 있다.
+// 둘을 384×334 타일 격자 하나로 합치는 계산은 전부 isoTileGrid.ts 에 있다.
 // 여기서는 가져오고 디코드하는 일만 한다.
 
 import { useEffect, useState } from 'react';

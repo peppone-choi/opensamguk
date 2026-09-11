@@ -35,20 +35,23 @@ function displaced(owner: Int32Array): string[] {
 }
 
 describe('stampSeatOwners', () => {
-  it('다수결만 쓰면 게임 城 189 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
+  it('다수결만 쓰면 게임 城 35 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
     // 이 수가 0 이 되면 downsampleOwner 쪽이 이미 고쳐졌다는 뜻이니 이 게이트를 다시 봐라.
-    // 실측: 781 城 시절 162 → 2026-09-11 변경 縣 51 곳이 城 782–832 로 서면서 189 (좁은 縣 구획이라
-    // 4×4 다수결에서 밀리는 자리가 늘었다).
-    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(189);
+    // 실측: 781 城 시절 162 → 변경 縣 51 곳이 城 782–832 로 서면서 189 → 2026-09-11
+    // rasterGroup 을 4 에서 2 로 내리면서 35. 블록이 좁아지니 治所가 제 縣 땅을
+    // 다수결로 지켜 내는 자리가 늘었다.
+    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(35);
   });
 
-  it('治所 칸을 되돌리면 189 → 48 로 줄고, 남는 48 는 전부 칸을 나눠 쓰는 城 이다', () => {
+  it('治所 칸을 되돌리면 35 → 5 로 줄고, 남는 5 는 전부 칸을 나눠 쓰는 城 이다', () => {
     const owner = stampSeatOwners(
       downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP),
       source, srcCols, cols, rows, seat, RASTER_GROUP,
     );
     const left = displaced(owner);
-    expect(left).toHaveLength(48); // 781 城 시절 44; 변경 縣이 郡 노드와 칸을 나눠 쓰는 자리 4 곳이 늘었다.
+    // 781 城 시절 44 → 832 城 시절 48 → rasterGroup 2 에서 5.
+    // 남는 다섯은 광척·치평·성무·성양·양추 — 원본 셀이 한두 칸 차이라 더 못 갈린다.
+    expect(left).toHaveLength(5);
 
     // 남는 것은 물리적으로 못 고친다 — 한 칸에 治所가 둘 이상 들면 색은 하나뿐이다.
     // 그래도 「그냥 남았다」로 두지 않는다: 남은 城 은 전부 그런 칸에 있어야 한다.

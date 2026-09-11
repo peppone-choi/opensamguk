@@ -22,7 +22,7 @@
   "x0": 80.540363,
   "y1": 45.0
  },
- "rasterGroup": 4,
+ "rasterGroup": 2,
  "metreGrid": {
   "file": "han-world-v3-metres.png",
   "cols": 768,
@@ -34,8 +34,8 @@
  },
  "levelGrid": {
   "file": "han-world-v3-levels.png",
-  "cols": 192,
-  "rows": 167,
+  "cols": 384,
+  "rows": 334,
   "ladderMetres": [
    0,
    200,
@@ -46,15 +46,15 @@
   ],
   "encoding": "uint8 PNG; level i means metres >= ladder[i-1]; 0 is below sea level",
   "histogram": {
-   "0": 10861,
-   "1": 4573,
-   "2": 3252,
-   "3": 3578,
-   "4": 6023,
-   "5": 1539,
-   "6": 2238
+   "0": 43578,
+   "1": 18657,
+   "2": 12783,
+   "3": 13960,
+   "4": 24129,
+   "5": 6173,
+   "6": 8976
   },
-  "sha256": "3ea7cc28835e45169905fdc687249bd64f4231d19ba9b5cb29399bb45930b169"
+  "sha256": "bf12db9e2ace111892c1b2429c63cb7863c7d13a1b666d98ba054ad28b4ef2bc"
  },
  "limitations": [
   "현대 지형이다. 후한대 황하 하도·운하·해안선 변화는 반영돼 있지 않다.",

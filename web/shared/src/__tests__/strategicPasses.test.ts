@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PASS_LEVEL, STRATEGIC_PASSES, placeStrategicPasses } from '../iso/strategicPasses';
 import { isExternalPlace } from '../iso/placeGameCities';
+import { RASTER_GROUP } from '../isoTileGrid';
 import type { BattlefieldMapProjection } from '../HanMapCanvas';
 
 const ROOT = resolve(__dirname, '../../../..');
@@ -66,7 +67,10 @@ describe('placeStrategicPasses', () => {
   };
   const projection = tiles._meta.projection;
   const source = { cols: tiles._meta.cols, rows: tiles._meta.rows };
-  const grid = { cols: Math.ceil(source.cols / 4), rows: Math.ceil(source.rows / 4) };
+  const grid = {
+    cols: Math.ceil(source.cols / RASTER_GROUP),
+    rows: Math.ceil(source.rows / RASTER_GROUP),
+  };
 
   it('關 8 곳이 모두 격자 안에 선다', () => {
     const placed = placeStrategicPasses(projection, source, grid);

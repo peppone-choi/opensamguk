@@ -27,16 +27,16 @@ function filled(cols: number, rows: number, code: number): number[][] {
 }
 
 describe('downsampleTerrain', () => {
-  it('768×669 를 192×167 로 줄인다 — 남는 행은 버린다', () => {
+  it('768×669 를 384×334 로 줄인다 — 남는 행은 버린다', () => {
     const tiles = downsampleTerrain(lines(filled(768, 669, TERRAIN.PLAIN)));
-    expect(tiles.cols).toBe(192);
-    expect(tiles.rows).toBe(167);
-    expect(tiles.code).toHaveLength(192 * 167);
+    expect(tiles.cols).toBe(384);
+    expect(tiles.rows).toBe(334);
+    expect(tiles.code).toHaveLength(384 * 334);
   });
 
   it('강은 블록에 한 셀만 있어도 살린다', () => {
     const grid = filled(RASTER_GROUP, RASTER_GROUP, TERRAIN.PLAIN);
-    grid[2][1] = TERRAIN.RIVER;
+    grid[RASTER_GROUP - 1][0] = TERRAIN.RIVER;
     expect(downsampleTerrain(lines(grid)).code[0]).toBe(TERRAIN.RIVER);
   });
 
@@ -51,18 +51,20 @@ describe('downsampleTerrain', () => {
     expect(downsampleTerrain(lines(two)).code[0]).toBe(TERRAIN.LAKE);
   });
 
-  it('해안이 8:8 로 갈리면 육지가 이긴다', () => {
+  it('해안이 반반으로 갈리면 육지가 이긴다', () => {
+    // 동률일 때 바다가 이기면 대륙이 타일 한 겹씩 깎여 나간다(TIE_ORDER).
     const grid = filled(RASTER_GROUP, RASTER_GROUP, TERRAIN.SEA);
-    for (let r = 0; r < 2; r += 1) for (let c = 0; c < RASTER_GROUP; c += 1) grid[r][c] = TERRAIN.PLAIN;
+    const half = RASTER_GROUP / 2;
+    for (let r = 0; r < half; r += 1) for (let c = 0; c < RASTER_GROUP; c += 1) grid[r][c] = TERRAIN.PLAIN;
     expect(downsampleTerrain(lines(grid)).code[0]).toBe(TERRAIN.PLAIN);
   });
 
   it('전부 범위밖일 때만 범위밖이다', () => {
-    expect(downsampleTerrain(lines(filled(4, 4, TERRAIN.OUT_OF_SCOPE))).code[0])
+    expect(downsampleTerrain(lines(filled(RASTER_GROUP, RASTER_GROUP, TERRAIN.OUT_OF_SCOPE))).code[0])
       .toBe(TERRAIN.OUT_OF_SCOPE);
 
     const mixed = filled(RASTER_GROUP, RASTER_GROUP, TERRAIN.OUT_OF_SCOPE);
-    mixed[3][3] = TERRAIN.DESERT;
+    mixed[RASTER_GROUP - 1][RASTER_GROUP - 1] = TERRAIN.DESERT;
     expect(downsampleTerrain(lines(mixed)).code[0]).toBe(TERRAIN.DESERT);
   });
 });

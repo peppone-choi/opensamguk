@@ -16,11 +16,16 @@
 
 산출물
     web/game/public/map/elevation/<mapCode>-metres.png   768×669 16bit, 오프셋 32768
-    web/game/public/map/elevation/<mapCode>-levels.png   192×167 8bit, 계단 레벨
+    web/game/public/map/elevation/<mapCode>-levels.png   384×334 8bit, 계단 레벨
     web/game/public/map/elevation/manifest.json          출처·해시·사다리
 
 원본 CSV 는 data/map/dem-cache/ 에 캐시한다(gitignored). 재실행은 네트워크를 다시
 타지 않는다.
+
+**--from-metres.** metres.png 는 커밋돼 있고 rasterGroup 과 무관한 768×669 원판이다.
+타일 격자 배수만 바꿀 때는 ETOPO1 을 다시 받을 이유가 없으므로, 이 옵션이 커밋된
+metres.png 를 되읽어 레벨과 매니페스트만 다시 낸다. 출처 메타(retrieved 날짜 따위)는
+기존 매니페스트에서 그대로 옮겨 온다 — 받지도 않은 날짜를 새로 적으면 거짓이 된다.
 """
 from __future__ import annotations
 
@@ -50,6 +55,10 @@ SOURCE_STEP_DEG = SOURCE_STRIDE / 60.0
 # 계단 사다리(m). 화면 한 단이 32px 이므로 단이 많으면 절벽만 남는다.
 # 화북 평원 1, 황토고원 3, 티베트 6 이 되도록 잡았다.
 LEVEL_LADDER = [0, 200, 500, 1000, 2000, 3500]
+
+#: 타일 하나에 묶을 원본 셀 배수. web/shared/src/isoTileGrid.ts · build_iso3d_assets.py
+#: 와 같은 값이어야 한다. 매니페스트의 rasterGroup 이 그 계약을 런타임으로 나른다.
+RASTER_GROUP = 2
 
 CACHE_DIR = 'data/map/dem-cache'
 OUT_DIR = 'web/game/public/map/elevation'
@@ -176,7 +185,7 @@ def block_reduce_mean(array, group):
     """rasterGroup 배수로 평균낸다.
 
     남는 가장자리 행·열은 버린다. 애셋 매니페스트(iso2d·iso3d)가 tileGrid 를
-    192×167 로 못박아 뒀고 669/4 = 167.25 이므로, 마지막 부분 행을 채워 168 로
+    384×334 로 못박아 뒀고 669/2 = 334.5 이므로, 마지막 부분 행을 채워 335 로
     만들면 렌더러 인덱스가 한 줄씩 어긋난다. 버리는 쪽이 계약과 맞다.
     """
     rows, cols = array.shape
@@ -185,6 +194,34 @@ def block_reduce_mean(array, group):
     cropped = array[:out_rows * group, :out_cols * group]
     blocks = cropped.reshape(out_rows, group, out_cols, group)
     return blocks.mean(axis=(1, 3)).astype(np.float32), out_rows, out_cols
+
+
+def read_metre_png(metre_png, manifest_path, proj):
+    """커밋된 metres.png 를 표고 배열로 되읽는다.
+
+    metres.png 는 16bit 회색조에 METRE_PNG_OFFSET 을 더해 저장한 768×669 원판이라
+    rasterGroup 과 무관하다. 타일 배수만 바꿀 때 ETOPO1 을 다시 받지 않아도 되는 이유다.
+    반올림해 저장했으므로 되읽은 값은 1m 이내로 원본과 다르다 — 레벨 사다리의 단이
+    200m 부터라 단차 판정에는 영향이 없다.
+
+    출처 블록은 기존 매니페스트에서 그대로 옮긴다. 없으면 되읽을 근거가 없으므로 멈춘다.
+    """
+    if not os.path.exists(metre_png):
+        raise SystemExit('--from-metres 인데 원판이 없다: %s' % metre_png)
+    with Image.open(metre_png) as image:
+        raw = np.array(image, dtype=np.int64)
+    if raw.shape != (proj.rows, proj.cols):
+        raise SystemExit('metres.png 격자 불일치: %dx%d, 투영은 %dx%d'
+                         % (raw.shape[1], raw.shape[0], proj.cols, proj.rows))
+    metres = (raw - METRE_PNG_OFFSET).astype(np.float32)
+    if not os.path.exists(manifest_path):
+        raise SystemExit('--from-metres 인데 기존 매니페스트가 없다: %s' % manifest_path)
+    with open(manifest_path, 'r', encoding='utf-8') as handle:
+        previous = json.load(handle)
+    source_meta = previous.get('source')
+    if not source_meta:
+        raise SystemExit('기존 매니페스트에 source 블록이 없다: %s' % manifest_path)
+    return metres, source_meta
 
 
 def quantise(metres, ladder):
@@ -213,53 +250,67 @@ def main():
     parser.add_argument('--bands', type=int, default=8, help='ERDDAP 위도 분할 수')
     parser.add_argument('--offline', action='store_true',
                         help='캐시만 쓰고 네트워크를 타지 않는다')
+    parser.add_argument('--raster-group', type=int, default=RASTER_GROUP,
+                        help='타일 하나에 묶을 원본 셀 배수 '
+                             '(web/shared/src/isoTileGrid.ts 의 RASTER_GROUP 과 같아야 한다)')
+    parser.add_argument('--from-metres', action='store_true',
+                        help='커밋된 metres.png 를 되읽어 레벨·매니페스트만 다시 낸다')
     args = parser.parse_args()
 
     with open(args.tiles, 'r', encoding='utf-8') as handle:
         meta = json.load(handle)['_meta']
     proj = Proj(meta['projection'])
-    lon_lo, lon_hi, lat_lo, lat_hi = proj.bounds()
-    # 겹선형 보간이 가장자리에서 잘리지 않도록 한 셀 여유를 준다.
-    margin = SOURCE_STEP_DEG * 2
-    lon_lo, lon_hi = lon_lo - margin, lon_hi + margin
-    lat_lo, lat_hi = lat_lo - margin, lat_hi + margin
-    print('격자 %d×%d · lon %.4f..%.4f · lat %.4f..%.4f'
-          % (proj.cols, proj.rows, lon_lo, lon_hi, lat_lo, lat_hi))
-
-    os.makedirs(args.cache_dir, exist_ok=True)
     os.makedirs(args.out_dir, exist_ok=True)
 
-    edges = np.linspace(lat_lo, lat_hi, args.bands + 1)
-    paths = []
-    for index in range(args.bands):
-        band_lo = float(edges[index])
-        band_hi = float(edges[index + 1]) - (SOURCE_STEP_DEG if index < args.bands - 1 else 0.0)
-        path = os.path.join(args.cache_dir, '%s-b%02d.csv' % (DATASET, index))
-        if not os.path.exists(path):
-            if args.offline:
-                raise SystemExit('캐시 없음(offline): %s' % path)
-            print('  밴드 %d/%d  lat %.3f..%.3f' % (index + 1, args.bands, band_lo, band_hi))
-            fetch_band(band_lo, band_hi, lon_lo, lon_hi, path)
-        paths.append(path)
+    metre_png = os.path.join(args.out_dir, '%s-metres.png' % args.map_code)
+    manifest_path = os.path.join(args.out_dir, 'manifest.json')
 
-    lats, lons, source, missing = parse_csv(paths)
-    print('원본 %d×%d (lat %.4f..%.4f, lon %.4f..%.4f) 결측 %d'
-          % (lats.size, lons.size, lats[0], lats[-1], lons[0], lons[-1], missing))
+    if args.from_metres:
+        metres, source_meta = read_metre_png(metre_png, manifest_path, proj)
+        print('metres.png 되읽음 %d×%d · 최저 %.0fm · 최고 %.0fm'
+              % (metres.shape[1], metres.shape[0], metres.min(), metres.max()))
+    else:
+        lon_lo, lon_hi, lat_lo, lat_hi = proj.bounds()
+        # 겹선형 보간이 가장자리에서 잘리지 않도록 한 셀 여유를 준다.
+        margin = SOURCE_STEP_DEG * 2
+        lon_lo, lon_hi = lon_lo - margin, lon_hi + margin
+        lat_lo, lat_hi = lat_lo - margin, lat_hi + margin
+        print('격자 %d×%d · lon %.4f..%.4f · lat %.4f..%.4f'
+              % (proj.cols, proj.rows, lon_lo, lon_hi, lat_lo, lat_hi))
+        metres, source_meta = None, None
+        os.makedirs(args.cache_dir, exist_ok=True)
 
-    metres = sample_projection(lats, lons, source, proj)
-    print('투영 후 %d×%d · 최저 %.0fm · 최고 %.0fm'
-          % (metres.shape[1], metres.shape[0], metres.min(), metres.max()))
+        edges = np.linspace(lat_lo, lat_hi, args.bands + 1)
+        paths = []
+        for index in range(args.bands):
+            band_lo = float(edges[index])
+            band_hi = float(edges[index + 1]) - (SOURCE_STEP_DEG if index < args.bands - 1 else 0.0)
+            path = os.path.join(args.cache_dir, '%s-b%02d.csv' % (DATASET, index))
+            if not os.path.exists(path):
+                if args.offline:
+                    raise SystemExit('캐시 없음(offline): %s' % path)
+                print('  밴드 %d/%d  lat %.3f..%.3f' % (index + 1, args.bands, band_lo, band_hi))
+                fetch_band(band_lo, band_hi, lon_lo, lon_hi, path)
+            paths.append(path)
 
-    group = int(meta.get('rasterGroup') or 4)
+        lats, lons, source, missing = parse_csv(paths)
+        print('원본 %d×%d (lat %.4f..%.4f, lon %.4f..%.4f) 결측 %d'
+              % (lats.size, lons.size, lats[0], lats[-1], lons[0], lons[-1], missing))
+
+        metres = sample_projection(lats, lons, source, proj)
+        print('투영 후 %d×%d · 최저 %.0fm · 최고 %.0fm'
+              % (metres.shape[1], metres.shape[0], metres.min(), metres.max()))
+
+    group = int(args.raster_group)
     tile_metres, tile_rows, tile_cols = block_reduce_mean(metres, group)
     levels = quantise(tile_metres, LEVEL_LADDER)
     print('타일 격자 %d×%d (rasterGroup %d) · 레벨 0..%d'
           % (tile_cols, tile_rows, group, int(levels.max())))
 
-    metre_png = os.path.join(args.out_dir, '%s-metres.png' % args.map_code)
-    clipped = np.clip(np.round(metres) + METRE_PNG_OFFSET, 0, 65535).astype('<u2')
-    Image.frombytes('I;16', (clipped.shape[1], clipped.shape[0]),
-                    clipped.tobytes()).save(metre_png, optimize=True)
+    if not args.from_metres:
+        clipped = np.clip(np.round(metres) + METRE_PNG_OFFSET, 0, 65535).astype('<u2')
+        Image.frombytes('I;16', (clipped.shape[1], clipped.shape[0]),
+                        clipped.tobytes()).save(metre_png, optimize=True)
 
     level_png = os.path.join(args.out_dir, '%s-levels.png' % args.map_code)
     Image.fromarray(levels, mode='L').save(level_png, optimize=True)
@@ -273,7 +324,9 @@ def main():
         'generator': 'tools/map/build_elevation_grid.py',
         'note': ('표고는 지형 분류와 독립된 두 번째 축이다. 지형 클래스는 Natural Earth '
                  '지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 서로를 보정하지 않는다.'),
-        'source': {
+        # --from-metres 면 받아 온 적이 없다. 기존 매니페스트의 출처 블록을 그대로
+        # 옮긴다 — 오늘 날짜를 적으면 하지 않은 취득을 기록하는 것이 된다.
+        'source': source_meta if source_meta is not None else {
             'dataset': DATASET,
             'title': DATASET_TITLE,
             'endpoint': ERDDAP,
@@ -307,7 +360,6 @@ def main():
             '레벨 사다리는 화면 단차용이며 고도 구간의 지리학적 표준이 아니다.',
         ],
     }
-    manifest_path = os.path.join(args.out_dir, 'manifest.json')
     with open(manifest_path, 'w', encoding='utf-8') as handle:
         json.dump(manifest, handle, ensure_ascii=False, indent=1)
         handle.write('\n')

@@ -20,10 +20,10 @@
     "path": "tools/assets/build_iso3d_assets.py",
     "comparison": "CPU orthographic rendering of actual pinned glTF vertex colors; not engine lighting"
   },
-  "rasterGroup": 4,
+  "rasterGroup": 2,
   "tileGrid": {
-    "cols": 192,
-    "rows": 167
+    "cols": 384,
+    "rows": 334
   },
   "flatFootprint": [
     256,
