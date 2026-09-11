@@ -23,8 +23,8 @@
     "provinceIdentity": {
       "method": "EXACT_LEGACY_SOURCE_ROW_PHYSICAL_PLACE_ID",
       "provinceRecordSource": "data/map/han-tiles.json provinceRecords[]",
-      "bound": 743,
-      "unresolved": 31,
+      "bound": 751,
+      "unresolved": 23,
       "unresolvedLedger": "data/curated/han/runtime-province-identity-unresolved-v1.json"
     }
   },
@@ -21245,7 +21245,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X056",
-      "provinceId": 1515
+      "provinceId": 1460
     },
     {
       "id": 521,
@@ -21284,7 +21284,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X061",
-      "provinceId": 1520
+      "provinceId": 1465
     },
     {
       "id": 522,
@@ -22310,7 +22310,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X057",
-      "provinceId": 1516
+      "provinceId": 1461
     },
     {
       "id": 548,
@@ -23065,7 +23065,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X060",
-      "provinceId": 1519
+      "provinceId": 1464
     },
     {
       "id": 567,
@@ -26252,7 +26252,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X059",
-      "provinceId": 1518
+      "provinceId": 1463
     },
     {
       "id": 647,
@@ -26329,7 +26329,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X058",
-      "provinceId": 1517
+      "provinceId": 1462
     },
     {
       "id": 649,
@@ -27470,7 +27470,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X064",
-      "provinceId": 1523
+      "provinceId": 1468
     },
     {
       "id": 677,
@@ -28934,7 +28934,8 @@
         "nameCh": "帶方郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X004"
+      "physicalPlaceId": "X004",
+      "provinceId": 1428
     },
     {
       "id": 713,
@@ -29015,7 +29016,8 @@
         "nameCh": "樂浪郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X003"
+      "physicalPlaceId": "X003",
+      "provinceId": 1427
     },
     {
       "id": 715,
@@ -29294,7 +29296,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X062",
-      "provinceId": 1521
+      "provinceId": 1466
     },
     {
       "id": 722,
@@ -29333,7 +29335,8 @@
         "nameCh": "玄菟郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X006"
+      "physicalPlaceId": "X006",
+      "provinceId": 1430
     },
     {
       "id": 723,
@@ -29373,7 +29376,8 @@
         "nameCh": "遼東屬國",
         "isSeat": true
       },
-      "physicalPlaceId": "X007"
+      "physicalPlaceId": "X007",
+      "provinceId": 1431
     },
     {
       "id": 724,
@@ -29411,7 +29415,8 @@
         "nameCh": "遼東郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X005"
+      "physicalPlaceId": "X005",
+      "provinceId": 1429
     },
     {
       "id": 725,
@@ -29568,7 +29573,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X063",
-      "provinceId": 1522
+      "provinceId": 1467
     },
     {
       "id": 729,
@@ -29606,7 +29611,8 @@
         "nameCh": "九真郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X001"
+      "physicalPlaceId": "X001",
+      "provinceId": 1425
     },
     {
       "id": 730,
@@ -29643,7 +29649,8 @@
         "nameCh": "交趾郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X000"
+      "physicalPlaceId": "X000",
+      "provinceId": 1424
     },
     {
       "id": 731,
@@ -29998,7 +30005,8 @@
         "nameCh": "日南郡",
         "isSeat": true
       },
-      "physicalPlaceId": "X002"
+      "physicalPlaceId": "X002",
+      "provinceId": 1426
     },
     {
       "id": 740,
@@ -30563,7 +30571,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X035",
-      "provinceId": 1494
+      "provinceId": 1439
     },
     {
       "id": 754,
@@ -30604,7 +30612,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X042",
-      "provinceId": 1501
+      "provinceId": 1446
     },
     {
       "id": 755,
@@ -30641,7 +30649,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X030",
-      "provinceId": 1489
+      "provinceId": 1434
     },
     {
       "id": 756,
@@ -30682,7 +30690,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X029",
-      "provinceId": 1488
+      "provinceId": 1433
     },
     {
       "id": 757,
@@ -30724,7 +30732,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X049",
-      "provinceId": 1508
+      "provinceId": 1453
     },
     {
       "id": 758,
@@ -30762,7 +30770,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X046",
-      "provinceId": 1505
+      "provinceId": 1450
     },
     {
       "id": 759,
@@ -30803,7 +30811,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X034",
-      "provinceId": 1493
+      "provinceId": 1438
     },
     {
       "id": 760,
@@ -30844,7 +30852,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X028",
-      "provinceId": 1487
+      "provinceId": 1432
     },
     {
       "id": 761,
@@ -30884,7 +30892,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X047",
-      "provinceId": 1506
+      "provinceId": 1451
     },
     {
       "id": 762,
@@ -30924,7 +30932,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X036",
-      "provinceId": 1495
+      "provinceId": 1440
     },
     {
       "id": 763,
@@ -30964,7 +30972,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X031",
-      "provinceId": 1490
+      "provinceId": 1435
     },
     {
       "id": 764,
@@ -31001,7 +31009,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X043",
-      "provinceId": 1502
+      "provinceId": 1447
     },
     {
       "id": 765,
@@ -31041,7 +31049,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X032",
-      "provinceId": 1491
+      "provinceId": 1436
     },
     {
       "id": 766,
@@ -31082,7 +31090,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X033",
-      "provinceId": 1492
+      "provinceId": 1437
     },
     {
       "id": 767,
@@ -31121,7 +31129,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X044",
-      "provinceId": 1503
+      "provinceId": 1448
     },
     {
       "id": 768,
@@ -31162,7 +31170,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X048",
-      "provinceId": 1507
+      "provinceId": 1452
     },
     {
       "id": 769,
@@ -31200,7 +31208,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X037",
-      "provinceId": 1496
+      "provinceId": 1441
     },
     {
       "id": 770,
@@ -31240,7 +31248,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X038",
-      "provinceId": 1497
+      "provinceId": 1442
     },
     {
       "id": 771,
@@ -31280,7 +31288,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X045",
-      "provinceId": 1504
+      "provinceId": 1449
     },
     {
       "id": 772,
@@ -31320,7 +31328,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X040",
-      "provinceId": 1499
+      "provinceId": 1444
     },
     {
       "id": 773,
@@ -31361,7 +31369,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X041",
-      "provinceId": 1500
+      "provinceId": 1445
     },
     {
       "id": 774,
@@ -31398,7 +31406,7 @@
         "isSeat": true
       },
       "physicalPlaceId": "X055",
-      "provinceId": 1514
+      "provinceId": 1459
     }
   ]
 }

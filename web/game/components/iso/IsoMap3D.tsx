@@ -553,9 +553,12 @@ export function IsoMap3D({
             const i = tiles[n];
             let rgb = playable[i] === 0 ? OUT_OF_PLAY : white;
             if (playable[i] === 1 && mode !== 'none' && tint > 0 && !isWater(code[i])) {
-              const key = mode === 'commandery' ? parentOwner[i] : owner[i];
               // 주인 없는 縣 은 칠하지 않고 지형을 그대로 둔다(ownerTint 주석 참조).
-              const owned = ownerTint(key, paint);
+              // 소유 표는 서버 provinceOccupancy 가 1,520 省 전부를 담아 오고, 한 縣의 省은
+              // 다 같은 주인이다(MapAdministrativeOwnership) — 그래서 땅에 빵꾸가 안 난다.
+              const owned = mode === 'commandery'
+                ? ownerTint(parentOwner[i], paint)
+                : ownerTint(owner[i], paint);
               if (owned) rgb = mixToward(luminancePreserving(owned), tint);
             }
             color.setRGB(rgb.r, rgb.g, rgb.b);
@@ -598,7 +601,7 @@ export function IsoMap3D({
       host.appendChild(canvas);
 
       // 城 라벨·소속 점을 얹는 2D 층. WebGL 캔버스 위에 같은 크기로 겹쳐 둔다.
-      // 스프라이트 텍스처나 DOM 노드 대신 이걸 쓰는 이유는 두 가지다 — 781 개 DOM 을
+      // 스프라이트 텍스처나 DOM 노드 대신 이걸 쓰는 이유는 두 가지다 — 832 개 DOM 을
       // 프레임마다 옮기지 않아도 되고, 글자 모양이 2D 판과 똑같이 나온다.
       const overlay = document.createElement('canvas');
       overlay.style.position = 'absolute';

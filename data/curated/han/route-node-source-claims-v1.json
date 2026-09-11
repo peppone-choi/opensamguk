@@ -16,7 +16,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X000",
           "wikidataId": "Q33408"
         },
@@ -59,7 +59,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X001",
           "wikidataId": "Q36175"
         },
@@ -104,7 +104,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X002",
           "wikidataId": "Q36579"
         },
@@ -147,7 +147,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X003",
           "wikidataId": "Q18808"
         },
@@ -190,7 +190,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X005",
           "wikidataId": "Q75203"
         },
@@ -235,7 +235,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X006",
           "wikidataId": "Q75026"
         },
@@ -280,7 +280,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X007",
           "wikidataId": "Q1331458"
         },
@@ -325,7 +325,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
           "recordId": "X026",
           "wikidataId": "Q641396"
         },
@@ -363,13 +363,2206 @@
       ],
       "subjectKey": "hhs:113:上郡:009",
       "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "新昌",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 新昌을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 834,
+          "lineStart": 834,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖新昌〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "無慮",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 無慮을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 836,
+          "lineStart": 836,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖无虑〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "望平",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 望平을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 838,
+          "lineStart": 838,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖望平〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "安市",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 安市을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 842,
+          "lineStart": 842,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖安市〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "平郭",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 平郭을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 844,
+          "lineStart": 844,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖平郭〗有铁。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "西安平",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 西安平을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-008",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-008",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-008",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 846,
+          "lineStart": 846,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖西安平〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:008",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "汶",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 汶을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 848,
+          "lineStart": 848,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖汶〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "番汗",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 番汗을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 850,
+          "lineStart": 850,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖番汗〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "沓氏",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東郡 屬縣 沓氏을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-011",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-011",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-011",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 852,
+          "lineStart": 852,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖沓氏〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:011",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "西蓋馬",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 玄菟郡 屬縣 西蓋馬을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-xuantu-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 858,
+          "lineStart": 858,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖西盖马〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "上殷台",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 玄菟郡 屬縣 上殷台을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-xuantu-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 860,
+          "lineStart": 860,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖上殷台〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "高顯",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 玄菟郡 屬縣 高顯을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-xuantu-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 862,
+          "lineStart": 862,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖高显〗故属辽东。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "候城",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 玄菟郡 屬縣 候城을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-xuantu-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 864,
+          "lineStart": 864,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖候城〗故属辽东。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "遼陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 玄菟郡 屬縣 遼陽을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-xuantu-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 866,
+          "lineStart": 866,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖辽阳〗故属辽东。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "浿水",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 浿水을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 874,
+          "lineStart": 874,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖浿水〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "含資",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 含資을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 876,
+          "lineStart": 876,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖含资〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "占蟬",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 占蟬을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 878,
+          "lineStart": 878,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖占蝉〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "遂城",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 遂城을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 880,
+          "lineStart": 880,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖遂城〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "增地",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 增地을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 882,
+          "lineStart": 882,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖增地〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "駟望",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 駟望을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 886,
+          "lineStart": 886,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖驷望〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "海冥",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 海冥을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 888,
+          "lineStart": 888,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖海冥〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "列口",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 列口을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-011",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-011",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-011",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 890,
+          "lineStart": 890,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖列口〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:011",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "長岑",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 長岑을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-012",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-012",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-012",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 892,
+          "lineStart": 892,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖长岑〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:012",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "屯有",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 屯有을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-013",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-013",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-013",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 894,
+          "lineStart": 894,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖屯有〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:013",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "昭明",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 昭明을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-014",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-014",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-014",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 896,
+          "lineStart": 896,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖昭明〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:014",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "鏤方",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 鏤方을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-015",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-015",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-015",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 898,
+          "lineStart": 898,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖镂方〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:015",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "提奚",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 提奚을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-016",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-016",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-016",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 900,
+          "lineStart": 900,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖提奚〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:016",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "渾彌",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 樂浪郡 屬縣 渾彌을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-lelang-017",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-017",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-017",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 902,
+          "lineStart": 902,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖浑弥〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:017",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "賓徒",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東屬國 屬縣 賓徒을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-shuguo-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 910,
+          "lineStart": 910,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖宾徒〗故属辽西。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東屬國:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "徒河",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東屬國 屬縣 徒河을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-shuguo-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 912,
+          "lineStart": 912,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖徒河〗故属辽西。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東屬國:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "險瀆",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東屬國 屬縣 險瀆을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-shuguo-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 916,
+          "lineStart": 916,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖险渎〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東屬國:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "房",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 遼東屬國 屬縣 房을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-liaodong-shuguo-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 918,
+          "lineStart": 918,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖房〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東屬國:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "羸𨻻",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 羸𨻻을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1003,
+          "lineStart": 1003,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖羸𨻻〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "安定",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 安定을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1005,
+          "lineStart": 1005,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖安定〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "苟漏",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 苟漏을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1007,
+          "lineStart": 1007,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖苟漏〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "麋泠",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 麋泠을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1009,
+          "lineStart": 1009,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖麋泠〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "曲陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 曲陽을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1011,
+          "lineStart": 1011,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖曲阳〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "北帶",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 北帶을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1013,
+          "lineStart": 1013,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖北带〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "稽徐",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 稽徐을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-008",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-008",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-008",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1015,
+          "lineStart": 1015,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖稽徐〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:008",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "西于",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 西于을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1017,
+          "lineStart": 1017,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖西于〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "朱䳒",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 朱䳒을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1019,
+          "lineStart": 1019,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖朱[B42B]〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "封谿",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 封谿을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-011",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-011",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-011",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1021,
+          "lineStart": 1021,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖封谿〗{{YL|建武十九年}}置。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:011",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "望海",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 交趾郡 屬縣 望海을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiaozhi-012",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-012",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-012",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1023,
+          "lineStart": 1023,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖望海〗建武十九年置。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:012",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "居風",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九真郡 屬縣 居風을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiuzhen-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1029,
+          "lineStart": 1029,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖居风〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:九真郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "咸懽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九真郡 屬縣 咸懽을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiuzhen-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1031,
+          "lineStart": 1031,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖咸懽〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:九真郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "無功",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九真郡 屬縣 無功을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiuzhen-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1033,
+          "lineStart": 1033,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖无功〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:九真郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "無編",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九真郡 屬縣 無編을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-jiuzhen-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1035,
+          "lineStart": 1035,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖无编〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:九真郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "朱吾",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 日南郡 屬縣 朱吾을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-rinan-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1041,
+          "lineStart": 1041,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖朱吾〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:日南郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "盧容",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 日南郡 屬縣 盧容을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-rinan-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1043,
+          "lineStart": 1043,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖卢容〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:日南郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "象林",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 日南郡 屬縣 象林을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-rinan-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1045,
+          "lineStart": 1045,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖象林〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:日南郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "比景",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 日南郡 屬縣 比景을 frontier-counties-v1 검토 원장의 좌표(나무위키 「삼국지/지명」 수확본, APPROXIMATE)로 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "cef2f883c87b13abfa5129e8514d03ac0dbad0b4d33d99757e9adaca532b64b5",
+          "recordId": "fc-rinan-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1047,
+          "lineStart": 1047,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖比景〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:日南郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
     }
   ],
   "policy": {
     "coordinateFieldsCopiedIntoThisArtifact": 0,
     "externalHistoricalBindingCount": 0,
     "legacyInfiniteLifecycleAccepted": false,
-    "purpose": "CHGIS V6 county coverage 밖의 HHS administrative unit 8건에만 유한 W0 물리 anchor를 제공한다.",
+    "purpose": "CHGIS V6 county coverage 밖의 HHS administrative unit 에만 유한 W0 물리 anchor를 제공한다 — 변경 郡治 8건(OPENSAM-225)과 frontier-counties-v1 의 변경 屬縣 51건.",
     "selectionBasis": "HHS_ADMINISTRATIVE_UNIT"
   },
   "reviewAuthority": "user-blanket-approval-2026-08-22",

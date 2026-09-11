@@ -54,7 +54,7 @@ class MapStrategicTopologyControllerTest {
             .andExpect(jsonPath("$.binding.worldId").value(7))
             .andExpect(jsonPath("$.binding.mapCode").value("han-world-v3"))
             .andExpect(jsonPath("$.binding.cols").value(768))
-            .andExpect(jsonPath("$.topology.landProvinceIds.length()").value(1524))
+            .andExpect(jsonPath("$.topology.landProvinceIds.length()").value(1520))
             .andExpect(jsonPath("$.topology.geometries[0].cellCount").value(47))
             .andExpect(jsonPath("$.topology.geometries[1].cellCount").value(83))
             .andExpect(jsonPath("$.topology.waterZones.length()").value(2))

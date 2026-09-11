@@ -12,17 +12,19 @@
 //   2) provinceRecords[i].cityIndex = 지형 응답 cities[] 인덱스
 //      (HanMapCanvas.tsx:1546 이 마커 자리를 잡을 때 쓰는 그 필드)
 //
-// 실측(han-world-v3, 2026-09-09): 게임 도시 781 중 773 이 이 길로 원본 셀 좌표를 얻고,
-// 서로 다른 도시가 같은 셀에 겹치는 경우는 0 이었다. 이름도 773/773 이 맞았다
+// 실측(han-world-v3, 2026-09-09, 781 城 시절): 게임 도시 781 중 773 이 이 길로 원본 셀 좌표를
+// 얻고, 서로 다른 도시가 같은 셀에 겹치는 경우는 0 이었다. 이름도 773/773 이 맞았다
 // (예: 게임 "장안(京兆尹)" → provinceRecords[503] "장안현" → cities[1033]).
 //
-// 남는 8 곳(구자속국·낙랑군·현도군·요동속국·요동군·구진군·교지군·일남군)은 provinceId 가
-// 없다 — 후한 縣 판정이 안 된 변경(邊境) 郡이다. 이쪽만 좌표 폴백을 쓴다. 폴백은 기존
-// 캔버스의 mapCityToTile 과 같은 선형식이고, 8 곳 모두 육지 타일에 떨어지는 것을 확인했다.
+// 2026-09-11 변경 縣 51 곳이 게임 城 으로 서면서(782–832) 변경 郡 일곱 곳도 縣 구획을 얻어
+// provinceId 가 붙었다. 이제 provinceId 가 없는 城 은 832 중 구자속국(704) 하나뿐이고,
+// 그 한 곳만 좌표 폴백을 쓴다. 폴백은 기존 캔버스의 mapCityToTile 과 같은 선형식이다.
 //
 // 郡國 밖 세력(EXTERNAL_PLACE)도 여기서 같이 앉힌다 — 중원과 다른 그림으로 그리지 않는다.
-// 자세한 것은 아래 placeExternalPlaces 주석. 關(관문)·변경 縣 도 마찬가지로 덧댄다
-// (strategicPasses.ts·frontierCounties.ts).
+// 자세한 것은 아래 placeExternalPlaces 주석. 關(관문)도 마찬가지로 덧댄다(strategicPasses.ts).
+// 변경 縣(交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 屬縣 51 곳)은 한때 여기서 표시 전용으로
+// 덧댔지만(PR #698 frontierCounties.ts), 2026-09-11 부로 han-tiles 縣 구획 → 경로 노드 →
+// han-world-v3 城 782–832 로 서버 세계에 들어갔다 — 다른 城 과 같은 길로 들어온다.
 
 import type { IsoMapData } from './useIsoTileGrid';
 import { RASTER_GROUP } from '../isoTileGrid';
@@ -30,7 +32,6 @@ import { isOwnedNationVisual } from '../nationVisual';
 import { externalPlaceLevel } from './externalPlaceTier';
 import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanMapCanvas';
 import { placeStrategicPasses } from './strategicPasses';
-import { placeFrontierCounties } from './frontierCounties';
 
 /** 배치 입력. MapPreviewCity 에서 필요한 만큼만 뽑은 모양이다. */
 export interface GameCityInput {
@@ -52,7 +53,7 @@ export interface GameCityInput {
 /**
  * 격자에 앉은 게임 도시. 렌더러 두 판이 함께 쓴다.
  *
- * col/row 는 **소수**다. 타일로 반올림하면 안 된다 — 실측하면 게임 도시 781 곳 중
+ * col/row 는 **소수**다. 타일로 반올림하면 안 된다 — 실측(781 城 시절)하면 게임 도시 781 곳 중
  * 37 곳이 다른 도시와 같은 타일(4×4 원본 셀)에 묶여 뒤에 오는 쪽이 통째로 가려진다.
  * 그러면 그 37 곳은 눌러서 들어갈 수 없다. 원본 셀 해상도를 그대로 들고 다니면
  * 확대했을 때 서로 떨어져 각각 집힌다. 높이를 볼 때만 tile 로 내린다.
@@ -186,11 +187,6 @@ export function placeGameCities(
   // 關(관문)도 같이 세운다. 게임 城 목록에 없는 길목이라 여기서 덧대는 수밖에 없다 —
   // 자세한 것과 근거는 strategicPasses.ts.
   placed.push(...placeStrategicPasses(
-    data.projection, { cols: sourceCols, rows: sourceRows }, grid,
-  ));
-  // 交州·幽州 변경 縣 도 같이 세운다. 郡國志에는 이름이 있는데 CHGIS 縣 점이 없어
-  // 게임 城 목록에 못 들어간 자리다 — 자세한 것과 근거는 frontierCounties.ts.
-  placed.push(...placeFrontierCounties(
     data.projection, { cols: sourceCols, rows: sourceRows }, grid,
   ));
   fitFootprintsInTile(placed);

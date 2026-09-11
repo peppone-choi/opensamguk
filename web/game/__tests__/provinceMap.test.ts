@@ -614,7 +614,7 @@ describe('province identity map', () => {
 
     expect(canonical.scenarios).toHaveLength(15);
     for (const scenario of canonical.scenarios) {
-      expect(scenario.assignments).toHaveLength(1_524);
+      expect(scenario.assignments).toHaveLength(1_520);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;

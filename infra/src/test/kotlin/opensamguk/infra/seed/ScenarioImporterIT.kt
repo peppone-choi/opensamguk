@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=781, `general`=230,
+ * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=832, `general`=230,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -155,8 +155,9 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertTrue(counts.gameEnv > 0)
         assertEquals(2, counts.nation)
-        // V3 projects scenario ownership through stable place identities: Han 122, Yellow 114, neutral 545.
-        assertEquals(781, counts.city)
+        // V3 projects scenario ownership through stable place identities: Han 122, Yellow 114, neutral 596
+        // (781 → 832: 交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 屬縣 51 곳이 게임 城 으로 섰다, 전부 공백지).
+        assertEquals(832, counts.city)
         assertEquals(230, counts.general)
         assertEquals(230 * 30, counts.generalTurn)
         assertEquals(230 * 37, counts.rankData)
@@ -205,11 +206,11 @@ class ScenarioImporterIT {
             ),
         )
         assertEquals(2, count("nation"))
-        assertEquals(781, count("city"))
-        assertEquals((1..781).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
+        assertEquals(832, count("city"))
+        assertEquals((1..832).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
         assertEquals("역성", jdbc.queryForObject("SELECT name FROM city WHERE id = 781 AND nation_id = 0", String::class.java))
         // 실효 지배지만 시나리오 소유로 칠하고, 나머지는 공백지로 둔다.
-        assertEquals(545, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals(596, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
         assertEquals(122, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
         assertEquals(114, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
@@ -1594,14 +1595,14 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(781, counts.city)             // Versioned Han V3 catalog, owned and neutral cities.
+        assertEquals(832, counts.city)             // Versioned Han V3 catalog, owned and neutral cities.
         assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
 
         assertEquals(21, count("nation"))
-        assertEquals(781, count("city"))
+        assertEquals(832, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
 
         // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──

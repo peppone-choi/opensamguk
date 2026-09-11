@@ -54,13 +54,13 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `persisted world v2 stays frozen while world v3 exposes reviewed 781 identities`() {
+    fun `persisted world v2 stays frozen while world v3 exposes reviewed 832 identities`() {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
 
         val v3 = CityConstRegistry.of("han-world-v3")
-        assertEquals((1..781).toList(), v3.all().keys.toList())
+        assertEquals((1..832).toList(), v3.all().keys.toList())
         assertTrue(v3.byId(273)!!.path.containsKey(781))
         assertTrue(v3.byId(781)!!.path.containsKey(273))
         val graph = buildString {
@@ -71,8 +71,11 @@ class CityConstRegistryTest {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(graph.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        // Geuk relocation: 8 removed and 9 added physical edges; v2 remains frozen above.
-        assertEquals("2c5a07d780407ae2c08ce2024e48271b3de2d65980db792b3852d122315345ac", digest)
+        // 省 → 城 귀속 원장(data/curated/han/province-city-attribution-v1.json)을 거치며
+        // 城 없는 縣의 땅이 제 郡의 城으로 접히고 같은 城 쌍의 경계 칸수가 합산돼, 도로망이
+        // 2,283 간선 / 성분 4 개 / 도달불가 17 로 바뀌었다(이전 성분 36 · 도달불가 174).
+        // v2 는 위에서 그대로 얼어 있다.
+        assertEquals("f765b832dee7e18b11cc417264ac5bed5a6edf5dfc6fca304d2379f7ef5fb3a4", digest)
     }
 
     @Test

@@ -373,8 +373,8 @@ describe('지도 아이콘 배율과 앵커', () => {
         )).not.toThrow();
 
         const provinceCities = provinceLayerRuntimeCities(runtime.cities);
-        expect(runtime.cities.filter((city) => city.provinceId === undefined)).toHaveLength(31);
-        expect(provinceCities).toHaveLength(runtime.cities.length - 31);
+        expect(runtime.cities.filter((city) => city.provinceId === undefined)).toHaveLength(23);
+        expect(provinceCities).toHaveLength(runtime.cities.length - 23);
         expect(provinceCities.every((city) => city.provinceId !== undefined)).toBe(true);
         expect(provinceCities.some((city) => city.id === 199)).toBe(false);
         expect(provinceCities.some((city) => city.id === 200)).toBe(true);
@@ -423,8 +423,8 @@ describe('지도 아이콘 배율과 앵커', () => {
             null,
             provinceMap,
         );
-        expect(jurisdictions).toHaveLength(1_020);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_020);
+        expect(jurisdictions).toHaveLength(1_071);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_071);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',

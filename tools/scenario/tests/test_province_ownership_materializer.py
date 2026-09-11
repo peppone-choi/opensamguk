@@ -206,7 +206,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertTrue(all(row.claim_trace == ("BASE",) for row in rows))
         self.assertTrue(all(row.confidence == "EXPLICIT_UNOWNED" for row in rows))
 
-    def test_production_document_has_1524_rows_per_active_scenario(self):
+    def test_production_document_has_1520_rows_per_active_scenario(self):
         map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
@@ -233,8 +233,8 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         generated = materialize_all(parsed, catalog)
 
         self.assertEqual(15, len(generated))
-        self.assertEqual(22_860, sum(len(rows) for rows in generated.values()))
-        self.assertTrue(all(len(rows) == 1_524 for rows in generated.values()))
+        self.assertEqual(22_800, sum(len(rows) for rows in generated.values()))
+        self.assertTrue(all(len(rows) == 1_520 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)
@@ -243,7 +243,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
         self.assertEqual(15, len(first["scenarios"]))
         self.assertEqual(
-            22_860,
+            22_800,
             sum(len(scenario["assignments"]) for scenario in first["scenarios"]),
         )
         self.assertNotIn(str(ROOT), canonical_bytes(first).decode("utf-8"))

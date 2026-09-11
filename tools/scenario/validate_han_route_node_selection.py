@@ -41,7 +41,17 @@ PROVENANCE_DEPENDENCIES = {
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
 LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 781}
+# han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 832}
+EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
+FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
+FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
+# LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 郡治 8 곳, han-world-v3 는 거기에 변경 縣 51 곳이
+# 더 붙는다. 어느 판인지는 selection.worldVersion 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
+EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
+    "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 8, FRONTIER_COUNTY_BATCH: 51},
+}
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
 NODE_CLASS_BY_UNIT_TYPE = {
@@ -60,7 +70,7 @@ AUTHORITY_EXACT_FIELDS = tuple(VALIDATION_CONTRACT["externalAuthorityExactFields
 REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
-    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", "w0c-hhs-external-location"}
+    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
 FORBIDDEN_FIELDS = frozenset(
@@ -97,11 +107,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
-PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
-PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
-PINNED_REVIEW_POLICY_SHA256 = "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "9c3b8dce9a142835ceadd226a53113d7c080bbe40d2237ffe219624994c7b108"
+PINNED_SOURCE_WITNESS_SHA256 = "e9610fdf127f2825311a8163ad631f4020df3f7cb6a4eb3094fedef1bc7f390c"
+PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc"
+PINNED_REVIEW_POLICY_SHA256 = "d9e8c46571d540416c14288c12770793d1c5bd5aa62282e863bd380e4c7c6b9c"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -329,6 +339,7 @@ class ScenarioResource:
 @dataclass(frozen=True, slots=True)
 class CatalogUnit:
     source_name_status: str
+    name_corrected: bool
     node_class: str
     canonical_name: str
     parent_name: str
@@ -579,11 +590,15 @@ def _validate_selection_rationale(document: JsonObject, expected_batch_id: str) 
         _fail("selectionRationale review batch does not match the validated binding route")
 
 
-def _selection_count(selection: JsonObject) -> int:
+def _world_version(selection: JsonObject) -> str:
     world_version = selection.get("worldVersion", "han-780-v1")
     if world_version not in WORLD_SELECTION_COUNTS:
         _fail("selection worldVersion is unsupported")
-    return WORLD_SELECTION_COUNTS[world_version]
+    return world_version
+
+
+def _selection_count(selection: JsonObject) -> int:
+    return WORLD_SELECTION_COUNTS[_world_version(selection)]
 
 
 def _route_key_registry_index(
@@ -701,6 +716,7 @@ def _catalog_index(catalog: dict, require_full_contract: bool = False) -> dict[s
                 _fail(f"duplicate administrative unit: {unit_id}")
             units[unit_id] = CatalogUnit(
                 source_name_status=source_name_status,
+                name_corrected=correction is not None,
                 node_class=NODE_CLASS_BY_UNIT_TYPE[unit_type],
                 canonical_name=canonical_name,
                 parent_name=canonical,
@@ -895,12 +911,24 @@ def _verify_source_record(record: JsonObject, claim_id: str, source_root: Path) 
         _fail(f"external claim source record verbatim does not match: {claim_id}")
 
 
-def _claims_index(claims_document: dict, source_root: Path) -> dict[str, dict]:
+def adjudications_or_empty(adjudications: dict[str, JsonObject] | None) -> dict[str, JsonObject]:
+    return {} if adjudications is None else adjudications
+
+
+def _location_claim_batch(point_ref: str) -> str:
+    return FRONTIER_COUNTY_BATCH if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+
+
+def _claims_index(
+    claims_document: dict, source_root: Path, expected_counts: dict[str, int],
+) -> dict[str, dict]:
     _forbid_fields(claims_document, "externalClaims")
     indexed: dict[str, dict] = {}
     claim_rows = _rows(claims_document, "claims")
-    if len(claim_rows) != 8:
-        _fail("external claim set must contain exactly 8 LOCATION_ONLY claims")
+    expected_total = sum(expected_counts.values())
+    if len(claim_rows) != expected_total:
+        _fail(f"external claim set must contain exactly {expected_total} LOCATION_ONLY claims")
+    batch_counts: Counter[str] = Counter()
     for raw in claim_rows:
         claim = _mapping(raw, "external claim")
         claim_id = _text(claim, "sourceClaimId")
@@ -932,6 +960,7 @@ def _claims_index(claims_document: dict, source_root: Path) -> dict[str, dict]:
         point_ref = _text(resolution, "physicalPlaceId")
         if POINT_REFERENCE.fullmatch(point_ref) is None:
             _fail(f"external claim physicalPlaceRef is not a point reference: {point_ref}")
+        batch_counts[_location_claim_batch(point_ref)] += 1
         dataset_ref = _mapping(resolution.get("coordinateDatasetRef"), "coordinateDatasetRef")
         if set(dataset_ref) != COORDINATE_DATASET_FIELDS:
             _fail(f"LOCATION_ONLY coordinateDatasetRef fields must be exact: {claim_id}")
@@ -982,12 +1011,15 @@ def _claims_index(claims_document: dict, source_root: Path) -> dict[str, dict]:
             _fail(f"identity-only external claim rationale cannot assert lifecycle: {claim_id}")
         indexed[claim_id] = {
             **claim,
+            "reviewBatchId": _location_claim_batch(point_ref),
             "claimRole": "LOCATION",
             "subjectType": "AdministrativePlace",
             "subjectKey": subject_key,
             "subjectName": subject_name,
             "physicalPlaceRef": point_ref,
         }
+    if dict(batch_counts) != expected_counts:
+        _fail(f"LOCATION_ONLY claim batches must be exactly {expected_counts}: {dict(batch_counts)}")
     return indexed
 
 
@@ -1274,7 +1306,7 @@ def _binding_token(node: dict) -> tuple[str, str]:
 
 def _reviewed_location_adjudication_index(
     documents: ValidationDocuments,
-) -> dict[str, JsonObject]:
+) -> tuple[dict[str, JsonObject], set[str]]:
     path = _resolved_repository_path(
         documents.source_root,
         PROVENANCE_DEPENDENCIES["locationAdjudications"],
@@ -1315,7 +1347,7 @@ def _reviewed_location_adjudication_index(
     ):
         _fail("location-adjudication policy counts or automation flags are invalid")
     approved: dict[str, JsonObject] = {}
-    rejected_count = 0
+    rejected_units: set[str] = set()
     seen: set[str] = set()
     row_fields = {
         "administrativeUnitId", "evidenceRefs", "rationale", "rationaleCode",
@@ -1346,12 +1378,12 @@ def _reviewed_location_adjudication_index(
         elif state == "REJECTED_FALSE_HOMONYM":
             if row.get("selectedPhysicalPlaceId") is not None:
                 _fail("rejected location-adjudication ledger row cannot select a place")
-            rejected_count += 1
+            rejected_units.add(unit_id)
         else:
             _fail("location-adjudication ledger reviewState is invalid")
-    if len(approved) != 50 or rejected_count != 5:
+    if len(approved) != 50 or len(rejected_units) != 5:
         _fail("location-adjudication ledger must contain exactly 50 approved and 5 rejected rows")
-    return approved
+    return approved, rejected_units
 
 
 def _validate_adjudication(
@@ -1769,11 +1801,13 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
         _fail("overlay catalogId must match the administrative catalog")
     overlay = _overlay_index(documents.overlay, catalog)
     candidates = _candidate_index(documents.candidate, catalog)
-    claims = _claims_index(documents.external_claims, documents.source_root)
-    adjudications = (
+    expected_claim_counts = EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD[_world_version(documents.selection)]
+    expected_claim_count = sum(expected_claim_counts.values())
+    claims = _claims_index(documents.external_claims, documents.source_root, expected_claim_counts)
+    adjudications, rejected_homonyms = (
         _reviewed_location_adjudication_index(documents)
         if documents.production_approval_mode
-        else None
+        else (None, None)
     )
     scenarios = _scenario_catalog(documents.selection, documents.candidate, documents.scenarios)
     if documents.selection.get("reviewState") != "APPROVED":
@@ -1871,7 +1905,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             )
             if registry_numeric_id != expected_registry_numeric:
                 _fail(f"route-node numeric registry mismatch for {unit_id}")
-            if catalog_unit.source_name_status == "SOURCE_PLACEHOLDER":
+            if catalog_unit.source_name_status == "SOURCE_PLACEHOLDER" and not catalog_unit.name_corrected:
                 _fail(f"source placeholder cannot bind a route node: {unit_id}")
             expected_metadata = {
                 "nodeClass": catalog_unit.node_class,
@@ -1885,6 +1919,18 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
                 if node.get(field) != expected:
                     _fail(f"HHS catalog metadata mismatch for {field}: {unit_id}")
             join_status, refs = overlay[unit_id]
+            # LOCATION_ONLY claim 자격: CHGIS 점이 하나도 남지 않은 단위 — NO_COORDINATE_CANDIDATE,
+            # 후보가 전부 REJECTED_FALSE_HOMONYM 인 AMBIGUOUS_POINT, nameCorrection 으로 복원된 SOURCE_PLACEHOLDER.
+            claim_bound = "locationClaimId" in node and (
+                join_status == "NO_COORDINATE_CANDIDATE"
+                or (
+                    join_status == "AMBIGUOUS_POINT"
+                    and (rejected_homonyms is None or unit_id in rejected_homonyms)
+                )
+                or (join_status == "SOURCE_PLACEHOLDER" and catalog_unit.name_corrected)
+            )
+            if claim_bound and join_status == "AMBIGUOUS_POINT" and unit_id in adjudications_or_empty(adjudications):
+                _fail(f"approved ambiguity cannot also bind a location claim: {unit_id}")
             if join_status == "RESOLVED_POINT":
                 expected_review_batch = "w0b-overlay-unique-220"
                 if node.get("physicalPlaceRef") not in refs:
@@ -1892,7 +1938,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
                 adjudication = _mapping(node.get("locationAdjudication"), "locationAdjudication")
                 if adjudication != {"kind": "W0B_GLOBAL_UNIQUE_220"}:
                     _fail("resolved HHS binding must cite the W0-B global-unique review batch")
-            if join_status == "AMBIGUOUS_POINT":
+            if join_status == "AMBIGUOUS_POINT" and not claim_bound:
                 expected_review_batch = "w0c-reviewed-ambiguity"
                 ledger_row = None if adjudications is None else adjudications.get(unit_id)
                 if adjudications is not None and ledger_row is None:
@@ -1900,14 +1946,16 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
                 _validate_adjudication(node, refs, ledger_row)
                 used_adjudications.add(unit_id)
                 ambiguous_count += 1
-            if join_status == "SOURCE_PLACEHOLDER":
+            if join_status == "SOURCE_PLACEHOLDER" and not claim_bound:
                 _fail(f"source placeholder overlay cannot bind a route node: {unit_id}")
-            if join_status == "NO_COORDINATE_CANDIDATE":
-                expected_review_batch = "w0c-hhs-external-location"
+            if join_status == "NO_COORDINATE_CANDIDATE" and not claim_bound:
+                _fail(f"NO_COORDINATE_CANDIDATE requires approved locationClaimId: {unit_id}")
+            if claim_bound:
                 location_id = node.get("locationClaimId")
                 if not isinstance(location_id, str) or location_id not in claims:
-                    _fail(f"NO_COORDINATE_CANDIDATE requires approved locationClaimId: {unit_id}")
+                    _fail(f"location claim binding requires approved locationClaimId: {unit_id}")
                 location_claim = claims[location_id]
+                expected_review_batch = location_claim["reviewBatchId"]
                 if location_claim.get("claimRole") != "LOCATION":
                     _fail(f"locationClaimId must reference a LOCATION claim: {location_id}")
                 if location_claim.get("subjectKey") != unit_id:
@@ -1925,7 +1973,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
                 claim = location_claim
                 location_count += 1
             elif "locationClaimId" in node:
-                _fail("locationClaimId is only valid for NO_COORDINATE_CANDIDATE")
+                _fail("locationClaimId is only valid for units without a surviving coordinate candidate")
         else:
             expected_review_batch = "w0c-hhs-external-location"
             claim_id = binding[1]
@@ -1954,8 +2002,11 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
         present_runtime_fields = FORBIDDEN_RUNTIME_NODE_FIELDS.intersection(node)
         if present_runtime_fields:
             _fail(f"W0 route node must not claim runtime lifecycle fields: {sorted(present_runtime_fields)}")
-    if used_claims != set(claims) or location_count != 8 or external_count != 0:
-        _fail("all exactly 8 LOCATION_ONLY claims must be used by one route node each; external bindings are forbidden")
+    if used_claims != set(claims) or location_count != expected_claim_count or external_count != 0:
+        _fail(
+            f"all exactly {expected_claim_count} LOCATION_ONLY claims must be used by one route node each; "
+            "external bindings are forbidden"
+        )
     if adjudications is not None and used_adjudications != set(adjudications):
         _fail("selection must exhaust the 50-row pinned location-adjudication ledger")
     migration = _validate_migration(

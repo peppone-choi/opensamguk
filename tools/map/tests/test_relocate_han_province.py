@@ -4,6 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
+from tools.map import materialize_frontier_counties as frontier
 from tools.map import relocate_han_province as relocation
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -14,6 +15,8 @@ class GeukRelocationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.source_bytes = (ROOT / 'data/map/han-tiles.json').read_bytes()
         cls.source = json.loads(cls.source_bytes)
+        # 변경 縣 51곳은 이 재배치 위에 얹힌 나중 단계다 — 먼저 그 단계를 벗겨낸다.
+        cls.source = frontier.restored_to_prior_stage(cls.source)
         if relocation.digest(cls.source) == json.loads(relocation.LEDGER.read_text())['outputDocumentSha256']:
             cls.source = relocation.restore_document(cls.source, json.loads(relocation.LEDGER.read_text()))
             cls.source_bytes = (json.dumps(cls.source, ensure_ascii=False, separators=(',', ':')) + '\n').encode()
@@ -69,10 +72,15 @@ class GeukRelocationTest(unittest.TestCase):
     def test_reconciliation_projects_only_actual_changed_cell_buckets(self):
         from tools.map import build_han_parent_reconciliation as reconciliation
         result = json.loads(reconciliation.render_ledger())
-        self.assertEqual(107155, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(80956, result['summary']['exactApprovedCellCount'])
-        self.assertEqual(26199, result['summary']['unresolvedCellCount'])
-        self.assertEqual(61, result['relocationCountProjection']['changedCellCount'])
+        self.assertEqual(121603, result['summary']['cityLinkedCellCount'])
+        self.assertEqual(95396, result['summary']['exactApprovedCellCount'])
+        self.assertEqual(26207, result['summary']['unresolvedCellCount'])
+        # 縣 51곳을 세운 뒤로 현재 문서의 앞 단계는 縣 단계다. 재배치 투영은 그 縣 단계가
+        # 재귀로 증명하는 **앞 단계 원장** 안에 실려 온다 — 같은 61칸을 그대로 들고 있다.
+        self.assertEqual(
+            61,
+            result['frontierCountyProjection']['priorRelocationCountProjection']['changedCellCount'],
+        )
 
     def test_forged_ledger_hashes_cannot_replace_the_frozen_input(self):
         source, output = copy.deepcopy(self.source), copy.deepcopy(self.result)

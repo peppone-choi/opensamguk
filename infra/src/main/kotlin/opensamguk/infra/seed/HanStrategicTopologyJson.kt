@@ -72,7 +72,8 @@ object HanStrategicTopologyJson {
             require(rows in 1..4096 && cols in 1..4096 && rows.toLong() * cols <= 4_000_000) { "Invalid terrain dimensions" }
             val provinces = tiles.array("provinceRecords")
             val landIds = provinces.map { it.text("id") }
-            require(landIds.size == 1524 && landIds.toSet().size == landIds.size) { "Canonical land identity set changed" }
+            // 省 1,520 — 변경경계 51 縣을 세우며 直領을 다시 나눠 1,524 에서 줄었다(han-tiles 실측).
+            require(landIds.size == 1520 && landIds.toSet().size == landIds.size) { "Canonical land identity set changed" }
             val terrain = tiles.array("terrain").map { it.stringValue() }
             require(terrain.size == rows && terrain.all { it.length == cols }) { "Malformed terrain rows" }
             val legend = meta.objectField("terrainLegend")
@@ -208,12 +209,12 @@ object HanStrategicTopologyJson {
         val runtime = world.array("cities")
         val selected = selection.array("routeNodes")
         val manifested = docs.getValue(WORLD_MANIFEST).array("routeNodes")
-        require(runtime.size == 781 && selected.size == 781 && manifested.size == 781) { "V3 route roster must contain 781 nodes" }
+        require(runtime.size == 832 && selected.size == 832 && manifested.size == 832) { "V3 route roster must contain 832 nodes" }
         data class Identity(val id: Int, val key: String, val physical: String)
         fun identities(rows: List<JsonNode>, idField: String): Set<Identity> {
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }
-            require(result.map { it.id }.toSet() == (1..781).toSet() && result.map { it.key }.toSet().size == 781 &&
-                result.map { it.physical }.toSet().size == 781) { "Duplicate or missing runtime/route/physical identity" }
+            require(result.map { it.id }.toSet() == (1..832).toSet() && result.map { it.key }.toSet().size == 832 &&
+                result.map { it.physical }.toSet().size == 832) { "Duplicate or missing runtime/route/physical identity" }
             return result.toSet()
         }
         val expected = identities(selected, "numericCityId")
@@ -235,6 +236,10 @@ object HanStrategicTopologyJson {
             val placeId = when {
                 physical.startsWith("chgis:v6:cnty:") -> physical.removePrefix("chgis:v6:cnty:")
                 physical.startsWith("external:v1:") -> physical.removePrefix("external:v1:")
+                // 변경경계 縣은 CHGIS 에 표제가 없어 심사 원장이 자체 발급한 장소다
+                // (data/curated/han/frontier-county-placements-v1.json).
+                physical.startsWith("curated:frontier-county-v1:") ->
+                    physical.removePrefix("curated:frontier-county-v1:")
                 else -> throw IllegalArgumentException("Unsupported physical reference domain")
             }
             val placeIndex = requireNotNull(physicalIndex[placeId]) { "Unknown physical place $physical" }

@@ -236,14 +236,6 @@ export {
   type StrategicPass,
 } from './iso/strategicPasses';
 export {
-  FRONTIER_COUNTIES,
-  FRONTIER_COUNTY_LEVEL,
-  frontierCountyDisplayName,
-  placeFrontierCounties,
-  type FrontierCounty,
-} from './iso/frontierCounties';
-
-export {
   CITY_SEED_RESEATS,
   applyCitySeedReseats,
   type CitySeedReseat,

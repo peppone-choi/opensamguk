@@ -1,5 +1,5 @@
 {
-  "authority": "OPENSAM-225 reviewed external place identities",
+  "authority": "OPENSAM-225 reviewed external place identities · frontier-counties-v1 reviewed 郡國志 county identities",
   "records": [
     {
       "canonicalName": "龍編",
@@ -56,6 +56,363 @@
       "recordId": "X026",
       "subjectKey": "hhs:113:上郡:009",
       "wikidataId": "Q641396"
+    },
+    {
+      "canonicalName": "新昌",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-002",
+      "recordId": "fc-liaodong-002",
+      "subjectKey": "hhs:113:遼東郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "無慮",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-003",
+      "recordId": "fc-liaodong-003",
+      "subjectKey": "hhs:113:遼東郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "望平",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-004",
+      "recordId": "fc-liaodong-004",
+      "subjectKey": "hhs:113:遼東郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "安市",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-006",
+      "recordId": "fc-liaodong-006",
+      "subjectKey": "hhs:113:遼東郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "平郭",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-007",
+      "recordId": "fc-liaodong-007",
+      "subjectKey": "hhs:113:遼東郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "西安平",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-008",
+      "recordId": "fc-liaodong-008",
+      "subjectKey": "hhs:113:遼東郡:008",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "汶",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-009",
+      "recordId": "fc-liaodong-009",
+      "subjectKey": "hhs:113:遼東郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "番汗",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-010",
+      "recordId": "fc-liaodong-010",
+      "subjectKey": "hhs:113:遼東郡:010",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "沓氏",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-011",
+      "recordId": "fc-liaodong-011",
+      "subjectKey": "hhs:113:遼東郡:011",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "西蓋馬",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-002",
+      "recordId": "fc-xuantu-002",
+      "subjectKey": "hhs:113:玄菟郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "上殷台",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-003",
+      "recordId": "fc-xuantu-003",
+      "subjectKey": "hhs:113:玄菟郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "高顯",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-004",
+      "recordId": "fc-xuantu-004",
+      "subjectKey": "hhs:113:玄菟郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "候城",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-005",
+      "recordId": "fc-xuantu-005",
+      "subjectKey": "hhs:113:玄菟郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "遼陽",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-xuantu-006",
+      "recordId": "fc-xuantu-006",
+      "subjectKey": "hhs:113:玄菟郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "浿水",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-003",
+      "recordId": "fc-lelang-003",
+      "subjectKey": "hhs:113:樂浪郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "含資",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-004",
+      "recordId": "fc-lelang-004",
+      "subjectKey": "hhs:113:樂浪郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "占蟬",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-005",
+      "recordId": "fc-lelang-005",
+      "subjectKey": "hhs:113:樂浪郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "遂城",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-006",
+      "recordId": "fc-lelang-006",
+      "subjectKey": "hhs:113:樂浪郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "增地",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-007",
+      "recordId": "fc-lelang-007",
+      "subjectKey": "hhs:113:樂浪郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "駟望",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-009",
+      "recordId": "fc-lelang-009",
+      "subjectKey": "hhs:113:樂浪郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "海冥",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-010",
+      "recordId": "fc-lelang-010",
+      "subjectKey": "hhs:113:樂浪郡:010",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "列口",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-011",
+      "recordId": "fc-lelang-011",
+      "subjectKey": "hhs:113:樂浪郡:011",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "長岑",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-012",
+      "recordId": "fc-lelang-012",
+      "subjectKey": "hhs:113:樂浪郡:012",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "屯有",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-013",
+      "recordId": "fc-lelang-013",
+      "subjectKey": "hhs:113:樂浪郡:013",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "昭明",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-014",
+      "recordId": "fc-lelang-014",
+      "subjectKey": "hhs:113:樂浪郡:014",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "鏤方",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-015",
+      "recordId": "fc-lelang-015",
+      "subjectKey": "hhs:113:樂浪郡:015",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "提奚",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-016",
+      "recordId": "fc-lelang-016",
+      "subjectKey": "hhs:113:樂浪郡:016",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "渾彌",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-lelang-017",
+      "recordId": "fc-lelang-017",
+      "subjectKey": "hhs:113:樂浪郡:017",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "賓徒",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-002",
+      "recordId": "fc-liaodong-shuguo-002",
+      "subjectKey": "hhs:113:遼東屬國:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "徒河",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-003",
+      "recordId": "fc-liaodong-shuguo-003",
+      "subjectKey": "hhs:113:遼東屬國:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "險瀆",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-005",
+      "recordId": "fc-liaodong-shuguo-005",
+      "subjectKey": "hhs:113:遼東屬國:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "房",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-liaodong-shuguo-006",
+      "recordId": "fc-liaodong-shuguo-006",
+      "subjectKey": "hhs:113:遼東屬國:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "羸𨻻",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-002",
+      "recordId": "fc-jiaozhi-002",
+      "subjectKey": "hhs:113:交趾郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "安定",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-003",
+      "recordId": "fc-jiaozhi-003",
+      "subjectKey": "hhs:113:交趾郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "苟漏",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-004",
+      "recordId": "fc-jiaozhi-004",
+      "subjectKey": "hhs:113:交趾郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "麋泠",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-005",
+      "recordId": "fc-jiaozhi-005",
+      "subjectKey": "hhs:113:交趾郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "曲陽",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-006",
+      "recordId": "fc-jiaozhi-006",
+      "subjectKey": "hhs:113:交趾郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "北帶",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-007",
+      "recordId": "fc-jiaozhi-007",
+      "subjectKey": "hhs:113:交趾郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "稽徐",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-008",
+      "recordId": "fc-jiaozhi-008",
+      "subjectKey": "hhs:113:交趾郡:008",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "西于",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-009",
+      "recordId": "fc-jiaozhi-009",
+      "subjectKey": "hhs:113:交趾郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "朱䳒",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-010",
+      "recordId": "fc-jiaozhi-010",
+      "subjectKey": "hhs:113:交趾郡:010",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "封谿",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-011",
+      "recordId": "fc-jiaozhi-011",
+      "subjectKey": "hhs:113:交趾郡:011",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "望海",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiaozhi-012",
+      "recordId": "fc-jiaozhi-012",
+      "subjectKey": "hhs:113:交趾郡:012",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "居風",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-002",
+      "recordId": "fc-jiuzhen-002",
+      "subjectKey": "hhs:113:九真郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "咸懽",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-003",
+      "recordId": "fc-jiuzhen-003",
+      "subjectKey": "hhs:113:九真郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "無功",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-004",
+      "recordId": "fc-jiuzhen-004",
+      "subjectKey": "hhs:113:九真郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "無編",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-jiuzhen-005",
+      "recordId": "fc-jiuzhen-005",
+      "subjectKey": "hhs:113:九真郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "朱吾",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-002",
+      "recordId": "fc-rinan-002",
+      "subjectKey": "hhs:113:日南郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "盧容",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-003",
+      "recordId": "fc-rinan-003",
+      "subjectKey": "hhs:113:日南郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "象林",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-004",
+      "recordId": "fc-rinan-004",
+      "subjectKey": "hhs:113:日南郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "比景",
+      "physicalPlaceId": "curated:frontier-county-v1:fc-rinan-005",
+      "recordId": "fc-rinan-005",
+      "subjectKey": "hhs:113:日南郡:005",
+      "wikidataId": null
     }
   ],
   "schemaVersion": 1

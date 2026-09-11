@@ -15,8 +15,16 @@ JsonObject: TypeAlias = dict[str, JsonValue]
 NODE_CLASSES = {"COUNTY": "COUNTY_NODE", "DAO": "DAO_NODE", "MARQUISATE": "MARQUISATE_NODE", "TOWN": "TOWN_NODE"}
 ALLOWED_NODE_CLASSES = frozenset(NODE_CLASSES.values())
 LEGACY_SELECTION_COUNT = 780
-EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, "w0c-hhs-external-location": 8}
-EXPECTED_SELECTION = {"routeNodeCount": 781, "hhsAdministrativeBindingCount": 781, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 8, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0}
+# 변경 縣 51 곳(frontier-counties-v1)은 CHGIS 점이 없는 HHS 단위라 郡治 8 곳과 같은 LOCATION_ONLY claim 으로
+# 결합하되, 별도 batch 로 센다 — physicalPlaceId 이름공간이 둘을 가른다(tools/map/materialize_frontier_counties.py).
+FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
+FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
+EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
+APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND"}
+EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 8, FRONTIER_COUNTY_BATCH: 51}
+EXPECTED_LOCATION_CLAIM_COUNT = EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
+SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 8, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -156,9 +164,27 @@ def _candidate_index(candidate: JsonObject) -> tuple[dict[int, JsonObject], set[
     return indexed, pool
 
 
+def _location_claim_eligible(unit: JsonObject, overlay_row: JsonObject, rejected_homonyms: set[str]) -> bool:
+    """LOCATION_ONLY claim 이 붙을 수 있는 단위 — CHGIS 점이 하나도 남지 않은 HHS 단위다.
+
+    NO_COORDINATE_CANDIDATE 그대로이거나, 유일 후보가 REJECTED_FALSE_HOMONYM 으로 전부 기각된
+    AMBIGUOUS_POINT 이거나, 자리표시자 縣名이 독립 인용 nameCorrection 으로 복원된 SOURCE_PLACEHOLDER 다.
+    """
+    status = overlay_row.get("joinStatus")
+    if status == "NO_COORDINATE_CANDIDATE":
+        return True
+    if status == "AMBIGUOUS_POINT":
+        return text(overlay_row, "administrativeUnitId") in rejected_homonyms
+    if status == "SOURCE_PLACEHOLDER":
+        return isinstance(unit.get("nameCorrection"), dict)
+    return False
+
+
 def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObject, claims: JsonObject,
+                        units: dict[str, JsonObject],
                         ) -> tuple[dict[str, tuple[str, str]], dict[str, JsonObject]]:
     selected: dict[str, tuple[str, str]] = {}
+    rejected_homonyms: set[str] = set()
     for unit_id, row in overlay.items():
         if row.get("joinStatus") == "RESOLVED_POINT":
             place = obj(row, "selectedCandidate")
@@ -187,11 +213,15 @@ def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObjec
             selected[unit_id] = (place_id, "w0c-reviewed-ambiguity")
         elif state != "REJECTED_FALSE_HOMONYM" or set(rejected) != set(by_place):
             raise MaterializationContractError("unreviewed ambiguity disposition")
+        else:
+            rejected_homonyms.add(unit_id)
     if reviewed != ambiguous:
         raise MaterializationContractError("unreviewed ambiguity remains")
     claim_rows = rows(claims, "claims")
-    if len(claim_rows) != 8:
-        raise MaterializationContractError("location claim set must contain exactly 8 LOCATION_ONLY claims")
+    if len(claim_rows) != EXPECTED_LOCATION_CLAIM_COUNT:
+        raise MaterializationContractError(
+            f"location claim set must contain exactly {EXPECTED_LOCATION_CLAIM_COUNT} LOCATION_ONLY claims"
+        )
     claim_index: dict[str, JsonObject] = {}
     for claim in claim_rows:
         claim_id, unit_id = text(claim, "sourceClaimId"), text(claim, "subjectKey")
@@ -200,16 +230,19 @@ def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObjec
             raise MaterializationContractError("location claim is not approved LOCATION_ONLY")
         if claim.get("selectionReviewCoverage") != "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY":
             raise MaterializationContractError("location claim must be identity-only W0 review coverage")
-        if unit_id not in overlay or overlay[unit_id].get("joinStatus") != "NO_COORDINATE_CANDIDATE":
+        if unit_id not in overlay or unit_id not in units or not _location_claim_eligible(
+            units[unit_id], overlay[unit_id], rejected_homonyms
+        ):
             raise MaterializationContractError(
-                f"location-only claim requires NO_COORDINATE_CANDIDATE overlay: {unit_id}"
+                f"location-only claim requires an HHS unit without any surviving coordinate candidate: {unit_id}"
             )
         if unit_id in selected or unit_id in claim_index or any(row.get("sourceClaimId") == claim_id for row in claim_index.values()):
             raise MaterializationContractError("location claim duplicates a selected binding")
         place_id = text(resolution, "physicalPlaceId")
-        selected[unit_id] = (place_id, "w0c-hhs-external-location")
+        batch_id = FRONTIER_COUNTY_BATCH if place_id.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+        selected[unit_id] = (place_id, batch_id)
         claim_index[unit_id] = claim
-    if len(selected) != 781 or len({value[0] for value in selected.values()}) != 781:
+    if len(selected) != SELECTION_COUNT or len({value[0] for value in selected.values()}) != SELECTION_COUNT:
         raise MaterializationContractError("duplicate physicalPlaceRef or selection count drift")
     return selected, claim_index
 
@@ -325,7 +358,7 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
         numeric_id = number(row, "numericCityId")
         if (
             unit_id not in selected_ids
-            or row.get("issuanceReason") != "LICHENG_MOVEMENT_V2_APPEND"
+            or row.get("issuanceReason") not in APPEND_ISSUANCE_REASONS
             or unit_id in appended
         ):
             raise MaterializationContractError("append-only numeric registry row is malformed")
@@ -346,7 +379,7 @@ def build_outputs(
     if len(overlay) != 1180 or overlay_doc.get("sourceYear") != 220:
         raise MaterializationContractError("overlay must cover 1,180 identities at year 220")
     current, pool = _candidate_index(candidate)
-    selected, claim_index = _reviewed_selection(overlay, adjudications, claims)
+    selected, claim_index = _reviewed_selection(overlay, adjudications, claims, units)
     if set(selected) - pool or policy.get("status") != "APPROVED":
         raise MaterializationContractError("approved selection is outside the candidate pool")
     if (any(row.get("reviewState") != "APPROVED" for row in rows(policy, "selectionBatches"))
@@ -476,8 +509,14 @@ def build_outputs(
     for unit_id, numeric_id in sorted(appended_ids.items(), key=lambda item: item[1]):
         unit = units[unit_id]
         place_id, batch_id = selected[unit_id]
-        if batch_id != "w0b-overlay-unique-220":
-            raise MaterializationContractError("append-only node must use reviewed overlay binding")
+        if batch_id == "w0b-overlay-unique-220":
+            location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
+            location_claim_id = None
+        elif batch_id == FRONTIER_COUNTY_BATCH and unit_id in claim_index:
+            location_claim_id = text(claim_index[unit_id], "sourceClaimId")
+            location_review = {"kind": "APPROVED_LOCATION_ONLY_CLAIM", "sourceClaimId": location_claim_id}
+        else:
+            raise MaterializationContractError("append-only node must use reviewed overlay binding or a frontier county claim")
         correction = unit.get("nameCorrection")
         canonical = text(correction, "correctedName") if isinstance(correction, dict) else text(unit, "sourceName")
         node_class = NODE_CLASSES[text(unit, "unitType")]
@@ -494,7 +533,7 @@ def build_outputs(
             "physicalPlaceRef": place_id,
             "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
             "administrativeUnitId": unit_id,
-            "locationAdjudication": {"kind": "W0B_GLOBAL_UNIQUE_220"},
+            "locationAdjudication": location_review,
             "selectionRationale": {
                 "method": "APPROVED_REVIEW_BATCH",
                 "batchId": batch_id,
@@ -503,6 +542,8 @@ def build_outputs(
                 "evidenceRefs": ["data/curated/han/route-node-review-policy-v1.json", batch_id],
             },
         }
+        if location_claim_id is not None:
+            node["locationClaimId"] = location_claim_id
         route_nodes.append(node)
         appended_rows.append({
             "newCityId": numeric_id,
@@ -552,7 +593,7 @@ def build_outputs(
                                               "reviewDecisionAnchors": decision_anchors,
                                               "numericCityIdChangeAllowed": False,
                                               "legacyAttributionCorrections": [number(row, "oldCityId") for row in rows(policy, "legacyAttributionCorrections")]},
-                             "provenance": provenance, "summary": {"approvedCount": 781, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 781}}, "routeNodes": route_nodes}
+                             "provenance": provenance, "summary": {"approvedCount": SELECTION_COUNT, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": SELECTION_COUNT}}, "routeNodes": route_nodes}
     migration: JsonObject = {"schemaVersion": 1, "migrationId": "han-route-node-migration-v1", "mode": "NEW_WORLD_ONLY", "targetWorldVersion": "han-world-v3", "sourceSelectionId": "han-route-node-selection-v1",
                              "referenceInventory": {"mutable": MUTABLE_REFERENCES, "immutableAudit": IMMUTABLE_AUDIT_REFERENCES,
                                                     "derivedReseed": DERIVED_RESEED_REFERENCES,

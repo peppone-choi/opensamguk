@@ -21297,6 +21297,17 @@
             "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
             "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
           },
+          "nameCorrection": {
+            "correctedName": "朱䳒",
+            "reason": "wikisource 續漢書 郡國五 판본은 縣名 두 번째 글자가 [B42B] 자리표시자로 깨져 있다. 宋書 州郡志 交州 交趾太守 조가 朱䳒令을 漢舊縣으로 실어 縣名을 朱䳒로 확정한다",
+            "sourceQuote": "朱䳒令，漢舊縣。",
+            "sourceCitation": {
+              "corpusPath": "data/corpus/ss-038.txt",
+              "line": 856,
+              "sourceUrl": "https://zh.wikisource.org/wiki/宋書/卷38",
+              "snapshotSha256": "02e36d3c3b1d0a5a69b8135121c41cc31060d686643f79bfbb4c2af508644264"
+            }
+          },
           "sourceNameIssue": {
             "resolutionStatus": "UNRESOLVED_SOURCE_PLACEHOLDER",
             "witnessText": "朱觏",

@@ -51,12 +51,12 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `canonical Han topology exposes 1524 provinces and 4161 symmetric edges`() {
+    fun `canonical Han topology exposes 1520 provinces and 4118 symmetric edges`() {
         val network = provider().network(1020, emptyList())
 
-        assertEquals(1_524, network.provinceOwners.size)
-        assertEquals(1_524, network.provinceAdjacency.size)
-        assertEquals(4_161, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        assertEquals(1_520, network.provinceOwners.size)
+        assertEquals(1_520, network.provinceAdjacency.size)
+        assertEquals(4_118, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         network.provinceAdjacency.forEachIndexed { a, neighbors ->
             neighbors.forEach { b -> assertTrue(a in network.provinceAdjacency[b]) }
         }

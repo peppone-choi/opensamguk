@@ -3920,6 +3920,312 @@
       "initialAdministrativeUnitId": "hhs:112:濟南國:010",
       "issuanceReason": "LICHENG_MOVEMENT_V2_APPEND",
       "numericCityId": 781
+    },
+    {
+      "routeNodeKey": "a1d8f9cd-d1c5-42f1-9226-4446d8b5b08b",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 782
+    },
+    {
+      "routeNodeKey": "cc76ee2d-873f-4536-8b03-e5fb8a79b30f",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 783
+    },
+    {
+      "routeNodeKey": "d0bd80d9-a882-403b-aa23-e20d80bcd9a8",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 784
+    },
+    {
+      "routeNodeKey": "7e58d068-3274-4b71-a136-b198bb20814f",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:006",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 785
+    },
+    {
+      "routeNodeKey": "5bbdbbf5-6b8b-43fc-b8f9-70229ada8817",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:007",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 786
+    },
+    {
+      "routeNodeKey": "0d6d61b4-e84b-4a90-a8cc-10afeebc9315",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:008",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 787
+    },
+    {
+      "routeNodeKey": "8da8ceaf-9f74-40d9-8c19-fcad58bf3b73",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:009",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 788
+    },
+    {
+      "routeNodeKey": "2af1d18c-50de-4fef-afc6-437ce951858c",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:010",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 789
+    },
+    {
+      "routeNodeKey": "b3cd94dd-12dd-41c3-aca5-be94625f2554",
+      "initialAdministrativeUnitId": "hhs:113:遼東郡:011",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 790
+    },
+    {
+      "routeNodeKey": "b2d47090-5595-4ebb-948b-f07d8d16956c",
+      "initialAdministrativeUnitId": "hhs:113:玄菟郡:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 791
+    },
+    {
+      "routeNodeKey": "0dcbc4fa-acec-4305-8305-b217432996a1",
+      "initialAdministrativeUnitId": "hhs:113:玄菟郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 792
+    },
+    {
+      "routeNodeKey": "2da5cb91-126f-424a-898d-5d57567762f1",
+      "initialAdministrativeUnitId": "hhs:113:玄菟郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 793
+    },
+    {
+      "routeNodeKey": "eaf552c6-df5b-4352-b278-3e2ded0c5637",
+      "initialAdministrativeUnitId": "hhs:113:玄菟郡:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 794
+    },
+    {
+      "routeNodeKey": "820068e8-ed77-4ad3-83fc-03cafcc7bfe3",
+      "initialAdministrativeUnitId": "hhs:113:玄菟郡:006",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 795
+    },
+    {
+      "routeNodeKey": "43cda9b8-bcaf-4cae-a94f-6abc8d627eef",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 796
+    },
+    {
+      "routeNodeKey": "1afbe24b-92a6-46bd-bfe8-a8a7c7834434",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 797
+    },
+    {
+      "routeNodeKey": "b5a7f5ce-e12d-4abd-a406-35a2aae10e3e",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 798
+    },
+    {
+      "routeNodeKey": "78c49390-dc6e-4c11-99f4-cea475c95696",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:006",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 799
+    },
+    {
+      "routeNodeKey": "6d92cbcd-d544-445f-81ba-f063df94daf4",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:007",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 800
+    },
+    {
+      "routeNodeKey": "4fa6d917-4f85-4a2c-b825-963b7c73f05c",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:009",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 801
+    },
+    {
+      "routeNodeKey": "dee6adae-9440-46eb-baf7-205e229a0974",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:010",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 802
+    },
+    {
+      "routeNodeKey": "2081fb53-7269-449f-97eb-5020f72c25b0",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:011",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 803
+    },
+    {
+      "routeNodeKey": "606dc9f4-abde-4461-bbdc-a7c7ec713c78",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:012",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 804
+    },
+    {
+      "routeNodeKey": "e7250b60-14ba-4fef-9bd7-664e90278a88",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:013",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 805
+    },
+    {
+      "routeNodeKey": "7822cbbe-fb12-47a1-806e-df2afba002db",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:014",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 806
+    },
+    {
+      "routeNodeKey": "2029ac11-103b-48bd-b26f-e5ab2bef1c10",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:015",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 807
+    },
+    {
+      "routeNodeKey": "6205faef-784a-4412-9e35-366d76bf82c2",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:016",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 808
+    },
+    {
+      "routeNodeKey": "3a4a6a54-f15b-4fc5-917e-8c10909c1107",
+      "initialAdministrativeUnitId": "hhs:113:樂浪郡:017",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 809
+    },
+    {
+      "routeNodeKey": "a39cc0d3-18d8-430a-b7cb-1a38d0e82b9d",
+      "initialAdministrativeUnitId": "hhs:113:遼東屬國:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 810
+    },
+    {
+      "routeNodeKey": "5c3843d4-1616-4521-a7fb-c7570ca5a3c8",
+      "initialAdministrativeUnitId": "hhs:113:遼東屬國:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 811
+    },
+    {
+      "routeNodeKey": "5235c442-567a-4b36-9145-dbe4594a00cb",
+      "initialAdministrativeUnitId": "hhs:113:遼東屬國:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 812
+    },
+    {
+      "routeNodeKey": "ddeac138-03aa-402b-9c50-1a998707814e",
+      "initialAdministrativeUnitId": "hhs:113:遼東屬國:006",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 813
+    },
+    {
+      "routeNodeKey": "85c74f5a-2ddc-4a11-9484-a20b2eaa82d4",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 814
+    },
+    {
+      "routeNodeKey": "05c360eb-4935-4e2d-80a3-ae2a1db08911",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 815
+    },
+    {
+      "routeNodeKey": "e07bef0d-c531-4b31-9577-876b096c6e8f",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 816
+    },
+    {
+      "routeNodeKey": "a4f274d1-92a3-4b48-b94d-ef51911c3352",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 817
+    },
+    {
+      "routeNodeKey": "84a3ec7a-7713-40ed-a627-99c5af587333",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:006",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 818
+    },
+    {
+      "routeNodeKey": "5ab94fee-73fb-4390-a9e0-9c45c2066a79",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:007",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 819
+    },
+    {
+      "routeNodeKey": "b52314e0-4cf8-4a4d-a89a-23dabbd8e3d6",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:008",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 820
+    },
+    {
+      "routeNodeKey": "71969480-6d4a-43c6-9f7b-24769d16b9c6",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:009",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 821
+    },
+    {
+      "routeNodeKey": "8f0e0ee1-3b91-4362-ae44-79ae3f2aecf2",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:010",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 822
+    },
+    {
+      "routeNodeKey": "ca02e661-43a9-4cff-bfc4-4880d465c97a",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:011",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 823
+    },
+    {
+      "routeNodeKey": "79d71b7d-0dc8-4964-801b-7018fad5bed1",
+      "initialAdministrativeUnitId": "hhs:113:交趾郡:012",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 824
+    },
+    {
+      "routeNodeKey": "5ee59f54-806f-47a3-ba12-f25ac2bd55de",
+      "initialAdministrativeUnitId": "hhs:113:九真郡:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 825
+    },
+    {
+      "routeNodeKey": "c56f5fbf-4321-44c2-97b5-51ecf694911f",
+      "initialAdministrativeUnitId": "hhs:113:九真郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 826
+    },
+    {
+      "routeNodeKey": "b158df89-f58a-45e5-a4ed-524997cce889",
+      "initialAdministrativeUnitId": "hhs:113:九真郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 827
+    },
+    {
+      "routeNodeKey": "990970a3-e955-4893-9e46-62bd5116fab5",
+      "initialAdministrativeUnitId": "hhs:113:九真郡:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 828
+    },
+    {
+      "routeNodeKey": "cbdc9e78-b27f-4054-bca4-740acead9a6a",
+      "initialAdministrativeUnitId": "hhs:113:日南郡:002",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 829
+    },
+    {
+      "routeNodeKey": "1d595ae9-af47-4b07-bfa1-90d71eee30db",
+      "initialAdministrativeUnitId": "hhs:113:日南郡:003",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 830
+    },
+    {
+      "routeNodeKey": "23a6de4d-2164-48c4-8800-d7634bb67296",
+      "initialAdministrativeUnitId": "hhs:113:日南郡:004",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 831
+    },
+    {
+      "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7",
+      "initialAdministrativeUnitId": "hhs:113:日南郡:005",
+      "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
+      "numericCityId": 832
     }
   ]
 }

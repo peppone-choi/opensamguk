@@ -40,6 +40,7 @@ class MapAdministrativeOwnershipTest {
                 ProvinceOccupancyProjection("P1", 0, 4),
                 ProvinceOccupancyProjection("P2", 1, 2),
                 ProvinceOccupancyProjection("P3", 2, 2),
+                ProvinceOccupancyProjection("P4", 3, 2),
             ),
             projection.provinceOccupancy,
         )
@@ -54,6 +55,39 @@ class MapAdministrativeOwnershipTest {
             listOf(CommanderyControlProjection("C1", 4)),
             projection.commanderyControl,
         )
+    }
+
+    @Test
+    fun `a live city recolors every province of its county that shares the seat baseline`() {
+        // 縣 J2 는 省 P3(治所) · P4 를 함께 가진다. 城을 빼앗으면 두 칸이 같이 바뀌어야 한다 —
+        // 治所만 바뀌면 같은 縣 안에 색이 빠진 칸이 남는다(프로빈스 빵꾸).
+        val projection = fixtureProjection().project(
+            scenarioCode = "scenario_1010",
+            liveCities = listOf(LiveCityOwnership(cityId = 20, provinceIndex = 2, nationId = 7)),
+        )
+
+        assertEquals(
+            listOf(
+                ProvinceOccupancyProjection("P1", 0, 1),
+                ProvinceOccupancyProjection("P2", 1, 2),
+                ProvinceOccupancyProjection("P3", 2, 7),
+                ProvinceOccupancyProjection("P4", 3, 7),
+            ),
+            projection.provinceOccupancy,
+        )
+    }
+
+    @Test
+    fun `an adjudicated split province keeps its canonical owner when the county seat falls`() {
+        // J1 의 P2 는 기준표가 치소(P1, 소유 1)와 다른 세력 2 에게 준 칸이다
+        // (충돌 허용 원장). 城이 넘어가도 이 칸은 대표 색으로 뭉개지 않는다.
+        val projection = fixtureProjection().project(
+            scenarioCode = "scenario_1010",
+            liveCities = listOf(LiveCityOwnership(cityId = 10, provinceIndex = 0, nationId = 4)),
+        )
+
+        assertEquals(4, projection.provinceOccupancy.single { it.provinceRecordId == "P1" }.nationId)
+        assertEquals(2, projection.provinceOccupancy.single { it.provinceRecordId == "P2" }.nationId)
     }
 
     @Test
@@ -102,8 +136,8 @@ class MapAdministrativeOwnershipTest {
 
         scenarioCodes.forEach { scenarioCode ->
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
-            assertEquals(1_524, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
-            assertEquals(1_020, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            assertEquals(1_520, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
+            assertEquals(1_071, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             assertEquals(172, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(
                 snapshot.provinceOccupancy.size,
@@ -155,11 +189,12 @@ class MapAdministrativeOwnershipTest {
               "provinceRecords": [
                 {"id":"P1","jurisdictionId":"J1"},
                 {"id":"P2","jurisdictionId":"J1"},
-                {"id":"P3","jurisdictionId":"J2"}
+                {"id":"P3","jurisdictionId":"J2"},
+                {"id":"P4","jurisdictionId":"J2"}
               ],
               "jurisdictionRecords": [
                 {"id":"J1","commanderyId":"C1","seatPlaceId":"P1","provinceIds":["P1","P2"]},
-                {"id":"J2","commanderyId":"C1","seatPlaceId":"P3","provinceIds":["P3"]}
+                {"id":"J2","commanderyId":"C1","seatPlaceId":"P3","provinceIds":["P3","P4"]}
               ],
               "commanderyRecords": [
                 {"id":"C1","seatJurisdictionId":"J1","jurisdictionIds":["J1","J2"]}
@@ -178,7 +213,8 @@ class MapAdministrativeOwnershipTest {
                 "assignments": [
                   {"provinceId":"P1","ownerNationId":1,"evidenceIds":["TEST-EVIDENCE-1"]},
                   {"provinceId":"P2","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]},
-                  {"provinceId":"P3","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]}
+                  {"provinceId":"P3","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]},
+                  {"provinceId":"P4","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]}
                 ]
               }]
             }

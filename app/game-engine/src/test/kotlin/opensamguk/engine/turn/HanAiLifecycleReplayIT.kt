@@ -144,8 +144,8 @@ class HanAiLifecycleReplayIT {
         },
     ): ReplayResult {
         assertEquals("han-world-v3", snapshot.state.config["mapName"], "scenario_1010 must exercise the new-world-only Han variant")
-        assertEquals(781, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
-        assertEquals((1..781).toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals(832, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
+        assertEquals((1..832).toSet(), snapshot.cities.map { it.id }.toSet())
         assertEquals("역성", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(230, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 

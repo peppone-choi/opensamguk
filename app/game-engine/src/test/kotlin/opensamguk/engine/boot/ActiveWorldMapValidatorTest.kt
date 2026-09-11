@@ -55,8 +55,8 @@ class ActiveWorldMapValidatorTest {
     }
 
     @Test
-    fun `new world v3 validates only the reviewed 781 identity domain`() {
-        ActiveWorldMapValidator.validate(snapshot("han-world-v3", 1..781, listOf(781), listOf(1)))
+    fun `new world v3 validates only the reviewed 832 identity domain`() {
+        ActiveWorldMapValidator.validate(snapshot("han-world-v3", 1..832, listOf(781), listOf(1)))
         assertFailsWith<IllegalStateException> {
             ActiveWorldMapValidator.validate(snapshot("han-world-v3", 1..774))
         }

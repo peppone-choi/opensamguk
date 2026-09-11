@@ -14,9 +14,9 @@ class Han780V1CompatibilityResourceTest {
     }
 
     @Test
-    fun `new world v3 resolves its reviewed 781 city resource`() {
+    fun `new world v3 resolves its reviewed 832 city resource`() {
         val v3 = MapJson.loadFromClasspath("han-world-v3")
-        assertEquals((1..781).toList(), v3.cities.map { it.id })
+        assertEquals((1..832).toList(), v3.cities.map { it.id })
     }
 
     @Test

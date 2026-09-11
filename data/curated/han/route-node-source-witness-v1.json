@@ -89,6 +89,516 @@
       "sourceClaimId": "han-location-claim-v1-x026",
       "verbatim": "龜茲音丘慈，縣名，屬上郡。",
       "volume": 65
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 834,
+      "lineStart": 834,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖新昌〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 836,
+      "lineStart": 836,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖无虑〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 838,
+      "lineStart": 838,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖望平〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 842,
+      "lineStart": 842,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖安市〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 844,
+      "lineStart": 844,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖平郭〗有铁。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-008",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 846,
+      "lineStart": 846,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖西安平〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-009",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 848,
+      "lineStart": 848,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖汶〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-010",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 850,
+      "lineStart": 850,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖番汗〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-011",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 852,
+      "lineStart": 852,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖沓氏〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 858,
+      "lineStart": 858,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖西盖马〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 860,
+      "lineStart": 860,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖上殷台〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 862,
+      "lineStart": 862,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖高显〗故属辽东。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 864,
+      "lineStart": 864,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖候城〗故属辽东。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 866,
+      "lineStart": 866,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖辽阳〗故属辽东。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 874,
+      "lineStart": 874,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖浿水〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 876,
+      "lineStart": 876,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖含资〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 878,
+      "lineStart": 878,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖占蝉〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 880,
+      "lineStart": 880,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖遂城〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 882,
+      "lineStart": 882,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖增地〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-009",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 886,
+      "lineStart": 886,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖驷望〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-010",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 888,
+      "lineStart": 888,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖海冥〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-011",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 890,
+      "lineStart": 890,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖列口〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-012",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 892,
+      "lineStart": 892,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖长岑〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-013",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 894,
+      "lineStart": 894,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖屯有〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-014",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 896,
+      "lineStart": 896,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖昭明〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-015",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 898,
+      "lineStart": 898,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖镂方〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-016",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 900,
+      "lineStart": 900,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖提奚〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-017",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 902,
+      "lineStart": 902,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖浑弥〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 910,
+      "lineStart": 910,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖宾徒〗故属辽西。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 912,
+      "lineStart": 912,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖徒河〗故属辽西。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 916,
+      "lineStart": 916,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖险渎〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 918,
+      "lineStart": 918,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖房〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1003,
+      "lineStart": 1003,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖羸𨻻〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1005,
+      "lineStart": 1005,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖安定〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1007,
+      "lineStart": 1007,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖苟漏〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1009,
+      "lineStart": 1009,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖麋泠〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1011,
+      "lineStart": 1011,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖曲阳〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1013,
+      "lineStart": 1013,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖北带〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-008",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1015,
+      "lineStart": 1015,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖稽徐〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-009",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1017,
+      "lineStart": 1017,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖西于〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-010",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1019,
+      "lineStart": 1019,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖朱[B42B]〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-011",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1021,
+      "lineStart": 1021,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖封谿〗{{YL|建武十九年}}置。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-012",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1023,
+      "lineStart": 1023,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖望海〗建武十九年置。",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1029,
+      "lineStart": 1029,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖居风〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1031,
+      "lineStart": 1031,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖咸懽〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1033,
+      "lineStart": 1033,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖无功〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1035,
+      "lineStart": 1035,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖无编〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1041,
+      "lineStart": 1041,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖朱吾〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1043,
+      "lineStart": 1043,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖卢容〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1045,
+      "lineStart": 1045,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖象林〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1047,
+      "lineStart": 1047,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖比景〗",
+      "volume": 113
     }
   ],
   "schemaVersion": 1

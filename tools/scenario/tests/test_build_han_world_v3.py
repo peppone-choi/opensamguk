@@ -91,6 +91,7 @@ class HanWorldV3Test(unittest.TestCase):
         )
 
     def test_county_adjacency_endpoints_are_spatial_province_indices(self) -> None:
+        # 귀속은 호출자가 省 인덱스로 명시해 넘긴다. cities 배열 서수는 여기 끼어들지 않는다.
         tiles = {
             "cities": [
                 {"id": "place-b"},
@@ -104,17 +105,61 @@ class HanWorldV3Test(unittest.TestCase):
             "adjacency": {"county": [{"a": 0, "b": 1, "cells": 6}]},
         }
 
-        edges = build_han_world.project_county_adjacency(
-            tiles, {"place-a": 781, "place-b": 273}
-        )
+        edges = build_han_world.project_county_adjacency(tiles, {0: 781, 1: 273})
 
         self.assertEqual([(273, 781, 6)], edges)
 
+    def test_unattributed_province_drops_its_edges(self) -> None:
+        # 城이 하나도 없는 郡의 땅이다(귀속 원장 COMMANDERY_HAS_NO_CITY). 지어낸 城으로
+        # 메우지 않고 간선을 버린다 — 옛 규칙과 같은 결론이고, 다른 점은 「城 없는 縣」이
+        # 더는 여기 오지 않는다는 것뿐이다.
+        tiles = {
+            "cities": [],
+            "provinceRecords": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
+            "adjacency": {
+                "county": [
+                    {"a": 0, "b": 1, "cells": 6},
+                    {"a": 1, "b": 2, "cells": 4},
+                ]
+            },
+        }
+
+        edges = build_han_world.project_county_adjacency(tiles, {0: 10, 1: 20})
+
+        self.assertEqual([(10, 20, 6)], edges)
+
+    def test_shared_city_merges_boundary_cells_instead_of_dropping_one(self) -> None:
+        # 한 城이 여러 省을 거느리므로 같은 城 쌍이 여러 경계에서 나온다. 접한 칸수는
+        # 그 경계들의 합이다 — 하나를 골라 버리면 길 굵기가 왜곡된다.
+        tiles = {
+            "cities": [],
+            "provinceRecords": [{"id": "a"}, {"id": "a2"}, {"id": "b"}],
+            "adjacency": {
+                "county": [
+                    {"a": 0, "b": 2, "cells": 6},
+                    {"a": 1, "b": 2, "cells": 4},
+                ]
+            },
+        }
+
+        edges = build_han_world.project_county_adjacency(tiles, {0: 10, 1: 10, 2: 20})
+
+        self.assertEqual([(10, 20, 10)], edges)
+
     def test_real_boundary_projection_links_lu_but_not_lu_county_to_licheng(self) -> None:
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        province_by_id = {
+            str(row["id"]): index
+            for index, row in enumerate(tiles["provinceRecords"])
+        }
 
         edges = build_han_world.project_county_adjacency(
-            tiles, {"45098": 273, "45022": 781, "45180": 999}
+            tiles,
+            {
+                province_by_id["45098"]: 273,
+                province_by_id["45022"]: 781,
+                province_by_id["45180"]: 999,
+            },
         )
 
         self.assertEqual([(273, 781, 6)], edges)
@@ -167,13 +212,32 @@ class HanWorldV3Test(unittest.TestCase):
         selection_by_id = {
             node["numericCityId"]: node for node in selection["routeNodes"]
         }
+        # 選定 원장의 parentName 은 續漢書 郡國志가 그 縣을 실은 郡이고, 월드의 meta.junCh 는
+        # 그 縣이 실제로 선 칸의 han-tiles parentOwner 다. 변경 縣 51곳 중 12곳은 두 값이
+        # 어긋난다 — 배치 원장이 그 12건을 worldParentRegionId != hhsParentRegionId 로
+        # 명시해 두었으므로, 그 집합과 **정확히** 같은지만 허용한다.
+        placements = json.loads(
+            (ROOT / "data/curated/han/frontier-county-placements-v1.json").read_text()
+        )["placements"]
+        expected_reassigned = {
+            (row["physicalPlaceRef"], row["hhsCommanderyHan"], row["worldCommanderyHan"])
+            for row in placements
+            if row["worldParentRegionId"] != row["hhsParentRegionId"]
+        }
+        self.assertEqual(12, len(expected_reassigned))
+        reassigned = set()
         for city in world["cities"]:
-            self.assertEqual(selection_by_id[city["id"]]["parentName"], city["meta"]["junCh"])
+            node = selection_by_id[city["id"]]
+            if node["parentName"] != city["meta"]["junCh"]:
+                reassigned.add(
+                    (city["physicalPlaceRef"], node["parentName"], city["meta"]["junCh"])
+                )
             self.assertEqual(
-                selection_by_id[city["id"]]["seatRole"] == "COMMANDERY_SEAT",
+                node["seatRole"] == "COMMANDERY_SEAT",
                 city["meta"]["isSeat"],
             )
-        self.assertEqual(781, len(actual))
+        self.assertEqual(expected_reassigned, reassigned)
+        self.assertEqual(832, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -208,8 +272,12 @@ class HanWorldV3Test(unittest.TestCase):
             )
 
     def test_v3_check_is_separate_and_legacy_artifacts_remain_pinned(self) -> None:
+        # 2026-09-11: 縣 51곳이 들어와 han-tiles provinceRecords 배열이 1,524→1,520 으로
+        # 재구성됐다. legacy han.json 의 provinceId 는 그 배열의 **인덱스**라, 재바인딩
+        # (materialize_runtime_province_identity.py --write) 없이 두면 城이 남의 省을
+        # 가리킨다. 城 집합·이름·좌표·연결은 불변이고 바뀐 것은 provinceId 뿐이다.
         expected = {
-            "infra/src/main/resources/map/han.json": "5f97f8c9269a0cff44839b55dd9e57e6d830003709df3d4618e4d1a79f76ed61",
+            "infra/src/main/resources/map/han.json": "13744d62cefe3b946398cb4ce6f2dc68f1024c8f45db8a9e3e66a5a476b9a08d",
             "infra/src/main/resources/map/han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
         }
         for rel, digest in expected.items():
@@ -321,7 +389,8 @@ class HanWorldV3Test(unittest.TestCase):
                 city["initial"], city["name"],
             )
         self.assertEqual(77, seats)
-        self.assertEqual(704, counties)
+        # 704 + 변경 縣 51 = 755 (郡治 51곳은 이미 서 있어 縣으로 오지 않는다).
+        self.assertEqual(755, counties)
         # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
         self.assertNotIn(4, {city["level"] for city in world["cities"]})
 

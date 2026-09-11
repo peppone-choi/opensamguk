@@ -28,7 +28,12 @@ object HistoricalBattlefieldCatalog {
                 }
                 return@forEach // External enclaves have no authoritative land-province node.
             }
-            require(row.get("physicalPlaceRef").textValue() == "chgis:v6:cnty:$province") {
+            // 城의 물리 장소는 출처에 따라 도메인이 셋이다 — CHGIS 표제(chgis), 중국 밖
+            // 외부 정치체(external), 그리고 CHGIS 에 표제가 없어 심사 원장이 자체 발급한
+            // 변경경계 縣(curated). 어느 쪽이든 접두어 뒤는 그 城의 省 id 와 같아야 한다.
+            val physical = row.get("physicalPlaceRef").textValue()
+            require(physical in setOf("chgis:v6:cnty:$province", "external:v1:$province",
+                "curated:frontier-county-v1:$province")) {
                 "Runtime city $id has inconsistent physical binding"
             }
             require(result.put(id, StrategicNodeRef.LandProvince(province)) == null) { "Duplicate runtime city" }

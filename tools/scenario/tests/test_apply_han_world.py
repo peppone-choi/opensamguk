@@ -95,15 +95,15 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
                 [], [],
             )
 
-    def test_world_v3_loader_verifies_manifest_and_has_all_781_nodes(self) -> None:
+    def test_world_v3_loader_verifies_manifest_and_has_all_832_nodes(self) -> None:
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        self.assertEqual(781, len({city for group in by_jun.values() for city in group}))
+        self.assertEqual(832, len({city for group in by_jun.values() for city in group}))
         self.assertIn(781, by_jun["제남국"])
 
     def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
         self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        known = set(range(1, 782))
+        known = set(range(1, 833))
         ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
         che2jun = {
             key: value["jun"]
@@ -135,15 +135,26 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             self.assertEqual(
                 row["routeNodeKey"], selection_by_id[row["newCityId"]]["routeNodeKey"]
             )
+        # 782–832 는 변경 縣 51곳이 같은 append-only 규약으로 뒤에 붙은 행이다 —
+        # 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고, 총 52행이어야 한다.
+        self.assertEqual(52, len(migration_doc["appendedRows"]))
         self.assertEqual(
-            [{
+            {
                 "administrativeUnitId": "hhs:112:濟南國:010",
                 "disposition": "APPENDED_NEW_WORLD_IDENTITY",
                 "newCityId": 781,
                 "physicalPlaceRef": "chgis:v6:cnty:45022",
                 "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef",
-            }],
-            migration_doc["appendedRows"],
+            },
+            migration_doc["appendedRows"][0],
+        )
+        self.assertEqual(
+            list(range(781, 833)),
+            [row["newCityId"] for row in migration_doc["appendedRows"]],
+        )
+        self.assertEqual(
+            {"APPENDED_NEW_WORLD_IDENTITY"},
+            {row["disposition"] for row in migration_doc["appendedRows"]},
         )
 
         for code in sorted(apply_han_world.ACTIVE_GENERAL_CONTRACTS):
