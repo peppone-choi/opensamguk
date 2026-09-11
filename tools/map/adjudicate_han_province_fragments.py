@@ -868,8 +868,20 @@ def _materialize_fragment_document(document: dict, ledger: dict) -> dict:
 
 def materialize_document(document: dict, ledger: dict) -> dict:
     """Validate prior decisions before composing an exact later relocation stage."""
+    from tools.map import materialize_frontier_counties as frontier
     from tools.map import relocate_han_province as relocation
 
+    if frontier.PLACEMENTS.exists():
+        placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
+        stage = placements.get("priorStage")
+        if isinstance(stage, dict) and relocation.digest(document) == stage["outputDocumentSha256"]:
+            restored = frontier.restore_document(document, placements)
+            reviewed = materialize_document(restored, ledger)
+            if reviewed != restored:
+                raise ValueError("frontier-county input is not the canonical prior relocation output")
+            county_ledger = json.loads(frontier.LEDGER.read_text(encoding="utf-8"))
+            rebuilt, _ = frontier.materialize_frontier_counties(reviewed, county_ledger)
+            return rebuilt
     if relocation.LEDGER.exists():
         later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
         if relocation.digest(document) == later["outputDocumentSha256"]:

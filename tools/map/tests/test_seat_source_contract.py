@@ -241,18 +241,19 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         return {k: v for k, v in by.items() if len(v) > 1}
 
     def test_u57_han_tiles_korean_names_collide(self) -> None:
-        """han-tiles.json 1138 노드에서 한글명 **92개가 209노드**에 겹치고, **75개는 nameCh 가 실제로 다르다**.
+        """han-tiles.json 1189 노드에서 한글명 **95개가 215노드**에 겹치고, **78개는 nameCh 가 실제로 다르다**.
 
-        73 은 「표기만 다른 같은 곳」이 아니라 **서로 다른 縣이 같은 한글명을 쓰는** 건수다
+        2026-09-11 변경 縣 51곳이 들어오며 곡양현·무공현·요양현 세 이름이 새로 겹쳤다.
+        76 은 「표기만 다른 같은 곳」이 아니라 **서로 다른 縣이 같은 한글명을 쓰는** 건수다
         (임강현 `临江县`/`临羌县`, 경현 `京县`/`泾县`/`经县`, 신도현 `信都县`/`新都县` …).
         """
         dup = self._collisions([c["name"] for c in self.cities])
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
-        self.assertEqual(92, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(209, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(95, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(215, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            75, len(different),
+            78, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 

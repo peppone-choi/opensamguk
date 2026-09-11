@@ -47,6 +47,18 @@ jobs:
       - name: Verify reviewed Han route candidate regeneration
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
+      # 변경 縣 51 곳(交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國)은 han-tiles 에 縣 구획으로 서 있다.
+      # 결정론 재생성이라 --check 가 곧 드리프트 게이트다 — 원장(frontier-county-placements-v1)의
+      # priorStage 로 이전 단계를 복원해 다시 세우고 바이트 비교한다(약 35초).
+      - name: Verify frontier county materialization
+        if: '!cancelled()'
+        run: python3 tools/map/materialize_frontier_counties.py --check
+      # 省 → 城 귀속 원장. 한 縣이 여러 省을 가지고 城이 없는 縣도 239 곳이라, 인접 간선을
+      # 省의 cityIndex 로만 풀면 그래프가 성분 36 개로 쪼개진다(실측). 결정론 재생성이라
+      # --check 가 곧 드리프트 게이트다.
+      - name: Verify province to city attribution ledger
+        if: '!cancelled()'
+        run: python3 tools/scenario/build_province_city_attribution.py --check
       - name: Verify new-world Han V3 artifacts
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_world.py --target han-world-v3 --check

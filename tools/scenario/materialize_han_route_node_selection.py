@@ -21,6 +21,7 @@ if str(ROOT) not in sys.path:
 
 from tools.scenario.han_route_node_selection import (
     BuildResult,
+    EXPECTED_LOCATION_CLAIM_COUNT,
     JsonObject,
     JsonValue,
     MaterializationContractError,
@@ -89,8 +90,10 @@ def _load(path: Path) -> JsonObject:
 def _verify_location_claim_sources(claims: JsonObject, source_witness: Path) -> None:
     claim_rows = rows(claims, "claims")
     witnesses: list[JsonObject] | None = None
-    if len(claim_rows) != 8:
-        raise MaterializationContractError("location claim set must contain exactly 8 LOCATION_ONLY claims")
+    if len(claim_rows) != EXPECTED_LOCATION_CLAIM_COUNT:
+        raise MaterializationContractError(
+            f"location claim set must contain exactly {EXPECTED_LOCATION_CLAIM_COUNT} LOCATION_ONLY claims"
+        )
     for claim in claim_rows:
         claim_id = text(claim, "sourceClaimId")
         if claim.get("claimRole") != "LOCATION_ONLY":

@@ -55,12 +55,15 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertNotIn("45022", commanderies["PARENT-0036"]["jurisdictionIds"])
         self.assertNotEqual("45022", commanderies["PARENT-0035"]["seatJurisdictionId"])
         self.assertFalse(cities["45022"]["zhi"])
-        self.assertEqual(1_524, len(tiles["provinceRecords"]))
-        self.assertEqual(1_020, len(tiles["jurisdictionRecords"]))
+        self.assertEqual(1_520, len(tiles["provinceRecords"]))
+        self.assertEqual(1_071, len(tiles["jurisdictionRecords"]))
         self.assertEqual(172, len(tiles["commanderyRecords"]))
         # Preserve the original Licheng geometry proof before the separate Geuk stage.
+        from tools.map import materialize_frontier_counties as frontier
         from tools.map import relocate_han_province as relocation
-        prior = relocation.restore_document(tiles, json.loads(relocation.LEDGER.read_text()))
+        prior = relocation.restore_document(
+            frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
+        )
         geometry_hashes = {
             key: hashlib.sha256(
                 json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
@@ -119,8 +122,8 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertIn("45277", commanderies["PARENT-0024"]["jurisdictionIds"])
         self.assertNotIn("45277", commanderies["PARENT-0028"]["jurisdictionIds"])
         self.assertNotEqual("45277", commanderies["PARENT-0024"]["seatJurisdictionId"])
-        self.assertEqual(1_524, len(document["provinceRecords"]))
-        self.assertEqual(1_020, len(document["jurisdictionRecords"]))
+        self.assertEqual(1_520, len(document["provinceRecords"]))
+        self.assertEqual(1_071, len(document["jurisdictionRecords"]))
         self.assertEqual(172, len(document["commanderyRecords"]))
 
     def test_ningyang_row_reparents_a_pristine_in_memory_source_parent_fixture(self) -> None:
@@ -456,8 +459,8 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         jurisdiction_ids = {record["id"] for record in jurisdictions}
         commandery_ids = {record["id"] for record in commanderies}
 
-        self.assertEqual(1524, len(provinces))
-        self.assertEqual(1020, len(jurisdictions))
+        self.assertEqual(1520, len(provinces))
+        self.assertEqual(1071, len(jurisdictions))
         self.assertEqual(172, len(commanderies))
         self.assertEqual({"SPATIAL_PROVINCE"}, {record["kind"] for record in provinces})
         self.assertEqual(len(provinces), len({record["id"] for record in provinces}))

@@ -9,7 +9,6 @@ import {
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import { PASS_LEVEL, STRATEGIC_PASSES } from '../iso/strategicPasses';
-import { FRONTIER_COUNTIES, frontierCountyDisplayName } from '../iso/frontierCounties';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { HanTiles } from '../HanMapCanvas';
@@ -360,25 +359,10 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
     for (const pass of passes) insideOwnTile(pass);
   });
 
-  // placeGameCities 에서 placeFrontierCounties 를 빼면 이 둘이 빨개진다.
-  it('게임 城 이 하나도 없어도 변경 縣 51 곳은 선다', () => {
+  // 변경 縣 51 곳은 더는 여기서 덧대지 않는다 — han-world-v3 城 782–832 로 서버가 실어
+  // 보낸다. 게임 城 이 하나도 없으면 關 8 곳과 郡國 밖 세력만 선다.
+  it('게임 城 이 없으면 표시 전용 縣 은 한 곳도 없다', () => {
     const placed = placeGameCities([], real, options);
-    const names = new Set(placed.map((c) => c.name));
-    for (const county of FRONTIER_COUNTIES) {
-      expect(names.has(frontierCountyDisplayName(county)), county.id).toBe(true);
-    }
-    const counties = placed.filter((c) => c.id < -1_000_008);
-    expect(counties).toHaveLength(FRONTIER_COUNTIES.length);
-    // 전부 음수 id — 눌러도 들어갈 데가 없다.
-    expect(counties.every(isExternalPlace)).toBe(true);
-  });
-
-  it('변경 縣 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
-    const counties = placeGameCities([], real, options).filter((c) => c.id < -1_000_008);
-    expect(counties).toHaveLength(FRONTIER_COUNTIES.length);
-    for (const county of counties) insideOwnTile(county);
-    // 한 칸을 나눠 쓰는 縣이 실제로 있다 — 없으면 이 게이트가 아무것도 안 본다.
-    // 실측: 麋泠·西于·封谿가 交趾 한 칸에 들고, 居風은 九真郡 노드와 같은 칸이다.
-    expect(counties.some((c) => c.drawScale < 1)).toBe(true);
+    expect(placed.filter((c) => c.id < -1_000_008)).toHaveLength(0);
   });
 });

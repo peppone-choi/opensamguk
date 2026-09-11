@@ -70,7 +70,10 @@ OUT_V3_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "comm
 OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
+PROVINCE_ATTRIBUTION = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
+# han-world-v3 城 수: legacy 780 + 781 歷城 + 782..832 변경 縣 51 (route-node-key-registry-v1).
+V3_ROUTE_NODE_COUNT = 832
 ADMIN_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.
@@ -830,6 +833,12 @@ def build() -> tuple[dict, str, str, dict]:
     return doc, kotlin(raw_rows), gate_kt, stats
 
 
+# 한 메서드에 담는 城 수. 城 832 곳의 인접 목록까지 한 listOf 로 내면 초기화 블록이
+# JVM 의 메서드 64KB 한도를 넘어 코틀린 컴파일러가 MethodTooLargeException 으로 죽는다
+# (:common:compileKotlin, 실측). 150 개씩 함수로 쪼개면 <clinit> 은 합치기만 한다.
+KOTLIN_CHUNK = 150
+
+
 def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
     body = []
     for cid, name, lv, stats, region, x, y, path in rows:
@@ -852,28 +861,99 @@ def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
         " * 소관이 아니다 — HanCityConstVariant 가 한다.\n"
         " */\n"
         f"object {object_name} {{\n"
-        "    val initCity: List<RawCity> = listOf(\n"
-        + "\n".join(body) + "\n"
-        "    )\n"
-        "}\n"
+        + _kotlin_city_table(body, chunked=target == "han-world-v3")
+        + "}\n"
     )
 
 
+def _kotlin_city_table(body: list[str], chunked: bool) -> str:
+    """RawCity 줄들을 initCity 표로 낸다. chunked 면 KOTLIN_CHUNK 개씩 함수로 쪼갠다.
+
+    han(780 城)은 한 덩이로도 한도 안에 들어가고, 그 생성기 입력(data/map/junguozhi.json)은
+    gitignored 라 이 자리에서 다시 낼 수 없다 — 그래서 쪼개기는 v3 한정이다.
+    """
+    if not chunked:
+        return (
+            "    val initCity: List<RawCity> = listOf(\n"
+            + "\n".join(body) + "\n"
+            "    )\n"
+        )
+    groups = [body[i : i + KOTLIN_CHUNK] for i in range(0, len(body), KOTLIN_CHUNK)]
+    names = [f"chunk{i}()" for i in range(len(groups))]
+    out = [
+        "    // 城 표를 한 listOf 로 내면 <clinit> 이 JVM 메서드 64KB 한도를 넘는다",
+        f"    // (MethodTooLargeException). {KOTLIN_CHUNK} 개씩 함수로 쪼개 합친다.",
+        "    val initCity: List<RawCity> = " + " + ".join(names),
+    ]
+    for i, group in enumerate(groups):
+        out.append("")
+        out.append(f"    private fun chunk{i}(): List<RawCity> = listOf(")
+        out.extend(group)
+        out.append("    )")
+    return "\n".join(out) + "\n"
+
+
+def load_province_route_attribution(
+    tiles: dict, selection: dict, route_id_by_physical_id: dict[str, int]
+) -> dict[int, int]:
+    """省 인덱스 → 城 번호. data/curated/han/province-city-attribution-v1.json 이 심사본이다.
+
+    한 縣이 여러 省을 가질 수 있고(han-tiles jurisdictionRecords.provinceIds), 城이 선정되지
+    않은 縣도 239 곳이라, 省을 제 城으로 바로 내릴 수 없다. 규칙은 사료 우선 순서
+    (縣 귀속 → 郡國志 郡治 → 같은 郡 최근접)이고 城 없는 郡은 비워 둔다 — 자세한 근거는
+    tools/scenario/build_province_city_attribution.py 문서 주석.
+
+    여기서 같은 규칙을 다시 계산하고 커밋된 원장과 **일치하는지** 본다. 원장을 그냥 믿으면
+    검사가 검사 대상과 같은 출처를 공유하게 된다(검사가 버그를 공유한다).
+    """
+    from tools.scenario.build_province_city_attribution import build_rows
+
+    rows, _, _ = build_rows(tiles, selection)
+    if not PROVINCE_ATTRIBUTION.exists():
+        raise AssertionError(
+            "province-city-attribution-v1.json 이 없다 — "
+            "python3 tools/scenario/build_province_city_attribution.py 를 먼저 돌려라"
+        )
+    ledger = json.loads(PROVINCE_ATTRIBUTION.read_text(encoding="utf-8"))
+    if ledger["rows"] != rows:
+        raise AssertionError(
+            "커밋된 귀속 원장이 현재 han-tiles·선정 원장에서 나오는 답과 다르다 — "
+            "python3 tools/scenario/build_province_city_attribution.py 로 재생성해라"
+        )
+    provinces = tiles["provinceRecords"]
+    attribution: dict[int, int] = {}
+    for index, row in enumerate(rows):
+        if row["provinceIndex"] != index or row["provinceId"] != provinces[index]["id"]:
+            raise AssertionError(f"귀속 원장 {index} 행이 provinceRecords 와 어긋난다")
+        node_id, place = row["routeNodeId"], row["cityPlaceId"]
+        if node_id is None:
+            continue
+        if route_id_by_physical_id.get(str(place)) != node_id:
+            raise AssertionError(
+                f"귀속 원장의 城 {place} → {node_id} 가 선정 원장과 다르다"
+            )
+        attribution[index] = node_id
+    return attribution
+
+
 def project_county_adjacency(
-    tiles: dict, route_id_by_physical_id: dict[str, int]
+    tiles: dict, attribution: dict[int, int]
 ) -> list[tuple[int, int, int]]:
     """Project canonical county boundaries into route-node IDs.
 
-    ``adjacency.county`` endpoints index ``provinceRecords``.  They never index
-    ``cities``; keeping that domain transition explicit prevents coincidentally
-    equal array ordinals from creating a false route.
+    ``adjacency.county`` endpoints index ``provinceRecords``.  ``attribution`` 이 그
+    省 인덱스를 城 번호로 내린다 — 호출자가 명시로 넘겨야 하고, 여기서 cities 배열을
+    다시 뒤지지 않는다. 배열 서수가 우연히 같아서 없는 길이 생기는 일을 막는 규칙은
+    그대로다.
+
+    省이 제 縣의 城을 가지지 않아도 같은 郡 안에서 답을 찾으므로, 城 없는 省이 사슬을
+    끊지 않는다. 실측(2026-09-11): 省의 cityIndex 만 쓰던 옛 규칙은 832 城을 성분
+    36 개로 쪼개 174 城을 본토에서 떼어 놓았다. 귀속 원장을 쓰면 성분 4 개 · 미도달
+    17(樂浪 15 + 섬 2)이고, 남은 것은 城이 하나도 없는 郡(52 곳) 때문이다.
     """
     provinces = tiles.get("provinceRecords")
     if not isinstance(provinces, list):
         raise AssertionError("provinceRecords must be an array")
-    cities = tiles.get("cities")
-    if not isinstance(cities, list):
-        raise AssertionError("cities must be an array")
     projected: dict[tuple[int, int], int] = {}
     for edge in tiles.get("adjacency", {}).get("county", []):
         a_index, b_index = edge.get("a"), edge.get("b")
@@ -881,32 +961,20 @@ def project_county_adjacency(
             raise AssertionError("county adjacency endpoints must be integer province indices")
         if not (0 <= a_index < len(provinces) and 0 <= b_index < len(provinces)):
             raise AssertionError("county adjacency endpoint is outside provinceRecords")
-        endpoint_places = []
-        for province_index in (a_index, b_index):
-            province = provinces[province_index]
-            city_index = province.get("cityIndex")
-            if isinstance(city_index, int):
-                if not 0 <= city_index < len(cities):
-                    raise AssertionError("spatial province seat cityIndex is out of bounds")
-                endpoint_places.append(str(cities[city_index]["id"]))
-            else:
-                # Synthetic/external spatial provinces have no physical city row;
-                # their stable province ID is the only available endpoint identity.
-                endpoint_places.append(str(province["id"]))
-        a_place, b_place = endpoint_places
-        if a_place not in route_id_by_physical_id or b_place not in route_id_by_physical_id:
+        a = attribution.get(a_index)
+        b = attribution.get(b_index)
+        if a is None or b is None:
+            # 城이 하나도 없는 郡의 땅이다. 지어낸 城으로 메우지 않고 간선을 버린다.
             continue
-        a = route_id_by_physical_id[a_place]
-        b = route_id_by_physical_id[b_place]
         if a == b:
             continue
         pair = tuple(sorted((a, b)))
         cells = edge.get("cells")
         if not isinstance(cells, int) or cells <= 0:
             raise AssertionError("county adjacency cells must be a positive integer")
-        if pair in projected:
-            raise AssertionError(f"duplicate county adjacency projection: {pair}")
-        projected[pair] = cells
+        # 한 城이 여러 省을 거느리므로 같은 城 쌍이 여러 경계에서 나올 수 있다. 접한
+        # 칸수는 그 경계들의 합이다 — 하나를 골라 버리면 길 굵기가 왜곡된다.
+        projected[pair] = projected.get(pair, 0) + cells
     return [(a, b, projected[(a, b)]) for a, b in sorted(projected)]
 
 
@@ -925,8 +993,8 @@ def build_v3() -> tuple[str, str, str, str]:
     legacy = json.loads(LEGACY_780_JSON.read_text(encoding="utf-8"))
     skeleton = build_gate_skeleton()
     nodes = sorted(selection["routeNodes"], key=lambda row: row["numericCityId"])
-    if [row["numericCityId"] for row in nodes] != list(range(1, 782)):
-        raise AssertionError("han-world-v3 selection must be the contiguous IDs 1..781")
+    if [row["numericCityId"] for row in nodes] != list(range(1, V3_ROUTE_NODE_COUNT + 1)):
+        raise AssertionError(f"han-world-v3 selection must be the contiguous IDs 1..{V3_ROUTE_NODE_COUNT}")
 
     cities_by_place = {str(row["id"]): row for row in tiles["cities"]}
     city_index_by_place = {str(row["id"]): index for index, row in enumerate(tiles["cities"])}
@@ -945,6 +1013,25 @@ def build_v3() -> tuple[str, str, str, str]:
         for node in nodes
         if node["seatRole"] == "COMMANDERY_SEAT"
     }
+    # 選定 원장에 郡治 노드가 없는 郡(帶方郡 — external:v1:X004 는 금지 선정)은 han-tiles 의
+    # juns[].seat 점 이름으로 治所 표기를 댄다. 선정된 郡治가 있으면 그쪽이 이긴다.
+    tile_seat_name_by_parent = {
+        jun["nameCh"]: tiles["cities"][jun["seat"]]["name"]
+        for jun in tiles["juns"]
+        if isinstance(jun.get("seat"), int)
+    }
+    parent_by_id = {row["id"]: row for row in tiles["parentRegions"]}
+    jurisdiction_by_id = {str(row["id"]): row for row in tiles["jurisdictionRecords"]}
+
+    def world_parent_ch(node: dict) -> str:
+        """城이 앉는 郡(漢字). legacy 780 칸은 선정 원장의 HHS 그룹을 그대로 쓰고, 덧붙인 칸
+        (781 歷城 · 782.. 변경 縣)은 han-tiles jurisdiction 의 commanderyId 로 푼다 — 郡國志
+        樂浪郡 屬縣이라도 220년 세계에서 帶方郡 땅에 서 있으면 帶方郡 城이다
+        (tools/map/materialize_frontier_counties.py 배치 규칙)."""
+        if node["numericCityId"] <= 780:
+            return node["parentName"]
+        place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
+        return parent_by_id[jurisdiction_by_id[place]["commanderyId"]]["nameCh"]
     route_by_place: dict[str, int] = {}
     for node in nodes:
         place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
@@ -954,7 +1041,8 @@ def build_v3() -> tuple[str, str, str, str]:
             raise AssertionError(f"selected physical place is absent from han-tiles: {place}")
         route_by_place[place] = node["numericCityId"]
 
-    edges = project_county_adjacency(tiles, route_by_place)
+    attribution = load_province_route_attribution(tiles, selection, route_by_place)
+    edges = project_county_adjacency(tiles, attribution)
     connections: dict[int, set[int]] = defaultdict(set)
     for a, b, _ in edges:
         connections[a].add(b)
@@ -1002,8 +1090,6 @@ def build_v3() -> tuple[str, str, str, str]:
         row for row in legacy["cities"]
         if row["meta"]["junCh"] == "濟南國" and not row["meta"]["isSeat"]
     )
-    parent_by_id = {row["id"]: row for row in tiles["parentRegions"]}
-    jurisdiction_by_id = {str(row["id"]): row for row in tiles["jurisdictionRecords"]}
     out_cities: list[dict] = []
     for node in nodes:
         cid = node["numericCityId"]
@@ -1030,7 +1116,7 @@ def build_v3() -> tuple[str, str, str, str]:
             })
         out["x"] = round(physical["col"] * WIDTH / tiles["_meta"]["cols"])
         out["y"] = round(physical["row"] * HEIGHT / tiles["_meta"]["rows"])
-        parent_ch = node["parentName"]
+        parent_ch = world_parent_ch(node)
         parent = jun_by_name_ch.get(parent_ch)
         region_name = region_by_parent.get(parent_ch, out["meta"]["ju"])
         out["region"] = legacy["_meta"]["regions"].index(region_name) + 1
@@ -1038,7 +1124,7 @@ def build_v3() -> tuple[str, str, str, str]:
             "jun": parent["name"] if parent else parent_ch,
             "junCh": parent_ch,
             "ju": region_name,
-            "seat": seat_name_by_parent.get(parent_ch, out["meta"].get("seat")),
+            "seat": seat_name_by_parent.get(parent_ch, tile_seat_name_by_parent.get(parent_ch, out["meta"].get("seat"))),
             # 화면 표기용 원 표기다. **행정 단위 꼬리가 붙은 채로** 실어야 한다
             # ("长安县"·"甘陵郡"·"原鹿侯国"). 選定 원장의 canonicalName 은 꼬리를 뗀
             # 줄기라(「长安」), 그걸 실으면 프런트의 縣 판정(web/shared/src/iso/cityName.ts)
@@ -1106,9 +1192,9 @@ def build_v3() -> tuple[str, str, str, str]:
     gate_by_jun, _ = gate_index(skeleton["tiles"], skeleton["region_of"])
     jun_index = {row["nameCh"]: i for i, row in enumerate(skeleton["juns"])}
     gate_index_v3 = {
-        node["numericCityId"]: gate_by_jun[jun_index[node["parentName"]]]
+        node["numericCityId"]: gate_by_jun[jun_index[world_parent_ch(node)]]
         for node in nodes
-        if node["parentName"] in jun_index and gate_by_jun.get(jun_index[node["parentName"]])
+        if world_parent_ch(node) in jun_index and gate_by_jun.get(jun_index[world_parent_ch(node)])
     }
     gate = kotlin_gate(gate_index_v3, "HanWorldV3GateIndex")
 
@@ -1120,6 +1206,7 @@ def build_v3() -> tuple[str, str, str, str]:
             "selectionSha256": _sha256_path(SELECTION),
             "migrationSha256": _sha256_path(MIGRATION),
             "hanTilesSha256": _sha256_path(TILES),
+            "provinceCityAttributionSha256": _sha256_path(PROVINCE_ATTRIBUTION),
             "legacy780Sha256": _sha256_path(LEGACY_780_JSON),
         },
         "outputs": {

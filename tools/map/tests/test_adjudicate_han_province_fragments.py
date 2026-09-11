@@ -686,12 +686,26 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         }
         areas = Counter(value for row in owner for value in row if value >= 0)
 
-        self.assertEqual((1524, 1020, 172), (
+        self.assertEqual((1520, 1071, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
         ))
-        self.assertGreaterEqual(min(areas.values()), 8)
+        # 省 최소 면적 8칸. 예외는 **물로 끊긴 直領 자투리 두 곳**뿐이다 — 변경 縣 51곳이
+        # 郡 몸통을 가져가면서 帶方郡(7칸)·交趾郡(6칸) 直領에는 섬 조각만 남았다. 섬은
+        # 물 때문에 키울 수 없고, 영역 단절 판정 원장이 이 두 省 id 를 직접 참조하므로
+        # 郡治 省으로 접어 없앨 수도 없다(administrative-topology-audit-v1 의
+        # provinceTopology.belowMinimum 이 같은 두 행을 기록한다).
+        island_remnants = {
+            "DIRECT-PARENT-0130-23501b7ffcdd": 7,
+            "DIRECT-PARENT-0102-ce418dfe67e6": 6,
+        }
+        below = {
+            tiles["provinceRecords"][index]["id"]: count
+            for index, count in areas.items()
+            if count < 8
+        }
+        self.assertEqual(island_remnants, below)
         for decision in ledger["reassignments"]:
             target_index = province_index[decision["targetProvinceId"]]
             self.assertTrue(all(
@@ -714,8 +728,11 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         self.assertEqual((423, 386), (city_by_id["32540"]["col"], city_by_id["32540"]["row"]))
         self.assertEqual((435, 174), (city_by_id["210314"]["col"], city_by_id["210314"]["row"]))
         # The historical fragment hashes pin the state before the later relocation.
+        from tools.map import materialize_frontier_counties as frontier
         from tools.map import relocate_han_province as relocation
-        prior = relocation.restore_document(tiles, json.loads(relocation.LEDGER.read_text()))
+        prior = relocation.restore_document(
+            frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
+        )
         self.assertEqual(ledger["outputCitiesSha256"], json_digest(prior["cities"]))
         self.assertEqual(ledger["outputJunsSha256"], json_digest(tiles["juns"]))
         self.assertEqual(

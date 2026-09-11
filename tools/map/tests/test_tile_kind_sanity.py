@@ -30,8 +30,11 @@ DEMOTED_SUFFIXES = ("侯國", "侯国", "屬國", "属国", "郡")
 
 class TileKindSanityTest(unittest.TestCase):
     def test_committed_tiles_kind_distribution_is_pinned(self) -> None:
-        """**등급 분포를 단언으로 고정한다.** 1,138개 중 COUNTY 962 · COMMANDERY 120 ·
-        KINGDOM 16 · EXTERNAL_PLACE 37 · PROVINCE 3.
+        """**등급 분포를 단언으로 고정한다.** 1,189개 중 COUNTY 1,012 · COMMANDERY 120 ·
+        KINGDOM 17 · EXTERNAL_PLACE 37 · PROVINCE 3.
+
+        2026-09-11: 交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 의 屬縣 51곳이 COUNTY 로
+        들어와 961→1,012 가 됐다(다른 등급은 불변).
 
         직전 값은 COUNTY 958 · COMMANDERY 140 · KINGDOM **0** 이었고, 그 0 때문에
         아래 승격 회귀가 **진공**이었다. CANON_105 재판정 20건(→KINGDOM 16, →COUNTY 4)
@@ -42,7 +45,7 @@ class TileKindSanityTest(unittest.TestCase):
         cities = json.loads(TILES.read_text())["cities"]
         kinds = Counter(c["kind"] for c in cities)
         self.assertEqual(
-            {"COUNTY": 961, "COMMANDERY": 120, "KINGDOM": 17,
+            {"COUNTY": 1012, "COMMANDERY": 120, "KINGDOM": 17,
              "EXTERNAL_PLACE": 37, "PROVINCE": 3},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",

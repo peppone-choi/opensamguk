@@ -27,7 +27,7 @@ class HanStrategicTopologyJsonTest {
         val presentation = json.path("presentation")
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
-        assertEquals("5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb",
+        assertEquals("17f14998cfb5c4832585fbc42462995d06f6263e6925cf8a500a60c9c5966c8f",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
@@ -44,12 +44,12 @@ class HanStrategicTopologyJsonTest {
         val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val topology = loaded.topology
 
-        assertEquals(1524, topology.landProvinceIds.size)
+        assertEquals(1520, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(781, loaded.bindingsByCityId.size)
+        assertEquals(832, loaded.bindingsByCityId.size)
         assertEquals(setOf("NO_REVIEWED_RIVER_CROSSING_EVIDENCE", "NO_REVIEWED_PORT_OR_LANDING_EVIDENCE"), loaded.activationBlockerCodes)
         assertEquals("45098", loaded.bindingsByCityId.getValue(273).landProvinceId)
         assertEquals("45022", loaded.bindingsByCityId.getValue(781).landProvinceId)

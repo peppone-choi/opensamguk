@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 781 도시).
+"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 832 도시).
 
 바꾸는 것은 네 가지뿐이다.
   1. `map.mapName` → legacy "han-world-v2" / --map 지정 시 "han-world-v3"
@@ -123,7 +123,7 @@ def _load_verified_v3_world() -> dict:
         (row["routeNodeKey"], row["id"], row["physicalPlaceRef"])
         for row in world["cities"]
     }
-    if manifest_nodes != world_nodes or len(world_nodes) != 781:
+    if manifest_nodes != world_nodes or len(world_nodes) != 832:
         raise ValueError("han-world-v3 manifest route-node set mismatch")
     return world
 

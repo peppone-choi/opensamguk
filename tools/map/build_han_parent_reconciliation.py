@@ -37,6 +37,10 @@ INPUT_PATHS = {
     )
 }
 REFERENCE_YEAR = 220
+# 780 legacy route nodes + 781 歷城 (LICHENG_MOVEMENT_V2_APPEND) + 782–832 frontier counties
+# (FRONTIER_COUNTY_V1_APPEND, tools/scenario/append_frontier_county_route_ledgers.py).
+APPENDED_ROUTE_NODE_COUNT = 1 + 51
+ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
     "schemaVersion", "adjudicationSetId", "referenceYear", "sourceWitnesses", "adjudications"
 }
@@ -500,7 +504,7 @@ def _validate_review_chain(
         not isinstance(rows, list)
         or selection.get("worldVersion") != "han-world-v3"
         or legacy_count != 780
-        or expected != legacy_count + 1
+        or expected != legacy_count + APPENDED_ROUTE_NODE_COUNT
         or len(rows) != expected
     ):
         raise ValueError("route-node selection count contract mismatch")
@@ -525,7 +529,7 @@ def _validate_review_chain(
     )
     _require_equal(
         selection.get("summary"),
-        {"approvedCount": 781, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 781}},
+        {"approvedCount": ROUTE_NODE_COUNT, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": ROUTE_NODE_COUNT}},
         "selection summary contract",
     )
     _require_equal(
@@ -533,12 +537,13 @@ def _validate_review_chain(
         {
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 8,
-            "hhsAdministrativeBindingCount": 781,
+            "frontierCountyClaimCount": 51,
+            "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
             "remoteGateCount": 0,
             "reviewedAmbiguousCount": 50,
-            "routeNodeCount": 781,
+            "routeNodeCount": ROUTE_NODE_COUNT,
             "sourcePlaceholderCount": 0,
         },
         "review policy expected selection contract",
@@ -546,7 +551,7 @@ def _validate_review_chain(
     batches = policy.get("selectionBatches")
     if (
         not isinstance(batches, list)
-        or len(batches) != 3
+        or len(batches) != 4
         or not all(isinstance(row, dict) for row in batches)
         or {
         (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
@@ -556,6 +561,7 @@ def _validate_review_chain(
             ("w0b-overlay-unique-220", 723, "APPROVED"),
             ("w0c-reviewed-ambiguity", 50, "APPROVED"),
             ("w0c-hhs-external-location", 8, "APPROVED"),
+            ("w1-frontier-county-location", 51, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")
@@ -610,7 +616,7 @@ def _validate_review_chain(
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "batchId",
-        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity"},
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location"},
         "approved route-node selection rationale",
     )
     _require_closed_enum(
@@ -1297,7 +1303,13 @@ def _summary(
     }
 
 
-def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
+def _assert_locked_contract(
+    summary: dict, absent: list[dict], expected_absent_terminal_ids: frozenset[str] = frozenset()
+) -> None:
+    if {row["terminalPhysicalPlaceId"] for row in absent} != set(expected_absent_terminal_ids) or len(
+        absent
+    ) != len(expected_absent_terminal_ids):
+        raise ValueError("approved physical places absent from tiles differ from the expected prior-stage set")
     expected = {
         "landOwnerRowCount": 1_138,
         "provinceRecordCount": 1_524,
@@ -1308,7 +1320,7 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         "directTerritoryCellCount": 120_193,
         "exactApprovedRowCount": 782,
         "exactApprovedCellCount": 80_963,
-        "approvedPhysicalPlaceIdAbsentCount": 0,
+        "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
         "unresolvedRowCount": 356,
         "unresolvedCellCount": 26_193,
         "crossParentRegionFootprintCount": 0,
@@ -1341,12 +1353,20 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         "pendingCandidateJunCount": 17,
     }:
         raise ValueError("locked direct-territory review split changed")
-    expected_absent = []
-    if [(row["administrativeUnitId"], row["terminalPhysicalPlaceId"]) for row in absent] != expected_absent:
-        raise ValueError("approved physical-place IDs absent from tiles changed")
 
 
-def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> dict:
+FRONTIER_STAGE_VARIANT_KEYS = frozenset({"cellCount", "seatJunDiagnostic", "footprintDiagnostic"})
+FRONTIER_STAGE_SOURCED_KEYS = frozenset(
+    {"decision", "reviewState", "directTerritoryReview", "geometryDiagnostic"}
+)
+
+
+def build_ledger(
+    documents: dict[str, dict],
+    input_records: dict[str, dict],
+    *,
+    expected_absent_terminal_ids: frozenset[str] = frozenset(),
+) -> dict:
     if set(documents) != set(INPUT_PATHS) or set(input_records) != set(INPUT_PATHS):
         raise ValueError("ledger build requires every pinned input")
     _validate_review_chain(documents, input_records)
@@ -1475,9 +1495,33 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
         rows.append(row)
     summary = _summary(rows, selections["absent"], direct_jun_reviews, tiles)
     projection = None
+    frontier_projection = None
     sys.path.insert(0, str(ROOT))
+    from tools.map import materialize_frontier_counties as frontier
     from tools.map import relocate_han_province as relocation
-    if relocation.LEDGER.exists():
+    if frontier.PLACEMENTS.exists():
+        placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
+        stage = placements.get("priorStage")
+        # 배열 순서만 뒤바뀐 문서도 같은 답을 내야 한다(아래 order 계약). 縣 단계 원장이
+        # 제 cities[] 순서를 적어 두므로 지문을 대기 전에 그 순서로 되돌린다.
+        current_tiles = documents["data/map/han-tiles.json"]
+        order = stage.get("outputCityOrder") if isinstance(stage, dict) else None
+        if order and set(order) == {row["id"] for row in current_tiles["cities"]}:
+            current_tiles = relocation.canonicalize_city_order(
+                current_tiles, {"inputCityOrder": order}
+            )
+        if isinstance(stage, dict) and relocation.digest(current_tiles) == stage["outputDocumentSha256"]:
+            frontier_projection = _frontier_stage_projection(
+                {**documents, "data/map/han-tiles.json": current_tiles},
+                input_records, placements, frontier, rows, direct_jun_reviews, tiles,
+            )
+    # 縣 단계 문서에는 Geuk 재배치 원장을 되감아 붙이면 안 된다 — 縣 51곳이 들어간
+    # 뒤라 재배치 원장의 도시 순서 핀이 더는 맞지 않는다.
+    if (
+        frontier_projection is None
+        and not frontier.has_frontier_counties(documents["data/map/han-tiles.json"])
+        and relocation.LEDGER.exists()
+    ):
         later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
         current_tiles = relocation.canonicalize_city_order(documents["data/map/han-tiles.json"], later)
         if relocation.digest(current_tiles) == later["outputDocumentSha256"]:
@@ -1486,7 +1530,9 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
             prior_records = copy.deepcopy(input_records)
             prior_records["data/map/han-tiles.json"]["sha256"] = later["inputTilesSha256"]
             # Recursive prior state uses the original, unchanged locked contract.
-            prior = build_ledger(prior_documents, prior_records)
+            prior = build_ledger(
+                prior_documents, prior_records, expected_absent_terminal_ids=expected_absent_terminal_ids
+            )
             deltas = Counter()
             for cell in later["ownerDelta"]:
                 deltas[cell["before"]] -= 1
@@ -1505,8 +1551,8 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
             projection = {"inputTilesSha256": later["inputTilesSha256"],
                           "changedCellCount": len(later["ownerDelta"]),
                           "provinceCellDeltas": dict(sorted((key, value) for key, value in deltas.items() if value))}
-    if projection is None:
-        _assert_locked_contract(summary, selections["absent"])
+    if projection is None and frontier_projection is None:
+        _assert_locked_contract(summary, selections["absent"], expected_absent_terminal_ids)
     result = {
         "schemaVersion": 1,
         "ledgerId": "han-administrative-parent-reconciliation-v1",
@@ -1526,7 +1572,105 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
     }
     if projection is not None:
         result["relocationCountProjection"] = projection
+    if frontier_projection is not None:
+        result["frontierCountyProjection"] = frontier_projection
     return result
+
+
+def _frontier_stage_projection(
+    documents: dict[str, dict],
+    input_records: dict[str, dict],
+    placements: dict,
+    frontier,
+    rows: list[dict],
+    direct_jun_reviews: list[dict],
+    tiles: dict,
+) -> dict:
+    """Rebuild the prior (relocation-output) stage and prove the frontier stage changed only
+    what materializing 51 縣 changes: new EXACT_APPROVED rows for the 縣 cities, geometry
+    diagnostics for cities inside the re-partitioned 郡, and the direct-territory reviews of
+    those 郡. Every other row is byte-identical to the prior review, whose locked contract is
+    asserted recursively (with the 縣 physical places allowed to be absent from the prior tiles)."""
+    stage = placements["priorStage"]
+    affected = set(stage["affectedParentRegionIds"])
+    prior_tiles = frontier.restore_document(documents["data/map/han-tiles.json"], placements)
+    prior_documents = {**documents, "data/map/han-tiles.json": prior_tiles}
+    prior_records = copy.deepcopy(input_records)
+    prior_records["data/map/han-tiles.json"]["sha256"] = stage["inputTilesSha256"]
+    frontier_city_ids = {
+        str(row["id"]) for row in documents["data/map/han-tiles.json"]["cities"]
+        if str(row["id"]).startswith(frontier.PLACE_ID_PREFIX)
+    }
+    prior = build_ledger(
+        prior_documents, prior_records, expected_absent_terminal_ids=frozenset(frontier_city_ids)
+    )
+    prior_rows = {row["cityId"]: row for row in prior["rows"]}
+    if len(prior_rows) != len(prior["rows"]):
+        raise ValueError("prior reconciliation rows are not keyed by unique city id")
+    parent_of_city = {}
+    for record in tiles["provinceRecords"]:
+        if record.get("cityIndex") is not None:
+            parent_of_city[str(tiles["cities"][record["cityIndex"]]["id"])] = record["parentRegionId"]
+    affected_city_ids = {
+        city_id for city_id, parent_id in parent_of_city.items() if parent_id in affected
+    }
+    new_rows = 0
+    variant_rows = 0
+    for row in rows:
+        city_id = row["cityId"]
+        if city_id in frontier_city_ids:
+            if row["decision"] != "EXACT_APPROVED" or row["reviewState"] != "APPROVED_EXACT_SELECTION_JOIN":
+                raise ValueError(f"frontier county {city_id} is not an exact approved selection join")
+            new_rows += 1
+            continue
+        prior_row = prior_rows.get(city_id)
+        if prior_row is None:
+            raise ValueError(f"city {city_id} has no prior reconciliation row")
+        if row == prior_row:
+            continue
+        if city_id not in affected_city_ids:
+            # Only cities whose province lies in a re-partitioned 郡 may differ, and only in
+            # geometry diagnostics. A frontier 郡治 that had no province before now has one.
+            seat_of_affected = any(
+                jun.get("seat") == tiles["cityIndexById"][city_id]
+                and tiles["parentRegions"][index]["id"] in affected
+                for index, jun in enumerate(tiles["juns"])
+            )
+            if not seat_of_affected:
+                raise ValueError(f"frontier stage changed a reconciliation row outside the affected 郡: {city_id}")
+        changed = {key for key in set(row) | set(prior_row) if row.get(key) != prior_row.get(key)}
+        allowed = set(FRONTIER_STAGE_VARIANT_KEYS)
+        if (
+            prior_row["decision"] == "BLOCKED_DIRECT_TERRITORY_REVIEW"
+            and row["decision"] == "PROPOSED_GEOMETRIC"
+        ):
+            # A 郡 whose only sourced counties are the new 縣 (帶方郡 with the six 樂浪 縣 the
+            # 220 CE boundary puts inside it) stops being an unsourced direct territory and
+            # its seat gets the same diagnostic-only geometric proposal every sourced 郡 gets.
+            allowed |= FRONTIER_STAGE_SOURCED_KEYS
+        if not changed <= allowed:
+            raise ValueError(
+                f"frontier stage changed a non-geometry field for {city_id}: {sorted(changed - allowed)}"
+            )
+        variant_rows += 1
+    if new_rows != len(frontier_city_ids):
+        raise ValueError("frontier county rows do not match the materialized 縣 cities")
+    prior_reviews = {row["junArrayIndex"]: row for row in prior["directTerritoryJunReviews"]}
+    current_reviews = {row["junArrayIndex"]: row for row in direct_jun_reviews}
+    for jun_index in set(prior_reviews) | set(current_reviews):
+        if prior_reviews.get(jun_index) != current_reviews.get(jun_index) and (
+            tiles["parentRegions"][jun_index]["id"] not in affected
+        ):
+            raise ValueError("frontier stage changed a direct-territory review outside the affected 郡")
+    return {
+        "inputTilesSha256": stage["inputTilesSha256"],
+        "inputDocumentSha256": stage["inputDocumentSha256"],
+        "affectedParentRegionIds": sorted(affected),
+        "frontierCountyRowCount": new_rows,
+        "geometryVariantRowCount": variant_rows,
+        "priorSummary": prior["summary"],
+        "priorRelocationCountProjection": prior.get("relocationCountProjection"),
+    }
 
 
 def render_ledger(input_paths: dict[str, Path] | None = None) -> bytes:

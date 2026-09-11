@@ -67,7 +67,7 @@ export function isHanCounty(city: CityNameInput): boolean {
  *
  * 같은 한글 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 달아 **식별자**를 유일하게
  * 만든다(build_han_world.py build_v3 의 name_counts/qualified_counts). 실측(han-world-v3):
- * 781 중 131 곳이 한정돼 있다(그중 6 곳은 번호).
+ * 832 중 136 곳이 한정돼 있다(그중 6 곳은 번호; 781 城 시절엔 131/6).
  *
  * 화면에서는 뗀다 — 「의씨현(河東郡)」이 아니라 「의씨현」이다(2026-09-10 사용자 지시:
  * 「군을 빼」). 식별은 계속 `id` 와 `name` 으로 하고 여기서 바뀌는 건 표기뿐이다.

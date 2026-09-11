@@ -359,9 +359,12 @@ export function IsoMap2D({
           for (let c = c0; c <= c1; c += 1) {
             const i = r * cols + c;
             if (playable[i] === 0 || isWater(code[i])) continue;
-            const key = tintMode === 'commandery' ? parentOwner[i] : owner[i];
             // 주인 없는 縣 은 칠하지 않는다 — 지형이 그대로 보인다(ownerTint 주석 참조).
-            const rgb = ownerTint(key, nationColorByOwner);
+            // 소유 표는 서버 provinceOccupancy 가 1,520 省 전부를 담아 오고, 한 縣의 省은
+            // 다 같은 주인이다(MapAdministrativeOwnership) — 그래서 땅에 빵꾸가 안 난다.
+            const rgb = tintMode === 'commandery'
+              ? ownerTint(parentOwner[i], nationColorByOwner)
+              : ownerTint(owner[i], nationColorByOwner);
             if (!rgb) continue;
             context.fillStyle = rgbCss(rgb);
             const [x, y] = tileScreen(c, r);

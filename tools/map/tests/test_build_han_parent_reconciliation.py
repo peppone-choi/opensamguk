@@ -67,12 +67,12 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
 
         ledger = module.build_ledger(documents, input_records)
 
-        self.assertEqual(1_524, ledger["summary"]["provinceRecordCount"])
-        self.assertEqual(998, ledger["summary"]["cityLinkedProvinceCount"])
-        self.assertEqual(526, ledger["summary"]["directTerritoryProvinceCount"])
+        self.assertEqual(1_520, ledger["summary"]["provinceRecordCount"])
+        self.assertEqual(1_057, ledger["summary"]["cityLinkedProvinceCount"])
+        self.assertEqual(463, ledger["summary"]["directTerritoryProvinceCount"])
         self.assertEqual(227_349, ledger["summary"]["landCellCount"])
-        self.assertEqual(120_194, ledger["summary"]["directTerritoryCellCount"])
-        self.assertEqual(782, ledger["summary"]["exactApprovedRowCount"])
+        self.assertEqual(105_746, ledger["summary"]["directTerritoryCellCount"])
+        self.assertEqual(833, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -422,7 +422,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(782, len(expected))
+        self.assertEqual(833, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -550,9 +550,9 @@ class HanParentReconciliationTest(unittest.TestCase):
         for row in self.ledger["rows"]:
             decision_cells[row["decision"]] += row["cellCount"]
 
-        self.assertEqual(1_138, len(self.ledger["rows"]))
-        self.assertEqual(1_138, len(self.rows))
-        self.assertEqual(107_155, sum(row["cellCount"] for row in self.ledger["rows"]))
+        self.assertEqual(1_189, len(self.ledger["rows"]))
+        self.assertEqual(1_189, len(self.rows))
+        self.assertEqual(121_603, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(227_349, summary["landCellCount"])
         self.assertEqual(
             summary["landCellCount"],
@@ -560,26 +560,26 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 782,
-                "PROPOSED_GEOMETRIC": 283,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
+                "EXACT_APPROVED": 833,
+                "PROPOSED_GEOMETRIC": 284,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
             dict(decisions),
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 80_956,
-                "PROPOSED_GEOMETRIC": 18_169,
+                "EXACT_APPROVED": 95_396,
+                "PROPOSED_GEOMETRIC": 18_177,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
         self.assertEqual(356, summary["unresolvedRowCount"])
-        self.assertEqual(26_199, summary["unresolvedCellCount"])
+        self.assertEqual(26_207, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 199, "cellCount": 10_343},
+            {"rowCount": 200, "cellCount": 10_351},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
@@ -611,7 +611,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 280, "cellCount": 18_100},
+            {"rowCount": 281, "cellCount": 18_108},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
@@ -646,7 +646,7 @@ class HanParentReconciliationTest(unittest.TestCase):
 
         self.assertEqual([], cross_jun)
         self.assertEqual([], mismatches)
-        self.assertEqual(140, len(unlinked))
+        self.assertEqual(132, len(unlinked))
         self.assertTrue(
             all(
                 row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"] is None
@@ -726,7 +726,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
         self.assertEqual(
-            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 17},
+            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 16},
             self.ledger["summary"]["directTerritoryReview"],
         )
 

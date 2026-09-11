@@ -503,13 +503,27 @@ def validate_ledger(document: object) -> list[dict]:
 # -------------------------------------------------------------------------- check
 
 
-def check(document: Mapping, ledger: Mapping) -> dict:
-    rows = validate_ledger(ledger)
-    components = inventory(document)
-    projection = None
+def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tuple[list[dict], object]:
+    """Peel later document stages so rows reviewed against an earlier stage still apply.
+
+    Stages, latest first: frontier counties (materialize_frontier_counties.priorStage) and the
+    劇 relocation (province-relocations-v1). Each stage restores its input by pinned digest and
+    re-runs the review on it, so a stage never hides an error the prior stage would raise.
+    """
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tools.map import materialize_frontier_counties as frontier
     from tools.map import relocate_han_province as relocation
+    if frontier.PLACEMENTS.exists():
+        placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
+        stage = placements.get("priorStage")
+        if isinstance(stage, Mapping) and relocation.digest(document) == stage["outputDocumentSha256"]:
+            before = frontier.restore_document(document, placements)
+            prior = check(before, ledger)
+            if prior["errors"]:
+                raise ValueError("prior territory review fails before frontier counties: " + repr(prior["errors"]))
+            rows, projection = _reviewed_rows(before, ledger, rows)
+            return rows, {"frontierStage": stage["outputDocumentSha256"], "relocationProjection": projection}
     if relocation.LEDGER.exists():
         later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
         if relocation.digest(document) == later["outputDocumentSha256"]:
@@ -518,7 +532,14 @@ def check(document: Mapping, ledger: Mapping) -> dict:
             if prior["errors"]:
                 raise ValueError("prior territory review fails before relocation: " + repr(prior["errors"]))
             rows = relocation.project_territory_rows(before, document, rows, later)
-            projection = later["territoryProjection"]
+            return rows, later["territoryProjection"]
+    return rows, None
+
+
+def check(document: Mapping, ledger: Mapping) -> dict:
+    rows = validate_ledger(ledger)
+    components = inventory(document)
+    rows, projection = _reviewed_rows(document, ledger, rows)
     by_key = {c["componentKey"]: c for c in components}
     errors: list[str] = []
     covered: set[str] = set()

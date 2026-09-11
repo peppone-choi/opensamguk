@@ -23,13 +23,6 @@
     },
     {
       "diagnosticOnly": true,
-      "junArrayIndex": 130,
-      "nameCh": "帶方郡",
-      "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
-      "sourcedAdministrativeUnitIds": []
-    },
-    {
-      "diagnosticOnly": true,
       "junArrayIndex": 63,
       "nameCh": "廣漢屬國",
       "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
@@ -193,6 +186,85 @@
       "sourcedAdministrativeUnitIds": []
     }
   ],
+  "frontierCountyProjection": {
+    "affectedParentRegionIds": [
+      "PARENT-0094",
+      "PARENT-0095",
+      "PARENT-0096",
+      "PARENT-0097",
+      "PARENT-0102",
+      "PARENT-0103",
+      "PARENT-0104",
+      "PARENT-0130"
+    ],
+    "frontierCountyRowCount": 51,
+    "geometryVariantRowCount": 8,
+    "inputDocumentSha256": "0c036d9f13999c9883e8125e7cdf5f07f230f906d447f13fcbf0f30211cc376c",
+    "inputTilesSha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb",
+    "priorRelocationCountProjection": {
+      "changedCellCount": 61,
+      "inputTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
+      "provinceCellDeltas": {
+        "200026": 3,
+        "45028": 7,
+        "45107": 6,
+        "45124": 8,
+        "85272": 11,
+        "85325": -36,
+        "DIRECT-PARENT-0107-67cb635d068b": 1
+      }
+    },
+    "priorSummary": {
+      "approvedPhysicalPlaceIdAbsentCount": 51,
+      "cityLinkedCellCount": 107155,
+      "cityLinkedProvinceCount": 998,
+      "coordinateFootprintMajorityMismatchCount": 0,
+      "crossParentRegionFootprintCount": 0,
+      "decisionCellCounts": {
+        "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
+        "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
+        "EXACT_APPROVED": 80956,
+        "PROPOSED_GEOMETRIC": 18169
+      },
+      "decisionRowCounts": {
+        "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
+        "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
+        "EXACT_APPROVED": 782,
+        "PROPOSED_GEOMETRIC": 283
+      },
+      "directTerritoryCellCount": 120194,
+      "directTerritoryProvinceCount": 526,
+      "directTerritoryReview": {
+        "pendingCandidateJunCount": 17,
+        "rejectedSourcedGroupJunCount": 5
+      },
+      "exactApprovedCellCount": 80956,
+      "exactApprovedRowCount": 782,
+      "geometryDiagnostics": {
+        "distanceTies": {
+          "cellCount": 69,
+          "rowCount": 3
+        },
+        "multiGroupJun": {
+          "cellCount": 7826,
+          "rowCount": 84
+        },
+        "singleGroupJun": {
+          "cellCount": 10343,
+          "rowCount": 199
+        },
+        "uniqueNearest": {
+          "cellCount": 18100,
+          "rowCount": 280
+        }
+      },
+      "landCellCount": 227349,
+      "landOwnerRowCount": 1138,
+      "provinceRecordCount": 1524,
+      "unresolvedCellCount": 26199,
+      "unresolvedRowCount": 356
+    }
+  },
   "inputs": {
     "data/curated/han/administrative-place-bindings-v1.json": {
       "path": "data/curated/han/administrative-place-bindings-v1.json",
@@ -204,7 +276,7 @@
     },
     "data/curated/han/administrative-units.json": {
       "path": "data/curated/han/administrative-units.json",
-      "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
+      "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
     },
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
@@ -212,15 +284,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
+      "sha256": "d9e8c46571d540416c14288c12770793d1c5bd5aa62282e863bd380e4c7c6b9c"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
+      "sha256": "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05"
+      "sha256": "7765628771cbc3c5888fad74d6a23b047fbad5aa35cb5a0de71493a798e6856c"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -240,7 +312,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb"
+      "sha256": "17f14998cfb5c4832585fbc42462995d06f6263e6925cf8a500a60c9c5966c8f"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -264,19 +336,6 @@
     "nonExactRowsNeverApproveParent": true
   },
   "referenceYear": 220,
-  "relocationCountProjection": {
-    "changedCellCount": 61,
-    "inputTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
-    "provinceCellDeltas": {
-      "200026": 3,
-      "45028": 7,
-      "45107": 6,
-      "45124": 8,
-      "85272": 11,
-      "85325": -36,
-      "DIRECT-PARENT-0107-67cb635d068b": 1
-    }
-  },
   "rows": [
     {
       "approvalEvidence": {
@@ -44146,16 +44205,24 @@
         "routeNodeKey": "9b216aca-43b5-433b-9049-e01ab5d8956a"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:001",
-      "cellCount": 0,
+      "cellCount": 542,
       "cityId": "X000",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 542,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
@@ -44179,21 +44246,30 @@
         "routeNodeKey": "7687355f-9389-4afc-8d27-c64a8bd93400"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:九真郡:001",
-      "cellCount": 0,
+      "cellCount": 8,
       "cityId": "X001",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡"
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -44212,16 +44288,24 @@
         "routeNodeKey": "86c2cd01-60c1-4467-9cc5-4f2f25156ae2"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:日南郡:001",
-      "cellCount": 0,
+      "cellCount": 8,
       "cityId": "X002",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 104,
+            "nameCh": "日南郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          104
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
@@ -44245,16 +44329,24 @@
         "routeNodeKey": "5714a4c1-dc87-4583-9c4e-5ac5fe7e89ca"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:001",
-      "cellCount": 0,
+      "cellCount": 131,
       "cityId": "X003",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 131,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
@@ -44267,25 +44359,43 @@
       }
     },
     {
-      "cellCount": 0,
+      "cellCount": 8,
       "cityId": "X004",
-      "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
-      "directTerritoryReview": {
-        "diagnosticOnly": true,
-        "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
-        "sourcedAdministrativeUnitIds": []
-      },
+      "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
       },
-      "reviewState": "BLOCKED",
+      "geometryDiagnostic": {
+        "diagnosticOnly": true,
+        "distanceTie": false,
+        "groupCardinality": "SINGLE_GROUP_JUN",
+        "nearestCandidates": [
+          {
+            "anchorCityId": "fc-lelang-004",
+            "candidateAdministrativeGroupId": "hhs-group:113:樂浪郡",
+            "candidateAdministrativeUnitId": "hhs:113:樂浪郡:004",
+            "squaredGridDistance": 10
+          }
+        ]
+      },
+      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 130,
         "nameCh": "帶方郡"
@@ -44303,20 +44413,30 @@
         "routeNodeKey": "954b8de5-8f5b-45a3-9261-0ce4f21cfcd2"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:001",
-      "cellCount": 0,
+      "cellCount": 184,
       "cityId": "X005",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 184,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
@@ -44336,21 +44456,30 @@
         "routeNodeKey": "a3b3e15e-3073-4657-a3c9-e504849e123e"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:001",
-      "cellCount": 0,
+      "cellCount": 8,
       "cityId": "X006",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          95
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡"
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 95,
@@ -44369,21 +44498,30 @@
         "routeNodeKey": "75a12c31-b00d-4f29-8818-0eed70a9494b"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:001",
-      "cellCount": 0,
+      "cellCount": 8,
       "cityId": "X007",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
-        "coordinateMatchesFootprintMajority": null,
+        "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
         "diagnosticOnly": true,
-        "hasProvinceFootprint": false,
-        "junDistribution": [],
-        "majorityJunArrayIndices": []
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 97,
+            "nameCh": "遼東屬國"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          97
+        ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:遼東屬國"
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 97,
@@ -46587,35 +46725,2159 @@
         "junArrayIndex": 114,
         "nameCh": "南匈奴"
       }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-002",
+        "routeNodeKey": "85c74f5a-2ddc-4a11-9484-a20b2eaa82d4"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:002",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-003",
+        "routeNodeKey": "05c360eb-4935-4e2d-80a3-ae2a1db08911"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:003",
+      "cellCount": 141,
+      "cityId": "fc-jiaozhi-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 141,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-004",
+        "routeNodeKey": "e07bef0d-c531-4b31-9577-876b096c6e8f"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:004",
+      "cellCount": 757,
+      "cityId": "fc-jiaozhi-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 757,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-005",
+        "routeNodeKey": "a4f274d1-92a3-4b48-b94d-ef51911c3352"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:005",
+      "cellCount": 9,
+      "cityId": "fc-jiaozhi-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 9,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-006",
+        "routeNodeKey": "84a3ec7a-7713-40ed-a627-99c5af587333"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:006",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-006",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-007",
+        "routeNodeKey": "5ab94fee-73fb-4390-a9e0-9c45c2066a79"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:007",
+      "cellCount": 28,
+      "cityId": "fc-jiaozhi-007",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 28,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-008",
+        "routeNodeKey": "b52314e0-4cf8-4a4d-a89a-23dabbd8e3d6"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:008",
+      "cellCount": 276,
+      "cityId": "fc-jiaozhi-008",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 276,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-009",
+        "routeNodeKey": "71969480-6d4a-43c6-9f7b-24769d16b9c6"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:009",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-009",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-010",
+        "routeNodeKey": "8f0e0ee1-3b91-4362-ae44-79ae3f2aecf2"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:010",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-010",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-011",
+        "routeNodeKey": "ca02e661-43a9-4cff-bfc4-4880d465c97a"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:011",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-011",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-012",
+        "routeNodeKey": "79d71b7d-0dc8-4964-801b-7018fad5bed1"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:交趾郡:012",
+      "cellCount": 8,
+      "cityId": "fc-jiaozhi-012",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 102,
+            "nameCh": "交趾郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          102
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:交趾郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 102,
+        "nameCh": "交趾郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-002",
+        "routeNodeKey": "5ee59f54-806f-47a3-ba12-f25ac2bd55de"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:九真郡:002",
+      "cellCount": 387,
+      "cityId": "fc-jiuzhen-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 387,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 103,
+        "nameCh": "九真郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-003",
+        "routeNodeKey": "c56f5fbf-4321-44c2-97b5-51ecf694911f"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:九真郡:003",
+      "cellCount": 8,
+      "cityId": "fc-jiuzhen-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 103,
+        "nameCh": "九真郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-004",
+        "routeNodeKey": "b158df89-f58a-45e5-a4ed-524997cce889"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:九真郡:004",
+      "cellCount": 378,
+      "cityId": "fc-jiuzhen-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 378,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 103,
+        "nameCh": "九真郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-005",
+        "routeNodeKey": "990970a3-e955-4893-9e46-62bd5116fab5"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:九真郡:005",
+      "cellCount": 740,
+      "cityId": "fc-jiuzhen-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 740,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 103,
+        "nameCh": "九真郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-003",
+        "routeNodeKey": "43cda9b8-bcaf-4cae-a94f-6abc8d627eef"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:003",
+      "cellCount": 137,
+      "cityId": "fc-lelang-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 137,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-004",
+        "routeNodeKey": "1afbe24b-92a6-46bd-bfe8-a8a7c7834434"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:004",
+      "cellCount": 238,
+      "cityId": "fc-lelang-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 238,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-005",
+        "routeNodeKey": "b5a7f5ce-e12d-4abd-a406-35a2aae10e3e"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:005",
+      "cellCount": 105,
+      "cityId": "fc-lelang-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 105,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-006",
+        "routeNodeKey": "78c49390-dc6e-4c11-99f4-cea475c95696"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:006",
+      "cellCount": 8,
+      "cityId": "fc-lelang-006",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-007",
+        "routeNodeKey": "6d92cbcd-d544-445f-81ba-f063df94daf4"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:007",
+      "cellCount": 137,
+      "cityId": "fc-lelang-007",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 137,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-009",
+        "routeNodeKey": "4fa6d917-4f85-4a2c-b825-963b7c73f05c"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:009",
+      "cellCount": 153,
+      "cityId": "fc-lelang-009",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 153,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-010",
+        "routeNodeKey": "dee6adae-9440-46eb-baf7-205e229a0974"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:010",
+      "cellCount": 84,
+      "cityId": "fc-lelang-010",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 84,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-011",
+        "routeNodeKey": "2081fb53-7269-449f-97eb-5020f72c25b0"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:011",
+      "cellCount": 75,
+      "cityId": "fc-lelang-011",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 75,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-012",
+        "routeNodeKey": "606dc9f4-abde-4461-bbdc-a7c7ec713c78"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:012",
+      "cellCount": 8,
+      "cityId": "fc-lelang-012",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-013",
+        "routeNodeKey": "e7250b60-14ba-4fef-9bd7-664e90278a88"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:013",
+      "cellCount": 399,
+      "cityId": "fc-lelang-013",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 399,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-014",
+        "routeNodeKey": "7822cbbe-fb12-47a1-806e-df2afba002db"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:014",
+      "cellCount": 168,
+      "cityId": "fc-lelang-014",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 168,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-015",
+        "routeNodeKey": "2029ac11-103b-48bd-b26f-e5ab2bef1c10"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:015",
+      "cellCount": 8,
+      "cityId": "fc-lelang-015",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-016",
+        "routeNodeKey": "6205faef-784a-4412-9e35-366d76bf82c2"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:016",
+      "cellCount": 8,
+      "cityId": "fc-lelang-016",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 130,
+            "nameCh": "帶方郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          130
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 130,
+        "nameCh": "帶方郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-017",
+        "routeNodeKey": "3a4a6a54-f15b-4fc5-917e-8c10909c1107"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:樂浪郡:017",
+      "cellCount": 132,
+      "cityId": "fc-lelang-017",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 132,
+            "junArrayIndex": 96,
+            "nameCh": "樂浪郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          96
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:樂浪郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 96,
+        "nameCh": "樂浪郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-002",
+        "routeNodeKey": "a1d8f9cd-d1c5-42f1-9226-4446d8b5b08b"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:002",
+      "cellCount": 373,
+      "cityId": "fc-liaodong-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 373,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-003",
+        "routeNodeKey": "cc76ee2d-873f-4536-8b03-e5fb8a79b30f"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:003",
+      "cellCount": 8,
+      "cityId": "fc-liaodong-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 97,
+            "nameCh": "遼東屬國"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          97
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 97,
+        "nameCh": "遼東屬國"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-004",
+        "routeNodeKey": "d0bd80d9-a882-403b-aa23-e20d80bcd9a8"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:004",
+      "cellCount": 8,
+      "cityId": "fc-liaodong-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          95
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-006",
+        "routeNodeKey": "7e58d068-3274-4b71-a136-b198bb20814f"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:006",
+      "cellCount": 363,
+      "cityId": "fc-liaodong-006",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 363,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-007",
+        "routeNodeKey": "5bbdbbf5-6b8b-43fc-b8f9-70229ada8817"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:007",
+      "cellCount": 8,
+      "cityId": "fc-liaodong-007",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-008",
+        "routeNodeKey": "0d6d61b4-e84b-4a90-a8cc-10afeebc9315"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:008",
+      "cellCount": 185,
+      "cityId": "fc-liaodong-008",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 185,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-009",
+        "routeNodeKey": "8da8ceaf-9f74-40d9-8c19-fcad58bf3b73"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:009",
+      "cellCount": 8,
+      "cityId": "fc-liaodong-009",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-010",
+        "routeNodeKey": "2af1d18c-50de-4fef-afc6-437ce951858c"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:010",
+      "cellCount": 187,
+      "cityId": "fc-liaodong-010",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 187,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-011",
+        "routeNodeKey": "b3cd94dd-12dd-41c3-aca5-be94625f2554"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:011",
+      "cellCount": 194,
+      "cityId": "fc-liaodong-011",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 194,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-002",
+        "routeNodeKey": "a39cc0d3-18d8-430a-b7cb-1a38d0e82b9d"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:002",
+      "cellCount": 8,
+      "cityId": "fc-liaodong-shuguo-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 97,
+            "nameCh": "遼東屬國"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          97
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 97,
+        "nameCh": "遼東屬國"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-003",
+        "routeNodeKey": "5c3843d4-1616-4521-a7fb-c7570ca5a3c8"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:003",
+      "cellCount": 1381,
+      "cityId": "fc-liaodong-shuguo-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 1381,
+            "junArrayIndex": 97,
+            "nameCh": "遼東屬國"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          97
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 97,
+        "nameCh": "遼東屬國"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-005",
+        "routeNodeKey": "5235c442-567a-4b36-9145-dbe4594a00cb"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:005",
+      "cellCount": 184,
+      "cityId": "fc-liaodong-shuguo-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 184,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-006",
+        "routeNodeKey": "ddeac138-03aa-402b-9c50-1a998707814e"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:006",
+      "cellCount": 921,
+      "cityId": "fc-liaodong-shuguo-006",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 921,
+            "junArrayIndex": 97,
+            "nameCh": "遼東屬國"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          97
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 97,
+        "nameCh": "遼東屬國"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-002",
+        "routeNodeKey": "cbdc9e78-b27f-4054-bca4-740acead9a6a"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:日南郡:002",
+      "cellCount": 1086,
+      "cityId": "fc-rinan-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 1086,
+            "junArrayIndex": 104,
+            "nameCh": "日南郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          104
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 104,
+        "nameCh": "日南郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-003",
+        "routeNodeKey": "1d595ae9-af47-4b07-bfa1-90d71eee30db"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:日南郡:003",
+      "cellCount": 8,
+      "cityId": "fc-rinan-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 104,
+            "nameCh": "日南郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          104
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 104,
+        "nameCh": "日南郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-004",
+        "routeNodeKey": "23a6de4d-2164-48c4-8800-d7634bb67296"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:日南郡:004",
+      "cellCount": 1126,
+      "cityId": "fc-rinan-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 1126,
+            "junArrayIndex": 104,
+            "nameCh": "日南郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          104
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 104,
+        "nameCh": "日南郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-005",
+        "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:日南郡:005",
+      "cellCount": 769,
+      "cityId": "fc-rinan-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 769,
+            "junArrayIndex": 103,
+            "nameCh": "九真郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          103
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:九真郡",
+          "hhs-group:113:日南郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 103,
+        "nameCh": "九真郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-002",
+        "routeNodeKey": "b2d47090-5595-4ebb-948b-f07d8d16956c"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:002",
+      "cellCount": 387,
+      "cityId": "fc-xuantu-002",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 387,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          95
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-003",
+        "routeNodeKey": "0dcbc4fa-acec-4305-8305-b217432996a1"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:003",
+      "cellCount": 1533,
+      "cityId": "fc-xuantu-003",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 1533,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          95
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-004",
+        "routeNodeKey": "2da5cb91-126f-424a-898d-5d57567762f1"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:004",
+      "cellCount": 186,
+      "cityId": "fc-xuantu-004",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 186,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-005",
+        "routeNodeKey": "eaf552c6-df5b-4352-b278-3e2ded0c5637"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:005",
+      "cellCount": 8,
+      "cityId": "fc-xuantu-005",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 8,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          95
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
+      }
+    },
+    {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-006",
+        "routeNodeKey": "820068e8-ed77-4ad3-83fc-03cafcc7bfe3"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:006",
+      "cellCount": 188,
+      "cityId": "fc-xuantu-006",
+      "decision": "EXACT_APPROVED",
+      "footprintDiagnostic": {
+        "coordinateMatchesFootprintMajority": true,
+        "crossJun": false,
+        "diagnosticOnly": true,
+        "hasProvinceFootprint": true,
+        "junDistribution": [
+          {
+            "cellCount": 188,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
+          }
+        ],
+        "majorityJunArrayIndices": [
+          94
+        ]
+      },
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "seatJunDiagnostic": {
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:玄菟郡",
+          "hhs-group:113:遼東屬國",
+          "hhs-group:113:遼東郡"
+        ],
+        "diagnosticOnly": true,
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
+      }
     }
   ],
   "schemaVersion": 1,
   "summary": {
     "approvedPhysicalPlaceIdAbsentCount": 0,
-    "cityLinkedCellCount": 107155,
-    "cityLinkedProvinceCount": 998,
+    "cityLinkedCellCount": 121603,
+    "cityLinkedProvinceCount": 1057,
     "coordinateFootprintMajorityMismatchCount": 0,
     "crossParentRegionFootprintCount": 0,
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80956,
-      "PROPOSED_GEOMETRIC": 18169
+      "EXACT_APPROVED": 95396,
+      "PROPOSED_GEOMETRIC": 18177
     },
     "decisionRowCounts": {
-      "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
+      "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 782,
-      "PROPOSED_GEOMETRIC": 283
+      "EXACT_APPROVED": 833,
+      "PROPOSED_GEOMETRIC": 284
     },
-    "directTerritoryCellCount": 120194,
-    "directTerritoryProvinceCount": 526,
+    "directTerritoryCellCount": 105746,
+    "directTerritoryProvinceCount": 463,
     "directTerritoryReview": {
-      "pendingCandidateJunCount": 17,
+      "pendingCandidateJunCount": 16,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80956,
-    "exactApprovedRowCount": 782,
+    "exactApprovedCellCount": 95396,
+    "exactApprovedRowCount": 833,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 69,
@@ -46626,18 +48888,18 @@
         "rowCount": 84
       },
       "singleGroupJun": {
-        "cellCount": 10343,
-        "rowCount": 199
+        "cellCount": 10351,
+        "rowCount": 200
       },
       "uniqueNearest": {
-        "cellCount": 18100,
-        "rowCount": 280
+        "cellCount": 18108,
+        "rowCount": 281
       }
     },
     "landCellCount": 227349,
-    "landOwnerRowCount": 1138,
-    "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26199,
+    "landOwnerRowCount": 1189,
+    "provinceRecordCount": 1520,
+    "unresolvedCellCount": 26207,
     "unresolvedRowCount": 356
   }
 }

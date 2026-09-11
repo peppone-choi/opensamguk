@@ -4,16 +4,16 @@
     "generator": "tools/scenario/materialize_han_route_node_selection.py",
     "inputs": {
       "administrativeCatalog": {
-        "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
+        "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
       },
       "administrativePlaceOverlay": {
         "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
       },
       "candidate": {
-        "sha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
+        "sha256": "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc"
       },
       "externalClaims": {
-        "sha256": "bdc84f732351962632b5e14306b60821d2436526f35ebc6c9fc6c46ca829266e"
+        "sha256": "b28416eeb8f7b05541522a101133c5120cc2e542232eca338656e96066ff43aa"
       },
       "legacyHanMap": {
         "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
@@ -25,10 +25,10 @@
         "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
       },
       "reviewPolicy": {
-        "sha256": "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
+        "sha256": "d9e8c46571d540416c14288c12770793d1c5bd5aa62282e863bd380e4c7c6b9c"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
+        "sha256": "9c3b8dce9a142835ceadd226a53113d7c080bbe40d2237ffe219624994c7b108"
       }
     }
   },
@@ -24975,6 +24975,1485 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:002",
+      "canonicalName": "新昌",
+      "displayName": "新昌",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 782,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a1d8f9cd-d1c5-42f1-9226-4446d8b5b08b",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:003",
+      "canonicalName": "无虑",
+      "displayName": "无虑",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 783,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "cc76ee2d-873f-4536-8b03-e5fb8a79b30f",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:004",
+      "canonicalName": "望平",
+      "displayName": "望平",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 784,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "d0bd80d9-a882-403b-aa23-e20d80bcd9a8",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:006",
+      "canonicalName": "安市",
+      "displayName": "安市",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-006"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-006",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 785,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-006",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "7e58d068-3274-4b71-a136-b198bb20814f",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:007",
+      "canonicalName": "平郭",
+      "displayName": "平郭",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-007"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-007",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 786,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-007",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5bbdbbf5-6b8b-43fc-b8f9-70229ada8817",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:008",
+      "canonicalName": "西安平",
+      "displayName": "西安平",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-008"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-008",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 787,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-008",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0d6d61b4-e84b-4a90-a8cc-10afeebc9315",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:009",
+      "canonicalName": "汶",
+      "displayName": "汶",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-009"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-009",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 788,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-009",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8da8ceaf-9f74-40d9-8c19-fcad58bf3b73",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:010",
+      "canonicalName": "番汗",
+      "displayName": "番汗",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-010"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-010",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 789,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-010",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "2af1d18c-50de-4fef-afc6-437ce951858c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:011",
+      "canonicalName": "沓氏",
+      "displayName": "沓氏",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-011"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-011",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 790,
+      "parentName": "遼東郡",
+      "parentRef": "hhs-group:113:遼東郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-011",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b3cd94dd-12dd-41c3-aca5-be94625f2554",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:002",
+      "canonicalName": "西盖马",
+      "displayName": "西盖马",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-xuantu-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 791,
+      "parentName": "玄菟郡",
+      "parentRef": "hhs-group:113:玄菟郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b2d47090-5595-4ebb-948b-f07d8d16956c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:003",
+      "canonicalName": "上殷台",
+      "displayName": "上殷台",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-xuantu-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 792,
+      "parentName": "玄菟郡",
+      "parentRef": "hhs-group:113:玄菟郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0dcbc4fa-acec-4305-8305-b217432996a1",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:004",
+      "canonicalName": "高显",
+      "displayName": "高显",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-xuantu-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 793,
+      "parentName": "玄菟郡",
+      "parentRef": "hhs-group:113:玄菟郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "2da5cb91-126f-424a-898d-5d57567762f1",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:005",
+      "canonicalName": "候城",
+      "displayName": "候城",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-xuantu-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 794,
+      "parentName": "玄菟郡",
+      "parentRef": "hhs-group:113:玄菟郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "eaf552c6-df5b-4352-b278-3e2ded0c5637",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:006",
+      "canonicalName": "辽阳",
+      "displayName": "辽阳",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-xuantu-006"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-xuantu-006",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 795,
+      "parentName": "玄菟郡",
+      "parentRef": "hhs-group:113:玄菟郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-006",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "820068e8-ed77-4ad3-83fc-03cafcc7bfe3",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:003",
+      "canonicalName": "浿水",
+      "displayName": "浿水",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 796,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "43cda9b8-bcaf-4cae-a94f-6abc8d627eef",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:004",
+      "canonicalName": "含资",
+      "displayName": "含资",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 797,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "1afbe24b-92a6-46bd-bfe8-a8a7c7834434",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:005",
+      "canonicalName": "占蝉",
+      "displayName": "占蝉",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 798,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b5a7f5ce-e12d-4abd-a406-35a2aae10e3e",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:006",
+      "canonicalName": "遂城",
+      "displayName": "遂城",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-006"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-006",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 799,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-006",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "78c49390-dc6e-4c11-99f4-cea475c95696",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:007",
+      "canonicalName": "增地",
+      "displayName": "增地",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-007"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-007",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 800,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-007",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "6d92cbcd-d544-445f-81ba-f063df94daf4",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:009",
+      "canonicalName": "驷望",
+      "displayName": "驷望",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-009"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-009",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 801,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-009",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "4fa6d917-4f85-4a2c-b825-963b7c73f05c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:010",
+      "canonicalName": "海冥",
+      "displayName": "海冥",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-010"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-010",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 802,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-010",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "dee6adae-9440-46eb-baf7-205e229a0974",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:011",
+      "canonicalName": "列口",
+      "displayName": "列口",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-011"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-011",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 803,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-011",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "2081fb53-7269-449f-97eb-5020f72c25b0",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:012",
+      "canonicalName": "长岑",
+      "displayName": "长岑",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-012"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-012",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 804,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-012",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "606dc9f4-abde-4461-bbdc-a7c7ec713c78",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:013",
+      "canonicalName": "屯有",
+      "displayName": "屯有",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-013"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-013",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 805,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-013",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "e7250b60-14ba-4fef-9bd7-664e90278a88",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:014",
+      "canonicalName": "昭明",
+      "displayName": "昭明",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-014"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-014",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 806,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-014",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "7822cbbe-fb12-47a1-806e-df2afba002db",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:015",
+      "canonicalName": "镂方",
+      "displayName": "镂方",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-015"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-015",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 807,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-015",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "2029ac11-103b-48bd-b26f-e5ab2bef1c10",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:016",
+      "canonicalName": "提奚",
+      "displayName": "提奚",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-016"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-016",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 808,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-016",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "6205faef-784a-4412-9e35-366d76bf82c2",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:017",
+      "canonicalName": "浑弥",
+      "displayName": "浑弥",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-lelang-017"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-lelang-017",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 809,
+      "parentName": "樂浪郡",
+      "parentRef": "hhs-group:113:樂浪郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-017",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "3a4a6a54-f15b-4fc5-917e-8c10909c1107",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:002",
+      "canonicalName": "宾徒",
+      "displayName": "宾徒",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 810,
+      "parentName": "遼東屬國",
+      "parentRef": "hhs-group:113:遼東屬國",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a39cc0d3-18d8-430a-b7cb-1a38d0e82b9d",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:003",
+      "canonicalName": "徒河",
+      "displayName": "徒河",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 811,
+      "parentName": "遼東屬國",
+      "parentRef": "hhs-group:113:遼東屬國",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5c3843d4-1616-4521-a7fb-c7570ca5a3c8",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:005",
+      "canonicalName": "险渎",
+      "displayName": "险渎",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 812,
+      "parentName": "遼東屬國",
+      "parentRef": "hhs-group:113:遼東屬國",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5235c442-567a-4b36-9145-dbe4594a00cb",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:006",
+      "canonicalName": "房",
+      "displayName": "房",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-006"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-liaodong-shuguo-006",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 813,
+      "parentName": "遼東屬國",
+      "parentRef": "hhs-group:113:遼東屬國",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-006",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "ddeac138-03aa-402b-9c50-1a998707814e",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:002",
+      "canonicalName": "羸𨻻",
+      "displayName": "羸𨻻",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 814,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "85c74f5a-2ddc-4a11-9484-a20b2eaa82d4",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:003",
+      "canonicalName": "安定",
+      "displayName": "安定",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 815,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "05c360eb-4935-4e2d-80a3-ae2a1db08911",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:004",
+      "canonicalName": "苟漏",
+      "displayName": "苟漏",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 816,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "e07bef0d-c531-4b31-9577-876b096c6e8f",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:005",
+      "canonicalName": "麋泠",
+      "displayName": "麋泠",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 817,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a4f274d1-92a3-4b48-b94d-ef51911c3352",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:006",
+      "canonicalName": "曲阳",
+      "displayName": "曲阳",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-006"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-006",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 818,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-006",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "84a3ec7a-7713-40ed-a627-99c5af587333",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:007",
+      "canonicalName": "北带",
+      "displayName": "北带",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-007"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-007",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 819,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-007",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5ab94fee-73fb-4390-a9e0-9c45c2066a79",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:008",
+      "canonicalName": "稽徐",
+      "displayName": "稽徐",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-008"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-008",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 820,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-008",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b52314e0-4cf8-4a4d-a89a-23dabbd8e3d6",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:009",
+      "canonicalName": "西于",
+      "displayName": "西于",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-009"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-009",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 821,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-009",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "71969480-6d4a-43c6-9f7b-24769d16b9c6",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:010",
+      "canonicalName": "朱䳒",
+      "displayName": "朱䳒",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-010"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-010",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 822,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-010",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8f0e0ee1-3b91-4362-ae44-79ae3f2aecf2",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:011",
+      "canonicalName": "封谿",
+      "displayName": "封谿",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-011"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-011",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 823,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-011",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "ca02e661-43a9-4cff-bfc4-4880d465c97a",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:012",
+      "canonicalName": "望海",
+      "displayName": "望海",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-012"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiaozhi-012",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 824,
+      "parentName": "交趾郡",
+      "parentRef": "hhs-group:113:交趾郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-012",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "79d71b7d-0dc8-4964-801b-7018fad5bed1",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:002",
+      "canonicalName": "居风",
+      "displayName": "居风",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 825,
+      "parentName": "九真郡",
+      "parentRef": "hhs-group:113:九真郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5ee59f54-806f-47a3-ba12-f25ac2bd55de",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:003",
+      "canonicalName": "咸懽",
+      "displayName": "咸懽",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 826,
+      "parentName": "九真郡",
+      "parentRef": "hhs-group:113:九真郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "c56f5fbf-4321-44c2-97b5-51ecf694911f",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:004",
+      "canonicalName": "无功",
+      "displayName": "无功",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 827,
+      "parentName": "九真郡",
+      "parentRef": "hhs-group:113:九真郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b158df89-f58a-45e5-a4ed-524997cce889",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:005",
+      "canonicalName": "无编",
+      "displayName": "无编",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-jiuzhen-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 828,
+      "parentName": "九真郡",
+      "parentRef": "hhs-group:113:九真郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "990970a3-e955-4893-9e46-62bd5116fab5",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:002",
+      "canonicalName": "朱吾",
+      "displayName": "朱吾",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-002"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-rinan-002",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 829,
+      "parentName": "日南郡",
+      "parentRef": "hhs-group:113:日南郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-002",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "cbdc9e78-b27f-4054-bca4-740acead9a6a",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:003",
+      "canonicalName": "卢容",
+      "displayName": "卢容",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-003"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-rinan-003",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 830,
+      "parentName": "日南郡",
+      "parentRef": "hhs-group:113:日南郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-003",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "1d595ae9-af47-4b07-bfa1-90d71eee30db",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:004",
+      "canonicalName": "象林",
+      "displayName": "象林",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-004"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-rinan-004",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 831,
+      "parentName": "日南郡",
+      "parentRef": "hhs-group:113:日南郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "23a6de4d-2164-48c4-8800-d7634bb67296",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:005",
+      "canonicalName": "比景",
+      "displayName": "比景",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-frontier-county-claim-v1-fc-rinan-005"
+      },
+      "locationClaimId": "han-frontier-county-claim-v1-fc-rinan-005",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 832,
+      "parentName": "日南郡",
+      "parentRef": "hhs-group:113:日南郡",
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-005",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-frontier-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-frontier-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -25097,98 +26576,98 @@
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "0752cf56f8e7a4c015dec76f326a6b0fc136016096cd7f6385fd23b04e8e8ffb",
+        "sha256": "26b31f9279741ac0d0a38337fe6afe4228a1d4989f4b077b8fb24e59891742e9",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "8dcd43a6625a5b7be19eee36c224754b41f0163e2121dcfdc06456825ba9f968",
+        "sha256": "f396e8912cd540a6635db3e26af2072113d282ca83d4cb608405d4e55afa3512",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "cac58a97ff9c5983983929744c8832bc124473a270d258c914bff6123c454be7",
+        "sha256": "5bcd3fa8daf6148607b99cc4e73d94c4c2b9d7464e0a40292b13235de977f4b4",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "2c36ae3dd5cb2c75ba6c617f12249b491973ad45482692a3fadc17145a78d89f",
+        "sha256": "ff066c7f161991b8b0828a22e1c47179252866f6b51255067ee1bbae255314fd",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "a757816ed737f277b2297c56d1862dbf5bc93a2949e214a032263a39785d0954",
+        "sha256": "46273b7ec3ab6a5614f186538506649cedaa5286c9c9b3a7f70d1f8b48670fd9",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "deb80fae8b750be02fbb33af2f02c8e83fccf3531d5f6576892d66942f3738ec",
+        "sha256": "623ac4385ced9590371142503a4dd965e6c864eb4122b0df30da5e49f92502a2",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "3a94aa2ef45981008332a3cc0d988b726641283a29089b5e0709c026c635ec55",
+        "sha256": "f3eb8822c575d54d97f353c8bda7e276f1713a879f30c30af61fceb3e5b7cc6f",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "5a39b17a83b36401916656839f3a014dd42dc75e9cfca769733d6e4289f8c79f",
+        "sha256": "95f5359acf6d631bc75b259468b8a0c86ab293d0c957f486f121e90d451ac210",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "6ac19f7bd1d53c85073f672d11a4931c6e02b7492ded6b7d6cbf5a7e8bf811ba",
+        "sha256": "c439e8b7c37636dd9b99086034f37ef9e8c89e530c38ced85435413f11db128d",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "fd92e08859451b63980b08261d5a22d489ddd11acf2d9f7e6262e802f15a7804",
+        "sha256": "f85b4668f4b1966e14ab9f5dfed35917eaccb1a0cbbd4045f03a29d6185a4dbf",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "6672648bbe65ba48cdc3167b05bdb05fecfc03920d3222d414605162ba832bab",
+        "sha256": "a7f53c51f31d3daba97460a2bc05e4c0ac58de133c5c2d2e3bc5457fb12d2f91",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "6081a905f67190943a8d709ac3236136be328e9f8bd9134e04b094ffe608ae70",
+        "sha256": "0b9b4f98c3b3601df59dc92983ed98ba14b6876d53b8216e4799287614bb1397",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "25e0bc726eb4cfb65157dec3a06581cd90f2d919f99f66aad1fde4101373e6ac",
+        "sha256": "c50c2a7db9faaa18d7b3b7fe79fab77f692b0d6ef462a4f1af074d1e18e49fd1",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "abec6e5fca03d8c859c784db8d32d2a9b78e3df74ee19320e43508511aa1ec72",
+        "sha256": "eb2dd3b9c54ceb523347502ba5c33a207ac80fd1189724f6da50a0e183298f98",
         "startYear": 188
       },
       {
@@ -25203,9 +26682,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 781,
+    "approvedCount": 832,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 781
+      "HHS_ADMINISTRATIVE_UNIT": 832
     }
   },
   "worldVersion": "han-world-v3"

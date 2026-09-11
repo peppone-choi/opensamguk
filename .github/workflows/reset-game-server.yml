@@ -35,11 +35,13 @@ on:
         type: string
       # 도시 집합은 지도 빌드마다 바뀐다(縣 복구로 늘고, 도시명에 郡名이 붙었다). 라이브 월드에서 잰 값을
       # 그대로 넣으면 리셋은 되고 검증만 빨개진다(2026-09-07 런 34100129248: 774 로 재고 781 이 심겼다).
-      # 아래 기본값은 2026-09-07 scenario_1020 리셋 직후 실측이다. 지도가 바뀌면 같이 갱신해라.
+      # 아래 기본값은 2026-09-07 scenario_1020 리셋 직후 실측(781)에서, 2026-09-11 변경 縣 51 곳이
+      # 게임 城 으로 서면서 832 로 올랐다(han-world-v3 · apply_han_world.py 가 832 를 못박는다).
+      # 첫 城 은 그대로 장안(京兆尹) 이다(ids 1–781 불변, 782–832 뒤에 붙었다). 지도가 바뀌면 같이 갱신해라.
       expected_city_count:
         description: "Optional public API city count assertion (blank = skip)"
         required: false
-        default: "781"
+        default: "832"
         type: string
       expected_first_city:
         description: "Optional public API first-city assertion (blank = skip)"

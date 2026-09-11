@@ -393,17 +393,17 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
-        self.assertEqual(27, snapshot["provinceTopology"]["disconnectedCount"])
-        self.assertEqual(11, snapshot["provinceTopology"]["fullyEnclosedCount"])
-        self.assertEqual(0, snapshot["provinceTopology"]["belowMinimumCount"])
+        self.assertEqual(26, snapshot["provinceTopology"]["disconnectedCount"])
+        self.assertEqual(25, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        self.assertEqual(2, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
-        self.assertEqual(10, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        self.assertEqual(24, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
-        self.assertEqual(73, snapshot["singleJurisdictionCommanderyCount"])
+        self.assertEqual(65, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])
         self.assertEqual(38, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])

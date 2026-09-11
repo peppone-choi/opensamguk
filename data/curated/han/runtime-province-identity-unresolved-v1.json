@@ -7,8 +7,8 @@
   },
   "summary": {
     "runtimeCities": 774,
-    "bound": 743,
-    "unresolved": 31
+    "bound": 751,
+    "unresolved": 23
   },
   "rows": [
     {
@@ -193,70 +193,6 @@
       "physicalPlaceId": "X026",
       "commanderyName": "구자속국",
       "commanderyNameCh": "龜茲屬國",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 712,
-      "runtimeName": "대방군",
-      "physicalPlaceId": "X004",
-      "commanderyName": "대방군",
-      "commanderyNameCh": "帶方郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 714,
-      "runtimeName": "낙랑군",
-      "physicalPlaceId": "X003",
-      "commanderyName": "낙랑군",
-      "commanderyNameCh": "樂浪郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 722,
-      "runtimeName": "현도군",
-      "physicalPlaceId": "X006",
-      "commanderyName": "현도군",
-      "commanderyNameCh": "玄菟郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 723,
-      "runtimeName": "요동속국",
-      "physicalPlaceId": "X007",
-      "commanderyName": "요동속국",
-      "commanderyNameCh": "遼東屬國",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 724,
-      "runtimeName": "요동군",
-      "physicalPlaceId": "X005",
-      "commanderyName": "요동군",
-      "commanderyNameCh": "遼東郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 729,
-      "runtimeName": "구진군",
-      "physicalPlaceId": "X001",
-      "commanderyName": "구진군",
-      "commanderyNameCh": "九真郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 730,
-      "runtimeName": "교지군",
-      "physicalPlaceId": "X000",
-      "commanderyName": "교지군",
-      "commanderyNameCh": "交趾郡",
-      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
-    },
-    {
-      "runtimeCityId": 739,
-      "runtimeName": "일남군",
-      "physicalPlaceId": "X002",
-      "commanderyName": "일남군",
-      "commanderyNameCh": "日南郡",
       "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
     }
   ]

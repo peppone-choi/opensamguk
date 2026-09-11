@@ -6,6 +6,363 @@
       "newCityId": 781,
       "physicalPlaceRef": "chgis:v6:cnty:45022",
       "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 782,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-002",
+      "routeNodeKey": "a1d8f9cd-d1c5-42f1-9226-4446d8b5b08b"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 783,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-003",
+      "routeNodeKey": "cc76ee2d-873f-4536-8b03-e5fb8a79b30f"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 784,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-004",
+      "routeNodeKey": "d0bd80d9-a882-403b-aa23-e20d80bcd9a8"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:006",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 785,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-006",
+      "routeNodeKey": "7e58d068-3274-4b71-a136-b198bb20814f"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:007",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 786,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-007",
+      "routeNodeKey": "5bbdbbf5-6b8b-43fc-b8f9-70229ada8817"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:008",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 787,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-008",
+      "routeNodeKey": "0d6d61b4-e84b-4a90-a8cc-10afeebc9315"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:009",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 788,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-009",
+      "routeNodeKey": "8da8ceaf-9f74-40d9-8c19-fcad58bf3b73"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:010",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 789,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-010",
+      "routeNodeKey": "2af1d18c-50de-4fef-afc6-437ce951858c"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 790,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-011",
+      "routeNodeKey": "b3cd94dd-12dd-41c3-aca5-be94625f2554"
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 791,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-002",
+      "routeNodeKey": "b2d47090-5595-4ebb-948b-f07d8d16956c"
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 792,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-003",
+      "routeNodeKey": "0dcbc4fa-acec-4305-8305-b217432996a1"
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 793,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-004",
+      "routeNodeKey": "2da5cb91-126f-424a-898d-5d57567762f1"
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 794,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-005",
+      "routeNodeKey": "eaf552c6-df5b-4352-b278-3e2ded0c5637"
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:006",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 795,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-xuantu-006",
+      "routeNodeKey": "820068e8-ed77-4ad3-83fc-03cafcc7bfe3"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 796,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-003",
+      "routeNodeKey": "43cda9b8-bcaf-4cae-a94f-6abc8d627eef"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 797,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-004",
+      "routeNodeKey": "1afbe24b-92a6-46bd-bfe8-a8a7c7834434"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 798,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-005",
+      "routeNodeKey": "b5a7f5ce-e12d-4abd-a406-35a2aae10e3e"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:006",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 799,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-006",
+      "routeNodeKey": "78c49390-dc6e-4c11-99f4-cea475c95696"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:007",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 800,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-007",
+      "routeNodeKey": "6d92cbcd-d544-445f-81ba-f063df94daf4"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:009",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 801,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-009",
+      "routeNodeKey": "4fa6d917-4f85-4a2c-b825-963b7c73f05c"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:010",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 802,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-010",
+      "routeNodeKey": "dee6adae-9440-46eb-baf7-205e229a0974"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 803,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-011",
+      "routeNodeKey": "2081fb53-7269-449f-97eb-5020f72c25b0"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:012",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 804,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-012",
+      "routeNodeKey": "606dc9f4-abde-4461-bbdc-a7c7ec713c78"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:013",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 805,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-013",
+      "routeNodeKey": "e7250b60-14ba-4fef-9bd7-664e90278a88"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:014",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 806,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-014",
+      "routeNodeKey": "7822cbbe-fb12-47a1-806e-df2afba002db"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:015",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 807,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-015",
+      "routeNodeKey": "2029ac11-103b-48bd-b26f-e5ab2bef1c10"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:016",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 808,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-016",
+      "routeNodeKey": "6205faef-784a-4412-9e35-366d76bf82c2"
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:017",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 809,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-lelang-017",
+      "routeNodeKey": "3a4a6a54-f15b-4fc5-917e-8c10909c1107"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 810,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-002",
+      "routeNodeKey": "a39cc0d3-18d8-430a-b7cb-1a38d0e82b9d"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 811,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-003",
+      "routeNodeKey": "5c3843d4-1616-4521-a7fb-c7570ca5a3c8"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 812,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-005",
+      "routeNodeKey": "5235c442-567a-4b36-9145-dbe4594a00cb"
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:006",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 813,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-liaodong-shuguo-006",
+      "routeNodeKey": "ddeac138-03aa-402b-9c50-1a998707814e"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 814,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-002",
+      "routeNodeKey": "85c74f5a-2ddc-4a11-9484-a20b2eaa82d4"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 815,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-003",
+      "routeNodeKey": "05c360eb-4935-4e2d-80a3-ae2a1db08911"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 816,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-004",
+      "routeNodeKey": "e07bef0d-c531-4b31-9577-876b096c6e8f"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 817,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-005",
+      "routeNodeKey": "a4f274d1-92a3-4b48-b94d-ef51911c3352"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:006",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 818,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-006",
+      "routeNodeKey": "84a3ec7a-7713-40ed-a627-99c5af587333"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:007",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 819,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-007",
+      "routeNodeKey": "5ab94fee-73fb-4390-a9e0-9c45c2066a79"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:008",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 820,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-008",
+      "routeNodeKey": "b52314e0-4cf8-4a4d-a89a-23dabbd8e3d6"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:009",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 821,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-009",
+      "routeNodeKey": "71969480-6d4a-43c6-9f7b-24769d16b9c6"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:010",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 822,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-010",
+      "routeNodeKey": "8f0e0ee1-3b91-4362-ae44-79ae3f2aecf2"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 823,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-011",
+      "routeNodeKey": "ca02e661-43a9-4cff-bfc4-4880d465c97a"
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:012",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 824,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiaozhi-012",
+      "routeNodeKey": "79d71b7d-0dc8-4964-801b-7018fad5bed1"
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 825,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-002",
+      "routeNodeKey": "5ee59f54-806f-47a3-ba12-f25ac2bd55de"
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 826,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-003",
+      "routeNodeKey": "c56f5fbf-4321-44c2-97b5-51ecf694911f"
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 827,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-004",
+      "routeNodeKey": "b158df89-f58a-45e5-a4ed-524997cce889"
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 828,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-jiuzhen-005",
+      "routeNodeKey": "990970a3-e955-4893-9e46-62bd5116fab5"
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 829,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-002",
+      "routeNodeKey": "cbdc9e78-b27f-4054-bca4-740acead9a6a"
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:003",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 830,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-003",
+      "routeNodeKey": "1d595ae9-af47-4b07-bfa1-90d71eee30db"
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 831,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-004",
+      "routeNodeKey": "23a6de4d-2164-48c4-8800-d7634bb67296"
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 832,
+      "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-005",
+      "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -5530,11 +5887,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670",
+  "sourceCandidateSha256": "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05",
+  "sourceSelectionSha256": "7765628771cbc3c5888fad74d6a23b047fbad5aa35cb5a0de71493a798e6856c",
   "summary": {
-    "appendedIdentityCount": 1,
+    "appendedIdentityCount": 52,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

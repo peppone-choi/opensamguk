@@ -44,7 +44,7 @@ import kotlin.test.assertTrue
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 781 V3 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 832 V3 cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -107,15 +107,15 @@ class ScenarioBootIT {
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
         assertEquals(230, count("general"))
-        assertEquals(781, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
+        assertEquals(832, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
         assertEquals(230, snapshot.generals.size)
         assertEquals("han-world-v3", snapshot.state.config["mapName"])
-        assertEquals(781, snapshot.cities.size)
-        assertEquals((1..781).toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals(832, snapshot.cities.size)
+        assertEquals((1..832).toSet(), snapshot.cities.map { it.id }.toSet())
         assertEquals("역성", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
