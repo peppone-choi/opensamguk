@@ -93,7 +93,7 @@ class CheCheobo(
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
         val cityConstVariant = CityConstRegistry.of(context.env.mapName)
-        val destCityName = cityConstVariant.byId(destCityId)?.name ?: ""
+        val destCityName = cityConstVariant.byId(destCityId)?.displayName ?: ""
         val josaUl = JosaUtil.pick(destCityName, "을")
 
         // searchDistance로 거리 측정 (che_첩보.php:145)

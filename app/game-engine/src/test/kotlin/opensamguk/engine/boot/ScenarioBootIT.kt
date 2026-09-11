@@ -116,7 +116,10 @@ class ScenarioBootIT {
         assertEquals("han-world-v3", snapshot.state.config["mapName"])
         assertEquals(832, snapshot.cities.size)
         assertEquals((1..832).toSet(), snapshot.cities.map { it.id }.toSet())
-        assertEquals("역성", snapshot.cities.single { it.id == 781 }.name)
+        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「역성현」이다
+        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」). 규칙은 tools/scenario/build_han_world.py
+        // display_name 이 한 번 계산해 meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
+        assertEquals("역성현", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)

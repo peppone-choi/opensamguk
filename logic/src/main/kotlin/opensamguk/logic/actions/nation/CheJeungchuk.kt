@@ -83,7 +83,7 @@ fun cheJeungchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nati
             rice = nation.rice - cost,
         )
 
-        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.name ?: ""
+        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.displayName ?: ""
         val josaUl = JosaUtil.pick(destName, "을")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<G><b>$destName</b></>$josaUl 증축했습니다. <1>${context.date}</>")

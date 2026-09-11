@@ -140,7 +140,7 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val cityConstVariant = CityConstRegistry.of(context.env.mapName)
-        val destCityName = cityConstVariant.byId(destCityId)?.name ?: cityConstVariant.byId(dest.id)?.name ?: ""
+        val destCityName = cityConstVariant.byId(destCityId)?.displayName ?: cityConstVariant.byId(dest.id)?.displayName ?: ""
         val argAmount = (context.args["amount"] as? Number)?.toInt() ?: 0
 
         // cr_인구이동.php:158 — amount = clamp(arg.amount, null, src.pop - minAvailableRecruitPop).

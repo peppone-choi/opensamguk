@@ -208,7 +208,10 @@ class ScenarioImporterIT {
         assertEquals(2, count("nation"))
         assertEquals(832, count("city"))
         assertEquals((1..832).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
-        assertEquals("역성", jdbc.queryForObject("SELECT name FROM city WHERE id = 781 AND nation_id = 0", String::class.java))
+        // name 컬럼은 **표기**다("역성현"). 식별자 "역성"(ScenarioCity.name)은 시나리오 소유
+        // 목록을 푸는 데만 쓰고 DB 에는 남지 않는다 — 로그·목록·지도가 한 이름을 쓰게 한
+        // 지점이 ScenarioImporter.insertCities 다(2026-09-11).
+        assertEquals("역성현", jdbc.queryForObject("SELECT name FROM city WHERE id = 781 AND nation_id = 0", String::class.java))
         // 실효 지배지만 시나리오 소유로 칠하고, 나머지는 공백지로 둔다.
         assertEquals(596, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
         assertEquals(122, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
@@ -395,13 +398,14 @@ class ScenarioImporterIT {
 
         // City x100 scaling + level/region int map: 낙양 (id 46) pop_max 754800, level 9 (경), region 1 (사예).
         val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 46")
-        assertEquals("낙양", sso(nak["name"]))
+        // 京師라도 雒陽縣이다 — name 컬럼은 표기라 「낙양현」이 들어간다(2026-09-11).
+        assertEquals("낙양현", sso(nak["name"]))
         assertEquals(9, soi(nak["level"]))
         assertEquals(1, soi(nak["region"]))
         assertEquals(754800, soi(nak["pop_max"]))
         assertEquals(1, soi(nak["nation_id"]))
 
-        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양 (id 46).
+        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양현 (id 46).
         val cap = jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE id = 1", Int::class.java)
         assertEquals(46, cap)
 
@@ -694,15 +698,17 @@ class ScenarioImporterIT {
         assertEquals(83, soi(so["intel"]))
         assertEquals(0, soi(so["nation_id"]))
 
-        // mapName 누락 시 han 정본의 낙양현(id 46)을 사용한다.
+        // mapName 누락 시 han 정본의 낙양(id 46)을 사용한다.
         val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 46")
+        // 774城 han 정본에는 meta.displayName 이 없다 — 그 생성기 입력이 gitignored 라 다시
+        // 낼 수 없어서다. 표기가 없으면 식별자를 그대로 쓰므로 여기선 「낙양」이 맞다.
         assertEquals("낙양", sso(nak["name"]))
         assertEquals(9, soi(nak["level"]))
         assertEquals(1, soi(nak["region"]))
         assertEquals(754800, soi(nak["pop_max"]))
         assertEquals(1, soi(nak["nation_id"]))
 
-        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양현 (id 46).
+        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양 (id 46).
         val cap = jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE id = 1", Int::class.java)
         assertEquals(46, cap)
 

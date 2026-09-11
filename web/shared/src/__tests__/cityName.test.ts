@@ -143,3 +143,32 @@ describe('han-world-v3 의 meta.nameCh', () => {
     expect(sample.length).toBeGreaterThan(5);
   });
 });
+
+// 서버가 싣고 오는 표기가 이 파일의 규칙과 **같은 값**인지 본다.
+//
+// 「로그와 맵의 현 이름을 같게 만들어」(2026-09-11) 이후 규칙이 두 군데 산다 — 여기(지도가
+// 쓴다)와 tools/scenario/build_han_world.py 의 display_name(서버 로그·DB 이름이 쓴다).
+// 두 구현이 갈리면 같은 城이 또 두 이름으로 불린다. 그래서 832 곳을 전수로 맞춰 본다.
+describe('han-world-v3 의 meta.displayName', () => {
+  const ROOT = resolve(__dirname, '../../../..');
+  const world = JSON.parse(
+    readFileSync(resolve(ROOT, 'infra/src/main/resources/map/han-world-v3.json'), 'utf-8'),
+  ) as {
+    cities: { id: number; name: string; level: number; meta: { nameCh: string; displayName: string } }[];
+  };
+
+  it('832 곳 전부가 cityDisplayName 과 같은 값이다', () => {
+    const mismatched = world.cities
+      .filter((c) => c.meta.displayName !== cityDisplayName({
+        id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
+      }))
+      .map((c) => `${c.id} ${c.name}: ${c.meta.displayName}`);
+    expect(mismatched).toEqual([]);
+    expect(world.cities.length).toBe(832);
+  });
+
+  it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
+    const changed = world.cities.filter((c) => c.meta.displayName !== c.name);
+    expect(changed.length).toBe(823);
+  });
+});

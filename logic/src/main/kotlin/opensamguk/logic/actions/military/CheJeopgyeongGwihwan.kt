@@ -44,7 +44,7 @@ class CheJeopgyeongGwihwan : GeneralActionDefinition {
         if (nearestCityList.isEmpty()) return
 
         val destCityId = rng.choice(nearestCityList)                           // DRAW1
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // PHP che_접경귀환.php:96 — 로그에 시각(<1>date</>) 미포함(다른 군사명령과 달리).

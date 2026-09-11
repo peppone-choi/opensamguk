@@ -76,7 +76,7 @@ class CheGeobyeong(private val pipeline: GeneralActionPipeline) : GeneralActionD
         val scenario = (context.args["scenario"] as? Number)?.toInt() ?: 0
 
         val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
-        val cityName = CityConstRegistry.of(context.env.mapName).byId(d.city.id)?.name ?: ""
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(d.city.id)?.displayName ?: ""
 
         // 1. nationName + ㉥ dedup (che_거병.php:79-91).
         var nationName = generalName

@@ -103,7 +103,7 @@ class CheChotohwa(private val pipeline: GeneralActionPipeline) : NationCommand()
         val d = context.draft
         val nation = d.nation ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
 
         // --- actor exp/ded (che_초토화.php:154-156) ---
         // addExperience(-exp*0.1, false): 트리거 미적용(증감폭 그대로), 레벨만 재계산.

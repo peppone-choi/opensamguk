@@ -264,6 +264,7 @@ object ScenarioJson {
                 secuInit = c.securityInit,
                 defInit = c.defenceInit,
                 wallInit = c.wallInit,
+                displayName = c.displayName,
             )
         }
 
@@ -471,4 +472,12 @@ data class ScenarioCity(
     val secuInit: Int? = null,
     val defInit: Int? = null,
     val wallInit: Int? = null,
+    /**
+     * 화면·로그에 적을 이름. `city.name` 컬럼에 들어가는 값이다 — 목록·로그가 다 이 컬럼을 읽는다.
+     *
+     * [name] 은 식별자로 남는다: 시나리오의 `nation[].cities` 가 도시명으로 소유를 적고
+     * (ScenarioImporter.cityIdByName), 그 표는 계속 [name] 으로 푼다. 표기만 갈린다.
+     * null 이면 표기가 따로 없는 맵이라 [name] 을 그대로 쓴다.
+     */
+    val displayName: String? = null,
 )
