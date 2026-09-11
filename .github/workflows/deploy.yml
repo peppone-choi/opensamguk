@@ -23,8 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     # 잡 기본값은 6시간이다. 2026-08-21 에 :app:game-api:test 가 매달려 72분 넘게 돌았고
     # concurrency(deploy-production, cancel-in-progress: false) 때문에 그동안 모든 후속
-    # 배포가 큐에 갇혔다. 직전 성공 런들이 13~22분이므로 40분이면 정상 빌드에 넉넉하다.
-    timeout-minutes: 40
+    # 배포가 큐에 갇혔다. 직전 성공 런들이 13~22분이라 40분으로 뒀는데, 城 832 · 省 1,520
+    # 으로 커진 2026-09-11 런(34576054808)이 game-api 이미지 푸시 도중 40분에서 잘렸다
+    # (테스트는 통과했고 이미지 4개 중 2개까지 밀어 넣은 상태였다). 70분으로 올린다.
+    timeout-minutes: 70
     permissions:
       contents: read
       packages: write
