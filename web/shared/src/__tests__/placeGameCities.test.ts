@@ -9,21 +9,29 @@ import {
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import { PASS_LEVEL, STRATEGIC_PASSES } from '../iso/strategicPasses';
+import { RASTER_GROUP } from '../isoTileGrid';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { HanTiles } from '../HanMapCanvas';
 
-/** 8×8 원본 셀 = 2×2 타일. 배치 계산만 보므로 격자 내용은 필요 없다. */
+/**
+ * 2×2 타일짜리 장난감 격자. 원본 셀은 2G×2G 다(G = RASTER_GROUP).
+ *
+ * 셀 수를 숫자로 박아 두면 G 를 바꿀 때 좌표가 통째로 어긋난다(4 → 2 로 내릴 때
+ * 실제로 18 건이 빨개졌다). 그래서 **타일 기준으로 쓰고 G 를 곱한다** — 이 묶음이
+ * 보는 것은 「타일 (1,0) 의 구석에 앉은 治所」이지 셀 번호가 아니다.
+ */
+const G = RASTER_GROUP;
 const data = {
   grid: { cols: 2, rows: 2 } as never,
   provinceSeatCell: {
-    // 縣 0 → 원본 셀 (5,1) = 타일 (1.25, 0.25) · 縣 1 → 좌표 없음
-    col: Int32Array.from([5, -1]),
+    // 縣 0 → 원본 셀 (G+1, 1) = 타일 (1+1/G, 1/G) — 타일 (1,0) 안 · 縣 1 → 좌표 없음
+    col: Int32Array.from([G + 1, -1]),
     row: Int32Array.from([1, -1]),
     cityIndex: Int32Array.from([-1, -1]),
   },
-  sourceCols: 8,
-  sourceRows: 8,
+  sourceCols: 2 * G,
+  sourceRows: 2 * G,
   cities: [] as IsoCity[],
   // 투영이 없으면 關 은 한 곳도 안 선다 — 이 묶음은 게임 城 배치만 본다.
   projection: undefined,
@@ -59,8 +67,8 @@ describe('placeGameCities', () => {
   it('provinceId 가 있으면 대조표 좌표를 쓴다 — x/y 는 무시한다', () => {
     const [placed] = placeGameCities([city({ provinceId: 0, x: 0, y: 0 })], data, options);
     expect(placed.exact).toBe(true);
-    expect(placed.col).toBeCloseTo(1.25);
-    expect(placed.row).toBeCloseTo(0.25);
+    expect(placed.col).toBeCloseTo(1 + 1 / G);
+    expect(placed.row).toBeCloseTo(1 / G);
     expect(placed.tileCol).toBe(1);
     expect(placed.tileRow).toBe(0);
   });
@@ -68,7 +76,7 @@ describe('placeGameCities', () => {
   it('provinceId 가 없으면 x/y 선형 폴백으로 떨어지고 그렇다고 표시한다', () => {
     const [placed] = placeGameCities([city({ x: 25, y: 75 })], data, options);
     expect(placed.exact).toBe(false);
-    // x 25/100 × 8칸 = 셀 2 → 타일 0.5
+    // x 25/100 × 2G칸 = 셀 G/2 → 타일 0.5 (G 와 무관하다)
     expect(placed.col).toBeCloseTo(0.5);
     expect(placed.row).toBeCloseTo(1.5);
   });
@@ -80,11 +88,11 @@ describe('placeGameCities', () => {
   });
 
   it('한 타일에 묶이는 두 도시가 서로 다른 소수 좌표로 살아남는다', () => {
-    // 원본 셀 (4,0) 과 (5,1) 은 둘 다 타일 (1,0) 이다. 정수로 내리면 하나가 사라진다.
+    // 원본 셀 (G+1,1) 과 (G,0) 은 둘 다 타일 (1,0) 이다. 정수로 내리면 하나가 사라진다.
     const twoSeats = {
       ...data,
       provinceSeatCell: {
-        col: Int32Array.from([5, 4]),
+        col: Int32Array.from([G + 1, G]),
         row: Int32Array.from([1, 0]),
         cityIndex: Int32Array.from([-1, -1]),
       },
@@ -167,7 +175,7 @@ describe('郡國 밖 세력', () => {
     const covered = {
       ...data,
       provinceSeatCell: {
-        col: Int32Array.from([5, -1]),
+        col: Int32Array.from([G + 1, -1]),
         row: Int32Array.from([1, -1]),
         // 縣 0 의 治所가 지형 cities[0] 이다 = 아래 external 과 같은 항목.
         cityIndex: Int32Array.from([0, -1]),
@@ -243,7 +251,7 @@ describe('fitFootprintsInTile', () => {
   const norm = (c: number, r: number) => Math.abs(c) + Math.abs(r);
 
   it('혼자면 칸 한가운데에 세운다 — 원본 셀이 칸 모서리여도', () => {
-    // 縣 0 은 원본 셀 (5,1), 타일 (1,0) 의 오른아래 구석이다.
+    // 縣 0 은 원본 셀 (G+1,1), 타일 (1,0) 의 오른아래 구석이다.
     const [placed] = placeGameCities([city({ provinceId: 0 })], data, options);
     expect(placed.drawCol).toBeCloseTo(1);
     expect(placed.drawRow).toBeCloseTo(0);
@@ -253,8 +261,8 @@ describe('fitFootprintsInTile', () => {
   it('같은 칸에 둘이면 발자국을 반으로 줄이고 칸 안에서 벌린다', () => {
     const seatCell = {
       // 둘 다 타일 (1,0) 안이지만 원본 셀은 다르다 — 같은 자리에 겹치면 못 누른다.
-      col: Int32Array.from([4, 7]),
-      row: Int32Array.from([0, 3]),
+      col: Int32Array.from([G, 2 * G - 1]),
+      row: Int32Array.from([0, G - 1]),
       cityIndex: Int32Array.from([-1, -1]),
     };
     const both = placeGameCities(
@@ -278,7 +286,7 @@ describe('fitFootprintsInTile', () => {
 
   it('좌표까지 같으면 마름모 둘레로 돌려세운다 — 겹쳐 두면 뒤엣것을 못 누른다', () => {
     const seatCell = {
-      col: Int32Array.from([5, 5]),
+      col: Int32Array.from([G + 1, G + 1]),
       row: Int32Array.from([1, 1]),
       cityIndex: Int32Array.from([-1, -1]),
     };
@@ -325,8 +333,8 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
     sourceCols: tiles._meta.cols,
     sourceRows: tiles._meta.rows,
     grid: {
-      cols: Math.ceil(tiles._meta.cols / 4),
-      rows: Math.ceil(tiles._meta.rows / 4),
+      cols: Math.ceil(tiles._meta.cols / RASTER_GROUP),
+      rows: Math.ceil(tiles._meta.rows / RASTER_GROUP),
     } as never,
     projection: tiles._meta.projection,
   } as typeof data;
