@@ -28,6 +28,9 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
     // 시트: 열리면 첫 포커스 가능 요소로, Tab 은 시트 안에서 순환(공유 Modal 과 같은 규칙), Escape 로 닫고 더보기 버튼으로 복귀.
     useEffect(() => {
         if (!moreOpen) return;
+        const surface = sheetRef.current?.closest('.shell')?.querySelector<HTMLElement>('.shell-scroll-surface');
+        const previousOverflow = surface?.style.overflowY;
+        if (surface) surface.style.overflowY = 'hidden';
         const focusables = () =>
             Array.from(sheetRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])') ?? []);
         focusables()[0]?.focus();
@@ -57,7 +60,10 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
             }
         };
         window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            if (surface) surface.style.overflowY = previousOverflow ?? '';
+        };
     }, [moreOpen]);
 
     return (
@@ -106,6 +112,13 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
                 <div className="dept-sheet" role="dialog" aria-modal="true" aria-label="부서 메뉴" id="dept-more" ref={sheetRef} tabIndex={-1}>
                     <button type="button" className="dept-sheet__scrim" aria-label="닫기" onClick={() => setMoreOpen(false)} />
                     <div className="dept-sheet__panel">
+                        <div className="dept-sheet__header">
+                            <strong>부서 메뉴</strong>
+                            <button type="button" aria-label="메뉴 닫기" onClick={() => {
+                                setMoreOpen(false);
+                                moreButtonRef.current?.focus();
+                            }}>닫기</button>
+                        </div>
                         <DeptNav gating={gating} gatingState={gatingState} global={global} menu={menu} vertical onNavigate={() => setMoreOpen(false)} />
                     </div>
                 </div>

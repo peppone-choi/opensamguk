@@ -49,4 +49,19 @@ describe('BottomNav (모바일 5탭)', () => {
         fireEvent.keyDown(window, { key: 'Tab' });
         expect(items[0]).toHaveFocus();
     });
+    it('locks the game scroll surface while open and restores it on close and unmount', () => {
+        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.serverId.mockReturnValue('s1');
+        const { unmount } = render(<div className="shell"><main className="shell-scroll-surface" style={{ overflowY: 'auto' }} /><BottomNav gating={NONE} gatingState="ready" /></div>);
+        const surface = document.querySelector<HTMLElement>('.shell-scroll-surface')!;
+        fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+        expect(surface.style.overflowY).toBe('hidden');
+        fireEvent.click(screen.getByRole('button', { name: '메뉴 닫기' }));
+        expect(surface.style.overflowY).toBe('auto');
+        expect(screen.getByRole('button', { name: '더보기' })).toHaveFocus();
+        fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+        unmount();
+        expect(surface.style.overflowY).toBe('auto');
+    });
+
 });
