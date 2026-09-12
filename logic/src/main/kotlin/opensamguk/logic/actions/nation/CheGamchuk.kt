@@ -93,7 +93,7 @@ fun cheGamchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nation
         )
 
         // logs (che_감축.php:198 general action + :201 global action)
-        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.name ?: ""
+        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.displayName ?: ""
         val josaUl = JosaUtil.pick(destName, "을")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<G><b>$destName</b></>$josaUl 감축했습니다. <1>${context.date}</>")

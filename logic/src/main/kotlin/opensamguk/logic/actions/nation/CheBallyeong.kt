@@ -72,7 +72,7 @@ fun cheBallyeong(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline):
         val d = context.draft
         val destGeneral = d.destGeneral ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
 
         // dest general → destCityID (che_발령.php:155)
         var movedDest = destGeneral.copy(cityId = destCityId)

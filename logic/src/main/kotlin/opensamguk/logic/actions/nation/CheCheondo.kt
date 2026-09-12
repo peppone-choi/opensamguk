@@ -91,7 +91,7 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
         val d = context.draft
         val nation = d.nation ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
         val distance = context.cityDistance ?: 50
         val expDed = 5 * (getPreReqTurnForDistance(distance) + 1)
 

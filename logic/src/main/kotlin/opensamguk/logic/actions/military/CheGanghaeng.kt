@@ -67,7 +67,7 @@ class CheGanghaeng(
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: d.destCity?.id
         ?: error("강행 requires a destCityID")
         val cityConst = CityConstRegistry.of(env.mapName)
-        val destCityName = d.destCity?.let { cityConst.byId(it.id)?.name } ?: cityConst.byId(destCityId)?.name
+        val destCityName = d.destCity?.let { cityConst.byId(it.id)?.displayName } ?: cityConst.byId(destCityId)?.displayName
         ?: error("unknown dest city $destCityId")
         val josaRo = JosaUtil.pick(destCityName, "로")
 

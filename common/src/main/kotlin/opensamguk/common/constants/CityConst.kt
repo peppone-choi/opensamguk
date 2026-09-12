@@ -51,6 +51,14 @@ object CityConst {
         val population: Int, val agriculture: Int, val commerce: Int,
         val security: Int, val defence: Int, val wall: Int,
         val region: String, val posX: Int, val posY: Int, val path: List<String>,
+        /**
+         * 화면·로그에 적을 이름. 생성기가 [CityInitialDetail.displayName] 으로 나른다.
+         *
+         * 기본값이 [name] 이라 13 개 인자로 적은 기존 표(che·han·han-780)는 그대로 컴파일된다.
+         * 표기를 따로 싣는 것은 han-world-v3 뿐이다 — 그 생성기만 입력이 tracked 라 다시 낼
+         * 수 있다(tools/scenario/build_han_world.py display_name).
+         */
+        val displayName: String = name,
     )
 
     /** The three generated maps produced by [generateCities] (mirrors CityConstBase::_generate). */
@@ -97,6 +105,7 @@ object CityConst {
             val city = CityInitialDetail(
                 raw.id, raw.name, level, population, agriculture, commerce,
                 security, defence, wall, region, raw.posX, raw.posY, newPath,
+                raw.displayName,
             )
 
             constID[raw.id] = city

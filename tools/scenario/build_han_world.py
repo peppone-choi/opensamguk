@@ -142,6 +142,47 @@ CAPITALS = {
     "京兆尹": "長安 — 前漢의 京師이자 後漢의 西京",
 }
 LEVEL_ID = {name: i + 1 for i, name in enumerate(LEVELS)}
+
+# --- 화면·로그에 적을 이름 ------------------------------------------------
+#
+# 「로그와 맵의 현 이름을 같게 만들어」(2026-09-11). 지도는 web/shared/src/iso/cityName.ts
+# 의 cityDisplayName 을 거쳐 「장안현」으로 적는데, 서버 로그는 CityConst.name 을 그대로
+# 써서 「장안(京兆尹)」으로 나갔다. 같은 城이 두 이름으로 불린 것이다.
+#
+# 규칙을 클라이언트와 서버가 각자 계산하면 또 갈라진다. 그래서 여기서 한 번 계산해
+# han-world-v3.json meta.displayName 과 RawCity.displayName 두 곳에 같은 값을 싣는다.
+# 규칙 자체는 cityName.ts 와 글자 그대로 같아야 하며, 그 동치는 테스트가 지킨다
+# (tools/scenario/tests/test_build_han_world_v3.py · web/shared/src/__tests__/cityName.test.ts).
+
+#: 「영현」·「장현」 — 등급 이름이 곧 縣이다.
+COUNTY_LEVELS = frozenset(("영현", "장현"))
+#: nameCh 꼬리로 縣임이 드러나는 행정 단위. 侯國은 縣 한 급이다(百官志 「列侯所食縣曰國」).
+COUNTY_UNITS = ("县", "縣", "侯国", "侯國")
+#: nameCh 꼬리로 縣이 **아님**이 드러나는 단위. 屬國은 郡 한 급이라 등급보다 먼저 본다.
+NON_COUNTY_UNITS = ("属国", "屬國", "郡", "国", "國")
+#: 「의씨(河東郡)」·「영릉#123」 — 이름 충돌을 가르려 붙인 식별자용 한정자. 화면에서는 뗀다.
+NAME_QUALIFIER = re.compile(r"(\([^()]*\)|#\d+)$")
+
+
+def is_han_county(city_id: int, level_name: str, name_ch: str) -> bool:
+    """이 城이 중국 郡縣制 안의 縣인가. cityName.ts isHanCounty 와 같은 판정이다."""
+    if city_id < 0:                       # 郡國 밖 세력(EXTERNAL_PLACE)은 음수 번호다.
+        return False
+    name_ch = name_ch or ""
+    if name_ch.endswith(COUNTY_UNITS):
+        return True
+    if name_ch.endswith(NON_COUNTY_UNITS):
+        return False
+    return level_name in COUNTY_LEVELS
+
+
+def display_name(city_id: int, name: str, level_name: str, name_ch: str) -> str:
+    """화면·로그에 적을 이름. 한정자를 떼고, 縣이면 「뭐뭐현」."""
+    stem = NAME_QUALIFIER.sub("", name)
+    if not is_han_county(city_id, level_name, name_ch):
+        return stem
+    return stem if stem.endswith("현") else stem + "현"
+
 HOUSEHOLD_LEVELS = ["소", "중", "대", "특"]
 
 # CityConst.buildInit (common/.../CityConst.kt:223-232) 을 그대로 옮긴 것.
@@ -841,10 +882,16 @@ KOTLIN_CHUNK = 150
 
 def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
     body = []
-    for cid, name, lv, stats, region, x, y, path in rows:
+    for cid, name, lv, stats, region, x, y, path, *rest in rows:
         p = ", ".join(f'"{n}"' for n in path)
         s = ", ".join(str(v) for v in stats)
-        body.append(f'        RawCity({cid}, "{name}", "{lv}", {s}, "{region}", {x}, {y}, listOf({p})),')
+        # 14 번째 인자 displayName 은 v3 만 싣는다. RawCity 가 기본값(= name)을 주므로
+        # han/han-780 표는 13 개 인자 그대로다 — 그 둘의 생성기 입력은 gitignored 라
+        # 여기서 다시 낼 수 없고, 낼 수 없는 파일을 바꾸면 --check 가 영구히 빨개진다.
+        extra = f', "{rest[0]}"' if rest else ""
+        body.append(
+            f'        RawCity({cid}, "{name}", "{lv}", {s}, "{region}", {x}, {y}, listOf({p}){extra}),'
+        )
     return (
         "package opensamguk.common.constants\n"
         "\n"
@@ -1166,6 +1213,13 @@ def build_v3() -> tuple[str, str, str, str]:
     if len({row["name"] for row in out_cities}) != len(out_cities):
         raise AssertionError("han-world-v3 runtime names must be unique")
 
+    # 이름 한정자가 확정된 뒤에 화면 이름을 낸다 — 한정자를 떼는 것이 이 규칙의 절반이라
+    # 붙이기 전에 계산하면 「의씨현」이 아니라 「의씨현(河東郡)」이 나온다.
+    for row in out_cities:
+        row["meta"]["displayName"] = display_name(
+            row["id"], row["name"], LEVELS[row["level"] - 1], row["meta"]["nameCh"],
+        )
+
     # Resolve path names only after every stable numeric identity exists.
     out_cities_by_id = {row["id"]: row for row in out_cities}
     raw_rows = [
@@ -1174,6 +1228,7 @@ def build_v3() -> tuple[str, str, str, str]:
             [row["max"][key] // 100 for key in STAT_KEYS],
             legacy["_meta"]["regions"][row["region"] - 1], row["x"], row["y"],
             [out_cities_by_id[n]["name"] for n in row["connections"]],
+            row["meta"]["displayName"],
         )
         for row in out_cities
     ]

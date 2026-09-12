@@ -134,7 +134,7 @@ class CheSeondong(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
         val destNationId = destCity.nationId
         val commandName = name
         val statType = "leadership"

@@ -167,7 +167,7 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         val nationType = context.args["nationType"] as? String ?: return
         val colorType = (context.args["colorType"] as? Number)?.toInt() ?: return
         val color = GetNationColors().getOrNull(colorType) ?: return
-        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.name ?: ""
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.displayName ?: ""
 
         // 3. logs (che_건국.php:172-178).
         val josaUl = JosaUtil.pick(nationName, "을")

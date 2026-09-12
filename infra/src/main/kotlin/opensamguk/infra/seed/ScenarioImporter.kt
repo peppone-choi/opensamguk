@@ -382,7 +382,10 @@ class ScenarioImporter(
                         ?, 100, ?, ?, ?, ?, ?,
                         0, 0, '{}'::jsonb, '{}'::jsonb)
                 """.trimIndent(),
-                worldId.value, c.id, c.name, c.level, cityNationId,
+                // name 컬럼에는 **표기**를 넣는다("장안현"). 식별자 c.name("장안(京兆尹)")은
+                // 시나리오 소유 목록을 푸는 데만 쓰고(cityIdByName) DB 에는 남기지 않는다 —
+                // 로그·목록·지도가 한 이름을 쓰게 하는 지점이 여기다(2026-09-11).
+                worldId.value, c.id, c.displayName ?: c.name, c.level, cityNationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
             )

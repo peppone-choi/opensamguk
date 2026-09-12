@@ -52,7 +52,7 @@ class CheNpcNeungdong(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
 
     override fun resolve(context: GeneralActionResolveContext) {
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val cityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: return
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: return
         val josaRo = JosaUtil.pick(cityName, "로")
         context.addLog("NPC 전용 명령을 이용해 $cityName$josaRo 이동했습니다.")
         context.draft.general = context.draft.general.copy(

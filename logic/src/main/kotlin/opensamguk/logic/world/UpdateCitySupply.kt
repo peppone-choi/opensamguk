@@ -271,7 +271,7 @@ fun applyCitySupply(
     val lostCitySet = lostCityIds.toSet()
     // The 고립 log uses the city's canonical name (PHP `city.name`); resolved from the active
     // CityConst (the byte-identical seed source) so the JosaUtil pick matches the golden.
-    val isolatedLogs = lostCities.map { HistoryTokens.isolatedCity(cityConst.byId(it.id)?.name ?: "") }
+    val isolatedLogs = lostCities.map { HistoryTokens.isolatedCity(cityConst.byId(it.id)?.displayName ?: "") }
 
     if (lostCitySet.isEmpty()) {
         return CitySupplyResult(decayedCities, decayedGenerals, lostCityIds, isolatedLogs, reachability?.rows.orEmpty())

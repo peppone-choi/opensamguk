@@ -55,6 +55,16 @@ object MapJson {
         val defenceInit: Int?,
         val wallInit: Int?,
         val connections: List<Int>,
+        /**
+         * `meta.displayName` — 화면·로그에 적을 이름("장안현"). [name] 은 식별자다("장안(京兆尹)").
+         *
+         * 「로그와 맵의 현 이름을 같게 만들어」(2026-09-11). 값은 생성기가 계산해 지도 JSON 에
+         * 싣는다(tools/scenario/build_han_world.py display_name). 없는 맵(che·han·han-780)은
+         * null 이고 그때는 [name] 을 그대로 쓴다.
+         *
+         * **맨 끝에 둔다** — MapCityCoord.nameCh 와 같은 이유로 위치 인자 시험이 밀린다.
+         */
+        val displayName: String? = null,
     )
 
     /**
@@ -136,6 +146,8 @@ object MapJson {
                 connections = (c["connections"] as? List<*>)
                     ?.mapNotNull { intOrNull(it) }
                     ?: emptyList(),
+                displayName = ((c["meta"] as? Map<*, *>)?.get("displayName") as? String)
+                    ?.takeIf { it.isNotBlank() },
             )
         }
     }

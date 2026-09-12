@@ -574,7 +574,7 @@ data class ConquerCityInput(
     fun conquerNationNameOf(nationId: Int): String = nationNames[nationId] ?: ""
 
     fun minCityNameOf(cityId: Int): String =
-        cityConstVariant.byId(cityId)?.name ?: CityConst.byId(cityId)?.name ?: ""
+        cityConstVariant.byId(cityId)?.displayName ?: CityConst.byId(cityId)?.displayName ?: ""
 }
 
 /**

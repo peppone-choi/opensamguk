@@ -420,5 +420,62 @@ class HanWorldV3Test(unittest.TestCase):
 
 
 
+class DisplayNameTest(unittest.TestCase):
+    """화면·로그에 적을 이름 규칙. web/shared/src/iso/cityName.ts 와 같은 판정이어야 한다.
+
+    값은 전부 han-world-v3 실측이다 — 지어낸 城 은 없다.
+    """
+
+    def test_name_ch_tail_beats_level(self) -> None:
+        display = build_han_world.display_name
+        # 弘農郡 治所. 등급은 「소」라 등급 규칙으로는 안 잡히고 nameCh 꼬리가 잡는다.
+        self.assertEqual("홍농현", display(22, "홍농", "소", "弘农县"))
+        # 侯國은 縣 한 급이다(百官志 「列侯所食縣曰國」). 등급 6 이어도 縣이다.
+        self.assertEqual("낙평현", display(211, "낙평", "중", "乐平侯国"))
+        # 屬國은 郡 한 급이다. 등급이 「장현」이어도 縣을 붙이면 없는 縣을 만든다.
+        self.assertEqual("구자속국", display(429, "구자속국", "장현", "龜茲屬國"))
+        # 縣 기록이 없는 郡. 「감릉현」을 새로 만들지 않는다.
+        self.assertEqual("감릉", display(240, "감릉", "중", "甘陵郡"))
+
+    def test_qualifier_is_stripped_and_hyeon_is_not_doubled(self) -> None:
+        display = build_han_world.display_name
+        # 한글 독음이 겹쳐 붙인 식별자용 한정자는 뗀다(「군을 빼」 2026-09-10).
+        self.assertEqual("의씨현", display(2, "의씨(河東郡)", "장현", "猗氏县"))
+        self.assertEqual("영릉현", display(9999, "영릉#9999", "장현", "零陵县"))
+        # 이미 「현」으로 끝나면 덧붙이지 않는다.
+        self.assertEqual("동평릉현", display(123, "동평릉현", "장현", "东平陵县"))
+        # 郡國 밖 세력은 음수 번호로 온다 — 縣이 아니다.
+        self.assertEqual("우산국", display(-35, "우산국", "이", ""))
+
+    def test_shipped_world_carries_the_same_value(self) -> None:
+        """실려 나간 값이 규칙을 다시 돌린 결과와 한 곳도 다르지 않다."""
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        levels = build_han_world.LEVELS
+        mismatched = [
+            (city["id"], city["name"], city["meta"]["displayName"])
+            for city in world["cities"]
+            if city["meta"]["displayName"] != build_han_world.display_name(
+                city["id"], city["name"], levels[city["level"] - 1], city["meta"]["nameCh"],
+            )
+        ]
+        self.assertEqual([], mismatched)
+        # 0 건이 「전부 이름이 같아서」가 아님을 같이 못박는다.
+        changed = [
+            city for city in world["cities"]
+            if city["meta"]["displayName"] != city["name"]
+        ]
+        self.assertEqual(832, len(world["cities"]))
+        self.assertEqual(823, len(changed))
+
+    def test_kotlin_table_carries_the_display_name(self) -> None:
+        """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""
+        kt = (ROOT / "common/src/main/kotlin/opensamguk/common/constants"
+              / "HanWorldV3CityConst.kt").read_text()
+        self.assertIn('RawCity(1, "장안(京兆尹)"', kt)
+        self.assertIn('), "장안현"),', kt)
+
+
 if __name__ == "__main__":
     unittest.main()

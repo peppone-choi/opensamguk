@@ -50,7 +50,7 @@ class CheJiphap(
         val g0 = d.general
 
         val cityId = d.city.id
-        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.name ?: error("unknown city $cityId")
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.displayName ?: error("unknown city $cityId")
         val josaRo = JosaUtil.pick(cityName, "로")
         val troopId = g0.id   // PHP troopID = $general->getID() (the leader is the troop id)
 

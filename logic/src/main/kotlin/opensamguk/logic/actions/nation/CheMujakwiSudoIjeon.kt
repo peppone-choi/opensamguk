@@ -53,7 +53,7 @@ fun cheMujakwiSudoIjeon(pipeline: GeneralActionPipeline): NationCommand = object
 
         val destCityId = context.rng.choice(context.candidateCityIds)   // the ONLY RNG draw
         val cityConst = CityConstRegistry.of(context.env.mapName).byId(destCityId) ?: return
-        val destCityName = cityConst.name
+        val destCityName = cityConst.displayName
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // exp/ded += 10

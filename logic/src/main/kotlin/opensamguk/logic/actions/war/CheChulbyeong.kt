@@ -190,7 +190,7 @@ class CheChulbyeong(
             ?: error("che_출병: chosen city $defenderCityId not staged")
         val defenderNationId = destCity.nationId
         val cityConst = CityConstRegistry.of(context.env.mapName)
-        val destCityName = cityConst.byId(defenderCityId)?.name ?: ""
+        val destCityName = cityConst.byId(defenderCityId)?.displayName ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // (3) friendly target → che_이동 alternative + RETURN (che_출병.php:201-213).
@@ -206,7 +206,7 @@ class CheChulbyeong(
 
         // the "거쳐야/거치기로" detour log when the chosen city is not the final target (che_출병.php:215-223).
         if (bctx.finalTargetCityId != defenderCityId) {
-            val finalName = cityConst.byId(bctx.finalTargetCityId)?.name ?: ""
+            val finalName = cityConst.byId(bctx.finalTargetCityId)?.displayName ?: ""
             val josaRoFinal = JosaUtil.pick(finalName, "로")
             val josaUl = JosaUtil.pick(destCityName, "을")
             val minDist = bctx.distanceList.keys.firstOrNull() ?: currDist

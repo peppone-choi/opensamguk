@@ -80,7 +80,7 @@ class CheBaekseongDongwon(private val pipeline: GeneralActionPipeline) : NationC
         //    golden broadcastLines=[] (addGlobalActionLog 아님). 같은 국가 candidate 장수에게 addPlainLogTo.
         if (context.candidateGenerals.isNotEmpty()) {
             val josaYi = opensamguk.common.josa.JosaUtil.pick(context.generalName, "이")
-            val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
+            val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName ?: ""
             val broadcast =
                 "<Y>${context.generalName}</>$josaYi <G><b>$destCityName</b></>에 <M>백성동원</>을 하였습니다."
             val nationId = d.nation?.id
