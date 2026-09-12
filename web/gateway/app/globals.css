@@ -1518,3 +1518,17 @@ textarea:focus {
     .portrait-editor__previews { gap: var(--space-sm); }
     .portrait-editor__preview, .portrait-editor__preview--hero, .portrait-editor__preview--card { width: 80px; }
 }
+
+/* Keep all gateway destinations available on narrow phones, including ADMIN. */
+@media (max-width: 767px) {
+    .lobby-topbar.os-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 8px max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)); gap: 4px 12px; }
+    .lobby-topbar .os-topbar__left { display: contents; }
+    .lobby-topbar .lobby-brand { grid-column: 1; grid-row: 1; }
+    .lobby-topbar .os-topbar__right { grid-column: 2; grid-row: 1; min-width: 0; }
+    .lobby-topbar .os-topbar__user { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lobby-topbar .os-topbar__nav { grid-column: 1 / -1; grid-row: 2; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; min-width: 0; }
+    .lobby-topbar .os-nav-item { display: flex; justify-content: center; align-items: center; min-height: 44px; }
+    .lobby-topbar button { min-height: 44px; }
+}
+
+@media (max-width: 1023px) { .lobby-topbar button { min-height: 44px; } }

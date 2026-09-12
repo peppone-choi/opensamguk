@@ -17,6 +17,7 @@
 // 땅을 통째로 눌렀다. 색만으로는 세력 범위가 안 읽히므로 縣·郡·국가 경계선을 함께 긋는다.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { attachMapGestures } from './mapGestures';
 import {
   MAX_LEVEL,
   SEAT_ONLY_TILE_PIXELS,
@@ -216,13 +217,13 @@ export function IsoMap2D({
   // 색 인자(tintMode 등)에도 걸려 있어서, 세력색 탭을 누르거나 국가색이 늦게 도착하면
   // 다시 돈다. 지역 변수로 두면 그때마다 사용자의 확대·이동이 전체 맞춤으로 되돌아가고
   // 스스로 복구되지 않는다 — ref 에 얹어 effect 를 넘겨 산다.
-  const viewRef = useRef({ scale: 1, panX: 0, panY: 0, fitted: false });
+  const viewRef = useRef({ scale: 1, minScale: 0.02, panX: 0, panY: 0, fitted: false });
   // 지형이 바뀌면 배율·위치는 뜻이 없다. 다시 맞춘다.
   useEffect(() => {
-    viewRef.current = { scale: 1, panX: 0, panY: 0, fitted: false };
+    viewRef.current = { scale: 1, minScale: 0.02, panX: 0, panY: 0, fitted: false };
   }, [data]);
 
-  // 캔버스 위 +/−/전체 단추가 쥐는 손잡이. 휠이 없는 손가락 조작에서 유일한 확대 수단이다.
+  // 캔버스 위 +/−/전체 단추가 쥐는 손잡이. 터치 핀치와 함께 쓸 수 있는 확대 수단이다.
   const zoomRef = useRef<{ by: (factor: number) => void; fit: () => void } | null>(null);
 
   useEffect(() => {
@@ -282,6 +283,7 @@ export function IsoMap2D({
         const minY = -ANCHOR_Y - lift;
         const maxY = (cols + rows - 2) * HALF_H + (160 - ANCHOR_Y);
         view.scale = Math.min(w / (maxX - minX), h / (maxY - minY)) * 0.95;
+        view.minScale = view.scale;
         view.panX = w / 2 - ((minX + maxX) / 2) * view.scale;
         view.panY = h / 2 - ((minY + maxY) / 2) * view.scale;
         view.fitted = true;
@@ -570,29 +572,25 @@ export function IsoMap2D({
       return null;
     };
 
-    let dragging = false;
-    let lastX = 0;
-    let lastY = 0;
-    let lastPointerType = 'mouse';
-    const onDown = (e: PointerEvent) => {
-      lastPointerType = e.pointerType || 'mouse';
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      canvas.style.cursor = 'grabbing';
-      canvas.setPointerCapture(e.pointerId);
-    };
+    const gestures = attachMapGestures(canvas, {
+      pan: (dx, dy) => {
+        view.panX += dx;
+        view.panY += dy;
+        schedule();
+      },
+      zoom: (factor, x, y) => {
+        const next = Math.max(view.minScale, Math.min(2, view.scale * factor));
+        const applied = next / view.scale;
+        view.panX = x - (x - view.panX) * applied;
+        view.panY = y - (y - view.panY) * applied;
+        view.scale = next;
+        schedule();
+      },
+    });
     // 마우스를 얹기만 해도 城 정보가 나와야 한다 — 눌러야 나오는 건 지도가 아니라 목록이다.
     let hovered: number | null = null;
     const onMove = (e: PointerEvent) => {
-      if (dragging) {
-        view.panX += e.clientX - lastX;
-        view.panY += e.clientY - lastY;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        schedule();
-        return;
-      }
+      if (gestures.active) return;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -609,18 +607,13 @@ export function IsoMap2D({
       hovered = null;
       onHoverCity?.(null, { x: 0, y: 0 });
     };
-    const onUp = (e: PointerEvent) => {
-      dragging = false;
-      canvas.style.cursor = 'grab';
-      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
-    };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
-      const next = Math.max(0.02, Math.min(2, view.scale * factor));
+      const next = Math.max(view.minScale, Math.min(2, view.scale * factor));
       const applied = next / view.scale;
       view.panX = mx - (mx - view.panX) * applied;
       view.panY = my - (my - view.panY) * applied;
@@ -646,7 +639,7 @@ export function IsoMap2D({
         const city = cityAt(x, y);
         // 음수 id 는 게임 城 이 아니다. 툴팁까지가 끝이고 여기서 더 가지 않는다.
         if (city && !isExternalPlace(city)) {
-          onPickCity(city, { pointerType: lastPointerType });
+          onPickCity(city, { pointerType: gestures.pointerType });
           return;
         }
       }
@@ -665,7 +658,7 @@ export function IsoMap2D({
       by: (factor: number) => {
         const mx = canvas.clientWidth / 2;
         const my = canvas.clientHeight / 2;
-        const next = Math.max(0.02, Math.min(2, view.scale * factor));
+        const next = Math.max(view.minScale, Math.min(2, view.scale * factor));
         const applied = next / view.scale;
         view.panX = mx - (mx - view.panX) * applied;
         view.panY = my - (my - view.panY) * applied;
@@ -680,10 +673,7 @@ export function IsoMap2D({
 
     canvas.style.cursor = 'grab';
     canvas.style.touchAction = 'none';
-    canvas.addEventListener('pointerdown', onDown);
     canvas.addEventListener('pointermove', onMove);
-    canvas.addEventListener('pointerup', onUp);
-    canvas.addEventListener('pointercancel', onUp);
     canvas.addEventListener('pointerleave', onLeave);
     canvas.addEventListener('wheel', onWheel, { passive: false });
     canvas.addEventListener('click', onClick);
@@ -695,10 +685,8 @@ export function IsoMap2D({
       if (frame) cancelAnimationFrame(frame);
       zoomRef.current = null;
       observer.disconnect();
-      canvas.removeEventListener('pointerdown', onDown);
+      gestures.dispose();
       canvas.removeEventListener('pointermove', onMove);
-      canvas.removeEventListener('pointerup', onUp);
-      canvas.removeEventListener('pointercancel', onUp);
       canvas.removeEventListener('pointerleave', onLeave);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
@@ -722,7 +710,7 @@ export function IsoMap2D({
         data-testid="iso2d-canvas"
         role="img"
         aria-label={ariaLabel}
-        style={{ width: '100%', height: '100%', display: 'block' }}
+        style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
       />
       {sprites ? (
         <div className="iso-zoom" role="group" aria-label="지도 배율">
