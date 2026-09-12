@@ -209,12 +209,12 @@ object HanStrategicTopologyJson {
         val runtime = world.array("cities")
         val selected = selection.array("routeNodes")
         val manifested = docs.getValue(WORLD_MANIFEST).array("routeNodes")
-        require(runtime.size == 832 && selected.size == 832 && manifested.size == 832) { "V3 route roster must contain 832 nodes" }
+        require(runtime.size == 835 && selected.size == 835 && manifested.size == 835) { "V3 route roster must contain 835 nodes" }
         data class Identity(val id: Int, val key: String, val physical: String)
         fun identities(rows: List<JsonNode>, idField: String): Set<Identity> {
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }
-            require(result.map { it.id }.toSet() == (1..832).toSet() && result.map { it.key }.toSet().size == 832 &&
-                result.map { it.physical }.toSet().size == 832) { "Duplicate or missing runtime/route/physical identity" }
+            require(result.map { it.id }.toSet() == (1..835).toSet() && result.map { it.key }.toSet().size == 835 &&
+                result.map { it.physical }.toSet().size == 835) { "Duplicate or missing runtime/route/physical identity" }
             return result.toSet()
         }
         val expected = identities(selected, "numericCityId")

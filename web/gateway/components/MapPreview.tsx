@@ -21,6 +21,8 @@ interface MapCity {
     name: string;
     /** meta.nameCh — 縣 판정용(cityName.ts). 없으면 level 로만 가른다. */
     nameCh?: string;
+    /** 서버가 계산한 화면 이름("경조윤 장안현"). 오면 그대로 쓴다 — 로그와 같은 글자다. */
+    displayName?: string;
     level: number;
     nationId: number;
     x: number;

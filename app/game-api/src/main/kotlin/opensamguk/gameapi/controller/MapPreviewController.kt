@@ -123,6 +123,7 @@ class MapPreviewController(
                     isCommanderySeat = coord.isCommanderySeat,
                     provinceId = coord.provinceId,
                     isCapital = city.id in capitalIds,
+                    displayName = coord.displayName,
                 )
             }
             .sortedBy { it.id }

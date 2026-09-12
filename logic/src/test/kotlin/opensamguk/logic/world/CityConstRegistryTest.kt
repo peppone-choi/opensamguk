@@ -54,13 +54,13 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `persisted world v2 stays frozen while world v3 exposes reviewed 832 identities`() {
+    fun `persisted world v2 stays frozen while world v3 exposes reviewed 835 identities`() {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
 
         val v3 = CityConstRegistry.of("han-world-v3")
-        assertEquals((1..832).toList(), v3.all().keys.toList())
+        assertEquals((1..835).toList(), v3.all().keys.toList())
         assertTrue(v3.byId(273)!!.path.containsKey(781))
         assertTrue(v3.byId(781)!!.path.containsKey(273))
         val graph = buildString {
@@ -82,7 +82,10 @@ class CityConstRegistryTest {
         // 씨앗칸을 사료가 지목한 郡 안으로 옮기면서 그 4곳과 이웃 8곳, 합 12개 城의 인접이
         // 갈렸다. 간선 2,283 → 2,285 · 성분 4 · 도달불가 17(실측).
         // data/curated/han/county-misbinding-rebindings-v1.json 참조.
-        assertEquals("53d8b0646572cdece11f00a94eb82cc87c1baabd1521f676bf0391d645ef5194", digest)
+        // 2026-09-12(3): 城을 하나도 못 받던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로
+        // 섰다. 그 郡 땅 29 省이 남의 郡 城 대신 제 治所를 보게 되면서 간선 2,285 → 2,341 ·
+        // 성분 4 → 3 · 도달불가 17 → 2(下邳國 徐縣·會稽郡 鄮縣 두 섬만 남는다, 실측).
+        assertEquals("1acf64540162e163fa6ba8ba1dab7030dcf7a4971427d72b672fa24c8de9f599", digest)
     }
 
     @Test

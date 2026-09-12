@@ -49,7 +49,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(832, loaded.bindingsByCityId.size)
+        assertEquals(835, loaded.bindingsByCityId.size)
         assertEquals(setOf("NO_REVIEWED_RIVER_CROSSING_EVIDENCE", "NO_REVIEWED_PORT_OR_LANDING_EVIDENCE"), loaded.activationBlockerCodes)
         assertEquals("45098", loaded.bindingsByCityId.getValue(273).landProvinceId)
         assertEquals("45022", loaded.bindingsByCityId.getValue(781).landProvinceId)

@@ -20,11 +20,15 @@ LEGACY_SELECTION_COUNT = 780
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
-APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND"}
-EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 8, FRONTIER_COUNTY_BATCH: 51}
+#: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch 둘. append 행은 여기만 쓴다.
+LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH})
+APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND"}
+# 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
+# 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
+EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51}
 EXPECTED_LOCATION_CLAIM_COUNT = EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
-EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 8, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51}
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -512,11 +516,13 @@ def build_outputs(
         if batch_id == "w0b-overlay-unique-220":
             location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
             location_claim_id = None
-        elif batch_id == FRONTIER_COUNTY_BATCH and unit_id in claim_index:
+        elif batch_id in LOCATION_ONLY_BATCHES and unit_id in claim_index:
+            # 변경 縣 51곳과 城 없던 郡治 3곳은 둘 다 CHGIS 점이 없어 승인된 LOCATION_ONLY claim 으로
+            # 결합한다. 이름공간만 다르고(curated:frontier-county-v1 / external:v1) 규약은 같다.
             location_claim_id = text(claim_index[unit_id], "sourceClaimId")
             location_review = {"kind": "APPROVED_LOCATION_ONLY_CLAIM", "sourceClaimId": location_claim_id}
         else:
-            raise MaterializationContractError("append-only node must use reviewed overlay binding or a frontier county claim")
+            raise MaterializationContractError("append-only node must use reviewed overlay binding or an approved location-only claim")
         correction = unit.get("nameCorrection")
         canonical = text(correction, "correctedName") if isinstance(correction, dict) else text(unit, "sourceName")
         node_class = NODE_CLASSES[text(unit, "unitType")]

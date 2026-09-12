@@ -41,16 +41,18 @@ PROVENANCE_DEPENDENCIES = {
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
 LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
-# han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 832}
+# han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location)
+# + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 835}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
-# LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 郡治 8 곳, han-world-v3 는 거기에 변경 縣 51 곳이
-# 더 붙는다. 어느 판인지는 selection.worldVersion 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
+# LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 邊郡 治所 8 곳, han-world-v3 는 거기에
+# 城 없던 郡治 3 곳(朔方·西河·定襄)과 변경 縣 51 곳이 더 붙는다. 어느 판인지는 selection.worldVersion
+# 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 8, FRONTIER_COUNTY_BATCH: 51},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -107,11 +109,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "9c3b8dce9a142835ceadd226a53113d7c080bbe40d2237ffe219624994c7b108"
-PINNED_SOURCE_WITNESS_SHA256 = "e9610fdf127f2825311a8163ad631f4020df3f7cb6a4eb3094fedef1bc7f390c"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
+PINNED_SOURCE_WITNESS_SHA256 = "fd0019d96389e74ed8dc79bae89d23b3b30a8db25d096f9162259a2b87bf7789"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
-PINNED_REVIEW_POLICY_SHA256 = "51e95405053533fd6a6f204511a1e77e29954eab4b6434ea6980e2bf70b4bd2f"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
+PINNED_REVIEW_POLICY_SHA256 = "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"

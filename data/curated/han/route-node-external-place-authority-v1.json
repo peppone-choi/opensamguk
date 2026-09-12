@@ -413,6 +413,27 @@
       "recordId": "fc-rinan-005",
       "subjectKey": "hhs:113:日南郡:005",
       "wikidataId": null
+    },
+    {
+      "canonicalName": "临戎",
+      "physicalPlaceId": "external:v1:X011",
+      "recordId": "X011",
+      "subjectKey": "hhs:113:朔方郡:001",
+      "wikidataId": "Q1015883"
+    },
+    {
+      "canonicalName": "离石",
+      "physicalPlaceId": "external:v1:X023",
+      "recordId": "X023",
+      "subjectKey": "hhs:113:西河郡:001",
+      "wikidataId": "Q256594"
+    },
+    {
+      "canonicalName": "善无",
+      "physicalPlaceId": "external:v1:X024",
+      "recordId": "X024",
+      "subjectKey": "hhs:113:定襄郡:001",
+      "wikidataId": "Q1196894"
     }
   ],
   "schemaVersion": 1

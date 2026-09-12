@@ -74,7 +74,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
         # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
         self.assertEqual(105_711, ledger["summary"]["directTerritoryCellCount"])
-        self.assertEqual(833, ledger["summary"]["exactApprovedRowCount"])
+        self.assertEqual(836, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -424,7 +424,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(833, len(expected))
+        self.assertEqual(836, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -566,9 +566,12 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 833,
+                # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로 서면서 그 셋이
+                # 直轄 심사(BLOCKED_DIRECT_TERRITORY_REVIEW)에서 빠져 승인으로 옮겼다.
+                # 칸수는 그대로다 — 옮긴 세 행은 cellCount 가 0 인 治所 행이다.
+                "EXACT_APPROVED": 836,
                 "PROPOSED_GEOMETRIC": 285,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 31,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
             dict(decisions),
@@ -582,7 +585,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             },
             dict(decision_cells),
         )
-        self.assertEqual(356, summary["unresolvedRowCount"])
+        self.assertEqual(353, summary["unresolvedRowCount"])
         self.assertEqual(26_612, summary["unresolvedCellCount"])
         self.assertEqual(
             {"rowCount": 206, "cellCount": 11_191},
@@ -712,7 +715,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
 
-    def test_direct_territory_is_rejected_under_five_already_sourced_hhs_groups(self):
+    def test_direct_territory_is_rejected_under_two_already_sourced_hhs_groups(self):
         rows = [
             row
             for row in self.ledger["rows"]
@@ -725,8 +728,10 @@ class HanParentReconciliationTest(unittest.TestCase):
             == "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST"
         ]
 
+        # 5 에서 2 로 — 朔方·西河·定襄 세 郡은 治所가 城 833–835 로 서면서 直轄 심사에서
+        # 빠져 EXACT_APPROVED 로 옮겼다. 남은 둘은 治所 縣 이름이 사료에 안 남은 屬國이다.
         self.assertEqual(
-            {"廣漢屬國", "張掖屬國", "西河郡", "定襄郡", "朔方郡"},
+            {"廣漢屬國", "張掖屬國"},
             {row["seatJunDiagnostic"]["nameCh"] for row in rejected},
         )
         self.assertTrue(
@@ -735,7 +740,8 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
         self.assertEqual(
             # 16 에서 15 로 — 南鄉郡이 治所(南鄉縣)를 얻어 直轄 후보에서 빠졌다.
-            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 15},
+            # 5 에서 2 로 — 朔方·西河·定襄 治所가 城 833–835 로 섰다.
+            {"rejectedSourcedGroupJunCount": 2, "pendingCandidateJunCount": 15},
             self.ledger["summary"]["directTerritoryReview"],
         )
 

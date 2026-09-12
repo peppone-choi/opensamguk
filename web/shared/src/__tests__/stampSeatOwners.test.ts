@@ -35,15 +35,16 @@ function displaced(owner: Int32Array): string[] {
 }
 
 describe('stampSeatOwners', () => {
-  it('다수결만 쓰면 게임 城 35 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
+  it('다수결만 쓰면 게임 城 39 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
     // 이 수가 0 이 되면 downsampleOwner 쪽이 이미 고쳐졌다는 뜻이니 이 게이트를 다시 봐라.
     // 실측: 781 城 시절 162 → 변경 縣 51 곳이 城 782–832 로 서면서 189 → 2026-09-11
     // rasterGroup 을 4 에서 2 로 내리면서 35. 블록이 좁아지니 治所가 제 縣 땅을
-    // 다수결로 지켜 내는 자리가 늘었다.
-    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(35);
+    // 다수결로 지켜 내는 자리가 늘었다. → 2026-09-12 오배정 縣 8 곳을 제자리로 되돌리며
+    // han-tiles 815 칸이 주인을 바꾸어 39(#704 가 이 핀을 같이 안 옮겨 빨갛게 남아 있었다).
+    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(39);
   });
 
-  it('治所 칸을 되돌리면 35 → 5 로 줄고, 남는 5 는 전부 칸을 나눠 쓰는 城 이다', () => {
+  it('治所 칸을 되돌리면 39 → 5 로 줄고, 남는 5 는 전부 칸을 나눠 쓰는 城 이다', () => {
     const owner = stampSeatOwners(
       downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP),
       source, srcCols, cols, rows, seat, RASTER_GROUP,

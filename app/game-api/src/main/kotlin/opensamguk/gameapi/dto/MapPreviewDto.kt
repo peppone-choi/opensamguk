@@ -85,6 +85,13 @@ data class MapPreviewCity(
      *  `@get:JsonProperty` 고정 — Kotlin boolean `isX`는 Jackson이 `x`로 직렬화하므로 명시. */
     @get:JsonProperty("isCapital")
     val isCapital: Boolean,
+    /**
+     * `map/<code>.json` 의 `meta.displayName` — 화면·로그에 적을 이름("경조윤 장안현").
+     * [name] 은 식별자다("장안(京兆尹)"). 클라이언트는 이 값이 오면 그대로 쓴다
+     * (cityName.ts cityDisplayName). 값이 없는 맵이면 생략되고 규칙으로 다시 낸다.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val displayName: String? = null,
 )
 
 data class MapPreviewNation(

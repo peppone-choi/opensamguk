@@ -144,12 +144,13 @@ class HanAiLifecycleReplayIT {
         },
     ): ReplayResult {
         assertEquals("han-world-v3", snapshot.state.config["mapName"], "scenario_1010 must exercise the new-world-only Han variant")
-        assertEquals(832, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
-        assertEquals((1..832).toSet(), snapshot.cities.map { it.id }.toSet())
-        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「역성현」이다
-        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」). 규칙은 tools/scenario/build_han_world.py
-        // display_name 이 한 번 계산해 meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
-        assertEquals("역성현", snapshot.cities.single { it.id == 781 }.name)
+        assertEquals(835, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
+        assertEquals((1..835).toSet(), snapshot.cities.map { it.id }.toSet())
+        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「제남국 역성현」이다
+        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」, 2026-09-12 「군현제 안에선 뭐뭐군 뭐뭐현으로
+        // 표기해」). 규칙은 tools/scenario/build_han_world.py display_name 이 한 번 계산해
+        // meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
+        assertEquals("제남국 역성현", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(230, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 
         val world = InMemoryTurnWorld(snapshot)

@@ -33,6 +33,16 @@ object MapJson {
          * SpatialSupplyNetworkWiringTest 등) 가운데에 끼우면 x·y 가 밀려 컴파일이 깨진다.
          */
         val nameCh: String? = null,
+        /**
+         * `meta.displayName` — 화면·로그에 적을 이름("경조윤 장안현"). [name] 은 식별자다.
+         *
+         * 「보이는 이름으로 통일하란 말이야」(2026-09-12). 생성기가 계산해 지도 JSON 에 싣는다
+         * (tools/scenario/build_han_world.py display_name + 전역 충돌 해소). 클라이언트가
+         * 규칙만으로는 못 내는 표기가 있어서(같은 郡 안 同音異字 縣 6 곳) 값을 실어 보낸다.
+         *
+         * **맨 끝에 둔다** — [nameCh] 와 같은 이유로 위치 인자 시험이 밀린다.
+         */
+        val displayName: String? = null,
     )
 
     data class MapCityDetail(
@@ -103,6 +113,7 @@ object MapJson {
                     ?: (c["physicalPlaceId"] as? String)?.takeIf { it.isNotBlank() }
                         ?.let { "chgis:v6:cnty:$it" },
                 routeNodeKey = (c["routeNodeKey"] as? String)?.takeIf { it.isNotBlank() },
+                displayName = (meta?.get("displayName") as? String)?.takeIf { it.isNotBlank() },
             )
         }
         return MapData(width = width, height = height, cities = cities)

@@ -68,7 +68,7 @@ describe('cityDisplayName', () => {
     expect(cityDisplayName(city(507, '문안현', 11, '文安县'))).toBe('문안현');
   });
 
-  // 같은 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 단다(han-world-v3 832 중 136 곳).
+  // 같은 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 단다(han-world-v3 835 중 136 곳).
   // 그건 식별자를 유일하게 만드는 장치고, 화면에서는 뗀다(2026-09-10 「군을 빼」).
   it('한정자를 떼고 현을 붙인다', () => {
     expect(cityDisplayName(city(2, '의씨(河東郡)', 11, '猗氏县'))).toBe('의씨현');
@@ -83,6 +83,28 @@ describe('cityDisplayName', () => {
 
   it('縣 이 아니어도 한정자는 뗀다', () => {
     expect(cityDisplayName(city(199, '감릉군(冀州)', 6, '甘陵郡'))).toBe('감릉군');
+  });
+
+  // 「양성(潁川郡)#129」처럼 한정자가 둘 겹쳐 붙은 城 이 있다. 한 번만 떼면 괄호가 표기에 남는다.
+  it('겹쳐 붙은 한정자를 한꺼번에 뗀다', () => {
+    expect(cityDisplayName(city(129, '양성(潁川郡)#129', 11, '襄城县'))).toBe('양성현');
+  });
+
+  // 2026-09-12 「현 표기할 때 군현제 안에선 뭐뭐군 뭐뭐현으로 표기해」.
+  it('郡 을 알면 「뭐뭐군 뭐뭐현」', () => {
+    expect(cityDisplayName({ ...city(1, '장안(京兆尹)', 9, '长安县'), jun: '경조윤' }))
+      .toBe('경조윤 장안현');
+    // 郡 자체는 앞에 제 이름을 또 달지 않는다 — 縣 이 아니기 때문이다.
+    expect(cityDisplayName({ ...city(199, '감릉군', 6, '甘陵郡'), jun: '감릉군' })).toBe('감릉군');
+  });
+
+  // 서버가 실어 보낸 값이 정본이다. 규칙이 갈려도 로그와 지도는 같은 글자를 쓴다.
+  it('displayName 이 오면 그대로 쓴다', () => {
+    expect(cityDisplayName({
+      ...city(129, '양성(潁川郡)#129', 11, '襄城县'),
+      jun: '영천군',
+      displayName: '영천군 양성현(襄城)',
+    })).toBe('영천군 양성현(襄城)');
   });
 });
 
@@ -102,18 +124,18 @@ describe('han-world-v3 의 meta.nameCh', () => {
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
-    // 縣 등급(10·11) 밖 = 郡治 77 곳. 예전에는 175 였다 — 縣 93 곳이 郡 등급을
-    // 물려받고 있었기 때문이다(build_han_world.build_v3 에서 고쳤다).
+    // 縣 등급(10·11) 밖 = 郡治 80 곳. 예전에는 175 였다 — 縣 93 곳이 郡 등급을
+    // 물려받고 있었기 때문이다(build_han_world.build_v3 에서 고쳤다). 77 → 80 은
+    // 城을 하나도 못 받던 朔方·西河·定襄 3 郡의 治所가 선 것이다.
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11);
-    expect(outside.length).toBe(77);
+    expect(outside.length).toBe(80);
     const rest = outside
       .filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
-    // 縣 이 아닌 채로 남는 것은 縣 기록이 없는 邊境 郡과 屬國뿐이다. 「낙랑현」을 만들지 않는다.
-    expect(rest).toEqual(
-      ['교지군', '구진군', '낙랑군', '요동군', '요동속국', '일남군', '현도군'].sort(),
-    );
+    // 郡治는 이제 한 곳도 안 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
+    // 싣는다. 0 건이 「조회가 죽었다」가 아님은 위 outside 80 이 같이 못박는다.
+    expect(rest).toEqual([]);
   });
 
   it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
@@ -139,8 +161,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
       }))
       .map((c) => c.meta.nameCh);
     expect(wrong).toEqual([]);
-    // 0 건이 「조회가 죽었다」가 아님을 같이 못박는다.
-    expect(sample.length).toBeGreaterThan(5);
+    // 0 건이 「조회가 죽었다」가 아님을 같이 못박는다. 邊境 郡 7 곳이 治所 縣 이름을 받으면서
+    // 이 표본은 8 → 1(龜茲屬國)로 줄었다.
+    expect(sample.map((c) => c.meta.nameCh)).toEqual(['龜茲屬國']);
   });
 });
 
@@ -148,27 +171,55 @@ describe('han-world-v3 의 meta.nameCh', () => {
 //
 // 「로그와 맵의 현 이름을 같게 만들어」(2026-09-11) 이후 규칙이 두 군데 산다 — 여기(지도가
 // 쓴다)와 tools/scenario/build_han_world.py 의 display_name(서버 로그·DB 이름이 쓴다).
-// 두 구현이 갈리면 같은 城이 또 두 이름으로 불린다. 그래서 832 곳을 전수로 맞춰 본다.
+// 두 구현이 갈리면 같은 城이 또 두 이름으로 불린다. 그래서 835 곳을 전수로 맞춰 본다.
 describe('han-world-v3 의 meta.displayName', () => {
   const ROOT = resolve(__dirname, '../../../..');
   const world = JSON.parse(
     readFileSync(resolve(ROOT, 'infra/src/main/resources/map/han-world-v3.json'), 'utf-8'),
   ) as {
-    cities: { id: number; name: string; level: number; meta: { nameCh: string; displayName: string } }[];
+    cities: {
+      id: number; name: string; level: number;
+      meta: { nameCh: string; jun?: string; displayName: string };
+    }[];
   };
 
-  it('832 곳 전부가 cityDisplayName 과 같은 값이다', () => {
+  it('835 곳 전부가 cityDisplayName 과 같은 값이다', () => {
     const mismatched = world.cities
       .filter((c) => c.meta.displayName !== cityDisplayName({
-        id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
+        id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh, jun: c.meta.jun,
       }))
       .map((c) => `${c.id} ${c.name}: ${c.meta.displayName}`);
-    expect(mismatched).toEqual([]);
-    expect(world.cities.length).toBe(832);
+    // 郡 을 앞에 세워도 안 갈리는 同音異字 縣 6 곳만 예외다. 생성기가 漢字 어간을 뒤에 달아
+    // 가르는데(build_han_world.build_v3), 그건 835 곳을 한꺼번에 봐야 알 수 있는 판정이라
+    // 城 하나만 보는 이 함수로는 못 만든다 — 그래서 서버가 실어 보낸 displayName 이 정본이다.
+    expect(mismatched).toEqual([
+      '129 양성(潁川郡)#129: 영천군 양성현(襄城)',
+      '134 양성(潁川郡)#134: 영천군 양성현(阳城)',
+      '490 영도(零陵郡)#490: 영릉군 영도현(泠道)',
+      '495 영도(零陵郡)#495: 영릉군 영도현(营道)',
+      '527 안풍(廬江郡)#527: 여강군 안풍현(安丰)',
+      '528 안풍(廬江郡)#528: 여강군 안풍현(安风)',
+      // 아래 7 곳은 郡 표시 점 위에 선 邊郡 治所다. legacy 런타임 이름이 郡(「낙랑군」)이라
+      // 이름에서 어간을 뽑으면 「낙랑군 낙랑군현」이 된다 — 어간을 治所 관할(朝鮮縣)에서
+      // 읽는 것도 城 하나만 보는 이 함수가 못 하는 판정이다.
+      '720 낙랑군: 낙랑군 조선현',
+      '728 현도군: 현도군 고구려현',
+      '729 요동속국: 요동속국 창료현',
+      '730 요동군: 요동군 양평현',
+      '735 구진군: 구진군 서포현',
+      '736 교지군: 교지군 용편현',
+      '745 일남군: 일남군 서권현',
+    ]);
+    expect(world.cities.length).toBe(835);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
     const changed = world.cities.filter((c) => c.meta.displayName !== c.name);
-    expect(changed.length).toBe(823);
+    expect(changed.length).toBe(834);
+  });
+
+  it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {
+    const shown = new Set(world.cities.map((c) => c.meta.displayName));
+    expect(shown.size).toBe(world.cities.length);
   });
 });

@@ -26,11 +26,18 @@ han-tiles 는 1,520 省 전부에 소속 縣(`provinceRecords[].jurisdictionId`)
   T3 SAME_COMMANDERY_NEAREST 郡에 郡治 城이 없고 다른 屬縣 城만 있다 → 같은 郡 안에서
                            가장 가까운 城. 여기만 기하다. 사료가 답을 주지 못하는 칸이라
                            basis 로 드러내 두고, 郡 경계는 절대 넘지 않는다.
-  T4 COMMANDERY_HAS_NO_CITY  그 郡 전체에 城이 하나도 없다 → 귀속 없음(null).
-                           52 郡 229 省이 여기다. 대부분 郡國 밖 세력(夫餘·烏桓·南匈奴·
-                           鮮卑·邪馬壹國·삼한 소국 등 31 곳)과 城이 선정되지 않은
-                           郡(朔方·西河·定襄·涪陵·廣漢屬國 등)이다. 지어낸 城으로 메우지
-                           않는다 — 城 승격은 라우트 노드 키 발급이 따르는 별도 단계다.
+  T5 ADJACENT_COMMANDERY_NEAREST 그 郡 전체에 城이 하나도 없다 → 省 인접 그래프를 바깥으로
+                           걸어 가장 가까운 城에 붙인다. **여기만 郡 경계를 넘는다.**
+                           사료 주장이 아니라 게임 그래프 폴백이라는 것을 basis 로 드러낸다 —
+                           이 칸이 비어 있으면 그 땅은 어느 나라 색도 못 받고(빵꾸),
+                           `project_county_adjacency` 가 그 省에 닿는 간선을 통째로 버려
+                           출병·이동이 거기서 끊긴다. 걸리는 郡은 51 곳인데, 그 중 31 곳은
+                           route-node-validation-contract-v1 이 城 승격 자체를 금지한
+                           郡國 밖 세력(夫餘·烏桓·南匈奴·鮮卑·邪馬壹國·삼한 소국 등)이라
+                           앞으로도 城을 얻지 못한다. 지어낸 城으로 메우지 않는다 —
+                           城 승격은 라우트 노드 키 발급이 따르는 별도 단계다.
+  T6 COMMANDERY_HAS_NO_CITY  T5 로도 못 닿는다 → 귀속 없음(null). 城이 하나도 없는 섬
+                           성분만 여기 남는다.
 
 ## 산출·검사
 
@@ -57,8 +64,11 @@ BASIS_ORDER = (
     "OWN_COUNTY_SEAT",
     "SAME_COMMANDERY_SEAT",
     "SAME_COMMANDERY_NEAREST",
+    "ADJACENT_COMMANDERY_NEAREST",
     "COMMANDERY_HAS_NO_CITY",
 )
+# 郡 경계를 넘는 유일한 basis. 검사가 「郡 경계를 안 넘는다」를 걸 때 여기만 예외로 둔다.
+CROSSES_COMMANDERY_BOUNDARY = "ADJACENT_COMMANDERY_NEAREST"
 
 
 def sha256_path(path: Path) -> str:
@@ -121,20 +131,21 @@ def build_rows(tiles: dict, selection: dict) -> tuple[list[dict], Counter, list[
     basis_counts: Counter = Counter()
     unattributed: dict[str, int] = defaultdict(int)
 
+    assigned: dict[int, dict] = {}
+    basis_of: dict[int, str] = {}
     for index, province in enumerate(provinces):
         jurisdiction_id = str(province["jurisdictionId"])
         commandery_id = province["parentRegionId"]
-        node: dict | None = None
         if jurisdiction_id in county_node:
-            basis = "OWN_COUNTY_SEAT"
-            node = county_node[jurisdiction_id]
+            basis_of[index] = "OWN_COUNTY_SEAT"
+            assigned[index] = county_node[jurisdiction_id]
         elif commandery_id in commandery_seat_node:
-            basis = "SAME_COMMANDERY_SEAT"
-            node = commandery_seat_node[commandery_id]
+            basis_of[index] = "SAME_COMMANDERY_SEAT"
+            assigned[index] = commandery_seat_node[commandery_id]
         elif commandery_nodes.get(commandery_id):
-            basis = "SAME_COMMANDERY_NEAREST"
+            basis_of[index] = "SAME_COMMANDERY_NEAREST"
             here = centroids.get(index)
-            node = min(
+            assigned[index] = min(
                 commandery_nodes[commandery_id],
                 key=lambda pair: (
                     _distance(here, centroids.get(pair[1])),
@@ -142,14 +153,22 @@ def build_rows(tiles: dict, selection: dict) -> tuple[list[dict], Counter, list[
                 ),
             )[0]
         else:
-            basis = "COMMANDERY_HAS_NO_CITY"
             unattributed[commandery_id] += 1
+
+    hops = _spread_to_cityless_provinces(tiles, len(provinces), assigned)
+    for index in hops:
+        basis_of[index] = CROSSES_COMMANDERY_BOUNDARY
+
+    for index, province in enumerate(provinces):
+        commandery_id = province["parentRegionId"]
+        node = assigned.get(index)
+        basis = basis_of.get(index, "COMMANDERY_HAS_NO_CITY")
         basis_counts[basis] += 1
         rows.append(
             {
                 "provinceId": province["id"],
                 "provinceIndex": index,
-                "jurisdictionId": jurisdiction_id,
+                "jurisdictionId": str(province["jurisdictionId"]),
                 "commanderyId": commandery_id,
                 "commanderyNameCh": parents[commandery_id]["nameCh"],
                 "basis": basis,
@@ -158,6 +177,7 @@ def build_rows(tiles: dict, selection: dict) -> tuple[list[dict], Counter, list[
                 "cityPlaceId": (
                     node["physicalPlaceRef"].rsplit(":", 1)[-1] if node else None
                 ),
+                "adjacencyHops": hops.get(index),
             }
         )
 
@@ -173,6 +193,47 @@ def build_rows(tiles: dict, selection: dict) -> tuple[list[dict], Counter, list[
         )
     ]
     return rows, basis_counts, gaps
+
+
+def _spread_to_cityless_provinces(
+    tiles: dict, province_count: int, assigned: dict[int, dict]
+) -> dict[int, int]:
+    """城 없는 郡의 省을 省 인접 그래프로 가장 가까운 城까지 걸어 붙인다(T5).
+
+    다중 출발점 BFS 다. 한 바퀴(hop)마다 「이미 붙은 이웃」만 보고, 그 중 城 번호가 가장
+    작은 것을 고른다 — 같은 바퀴 안의 결과끼리는 서로를 보지 않으므로 입력 순서와 무관하게
+    같은 답이 나온다. 돌려주는 것은 새로 붙은 省의 바퀴 수이고, `assigned` 는 제자리에서
+    채워진다. 어느 城에도 육로로 닿지 않는 성분은 손대지 않는다 — 그건 T6 로 남는다.
+    """
+    neighbours: dict[int, list[int]] = defaultdict(list)
+    for edge in tiles["adjacency"]["county"]:
+        a, b = edge["a"], edge["b"]
+        if a >= province_count or b >= province_count:
+            continue
+        neighbours[a].append(b)
+        neighbours[b].append(a)
+
+    hops: dict[int, int] = {}
+    frontier = set(assigned)
+    hop = 0
+    while frontier:
+        hop += 1
+        settled: dict[int, dict] = {}
+        for index in frontier:
+            for neighbour in neighbours[index]:
+                if neighbour in assigned or neighbour in settled:
+                    continue
+                candidates = [
+                    assigned[other]
+                    for other in neighbours[neighbour]
+                    if other in assigned
+                ]
+                settled[neighbour] = min(candidates, key=lambda node: node["numericCityId"])
+        assigned.update(settled)
+        for index in settled:
+            hops[index] = hop
+        frontier = set(settled)
+    return hops
 
 
 def _distance(a: tuple[float, float] | None, b: tuple[float, float] | None) -> float:
@@ -200,7 +261,9 @@ def build_ledger() -> dict:
             "note": (
                 "省의 소속 縣은 han-tiles 가 정본이다. 이 원장은 그 縣을 게임 城으로 내리는 "
                 "마지막 칸만 정한다. 사료 근거는 T1(縣 귀속 심사) · T2(郡國志 郡 소속)이고, "
-                "T3 만 기하 폴백이며 郡 경계를 넘지 않는다. T4 는 城이 없어 비워 둔다."
+                "T3 만 기하 폴백이며 郡 경계를 넘지 않는다. T5 는 城이 하나도 없는 郡의 땅을 "
+                "省 인접 그래프로 가장 가까운 城에 붙이는 게임 그래프 폴백이고, 郡 경계를 "
+                "넘는 유일한 칸이다. T6 는 城에 육로로 닿지 않는 성분만 비워 둔다."
             ),
         },
         "provenance": {

@@ -4226,6 +4226,24 @@
       "initialAdministrativeUnitId": "hhs:113:日南郡:005",
       "issuanceReason": "FRONTIER_COUNTY_V1_APPEND",
       "numericCityId": 832
+    },
+    {
+      "routeNodeKey": "60e964d2-fa8a-49d7-a07a-85b70d987b76",
+      "initialAdministrativeUnitId": "hhs:113:朔方郡:001",
+      "issuanceReason": "CITYLESS_COMMANDERY_SEAT_V1_APPEND",
+      "numericCityId": 833
+    },
+    {
+      "routeNodeKey": "332fa1c1-c727-47b8-b935-af0222ad0a39",
+      "initialAdministrativeUnitId": "hhs:113:西河郡:001",
+      "issuanceReason": "CITYLESS_COMMANDERY_SEAT_V1_APPEND",
+      "numericCityId": 834
+    },
+    {
+      "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360",
+      "initialAdministrativeUnitId": "hhs:113:定襄郡:001",
+      "issuanceReason": "CITYLESS_COMMANDERY_SEAT_V1_APPEND",
+      "numericCityId": 835
     }
   ]
 }
