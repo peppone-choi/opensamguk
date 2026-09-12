@@ -15,7 +15,7 @@ from types import MappingProxyType
 import unicodedata
 import uuid
 
-from game_server_recovery import (RecoveryError, checked_path, digest, read_json,
+from game_server_recovery import (IMAGE_ID, RecoveryError, checked_path, digest, read_json,
                                  require, unique_object, validate_target)
 
 LABEL = 'org.opensamguk.pep-drill'
@@ -172,6 +172,8 @@ class ApplicationProof:
     plock_delta: dict
     status: dict
     cleanup: dict
+    captured_engine_image_id: str
+    tested_engine_image_id: str
 
 
 class PepApplicationDrill:
@@ -361,7 +363,7 @@ class PepApplicationDrill:
         return dict(updated_rows=int(bool(before) and not already_paused), inserted_rows=int(not before),
                     loader_visible_rows=len(after), effective_value=1)
 
-    def prove(self, recovery, bundle, source_inputs, preserved_scenario, scenario):
+    def prove(self, recovery, bundle, source_inputs, preserved_scenario, scenario, *, candidate_engine_image_id=None):
         bundle, tree = Path(bundle), Path(preserved_scenario)
         self.owned = []
         self.last_cleanup = {'success': True, 'remaining_resources': []}
@@ -372,6 +374,14 @@ class PepApplicationDrill:
             prior = self._report(bundle, source_inputs.server, manifest_sha)
             destination, url_options, port = self._inputs(source_inputs, manifest, env)
             self._scenario(bundle, tree, scenario, manifest_sha)
+            captured_engine = source_inputs.services['game-engine'].image_id
+            tested_engine = captured_engine
+            if candidate_engine_image_id is not None:
+                require(isinstance(candidate_engine_image_id, str) and
+                        IMAGE_ID.fullmatch(candidate_engine_image_id), 'exact candidate engine image ID required')
+                require(recovery.inspect('image', candidate_engine_image_id)['Id'] == candidate_engine_image_id,
+                        'candidate engine image identity mismatch')
+                tested_engine = candidate_engine_image_id
             self.token = self.token_factory()
             require(isinstance(self.token, str) and re.fullmatch('[a-z0-9]{8,40}', self.token), 'invalid resource token')
             prefix = 'pep-drill-' + self.token + '-'
@@ -424,6 +434,7 @@ class PepApplicationDrill:
                     '(SELECT current_year, current_month, current_phase, tick_seconds, meta, start_time '
                     'FROM world_state WHERE id = ' + env['OPENSAMGUK_WORLD_ID'] + ') q;')))
                 delta = self._plock(recovery, pg, env)
+                paused_database = recovery.postgres_check(pg, env)
                 redis = self._create(recovery, 'container', names['game-redis'],
                     ['container', 'create', '--name', names['game-redis'], '--network', network, *label,
                      '--pull=never', '--log-driver', 'none', '--memory', str(source_inputs.services['game-redis'].memory),
@@ -440,7 +451,7 @@ class PepApplicationDrill:
                                  REDIS_HOST=redis, REDIS_PORT='6379', SCENARIO_SEED_ENABLED='false',
                                  OPENSAMGUK_DAEMON_ENABLED='true')
                 environment = [part for k, v in sorted(clone_env.items()) for part in ('-e', k + '=' + v)]
-                engine = container('game-engine', source_inputs.services['game-engine'].image_id,
+                engine = container('game-engine', tested_engine,
                     [*environment, '--mount', f'type=bind,source={tree},target={destination},readonly'],
                     memory=source_inputs.services['game-engine'].memory)
                 recovery.docker.run(['container', 'start', engine])
@@ -461,9 +472,15 @@ class PepApplicationDrill:
                         pass
                     recovery.sleep(1)
                 require(verified is not None, 'archived engine did not satisfy strict paused recovery diagnostics')
+                recovery.docker.run(['container', 'stop', '--time', '120', engine])
+                stopped = recovery.inspect('container', engine)['State']
+                require(not stopped['Running'] and not stopped.get('OOMKilled') and
+                        stopped.get('ExitCode') in (0, 143), 'clone engine shutdown was not clean')
+                require(recovery.postgres_check(pg, env) == paused_database,
+                        'clone database changed during engine recovery')
                 self._scenario(bundle, tree, scenario, manifest_sha)
             finally:
                 cleanup = self._cleanup(recovery)
             require(cleanup['success'], 'application drill cleanup failed; inspect remaining private resources')
             return ApplicationProof(manifest_sha, scenario.tree_sha256, int(env['OPENSAMGUK_WORLD_ID']),
-                                    clone_env['TURN_PROFILE_NAME'], clock, delta, verified, cleanup)
+                                    clone_env['TURN_PROFILE_NAME'], clock, delta, verified, cleanup, captured_engine, tested_engine)
