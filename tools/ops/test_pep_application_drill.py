@@ -37,6 +37,7 @@ class BoundaryDocker:
         self.calls, self.objects, self.rows, self.queries = [], {}, [], []
         self.status = status()
         self.foreign = False
+        self.stop_exit = 143
         self.world = dict(current_year=180, current_month=1, current_phase=1,
                           tick_seconds=60, meta={'lastTurnTime': '2026-01-01T00:00:00+00:00'},
                           start_time=None)
@@ -64,6 +65,9 @@ class BoundaryDocker:
                        Internal=True)
             self.objects[kind, name] = obj
             return (obj['Id'] if kind != 'volume' else name).encode()
+        if verb == 'stop':
+            self.objects[kind, args[-1]]['State'] = dict(Running=False, OOMKilled=False, ExitCode=self.stop_exit)
+            return b''
         if verb == 'rm':
             del self.objects[kind, args[-1]]
             return b''
@@ -140,9 +144,60 @@ class ApplicationDrillTests(unittest.TestCase):
     def write_report(self):
         base.write_private(self.bundle / 'verification.json', base.json_bytes(self.report), replace=True)
 
-    def prove(self):
+    def prove(self, **kwargs):
         return self.drill.prove(self.recovery, self.bundle,
-            app.SourceEngineInputs.from_inspections('fixture', self.inspections), self.tree, self.scenario)
+            app.SourceEngineInputs.from_inspections('fixture', self.inspections), self.tree, self.scenario, **kwargs)
+
+    def test_candidate_only_changes_clone_engine_and_records_both_images(self):
+        candidate = 'sha256:' + 'a' * 64
+        before = (self.bundle / 'manifest.json').read_bytes()
+        proof = self.prove(candidate_engine_image_id=candidate)
+        engine = next(a for a in self.docker.calls if a[:2] == ['container', 'create']
+                      and 'pep-drill-abcdefgh-game-engine' in a)
+        self.assertEqual(engine[-1], candidate)
+        self.assertEqual(proof.captured_engine_image_id, self.inspections['game-engine']['Image'])
+        self.assertEqual(proof.tested_engine_image_id, candidate)
+        self.assertEqual((self.bundle / 'manifest.json').read_bytes(), before)
+        self.assertFalse(any(a[:2] == ['image', 'pull'] for a in self.docker.calls))
+
+    def test_candidate_rejects_tags_missing_images_and_source_forgery_before_create(self):
+        for candidate in ['latest', 'sha256:bad', 123]:
+            with self.subTest(candidate=candidate), self.assertRaises(base.RecoveryError):
+                self.prove(candidate_engine_image_id=candidate)
+        original = self.recovery.inspect
+        def inspect(kind, name):
+            if kind == 'image' and name == 'sha256:' + 'a' * 64:
+                raise base.RecoveryError('candidate absent')
+            return original(kind, name)
+        self.recovery.inspect = inspect
+        with self.assertRaises(base.RecoveryError):
+            self.prove(candidate_engine_image_id='sha256:' + 'a' * 64)
+        self.recovery.inspect = original
+        self.inspections['game-engine']['Image'] = 'sha256:' + '9' * 64
+        with self.assertRaises(base.RecoveryError):
+            self.prove(candidate_engine_image_id='sha256:' + 'a' * 64)
+        self.assertFalse(any(a[1] == 'create' for a in self.docker.calls))
+
+    def test_forced_or_failed_shutdown_cannot_produce_proof(self):
+        for code in (137, 1):
+            self.docker.stop_exit = code
+            with self.subTest(code=code), self.assertRaisesRegex(base.RecoveryError, 'shutdown was not clean'):
+                self.prove()
+            self.assertFalse(self.docker.objects)
+
+    def test_engine_startup_database_mutation_fails_and_cleans_up(self):
+        count = 0
+        def check(*_):
+            nonlocal count
+            count += 1
+            result = copy.deepcopy(self.pg)
+            if count == 3:
+                result['logical_dump_sha256'] = 'b' * 64
+            return result
+        self.recovery.postgres_check = check
+        with self.assertRaisesRegex(base.RecoveryError, 'clone database changed'):
+            self.prove()
+        self.assertFalse(self.docker.objects)
 
     def test_internal_clone_preserves_env_memory_and_scenario_bind(self):
         proof = self.prove()

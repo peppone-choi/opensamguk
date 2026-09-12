@@ -110,7 +110,7 @@ class DockerDrillTests(unittest.TestCase):
                 docker.run(['container', 'exec', redis, 'redis-cli', 'SET', 'synthetic:source-sentinel', '1'])
                 engine_env = dict(GAME_DATABASE_URL=f'jdbc:postgresql://{pg}:5432/sammo', GAME_DB_USER='sammo',
                     GAME_DB_PASSWORD='fixture', REDIS_HOST=redis, REDIS_PORT='6379', OPENSAMGUK_WORLD_ID='7',
-                    TURN_PROFILE_NAME='che:scenario_2', SCENARIO_CODE='scenario_2',
+                    TURN_PROFILE_NAME='che:scenario_1020', SCENARIO_CODE='scenario_1020',
                     SCENARIO_SEED_ENABLED='true', OPENSAMGUK_DAEMON_ENABLED='false')
                 mount = f'type=bind,source={tree},target=/data/scenarios,readonly'
                 engine = container('game-engine', images['engine'], ['--memory', str(1536 * 1024**2),
@@ -167,7 +167,9 @@ class DockerDrillTests(unittest.TestCase):
                 shutil.copytree(tree, companion / 'tree')
                 scenario = app.ScenarioTreeDigest.capture(companion / 'tree', base.digest(bundle / 'manifest.json')['sha256'])
                 base.write_private(companion / 'manifest.json', base.json_bytes(scenario.manifest()))
-                proof = drill.prove(helper, bundle, inputs, companion / 'tree', scenario)
+                proof = drill.prove(helper, bundle, inputs, companion / 'tree', scenario,
+                                    candidate_engine_image_id=images['engine'])
+                self.assertEqual(proof.tested_engine_image_id, images['engine'])
                 self.assertTrue(proof.cleanup['success'])
                 self.assertEqual(proof.plock_delta, dict(updated_rows=1, inserted_rows=0, loader_visible_rows=2, effective_value=1))
                 # A second cold capture detects any source-volume mutation caused by the drill.

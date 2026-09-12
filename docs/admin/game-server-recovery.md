@@ -267,3 +267,20 @@ RUN_RECOVERY_DOCKER_TESTS=1 python3 tools/ops/test_game_server_recovery_docker.p
 capture 실패는 `INCOMPLETE` bundle을 남깁니다. verify 실패는 성공 표시를 남기지 않으며 `cleanup.remaining_resources`의
 자원은 정확한 이름·label·identity를 확인해 수동 처리합니다. 다른 작업의 자원을 지우거나 자동 retry하지 않습니다.
 운영 보고서에는 결과, 실행 코드 커밋, 검증 종류, 데이터 비교 결과, 남은 위험을 기록하고 원본 비공개 데이터는 첨부하지 않습니다.
+
+## 호환 엔진 후보의 격리 재적재 검증
+
+`PepApplicationDrill.prove(..., candidate_engine_image_id="sha256:...")`는 현재 백업의 엔진이
+기존 월드를 읽을 수 없을 때 다른 로컬 엔진 이미지를 격리 clone에서 검증합니다. 후보는 정확한
+Docker image ID로 지정하며 자동 pull이나 tag 변경을 하지 않습니다. 원본 bundle·manifest와
+source container/image 상관관계 검사는 유지됩니다. 후보는 clone engine에만 적용하며,
+PostgreSQL/Redis 이미지·격리 네트워크·원본 환경과 보존 scenario 입력은 기존 검증 경계를 따릅니다.
+
+결과는 `captured_engine_image_id`와 `tested_engine_image_id`, bundle/scenario hash를 함께
+기록합니다. clone의 plock 설정 직후 DB fingerprint/count/Flyway를 기준으로 삼고, 엔진의 정상
+종료(0 또는 JVM SIGTERM 143) 뒤 다시 대조합니다. startup migration이나 예상치 못한 write,
+강제 종료, materialize 실패, cleanup 실패는 성공 증거가 아닙니다.
+
+이 결과는 해당 후보의 재적재 호환성 증거입니다. 운영 rollback/reset 실행, 인증 경로 검증,
+실제 턴 전진 또는 전체 작업 구간의 lifecycle admission을 대신하지 않습니다. 후보 이미지는
+bundle에 자동 추가되지 않으므로 실제 복구에 사용하려면 별도 보존과 ID 대조가 필요합니다.
