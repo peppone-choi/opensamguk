@@ -686,7 +686,12 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         }
         areas = Counter(value for row in owner for value in row if value >= 0)
 
-        self.assertEqual((1520, 1071, 172), (
+        # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
+        # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
+        # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
+        # data/curated/han/county-misbinding-rebindings-v1.json 의
+        # supersedesJurisdictionSeatRecovery 참조.
+        self.assertEqual((1520, 1070, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),

@@ -529,8 +529,11 @@ class CoordinateAxisTolerance(unittest.TestCase):
 
     def test_candidate_count_plateaus(self) -> None:
         counts = {tol: len(self._candidates(tol)) for tol in (1.0, 2.0, 5.0)}
+        # 8/10/10 에서 9/11/11 로 올라간 유일한 후보는 `남향군`이다 — 南鄉縣이 동명이지
+        # (陝西 鎮巴)에 묶여 있다가 제자리(河南 淅川)로 돌아오면서 南鄉郡 治所와 0.0km 로
+        # 겹쳤다. data/curated/han/county-misbinding-rebindings-v1.json 참조.
         self.assertEqual(
-            {1.0: 8, 2.0: 10, 5.0: 10}, counts,
+            {1.0: 9, 2.0: 11, 5.0: 11}, counts,
             f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
         )
 

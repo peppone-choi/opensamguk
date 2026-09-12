@@ -12,18 +12,18 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "17f14998cfb5c4832585fbc42462995d06f6263e6925cf8a500a60c9c5966c8f",
+    "tilesSha256": "c6040198574a1fb5fa07d040b1faca8369f30a0bc60711f0c720c801b2b4e2b5",
     "selectionSha256": "7765628771cbc3c5888fad74d6a23b047fbad5aa35cb5a0de71493a798e6856c"
   },
   "summary": {
     "provinceCount": 1520,
     "basisCounts": {
       "OWN_COUNTY_SEAT": 1082,
-      "SAME_COMMANDERY_SEAT": 154,
+      "SAME_COMMANDERY_SEAT": 155,
       "SAME_COMMANDERY_NEAREST": 55,
-      "COMMANDERY_HAS_NO_CITY": 229
+      "COMMANDERY_HAS_NO_CITY": 228
     },
-    "attributedProvinceCount": 1291,
+    "attributedProvinceCount": 1292,
     "distinctRouteNodeCount": 832,
     "commanderiesWithoutCity": [
       {
@@ -211,12 +211,6 @@
         "commanderyNameCh": "于山國",
         "provinceCount": 1,
         "seatPlaceId": "X035"
-      },
-      {
-        "commanderyId": "PARENT-0113",
-        "commanderyNameCh": "南鄉郡",
-        "provinceCount": 1,
-        "seatPlaceId": "210962"
       },
       {
         "commanderyId": "PARENT-0121",
@@ -785,8 +779,8 @@
       "provinceId": "40236",
       "provinceIndex": 40,
       "jurisdictionId": "40236",
-      "commanderyId": "PARENT-0053",
-      "commanderyNameCh": "豫章郡",
+      "commanderyId": "PARENT-0010",
+      "commanderyNameCh": "沛國",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 100,
       "routeNodeKey": null,
@@ -1016,8 +1010,8 @@
       "provinceId": "40645",
       "provinceIndex": 61,
       "jurisdictionId": "40645",
-      "commanderyId": "PARENT-0051",
-      "commanderyNameCh": "會稽郡",
+      "commanderyId": "PARENT-0003",
+      "commanderyNameCh": "弘農郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 15,
       "routeNodeKey": null,
@@ -4503,8 +4497,8 @@
       "provinceId": "45198",
       "provinceIndex": 378,
       "jurisdictionId": "45198",
-      "commanderyId": "PARENT-0028",
-      "commanderyNameCh": "山陽郡",
+      "commanderyId": "PARENT-0070",
+      "commanderyNameCh": "安定郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 247,
       "routeNodeKey": null,
@@ -5463,9 +5457,9 @@
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
       "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 631,
+      "routeNodeId": 247,
       "routeNodeKey": null,
-      "cityPlaceId": "70178"
+      "cityPlaceId": "45198"
     },
     {
       "provinceId": "70203",
@@ -6120,8 +6114,8 @@
       "provinceId": "71022",
       "provinceIndex": 525,
       "jurisdictionId": "71022",
-      "commanderyId": "PARENT-0054",
-      "commanderyNameCh": "漢中郡",
+      "commanderyId": "PARENT-0113",
+      "commanderyNameCh": "南鄉郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 469,
       "routeNodeKey": null,
@@ -10981,13 +10975,13 @@
     {
       "provinceId": "DIRECT-PARENT-0054-27a76df70ed1",
       "provinceIndex": 967,
-      "jurisdictionId": "71022",
+      "jurisdictionId": "45930",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 469,
+      "basis": "SAME_COMMANDERY_SEAT",
+      "routeNodeId": 593,
       "routeNodeKey": null,
-      "cityPlaceId": "71022"
+      "cityPlaceId": "70983"
     },
     {
       "provinceId": "DIRECT-PARENT-0054-b3163831b975",
@@ -12272,9 +12266,9 @@
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
       "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 631,
+      "routeNodeId": 247,
       "routeNodeKey": null,
-      "cityPlaceId": "70178"
+      "cityPlaceId": "45198"
     },
     {
       "provinceId": "DIRECT-PARENT-0070-e595ec672f22",
@@ -14721,13 +14715,13 @@
     {
       "provinceId": "DIRECT-PARENT-0113-9a25366ea685",
       "provinceIndex": 1307,
-      "jurisdictionId": "JURISDICTION-PARENT-0113-SEAT",
+      "jurisdictionId": "71022",
       "commanderyId": "PARENT-0113",
       "commanderyNameCh": "南鄉郡",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 469,
       "routeNodeKey": null,
-      "cityPlaceId": null
+      "cityPlaceId": "71022"
     },
     {
       "provinceId": "DIRECT-PARENT-0114-28edacd38a71",

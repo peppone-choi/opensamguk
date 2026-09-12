@@ -75,7 +75,11 @@ class CityConstRegistryTest {
         // 城 없는 縣의 땅이 제 郡의 城으로 접히고 같은 城 쌍의 경계 칸수가 합산돼, 도로망이
         // 2,283 간선 / 성분 4 개 / 도달불가 17 로 바뀌었다(이전 성분 36 · 도달불가 174).
         // v2 는 위에서 그대로 얼어 있다.
-        assertEquals("f765b832dee7e18b11cc417264ac5bed5a6edf5dfc6fca304d2379f7ef5fb3a4", digest)
+        // 2026-09-12: 오배정 縣 4곳(100 建平·15 新安·247 高平·469 南鄉)이 동명이지에서
+        // CHGIS 제자리로 옮겨 앉으면서 그 4곳과 옛·새 이웃 31곳, 합 35개 城의 인접이
+        // 갈렸다. 간선 총수 2,283 · 성분 4 · 도달불가 17 은 그대로다(실측).
+        // data/curated/han/county-misbinding-rebindings-v1.json 참조.
+        assertEquals("7a32b0a7b45f0c2e306b2b6968e93fb292a692037b1e83f98547fe9a9092080f", digest)
     }
 
     @Test
