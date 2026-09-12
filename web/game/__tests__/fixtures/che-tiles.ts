@@ -21,8 +21,8 @@ export const CHE_TILES_FIXTURE: HanTiles = {
   },
   regions: [],
   cities: [
-    { id: '1', name: '낙양', nameCh: '雒陽', level: 8, kind: 'COMMANDERY', seat: true, col: 1, row: 1 },
-    { id: '2', name: '허창', nameCh: '許昌', level: 6, kind: 'COUNTY', seat: true, col: 3, row: 2 },
+    { id: '1', name: '낙양', nameCh: '雒陽', level: 8, kind: 'COMMANDERY', seat: true, col: 1, row: 1, lat: 0, lon: 0 },
+    { id: '2', name: '허창', nameCh: '許昌', level: 6, kind: 'COUNTY', seat: true, col: 3, row: 2, lat: 0, lon: 0 },
   ],
 };
 

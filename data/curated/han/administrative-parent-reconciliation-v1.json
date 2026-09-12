@@ -11,10 +11,15 @@
       "PARENT-0054",
       "PARENT-0055",
       "PARENT-0070",
+      "PARENT-0094",
+      "PARENT-0095",
+      "PARENT-0097",
+      "PARENT-0103",
+      "PARENT-0104",
       "PARENT-0113"
     ],
-    "changedCellCount": 815,
-    "geometryVariantRowCount": 90,
+    "changedCellCount": 2035,
+    "geometryVariantRowCount": 114,
     "ledgerId": "han-county-misbinding-rebindings-v1",
     "priorFrontierCountyProjection": {
       "affectedParentRegionIds": [
@@ -344,15 +349,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "d9e8c46571d540416c14288c12770793d1c5bd5aa62282e863bd380e4c7c6b9c"
+      "sha256": "51e95405053533fd6a6f204511a1e77e29954eab4b6434ea6980e2bf70b4bd2f"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc"
+      "sha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "7765628771cbc3c5888fad74d6a23b047fbad5aa35cb5a0de71493a798e6856c"
+      "sha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -372,7 +377,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "c6040198574a1fb5fa07d040b1faca8369f30a0bc60711f0c720c801b2b4e2b5"
+      "sha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -44260,8 +44265,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
-          "hhs-group:113:日南郡"
+          "hhs-group:113:九真郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -44405,7 +44409,7 @@
         "routeNodeKey": "954b8de5-8f5b-45a3-9261-0ce4f21cfcd2"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:001",
-      "cellCount": 184,
+      "cellCount": 288,
       "cityId": "X005",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -44415,7 +44419,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 184,
+            "cellCount": 288,
             "junArrayIndex": 94,
             "nameCh": "遼東郡"
           }
@@ -44427,7 +44431,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -44512,8 +44515,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:遼東屬國",
-          "hhs-group:113:遼東郡"
+          "hhs-group:113:遼東屬國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 97,
@@ -47203,8 +47205,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
-          "hhs-group:113:日南郡"
+          "hhs-group:113:九真郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -47245,8 +47246,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
-          "hhs-group:113:日南郡"
+          "hhs-group:113:九真郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -47287,8 +47287,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
-          "hhs-group:113:日南郡"
+          "hhs-group:113:九真郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -47307,7 +47306,7 @@
         "routeNodeKey": "990970a3-e955-4893-9e46-62bd5116fab5"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:九真郡:005",
-      "cellCount": 740,
+      "cellCount": 1204,
       "cityId": "fc-jiuzhen-005",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -47317,7 +47316,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 740,
+            "cellCount": 1204,
             "junArrayIndex": 103,
             "nameCh": "九真郡"
           }
@@ -47329,8 +47328,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
-          "hhs-group:113:日南郡"
+          "hhs-group:113:九真郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 103,
@@ -47945,7 +47943,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -47966,7 +47963,7 @@
         "routeNodeKey": "cc76ee2d-873f-4536-8b03-e5fb8a79b30f"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:003",
-      "cellCount": 8,
+      "cellCount": 60,
       "cityId": "fc-liaodong-003",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -47976,13 +47973,13 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 8,
-            "junArrayIndex": 97,
-            "nameCh": "遼東屬國"
+            "cellCount": 60,
+            "junArrayIndex": 94,
+            "nameCh": "遼東郡"
           }
         ],
         "majorityJunArrayIndices": [
-          97
+          94
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
@@ -47992,8 +47989,8 @@
           "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 97,
-        "nameCh": "遼東屬國"
+        "junArrayIndex": 94,
+        "nameCh": "遼東郡"
       }
     },
     {
@@ -48072,7 +48069,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48115,7 +48111,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48136,7 +48131,7 @@
         "routeNodeKey": "0d6d61b4-e84b-4a90-a8cc-10afeebc9315"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東郡:008",
-      "cellCount": 185,
+      "cellCount": 191,
       "cityId": "fc-liaodong-008",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48146,7 +48141,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 185,
+            "cellCount": 191,
             "junArrayIndex": 94,
             "nameCh": "遼東郡"
           }
@@ -48158,7 +48153,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48201,7 +48195,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48244,7 +48237,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48287,7 +48279,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48330,8 +48321,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:遼東屬國",
-          "hhs-group:113:遼東郡"
+          "hhs-group:113:遼東屬國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 97,
@@ -48372,8 +48362,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:遼東屬國",
-          "hhs-group:113:遼東郡"
+          "hhs-group:113:遼東屬國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 97,
@@ -48392,7 +48381,7 @@
         "routeNodeKey": "5235c442-567a-4b36-9145-dbe4594a00cb"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:005",
-      "cellCount": 184,
+      "cellCount": 208,
       "cityId": "fc-liaodong-shuguo-005",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48402,7 +48391,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 184,
+            "cellCount": 208,
             "junArrayIndex": 94,
             "nameCh": "遼東郡"
           }
@@ -48414,7 +48403,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:玄菟郡",
           "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
@@ -48435,7 +48423,7 @@
         "routeNodeKey": "ddeac138-03aa-402b-9c50-1a998707814e"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:遼東屬國:006",
-      "cellCount": 921,
+      "cellCount": 953,
       "cityId": "fc-liaodong-shuguo-006",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48445,7 +48433,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 921,
+            "cellCount": 953,
             "junArrayIndex": 97,
             "nameCh": "遼東屬國"
           }
@@ -48457,8 +48445,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:遼東屬國",
-          "hhs-group:113:遼東郡"
+          "hhs-group:113:遼東屬國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 97,
@@ -48477,7 +48464,7 @@
         "routeNodeKey": "cbdc9e78-b27f-4054-bca4-740acead9a6a"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:日南郡:002",
-      "cellCount": 1086,
+      "cellCount": 1331,
       "cityId": "fc-rinan-002",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48487,7 +48474,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 1086,
+            "cellCount": 1331,
             "junArrayIndex": 104,
             "nameCh": "日南郡"
           }
@@ -48600,7 +48587,7 @@
         "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:日南郡:005",
-      "cellCount": 769,
+      "cellCount": 60,
       "cityId": "fc-rinan-005",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48610,24 +48597,23 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 769,
-            "junArrayIndex": 103,
-            "nameCh": "九真郡"
+            "cellCount": 60,
+            "junArrayIndex": 104,
+            "nameCh": "日南郡"
           }
         ],
         "majorityJunArrayIndices": [
-          103
+          104
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:113:九真郡",
           "hhs-group:113:日南郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 103,
-        "nameCh": "九真郡"
+        "junArrayIndex": 104,
+        "nameCh": "日南郡"
       }
     },
     {
@@ -48684,7 +48670,7 @@
         "routeNodeKey": "0dcbc4fa-acec-4305-8305-b217432996a1"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:003",
-      "cellCount": 1533,
+      "cellCount": 1568,
       "cityId": "fc-xuantu-003",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48694,7 +48680,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 1533,
+            "cellCount": 1568,
             "junArrayIndex": 95,
             "nameCh": "玄菟郡"
           }
@@ -48726,7 +48712,7 @@
         "routeNodeKey": "2da5cb91-126f-424a-898d-5d57567762f1"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:004",
-      "cellCount": 186,
+      "cellCount": 61,
       "cityId": "fc-xuantu-004",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48736,25 +48722,24 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 186,
-            "junArrayIndex": 94,
-            "nameCh": "遼東郡"
+            "cellCount": 61,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
           }
         ],
         "majorityJunArrayIndices": [
-          94
+          95
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:113:玄菟郡",
-          "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 94,
-        "nameCh": "遼東郡"
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
       }
     },
     {
@@ -48811,7 +48796,7 @@
         "routeNodeKey": "820068e8-ed77-4ad3-83fc-03cafcc7bfe3"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:玄菟郡:006",
-      "cellCount": 188,
+      "cellCount": 60,
       "cityId": "fc-xuantu-006",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -48821,25 +48806,24 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 188,
-            "junArrayIndex": 94,
-            "nameCh": "遼東郡"
+            "cellCount": 60,
+            "junArrayIndex": 95,
+            "nameCh": "玄菟郡"
           }
         ],
         "majorityJunArrayIndices": [
-          94
+          95
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:113:玄菟郡",
-          "hhs-group:113:遼東屬國",
           "hhs-group:113:遼東郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 94,
-        "nameCh": "遼東郡"
+        "junArrayIndex": 95,
+        "nameCh": "玄菟郡"
       }
     }
   ],

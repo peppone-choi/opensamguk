@@ -72,14 +72,15 @@ class GeukRelocationTest(unittest.TestCase):
     def test_reconciliation_projects_only_actual_changed_cell_buckets(self):
         from tools.map import build_han_parent_reconciliation as reconciliation
         result = json.loads(reconciliation.render_ledger())
-        # 오배정 縣 4곳을 제자리로 돌린 뒤의 실측이다(815칸 이동). 앞 단계 값
+        # 오배정 縣 4곳을 제자리로 돌리고, 사료가 지목한 郡으로 縣 4곳(無慮·高顯·遼陽·比景)의
+        # 씨앗칸을 옮긴 뒤의 실측이다(2,035칸 이동). 앞 단계 값
         # 121603/95396/26207 은 아래 priorSummary 가 그대로 들고 있다 —
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
         self.assertEqual(121638, result['summary']['cityLinkedCellCount'])
         self.assertEqual(95026, result['summary']['exactApprovedCellCount'])
         self.assertEqual(26612, result['summary']['unresolvedCellCount'])
         rebinding = result['countyRebindingProjection']
-        self.assertEqual(815, rebinding['changedCellCount'])
+        self.assertEqual(2035, rebinding['changedCellCount'])
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
         self.assertEqual(95396, rebinding['priorSummary']['exactApprovedCellCount'])
         self.assertEqual(26207, rebinding['priorSummary']['unresolvedCellCount'])

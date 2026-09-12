@@ -3,16 +3,16 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "7765628771cbc3c5888fad74d6a23b047fbad5aa35cb5a0de71493a798e6856c",
-    "migrationSha256": "66f2944fea25431bc93d319cc3184f3051ec9ae9a01798b944d03e50e8d272df",
-    "hanTilesSha256": "c6040198574a1fb5fa07d040b1faca8369f30a0bc60711f0c720c801b2b4e2b5",
-    "provinceCityAttributionSha256": "9a70e6622e465548fca8db5c5fed9c61651d7d79063199ae02c15a8943760b26",
+    "selectionSha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934",
+    "migrationSha256": "44ca2a3df0636a61cd6eb333d00227a779d6b68cea9f2c0f3bbd6dbb4094bcbc",
+    "hanTilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
+    "provinceCityAttributionSha256": "3fe1418420cc2d982eacb0ae390a6a24da54747fb44f9a555a99abb23e87e920",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "7a6236f8c2cd4d88adae280559300c3a19241b84cc2938e84c0de0980406f722",
-    "cityConstSha256": "19216b3d1ce43188ff015322844652575c636fd709fe0726dedc6ccfa47419f0",
-    "gateIndexSha256": "3960f988b4e66cdc497782e97e4459fa4d02f5fa5435213ff29dbc4093d9e78f"
+    "worldJsonSha256": "ed62e8cd1e2eff0fdb4c58552a8d1b6b36ea0b44c97443abca193bc50cc8b4db",
+    "cityConstSha256": "c9cd6938c75f8e224b21ac081427af9d76fb716e4cf127ef46903876383f5864",
+    "gateIndexSha256": "d2ebbdb233e2195b5482ed26c8ae526733e521e75ee7ad3a0099136554449ccf"
   },
   "routeNodes": [
     {
@@ -14795,22 +14795,27 @@
     {
       "a": 730,
       "b": 787,
-      "sharedBoundaryCells": 13
+      "sharedBoundaryCells": 17
+    },
+    {
+      "a": 730,
+      "b": 792,
+      "sharedBoundaryCells": 20
     },
     {
       "a": 730,
       "b": 793,
-      "sharedBoundaryCells": 30
+      "sharedBoundaryCells": 10
     },
     {
       "a": 730,
       "b": 795,
-      "sharedBoundaryCells": 8
+      "sharedBoundaryCells": 6
     },
     {
       "a": 730,
       "b": 812,
-      "sharedBoundaryCells": 2
+      "sharedBoundaryCells": 12
     },
     {
       "a": 731,
@@ -15234,8 +15239,13 @@
     },
     {
       "a": 783,
+      "b": 812,
+      "sharedBoundaryCells": 30
+    },
+    {
+      "a": 783,
       "b": 813,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 16
     },
     {
       "a": 784,
@@ -15275,12 +15285,7 @@
     {
       "a": 787,
       "b": 792,
-      "sharedBoundaryCells": 1
-    },
-    {
-      "a": 787,
-      "b": 793,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 5
     },
     {
       "a": 791,
@@ -15290,37 +15295,42 @@
     {
       "a": 792,
       "b": 793,
-      "sharedBoundaryCells": 47
+      "sharedBoundaryCells": 13
     },
     {
       "a": 792,
       "b": 794,
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 792,
+      "b": 795,
+      "sharedBoundaryCells": 21
+    },
+    {
+      "a": 792,
+      "b": 812,
       "sharedBoundaryCells": 12
     },
     {
       "a": 792,
-      "b": 795,
-      "sharedBoundaryCells": 18
+      "b": 813,
+      "sharedBoundaryCells": 52
     },
     {
-      "a": 792,
-      "b": 813,
-      "sharedBoundaryCells": 41
+      "a": 793,
+      "b": 794,
+      "sharedBoundaryCells": 4
     },
     {
       "a": 793,
       "b": 795,
-      "sharedBoundaryCells": 15
+      "sharedBoundaryCells": 11
     },
     {
       "a": 795,
       "b": 812,
-      "sharedBoundaryCells": 26
-    },
-    {
-      "a": 795,
-      "b": 813,
-      "sharedBoundaryCells": 13
+      "sharedBoundaryCells": 4
     },
     {
       "a": 796,
@@ -15435,7 +15445,7 @@
     {
       "a": 812,
       "b": 813,
-      "sharedBoundaryCells": 31
+      "sharedBoundaryCells": 21
     },
     {
       "a": 814,
@@ -15569,8 +15579,8 @@
     },
     {
       "a": 828,
-      "b": 832,
-      "sharedBoundaryCells": 34
+      "b": 829,
+      "sharedBoundaryCells": 29
     },
     {
       "a": 829,
@@ -15585,7 +15595,7 @@
     {
       "a": 829,
       "b": 832,
-      "sharedBoundaryCells": 26
+      "sharedBoundaryCells": 33
     },
     {
       "a": 830,

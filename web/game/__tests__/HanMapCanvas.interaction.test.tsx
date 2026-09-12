@@ -272,9 +272,10 @@ describe('shared HanMapCanvas viewport interaction', () => {
     pathRecords.length = 0;
     measuredWidth = 200;
     measuredHeight = 106;
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(this: HTMLCanvasElement) {
+    // 2D 컨텍스트만 쓰는 테스트다. getContext 의 오버로드 전체(WebGPU 포함)를 만족시킬 수 없어 좁혀 캐스팅한다.
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((function getContext(this: HTMLCanvasElement) {
       return recordFor(this).context;
-    });
+    }) as unknown as HTMLCanvasElement['getContext']);
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => measuredWidth);
     vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => measuredHeight);
     vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue({
@@ -779,7 +780,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       }],
       parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
       adjacency: { county: [], commandery: [] }, regions: [],
-      cities: [{ id: '1', name: '정본현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+      cities: [{ id: '1', name: '정본현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
     };
     render(
       <HanMapCanvas
@@ -898,7 +899,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
           }],
           parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
           adjacency: { county: [], commandery: [] }, regions: [],
-          cities: [{ id: '1', name: '소현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+          cities: [{ id: '1', name: '소현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
         }}
         provinceMap={provinceMap}
         cities={[{ ...CHE_OVERLAYS_FIXTURE[0], id: 1, x: 0, y: 0, commanderyName: 'A군', supply: false }]}
@@ -1200,7 +1201,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
           parentRegions: [{ id: 'R1', displayName: '하남윤', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
           adjacency: { county: [], commandery: [] },
           regions: [],
-          cities: [{ id: '1', name: '낙양현', nameCh: '', level: 8, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+          cities: [{ id: '1', name: '낙양현', nameCh: '', level: 8, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
         }}
         provinceMap={provinceMap}
         cities={[{ ...CHE_OVERLAYS_FIXTURE[0], x: 0, y: 0 }]}
@@ -1269,7 +1270,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
           parentRegions: [{ id: 'R1', displayName: parentName, nameCh: '', administrativeSystem }],
           adjacency: { county: [], commandery: [] },
           regions: [],
-          cities: [{ id: '1', name: countyName, nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+          cities: [{ id: '1', name: countyName, nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
         }}
         provinceMap={provinceMap}
         cities={[]}
@@ -1330,7 +1331,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
           parentRegions: [{ id: 'C1', displayName: '하남윤', nameCh: '河南尹', administrativeSystem: 'HAN_COMMANDERY' }],
           adjacency: { county: [], commandery: [] },
           regions: [],
-          cities: [{ id: '1', name: '낙양현', nameCh: '雒陽縣', level: 8, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+          cities: [{ id: '1', name: '낙양현', nameCh: '雒陽縣', level: 8, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
         }}
         provinceMap={provinceMap}
         cities={[{

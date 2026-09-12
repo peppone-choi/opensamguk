@@ -672,7 +672,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 25,
+    "fullyEnclosedCount": 23,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -884,17 +884,6 @@
         ]
       },
       {
-        "id": "fc-liaodong-003",
-        "displayName": "무려현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-liaodong-shuguo-006"
-        ],
-        "surroundingDisplayNames": [
-          "방현"
-        ]
-      },
-      {
         "id": "fc-liaodong-004",
         "displayName": "망평현",
         "componentCellCount": 8,
@@ -936,17 +925,6 @@
         ],
         "surroundingDisplayNames": [
           "도하현"
-        ]
-      },
-      {
-        "id": "fc-xuantu-005",
-        "displayName": "후성현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-xuantu-003"
-        ],
-        "surroundingDisplayNames": [
-          "상은태현"
         ]
       }
     ]
@@ -1710,7 +1688,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 24,
+    "fullyEnclosedCount": 22,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -1965,20 +1943,6 @@
         "sameCommandery": true
       },
       {
-        "id": "fc-liaodong-003",
-        "displayName": "무려현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-liaodong-shuguo-006"
-        ],
-        "surroundingDisplayNames": [
-          "방현"
-        ],
-        "commanderyId": "PARENT-0097",
-        "surroundingCommanderyId": "PARENT-0097",
-        "sameCommandery": true
-      },
-      {
         "id": "fc-liaodong-004",
         "displayName": "망평현",
         "componentCellCount": 8,
@@ -2032,20 +1996,6 @@
         ],
         "commanderyId": "PARENT-0097",
         "surroundingCommanderyId": "PARENT-0097",
-        "sameCommandery": true
-      },
-      {
-        "id": "fc-xuantu-005",
-        "displayName": "후성현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-xuantu-003"
-        ],
-        "surroundingDisplayNames": [
-          "상은태현"
-        ],
-        "commanderyId": "PARENT-0095",
-        "surroundingCommanderyId": "PARENT-0095",
         "sameCommandery": true
       }
     ]
@@ -8449,7 +8399,7 @@
         "currentCommanderyDisplayName": "요동군",
         "currentCommanderyNameCh": "遼東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 11,
+        "currentJurisdictionCount": 10,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -8461,7 +8411,7 @@
         "currentCommanderyDisplayName": "현도군",
         "currentCommanderyNameCh": "玄菟郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 5,
+        "currentJurisdictionCount": 7,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 6,
@@ -8485,7 +8435,7 @@
         "currentCommanderyDisplayName": "요동속국",
         "currentCommanderyNameCh": "遼東屬國",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 5,
+        "currentJurisdictionCount": 4,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 6,
@@ -8557,7 +8507,7 @@
         "currentCommanderyDisplayName": "구진군",
         "currentCommanderyNameCh": "九真郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 6,
+        "currentJurisdictionCount": 5,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 5,
@@ -8569,7 +8519,7 @@
         "currentCommanderyDisplayName": "일남군",
         "currentCommanderyNameCh": "日南郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 4,
+        "currentJurisdictionCount": 5,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 5,
@@ -9130,7 +9080,7 @@
         "jurisdictionId": "fc-xuantu-004",
         "displayName": "고현현",
         "nameCh": "高顯縣",
-        "commanderyId": "PARENT-0094"
+        "commanderyId": "PARENT-0095"
       }
     ],
     "sameCommanderyCanonicalNameDuplicateCount": 2,
@@ -9473,7 +9423,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "c6040198574a1fb5fa07d040b1faca8369f30a0bc60711f0c720c801b2b4e2b5"
+      "sha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
