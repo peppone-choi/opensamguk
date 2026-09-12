@@ -414,8 +414,15 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
         external = place.get('kind') == 'EXTERNAL_PLACE'
         display = external_displays.get(place_id)
         seed_row, seed_col = int(place['gy']), int(place['gx'])
+        # 씨앗은 **제 郡 땅 안**에 서야 한다. 縣 좌표가 郡 경계에 딱 붙으면 소유 래스터가
+        # 그 칸을 이웃 郡에 주는 일이 있다 — 실측(2026-09-11): 鉅鹿郡 巨鹿縣 칸이 廣平郡
+        # (建安17년 鉅鹿 분치)에, 巴西郡 西充國縣 칸이 巴郡(巴西는 建安6년 巴 분치)에
+        # 떨어졌다. 그대로 두면 省 분할이 「fixed anchors must fall inside the parent
+        # mask」로 죽는다. 아래 폴백이 이미 「제 郡 땅에서 가장 가까운 칸」을 고르므로
+        # 같은 길로 보낸다 — 씨앗 칸은 옮겨도 표시 좌표(lon/lat)는 그대로다.
         if not (0 <= seed_row < zone_grid.shape[0] and 0 <= seed_col < zone_grid.shape[1]
                 and zone_grid[seed_row, seed_col] >= 0
+                and parent_owner[seed_row, seed_col] == parent_index
                 and (seed_row, seed_col) not in occupied_seed_cells):
             candidates = np.argwhere(
                 (parent_owner == parent_index) & political_land & (zone_grid >= 0)
@@ -901,6 +908,7 @@ def fold_to_jun(places, proj, junguo):
     # 나머지 CHGIS 점은 좌표만 있고 소속·이름 근거가 없어 게임 거점으로 못 쓴다.
     zhi: set[int] = set()
     bound = unbound = 0
+    prepared = []
     for jn, jun in enumerate(junguo):
         names.append(jun['name'])
         for c in jun['counties']:
@@ -919,10 +927,25 @@ def fold_to_jun(places, proj, junguo):
             ranked = sorted(
                 ((math.hypot((places[i]['lon'] - c['lon']) * math.cos(math.radians(c['lat'])),
                              places[i]['lat'] - c['lat']) * 111.0, i) for i in pool))
+            prepared.append((jn, jun, c, bool(cand), ranked, 120 if cand else 30))
+
+    # 두 번에 걸쳐 붙인다 — **이름이 맞는 縣이 먼저**, 남은 것이 좌표로 나중.
+    #
+    # 한 번에 돌리면 郡國志에 적힌 순서가 사료를 이긴다. 실측(2026-09-11): 河南尹 平縣은
+    # CHGIS 에 같은 이름이 없어 30km 좌표 폴백으로 10.2km 떨어진 溫縣 점을 집었고, 뒤에
+    # 온 河內郡 溫縣은 **거리 0.0km 이름 일치**인데도 이미 물린 점이라 제 郡을 잃었다.
+    # 그 결과 溫縣이 河南尹 소속이 되어 제 郡의 땅 밖에 씨앗이 서고, 省 분할이
+    # 「PARENT-0000: fixed anchors must fall inside the parent mask」로 죽었다.
+    #
+    # 소속은 사료에서 읽어온다는 이 파일의 원칙 그대로다 — 좌표 추측이 이름 근거를
+    # 밀어내지 못하게 순서가 아니라 근거의 급으로 가른다.
+    for named_pass in (True, False):
+        for jn, jun, c, named, ranked, lim in prepared:
+            if named is not named_pass:
+                continue
             # 동명이인 縣이 흔하다(新安·安陽·豐…). 가장 가까운 후보가 이미 다른 郡에
             # 물려 있으면 다음 후보로 넘어간다 — 먼저 잡은 郡이 이기고 끝내면 뒤에 온
             # 郡은 제 縣을 영영 못 찾는다.
-            lim = 120 if cand else 30
             free = next((x for x in ranked if x[0] < lim and jun_of[x[1]] < 0), None)
             best, bd = (free if free else (ranked[0] if ranked else (1e9, -1)))[::-1]
             if best >= 0 and bd < lim:

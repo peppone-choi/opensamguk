@@ -1496,10 +1496,18 @@ def build_ledger(
     summary = _summary(rows, selections["absent"], direct_jun_reviews, tiles)
     projection = None
     frontier_projection = None
+    rebinding_projection = None
     sys.path.insert(0, str(ROOT))
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import relocate_han_province as relocation
-    if frontier.PLACEMENTS.exists():
+    # 오배정 縣 재바인딩은 縣 51곳보다 나중 단계다. 얹혀 있으면 벗겨 낸 앞 단계를 다시
+    # 세워, 이 단계가 건드린 郡 바깥은 한 줄도 안 바뀌었음을 증명한다.
+    _, rebound_ledger = frontier.peel_rebinding(documents["data/map/han-tiles.json"])
+    if rebound_ledger is not None:
+        rebinding_projection = _rebinding_stage_projection(
+            documents, input_records, rebound_ledger, frontier, rows, direct_jun_reviews, tiles,
+        )
+    elif frontier.PLACEMENTS.exists():
         placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
         stage = placements.get("priorStage")
         # 배열 순서만 뒤바뀐 문서도 같은 답을 내야 한다(아래 order 계약). 縣 단계 원장이
@@ -1551,7 +1559,7 @@ def build_ledger(
             projection = {"inputTilesSha256": later["inputTilesSha256"],
                           "changedCellCount": len(later["ownerDelta"]),
                           "provinceCellDeltas": dict(sorted((key, value) for key, value in deltas.items() if value))}
-    if projection is None and frontier_projection is None:
+    if projection is None and frontier_projection is None and rebinding_projection is None:
         _assert_locked_contract(summary, selections["absent"], expected_absent_terminal_ids)
     result = {
         "schemaVersion": 1,
@@ -1574,7 +1582,110 @@ def build_ledger(
         result["relocationCountProjection"] = projection
     if frontier_projection is not None:
         result["frontierCountyProjection"] = frontier_projection
+    if rebinding_projection is not None:
+        result["countyRebindingProjection"] = rebinding_projection
     return result
+
+
+def _anchors_inside(row: dict, parent_of_city: dict[str, str], affected: set[str]) -> bool:
+    """省이 없는 place 노드는 제 가장 가까운 앵커 縣이 움직이면 진단이 바뀐다."""
+    diagnostic = row.get("geometryDiagnostic") or {}
+    return any(
+        parent_of_city.get(str(candidate.get("anchorCityId"))) in affected
+        for candidate in diagnostic.get("nearestCandidates", [])
+    )
+
+
+REBINDING_STAGE_VARIANT_KEYS = frozenset(
+    {"cellCount", "footprintDiagnostic", "seatJunDiagnostic", "geometryDiagnostic"}
+)
+
+
+def _rebinding_stage_projection(
+    documents: dict[str, dict],
+    input_records: dict[str, dict],
+    rebound: dict,
+    frontier,
+    rows: list[dict],
+    direct_jun_reviews: list[dict],
+    tiles: dict,
+) -> dict:
+    """Rebuild the stage before the 오배정 縣 재바인딩 and prove the rebinding changed nothing
+    outside the 郡 whose land it moved: geometry diagnostics only, plus the one 郡 that stops
+    being an unsourced direct territory because a sourced 縣 came home to it. Every other row
+    is byte-identical to the prior review, whose own stage contracts assert recursively."""
+    prior_tiles, _ = frontier.peel_rebinding(documents["data/map/han-tiles.json"])
+    prior = build_ledger({**documents, "data/map/han-tiles.json": prior_tiles}, input_records)
+    prior_rows = {row["cityId"]: row for row in prior["rows"]}
+    if len(prior_rows) != len(prior["rows"]):
+        raise ValueError("prior reconciliation rows are not keyed by unique city id")
+
+    def parent_of_city(document: dict) -> dict[str, str]:
+        out = {}
+        for record in document["provinceRecords"]:
+            if record.get("cityIndex") is not None:
+                out[str(document["cities"][record["cityIndex"]]["id"])] = record["parentRegionId"]
+        return out
+
+    prior_parent, current_parent = parent_of_city(prior_tiles), parent_of_city(tiles)
+    prior_province_parent = {row["id"]: row["parentRegionId"] for row in prior_tiles["provinceRecords"]}
+    current_province_parent = {row["id"]: row["parentRegionId"] for row in tiles["provinceRecords"]}
+    affected = set()
+    for cell in rebound["geometry"]["ownerDelta"]:
+        affected.add(prior_province_parent[cell["before"]])
+        affected.add(current_province_parent[cell["after"]])
+    seat_city_ids = {
+        str(tiles["cities"][jun["seat"]]["id"])
+        for index, jun in enumerate(tiles["juns"])
+        if tiles["parentRegions"][index]["id"] in affected
+    }
+    variant_rows = 0
+    for row in rows:
+        city_id = row["cityId"]
+        prior_row = prior_rows.get(city_id)
+        if prior_row is None:
+            raise ValueError(f"city {city_id} has no prior reconciliation row")
+        if row == prior_row:
+            continue
+        if not (
+            current_parent.get(city_id) in affected
+            or prior_parent.get(city_id) in affected
+            or city_id in seat_city_ids
+            or _anchors_inside(row, current_parent, affected)
+            or _anchors_inside(prior_row, prior_parent, affected)
+        ):
+            raise ValueError(f"county rebinding changed a reconciliation row outside its 郡: {city_id}")
+        changed = {key for key in set(row) | set(prior_row) if row.get(key) != prior_row.get(key)}
+        allowed = set(REBINDING_STAGE_VARIANT_KEYS)
+        if (
+            prior_row["decision"] == "BLOCKED_DIRECT_TERRITORY_REVIEW"
+            and row["decision"] != prior_row["decision"]
+        ):
+            # 南鄉郡 처럼 제 이름의 縣이 돌아와 「사료에 근거한 縣이 없는 直屬 땅」을
+            # 벗어난 郡이다. 프론티어 단계가 帶方郡에 대해 이미 허용한 그 전이다.
+            allowed |= FRONTIER_STAGE_SOURCED_KEYS
+        if not changed <= allowed:
+            raise ValueError(
+                f"county rebinding changed a non-geometry field for {city_id}: {sorted(changed - allowed)}"
+            )
+        variant_rows += 1
+    if len(rows) != len(prior["rows"]):
+        raise ValueError("county rebinding added or removed a reconciliation row")
+    prior_reviews = {row["junArrayIndex"]: row for row in prior["directTerritoryJunReviews"]}
+    current_reviews = {row["junArrayIndex"]: row for row in direct_jun_reviews}
+    for jun_index in set(prior_reviews) | set(current_reviews):
+        if prior_reviews.get(jun_index) != current_reviews.get(jun_index) and (
+            tiles["parentRegions"][jun_index]["id"] not in affected
+        ):
+            raise ValueError("county rebinding changed a direct-territory review outside its 郡")
+    return {
+        "ledgerId": rebound["ledgerId"],
+        "affectedParentRegionIds": sorted(affected),
+        "changedCellCount": len(rebound["geometry"]["ownerDelta"]),
+        "geometryVariantRowCount": variant_rows,
+        "priorSummary": prior["summary"],
+        "priorFrontierCountyProjection": prior.get("frontierCountyProjection"),
+    }
 
 
 def _frontier_stage_projection(

@@ -1,13 +1,152 @@
 {
   "approvedPhysicalPlaceIdsAbsentFromTiles": [],
-  "directTerritoryJunReviews": [
-    {
-      "diagnosticOnly": true,
-      "junArrayIndex": 113,
-      "nameCh": "南鄉郡",
-      "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
-      "sourcedAdministrativeUnitIds": []
+  "countyRebindingProjection": {
+    "affectedParentRegionIds": [
+      "PARENT-0003",
+      "PARENT-0010",
+      "PARENT-0025",
+      "PARENT-0028",
+      "PARENT-0051",
+      "PARENT-0053",
+      "PARENT-0054",
+      "PARENT-0055",
+      "PARENT-0070",
+      "PARENT-0113"
+    ],
+    "changedCellCount": 815,
+    "geometryVariantRowCount": 90,
+    "ledgerId": "han-county-misbinding-rebindings-v1",
+    "priorFrontierCountyProjection": {
+      "affectedParentRegionIds": [
+        "PARENT-0094",
+        "PARENT-0095",
+        "PARENT-0096",
+        "PARENT-0097",
+        "PARENT-0102",
+        "PARENT-0103",
+        "PARENT-0104",
+        "PARENT-0130"
+      ],
+      "frontierCountyRowCount": 51,
+      "geometryVariantRowCount": 8,
+      "inputDocumentSha256": "0c036d9f13999c9883e8125e7cdf5f07f230f906d447f13fcbf0f30211cc376c",
+      "inputTilesSha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb",
+      "priorRelocationCountProjection": {
+        "changedCellCount": 61,
+        "inputTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
+        "provinceCellDeltas": {
+          "200026": 3,
+          "45028": 7,
+          "45107": 6,
+          "45124": 8,
+          "85272": 11,
+          "85325": -36,
+          "DIRECT-PARENT-0107-67cb635d068b": 1
+        }
+      },
+      "priorSummary": {
+        "approvedPhysicalPlaceIdAbsentCount": 51,
+        "cityLinkedCellCount": 107155,
+        "cityLinkedProvinceCount": 998,
+        "coordinateFootprintMajorityMismatchCount": 0,
+        "crossParentRegionFootprintCount": 0,
+        "decisionCellCounts": {
+          "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
+          "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
+          "EXACT_APPROVED": 80956,
+          "PROPOSED_GEOMETRIC": 18169
+        },
+        "decisionRowCounts": {
+          "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
+          "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
+          "EXACT_APPROVED": 782,
+          "PROPOSED_GEOMETRIC": 283
+        },
+        "directTerritoryCellCount": 120194,
+        "directTerritoryProvinceCount": 526,
+        "directTerritoryReview": {
+          "pendingCandidateJunCount": 17,
+          "rejectedSourcedGroupJunCount": 5
+        },
+        "exactApprovedCellCount": 80956,
+        "exactApprovedRowCount": 782,
+        "geometryDiagnostics": {
+          "distanceTies": {
+            "cellCount": 69,
+            "rowCount": 3
+          },
+          "multiGroupJun": {
+            "cellCount": 7826,
+            "rowCount": 84
+          },
+          "singleGroupJun": {
+            "cellCount": 10343,
+            "rowCount": 199
+          },
+          "uniqueNearest": {
+            "cellCount": 18100,
+            "rowCount": 280
+          }
+        },
+        "landCellCount": 227349,
+        "landOwnerRowCount": 1138,
+        "provinceRecordCount": 1524,
+        "unresolvedCellCount": 26199,
+        "unresolvedRowCount": 356
+      }
     },
+    "priorSummary": {
+      "approvedPhysicalPlaceIdAbsentCount": 0,
+      "cityLinkedCellCount": 121603,
+      "cityLinkedProvinceCount": 1057,
+      "coordinateFootprintMajorityMismatchCount": 0,
+      "crossParentRegionFootprintCount": 0,
+      "decisionCellCounts": {
+        "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
+        "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
+        "EXACT_APPROVED": 95396,
+        "PROPOSED_GEOMETRIC": 18177
+      },
+      "decisionRowCounts": {
+        "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
+        "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
+        "EXACT_APPROVED": 833,
+        "PROPOSED_GEOMETRIC": 284
+      },
+      "directTerritoryCellCount": 105746,
+      "directTerritoryProvinceCount": 463,
+      "directTerritoryReview": {
+        "pendingCandidateJunCount": 16,
+        "rejectedSourcedGroupJunCount": 5
+      },
+      "exactApprovedCellCount": 95396,
+      "exactApprovedRowCount": 833,
+      "geometryDiagnostics": {
+        "distanceTies": {
+          "cellCount": 69,
+          "rowCount": 3
+        },
+        "multiGroupJun": {
+          "cellCount": 7826,
+          "rowCount": 84
+        },
+        "singleGroupJun": {
+          "cellCount": 10351,
+          "rowCount": 200
+        },
+        "uniqueNearest": {
+          "cellCount": 18108,
+          "rowCount": 281
+        }
+      },
+      "landCellCount": 227349,
+      "landOwnerRowCount": 1189,
+      "provinceRecordCount": 1520,
+      "unresolvedCellCount": 26207,
+      "unresolvedRowCount": 356
+    }
+  },
+  "directTerritoryJunReviews": [
     {
       "diagnosticOnly": true,
       "junArrayIndex": 84,
@@ -186,85 +325,6 @@
       "sourcedAdministrativeUnitIds": []
     }
   ],
-  "frontierCountyProjection": {
-    "affectedParentRegionIds": [
-      "PARENT-0094",
-      "PARENT-0095",
-      "PARENT-0096",
-      "PARENT-0097",
-      "PARENT-0102",
-      "PARENT-0103",
-      "PARENT-0104",
-      "PARENT-0130"
-    ],
-    "frontierCountyRowCount": 51,
-    "geometryVariantRowCount": 8,
-    "inputDocumentSha256": "0c036d9f13999c9883e8125e7cdf5f07f230f906d447f13fcbf0f30211cc376c",
-    "inputTilesSha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb",
-    "priorRelocationCountProjection": {
-      "changedCellCount": 61,
-      "inputTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
-      "provinceCellDeltas": {
-        "200026": 3,
-        "45028": 7,
-        "45107": 6,
-        "45124": 8,
-        "85272": 11,
-        "85325": -36,
-        "DIRECT-PARENT-0107-67cb635d068b": 1
-      }
-    },
-    "priorSummary": {
-      "approvedPhysicalPlaceIdAbsentCount": 51,
-      "cityLinkedCellCount": 107155,
-      "cityLinkedProvinceCount": 998,
-      "coordinateFootprintMajorityMismatchCount": 0,
-      "crossParentRegionFootprintCount": 0,
-      "decisionCellCounts": {
-        "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
-        "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-        "EXACT_APPROVED": 80956,
-        "PROPOSED_GEOMETRIC": 18169
-      },
-      "decisionRowCounts": {
-        "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
-        "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-        "EXACT_APPROVED": 782,
-        "PROPOSED_GEOMETRIC": 283
-      },
-      "directTerritoryCellCount": 120194,
-      "directTerritoryProvinceCount": 526,
-      "directTerritoryReview": {
-        "pendingCandidateJunCount": 17,
-        "rejectedSourcedGroupJunCount": 5
-      },
-      "exactApprovedCellCount": 80956,
-      "exactApprovedRowCount": 782,
-      "geometryDiagnostics": {
-        "distanceTies": {
-          "cellCount": 69,
-          "rowCount": 3
-        },
-        "multiGroupJun": {
-          "cellCount": 7826,
-          "rowCount": 84
-        },
-        "singleGroupJun": {
-          "cellCount": 10343,
-          "rowCount": 199
-        },
-        "uniqueNearest": {
-          "cellCount": 18100,
-          "rowCount": 280
-        }
-      },
-      "landCellCount": 227349,
-      "landOwnerRowCount": 1138,
-      "provinceRecordCount": 1524,
-      "unresolvedCellCount": 26199,
-      "unresolvedRowCount": 356
-    }
-  },
   "inputs": {
     "data/curated/han/administrative-place-bindings-v1.json": {
       "path": "data/curated/han/administrative-place-bindings-v1.json",
@@ -312,7 +372,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "17f14998cfb5c4832585fbc42462995d06f6263e6925cf8a500a60c9c5966c8f"
+      "sha256": "c6040198574a1fb5fa07d040b1faca8369f30a0bc60711f0c720c801b2b4e2b5"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -505,7 +565,7 @@
       }
     },
     {
-      "cellCount": 245,
+      "cellCount": 333,
       "cityId": "200048",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -515,7 +575,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 245,
+            "cellCount": 333,
             "junArrayIndex": 54,
             "nameCh": "漢中郡"
           }
@@ -527,7 +587,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "200050",
@@ -540,7 +600,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -582,7 +641,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -706,7 +764,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -1371,7 +1428,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -2215,8 +2271,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -2791,12 +2846,7 @@
     {
       "cellCount": 0,
       "cityId": "210962",
-      "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
-      "directTerritoryReview": {
-        "diagnosticOnly": true,
-        "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
-        "sourcedAdministrativeUnitIds": []
-      },
+      "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": null,
         "crossJun": false,
@@ -2805,9 +2855,24 @@
         "junDistribution": [],
         "majorityJunArrayIndices": []
       },
-      "reviewState": "BLOCKED",
+      "geometryDiagnostic": {
+        "diagnosticOnly": true,
+        "distanceTie": false,
+        "groupCardinality": "SINGLE_GROUP_JUN",
+        "nearestCandidates": [
+          {
+            "anchorCityId": "71022",
+            "candidateAdministrativeGroupId": "hhs-group:112:南陽郡",
+            "candidateAdministrativeUnitId": "hhs:112:南陽郡:035",
+            "squaredGridDistance": 0
+          }
+        ]
+      },
+      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:112:南陽郡"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 113,
         "nameCh": "南鄉郡"
@@ -3299,7 +3364,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "70983",
@@ -3312,7 +3377,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -3975,7 +4039,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -4097,7 +4160,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -4987,7 +5049,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -5454,7 +5515,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -5499,7 +5559,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -5520,7 +5579,7 @@
         "routeNodeKey": "f020801c-97d9-4937-b592-16854c7bdc51"
       },
       "approvedParentAdministrativeUnitId": "hhs:110:沛國:012",
-      "cellCount": 233,
+      "cellCount": 37,
       "cityId": "40236",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -5530,29 +5589,28 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 233,
-            "junArrayIndex": 53,
-            "nameCh": "豫章郡"
+            "cellCount": 37,
+            "junArrayIndex": 10,
+            "nameCh": "沛國"
           }
         ],
         "majorityJunArrayIndices": [
-          53
+          10
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:110:沛國",
-          "hhs-group:112:豫章郡",
-          "hhs-group:113:犍為郡"
+          "hhs-group:112:九江郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 53,
-        "nameCh": "豫章郡"
+        "junArrayIndex": 10,
+        "nameCh": "沛國"
       }
     },
     {
-      "cellCount": 140,
+      "cellCount": 162,
       "cityId": "40242",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -5562,7 +5620,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 140,
+            "cellCount": 162,
             "junArrayIndex": 51,
             "nameCh": "會稽郡"
           }
@@ -5577,17 +5635,16 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "40645",
-            "candidateAdministrativeGroupId": "hhs-group:109:弘農郡",
-            "candidateAdministrativeUnitId": "hhs:109:弘農郡:004",
-            "squaredGridDistance": 265
+            "anchorCityId": "40638",
+            "candidateAdministrativeGroupId": "hhs-group:112:會稽郡",
+            "candidateAdministrativeUnitId": "hhs:112:會稽郡:006",
+            "squaredGridDistance": 425
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -5597,7 +5654,7 @@
       }
     },
     {
-      "cellCount": 241,
+      "cellCount": 395,
       "cityId": "40303",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -5607,7 +5664,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 241,
+            "cellCount": 395,
             "junArrayIndex": 53,
             "nameCh": "豫章郡"
           }
@@ -5622,17 +5679,16 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "40236",
-            "candidateAdministrativeGroupId": "hhs-group:110:沛國",
-            "candidateAdministrativeUnitId": "hhs:110:沛國:012",
-            "squaredGridDistance": 116
+            "anchorCityId": "40980",
+            "candidateAdministrativeGroupId": "hhs-group:112:豫章郡",
+            "candidateAdministrativeUnitId": "hhs:112:豫章郡:009",
+            "squaredGridDistance": 232
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -5677,7 +5733,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6226,7 +6281,7 @@
       }
     },
     {
-      "cellCount": 152,
+      "cellCount": 198,
       "cityId": "40610",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -6236,7 +6291,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 152,
+            "cellCount": 198,
             "junArrayIndex": 51,
             "nameCh": "會稽郡"
           }
@@ -6251,17 +6306,16 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "40645",
-            "candidateAdministrativeGroupId": "hhs-group:109:弘農郡",
-            "candidateAdministrativeUnitId": "hhs:109:弘農郡:004",
-            "squaredGridDistance": 25
+            "anchorCityId": "40624",
+            "candidateAdministrativeGroupId": "hhs-group:113:上郡",
+            "candidateAdministrativeUnitId": "hhs:113:上郡:007",
+            "squaredGridDistance": 173
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6271,7 +6325,7 @@
       }
     },
     {
-      "cellCount": 139,
+      "cellCount": 156,
       "cityId": "40616",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -6281,7 +6335,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 139,
+            "cellCount": 156,
             "junArrayIndex": 51,
             "nameCh": "會稽郡"
           }
@@ -6296,17 +6350,16 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "40645",
-            "candidateAdministrativeGroupId": "hhs-group:109:弘農郡",
-            "candidateAdministrativeUnitId": "hhs:109:弘農郡:004",
-            "squaredGridDistance": 34
+            "anchorCityId": "40638",
+            "candidateAdministrativeGroupId": "hhs-group:112:會稽郡",
+            "candidateAdministrativeUnitId": "hhs:112:會稽郡:006",
+            "squaredGridDistance": 200
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6349,7 +6402,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6370,7 +6422,7 @@
         "routeNodeKey": "6c23dd8d-9c5e-4cb4-9f8d-6af42de83358"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:會稽郡:006",
-      "cellCount": 147,
+      "cellCount": 181,
       "cityId": "40638",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -6380,7 +6432,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 147,
+            "cellCount": 181,
             "junArrayIndex": 51,
             "nameCh": "會稽郡"
           }
@@ -6392,7 +6444,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6413,7 +6464,7 @@
         "routeNodeKey": "7eda3ea1-bd96-4d9e-9af3-0898ce67a6d1"
       },
       "approvedParentAdministrativeUnitId": "hhs:109:弘農郡:004",
-      "cellCount": 132,
+      "cellCount": 56,
       "cityId": "40645",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -6423,25 +6474,23 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 132,
-            "junArrayIndex": 51,
-            "nameCh": "會稽郡"
+            "cellCount": 56,
+            "junArrayIndex": 3,
+            "nameCh": "弘農郡"
           }
         ],
         "majorityJunArrayIndices": [
-          51
+          3
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
-          "hhs-group:112:會稽郡",
-          "hhs-group:113:上郡"
+          "hhs-group:109:弘農郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 51,
-        "nameCh": "會稽郡"
+        "junArrayIndex": 3,
+        "nameCh": "弘農郡"
       }
     },
     {
@@ -6478,7 +6527,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6523,7 +6571,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6566,7 +6613,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6611,7 +6657,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6621,7 +6666,7 @@
       }
     },
     {
-      "cellCount": 257,
+      "cellCount": 270,
       "cityId": "40716",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -6631,7 +6676,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 257,
+            "cellCount": 270,
             "junArrayIndex": 51,
             "nameCh": "會稽郡"
           }
@@ -6656,7 +6701,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6699,7 +6743,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6744,7 +6787,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6787,7 +6829,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6830,7 +6871,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6873,7 +6913,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6916,7 +6955,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -6959,7 +6997,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7002,7 +7039,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7047,7 +7083,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7090,7 +7125,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7133,7 +7167,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7176,7 +7209,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:109:弘農郡",
           "hhs-group:112:會稽郡",
           "hhs-group:113:上郡"
         ],
@@ -7285,7 +7317,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7328,7 +7359,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7373,7 +7403,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7416,7 +7445,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7459,7 +7487,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7504,7 +7531,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7547,7 +7573,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7592,7 +7617,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7668,7 +7692,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7713,7 +7736,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7873,7 +7895,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7951,7 +7972,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -7994,7 +8014,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8015,7 +8034,7 @@
         "routeNodeKey": "f163f145-9b88-41f7-9195-40dec89d63d3"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:豫章郡:009",
-      "cellCount": 244,
+      "cellCount": 323,
       "cityId": "40980",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -8025,7 +8044,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 244,
+            "cellCount": 323,
             "junArrayIndex": 53,
             "nameCh": "豫章郡"
           }
@@ -8037,7 +8056,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8080,7 +8098,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8123,7 +8140,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8168,7 +8184,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8213,7 +8228,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8299,7 +8313,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8342,7 +8355,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8387,7 +8399,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8432,7 +8443,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8475,7 +8485,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8518,7 +8527,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8688,7 +8696,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8860,7 +8867,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8905,7 +8911,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8950,7 +8955,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -8993,7 +8997,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:沛國",
           "hhs-group:112:豫章郡",
           "hhs-group:113:犍為郡"
         ],
@@ -18166,7 +18169,7 @@
       }
     },
     {
-      "cellCount": 221,
+      "cellCount": 249,
       "cityId": "44621",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -18176,7 +18179,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 221,
+            "cellCount": 249,
             "junArrayIndex": 55,
             "nameCh": "巴郡"
           }
@@ -19586,8 +19589,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -19595,7 +19597,7 @@
       }
     },
     {
-      "cellCount": 25,
+      "cellCount": 31,
       "cityId": "45192",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -19605,7 +19607,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 25,
+            "cellCount": 31,
             "junArrayIndex": 28,
             "nameCh": "山陽郡"
           }
@@ -19631,8 +19633,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -19651,7 +19652,7 @@
         "routeNodeKey": "20e7e845-384e-4e9d-8032-b1f20fbca066"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:安定郡:002",
-      "cellCount": 21,
+      "cellCount": 60,
       "cityId": "45198",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -19661,25 +19662,23 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 21,
-            "junArrayIndex": 28,
-            "nameCh": "山陽郡"
+            "cellCount": 60,
+            "junArrayIndex": 70,
+            "nameCh": "安定郡"
           }
         ],
         "majorityJunArrayIndices": [
-          28
+          70
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
           "hhs-group:113:安定郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 28,
-        "nameCh": "山陽郡"
+        "junArrayIndex": 70,
+        "nameCh": "安定郡"
       }
     },
     {
@@ -20170,8 +20169,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -22540,7 +22538,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "45934",
@@ -22553,7 +22551,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -22595,7 +22592,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -22626,7 +22622,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "45934",
@@ -22639,7 +22635,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -23291,9 +23286,15 @@
       },
       "geometryDiagnostic": {
         "diagnosticOnly": true,
-        "distanceTie": false,
+        "distanceTie": true,
         "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
+          {
+            "anchorCityId": "45198",
+            "candidateAdministrativeGroupId": "hhs-group:113:安定郡",
+            "candidateAdministrativeUnitId": "hhs:113:安定郡:002",
+            "squaredGridDistance": 116
+          },
           {
             "anchorCityId": "70178",
             "candidateAdministrativeGroupId": "hhs-group:113:安定郡",
@@ -25700,7 +25701,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -25709,7 +25709,7 @@
       }
     },
     {
-      "cellCount": 237,
+      "cellCount": 268,
       "cityId": "71009",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -25719,7 +25719,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 237,
+            "cellCount": 268,
             "junArrayIndex": 54,
             "nameCh": "漢中郡"
           }
@@ -25731,20 +25731,19 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "71022",
-            "candidateAdministrativeGroupId": "hhs-group:112:南陽郡",
-            "candidateAdministrativeUnitId": "hhs:112:南陽郡:035",
-            "squaredGridDistance": 250
+            "anchorCityId": "200433",
+            "candidateAdministrativeGroupId": "hhs-group:113:漢中郡",
+            "candidateAdministrativeUnitId": "hhs:113:漢中郡:006",
+            "squaredGridDistance": 269
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -25764,7 +25763,7 @@
         "routeNodeKey": "84ea5e4f-dca1-4fce-80f9-11dcd333b3dc"
       },
       "approvedParentAdministrativeUnitId": "hhs:112:南陽郡:035",
-      "cellCount": 237,
+      "cellCount": 39,
       "cityId": "71022",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -25774,24 +25773,23 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 237,
-            "junArrayIndex": 54,
-            "nameCh": "漢中郡"
+            "cellCount": 39,
+            "junArrayIndex": 113,
+            "nameCh": "南鄉郡"
           }
         ],
         "majorityJunArrayIndices": [
-          54
+          113
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
-          "hhs-group:113:漢中郡"
+          "hhs-group:112:南陽郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 54,
-        "nameCh": "漢中郡"
+        "junArrayIndex": 113,
+        "nameCh": "南鄉郡"
       }
     },
     {
@@ -25869,7 +25867,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:南陽郡",
           "hhs-group:113:漢中郡"
         ],
         "diagnosticOnly": true,
@@ -26918,7 +26915,7 @@
         "routeNodeKey": "b4d422d6-ab45-4954-98ab-2cb5acf4589f"
       },
       "approvedParentAdministrativeUnitId": "hhs:110:沛國:005",
-      "cellCount": 75,
+      "cellCount": 38,
       "cityId": "82128",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -26928,7 +26925,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 75,
+            "cellCount": 38,
             "junArrayIndex": 10,
             "nameCh": "沛國"
           }
@@ -30290,7 +30287,7 @@
         "routeNodeKey": "4d3e3d24-f34c-4970-97bc-abc044a8ea00"
       },
       "approvedParentAdministrativeUnitId": "hhs:109:弘農郡:005",
-      "cellCount": 112,
+      "cellCount": 56,
       "cityId": "82871",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -30300,7 +30297,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 112,
+            "cellCount": 56,
             "junArrayIndex": 3,
             "nameCh": "弘農郡"
           }
@@ -31860,8 +31857,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -32384,7 +32380,7 @@
         "routeNodeKey": "552230a0-7081-4f82-9c02-1e3e0c7cb148"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:任城國:002",
-      "cellCount": 20,
+      "cellCount": 24,
       "cityId": "85131",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -32394,7 +32390,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 20,
+            "cellCount": 24,
             "junArrayIndex": 25,
             "nameCh": "任城國"
           }
@@ -32448,8 +32444,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -32468,7 +32463,7 @@
         "routeNodeKey": "903b59d8-2167-4cd5-b2c7-eed99320c6e2"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:山陽郡:005",
-      "cellCount": 23,
+      "cellCount": 29,
       "cityId": "85146",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -32478,7 +32473,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 23,
+            "cellCount": 29,
             "junArrayIndex": 28,
             "nameCh": "山陽郡"
           }
@@ -32491,8 +32486,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -32511,7 +32505,7 @@
         "routeNodeKey": "9fb736a5-047b-49de-82aa-a6d5e4838bbe"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:山陽郡:007",
-      "cellCount": 26,
+      "cellCount": 29,
       "cityId": "85147",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -32521,7 +32515,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 26,
+            "cellCount": 29,
             "junArrayIndex": 28,
             "nameCh": "山陽郡"
           }
@@ -32534,8 +32528,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -32554,7 +32547,7 @@
         "routeNodeKey": "408d37db-231f-44cb-8849-6bac39988b74"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:任城國:001",
-      "cellCount": 20,
+      "cellCount": 22,
       "cityId": "85155",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -32564,7 +32557,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 20,
+            "cellCount": 22,
             "junArrayIndex": 25,
             "nameCh": "任城國"
           }
@@ -32620,8 +32613,7 @@
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:濟陰郡"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 28,
@@ -43588,7 +43580,7 @@
         "routeNodeKey": "c40177d0-56e0-4d32-aee0-5af66b79727a"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:巴郡:013",
-      "cellCount": 228,
+      "cellCount": 254,
       "cityId": "96259",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -43598,7 +43590,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 228,
+            "cellCount": 254,
             "junArrayIndex": 55,
             "nameCh": "巴郡"
           }
@@ -48854,52 +48846,52 @@
   "schemaVersion": 1,
   "summary": {
     "approvedPhysicalPlaceIdAbsentCount": 0,
-    "cityLinkedCellCount": 121603,
+    "cityLinkedCellCount": 121638,
     "cityLinkedProvinceCount": 1057,
     "coordinateFootprintMajorityMismatchCount": 0,
     "crossParentRegionFootprintCount": 0,
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 95396,
-      "PROPOSED_GEOMETRIC": 18177
+      "EXACT_APPROVED": 95026,
+      "PROPOSED_GEOMETRIC": 18582
     },
     "decisionRowCounts": {
-      "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
+      "BLOCKED_DIRECT_TERRITORY_REVIEW": 31,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
       "EXACT_APPROVED": 833,
-      "PROPOSED_GEOMETRIC": 284
+      "PROPOSED_GEOMETRIC": 285
     },
-    "directTerritoryCellCount": 105746,
+    "directTerritoryCellCount": 105711,
     "directTerritoryProvinceCount": 463,
     "directTerritoryReview": {
-      "pendingCandidateJunCount": 16,
+      "pendingCandidateJunCount": 15,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 95396,
+    "exactApprovedCellCount": 95026,
     "exactApprovedRowCount": 833,
     "geometryDiagnostics": {
       "distanceTies": {
-        "cellCount": 69,
-        "rowCount": 3
+        "cellCount": 310,
+        "rowCount": 4
       },
       "multiGroupJun": {
-        "cellCount": 7826,
-        "rowCount": 84
+        "cellCount": 7391,
+        "rowCount": 79
       },
       "singleGroupJun": {
-        "cellCount": 10351,
-        "rowCount": 200
+        "cellCount": 11191,
+        "rowCount": 206
       },
       "uniqueNearest": {
-        "cellCount": 18108,
+        "cellCount": 18272,
         "rowCount": 281
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1189,
     "provinceRecordCount": 1520,
-    "unresolvedCellCount": 26207,
+    "unresolvedCellCount": 26612,
     "unresolvedRowCount": 356
   }
 }

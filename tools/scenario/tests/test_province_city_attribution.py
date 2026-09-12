@@ -49,13 +49,17 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         )
 
     def test_measured_basis_counts(self) -> None:
-        # 실측 기준선이다(2026-09-11). 임계값이 아니라 「지금 이 데이터가 이렇다」는 핀이다.
+        # 실측 기준선이다(2026-09-12). 임계값이 아니라 「지금 이 데이터가 이렇다」는 핀이다.
+        # 앞 판(1082/154/55/229)에서 한 칸만 옮겼다 — 오배정 縣 재바인딩으로 南鄉縣(71022)이
+        # 동명이지(漢中)에서 南鄉郡(PARENT-0113)으로 돌아가 그 郡이 城을 얻었고, 郡에 남아
+        # 있던 直屬 省 하나가 COMMANDERY_HAS_NO_CITY 에서 SAME_COMMANDERY_SEAT 로 넘어갔다.
+        # 縣 제 省은 옮겨 가서도 제 治所를 그대로 써서 OWN_COUNTY_SEAT 수는 안 변한다.
         self.assertEqual(
             {
                 "OWN_COUNTY_SEAT": 1082,
-                "SAME_COMMANDERY_SEAT": 154,
+                "SAME_COMMANDERY_SEAT": 155,
                 "SAME_COMMANDERY_NEAREST": 55,
-                "COMMANDERY_HAS_NO_CITY": 229,
+                "COMMANDERY_HAS_NO_CITY": 228,
             },
             dict(self.basis),
         )
@@ -103,12 +107,15 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         self.assertEqual(len(self.tiles["jurisdictionRecords"]), len(per_county))
 
     def test_cityless_commanderies_are_named_with_their_seat_place(self) -> None:
-        self.assertEqual(52, len(self.gaps))
+        # 52 에서 51 로 내려온 건 南鄉郡(PARENT-0113)이 治所를 얻었기 때문이다 —
+        # 南鄉縣이 동명이지(陝西 鎮巴)에 묶여 漢中郡 땅에 서 있다가 제자리(河南 淅川)로
+        # 돌아왔다. data/curated/han/county-misbinding-rebindings-v1.json 참조.
+        self.assertEqual(51, len(self.gaps))
         for gap in self.gaps:
             self.assertIsNotNone(gap["seatPlaceId"], gap)
             self.assertGreater(gap["provinceCount"], 0, gap)
         self.assertEqual(
-            229, sum(gap["provinceCount"] for gap in self.gaps)
+            228, sum(gap["provinceCount"] for gap in self.gaps)
         )
 
     def test_no_coordinates_leak_into_the_ledger(self) -> None:

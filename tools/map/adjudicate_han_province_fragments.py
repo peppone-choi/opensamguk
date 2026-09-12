@@ -869,8 +869,16 @@ def _materialize_fragment_document(document: dict, ledger: dict) -> dict:
 def materialize_document(document: dict, ledger: dict) -> dict:
     """Validate prior decisions before composing an exact later relocation stage."""
     from tools.map import materialize_frontier_counties as frontier
+    from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
 
+    peeled, rebound = frontier.peel_rebinding(document)
+    if rebound is not None:
+        reviewed = materialize_document(peeled, ledger)
+        if reviewed != peeled:
+            raise ValueError("county rebinding input is not the canonical prior stage output")
+        rebuilt, _, _ = rebinding.apply_rebindings(reviewed, rebound)
+        return rebuilt
     if frontier.PLACEMENTS.exists():
         placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
         stage = placements.get("priorStage")
