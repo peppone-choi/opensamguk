@@ -506,13 +506,15 @@ def validate_ledger(document: object) -> list[dict]:
 def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tuple[list[dict], object]:
     """Peel later document stages so rows reviewed against an earlier stage still apply.
 
-    Stages, latest first: frontier counties (materialize_frontier_counties.priorStage) and the
-    劇 relocation (province-relocations-v1). Each stage restores its input by pinned digest and
+    Stages, latest first: frontier counties (materialize_frontier_counties.priorStage), the
+    오배정 縣 재바인딩 (county-misbinding-rebindings-v1) and the 劇 relocation
+    (province-relocations-v1). Each stage restores its input by pinned digest and
     re-runs the review on it, so a stage never hides an error the prior stage would raise.
     """
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from tools.map import materialize_frontier_counties as frontier
+    from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
     if frontier.PLACEMENTS.exists():
         placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
@@ -524,6 +526,18 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
                 raise ValueError("prior territory review fails before frontier counties: " + repr(prior["errors"]))
             rows, projection = _reviewed_rows(before, ledger, rows)
             return rows, {"frontierStage": stage["outputDocumentSha256"], "relocationProjection": projection}
+    if rebinding.LEDGER.exists():
+        rebound = json.loads(rebinding.LEDGER.read_text(encoding="utf-8"))
+        stages = rebound.get("geometry", {}).get("stages", [])
+        if any(row["outputDocumentSha256"] == relocation.digest(document) for row in stages):
+            before = rebinding.restore_document(document, rebound)
+            prior = check(before, ledger)
+            if prior["errors"]:
+                raise ValueError("prior territory review fails before the county rebinding: "
+                                 + repr(prior["errors"]))
+            rows, projection = _reviewed_rows(before, ledger, rows)
+            return rows, {"rebindingStage": relocation.digest(document),
+                          "priorProjection": projection}
     if relocation.LEDGER.exists():
         later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
         if relocation.digest(document) == later["outputDocumentSha256"]:

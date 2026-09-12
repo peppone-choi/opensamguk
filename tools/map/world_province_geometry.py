@@ -507,6 +507,16 @@ def rebalance_province_areas(
         for index in range(len(result.parent_regions))
     }
     rows, cols = balanced_parent_owner.shape
+    # 縣의 씨앗 칸은 최소 면적 보정이 뺏어가면 안 된다. 뺏기면 그 縣의 고정 앵커가 제
+    # 郡 마스크 밖으로 나가 아래 balanced_parent_labels 가 「fixed anchors must fall
+    # inside the parent mask」로 죽는다 — 鉅鹿郡 巨鹿縣·巴西郡 西充國縣이 각각 이웃
+    # 廣平郡·巴郡에 뺏겨서 그렇게 죽었다(실측 2026-09-11). 씨앗 칸은 그 縣이 사료로
+    # 붙은 자리라 보정이 만질 수 있는 여분의 땅이 아니다.
+    anchor_cells = {
+        (seed_by_id[record.id].row, seed_by_id[record.id].col)
+        for records in historical_by_parent.values()
+        for record in records
+    }
     for parent_index, parent in enumerate(result.parent_regions):
         required = required_cells[parent.id]
         while area_by_index[parent_index] < required:
@@ -515,6 +525,8 @@ def rebalance_province_areas(
                 for next_row, next_col in _neighbors(int(row), int(col), rows, cols):
                     donor = int(balanced_parent_owner[next_row, next_col])
                     if donor < 0 or donor == parent_index:
+                        continue
+                    if (next_row, next_col) in anchor_cells:
                         continue
                     donor_parent = result.parent_regions[donor]
                     if area_by_index[donor] <= required_cells[donor_parent.id]:

@@ -71,7 +71,9 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         self.assertEqual(1_057, ledger["summary"]["cityLinkedProvinceCount"])
         self.assertEqual(463, ledger["summary"]["directTerritoryProvinceCount"])
         self.assertEqual(227_349, ledger["summary"]["landCellCount"])
-        self.assertEqual(105_746, ledger["summary"]["directTerritoryCellCount"])
+        # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
+        # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
+        self.assertEqual(105_711, ledger["summary"]["directTerritoryCellCount"])
         self.assertEqual(833, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
@@ -552,7 +554,11 @@ class HanParentReconciliationTest(unittest.TestCase):
 
         self.assertEqual(1_189, len(self.ledger["rows"]))
         self.assertEqual(1_189, len(self.rows))
-        self.assertEqual(121_603, sum(row["cellCount"] for row in self.ledger["rows"]))
+        # 오배정 縣 4곳(建平·新安·高平·南鄉)을 CHGIS 제자리 좌표로 되돌린 뒤의 실측이다 —
+        # 815칸이 움직였고, 治所를 얻은 南鄉郡(PARENT-0113)이 直轄 심사에서 빠졌다.
+        # 앞 단계 값은 ledger['countyRebindingProjection']['priorSummary'] 가 들고 있다.
+        # data/curated/han/county-misbinding-rebindings-v1.json 참조.
+        self.assertEqual(121_638, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(227_349, summary["landCellCount"])
         self.assertEqual(
             summary["landCellCount"],
@@ -561,41 +567,43 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertEqual(
             {
                 "EXACT_APPROVED": 833,
-                "PROPOSED_GEOMETRIC": 284,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
+                "PROPOSED_GEOMETRIC": 285,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 31,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
             dict(decisions),
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 95_396,
-                "PROPOSED_GEOMETRIC": 18_177,
+                "EXACT_APPROVED": 95_026,
+                "PROPOSED_GEOMETRIC": 18_582,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
         self.assertEqual(356, summary["unresolvedRowCount"])
-        self.assertEqual(26_207, summary["unresolvedCellCount"])
+        self.assertEqual(26_612, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 200, "cellCount": 10_351},
+            {"rowCount": 206, "cellCount": 11_191},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 84, "cellCount": 7_826},
+            {"rowCount": 79, "cellCount": 7_391},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
-    def test_geometry_retains_all_three_v2_parent_distance_ties(self):
+    def test_geometry_retains_the_v2_parent_distance_ties(self):
         tied = {
             row["cityId"]: row
             for row in self.ledger["rows"]
             if row.get("geometryDiagnostic", {}).get("distanceTie")
         }
 
-        self.assertEqual({"210170", "45113", "87625"}, set(tied))
-        self.assertEqual(69, sum(row["cellCount"] for row in tied.values()))
+        # 70186 이 넷째로 합류했다 — 高平縣(45198)이 山陽郡 동명이지에서 安定郡 제자리로
+        # 옮겨 앉으면서 70186 의 최근접 앵커가 45198 과 70178 로 116 동률이 됐다.
+        self.assertEqual({"210170", "45113", "70186", "87625"}, set(tied))
+        self.assertEqual(310, sum(row["cellCount"] for row in tied.values()))
         self.assertEqual(
             {"95318", "95341"},
             {
@@ -611,11 +619,11 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 281, "cellCount": 18_108},
+            {"rowCount": 281, "cellCount": 18_272},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
-            {"rowCount": 3, "cellCount": 69},
+            {"rowCount": 4, "cellCount": 310},
             self.ledger["summary"]["geometryDiagnostics"]["distanceTies"],
         )
         for row in self.ledger["rows"]:
@@ -726,7 +734,8 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
         self.assertEqual(
-            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 16},
+            # 16 에서 15 로 — 南鄉郡이 治所(南鄉縣)를 얻어 直轄 후보에서 빠졌다.
+            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 15},
             self.ledger["summary"]["directTerritoryReview"],
         )
 

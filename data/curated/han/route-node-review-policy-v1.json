@@ -70,7 +70,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "25a43be503d8eb57b7796041c6773415487e4213a697055d26efe940576097bc"
+      "sha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
     },
     "coordinateOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
     "locationAdjudications": {

@@ -72,14 +72,24 @@ class GeukRelocationTest(unittest.TestCase):
     def test_reconciliation_projects_only_actual_changed_cell_buckets(self):
         from tools.map import build_han_parent_reconciliation as reconciliation
         result = json.loads(reconciliation.render_ledger())
-        self.assertEqual(121603, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(95396, result['summary']['exactApprovedCellCount'])
-        self.assertEqual(26207, result['summary']['unresolvedCellCount'])
-        # 縣 51곳을 세운 뒤로 현재 문서의 앞 단계는 縣 단계다. 재배치 투영은 그 縣 단계가
-        # 재귀로 증명하는 **앞 단계 원장** 안에 실려 온다 — 같은 61칸을 그대로 들고 있다.
+        # 오배정 縣 4곳을 제자리로 돌리고, 사료가 지목한 郡으로 縣 4곳(無慮·高顯·遼陽·比景)의
+        # 씨앗칸을 옮긴 뒤의 실측이다(2,035칸 이동). 앞 단계 값
+        # 121603/95396/26207 은 아래 priorSummary 가 그대로 들고 있다 —
+        # data/curated/han/county-misbinding-rebindings-v1.json 참조.
+        self.assertEqual(121638, result['summary']['cityLinkedCellCount'])
+        self.assertEqual(95026, result['summary']['exactApprovedCellCount'])
+        self.assertEqual(26612, result['summary']['unresolvedCellCount'])
+        rebinding = result['countyRebindingProjection']
+        self.assertEqual(2035, rebinding['changedCellCount'])
+        self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
+        self.assertEqual(95396, rebinding['priorSummary']['exactApprovedCellCount'])
+        self.assertEqual(26207, rebinding['priorSummary']['unresolvedCellCount'])
+        # 縣 51곳을 세운 뒤로 재배치 투영은 그 縣 단계가 재귀로 증명하는 **앞 단계 원장**
+        # 안에 실려 온다 — 재바인딩이 그 위에 한 겹 더 얹혔을 뿐 같은 61칸이다.
         self.assertEqual(
             61,
-            result['frontierCountyProjection']['priorRelocationCountProjection']['changedCellCount'],
+            rebinding['priorFrontierCountyProjection']
+            ['priorRelocationCountProjection']['changedCellCount'],
         )
 
     def test_forged_ledger_hashes_cannot_replace_the_frozen_input(self):

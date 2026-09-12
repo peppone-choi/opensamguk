@@ -25,11 +25,11 @@ class HanStrategicSupplyProviderTest {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
         assertEquals(1520, network.provinceOwners.size)
-        // 省 1,520 · 郡縣 인접 4,118(han-tiles adjacency.county 실측) 중 물을 건너는 46 간선이
-        // v3 에서 빠져 4,072 다. v2 는 그 걸러내기가 없어 아래에서 4,118 그대로다.
-        assertEquals(4072, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        // 省 1,520 · 郡縣 인접 4,120(han-tiles adjacency.county 실측) 중 물을 건너는 46 간선이
+        // v3 에서 빠져 4,074 다. v2 는 그 걸러내기가 없어 아래에서 4,120 그대로다.
+        assertEquals(4074, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         assertNotNull(network.strategicSupply)
-        assertEquals(4118, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)
+        assertEquals(4120, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)
         assertNull(provider.network("han-world-v2", 1020, emptyList()).strategicSupply)
     }
 

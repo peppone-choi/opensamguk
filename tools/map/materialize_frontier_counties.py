@@ -135,12 +135,34 @@ def has_frontier_counties(document: dict) -> bool:
     return any(str(row["id"]).startswith(PLACE_ID_PREFIX) for row in document["cities"])
 
 
+def peel_rebinding(document: dict) -> tuple[dict, dict | None]:
+    """오배정 縣 재바인딩은 프론티어 縣보다 나중 단계다. 얹혀 있으면 벗겨 낸다.
+
+    배열 순서만 뒤바뀐 문서도 같은 답을 내야 한다 — 지문을 대기 전에 원장이 적어 둔
+    cities[] 순서로 되돌린다(프론티어 단계의 outputCityOrder 계약과 같다)."""
+    from tools.map import rebind_misbound_counties as rebinding
+    from tools.map import relocate_han_province as relocation
+    if not rebinding.LEDGER.is_file():
+        return document, None
+    ledger = json.loads(rebinding.LEDGER.read_text(encoding="utf-8"))
+    stages = ledger.get("geometry", {}).get("stages", [])
+    for stage in stages:
+        order = stage.get("outputCityOrder")
+        candidate = document
+        if order and set(order) == {row["id"] for row in document["cities"]}:
+            candidate = relocation.canonicalize_city_order(candidate, {"inputCityOrder": order})
+        if stage["outputDocumentSha256"] == digest(candidate):
+            return rebinding.restore_document(candidate, ledger), ledger
+    return document, None
+
+
 def restored_to_prior_stage(document: dict) -> dict:
     """縣 51곳을 세우기 **전** 단계(=Geuk 재배치 산출)로 되돌린다. 이미 그 단계면 그대로 준다.
 
     이 단계를 앵커로 쓰는 이전 판정들(조각 판정·관할 구체화·영역 단절)은 자기 해시를
-    그 단계 문서에 대고 못박아 뒀다. 縣 단계는 그 위에 얹힌 나중 단계라, 앵커를 갈아끼우지
-    말고 원장의 priorStage 로 복원해서 비교한다."""
+    그 단계 문서에 대고 못박아 뒀다. 縣 단계와 그 위의 오배정 縣 재바인딩은 나중 단계라,
+    앵커를 갈아끼우지 말고 각 원장으로 차례로 복원해서 비교한다."""
+    document, _ = peel_rebinding(document)
     if not has_frontier_counties(document):
         return document
     return restore_document(document, json.loads(PLACEMENTS.read_text(encoding="utf-8")))
@@ -611,16 +633,21 @@ def main() -> int:
     parser.add_argument("--ledger", type=Path, default=LEDGER)
     parser.add_argument("--placements", type=Path, default=PLACEMENTS)
     args = parser.parse_args()
-    document = json.loads(args.tiles.read_text(encoding="utf-8"))
+    committed = json.loads(args.tiles.read_text(encoding="utf-8"))
+    document = json.loads(json.dumps(committed))
     ledger = json.loads(args.ledger.read_text(encoding="utf-8"))
+    # 오배정 縣 재바인딩은 프론티어 縣보다 나중 단계다. 벗겨 내고 세운 뒤 다시 얹어야
+    # 프론티어 배치 원장이 제 입력 지문 그대로 남는다(재바인딩은 그 郡들을 건드리지 않는다).
+    from tools.map import rebind_misbound_counties as rebinding
+    document, rebound = peel_rebinding(document)
     if has_frontier_counties(document):
         if not args.placements.is_file():
             print("han-tiles already carries frontier counties but no placement ledger exists to restore from",
                   file=sys.stderr)
             return 1
-        committed = json.loads(args.placements.read_text(encoding="utf-8"))
-        base = restore_document(document, committed)
-        input_tiles_sha256 = committed["priorStage"]["inputTilesSha256"]
+        placements = json.loads(args.placements.read_text(encoding="utf-8"))
+        base = restore_document(document, placements)
+        input_tiles_sha256 = placements["priorStage"]["inputTilesSha256"]
     else:
         base = document
         input_tiles_sha256 = _sha256(args.tiles)
@@ -629,11 +656,13 @@ def main() -> int:
     placement_document["priorStage"] = {
         "inputTilesSha256": input_tiles_sha256, **placement_document["priorStage"],
     }
+    if rebound is not None:
+        updated, _, _ = rebinding.apply_rebindings(updated, rebound)
     tiles_blob = _dump(updated)
     placement_blob = json.dumps(placement_document, ensure_ascii=False, indent=2) + "\n"
     if args.check:
         failures = []
-        if updated != document:
+        if updated != committed:
             failures.append("data/map/han-tiles.json is not the materialized frontier-county document")
         if not args.placements.is_file() or args.placements.read_text(encoding="utf-8") != placement_blob:
             failures.append(f"{args.placements} is stale")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import heapq
 import math
+import random
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from fractions import Fraction
@@ -114,6 +115,72 @@ def repair_label_connectivity(
     return output
 
 
+
+ANCHOR_FOOTPRINT_RETRIES = 256
+
+
+def _grow_anchor_footprints(
+    mask: np.ndarray,
+    anchors: np.ndarray,
+    province_count: int,
+    minimum_anchor_area: int,
+    rng: "random.Random | None",
+) -> np.ndarray | None:
+    """Grow each anchor into a connected footprint, or return None when one is boxed in."""
+    protected = np.full(mask.shape, -1, dtype=np.int32)
+    protected_counts = np.ones(province_count, dtype=np.int32)
+    for label, (row, col) in enumerate(anchors):
+        protected[int(row), int(col)] = label
+    frontiers: list[set[tuple[int, int]]] = []
+    for row, col in anchors:
+        frontiers.append({
+            (next_row, next_col)
+            for next_row, next_col in (
+                (int(row) - 1, int(col)), (int(row) + 1, int(col)),
+                (int(row), int(col) - 1), (int(row), int(col) + 1),
+            )
+            if 0 <= next_row < mask.shape[0] and 0 <= next_col < mask.shape[1]
+            and mask[next_row, next_col] and protected[next_row, next_col] < 0
+        })
+    while int(protected_counts.min()) < minimum_anchor_area:
+        options = []
+        for label in range(province_count):
+            if protected_counts[label] >= minimum_anchor_area:
+                continue
+            options.append((len(frontiers[label]), int(protected_counts[label]), label))
+        if not options:
+            break
+        key = min(options)[:2]
+        tied = [label for size, count, label in options if (size, count) == key]
+        label = rng.choice(tied) if rng is not None else tied[0]
+        boundary = frontiers[label]
+        if not boundary:
+            return None
+        anchor_row, anchor_col = anchors[label]
+        reach = min(
+            (cell[0] - int(anchor_row)) ** 2 + (cell[1] - int(anchor_col)) ** 2
+            for cell in boundary
+        )
+        nearest = sorted(
+            cell for cell in boundary
+            if (cell[0] - int(anchor_row)) ** 2 + (cell[1] - int(anchor_col)) ** 2 == reach
+        )
+        row, col = rng.choice(nearest) if rng is not None else nearest[0]
+        protected[row, col] = label
+        protected_counts[label] += 1
+        for frontier in frontiers:
+            frontier.discard((row, col))
+        frontiers[label].update(
+            (next_row, next_col)
+            for next_row, next_col in (
+                (row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1),
+            )
+            if 0 <= next_row < mask.shape[0] and 0 <= next_col < mask.shape[1]
+            and mask[next_row, next_col] and protected[next_row, next_col] < 0
+        )
+    return protected
+
+
 def balanced_parent_labels(
     mask: np.ndarray,
     province_count: int,
@@ -216,50 +283,20 @@ def balanced_parent_labels(
             np.sum((candidate_cells - candidate_cells[index]) ** 2, axis=1),
         )
     anchors = np.asarray(anchor_rows, dtype=np.int32)
-    protected = np.full(mask.shape, -1, dtype=np.int32)
-    protected_counts = np.ones(province_count, dtype=np.int32)
-    for label, (row, col) in enumerate(anchors):
-        protected[int(row), int(col)] = label
-    frontiers: list[set[tuple[int, int]]] = []
-    for row, col in anchors:
-        frontiers.append({
-            (next_row, next_col)
-            for next_row, next_col in (
-                (int(row) - 1, int(col)), (int(row) + 1, int(col)),
-                (int(row), int(col) - 1), (int(row), int(col) + 1),
+    protected = _grow_anchor_footprints(mask, anchors, province_count, minimum_anchor_area, None)
+    if protected is None:
+        # 동률을 푸는 순서만 바꿔 다시 심어 본다. 결정론적 순서는 앵커가 빽빽한 郡에서
+        # 한 縣을 이웃 발자국들 사이에 가둬 버린다 — 鉅鹿郡(292칸·18縣·최소 8칸)이 그랬고,
+        # 같은 마스크도 순서를 바꾸면 18縣 모두 8칸을 받는다(실측 2026-09-11).
+        # 시드는 시도 번호 그 자체라 재생성해도 같은 답이 나온다.
+        for attempt in range(1, ANCHOR_FOOTPRINT_RETRIES + 1):
+            protected = _grow_anchor_footprints(
+                mask, anchors, province_count, minimum_anchor_area, random.Random(attempt),
             )
-            if 0 <= next_row < mask.shape[0] and 0 <= next_col < mask.shape[1]
-            and mask[next_row, next_col] and protected[next_row, next_col] < 0
-        })
-    while int(protected_counts.min()) < minimum_anchor_area:
-        options = []
-        for label in range(province_count):
-            if protected_counts[label] >= minimum_anchor_area:
-                continue
-            boundary = frontiers[label]
-            options.append((len(boundary), int(protected_counts[label]), label, boundary))
-        if not options:
-            break
-        frontier_count, _, label, boundary = min(options, key=lambda row: row[:3])
-        if frontier_count == 0:
-            raise ValueError("cannot grow connected minimum anchor footprints")
-        anchor_row, anchor_col = anchors[label]
-        row, col = min(boundary, key=lambda cell: (
-            (cell[0] - int(anchor_row)) ** 2 + (cell[1] - int(anchor_col)) ** 2,
-            cell,
-        ))
-        protected[row, col] = label
-        protected_counts[label] += 1
-        for frontier in frontiers:
-            frontier.discard((row, col))
-        frontiers[label].update(
-            (next_row, next_col)
-            for next_row, next_col in (
-                (row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1),
-            )
-            if 0 <= next_row < mask.shape[0] and 0 <= next_col < mask.shape[1]
-            and mask[next_row, next_col] and protected[next_row, next_col] < 0
-        )
+            if protected is not None:
+                break
+    if protected is None:
+        raise ValueError("cannot grow connected minimum anchor footprints")
     distances = np.sum((cells[:, None, :] - anchors[None, :, :]) ** 2, axis=2).astype(np.float32)
     targets = np.full(province_count, cell_count // province_count, dtype=np.int32)
     targets[:cell_count % province_count] += 1

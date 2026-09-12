@@ -15,9 +15,9 @@
   548
  ],
  "stats": {
-  "linkCount": 70,
-  "medianKm": 47.6,
-  "p90Km": 167.7,
+  "linkCount": 69,
+  "medianKm": 47.3,
+  "p90Km": 161.0,
   "maxKm": 397.3
  },
  "links": [
@@ -183,19 +183,11 @@
   },
   {
    "canonicalGroup": "南陽郡",
-   "fromProvinceIndex": 438,
-   "toProvinceIndex": 439,
-   "fromCityName": "음",
-   "toCityName": "무당",
-   "distanceKm": 49.2
-  },
-  {
-   "canonicalGroup": "南陽郡",
    "fromProvinceIndex": 439,
    "toProvinceIndex": 525,
    "fromCityName": "무당",
    "toCityName": "남향",
-   "distanceKm": 300.6
+   "distanceKm": 37.7
   },
   {
    "canonicalGroup": "合浦郡",
