@@ -38,8 +38,10 @@ INPUT_PATHS = {
 }
 REFERENCE_YEAR = 220
 # 780 legacy route nodes + 781 歷城 (LICHENG_MOVEMENT_V2_APPEND) + 782–832 frontier counties
-# (FRONTIER_COUNTY_V1_APPEND, tools/scenario/append_frontier_county_route_ledgers.py).
-APPENDED_ROUTE_NODE_COUNT = 1 + 51
+# (FRONTIER_COUNTY_V1_APPEND, tools/scenario/append_frontier_county_route_ledgers.py)
+# + 833–835 城 없던 郡治 3곳 (CITYLESS_COMMANDERY_SEAT_V1_APPEND,
+# tools/scenario/append_cityless_commandery_seat_ledgers.py).
+APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
     "schemaVersion", "adjudicationSetId", "referenceYear", "sourceWitnesses", "adjudications"
@@ -536,7 +538,7 @@ def _validate_review_chain(
         policy.get("expectedSelection"),
         {
             "externalHistoricalBindingCount": 0,
-            "externalLocationClaimCount": 8,
+            "externalLocationClaimCount": 11,
             "frontierCountyClaimCount": 51,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT,
             "overlayUniqueCount": 723,
@@ -560,7 +562,7 @@ def _validate_review_chain(
         != {
             ("w0b-overlay-unique-220", 723, "APPROVED"),
             ("w0c-reviewed-ambiguity", 50, "APPROVED"),
-            ("w0c-hhs-external-location", 8, "APPROVED"),
+            ("w0c-hhs-external-location", 11, "APPROVED"),
             ("w1-frontier-county-location", 51, "APPROVED"),
         }
     ):
@@ -1318,10 +1320,11 @@ def _assert_locked_contract(
         "landCellCount": 227_349,
         "cityLinkedCellCount": 107_156,
         "directTerritoryCellCount": 120_193,
-        "exactApprovedRowCount": 782,
+        # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 경로 노드로 서면서 782 → 785.
+        "exactApprovedRowCount": 785,
         "exactApprovedCellCount": 80_963,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
-        "unresolvedRowCount": 356,
+        "unresolvedRowCount": 353,
         "unresolvedCellCount": 26_193,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
@@ -1340,7 +1343,8 @@ def _assert_locked_contract(
         "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
-    if summary["decisionRowCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 33:
+    # 그 3행이 직할지 검토 대기에서 빠져 33 → 30 이다(셀 수는 0행이라 그대로).
+    if summary["decisionRowCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 30:
         raise ValueError("locked direct-territory blocker row count changed")
     if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 1_699:
         raise ValueError("locked direct-territory blocker cell count changed")
@@ -1349,7 +1353,7 @@ def _assert_locked_contract(
     if summary["decisionCellCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 6_331:
         raise ValueError("locked external-polity blocker cell count changed")
     if summary["directTerritoryReview"] != {
-        "rejectedSourcedGroupJunCount": 5,
+        "rejectedSourcedGroupJunCount": 2,
         "pendingCandidateJunCount": 17,
     }:
         raise ValueError("locked direct-territory review split changed")

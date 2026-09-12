@@ -2,8 +2,8 @@
 
 빵꾸(색칠 안 되는 프로빈스)와 「북쪽·조선반도·남만·서북으로 이동이 안 된다」는 뿌리가
 같다 — 城이 없는 縣의 땅이 어느 城에도 귀속되지 않았다. 여기서 거는 것은 그 귀속 규칙의
-순서(사료 우선)와, 郡 경계를 넘지 않는다는 것, 그리고 커밋된 원장이 현재 입력에서
-그대로 다시 나온다는 것이다.
+순서(사료 우선)와, 郡 경계를 넘는 칸이 T5 하나뿐이라는 것, 그리고 커밋된 원장이 현재
+입력에서 그대로 다시 나온다는 것이다.
 """
 
 from __future__ import annotations
@@ -50,16 +50,16 @@ class ProvinceCityAttributionTest(unittest.TestCase):
 
     def test_measured_basis_counts(self) -> None:
         # 실측 기준선이다(2026-09-12). 임계값이 아니라 「지금 이 데이터가 이렇다」는 핀이다.
-        # 앞 판(1082/154/55/229)에서 한 칸만 옮겼다 — 오배정 縣 재바인딩으로 南鄉縣(71022)이
-        # 동명이지(漢中)에서 南鄉郡(PARENT-0113)으로 돌아가 그 郡이 城을 얻었고, 郡에 남아
-        # 있던 直屬 省 하나가 COMMANDERY_HAS_NO_CITY 에서 SAME_COMMANDERY_SEAT 로 넘어갔다.
-        # 縣 제 省은 옮겨 가서도 제 治所를 그대로 써서 OWN_COUNTY_SEAT 수는 안 변한다.
+        # 앞 판(1082/155/55/206/22)에서 옮긴 것은 城을 하나도 못 받던 郡 3곳(朔方·西河·定襄)의
+        # 治所가 城 833–835 로 서면서다. 그 郡 땅 29 省이 남의 郡 城을 보던 T5 에서 제 縣 治所를
+        # 보는 OWN_COUNTY_SEAT 로 돌아왔다(206 → 177, 1082 → 1111).
         self.assertEqual(
             {
-                "OWN_COUNTY_SEAT": 1082,
+                "OWN_COUNTY_SEAT": 1111,
                 "SAME_COMMANDERY_SEAT": 155,
                 "SAME_COMMANDERY_NEAREST": 55,
-                "COMMANDERY_HAS_NO_CITY": 228,
+                "ADJACENT_COMMANDERY_NEAREST": 177,
+                "COMMANDERY_HAS_NO_CITY": 22,
             },
             dict(self.basis),
         )
@@ -74,6 +74,9 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         }
         for row in self.rows:
             if row["routeNodeId"] is None:
+                continue
+            if row["basis"] == attribution.CROSSES_COMMANDERY_BOUNDARY:
+                # T5 만 郡 경계를 넘는다 — 그 郡에는 城이 하나도 없어서 넘을 수밖에 없다.
                 continue
             owner = place_to_jurisdiction[str(row["cityPlaceId"])]
             self.assertEqual(
@@ -107,15 +110,51 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         self.assertEqual(len(self.tiles["jurisdictionRecords"]), len(per_county))
 
     def test_cityless_commanderies_are_named_with_their_seat_place(self) -> None:
-        # 52 에서 51 로 내려온 건 南鄉郡(PARENT-0113)이 治所를 얻었기 때문이다 —
-        # 南鄉縣이 동명이지(陝西 鎮巴)에 묶여 漢中郡 땅에 서 있다가 제자리(河南 淅川)로
-        # 돌아왔다. data/curated/han/county-misbinding-rebindings-v1.json 참조.
-        self.assertEqual(51, len(self.gaps))
+        # 52 → 51 은 南鄉郡(PARENT-0113)이 治所를 얻은 것이고(南鄉縣이 동명이지 陝西 鎮巴에서
+        # 제자리 河南 淅川으로 돌아왔다, county-misbinding-rebindings-v1.json), 51 → 48 은
+        # 朔方·西河·定襄 治所가 경로 노드로 선 것이다
+        # (tools/scenario/append_cityless_commandery_seat_ledgers.py).
+        self.assertEqual(48, len(self.gaps))
         for gap in self.gaps:
             self.assertIsNotNone(gap["seatPlaceId"], gap)
             self.assertGreater(gap["provinceCount"], 0, gap)
         self.assertEqual(
-            228, sum(gap["provinceCount"] for gap in self.gaps)
+            199, sum(gap["provinceCount"] for gap in self.gaps)
+        )
+
+    def test_cityless_land_is_walked_out_to_the_nearest_city(self) -> None:
+        # T5 는 城 없는 郡의 땅이 빵꾸로 남지 않게 하는 칸이다. 붙은 省은 반드시 城을 갖고,
+        # 바퀴 수(hop)가 1 이상이며, 제 郡 밖의 城을 본다.
+        walked = [
+            row for row in self.rows
+            if row["basis"] == attribution.CROSSES_COMMANDERY_BOUNDARY
+        ]
+        self.assertEqual(177, len(walked))
+        jurisdictions = {
+            str(row["id"]): row for row in self.tiles["jurisdictionRecords"]
+        }
+        place_to_jurisdiction = {
+            str(row["seatPlaceId"]): str(row["id"])
+            for row in self.tiles["jurisdictionRecords"]
+        }
+        for row in walked:
+            self.assertIsNotNone(row["routeNodeId"], row)
+            self.assertGreaterEqual(row["adjacencyHops"], 1, row)
+            owner = place_to_jurisdiction[str(row["cityPlaceId"])]
+            self.assertNotEqual(
+                row["commanderyId"], jurisdictions[owner]["commanderyId"], row
+            )
+
+    def test_only_sea_separated_polities_stay_unattributed(self) -> None:
+        # 남은 22 省은 전부 바다 건너다 — 육로 인접이 없으니 걸어서 닿을 城이 없다.
+        # 뭍에 붙은 땅은 하나도 안 남는다는 것이 이 검사의 핵심이다.
+        stranded = Counter(
+            row["commanderyNameCh"] for row in self.rows
+            if row["basis"] == "COMMANDERY_HAS_NO_CITY"
+        )
+        self.assertEqual(
+            {"邪馬壹國": 12, "夷洲": 6, "于山國": 1, "州胡": 1, "狗邪國": 1, "流求": 1},
+            dict(stranded),
         )
 
     def test_no_coordinates_leak_into_the_ledger(self) -> None:

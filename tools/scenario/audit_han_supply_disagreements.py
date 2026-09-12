@@ -8,7 +8,7 @@ import json
 from collections import Counter, deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import AbstractSet, Any, Mapping, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,11 +48,43 @@ SOURCE_VERDICT_BY_DECISION = {
 VERDICTS = (
     "BOTH_SUPPLIED",
     "CITY_ONLY_PROTECTED",
+    "CITY_ONLY_UNOWNED_GAP",
     "SPATIAL_ONLY_SUPPLIED",
     "BOTH_UNSUPPLIED_PROTECTED",
     "BOTH_UNSUPPLIED",
     "SPATIAL_CUT_UPHELD",
 )
+
+
+def _only_unowned_land_between(
+    province_index: Any,
+    nation_id: int,
+    adjacency: Mapping[int, Sequence[int]],
+    province_owners: Mapping[int, int],
+    spatial_reached: AbstractSet[int],
+) -> bool:
+    """城 그래프만 닿는 까닭이 「사이가 주인 없는 땅」인지 본다.
+
+    제 나라 땅과 **무주지(owner 0)** 만 밟아서 이미 보급이 닿는 省에 이를 수 있으면 참이다.
+    남의 나라 땅을 밟아야 하거나 아예 길이 없으면 거짓 — 그건 파생 분류로 넘기지 않고
+    심사 행을 요구한다. 육지 인접만 쓴다(adjacency.county).
+    """
+    if not isinstance(province_index, int) or province_index not in adjacency:
+        return False
+    seen = {province_index}
+    queue = deque([province_index])
+    while queue:
+        current = queue.popleft()
+        for neighbour in adjacency.get(current, ()):
+            if neighbour in seen:
+                continue
+            seen.add(neighbour)
+            if neighbour in spatial_reached:
+                return True
+            owner = province_owners.get(neighbour, 0)
+            if owner == 0 or owner == nation_id:
+                queue.append(neighbour)
+    return False
 
 
 @dataclass(frozen=True)
@@ -306,9 +338,23 @@ def audit_documents(
             elif by_city:
                 if applied_policy and applied_policy.get("decision") in UPHOLD_DECISIONS:
                     verdict = "SPATIAL_CUT_UPHELD"
+                elif applied_policy is not None:
+                    verdict = "CITY_ONLY_PROTECTED"
+                elif _only_unowned_land_between(
+                    runtime_by_id[city_id].get("provinceId"),
+                    owner_by_city[city_id],
+                    spatial_adjacency,
+                    province_owners,
+                    spatial_reached,
+                ):
+                    # 城 이동망은 닿는데 보급망은 안 닿는다 — 그 사이가 **아무도 안 가진 땅**이다.
+                    # 결함이 아니라 규칙이다: 출병은 남의 땅을 지나가지만 보급선은 못 지난다.
+                    # 省 귀속 T5(ADJACENT_COMMANDERY_NEAREST)가 城 없는 郡의 땅을 이웃 城에
+                    # 붙이면서 城 그래프가 그 위를 잇게 된 칸이다. 심사 행이 필요 없는 파생
+                    # 분류라 손으로 적지 않는다 — 사이 땅을 한 세력이 가지면 저절로 사라진다.
+                    verdict = "CITY_ONLY_UNOWNED_GAP"
                 else:
                     verdict = "CITY_ONLY_PROTECTED"
-                if applied_policy is None:
                     errors.append(f"unclassified city-only mismatch: scenario {scenario_code} city {city_id}")
             elif by_spatial:
                 verdict = "SPATIAL_ONLY_SUPPLIED"

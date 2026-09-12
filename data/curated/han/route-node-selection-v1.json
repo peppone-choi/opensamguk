@@ -10,10 +10,10 @@
         "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
       },
       "candidate": {
-        "sha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
+        "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
       },
       "externalClaims": {
-        "sha256": "b28416eeb8f7b05541522a101133c5120cc2e542232eca338656e96066ff43aa"
+        "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
       },
       "legacyHanMap": {
         "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
@@ -25,10 +25,10 @@
         "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
       },
       "reviewPolicy": {
-        "sha256": "51e95405053533fd6a6f204511a1e77e29954eab4b6434ea6980e2bf70b4bd2f"
+        "sha256": "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "9c3b8dce9a142835ceadd226a53113d7c080bbe40d2237ffe219624994c7b108"
+        "sha256": "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
       }
     }
   },
@@ -26454,6 +26454,93 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:113:朔方郡:001",
+      "canonicalName": "临戎",
+      "displayName": "临戎",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-location-claim-v1-x011"
+      },
+      "locationClaimId": "han-location-claim-v1-x011",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 833,
+      "parentName": "朔方郡",
+      "parentRef": "hhs-group:113:朔方郡",
+      "physicalPlaceRef": "external:v1:X011",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "60e964d2-fa8a-49d7-a07a-85b70d987b76",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w0c-hhs-external-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w0c-hhs-external-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:西河郡:001",
+      "canonicalName": "离石",
+      "displayName": "离石",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-location-claim-v1-x023"
+      },
+      "locationClaimId": "han-location-claim-v1-x023",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 834,
+      "parentName": "西河郡",
+      "parentRef": "hhs-group:113:西河郡",
+      "physicalPlaceRef": "external:v1:X023",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "332fa1c1-c727-47b8-b935-af0222ad0a39",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w0c-hhs-external-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w0c-hhs-external-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:定襄郡:001",
+      "canonicalName": "善无",
+      "displayName": "善无",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-location-claim-v1-x024"
+      },
+      "locationClaimId": "han-location-claim-v1-x024",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 835,
+      "parentName": "定襄郡",
+      "parentRef": "hhs-group:113:定襄郡",
+      "physicalPlaceRef": "external:v1:X024",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w0c-hhs-external-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w0c-hhs-external-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -26618,49 +26705,49 @@
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "f4dfa6cf4d819739b02f9e988c7b3c333b73dc9381bedbaf6d553b2138fb3a2b",
+        "sha256": "24da33172578e5071c3cde740b14a75f594f23b79ff2170beaf7f539ae553db1",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "fb0cc595770cfab98cad998afe45260bb4dfdf4668baf9fe3203626457c767d6",
+        "sha256": "913c017e5b57335bc10c6e190230d6c479d2e6e9ef1ebb24b7bb0e2eee4e9dfa",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "3194510599441a1440c224ca620e9d9fc0e4c9ff8bec1e982461a23d9109c36f",
+        "sha256": "21c9d903c8cc298a2370af4db9745a106a1bda9e0ecb2f2886a3889db93129d7",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "d3e2c50cd6befbe77e04d74e89f2fb0774380663b5ec6024ce3c7c5ad5eac730",
+        "sha256": "5f3234539f5375f703f9f7220565fec06277e65d9d2d52ec20d2a5a634ebb899",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "9603029fd54c9ef90f8e184d630ca731e3f1fde1e233722f3aa75970dcd985fe",
+        "sha256": "92da1dbac6741c603d63b6055b38121f405fac73dbe434942b4918b87ad94296",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "ce22bbb1ec99fe00505c78e50f1648ad3e4ca16f52976dd594284f24f211f54c",
+        "sha256": "9dda3ebbb6ceea5fcd5b1ff3791ecf789ce54109fbfd9b71f57f319770199d71",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "ab90353b0a8be82e88dc5507a79cf3e3f23a9be6a61fb7707772534a450ee41d",
+        "sha256": "873ea938a3cb4fc67c0b578be87f4c707743568a002377f17600677a974a1ce6",
         "startYear": 225
       },
       {
@@ -26682,9 +26769,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 832,
+    "approvedCount": 835,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 832
+      "HHS_ADMINISTRATIVE_UNIT": 835
     }
   },
   "worldVersion": "han-world-v3"

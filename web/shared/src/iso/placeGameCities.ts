@@ -17,8 +17,9 @@
 // (예: 게임 "장안(京兆尹)" → provinceRecords[503] "장안현" → cities[1033]).
 //
 // 2026-09-11 변경 縣 51 곳이 게임 城 으로 서면서(782–832) 변경 郡 일곱 곳도 縣 구획을 얻어
-// provinceId 가 붙었다. 이제 provinceId 가 없는 城 은 832 중 구자속국(704) 하나뿐이고,
-// 그 한 곳만 좌표 폴백을 쓴다. 폴백은 기존 캔버스의 mapCityToTile 과 같은 선형식이다.
+// provinceId 가 붙었다. provinceId 가 없는 城 은 835 중 넷 — 구자속국(704)과 城 없던 郡
+// 3 곳의 治所(833–835)다. 넷 다 縣 구획이 아니라 郡 직할 땅 위에 서 있어 縣 省이 없다.
+// 그 넷만 좌표 폴백을 쓴다. 폴백은 기존 캔버스의 mapCityToTile 과 같은 선형식이다.
 //
 // 郡國 밖 세력(EXTERNAL_PLACE)도 여기서 같이 앉힌다 — 중원과 다른 그림으로 그리지 않는다.
 // 자세한 것은 아래 placeExternalPlaces 주석. 關(관문)도 마찬가지로 덧댄다(strategicPasses.ts).
@@ -39,6 +40,8 @@ export interface GameCityInput {
   name: string;
   /** han.json meta.nameCh. 縣 판정에만 쓴다 — cityName.ts 참조. */
   nameCh?: string;
+  /** 서버가 계산한 화면 이름(meta.displayName). 오면 그대로 쓴다 — cityName.ts 참조. */
+  displayName?: string;
   level: number;
   nationId: number;
   x: number;
@@ -68,6 +71,8 @@ export interface PlacedCity {
   name: string;
   /** 행정 단위가 붙은 원 표기("长安县"). 화면 이름을 「뭐뭐현」으로 짓는 데 쓴다. */
   nameCh?: string;
+  /** 서버가 계산한 화면 이름. cityDisplayName 이 그대로 쓴다. */
+  displayName?: string;
   level: number;
   nationId: number;
   /** 소수 타일 좌표(원본 셀 / rasterGroup). */
@@ -165,6 +170,7 @@ export function placeGameCities(
       id: city.id,
       name: city.name,
       nameCh: city.nameCh,
+      displayName: city.displayName,
       level: city.level,
       nationId: city.nationId,
       col,

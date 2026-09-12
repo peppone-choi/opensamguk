@@ -3,16 +3,16 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934",
-    "migrationSha256": "44ca2a3df0636a61cd6eb333d00227a779d6b68cea9f2c0f3bbd6dbb4094bcbc",
+    "selectionSha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d",
+    "migrationSha256": "630f9d47bd4da3c2ed362e0c89d9e99ce31c9f541a9c45165ba19a3346784bcd",
     "hanTilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
-    "provinceCityAttributionSha256": "3fe1418420cc2d982eacb0ae390a6a24da54747fb44f9a555a99abb23e87e920",
+    "provinceCityAttributionSha256": "7a0a65768660810795ad76cfbec3680545597794d0eda7ea20a6c2bac6d4073b",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "ed62e8cd1e2eff0fdb4c58552a8d1b6b36ea0b44c97443abca193bc50cc8b4db",
-    "cityConstSha256": "c9cd6938c75f8e224b21ac081427af9d76fb716e4cf127ef46903876383f5864",
-    "gateIndexSha256": "d2ebbdb233e2195b5482ed26c8ae526733e521e75ee7ad3a0099136554449ccf"
+    "worldJsonSha256": "9d4214ef82a3d59c0cf2d98385abf2d071ff2c468052a6179634094cfc7849b0",
+    "cityConstSha256": "e8342a1baed7c8764d71f638a041021fa2c9f6b9f5b509eb161a350fce86d4cd",
+    "gateIndexSha256": "f8a206241631540a56aefeb4bc903905b12b30d08f23467488b9ec6719daee43"
   },
   "routeNodes": [
     {
@@ -4174,6 +4174,21 @@
       "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7",
       "numericCityId": 832,
       "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-005"
+    },
+    {
+      "routeNodeKey": "60e964d2-fa8a-49d7-a07a-85b70d987b76",
+      "numericCityId": 833,
+      "physicalPlaceRef": "external:v1:X011"
+    },
+    {
+      "routeNodeKey": "332fa1c1-c727-47b8-b935-af0222ad0a39",
+      "numericCityId": 834,
+      "physicalPlaceRef": "external:v1:X023"
+    },
+    {
+      "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360",
+      "numericCityId": 835,
+      "physicalPlaceRef": "external:v1:X024"
     }
   ],
   "countyAdjacency": [
@@ -4440,12 +4455,12 @@
     {
       "a": 10,
       "b": 80,
-      "sharedBoundaryCells": 10
+      "sharedBoundaryCells": 14
     },
     {
       "a": 10,
       "b": 627,
-      "sharedBoundaryCells": 33
+      "sharedBoundaryCells": 37
     },
     {
       "a": 10,
@@ -4540,7 +4555,7 @@
     {
       "a": 14,
       "b": 650,
-      "sharedBoundaryCells": 14
+      "sharedBoundaryCells": 44
     },
     {
       "a": 14,
@@ -5491,6 +5506,11 @@
       "a": 65,
       "b": 772,
       "sharedBoundaryCells": 3
+    },
+    {
+      "a": 65,
+      "b": 834,
+      "sharedBoundaryCells": 18
     },
     {
       "a": 66,
@@ -7169,13 +7189,23 @@
     },
     {
       "a": 163,
+      "b": 191,
+      "sharedBoundaryCells": 7
+    },
+    {
+      "a": 163,
       "b": 194,
-      "sharedBoundaryCells": 3
+      "sharedBoundaryCells": 12
     },
     {
       "a": 163,
       "b": 195,
-      "sharedBoundaryCells": 1
+      "sharedBoundaryCells": 11
+    },
+    {
+      "a": 163,
+      "b": 196,
+      "sharedBoundaryCells": 6
     },
     {
       "a": 163,
@@ -7350,7 +7380,7 @@
     {
       "a": 172,
       "b": 173,
-      "sharedBoundaryCells": 1
+      "sharedBoundaryCells": 11
     },
     {
       "a": 172,
@@ -7364,8 +7394,18 @@
     },
     {
       "a": 172,
+      "b": 189,
+      "sharedBoundaryCells": 7
+    },
+    {
+      "a": 172,
       "b": 200,
-      "sharedBoundaryCells": 2
+      "sharedBoundaryCells": 11
+    },
+    {
+      "a": 172,
+      "b": 202,
+      "sharedBoundaryCells": 1
     },
     {
       "a": 173,
@@ -7450,7 +7490,7 @@
     {
       "a": 177,
       "b": 178,
-      "sharedBoundaryCells": 8
+      "sharedBoundaryCells": 9
     },
     {
       "a": 177,
@@ -7475,12 +7515,32 @@
     {
       "a": 177,
       "b": 183,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 14
     },
     {
       "a": 177,
       "b": 184,
       "sharedBoundaryCells": 12
+    },
+    {
+      "a": 177,
+      "b": 207,
+      "sharedBoundaryCells": 7
+    },
+    {
+      "a": 177,
+      "b": 228,
+      "sharedBoundaryCells": 4
+    },
+    {
+      "a": 177,
+      "b": 230,
+      "sharedBoundaryCells": 4
+    },
+    {
+      "a": 177,
+      "b": 671,
+      "sharedBoundaryCells": 8
     },
     {
       "a": 178,
@@ -7775,12 +7835,12 @@
     {
       "a": 202,
       "b": 204,
-      "sharedBoundaryCells": 10
+      "sharedBoundaryCells": 22
     },
     {
       "a": 202,
       "b": 256,
-      "sharedBoundaryCells": 3
+      "sharedBoundaryCells": 8
     },
     {
       "a": 202,
@@ -9425,7 +9485,7 @@
     {
       "a": 316,
       "b": 515,
-      "sharedBoundaryCells": 18
+      "sharedBoundaryCells": 35
     },
     {
       "a": 316,
@@ -9590,7 +9650,12 @@
     {
       "a": 334,
       "b": 365,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 15
+    },
+    {
+      "a": 334,
+      "b": 367,
+      "sharedBoundaryCells": 12
     },
     {
       "a": 334,
@@ -9604,13 +9669,18 @@
     },
     {
       "a": 334,
+      "b": 385,
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 334,
       "b": 388,
       "sharedBoundaryCells": 2
     },
     {
       "a": 334,
       "b": 391,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 10
     },
     {
       "a": 334,
@@ -11319,8 +11389,23 @@
     },
     {
       "a": 455,
+      "b": 457,
+      "sharedBoundaryCells": 16
+    },
+    {
+      "a": 455,
       "b": 535,
-      "sharedBoundaryCells": 7
+      "sharedBoundaryCells": 12
+    },
+    {
+      "a": 455,
+      "b": 576,
+      "sharedBoundaryCells": 20
+    },
+    {
+      "a": 455,
+      "b": 578,
+      "sharedBoundaryCells": 27
     },
     {
       "a": 455,
@@ -11330,7 +11415,7 @@
     {
       "a": 455,
       "b": 605,
-      "sharedBoundaryCells": 17
+      "sharedBoundaryCells": 38
     },
     {
       "a": 456,
@@ -11370,12 +11455,22 @@
     {
       "a": 457,
       "b": 535,
-      "sharedBoundaryCells": 21
+      "sharedBoundaryCells": 31
+    },
+    {
+      "a": 457,
+      "b": 572,
+      "sharedBoundaryCells": 27
+    },
+    {
+      "a": 457,
+      "b": 576,
+      "sharedBoundaryCells": 14
     },
     {
       "a": 457,
       "b": 599,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 13
     },
     {
       "a": 458,
@@ -11560,7 +11655,7 @@
     {
       "a": 474,
       "b": 476,
-      "sharedBoundaryCells": 27
+      "sharedBoundaryCells": 47
     },
     {
       "a": 474,
@@ -11595,7 +11690,7 @@
     {
       "a": 474,
       "b": 485,
-      "sharedBoundaryCells": 25
+      "sharedBoundaryCells": 44
     },
     {
       "a": 474,
@@ -11605,7 +11700,7 @@
     {
       "a": 474,
       "b": 551,
-      "sharedBoundaryCells": 7
+      "sharedBoundaryCells": 15
     },
     {
       "a": 474,
@@ -11630,12 +11725,12 @@
     {
       "a": 476,
       "b": 485,
-      "sharedBoundaryCells": 3
+      "sharedBoundaryCells": 14
     },
     {
       "a": 476,
       "b": 551,
-      "sharedBoundaryCells": 18
+      "sharedBoundaryCells": 47
     },
     {
       "a": 477,
@@ -11890,7 +11985,7 @@
     {
       "a": 499,
       "b": 502,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 44
     },
     {
       "a": 499,
@@ -11905,7 +12000,7 @@
     {
       "a": 499,
       "b": 506,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 36
     },
     {
       "a": 499,
@@ -11950,12 +12045,17 @@
     {
       "a": 499,
       "b": 536,
-      "sharedBoundaryCells": 14
+      "sharedBoundaryCells": 23
+    },
+    {
+      "a": 499,
+      "b": 538,
+      "sharedBoundaryCells": 7
     },
     {
       "a": 499,
       "b": 540,
-      "sharedBoundaryCells": 3
+      "sharedBoundaryCells": 18
     },
     {
       "a": 499,
@@ -12550,7 +12650,7 @@
     {
       "a": 551,
       "b": 559,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 28
     },
     {
       "a": 551,
@@ -12560,12 +12660,12 @@
     {
       "a": 551,
       "b": 561,
-      "sharedBoundaryCells": 9
+      "sharedBoundaryCells": 42
     },
     {
       "a": 551,
       "b": 564,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 16
     },
     {
       "a": 551,
@@ -12804,6 +12904,11 @@
     },
     {
       "a": 572,
+      "b": 583,
+      "sharedBoundaryCells": 27
+    },
+    {
+      "a": 572,
       "b": 585,
       "sharedBoundaryCells": 7
     },
@@ -12820,7 +12925,7 @@
     {
       "a": 572,
       "b": 598,
-      "sharedBoundaryCells": 26
+      "sharedBoundaryCells": 41
     },
     {
       "a": 572,
@@ -12840,12 +12945,17 @@
     {
       "a": 572,
       "b": 616,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 13
     },
     {
       "a": 572,
       "b": 646,
       "sharedBoundaryCells": 4
+    },
+    {
+      "a": 572,
+      "b": 648,
+      "sharedBoundaryCells": 20
     },
     {
       "a": 573,
@@ -12895,7 +13005,7 @@
     {
       "a": 576,
       "b": 578,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 55
     },
     {
       "a": 577,
@@ -12910,7 +13020,7 @@
     {
       "a": 578,
       "b": 605,
-      "sharedBoundaryCells": 7
+      "sharedBoundaryCells": 19
     },
     {
       "a": 578,
@@ -12999,13 +13109,28 @@
     },
     {
       "a": 583,
+      "b": 613,
+      "sharedBoundaryCells": 21
+    },
+    {
+      "a": 583,
       "b": 616,
-      "sharedBoundaryCells": 11
+      "sharedBoundaryCells": 29
     },
     {
       "a": 583,
       "b": 632,
       "sharedBoundaryCells": 29
+    },
+    {
+      "a": 583,
+      "b": 648,
+      "sharedBoundaryCells": 2
+    },
+    {
+      "a": 583,
+      "b": 660,
+      "sharedBoundaryCells": 6
     },
     {
       "a": 584,
@@ -13054,13 +13179,18 @@
     },
     {
       "a": 588,
+      "b": 589,
+      "sharedBoundaryCells": 70
+    },
+    {
+      "a": 588,
       "b": 612,
       "sharedBoundaryCells": 19
     },
     {
       "a": 588,
       "b": 764,
-      "sharedBoundaryCells": 40
+      "sharedBoundaryCells": 65
     },
     {
       "a": 588,
@@ -13170,7 +13300,7 @@
     {
       "a": 598,
       "b": 648,
-      "sharedBoundaryCells": 27
+      "sharedBoundaryCells": 57
     },
     {
       "a": 601,
@@ -13415,17 +13545,22 @@
     {
       "a": 613,
       "b": 632,
-      "sharedBoundaryCells": 44
+      "sharedBoundaryCells": 49
     },
     {
       "a": 613,
       "b": 634,
-      "sharedBoundaryCells": 60
+      "sharedBoundaryCells": 83
+    },
+    {
+      "a": 613,
+      "b": 660,
+      "sharedBoundaryCells": 29
     },
     {
       "a": 613,
       "b": 664,
-      "sharedBoundaryCells": 13
+      "sharedBoundaryCells": 38
     },
     {
       "a": 614,
@@ -13613,6 +13748,11 @@
       "sharedBoundaryCells": 43
     },
     {
+      "a": 627,
+      "b": 833,
+      "sharedBoundaryCells": 19
+    },
+    {
       "a": 628,
       "b": 629,
       "sharedBoundaryCells": 37
@@ -13621,6 +13761,11 @@
       "a": 628,
       "b": 647,
       "sharedBoundaryCells": 31
+    },
+    {
+      "a": 628,
+      "b": 833,
+      "sharedBoundaryCells": 46
     },
     {
       "a": 629,
@@ -13693,6 +13838,11 @@
       "sharedBoundaryCells": 45
     },
     {
+      "a": 633,
+      "b": 833,
+      "sharedBoundaryCells": 33
+    },
+    {
       "a": 635,
       "b": 637,
       "sharedBoundaryCells": 7
@@ -13733,6 +13883,11 @@
       "sharedBoundaryCells": 18
     },
     {
+      "a": 636,
+      "b": 833,
+      "sharedBoundaryCells": 3
+    },
+    {
       "a": 637,
       "b": 638,
       "sharedBoundaryCells": 26
@@ -13745,7 +13900,7 @@
     {
       "a": 637,
       "b": 640,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 46
     },
     {
       "a": 637,
@@ -13755,7 +13910,7 @@
     {
       "a": 637,
       "b": 656,
-      "sharedBoundaryCells": 21
+      "sharedBoundaryCells": 28
     },
     {
       "a": 637,
@@ -13790,12 +13945,17 @@
     {
       "a": 641,
       "b": 647,
-      "sharedBoundaryCells": 26
+      "sharedBoundaryCells": 36
+    },
+    {
+      "a": 641,
+      "b": 657,
+      "sharedBoundaryCells": 25
     },
     {
       "a": 641,
       "b": 659,
-      "sharedBoundaryCells": 21
+      "sharedBoundaryCells": 38
     },
     {
       "a": 641,
@@ -13873,9 +14033,19 @@
       "sharedBoundaryCells": 21
     },
     {
+      "a": 647,
+      "b": 833,
+      "sharedBoundaryCells": 46
+    },
+    {
       "a": 648,
       "b": 650,
-      "sharedBoundaryCells": 13
+      "sharedBoundaryCells": 21
+    },
+    {
+      "a": 648,
+      "b": 660,
+      "sharedBoundaryCells": 32
     },
     {
       "a": 648,
@@ -13960,7 +14130,7 @@
     {
       "a": 657,
       "b": 659,
-      "sharedBoundaryCells": 5
+      "sharedBoundaryCells": 15
     },
     {
       "a": 657,
@@ -14205,17 +14375,27 @@
     {
       "a": 680,
       "b": 688,
-      "sharedBoundaryCells": 8
+      "sharedBoundaryCells": 16
+    },
+    {
+      "a": 680,
+      "b": 692,
+      "sharedBoundaryCells": 4
     },
     {
       "a": 680,
       "b": 698,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 17
     },
     {
       "a": 680,
       "b": 699,
       "sharedBoundaryCells": 14
+    },
+    {
+      "a": 680,
+      "b": 701,
+      "sharedBoundaryCells": 6
     },
     {
       "a": 681,
@@ -14251,6 +14431,11 @@
       "a": 682,
       "b": 691,
       "sharedBoundaryCells": 13
+    },
+    {
+      "a": 682,
+      "b": 834,
+      "sharedBoundaryCells": 18
     },
     {
       "a": 683,
@@ -14301,6 +14486,11 @@
       "a": 685,
       "b": 692,
       "sharedBoundaryCells": 8
+    },
+    {
+      "a": 685,
+      "b": 834,
+      "sharedBoundaryCells": 10
     },
     {
       "a": 686,
@@ -14366,6 +14556,11 @@
       "a": 692,
       "b": 701,
       "sharedBoundaryCells": 3
+    },
+    {
+      "a": 692,
+      "b": 834,
+      "sharedBoundaryCells": 9
     },
     {
       "a": 694,
@@ -14453,14 +14648,39 @@
       "sharedBoundaryCells": 18
     },
     {
+      "a": 700,
+      "b": 835,
+      "sharedBoundaryCells": 3
+    },
+    {
       "a": 701,
       "b": 703,
       "sharedBoundaryCells": 37
     },
     {
+      "a": 701,
+      "b": 834,
+      "sharedBoundaryCells": 67
+    },
+    {
+      "a": 701,
+      "b": 835,
+      "sharedBoundaryCells": 26
+    },
+    {
+      "a": 702,
+      "b": 705,
+      "sharedBoundaryCells": 31
+    },
+    {
       "a": 702,
       "b": 710,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 53
+    },
+    {
+      "a": 702,
+      "b": 835,
+      "sharedBoundaryCells": 26
     },
     {
       "a": 703,
@@ -14473,9 +14693,24 @@
       "sharedBoundaryCells": 15
     },
     {
+      "a": 703,
+      "b": 835,
+      "sharedBoundaryCells": 22
+    },
+    {
       "a": 704,
       "b": 772,
       "sharedBoundaryCells": 39
+    },
+    {
+      "a": 704,
+      "b": 833,
+      "sharedBoundaryCells": 84
+    },
+    {
+      "a": 704,
+      "b": 834,
+      "sharedBoundaryCells": 78
     },
     {
       "a": 705,
@@ -14494,13 +14729,18 @@
     },
     {
       "a": 705,
+      "b": 710,
+      "sharedBoundaryCells": 34
+    },
+    {
+      "a": 705,
       "b": 712,
-      "sharedBoundaryCells": 16
+      "sharedBoundaryCells": 19
     },
     {
       "a": 705,
       "b": 726,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 23
     },
     {
       "a": 706,
@@ -14575,7 +14815,7 @@
     {
       "a": 710,
       "b": 712,
-      "sharedBoundaryCells": 21
+      "sharedBoundaryCells": 31
     },
     {
       "a": 710,
@@ -14630,12 +14870,17 @@
     {
       "a": 716,
       "b": 726,
-      "sharedBoundaryCells": 51
+      "sharedBoundaryCells": 158
     },
     {
       "a": 716,
       "b": 776,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 57
+    },
+    {
+      "a": 716,
+      "b": 811,
+      "sharedBoundaryCells": 75
     },
     {
       "a": 717,
@@ -14771,6 +15016,11 @@
       "a": 725,
       "b": 775,
       "sharedBoundaryCells": 10
+    },
+    {
+      "a": 726,
+      "b": 811,
+      "sharedBoundaryCells": 12
     },
     {
       "a": 727,
@@ -15203,9 +15453,14 @@
       "sharedBoundaryCells": 27
     },
     {
+      "a": 772,
+      "b": 834,
+      "sharedBoundaryCells": 49
+    },
+    {
       "a": 776,
       "b": 811,
-      "sharedBoundaryCells": 20
+      "sharedBoundaryCells": 66
     },
     {
       "a": 777,
@@ -15284,13 +15539,38 @@
     },
     {
       "a": 787,
+      "b": 791,
+      "sharedBoundaryCells": 73
+    },
+    {
+      "a": 787,
       "b": 792,
       "sharedBoundaryCells": 5
     },
     {
+      "a": 787,
+      "b": 796,
+      "sharedBoundaryCells": 3
+    },
+    {
+      "a": 787,
+      "b": 800,
+      "sharedBoundaryCells": 42
+    },
+    {
+      "a": 787,
+      "b": 801,
+      "sharedBoundaryCells": 11
+    },
+    {
       "a": 791,
       "b": 792,
-      "sharedBoundaryCells": 62
+      "sharedBoundaryCells": 158
+    },
+    {
+      "a": 791,
+      "b": 796,
+      "sharedBoundaryCells": 227
     },
     {
       "a": 792,
@@ -15315,7 +15595,7 @@
     {
       "a": 792,
       "b": 813,
-      "sharedBoundaryCells": 52
+      "sharedBoundaryCells": 60
     },
     {
       "a": 793,
@@ -15335,12 +15615,12 @@
     {
       "a": 796,
       "b": 800,
-      "sharedBoundaryCells": 10
+      "sharedBoundaryCells": 34
     },
     {
       "a": 796,
       "b": 805,
-      "sharedBoundaryCells": 5
+      "sharedBoundaryCells": 8
     },
     {
       "a": 796,
@@ -15365,12 +15645,12 @@
     {
       "a": 797,
       "b": 805,
-      "sharedBoundaryCells": 23
+      "sharedBoundaryCells": 76
     },
     {
       "a": 797,
       "b": 806,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 35
     },
     {
       "a": 797,
@@ -15601,6 +15881,21 @@
       "a": 830,
       "b": 831,
       "sharedBoundaryCells": 1
+    },
+    {
+      "a": 833,
+      "b": 834,
+      "sharedBoundaryCells": 26
+    },
+    {
+      "a": 833,
+      "b": 835,
+      "sharedBoundaryCells": 65
+    },
+    {
+      "a": 834,
+      "b": 835,
+      "sharedBoundaryCells": 31
     }
   ]
 }

@@ -28,6 +28,21 @@ export interface CityNameInput {
   level: number;
   /** han.json meta.nameCh. 서버가 안 실어 보내면 undefined — 그러면 level 만으로 판정한다. */
   nameCh?: string;
+  /**
+   * 소속 郡의 표기명(han.json meta.jun — 「경조윤」·「하동군」·「요동속국」).
+   * 縣 앞에 세워 「하동군 의씨현」으로 적는다. 안 실어 보내면 縣 이름만 적는다.
+   */
+  jun?: string;
+  /**
+   * 서버가 이미 계산해 실어 보낸 화면 이름(han.json meta.displayName).
+   * **있으면 그대로 쓴다** — 로그와 지도가 한 글자도 다르지 않게 하는 유일한 방법이다.
+   *
+   * 아래 규칙만으로는 못 내는 표기가 6 곳 있다. 같은 郡 안 同音異字 縣(潁川 襄城·陽城,
+   * 零陵 泠道·營道, 廬江 安丰·安风)은 郡 을 앞에 세워도 「영천군 양성현」으로 겹쳐서,
+   * 생성기가 전역 충돌 검사를 돌린 뒤 漢字 어간을 뒤에 단다(「영천군 양성현(襄城)」).
+   * 그건 城 하나만 보고는 알 수 없는 판정이라 클라이언트가 흉내 낼 수 없다.
+   */
+  displayName?: string;
 }
 
 /** 「영현」·「장현」. 등급 이름이 곧 縣 이다. */
@@ -67,18 +82,31 @@ export function isHanCounty(city: CityNameInput): boolean {
  *
  * 같은 한글 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 달아 **식별자**를 유일하게
  * 만든다(build_han_world.py build_v3 의 name_counts/qualified_counts). 실측(han-world-v3):
- * 832 중 136 곳이 한정돼 있다(그중 6 곳은 번호; 781 城 시절엔 131/6).
+ * 835 중 136 곳이 한정돼 있다(그중 6 곳은 번호; 781 城 시절엔 131/6).
  *
  * 화면에서는 뗀다 — 「의씨현(河東郡)」이 아니라 「의씨현」이다(2026-09-10 사용자 지시:
  * 「군을 빼」). 식별은 계속 `id` 와 `name` 으로 하고 여기서 바뀌는 건 표기뿐이다.
  * 대가는 알고 간다: 한정자를 떼면 60 개 표기가 130 城 에 겹친다(주현 4·기현 4·유현 4 …).
  * 어느 城 인지는 눌러서 나오는 소속 郡으로 가른다.
  */
-const QUALIFIER = /(\([^()]*\)|#\d+)$/;
+const QUALIFIER = /(?:\([^()]*\)|#\d+)+$/;
 
-/** 화면에 적을 이름. 한정자를 떼고, 縣 이면 「뭐뭐현」. */
+/**
+ * 화면에 적을 이름. 한정자를 떼고, 縣 이면 「뭐뭐군 뭐뭐현」.
+ *
+ * 郡 을 앞에 세우는 건 사용자 지시다(2026-09-12: 「군현제 안에선 뭐뭐군 뭐뭐현으로 표기해」).
+ * 한정자를 떼면 60 개 표기가 130 城 에 겹치는데(QUALIFIER 주석), 郡 이 앞에 서면 그 겹침이
+ * 표기 안에서 다시 갈린다. 郡縣制 밖은 縣 이 아니므로 郡 도 붙지 않는다.
+ *
+ * tools/scenario/build_han_world.py 의 display_name 과 **같은 규칙**이다. 두 구현이 갈리면
+ * 양쪽 835 행 교차 대조 시험이 빨개진다.
+ */
 export function cityDisplayName(city: CityNameInput): string {
+  // 서버가 실어 보낸 값이 정본이다. 같은 郡 안 同音異字처럼 전역을 봐야 나오는 표기가
+  // 있어서, 규칙 재계산은 그 값이 없을 때의 대비책이다.
+  if (city.displayName) return city.displayName;
   const stem = city.name.replace(QUALIFIER, '');
   if (!isHanCounty(city)) return stem;
-  return stem.endsWith('현') ? stem : `${stem}현`;
+  const county = stem.endsWith('현') ? stem : `${stem}현`;
+  return city.jun ? `${city.jun} ${county}` : county;
 }

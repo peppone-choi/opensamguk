@@ -599,6 +599,36 @@
       "sourceBook": "後漢書",
       "verbatim": "〖比景〗",
       "volume": 113
+    },
+    {
+      "sourceClaimId": "han-location-claim-v1-x011",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 703,
+      "lineStart": 703,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖临戎〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-location-claim-v1-x023",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 587,
+      "lineStart": 587,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖离石〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-location-claim-v1-x024",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 661,
+      "lineStart": 661,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖善无〗故属雁门。",
+      "volume": 113
     }
   ],
   "schemaVersion": 1

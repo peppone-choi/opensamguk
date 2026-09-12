@@ -363,6 +363,27 @@
       "newCityId": 832,
       "physicalPlaceRef": "curated:frontier-county-v1:fc-rinan-005",
       "routeNodeKey": "e8854444-df25-4975-accc-0520f3f508c7"
+    },
+    {
+      "administrativeUnitId": "hhs:113:朔方郡:001",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 833,
+      "physicalPlaceRef": "external:v1:X011",
+      "routeNodeKey": "60e964d2-fa8a-49d7-a07a-85b70d987b76"
+    },
+    {
+      "administrativeUnitId": "hhs:113:西河郡:001",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 834,
+      "physicalPlaceRef": "external:v1:X023",
+      "routeNodeKey": "332fa1c1-c727-47b8-b935-af0222ad0a39"
+    },
+    {
+      "administrativeUnitId": "hhs:113:定襄郡:001",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 835,
+      "physicalPlaceRef": "external:v1:X024",
+      "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -5887,11 +5908,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55",
+  "sourceCandidateSha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934",
+  "sourceSelectionSha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d",
   "summary": {
-    "appendedIdentityCount": 52,
+    "appendedIdentityCount": 55,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

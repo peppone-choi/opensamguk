@@ -842,6 +842,9 @@ object HanWorldV3GateIndex {
         830 to setOf("交州", "日南", "蠻"),
         831 to setOf("交州", "日南", "蠻"),
         832 to setOf("交州", "日南", "蠻"),
+        833 to setOf("并州"),
+        834 to setOf("屠各", "并州"),
+        835 to setOf("并州"),
     )
 
     fun keys(cityId: Int): Set<String> = keysByCityId[cityId].orEmpty()

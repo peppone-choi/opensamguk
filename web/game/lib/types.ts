@@ -317,6 +317,8 @@ export interface MapPreviewCity {
   name: string;
   /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). */
   nameCh?: string;
+  /** 서버가 계산한 화면 이름("경조윤 장안현"). 오면 그대로 쓴다 — 로그와 한 글자도 안 다르다. */
+  displayName?: string;
   level: number;
   nationId: number;
   x: number;

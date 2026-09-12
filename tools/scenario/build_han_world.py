@@ -72,8 +72,9 @@ SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
 PROVINCE_ATTRIBUTION = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
-# han-world-v3 城 수: legacy 780 + 781 歷城 + 782..832 변경 縣 51 (route-node-key-registry-v1).
-V3_ROUTE_NODE_COUNT = 832
+# han-world-v3 城 수: legacy 780 + 781 歷城 + 782..832 변경 縣 51 + 833..835 城 없던 郡治 3
+# (朔方·西河·定襄, route-node-key-registry-v1).
+V3_ROUTE_NODE_COUNT = 835
 ADMIN_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.
@@ -161,7 +162,8 @@ COUNTY_UNITS = ("县", "縣", "侯国", "侯國")
 #: nameCh 꼬리로 縣이 **아님**이 드러나는 단위. 屬國은 郡 한 급이라 등급보다 먼저 본다.
 NON_COUNTY_UNITS = ("属国", "屬國", "郡", "国", "國")
 #: 「의씨(河東郡)」·「영릉#123」 — 이름 충돌을 가르려 붙인 식별자용 한정자. 화면에서는 뗀다.
-NAME_QUALIFIER = re.compile(r"(\([^()]*\)|#\d+)$")
+#: 둘이 겹쳐 붙기도 한다(「양성(潁川郡)#129」) — 한 번만 떼면 괄호가 표기에 남는다.
+NAME_QUALIFIER = re.compile(r"(?:\([^()]*\)|#\d+)+$")
 
 
 def is_han_county(city_id: int, level_name: str, name_ch: str) -> bool:
@@ -176,12 +178,22 @@ def is_han_county(city_id: int, level_name: str, name_ch: str) -> bool:
     return level_name in COUNTY_LEVELS
 
 
-def display_name(city_id: int, name: str, level_name: str, name_ch: str) -> str:
-    """화면·로그에 적을 이름. 한정자를 떼고, 縣이면 「뭐뭐현」."""
+def display_name(city_id: int, name: str, level_name: str, name_ch: str,
+                 jun: str = "") -> str:
+    """화면·로그에 적을 이름. 한정자를 떼고, 縣이면 「뭐뭐군 뭐뭐현」.
+
+    郡 을 앞에 붙이는 이유는 두 가지다. 하나는 사용자 지시(2026-09-12: 「군현제 안에선
+    뭐뭐군 뭐뭐현으로 표기해」)이고, 다른 하나는 한정자를 뗀 대가를 그대로 갚는다는 것이다 —
+    「의씨(河東郡)」의 괄호를 떼면 60 개 표기가 130 城 에 겹치는데, 郡 을 앞에 세우면
+    그 겹침이 표기 안에서 다시 갈린다. 郡 이름은 제 표기 그대로다(경조윤·하간국·요동속국).
+
+    郡縣制 밖(이민족·屬國·郡 자체인 城)은 縣 이 아니므로 郡 도 붙이지 않는다.
+    """
     stem = NAME_QUALIFIER.sub("", name)
     if not is_han_county(city_id, level_name, name_ch):
         return stem
-    return stem if stem.endswith("현") else stem + "현"
+    county = stem if stem.endswith("현") else stem + "현"
+    return f"{jun} {county}" if jun else county
 
 HOUSEHOLD_LEVELS = ["소", "중", "대", "특"]
 
@@ -1055,8 +1067,25 @@ def build_v3() -> tuple[str, str, str, str]:
         row["nameCh"]: skeleton["region_of"][index]
         for index, row in enumerate(skeleton["juns"])
     }
+    # 그런 郡의 물리점은 郡 표시(「삭방군」·朔方郡)로 찍혀 있다. 경로 노드가 묶인 것은 그 郡의
+    # 治所 縣(郡國志 朔方郡:001 临戎)이므로, 이름은 점이 아니라 治所 관할에서 읽어야 한다 —
+    # 안 그러면 城 이름이 「삭방군」이 되어 郡과 縣이 같은 글자로 불린다.
+    stand_in_seat_by_place = {
+        str(row["seatPlaceId"]): {
+            "id": str(row["seatPlaceId"]),
+            "name": row["displayName"],
+            "nameCh": row["nameCh"],
+            "kind": row["kind"],
+        }
+        for row in tiles["jurisdictionRecords"]
+        if row["kind"] == "COUNTY"
+        and cities_by_place.get(str(row["seatPlaceId"]), {}).get("kind") != "COUNTY"
+    }
     seat_name_by_parent = {
-        node["parentName"]: cities_by_place[node["physicalPlaceRef"].rsplit(":", 1)[-1]]["name"]
+        node["parentName"]: (
+            stand_in_seat_by_place.get(node["physicalPlaceRef"].rsplit(":", 1)[-1])
+            or cities_by_place[node["physicalPlaceRef"].rsplit(":", 1)[-1]]
+        )["name"]
         for node in nodes
         if node["seatRole"] == "COMMANDERY_SEAT"
     }
@@ -1069,6 +1098,10 @@ def build_v3() -> tuple[str, str, str, str]:
     }
     parent_by_id = {row["id"]: row for row in tiles["parentRegions"]}
     jurisdiction_by_id = {str(row["id"]): row for row in tiles["jurisdictionRecords"]}
+    # 城 없던 郡의 治所 관할은 id 가 JURISDICTION-PARENT-…-SEAT 라 물리점 id 로는 안 찾아진다.
+    # 治所 점으로도 찾을 수 있게 같은 표에 얹는다(기존 키를 덮지 않는다).
+    for row in tiles["jurisdictionRecords"]:
+        jurisdiction_by_id.setdefault(str(row["seatPlaceId"]), row)
 
     def world_parent_ch(node: dict) -> str:
         """城이 앉는 郡(漢字). legacy 780 칸은 선정 원장의 HHS 그룹을 그대로 쓰고, 덧붙인 칸
@@ -1138,10 +1171,17 @@ def build_v3() -> tuple[str, str, str, str]:
         if row["meta"]["junCh"] == "濟南國" and not row["meta"]["isSeat"]
     )
     out_cities: list[dict] = []
+    # 郡 표시 점 위에 선 城의 화면 이름 어간. 이 城의 nameCh 는 治所 縣(朝鮮縣)인데
+    # legacy 런타임 이름은 郡(「낙랑군」)이라, 그대로 두면 표기가 「낙랑군 낙랑군현」이 된다.
+    # 표기만 治所 縣 이름으로 돌린다 — 런타임 이름은 legacy 식별자라 못 건드린다.
+    display_stem_by_id: dict[int, str] = {}
     for node in nodes:
         cid = node["numericCityId"]
         place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
         physical = cities_by_place[place]
+        stand_in_seat = stand_in_seat_by_place.get(place)
+        if stand_in_seat is not None:
+            display_stem_by_id[cid] = runtime_place_name(stand_in_seat)
         if cid <= 780:
             out = copy.deepcopy(legacy_by_id[cid])
             if node.get("legacyDisposition") == "REPLACED":
@@ -1150,9 +1190,10 @@ def build_v3() -> tuple[str, str, str, str]:
             jurisdiction = jurisdiction_by_id[place]
             parent = parent_by_id[jurisdiction["commanderyId"]]
             out = copy.deepcopy(legacy_jinan)
+            stand_in = stand_in_seat_by_place.get(place)
             out.update({
                 "id": cid,
-                "name": runtime_place_name(physical),
+                "name": runtime_place_name(stand_in or physical),
                 "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
                 "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
                 "meta": {
@@ -1179,13 +1220,18 @@ def build_v3() -> tuple[str, str, str, str]:
             # (2026-09-10 프로덕션 실측: 781 중 县/縣 로 끝나는 nameCh 0 건).
             # 781 번 가지가 이미 physical["nameCh"] 를 쓰고 있고 v2 han.json 도 같은 값이라,
             # 여기만 줄기를 쓰던 것이 어긋난 쪽이었다.
-            "nameCh": physical["nameCh"],
+            "nameCh": stand_in_seat_by_place.get(place, physical)["nameCh"],
             "isSeat": node["seatRole"] == "COMMANDERY_SEAT",
         }
         level_name = v3_level(parent_ch, node["seatRole"] == "COMMANDERY_SEAT")
         out["level"] = LEVEL_ID[level_name]
         out["max"] = dict(v3_maxes[level_name])
         out["initial"] = dict(zip(STAT_KEYS, BUILD_INIT[level_name]))
+        # 省이 안 붙는 城이 넷 있다 — 龜茲屬國(704)과 城 없던 郡 3곳의 治所(833–835).
+        # 넷 다 縣 구획이 아니라 郡 직할(DIRECT-*) 땅 위에 서 있고, 직할 省 463 행은
+        # 전부 cityIndex 가 비어 있다(설계다). 타일 소유 격자로 메우면 「縣 구획이 없는
+        # 물리점은 序數 省을 물려받지 않는다」는 런타임 계약(HanStrategicTopologyJson.kt:248)과
+        # 어긋난다 — 클라이언트는 그 넷만 좌표 폴백으로 앉힌다(placeGameCities.ts).
         province = province_by_city_index.get(city_index_by_place[place])
         if province is not None:
             province_index, province_record = province
@@ -1217,8 +1263,25 @@ def build_v3() -> tuple[str, str, str, str]:
     # 붙이기 전에 계산하면 「의씨현」이 아니라 「의씨현(河東郡)」이 나온다.
     for row in out_cities:
         row["meta"]["displayName"] = display_name(
-            row["id"], row["name"], LEVELS[row["level"] - 1], row["meta"]["nameCh"],
+            row["id"], display_stem_by_id.get(row["id"], row["name"]),
+            LEVELS[row["level"] - 1], row["meta"]["nameCh"],
+            row["meta"].get("jun", ""),
         )
+
+    # 같은 郡 안의 同音異字 縣은 郡 을 앞에 세워도 안 갈린다 — 襄城·陽城이 둘 다 「영천군
+    # 양성현」이다(潁川 2·零陵 2·廬江 2). 그런 칸만 漢字 어간을 뒤에 달아 가른다. 식별자용
+    # 「#129」 와 달리 사람이 읽을 수 있는 구분이고, 겹치지 않는 표기는 손대지 않는다.
+    shown_counts = Counter(row["meta"]["displayName"] for row in out_cities)
+    for row in out_cities:
+        if shown_counts[row["meta"]["displayName"]] > 1:
+            stem = row["meta"]["nameCh"]
+            for unit in COUNTY_UNITS + NON_COUNTY_UNITS:
+                if stem.endswith(unit):
+                    stem = stem[: -len(unit)]
+                    break
+            row["meta"]["displayName"] = f'{row["meta"]["displayName"]}({stem})'
+    if len({row["meta"]["displayName"] for row in out_cities}) != len(out_cities):
+        raise AssertionError("han-world-v3 화면 이름은 城마다 하나여야 한다")
 
     # Resolve path names only after every stable numeric identity exists.
     out_cities_by_id = {row["id"]: row for row in out_cities}

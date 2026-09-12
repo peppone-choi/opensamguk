@@ -1,13 +1,13 @@
 {
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
-    "externalLocationClaimCount": 8,
-    "hhsAdministrativeBindingCount": 832,
+    "externalLocationClaimCount": 11,
+    "hhsAdministrativeBindingCount": 835,
     "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 832,
+    "routeNodeCount": 835,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51
   },
@@ -70,7 +70,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
+      "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
     },
     "coordinateOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
     "locationAdjudications": {
@@ -79,11 +79,11 @@
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "b28416eeb8f7b05541522a101133c5120cc2e542232eca338656e96066ff43aa"
+      "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "9c3b8dce9a142835ceadd226a53113d7c080bbe40d2237ffe219624994c7b108"
+      "sha256": "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
     }
   },
   "legacyAttributionCorrections": [
@@ -321,9 +321,9 @@
     {
       "batchId": "w0c-hhs-external-location",
       "criteria": "HHS NO_COORDINATE_CANDIDATE identity with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
-      "expectedCount": 8,
+      "expectedCount": 11,
       "reviewState": "APPROVED",
-      "selectionRationale": "CHGIS county 경계 밖의 후한 현급 치소 7개와 上郡 龜茲 교정 1개를 외부 물리 claim으로 결합한다. 역사 binding은 모두 HHS identity다."
+      "selectionRationale": "續漢書 郡國志가 적은 郡治 가운데 CHGIS county 층에 점이 없는 곳을 검토된 외부 좌표 record로 결합한다. 邊郡 8곳(交趾·九真·日南·樂浪·遼東·玄菟·遼東屬國·上郡 龜茲)에 더해, 城을 하나도 못 받아 제 郡 안에 治所가 없던 朔方·西河·定襄 3곳을 같은 규약으로 얹는다."
     },
     {
       "batchId": "w1-frontier-county-location",

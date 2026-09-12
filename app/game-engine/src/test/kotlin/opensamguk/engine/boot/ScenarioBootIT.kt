@@ -44,7 +44,7 @@ import kotlin.test.assertTrue
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 832 V3 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 835 V3 cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -107,19 +107,20 @@ class ScenarioBootIT {
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
         assertEquals(230, count("general"))
-        assertEquals(832, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
+        assertEquals(835, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
         assertEquals(230, snapshot.generals.size)
         assertEquals("han-world-v3", snapshot.state.config["mapName"])
-        assertEquals(832, snapshot.cities.size)
-        assertEquals((1..832).toSet(), snapshot.cities.map { it.id }.toSet())
-        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「역성현」이다
-        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」). 규칙은 tools/scenario/build_han_world.py
-        // display_name 이 한 번 계산해 meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
-        assertEquals("역성현", snapshot.cities.single { it.id == 781 }.name)
+        assertEquals(835, snapshot.cities.size)
+        assertEquals((1..835).toSet(), snapshot.cities.map { it.id }.toSet())
+        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「제남국 역성현」이다
+        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」, 2026-09-12 「군현제 안에선 뭐뭐군 뭐뭐현으로
+        // 표기해」). 규칙은 tools/scenario/build_han_world.py display_name 이 한 번 계산해
+        // meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
+        assertEquals("제남국 역성현", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)

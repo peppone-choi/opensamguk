@@ -62,19 +62,19 @@
           "PROPOSED_GEOMETRIC": 18169
         },
         "decisionRowCounts": {
-          "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
+          "BLOCKED_DIRECT_TERRITORY_REVIEW": 30,
           "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-          "EXACT_APPROVED": 782,
+          "EXACT_APPROVED": 785,
           "PROPOSED_GEOMETRIC": 283
         },
         "directTerritoryCellCount": 120194,
         "directTerritoryProvinceCount": 526,
         "directTerritoryReview": {
           "pendingCandidateJunCount": 17,
-          "rejectedSourcedGroupJunCount": 5
+          "rejectedSourcedGroupJunCount": 2
         },
         "exactApprovedCellCount": 80956,
-        "exactApprovedRowCount": 782,
+        "exactApprovedRowCount": 785,
         "geometryDiagnostics": {
           "distanceTies": {
             "cellCount": 69,
@@ -97,7 +97,7 @@
         "landOwnerRowCount": 1138,
         "provinceRecordCount": 1524,
         "unresolvedCellCount": 26199,
-        "unresolvedRowCount": 356
+        "unresolvedRowCount": 353
       }
     },
     "priorSummary": {
@@ -113,19 +113,19 @@
         "PROPOSED_GEOMETRIC": 18177
       },
       "decisionRowCounts": {
-        "BLOCKED_DIRECT_TERRITORY_REVIEW": 32,
+        "BLOCKED_DIRECT_TERRITORY_REVIEW": 29,
         "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-        "EXACT_APPROVED": 833,
+        "EXACT_APPROVED": 836,
         "PROPOSED_GEOMETRIC": 284
       },
       "directTerritoryCellCount": 105746,
       "directTerritoryProvinceCount": 463,
       "directTerritoryReview": {
         "pendingCandidateJunCount": 16,
-        "rejectedSourcedGroupJunCount": 5
+        "rejectedSourcedGroupJunCount": 2
       },
       "exactApprovedCellCount": 95396,
-      "exactApprovedRowCount": 833,
+      "exactApprovedRowCount": 836,
       "geometryDiagnostics": {
         "distanceTies": {
           "cellCount": 69,
@@ -148,23 +148,10 @@
       "landOwnerRowCount": 1189,
       "provinceRecordCount": 1520,
       "unresolvedCellCount": 26207,
-      "unresolvedRowCount": 356
+      "unresolvedRowCount": 353
     }
   },
   "directTerritoryJunReviews": [
-    {
-      "diagnosticOnly": true,
-      "junArrayIndex": 84,
-      "nameCh": "定襄郡",
-      "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-      "sourcedAdministrativeUnitIds": [
-        "hhs:113:定襄郡:001",
-        "hhs:113:定襄郡:002",
-        "hhs:113:定襄郡:003",
-        "hhs:113:定襄郡:004",
-        "hhs:113:定襄郡:005"
-      ]
-    },
     {
       "diagnosticOnly": true,
       "junArrayIndex": 63,
@@ -223,20 +210,6 @@
       "nameCh": "新都郡",
       "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
       "sourcedAdministrativeUnitIds": []
-    },
-    {
-      "diagnosticOnly": true,
-      "junArrayIndex": 86,
-      "nameCh": "朔方郡",
-      "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-      "sourcedAdministrativeUnitIds": [
-        "hhs:113:朔方郡:001",
-        "hhs:113:朔方郡:002",
-        "hhs:113:朔方郡:003",
-        "hhs:113:朔方郡:004",
-        "hhs:113:朔方郡:005",
-        "hhs:113:朔方郡:006"
-      ]
     },
     {
       "diagnosticOnly": true,
@@ -303,27 +276,6 @@
     },
     {
       "diagnosticOnly": true,
-      "junArrayIndex": 81,
-      "nameCh": "西河郡",
-      "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-      "sourcedAdministrativeUnitIds": [
-        "hhs:113:西河郡:001",
-        "hhs:113:西河郡:002",
-        "hhs:113:西河郡:003",
-        "hhs:113:西河郡:004",
-        "hhs:113:西河郡:005",
-        "hhs:113:西河郡:006",
-        "hhs:113:西河郡:007",
-        "hhs:113:西河郡:008",
-        "hhs:113:西河郡:009",
-        "hhs:113:西河郡:010",
-        "hhs:113:西河郡:011",
-        "hhs:113:西河郡:012",
-        "hhs:113:西河郡:013"
-      ]
-    },
-    {
-      "diagnosticOnly": true,
       "junArrayIndex": 167,
       "nameCh": "長樂郡",
       "reviewState": "PENDING_DIRECT_TERRITORY_REVIEW",
@@ -349,15 +301,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "51e95405053533fd6a6f204511a1e77e29954eab4b6434ea6980e2bf70b4bd2f"
+      "sha256": "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "b3684ac996d9e0d6670bdf5accf1096ef213e40272484950b351fc25564d1a55"
+      "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934"
+      "sha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -44624,21 +44576,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X011",
+        "routeNodeKey": "60e964d2-fa8a-49d7-a07a-85b70d987b76"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:朔方郡:001",
       "cellCount": 0,
       "cityId": "X011",
-      "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
-      "directTerritoryReview": {
-        "diagnosticOnly": true,
-        "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-        "sourcedAdministrativeUnitIds": [
-          "hhs:113:朔方郡:001",
-          "hhs:113:朔方郡:002",
-          "hhs:113:朔方郡:003",
-          "hhs:113:朔方郡:004",
-          "hhs:113:朔方郡:005",
-          "hhs:113:朔方郡:006"
-        ]
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": null,
         "crossJun": false,
@@ -44647,9 +44598,11 @@
         "junDistribution": [],
         "majorityJunArrayIndices": []
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:朔方郡"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 86,
         "nameCh": "朔方郡"
@@ -45041,28 +44994,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X023",
+        "routeNodeKey": "332fa1c1-c727-47b8-b935-af0222ad0a39"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:西河郡:001",
       "cellCount": 0,
       "cityId": "X023",
-      "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
-      "directTerritoryReview": {
-        "diagnosticOnly": true,
-        "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-        "sourcedAdministrativeUnitIds": [
-          "hhs:113:西河郡:001",
-          "hhs:113:西河郡:002",
-          "hhs:113:西河郡:003",
-          "hhs:113:西河郡:004",
-          "hhs:113:西河郡:005",
-          "hhs:113:西河郡:006",
-          "hhs:113:西河郡:007",
-          "hhs:113:西河郡:008",
-          "hhs:113:西河郡:009",
-          "hhs:113:西河郡:010",
-          "hhs:113:西河郡:011",
-          "hhs:113:西河郡:012",
-          "hhs:113:西河郡:013"
-        ]
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": null,
         "crossJun": false,
@@ -45071,29 +45016,31 @@
         "junDistribution": [],
         "majorityJunArrayIndices": []
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:西河郡"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 81,
         "nameCh": "西河郡"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X024",
+        "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:定襄郡:001",
       "cellCount": 0,
       "cityId": "X024",
-      "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
-      "directTerritoryReview": {
-        "diagnosticOnly": true,
-        "reviewState": "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST",
-        "sourcedAdministrativeUnitIds": [
-          "hhs:113:定襄郡:001",
-          "hhs:113:定襄郡:002",
-          "hhs:113:定襄郡:003",
-          "hhs:113:定襄郡:004",
-          "hhs:113:定襄郡:005"
-        ]
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": null,
         "crossJun": false,
@@ -45102,9 +45049,11 @@
         "junDistribution": [],
         "majorityJunArrayIndices": []
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "hhs-group:113:定襄郡"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 84,
         "nameCh": "定襄郡"
@@ -48841,19 +48790,19 @@
       "PROPOSED_GEOMETRIC": 18582
     },
     "decisionRowCounts": {
-      "BLOCKED_DIRECT_TERRITORY_REVIEW": 31,
+      "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 833,
+      "EXACT_APPROVED": 836,
       "PROPOSED_GEOMETRIC": 285
     },
     "directTerritoryCellCount": 105711,
     "directTerritoryProvinceCount": 463,
     "directTerritoryReview": {
       "pendingCandidateJunCount": 15,
-      "rejectedSourcedGroupJunCount": 5
+      "rejectedSourcedGroupJunCount": 2
     },
     "exactApprovedCellCount": 95026,
-    "exactApprovedRowCount": 833,
+    "exactApprovedRowCount": 836,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 310,
@@ -48876,6 +48825,6 @@
     "landOwnerRowCount": 1189,
     "provinceRecordCount": 1520,
     "unresolvedCellCount": 26612,
-    "unresolvedRowCount": 356
+    "unresolvedRowCount": 353
   }
 }
