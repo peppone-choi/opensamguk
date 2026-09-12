@@ -11,9 +11,16 @@ correction to data/map/han-tiles.json:
     seat cell, leaving that donor connected and still holding its own seat,
   * the city label, its cell and the province parent follow the corrected place.
 
+The same ledger also carries `commanderyCorrections`: frontier counties whose
+**coordinate is right** but whose projected cell landed in the neighbouring 郡,
+against a 郡國志/晉書 attestation that names the 郡 outright.  There the lon/lat
+stays and only the seed cell moves, into the nearest free land of the attested
+郡 — the frontier stage that owns `SNAPPED_INTO_HHS_COMMANDERY` is frozen by a
+pinned digest, so the move has to be expressed here.
+
 The new boundary is an adapted local partition, not a reconstructed historical
-boundary.  Only the old mask and the donor mask can change owners; the ledger
-pins every changed cell so a later run cannot drift.
+boundary.  Only the old mask and the donor mask can change owners; each stage of
+the ledger pins every cell it changed so a later run cannot drift.
 """
 from __future__ import annotations
 
@@ -166,6 +173,87 @@ def _reattribute(document: dict, owner: np.ndarray, province_id: str, parent_id:
     return records[best]['jurisdictionId']
 
 
+def _nearest_free_cell(owner, records, cities, destination: str,
+                       seat: tuple[int, int]) -> tuple[int, int]:
+    """사료가 지목한 郡 안에서, 지금 칸에 가장 가까운 빈 땅을 고른다."""
+    taken = {(row['row'], row['col']) for row in cities}
+    wanted = {index for index, record in enumerate(records)
+              if record['parentRegionId'] == destination}
+    candidates = [(int(row), int(col))
+                  for row, col in np.argwhere(np.isin(owner, sorted(wanted)))]
+    ranked = sorted(candidates,
+                    key=lambda cell: ((cell[0] - seat[0]) ** 2 + (cell[1] - seat[1]) ** 2, cell))
+    for cell in ranked:
+        if cell not in taken:
+            return cell
+    raise ValueError(f'{destination} has no free land cell')
+
+
+def _relocate(document: dict, owner, records: list[dict], cities: list[dict],
+              index_by_id: dict, jurisdiction_by_id: dict, commandery_by_id: dict,
+              labels: list[dict], key: str, seat: tuple[int, int], destination: str,
+              coordinate: tuple[float, float], geometry_basis: str,
+              supersede: dict | None) -> None:
+    """省 하나를 목적지 郡 안의 한 칸으로 옮기고, 그 주변을 새 발자국으로 깎는다."""
+    rows, cols = owner.shape
+    index = index_by_id[key]
+    record = records[index]
+    city = cities[record['cityIndex']]
+    if not (0 <= seat[0] < rows and 0 <= seat[1] < cols):
+        raise ValueError(f'{key}: the destination cell falls outside the grid')
+    donor = int(owner[seat])
+    if donor < 0:
+        raise ValueError(f'{key}: the destination cell falls on unplayable ground')
+    if records[donor]['parentRegionId'] != destination:
+        raise ValueError(f'{key}: the destination cell is not inside {destination}')
+    origin_parent = record['parentRegionId']
+    _dissolve(owner, index, records)
+    donor_city = records[donor].get('cityIndex')
+    donor_seat = None
+    if donor_city is not None:
+        donor_seat = (cities[donor_city]['row'], cities[donor_city]['col'])
+    _carve(owner, index, seat, donor, donor_seat)
+    labels.append({
+        'runtimePlaceKey': key,
+        'before': {'col': city['col'], 'row': city['row'],
+                   'lon': city['lon'], 'lat': city['lat'],
+                   'parentRegionId': origin_parent},
+        'after': {'col': seat[1], 'row': seat[0],
+                  'lon': coordinate[0], 'lat': coordinate[1],
+                  'parentRegionId': destination},
+    })
+    city['col'], city['row'] = seat[1], seat[0]
+    city['lon'], city['lat'] = coordinate
+    record['parentRegionId'] = destination
+    record['geometryBasis'] = geometry_basis
+    jurisdiction = jurisdiction_by_id[record['jurisdictionId']]
+    jurisdiction['commanderyId'] = destination
+    stranded = [value for value in jurisdiction['provinceIds'] if value != key]
+    for province_id in stranded:
+        receiver = _reattribute(document, owner, province_id, origin_parent)
+        jurisdiction['provinceIds'] = [
+            value for value in jurisdiction['provinceIds'] if value != province_id
+        ]
+        jurisdiction_by_id[receiver]['provinceIds'] = sorted(
+            set(jurisdiction_by_id[receiver]['provinceIds']) | {province_id}
+        )
+        moved = records[index_by_id[province_id]]
+        moved['jurisdictionId'] = receiver
+        moved['assignmentBasis'] = 'MAX_SHARED_BOUNDARY'
+        moved['assignmentConfidence'] = 'INFERRED'
+    origin = commandery_by_id[origin_parent]
+    origin['jurisdictionIds'] = [
+        value for value in origin['jurisdictionIds'] if value != jurisdiction['id']
+    ]
+    target = commandery_by_id[destination]
+    target['jurisdictionIds'] = sorted(set(target['jurisdictionIds']) | {jurisdiction['id']})
+    if origin.get('seatJurisdictionId') == jurisdiction['id']:
+        raise ValueError(f'{key}: a commandery seat cannot be relocated by this ledger')
+    if supersede is not None:
+        _supersede_seat_recovery(document, records, index_by_id, jurisdiction_by_id,
+                                 jurisdiction, target, seat, key, supersede)
+
+
 def apply_rebindings(source: dict, ledger: dict) -> tuple[dict, list[dict], list[dict]]:
     document = copy.deepcopy(source)
     meta = document['_meta']
@@ -183,76 +271,41 @@ def apply_rebindings(source: dict, ledger: dict) -> tuple[dict, list[dict], list
         key = rebinding['runtimePlaceKey']
         corrected = rebinding['correctedPhysicalPlace']
         incorrect = rebinding['incorrectPhysicalPlace']
-        index = index_by_id[key]
-        record = records[index]
-        city = cities[record['cityIndex']]
+        city = cities[records[index_by_id[key]]['cityIndex']]
         if (city['lon'], city['lat']) != (incorrect['lon'], incorrect['lat']):
             raise ValueError(f'{key}: city no longer carries the mis-bound coordinate')
         column, row = projection.to_cell(corrected['lon'], corrected['lat'])
-        seat = (math.floor(row), math.floor(column))
-        if not (0 <= seat[0] < rows and 0 <= seat[1] < cols):
-            raise ValueError(f'{key}: corrected place falls outside the grid')
-        donor = int(owner[seat])
-        if donor < 0:
-            raise ValueError(f'{key}: corrected place falls on unplayable ground')
-        destination = rebinding['destinationParentRegionId']
-        if records[donor]['parentRegionId'] != destination:
-            raise ValueError(f'{key}: corrected place is not inside {destination}')
-        origin_parent = record['parentRegionId']
-        _dissolve(owner, index, records)
-        donor_city = records[donor].get('cityIndex')
-        donor_seat = None
-        if donor_city is not None:
-            donor_seat = (cities[donor_city]['row'], cities[donor_city]['col'])
-        _carve(owner, index, seat, donor, donor_seat)
-        labels.append({
-            'runtimePlaceKey': key,
-            'before': {'col': city['col'], 'row': city['row'],
-                       'lon': city['lon'], 'lat': city['lat'],
-                       'parentRegionId': origin_parent},
-            'after': {'col': seat[1], 'row': seat[0],
-                      'lon': corrected['lon'], 'lat': corrected['lat'],
-                      'parentRegionId': destination},
-        })
-        city['col'], city['row'] = seat[1], seat[0]
-        city['lon'], city['lat'] = corrected['lon'], corrected['lat']
-        record['parentRegionId'] = destination
-        record['geometryBasis'] = 'CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION'
-        jurisdiction = jurisdiction_by_id[record['jurisdictionId']]
-        jurisdiction['commanderyId'] = destination
-        stranded = [value for value in jurisdiction['provinceIds'] if value != key]
-        for province_id in stranded:
-            receiver = _reattribute(document, owner, province_id, origin_parent)
-            jurisdiction['provinceIds'] = [
-                value for value in jurisdiction['provinceIds'] if value != province_id
-            ]
-            jurisdiction_by_id[receiver]['provinceIds'] = sorted(
-                set(jurisdiction_by_id[receiver]['provinceIds']) | {province_id}
-            )
-            moved = records[index_by_id[province_id]]
-            moved['jurisdictionId'] = receiver
-            moved['assignmentBasis'] = 'MAX_SHARED_BOUNDARY'
-            moved['assignmentConfidence'] = 'INFERRED'
-        origin = commandery_by_id[origin_parent]
-        origin['jurisdictionIds'] = [
-            value for value in origin['jurisdictionIds'] if value != jurisdiction['id']
-        ]
-        target = commandery_by_id[destination]
-        target['jurisdictionIds'] = sorted(set(target['jurisdictionIds']) | {jurisdiction['id']})
-        if origin.get('seatJurisdictionId') == jurisdiction['id']:
-            raise ValueError(f'{key}: a commandery seat cannot be relocated by this ledger')
-        supersede = rebinding.get('supersedesJurisdictionSeatRecovery')
-        if supersede is not None:
-            _supersede_seat_recovery(document, records, index_by_id, jurisdiction_by_id,
-                                     jurisdiction, target, seat, key, supersede)
+        _relocate(document, owner, records, cities, index_by_id, jurisdiction_by_id,
+                  commandery_by_id, labels, key, (math.floor(row), math.floor(column)),
+                  rebinding['destinationParentRegionId'],
+                  (corrected['lon'], corrected['lat']),
+                  'CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION',
+                  rebinding.get('supersedesJurisdictionSeatRecovery'))
+    corrections = ledger.get('commanderyCorrections', [])
+    present = [row for row in corrections if row['runtimePlaceKey'] in index_by_id]
+    if present and len(present) != len(corrections):
+        raise ValueError('a commandery correction names a county this document does not carry')
+    for correction in present:
+        key = correction['runtimePlaceKey']
+        record = records[index_by_id[key]]
+        if record['parentRegionId'] != correction['projectedParentRegionId']:
+            raise ValueError(f'{key}: county no longer sits in the projected commandery')
+        city = cities[record['cityIndex']]
+        destination = correction['destinationParentRegionId']
+        seat = _nearest_free_cell(owner, records, cities, destination,
+                                  (city['row'], city['col']))
+        _relocate(document, owner, records, cities, index_by_id, jurisdiction_by_id,
+                  commandery_by_id, labels, key, seat, destination,
+                  (city['lon'], city['lat']),
+                  'SOURCE_ATTESTED_COMMANDERY_LOCAL_ADAPTATION', None)
 
     areas = Counter(owner.ravel().tolist())
     baseline = Counter(before.ravel().tolist())
     for province_index in range(len(records)):
         if areas[province_index] < min(MINIMUM_AREA, baseline[province_index]):
             raise ValueError(f'{records[province_index]["id"]} fell below its own minimum area')
-    for rebinding in ledger['rebindings']:
-        index = index_by_id[rebinding['runtimePlaceKey']]
+    for label in labels:
+        index = index_by_id[label['runtimePlaceKey']]
         city = cities[records[index]['cityIndex']]
         if int(owner[city['row'], city['col']]) != index:
             raise ValueError('a relocated city must stand on its own province')
@@ -336,13 +389,34 @@ def _record_delta(source: dict, document: dict) -> tuple[list[dict], list[dict]]
     return delta, removals
 
 
+DELTA_KEYS = ('ownerDelta', 'labelDelta', 'recordDelta', 'recordRemovals')
+
+
+def stage_for(document: dict, ledger: dict) -> dict | None:
+    """이 문서를 산출한 단계를 찾는다. 단계마다 제 델타를 따로 이고 있다.
+
+    재바인딩은 두 문서에 얹힌다 — 프론티어 縣 51곳이 서기 **전** 문서와 **후** 문서.
+    郡 보정은 뒤 문서에만 해당하므로 두 단계의 델타는 같지 않다."""
+    from tools.map import relocate_han_province as relocation
+    fingerprint = digest(document)
+    identifiers = {row['id'] for row in document['cities']}
+    for stage in ledger.get('geometry', {}).get('stages', []):
+        order = stage.get('outputCityOrder')
+        if stage['outputDocumentSha256'] == fingerprint:
+            return stage
+        if order and set(order) == identifiers:
+            candidate = relocation.canonicalize_city_order(document, {'inputCityOrder': order})
+            if stage['outputDocumentSha256'] == digest(candidate):
+                return stage
+    return None
+
+
 def restore_document(document: dict, ledger: dict) -> dict:
     """재바인딩을 되돌려 이 단계의 입력 문서로 돌아간다. 지문이 맞아야만 한다."""
-    geometry = ledger['geometry']
-    stage = next((row for row in geometry['stages']
-                  if row['outputDocumentSha256'] == digest(document)), None)
+    stage = stage_for(document, ledger)
     if stage is None:
         raise ValueError('document is not a pinned rebinding output')
+    geometry = stage
     restored = copy.deepcopy(document)
     meta = restored['_meta']
     owner = expand(restored['owner'], meta['rows'], meta['cols'])
@@ -370,11 +444,11 @@ def restore_document(document: dict, ledger: dict) -> dict:
 def check(document: dict, ledger: dict) -> list[str]:
     """Report every way the artifact drifts from the reviewed rebinding."""
     problems: list[str] = []
-    geometry = ledger.get('geometry')
-    if not geometry:
+    if not ledger.get('geometry'):
         return ['ledger carries no prepared geometry']
-    if not any(row['outputDocumentSha256'] == digest(document) for row in geometry['stages']):
-        problems.append('han-tiles.json is not the reviewed rebinding output')
+    geometry = stage_for(document, ledger)
+    if geometry is None:
+        return ['han-tiles.json is not the reviewed rebinding output']
     meta = document['_meta']
     owner = expand(document['owner'], meta['rows'], meta['cols'])
     records = document['provinceRecords']
@@ -414,18 +488,19 @@ def main() -> int:
     records, removals = _record_delta(source, document)
     if args.prepare:
         geometry = ledger.get('geometry') or {}
-        fresh = {'ownerDelta': delta, 'labelDelta': labels, 'recordDelta': records,
-                 'recordRemovals': removals}
-        for field, value in fresh.items():
-            if field in geometry and geometry[field] != value:
-                raise SystemExit(f'{field} differs from the reviewed rebinding')
         stage = {'inputDocumentSha256': digest(source),
                  'outputDocumentSha256': digest(document),
-                 'outputCityOrder': [row['id'] for row in document['cities']]}
-        stages = [row for row in geometry.get('stages', [])
-                  if row['inputDocumentSha256'] != stage['inputDocumentSha256']]
-        geometry.update(fresh)
-        geometry['stages'] = sorted(stages + [stage], key=lambda row: row['inputDocumentSha256'])
+                 'outputCityOrder': [row['id'] for row in document['cities']],
+                 'ownerDelta': delta, 'labelDelta': labels, 'recordDelta': records,
+                 'recordRemovals': removals}
+        known = {row['inputDocumentSha256']: row for row in geometry.get('stages', [])}
+        pinned = known.get(stage['inputDocumentSha256'])
+        if pinned is not None:
+            for field in DELTA_KEYS:
+                if pinned.get(field) != stage[field]:
+                    raise SystemExit(f'{field} differs from the reviewed rebinding')
+        known[stage['inputDocumentSha256']] = stage
+        geometry = {'stages': [known[key] for key in sorted(known)]}
         ledger['geometry'] = geometry
         args.ledger.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + '\n',
                                encoding='utf-8')

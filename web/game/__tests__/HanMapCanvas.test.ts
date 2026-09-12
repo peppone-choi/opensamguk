@@ -248,7 +248,7 @@ describe('지도 아이콘 배율과 앵커', () => {
             ],
             parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
             adjacency: { county: [], commandery: [] }, regions: [],
-            cities: [{ id: 'P1', name: 'A현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+            cities: [{ id: 'P1', name: 'A현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
         } satisfies HanTiles;
 
         const overlays = completeJurisdictionOverlays(
@@ -321,8 +321,8 @@ describe('지도 아이콘 배율과 앵커', () => {
             parentRegions: [{ id: 'R1', displayName: '어양군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
             adjacency: { county: [], commandery: [] }, regions: [],
             cities: [
-                { id: 'P1', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 },
-                { id: 'P2', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: false, col: 1, row: 0 },
+                { id: 'P1', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 },
+                { id: 'P2', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: false, col: 1, row: 0, lat: 0, lon: 0 },
             ],
         } satisfies HanTiles;
 
@@ -423,8 +423,11 @@ describe('지도 아이콘 배율과 앵커', () => {
             null,
             provinceMap,
         );
-        expect(jurisdictions).toHaveLength(1_071);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_071);
+        // 1,070 = han-tiles.json 의 jurisdictionRecords 실측. 南鄉郡이 제 이름의 縣(71022 南鄉)을
+        // 되찾으면서 그 자리를 지키던 합성 관할 JURISDICTION-PARENT-0113-SEAT 이 접혔다
+        // (data/curated/han/county-misbinding-rebindings-v1.json · supersedesJurisdictionSeatRecovery).
+        expect(jurisdictions).toHaveLength(1_070);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_070);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',

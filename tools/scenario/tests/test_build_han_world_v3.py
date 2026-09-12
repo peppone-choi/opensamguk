@@ -219,12 +219,23 @@ class HanWorldV3Test(unittest.TestCase):
         placements = json.loads(
             (ROOT / "data/curated/han/frontier-county-placements-v1.json").read_text()
         )["placements"]
+        # 그 12건 가운데 4건은 사료가 郡 소속을 명시적으로 뒤집어 씨앗칸을 옮겼다
+        # (data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections).
+        # 옮긴 뒤로는 두 값이 같아지므로 어긋남으로 남는 건 8건이다.
+        corrected = {
+            row["runtimePlaceKey"]
+            for row in json.loads(
+                (ROOT / "data/curated/han/county-misbinding-rebindings-v1.json").read_text()
+            )["commanderyCorrections"]
+        }
         expected_reassigned = {
             (row["physicalPlaceRef"], row["hhsCommanderyHan"], row["worldCommanderyHan"])
             for row in placements
             if row["worldParentRegionId"] != row["hhsParentRegionId"]
+            and row["physicalPlaceId"] not in corrected
         }
-        self.assertEqual(12, len(expected_reassigned))
+        self.assertEqual(4, len(corrected))
+        self.assertEqual(8, len(expected_reassigned))
         reassigned = set()
         for city in world["cities"]:
             node = selection_by_id[city["id"]]

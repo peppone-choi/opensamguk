@@ -1631,7 +1631,11 @@ def _rebinding_stage_projection(
     prior_province_parent = {row["id"]: row["parentRegionId"] for row in prior_tiles["provinceRecords"]}
     current_province_parent = {row["id"]: row["parentRegionId"] for row in tiles["provinceRecords"]}
     affected = set()
-    for cell in rebound["geometry"]["ownerDelta"]:
+    from tools.map import rebind_misbound_counties as rebinding
+    rebound_stage = rebinding.stage_for(documents["data/map/han-tiles.json"], rebound)
+    if rebound_stage is None:
+        raise ValueError("han-tiles.json is not a pinned county-rebinding output")
+    for cell in rebound_stage["ownerDelta"]:
         affected.add(prior_province_parent[cell["before"]])
         affected.add(current_province_parent[cell["after"]])
     seat_city_ids = {
@@ -1681,7 +1685,7 @@ def _rebinding_stage_projection(
     return {
         "ledgerId": rebound["ledgerId"],
         "affectedParentRegionIds": sorted(affected),
-        "changedCellCount": len(rebound["geometry"]["ownerDelta"]),
+        "changedCellCount": len(rebound_stage["ownerDelta"]),
         "geometryVariantRowCount": variant_rows,
         "priorSummary": prior["summary"],
         "priorFrontierCountyProjection": prior.get("frontierCountyProjection"),

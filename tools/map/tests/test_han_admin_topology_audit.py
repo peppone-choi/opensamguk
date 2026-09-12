@@ -394,10 +394,13 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
         self.assertEqual(26, snapshot["provinceTopology"]["disconnectedCount"])
-        self.assertEqual(25, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        # 23·22 = 실측. 사료가 지목한 郡으로 縣 4곳(無慮·高顯·遼陽·比景)의 씨앗칸을 옮기면서
+        # 邊郡의 발자국이 다시 깎여 완전 포위된 省·관할이 각각 둘씩 풀렸다.
+        # data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections 참조.
+        self.assertEqual(23, snapshot["provinceTopology"]["fullyEnclosedCount"])
         self.assertEqual(2, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
-        self.assertEqual(24, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        self.assertEqual(22, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
