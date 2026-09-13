@@ -151,7 +151,7 @@ class CheChulbyeong(
     private fun routeWithEnemyExists(c: ConstraintContext, view: StateView): Boolean {
         val g = view.get(RequirementKey.General(c.actorId)) as? General ?: return true
         val destCityId = c.destCityId ?: return true
-        val cityConst = CityConstRegistry.of(c.env["mapName"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME)
+        val cityConst = c.selectedCityConst() ?: return false
         val allowedCityList = LinkedHashMap<Int, Int>()
         for (cityId in cityConst.all().keys) {
             val nationId = (view.get(RequirementKey.City(cityId)) as? opensamguk.logic.domain.City)?.nationId
@@ -189,7 +189,7 @@ class CheChulbyeong(
         val destCity = bctx.cityById[defenderCityId]
             ?: error("che_출병: chosen city $defenderCityId not staged")
         val defenderNationId = destCity.nationId
-        val cityConst = CityConstRegistry.of(context.env.mapName)
+        val cityConst = context.env.cityConst
         val destCityName = cityConst.byId(defenderCityId)?.displayName ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 

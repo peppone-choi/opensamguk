@@ -28,15 +28,67 @@ class MapStrategicTopologyControllerTest {
     private val world = mock(WorldStateReadRepository::class.java)
     private val source = StrategicTopologyReadSource { loaded }
     private val jdbc = ReadJdbc()
+    private val cities = mock(CityReadRepository::class.java)
+    private val pins = mock(WorldArtifactIdentityReadRepository::class.java)
+    private val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+    private val resolver = ActiveWorldArtifactResolver(world, cities, pins, artifacts)
 
     @AfterEach
     fun clearIdentity() = SecurityContextHolder.clearContext()
 
     private fun mvc(mapName: String = "han-world-v3") = MockMvcBuilders.standaloneSetup(
-        MapStrategicTopologyController(world, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source),
-    ).build().also {
+        MapStrategicTopologyController(resolver, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source),
+    ).setControllerAdvice(MapStrategicTopologyErrors()).build().also {
+        `when`(cities.findAll()).thenReturn(artifacts.artifacts(opensamguk.logic.world.HanWorldVariant.V3_835).cityConst.all().keys.map {
+            CityReadEntity(id = it, worldId = 7)
+        })
+        `when`(pins.readPins(7)).thenReturn(emptyList())
         `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 7, scenarioCode = "scenario_1050",
             config = mapOf("mapName" to mapName)))
+    }
+
+    @Test
+    fun `historical roster returns its own topology and rejects stale identity`() {
+        val client = mvc()
+        val older = artifacts.artifacts(opensamguk.logic.world.HanWorldVariant.V3_832)
+        `when`(cities.findAll()).thenReturn(older.cityConst.all().keys.map { CityReadEntity(id = it, worldId = 7) })
+        client.perform(get("/api/map/strategic-topology").queryParam("knownTopologyHash", loaded.topology.contentHash))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.binding.topologyHash").value(older.projection.topology.contentHash))
+            .andExpect(jsonPath("$.topology").exists())
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin(
+            "province_control", loaded.topology.topologyRevision, loaded.topology.contentHash)))
+        client.perform(get("/api/map/strategic-topology"))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("STRATEGIC_STATE_INVALID"))
+    }
+
+    @Test
+    fun `validation failure remains conflict through real Spring transaction proxies`() {
+        mvc() // configure the complete world roster
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", "bad", "bad")))
+        val connection = mock(java.sql.Connection::class.java)
+        `when`(connection.autoCommit).thenReturn(true)
+        val dataSource = mock(javax.sql.DataSource::class.java)
+        `when`(dataSource.connection).thenReturn(connection)
+        val manager = org.springframework.jdbc.datasource.DataSourceTransactionManager(dataSource)
+        val interceptor = org.springframework.transaction.interceptor.TransactionInterceptor(
+            manager, org.springframework.transaction.annotation.AnnotationTransactionAttributeSource())
+        fun <T : Any> transactional(target: T): T {
+            val factory = org.springframework.aop.framework.ProxyFactory(target)
+            factory.isProxyTargetClass = true
+            factory.addAdvice(interceptor)
+            @Suppress("UNCHECKED_CAST")
+            return factory.proxy as T
+        }
+        val controller = transactional(MapStrategicTopologyController(transactional(resolver),
+            WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source))
+        MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(MapStrategicTopologyErrors()).build()
+            .perform(get("/api/map/strategic-topology"))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("STRATEGIC_STATE_INVALID"))
+        org.mockito.Mockito.verify(connection).rollback()
+        org.mockito.Mockito.verify(connection, org.mockito.Mockito.never()).commit()
     }
 
     private fun admin() {

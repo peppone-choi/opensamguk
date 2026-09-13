@@ -34,6 +34,7 @@ class WorldSnapshotLoaderWaterControlTest {
                     queries += sql to args
                     val mapper = invocation.arguments.filterIsInstance<RowMapper<*>>().singleOrNull()
                     val source = when {
+                        " AS channel" in sql -> emptyList()
                         "FROM world_state" in sql -> listOf(world)
                         "FROM water_zone_control" in sql -> rows
                         "FROM general_spatial_position" in sql -> positions
@@ -46,7 +47,8 @@ class WorldSnapshotLoaderWaterControlTest {
             }
         }
         val snapshot = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(8)),
-            WorldId(8), snapshotValidator = {}, waterTopologyLoader = { topology }).buildSnapshot()
+            WorldId(8), snapshotValidator = {}, waterTopologyLoader = { topology },
+            hanVariantSelector = { _, _ -> HanWorldVariant.V3_835 }).buildSnapshot()
         return snapshot to queries
     }
 
@@ -67,7 +69,7 @@ class WorldSnapshotLoaderWaterControlTest {
         assertEquals(7L, state.revision)
         assertEquals(listOf(5L, 9L), state.contestingNationIds)
         assertEquals(WaterBlockadeState.CONTESTED, state.blockadeState)
-        val (sql, args) = queries.single { "FROM water_zone_control" in it.first }
+        val (sql, args) = queries.single { "FROM water_zone_control" in it.first && " AS channel" !in it.first }
         assertContains(sql, "WHERE world_id = ?")
         assertEquals(listOf(8), args)
     }
@@ -78,7 +80,7 @@ class WorldSnapshotLoaderWaterControlTest {
         assertTrue(snapshot.provinceControlSnapshot!!.statesByProvinceId.isEmpty())
         assertTrue(snapshot.generalPositionSnapshot!!.statesByGeneralId.isEmpty())
         for ((table, key) in listOf("province_control" to "province_id", "general_spatial_position" to "general_id")) {
-            val (sql, args) = queries.single { "FROM $table" in it.first }
+            val (sql, args) = queries.single { "FROM $table" in it.first && " AS channel" !in it.first }
             assertContains(sql, "WHERE world_id = ? ORDER BY $key")
             assertEquals(listOf(8), args)
         }

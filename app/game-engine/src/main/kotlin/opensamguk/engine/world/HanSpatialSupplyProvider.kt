@@ -27,7 +27,8 @@ data class SpatialSupplyCity(
  * Loads the canonical Han province topology and scenario occupancy used by monthly supply.
  *
  * The projection deliberately matches MapAdministrativeOwnership: scenario direct occupancy is the
- * base, and each mapped runtime city overrides only its jurisdiction's canonical seat province.
+ * base, and each mapped runtime city overrides member provinces sharing its seat's baseline owner.
+ * Provinces with a different scenario baseline owner retain that reviewed split ownership.
  */
 @Component
 class HanSpatialSupplyProvider(
@@ -42,6 +43,7 @@ class HanSpatialSupplyProvider(
 ) {
     @Volatile
     private var cached: CanonicalSpatialSupply? = null
+    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, CanonicalSpatialSupply>()
 
     fun network(
         scenarioCode: Int,
@@ -54,10 +56,18 @@ class HanSpatialSupplyProvider(
         liveCities: List<SpatialSupplyCity>,
         waterControl: WaterControlSnapshot? = null,
         strategicProjection: HanStrategicRouteProjection? = null,
+        artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null,
     ): SpatialSupplyNetwork {
-        val canonical = canonical()
+        require(artifacts == null || activeMapName == "han-world-v3")
+        val canonical = if (artifacts == null) canonical() else historical.computeIfAbsent(artifacts.variant) {
+            loadCanonical(artifacts.artifactBytes("data/map/han-tiles.json"),
+                artifacts.artifactBytes("data/map/han-scenario-province-ownership-v1.json"))
+        }
         val strategic = if (activeMapName == "han-world-v3") {
-            val projection = strategicProjection ?: HanStrategicTopologyJson.loadDefault()
+            val projection = artifacts?.projection ?: requireNotNull(strategicProjection) { "V3 supply requires selected topology" }
+            require(strategicProjection == null || strategicProjection.topology.contentHash == projection.topology.contentHash) {
+                "Supply projection differs from selected historical artifacts"
+            }
             require(projection.topology.artifactHashes["data/map/han-tiles.json"] == canonical.baseSha256) {
                 "Supply ownership and strategic topology base hashes differ"
             }
@@ -73,8 +83,9 @@ class HanSpatialSupplyProvider(
             require(waterControl == null && strategicProjection == null) { "Legacy supply cannot consume V3 water state" }
             null
         }
-        val owners = canonical.scenarioOwners[scenarioCode]?.clone()
+        val baselineOwners = canonical.scenarioOwners[scenarioCode]
             ?: error("No canonical province ownership for scenario $scenarioCode")
+        val owners = baselineOwners.clone()
 
         val cityByJurisdiction = linkedMapOf<String, SpatialSupplyCity>()
         for (city in liveCities.sortedBy { it.cityId }) {
@@ -91,7 +102,13 @@ class HanSpatialSupplyProvider(
                 "Runtime city ${city.cityId} province ${city.provinceIndex} is not seat province " +
                     "$seatProvinceIndex of jurisdiction $jurisdictionId"
             }
-            owners[seatProvinceIndex] = city.nationId
+        }
+        canonical.provinceJurisdictions.forEachIndexed { provinceIndex, jurisdictionId ->
+            val city = cityByJurisdiction[jurisdictionId] ?: return@forEachIndexed
+            val seatProvinceIndex = canonical.jurisdictionSeatProvince.getValue(jurisdictionId)
+            if (baselineOwners[provinceIndex] == baselineOwners[seatProvinceIndex]) {
+                owners[provinceIndex] = city.nationId
+            }
         }
 
         return SpatialSupplyNetwork(
@@ -113,7 +130,7 @@ class HanSpatialSupplyProvider(
                 // **이동은 바뀌지 않는다** — 위의 LAND traversalEdges 는 그대로다. 이 간선은
                 // 보급망(provinceAdjacency)에만 더해지고, 전략 위상은 여전히 래스터에서 맞닿은
                 // 프로빈스끼리만 이동을 허용한다.
-                commanderySupplyLinks.load().forEach { (a, b) ->
+                commanderySupplyLinks.load(artifacts).forEach { (a, b) ->
                     require(a in adjacency.indices && b in adjacency.indices) {
                         "Commandery supply link references unknown province index $a/$b"
                     }
@@ -127,6 +144,7 @@ class HanSpatialSupplyProvider(
                 activeMapName,
                 scenarioCode,
                 liveCities,
+                artifacts,
             ).orEmpty(),
             strategicSupply = strategic,
         )
@@ -136,8 +154,10 @@ class HanSpatialSupplyProvider(
         cached ?: loadCanonical().also { cached = it }
     }
 
-    private fun loadCanonical(): CanonicalSpatialSupply {
-        val mapBytes = Files.readAllBytes(Path.of(mapPath))
+    private fun loadCanonical(
+        mapBytes: ByteArray = Files.readAllBytes(Path.of(mapPath)),
+        ownershipBytes: ByteArray = Files.readAllBytes(Path.of(ownershipPath)),
+    ): CanonicalSpatialSupply {
         val mapRoot = objectMapper.readTree(mapBytes)
         val provinces = mapRoot.requiredArray("provinceRecords")
         val provinceIds = provinces.map { it.requiredText("id") }
@@ -217,7 +237,7 @@ class HanSpatialSupplyProvider(
         val validatedAdjacency = adjacency.map { it.toIntArray() }
         validateSpatialAdjacency(validatedAdjacency, provinces.size)
 
-        val scenarios = objectMapper.readTree(Path.of(ownershipPath).toFile()).requiredArray("scenarios")
+        val scenarios = objectMapper.readTree(ownershipBytes).requiredArray("scenarios")
         val scenarioCodes = scenarios.map { it.requiredInt("scenarioCode") }
         requireUnique(scenarioCodes, "scenario code")
         val scenarioOwners = scenarios.associate { scenario ->

@@ -5,7 +5,7 @@ import opensamguk.logic.world.ActiveWorldMap
 
 object ActiveWorldMapValidator {
     fun validate(snapshot: WorldSnapshot) {
-        val variant = ActiveWorldMap.requireVariant(snapshot.state.config, snapshot.state.meta)
+        val variant = ActiveWorldMap.requireVariant(snapshot.state.config, snapshot.state.meta, snapshot.state.hanWorldVariant)
         val persistedIds = snapshot.cities.mapTo(linkedSetOf()) { it.id }
         check(persistedIds == variant.all().keys) {
             "worldId=${snapshot.worldId.value} mapName=${variant.mapName} persisted city ids do not match variant"

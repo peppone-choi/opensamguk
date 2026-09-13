@@ -94,7 +94,7 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         // 지도 변종에 없는 id 면 기본 지도로 한 번 더 찾는다 — 여기서 비면 「<G><b></b></>로 천도」가
         // 그대로 로그에 나간다. ConquerCity.minCityNameOf 와 같은 사슬이다.
-        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.displayName
+        val destCityName = context.env.cityConst.byId(destCityId)?.displayName
             ?: CityConst.byId(destCityId)?.displayName
             ?: ""
         val distance = context.cityDistance ?: 50

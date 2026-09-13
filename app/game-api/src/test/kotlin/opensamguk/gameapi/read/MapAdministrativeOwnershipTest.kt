@@ -13,6 +13,23 @@ class MapAdministrativeOwnershipTest {
     lateinit var tempDir: Path
 
     @Test
+    fun `historical ownership survives absent runtime files and applies a live conquest`() {
+        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
+        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            val artifacts = resolver.artifacts(variant)
+            val map = opensamguk.infra.seed.MapJson.loadMap(artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
+            val city = map.cities.first { it.provinceId != null }
+            val provinceIndex = requireNotNull(city.provinceId)
+            val before = projection.project("scenario_1020", emptyList(), artifacts)
+            val captured = projection.project("scenario_1020", listOf(LiveCityOwnership(city.id, provinceIndex, 999)), artifacts)
+            assertEquals(before.provinceOccupancy.map { it.provinceRecordId }, captured.provinceOccupancy.map { it.provinceRecordId })
+            assertEquals(999, captured.provinceOccupancy.single { it.provinceIndex == provinceIndex }.nationId)
+            assertEquals(before, projection.project("scenario_1020", emptyList(), artifacts))
+        }
+    }
+
+    @Test
     fun `commandery tie fallback prefers the lowest positive owner over neutral`() {
         assertEquals(1, resolveCommanderyController(mapOf(0 to 2, 1 to 2, 2 to 1), seatOwner = 2))
         assertEquals(0, resolveCommanderyController(mapOf(0 to 2), seatOwner = 0))

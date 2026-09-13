@@ -253,17 +253,21 @@ class DaemonLoopConfig {
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
         val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
+        val supplyArtifacts = if (activeMapName == "han-world-v3") {
+            opensamguk.infra.seed.HanWorldArtifactsResolver().artifacts(requireNotNull(state.hanWorldVariant))
+        } else null
         val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
             activeMapName = activeMapName,
             mapData = if (activeMapName in setOf("han", "han-world-v2", "han-world-v3")) {
-                MapJson.loadFromClasspath(activeMapName)
+                supplyArtifacts?.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
+                    ?.toString(Charsets.UTF_8)?.let(MapJson::loadMap) ?: MapJson.loadFromClasspath(activeMapName)
             } else {
                 MapJson.MapData(0, 0, emptyList())
             },
             scenarioCode = scenario,
             liveCityNations = { world.listCities().map { it.id to it.nationId } },
             loadNetwork = { mapName, scenarioCode, liveCities ->
-                hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot())
+                hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
             },
         )
 

@@ -277,6 +277,7 @@ class ReservedTurnHandler(
         env["mapName"] = ActiveWorldMap.requireName(state.config, state.meta)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear).copy(
             mapName = ActiveWorldMap.requireName(state.config, state.meta),
+            hanWorldVariant = state.hanWorldVariant,
         )
 
         if (actionCode == "che_전장이동") {
@@ -331,6 +332,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
+            hanWorldVariant = world.getState().hanWorldVariant,
         )
         val view = WorldStateViewAdapter(overlay, env = env, args = actionArgs)
         val result = evaluateConstraints(definition.buildConstraints(ctx), ctx, view)
@@ -794,7 +796,7 @@ class ReservedTurnHandler(
                 defenderNationGenerals = defenderNationGenerals,
                 allCitiesForBfs = logicCities,
                 diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
-                cityConstVariant = CityConstRegistry.of(activeMapName()),
+                cityConstVariant = world.getState().let { ActiveWorldMap.requireVariant(it.config, it.meta, it.hanWorldVariant) },
                 attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
                 attackerGeneralName = attacker.name,
                 attackerNationChiefIds = world.listGenerals()
@@ -1395,6 +1397,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
+            hanWorldVariant = world.getState().hanWorldVariant,
         )
         when (val result = evaluateConstraints(
             definition.buildConstraints(constraintContext),

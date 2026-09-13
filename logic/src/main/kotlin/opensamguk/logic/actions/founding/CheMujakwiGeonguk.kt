@@ -109,7 +109,7 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
      * `candidateCityDefence` 로 선적재하며, 없으면 0 = 판정 없음(che 기존 동작).
      */
     private fun chosenCity(cityId: Int, context: GeneralActionResolveContext): City = City(
-        id = cityId, nationId = 0, level = CityConstRegistry.of(context.env.mapName).byId(cityId)?.level ?: 5,
+        id = cityId, nationId = 0, level = context.env.cityConst.byId(cityId)?.level ?: 5,
         commerce = 0, commerceMax = 0, agriculture = 0, agricultureMax = 0,
         supplyState = 1, frontState = 0, trust = 0.0,
         defense = candidateCityDefence(context, cityId),

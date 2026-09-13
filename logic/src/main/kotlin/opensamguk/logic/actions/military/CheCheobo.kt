@@ -92,7 +92,7 @@ class CheCheobo(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
-        val cityConstVariant = CityConstRegistry.of(context.env.mapName)
+        val cityConstVariant = context.env.cityConst
         val destCityName = cityConstVariant.byId(destCityId)?.displayName ?: ""
         val josaUl = JosaUtil.pick(destCityName, "을")
 

@@ -7,6 +7,14 @@ object HotColdCatalog {
 
     val snapshotAccesses: List<SnapshotAccess> = listOf(
         SnapshotAccess(
+            methodName = "loadHistoricalMapPins",
+            relation = "water_zone_control/province_control/general_spatial_position",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "configured world_id exact in every channel; order independent identity checks",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
             methodName = "loadProvinceControlSnapshot",
             relation = "province_control",
             temperature = DataTemperature.ALWAYS_HOT,

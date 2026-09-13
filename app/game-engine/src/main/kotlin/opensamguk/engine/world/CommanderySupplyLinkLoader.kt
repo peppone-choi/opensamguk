@@ -28,8 +28,15 @@ class CommanderySupplyLinkLoader(
     @Volatile
     private var cached: List<Pair<Int, Int>>? = null
 
-    fun load(): List<Pair<Int, Int>> = cached ?: synchronized(this) {
+    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, List<Pair<Int, Int>>>()
+
+    fun load(artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null): List<Pair<Int, Int>> {
+        if (artifacts != null) return historical.computeIfAbsent(artifacts.variant) {
+            parse(objectMapper.readTree(artifacts.artifactBytes("data/map/han-commandery-supply-links-v1.json")))
+        }
+        return cached ?: synchronized(this) {
         cached ?: read().also { cached = it }
+        }
     }
 
     private fun read(): List<Pair<Int, Int>> {
@@ -37,6 +44,10 @@ class CommanderySupplyLinkLoader(
         // 파일이 없으면 링크 없음으로 둔다 — 보급이 오늘과 같아질 뿐, 부팅을 막지 않는다.
         if (!Files.isRegularFile(path)) return emptyList()
         val root = objectMapper.readTree(Files.readAllBytes(path))
+        return parse(root)
+    }
+
+    private fun parse(root: com.fasterxml.jackson.databind.JsonNode): List<Pair<Int, Int>> {
         val links = root.get("links") ?: return emptyList()
         require(links.isArray) { "han-commandery-supply-links links must be an array" }
         return links.map { row ->

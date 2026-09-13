@@ -38,6 +38,7 @@ class PrecheckStateViewFactory(
     private val diplomacies: DiplomacyReadRepository,
     private val worldStates: WorldStateReadRepository,
     private val battlefields: opensamguk.gameapi.read.BattlefieldReadRepository? = null,
+    private val worldArtifacts: opensamguk.gameapi.read.ActiveWorldArtifactResolver? = null,
 ) {
 
     /**
@@ -51,9 +52,11 @@ class PrecheckStateViewFactory(
         val view: MemoryStateView,
         val env: Map<String, Any?>,
         val diplomacy: List<Diplomacy>,
+        val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
     )
 
     /** Load + assemble the precheck state for [generalId], or `null` when the general row is absent. */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     fun build(
         generalId: Int,
         args: Map<String, Any?> = emptyMap(),
@@ -105,7 +108,10 @@ class PrecheckStateViewFactory(
             env = env,
             diplomacy = diplomacy,
         )
-        return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy)
+        val variant = if (env["mapName"] == "han-world-v3") {
+            requireNotNull(requireNotNull(worldArtifacts) { "V3 precheck requires a complete-world artifact resolver" }.resolve()?.artifacts).variant
+        } else null
+        return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy, hanWorldVariant = variant)
     }
 
     /** Build the `ConstraintContext.env` map from the singleton `world_state` via the shared builder. */

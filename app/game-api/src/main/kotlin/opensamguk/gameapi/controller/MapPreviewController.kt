@@ -6,15 +6,14 @@ import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
 import opensamguk.gameapi.dto.StrategicTopologyBinding
 import opensamguk.gameapi.read.ActiveWorldMap
-import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.ActiveWorldArtifactResolver
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import opensamguk.gameapi.read.LiveCityOwnership
 import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
-import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.gameapi.read.StrategicTopologyReadSource
 import opensamguk.infra.seed.MapJson
-import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -43,15 +42,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/map")
 class MapPreviewController(
-    private val cityReadRepository: CityReadRepository,
     private val nationReadRepository: NationReadRepository,
-    private val worldStateReadRepository: WorldStateReadRepository,
+    private val worlds: ActiveWorldArtifactResolver,
     private val nationEnvReadRepository: NationEnvReadRepository,
     private val mapAdministrativeOwnership: MapAdministrativeOwnership,
     private val objectMapper: ObjectMapper,
-    private val strategicSource: StrategicTopologyReadSource = StrategicTopologyReadSource(),
 ) {
-    private val log = LoggerFactory.getLogger(MapPreviewController::class.java)
 
     /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
      *  (하드코딩 X) — 좌표는 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) native 700×500 표시 전용 값. 프론트 transform이 캔버스 폭에
@@ -63,6 +59,7 @@ class MapPreviewController(
             ?.let { runCatching { objectMapper.readTree(it.value).asText() }.getOrNull() }
             ?.takeIf { it.isNotBlank() }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     @GetMapping("/preview")
     fun preview(): ResponseEntity<MapPreviewResponse> {
         return ResponseEntity.ok(build())
@@ -70,10 +67,12 @@ class MapPreviewController(
 
     private fun build(): MapPreviewResponse {
         // world clock — the singleton row. Unseeded ⇒ empty snapshot (year/month 0), never 500.
-        val world = worldStateReadRepository.findAll().firstOrNull()
+        val selected = worlds.resolve()
+        val world = selected?.world
 
         val mapCode = world?.let(ActiveWorldMap::requireName) ?: defaultMapCode
-        val mapData = loadMapData(mapCode)
+        val mapData = selected?.artifacts?.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
+            ?.toString(Charsets.UTF_8)?.let(MapJson::loadMap) ?: loadMapData(mapCode)
 
         if (world == null) {
             return MapPreviewResponse(
@@ -103,7 +102,7 @@ class MapPreviewController(
         val allNations = nationReadRepository.findAll()
         val capitalIds = allNations.mapNotNull { it.capitalCityId }.toSet()
 
-        val cities = cityReadRepository.findAll()
+        val cities = requireNotNull(selected).cities
             .mapNotNull { city ->
                 val coord = coords[city.id] ?: return@mapNotNull null // no coord → nothing to draw
                 MapPreviewCity(
@@ -131,6 +130,7 @@ class MapPreviewController(
         val administrativeOwnership = if (mapCode in setOf("han", "han-world-v2", "han-world-v3")) {
             mapAdministrativeOwnership.project(
                 scenarioCode = world.scenarioCode,
+                artifacts = selected.artifacts,
                 liveCities = cities.mapNotNull { city ->
                     city.provinceId?.let { provinceIndex ->
                         LiveCityOwnership(
@@ -181,19 +181,8 @@ class MapPreviewController(
             jurisdictionOwnership = administrativeOwnership?.jurisdictionOwnership.orEmpty(),
             commanderyControl = administrativeOwnership?.commanderyControl.orEmpty(),
             startYear = startYear,
-            strategicTopology = if (mapCode == "han-world-v3") optionalStrategicBinding(world.id) else null,
+            strategicTopology = selected.artifacts?.let { StrategicTopologyBinding.from(world.id, it.projection) },
         )
-    }
-
-    /** Invalid optional water data hides that layer; it cannot erase the validated land preview. */
-    private fun optionalStrategicBinding(worldId: Int): StrategicTopologyBinding? = try {
-        strategicSource.binding(worldId)
-    } catch (error: IllegalArgumentException) {
-        log.warn("Han V3 strategic layer unavailable for world {}", worldId, error)
-        null
-    } catch (error: IllegalStateException) {
-        log.warn("Han V3 strategic layer unavailable for world {}", worldId, error)
-        null
     }
 
     /** Decode `map/<code>.json` (committed, on the classpath via `:infra`) → 표시 dims + id→좌표.

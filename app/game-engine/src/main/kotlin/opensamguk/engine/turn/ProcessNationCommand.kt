@@ -260,7 +260,7 @@ class ProcessNationCommand(
             .filter { it.nationId == nationId }
             .mapTo(LinkedHashSet()) { it.id }
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
         val blockedCityIds = cityConst.all().keys.filterTo(HashSet()) { it !in ownedCityIds }
         return CalcCityDistance.calcCityDistance(capitalCityId, destCityId, blockedCityIds, cityConst)
             ?: CHEONDO_FALLBACK_DISTANCE
@@ -366,6 +366,7 @@ class ProcessNationCommand(
             args = args,
             env = env,
             mode = ConstraintMode.FULL,
+            hanWorldVariant = world.getState().hanWorldVariant,
         )
         return ctx to WorldStateViewAdapter(
             PerTurnOverlay(world),
@@ -498,7 +499,10 @@ class ProcessNationCommand(
         val ctx = GeneralActionResolveContext(
             draft = draft,
             rng = rng,
-            env = WorldEnvBuilder.worldEnv(year, startYear.ifZero { year }),
+            env = WorldEnvBuilder.worldEnv(year, startYear.ifZero { year }).copy(
+                mapName = world.getState().let { ActiveWorldMap.requireName(it.config, it.meta) },
+                hanWorldVariant = world.getState().hanWorldVariant,
+            ),
             month = month,
             date = date,
             args = resolveArgs,

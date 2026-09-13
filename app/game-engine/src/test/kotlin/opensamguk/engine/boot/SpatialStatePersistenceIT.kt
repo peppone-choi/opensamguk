@@ -62,7 +62,9 @@ class SpatialStatePersistenceIT {
     }
 
     private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)),
-        WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology }).buildSnapshot()
+        WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology },
+        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HanHistoricalWorldRoundTripIT.
+        hanVariantSelector = { _, _ -> opensamguk.logic.world.HanWorldVariant.V3_835 }).buildSnapshot()
     private fun read(id: Int) = SpatialStateReadRepository(named, GameApiProcessWorld(id)).readSnapshot(id, topology)
     private fun province(owner: Int, id: String = "p1") = ProvinceControlAssessment("r1", topology.contentHash, id, owner)
     private fun position(water: Boolean, generalId: Int = 7) = GeneralPositionAssessment("r1", topology.contentHash, generalId,

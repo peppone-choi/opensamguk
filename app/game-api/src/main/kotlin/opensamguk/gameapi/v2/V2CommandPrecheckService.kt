@@ -36,11 +36,11 @@ class V2CommandPrecheckService(
     private val states: PrecheckStateViewFactory,
     private val jdbc: NamedParameterJdbcTemplate,
     processWorld: GameApiProcessWorld,
-    private val loadTopology: () -> HanStrategicRouteProjection,
+    private val loadTopology: (() -> HanStrategicRouteProjection)?,
 ) {
     @Autowired
     constructor(states: PrecheckStateViewFactory, jdbc: NamedParameterJdbcTemplate, processWorld: GameApiProcessWorld) :
-        this(states, jdbc, processWorld, HanStrategicTopologyJson::loadDefault)
+        this(states, jdbc, processWorld, null)
 
     private val worldId = processWorld.worldId
 
@@ -120,7 +120,9 @@ class V2CommandPrecheckService(
         val to = state?.view?.get(RequirementKey.City(args.toCityId)) as? City
         val mapName = state?.env?.get("mapName") as? String
         val strategic = mapName == HAN_WORLD_V3_MAP_NAME
-        val route = if (strategic) resolveImmediateCityTransportRoute(args, loadTopology) else null
+        val route = if (strategic) resolveImmediateCityTransportRoute(args) {
+            loadTopology?.invoke() ?: historicalArtifacts.artifacts(requireNotNull(state?.hanWorldVariant)).projection
+        } else null
         val path = (route as? StrategicPathResult.Resolved)?.path
         val decisionArgs = if (preview && path != null) args.copy(
             topologyRevision = path.topologyRevision, routePathHash = path.pathHash,
@@ -155,4 +157,6 @@ class V2CommandPrecheckService(
         .firstOrNull() ?: Ledger(0, 0, 0)
 
     private data class Ledger(val gold: Long, val rice: Long, val garrison: Int)
+    private companion object { val historicalArtifacts = opensamguk.infra.seed.HanWorldArtifactsResolver() }
+
 }

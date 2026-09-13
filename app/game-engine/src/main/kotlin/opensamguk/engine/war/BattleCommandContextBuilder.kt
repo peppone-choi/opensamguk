@@ -59,7 +59,7 @@ object BattleCommandContextBuilder {
         }
 
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
         val distanceList = searchDistanceListToDest(attackerCityId, finalTargetCityId, allowedCityList, cityConst)
 
         // per-city defender generals (same-nation, non-neutral) (process_war.php:40-41).

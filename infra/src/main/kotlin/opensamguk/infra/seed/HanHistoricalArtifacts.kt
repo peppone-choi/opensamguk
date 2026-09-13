@@ -23,7 +23,10 @@ object HanHistoricalArtifacts {
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun loadFromDirectory(root: Path, variantId: String): HanStrategicRouteProjection {
+    fun loadFromDirectory(root: Path, variantId: String): HanStrategicRouteProjection =
+        loadBundleFromDirectory(root, variantId).projection
+
+    internal fun loadBundleFromDirectory(root: Path, variantId: String): ResolvedHanWorldArtifacts {
         val (commit, count) = requireNotNull(versions[variantId]) { "Unknown Han artifact set: $variantId" }
         try {
             val directory = root.resolve("data/map/han-world-artifacts-v1")
@@ -52,7 +55,10 @@ object HanHistoricalArtifacts {
                 entry.path("path").asText() to data
             }
             // Retain all existing manifest, identity, terrain and connectivity checks.
-            return HanStrategicTopologyJson.loadVersion("han-world-v3", count, bytes::getValue)
+            val runtimeVariant = opensamguk.logic.world.HanWorldVariant.entries.single { it.artifactId == variantId }
+            val projection = HanStrategicTopologyJson.loadVersion("han-world-v3", count, bytes::getValue)
+            val ownership = HanHistoricalOwnership.load(directory, variantId, commit)
+            return ResolvedHanWorldArtifacts(runtimeVariant, projection, bytes + ownership)
         } catch (error: IllegalArgumentException) {
             throw error
         } catch (error: Exception) {

@@ -116,6 +116,7 @@ class FrontInfoController(
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
     private val accessLogs: GeneralAccessLogReadRepository? = null,
     private val gameKv: GameKvRepository? = null,
+    private val worldArtifacts: opensamguk.gameapi.read.ActiveWorldArtifactResolver? = null,
 ) {
     private val canonicalPublicServerIdPattern = Regex("^[a-z0-9]{1,48}$")
     private val reservedPublicServerIds = setOf(
@@ -568,6 +569,9 @@ class FrontInfoController(
     private fun mapNameCh(): Map<Int, String> {
         val active = world.findAll().firstOrNull() ?: return emptyMap()
         val mapCode = runCatching { ActiveWorldMap.requireName(active) }.getOrNull() ?: return emptyMap()
+        if (mapCode == "han-world-v3") {
+            return requireNotNull(worldArtifacts) { "Historical city names require selected world artifacts" }.cityNames()
+        }
         return MapJson.loadFromClasspath(mapCode).cities
             .mapNotNull { city -> city.nameCh?.let { city.id to it } }
             .toMap()

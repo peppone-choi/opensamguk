@@ -71,7 +71,9 @@ class WaterControlPersistenceIT {
     }
 
     private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)),
-        WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology }).buildSnapshot()
+        WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology },
+        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HanHistoricalWorldRoundTripIT.
+        hanVariantSelector = { _, _ -> opensamguk.logic.world.HanWorldVariant.V3_835 }).buildSnapshot()
 
     private fun state(zone: String = "lake", revision: Long = 1, hash: String = topology.contentHash) =
         WaterControlState(topology.topologyRevision, hash, zone, 3L, emptyList(), WaterBlockadeState.OPEN, revision)

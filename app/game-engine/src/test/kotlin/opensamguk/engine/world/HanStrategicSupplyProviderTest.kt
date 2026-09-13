@@ -21,6 +21,34 @@ class HanStrategicSupplyProviderTest {
                 city.physicalPlaceRef, city.routeNodeKey) }
         }
 
+    @Test fun `historical supply uses frozen ownership links and policies without runtime files`() {
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val policy = HanSupplyDisconnectionPolicyLoader(mapper, "/missing/legacy", "/missing/tiles", "/missing/map", "/missing/source",
+            "/missing/v3policy", "/missing/v3map")
+        val historicalProvider = HanSpatialSupplyProvider(mapper, "/missing/tiles", "/missing/owners", policy,
+            CommanderySupplyLinkLoader(mapper, "/missing/links"))
+        for (variant in HanWorldVariant.entries) {
+            val bundle = artifacts.artifacts(variant)
+            val map = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
+            val live = map.cities.mapNotNull { city -> city.provinceId?.let {
+                SpatialSupplyCity(city.id, it, 0, city.physicalPlaceRef, city.routeNodeKey)
+            } }
+            val network = historicalProvider.network("han-world-v3", 1020, live,
+                WaterControlSnapshot.fromTopology(bundle.projection.topology), artifacts = bundle)
+            assertEquals(bundle.projection.topology.contentHash, network.strategicSupply?.topology?.contentHash)
+            assertEquals(live.associate { it.cityId to it.provinceIndex }, network.cityProvinceIndices)
+            assertFailsWith<IllegalArgumentException> {
+                historicalProvider.network("han-world-v3", 1020, live.mapIndexed { i, city ->
+                    if (i == 0) city.copy(physicalPlaceRef = "wrong") else city
+                }, artifacts = bundle)
+            }
+            val other = HanWorldVariant.entries.first { it != variant }
+            assertFailsWith<IllegalArgumentException> {
+                historicalProvider.network("han-world-v3", 1020, live, strategicProjection = artifacts.artifacts(other).projection, artifacts = bundle)
+            }
+        }
+    }
+
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)

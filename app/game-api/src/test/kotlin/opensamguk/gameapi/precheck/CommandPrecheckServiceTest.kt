@@ -79,6 +79,34 @@ class CommandPrecheckServiceTest {
     }
 
     @Test
+    fun `partial precheck view selects identity from the complete world roster`() {
+        val generals = mock(GeneralReadRepository::class.java)
+        val cities = mock(CityReadRepository::class.java)
+        val nations = mock(NationReadRepository::class.java)
+        val diplomacies = mock(DiplomacyReadRepository::class.java)
+        val worlds = mock(WorldStateReadRepository::class.java)
+        val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
+        val world = worldState().apply { config = config + ("mapName" to "han-world-v3") }
+        `when`(worlds.findAll()).thenReturn(listOf(world))
+        `when`(worlds.findProcessWorld()).thenReturn(world)
+        `when`(generals.findById(10)).thenReturn(Optional.of(general()))
+        `when`(cities.findById(5)).thenReturn(Optional.of(city().apply { worldId = 1 }))
+        `when`(pins.readPins(1)).thenReturn(emptyList())
+        val bundles = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val resolver = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins, bundles)
+        val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, worldArtifacts = resolver)
+        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            `when`(cities.findAll()).thenReturn(bundles.artifacts(variant).cityConst.all().keys.map {
+                CityReadEntity(id = it, worldId = 1)
+            })
+            val result = kotlin.test.assertNotNull(factory.build(10, loadAllCities = false))
+            assertEquals(variant, result.hanWorldVariant)
+        }
+        `when`(cities.findAll()).thenReturn(listOf(CityReadEntity(id = 5, worldId = 1)))
+        kotlin.test.assertFailsWith<IllegalArgumentException> { factory.build(10, loadAllCities = false) }
+    }
+
+    @Test
     fun `field deployment blocks city work before legacy city constraints`() {
         val factory = mock(PrecheckStateViewFactory::class.java)
         val actor = general().toLogic()

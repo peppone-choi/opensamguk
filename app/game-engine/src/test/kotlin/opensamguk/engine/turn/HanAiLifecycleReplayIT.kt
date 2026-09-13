@@ -62,8 +62,10 @@ class HanAiLifecycleReplayIT {
         jdbc = JdbcTemplate(dataSource)
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh database must seed scenario_1010")
-        val topology = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3").topology
-        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1), waterTopologyLoader = { topology })
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
+            waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+            hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant })
     }
 
     @AfterAll

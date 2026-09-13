@@ -26,7 +26,9 @@ import opensamguk.infra.persistence.WaterControlRowCodec
 import opensamguk.infra.persistence.ProvinceControlRowCodec
 import opensamguk.infra.seed.HistoricalBattlefieldCatalog
 import opensamguk.infra.persistence.GeneralPositionRowCodec
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.HanWorldTopologyPin
+import opensamguk.logic.world.HanWorldVariant
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.StrategicTopologySnapshot
 import opensamguk.logic.world.WaterControlSnapshot
@@ -67,7 +69,9 @@ class WorldSnapshotLoader(
     private val seedBootstrap: SeedBootstrap,
     private val worldId: WorldId,
     private val snapshotValidator: (WorldSnapshot) -> Unit = ActiveWorldMapValidator::validate,
-    private val waterTopologyLoader: () -> StrategicTopologySnapshot = { HanStrategicTopologyJson.loadDefault().topology },
+    private val waterTopologyLoader: (HanWorldVariant) -> StrategicTopologySnapshot = { historicalArtifacts.artifacts(it).projection.topology },
+    private val hanVariantSelector: (Collection<Int>, Collection<HanWorldTopologyPin>) -> HanWorldVariant =
+        { ids, pins -> historicalArtifacts.resolve(ids, pins).variant },
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -114,7 +118,7 @@ class WorldSnapshotLoader(
         val inheritancePrevious = inheritancePoints.mapValues { (_, values) ->
             (values["previous"]?.getOrNull(0) as? Number)?.toDouble() ?: 0.0
         }.filterValues { it != 0.0 }
-        val state = loadedState.copy(
+        var state = loadedState.copy(
             serverId = activeServerId,
             meta = LinkedHashMap(loadedState.meta).apply {
                 if (activeGame != null) {
@@ -147,6 +151,10 @@ class WorldSnapshotLoader(
             nation.copy(meta = meta)
         }
         val cities = loadCities()
+        val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
+        if (hasMap && ActiveWorldMap.requireName(state.config, state.meta) == "han-world-v3") {
+            state = state.copy(hanWorldVariant = hanVariantSelector(cities.map { it.id }, loadHistoricalMapPins()))
+        }
         val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
         val accessLogs = loadAccessLogs()
@@ -196,8 +204,21 @@ class WorldSnapshotLoader(
         // Small historical test snapshots may omit map identity; the production map validator still rejects them.
         val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
         if (!hasMap || ActiveWorldMap.requireName(state.config, state.meta) != "han-world-v3") return null
-        return waterTopologyLoader()
+        return waterTopologyLoader(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
     }
+
+    private fun loadHistoricalMapPins(): List<HanWorldTopologyPin> = jdbc.query(
+        """SELECT 'water_zone_control' AS channel, topology_revision, topology_hash
+            FROM water_zone_control WHERE world_id = ?
+            UNION ALL
+            SELECT 'province_control' AS channel, topology_revision, topology_hash
+            FROM province_control WHERE world_id = ?
+            UNION ALL
+            SELECT 'general_spatial_position' AS channel, topology_revision, topology_hash
+            FROM general_spatial_position WHERE world_id = ?""".trimIndent(),
+        { row, _ -> HanWorldTopologyPin(row.getString("channel"), row.getString("topology_revision"), row.getString("topology_hash")) },
+        worldId.value, worldId.value, worldId.value,
+    )
 
     private fun loadWaterControlSnapshot(topology: StrategicTopologySnapshot): WaterControlSnapshot {
         val rows = jdbc.query(
@@ -793,6 +814,7 @@ class WorldSnapshotLoader(
     )
 
     private companion object {
+        val historicalArtifacts = HanWorldArtifactsResolver()
         val coldBootMetaKeys: Set<String> = setOf("statisticRows", "nationHistory", "generalHistory", "globalLogs")
     }
 

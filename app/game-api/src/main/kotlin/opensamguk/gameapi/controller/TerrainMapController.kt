@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import java.nio.file.Files
 import java.nio.file.Path
 import org.springframework.beans.factory.annotation.Value
@@ -14,24 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * `GET /api/map/terrain` — 후한 군현 지형 격자(256×256)를 그대로 흘려보낸다.
- *
- * **왜 정적 리소스가 아니라 런타임 파일인가.** 이 격자는 CHGIS 파생물이고, ADR-LITE-039 는
- * CHGIS 파생물을 **저장소 번들·CDN·배포 이미지·런타임 allowlist 에 올리는 것을 금지**한다.
- * 그래서 jar 에 넣지 않고, 운영자가 읽기 전용으로 마운트한 경로를 읽는다 — F1 `SCENARIO_DIR`
- * 선례와 같은 형태다(`docker-compose.yml:106`). 파일이 없으면 **404** 이고 500 이 아니다.
- * 프런트는 404 를 보고 준비/오류 상태를 보인다. 다른 맵으로 바꾸지 않는다.
- *
- * **파싱하지 않는다.** `tools/map/build_tile_grid.py` 가 이미 굽고 불변식까지 검사한 blob 이라
- * 여기서 DTO 로 되돌렸다가 다시 직렬화할 이유가 없다. 바이트를 그대로 준다.
- *
- * **캐시.** 격자는 턴마다 바뀌지 않는다(소유 색칠은 `/api/map/preview` 가 라이브로 준다).
- * 크기·수정시각으로 만든 ETag 로 재방문을 304 로 끊는다 — 0.3MB 를 매번 다시 보내지 않는다.
+ * V3 terrain comes from the active world's verified historical artifact set.
+ * Its exact-byte ETag is privately revalidated on every request, including after resets.
+ * Legacy maps retain the configured runtime-file source and return 404 when absent.
  */
 @RestController
 @RequestMapping("/api/map")
 class TerrainMapController(
     @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapFile: String,
+    private val worlds: ActiveWorldArtifactResolver,
 ) {
 
     @GetMapping("/terrain")
@@ -40,6 +32,16 @@ class TerrainMapController(
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<ByteArray> {
         if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
+        if (mapCode == "han-world-v3") {
+            val selected = worlds.resolve()?.artifacts ?: return ResponseEntity.notFound().build()
+            val bytes = selected.artifactBytes("data/map/han-tiles.json")
+            val tag = "\"sha256-${java.security.MessageDigest.getInstance("SHA-256")
+                .digest(bytes).joinToString("") { "%02x".format(it) }}\""
+            val response = if (ifNoneMatch == tag) ResponseEntity.status(304) else ResponseEntity.ok()
+            return response.eTag(tag).cacheControl(CacheControl.noCache().cachePrivate().mustRevalidate())
+                .varyBy(HttpHeaders.COOKIE, HttpHeaders.AUTHORIZATION)
+                .contentType(MediaType.APPLICATION_JSON).body(if (ifNoneMatch == tag) null else bytes)
+        }
         val configured = Path.of(mapFile)
         val path: Path = if (mapCode == "han") configured else configured.resolveSibling("$mapCode-tiles.json")
         return servePath(path, MediaType.APPLICATION_JSON, ifNoneMatch, strongHash = mapCode == "han-world-v3")
@@ -49,7 +51,28 @@ class TerrainMapController(
     fun provinces(
         @RequestParam(defaultValue = "han") mapCode: String,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
-    ): ResponseEntity<ByteArray> = serveMapFile(mapCode, "provinces.png", MediaType.IMAGE_PNG, ifNoneMatch)
+    ): ResponseEntity<ByteArray> {
+        if (mapCode != "han-world-v3") return serveMapFile(mapCode, "provinces.png", MediaType.IMAGE_PNG, ifNoneMatch)
+        val selected = worlds.resolve()?.artifacts ?: return ResponseEntity.notFound().build()
+        val imagePath = Path.of(mapFile).resolveSibling("$mapCode-provinces.png")
+        val metadataPath = Path.of(mapFile).resolveSibling("$mapCode-provinces.meta.json")
+        if (!Files.isRegularFile(imagePath) || !Files.isRegularFile(metadataPath)) return ResponseEntity.notFound().build()
+        val bytes = Files.readAllBytes(imagePath)
+        val metadata = com.fasterxml.jackson.databind.ObjectMapper().readTree(Files.readAllBytes(metadataPath))
+        require(metadata.path("sourceSha256").asText() == sha256(selected.artifactBytes("data/map/han-tiles.json"))) {
+            "Province image source differs from selected historical terrain"
+        }
+        val imageHash = sha256(bytes)
+        require(metadata.path("pngSha256").asText() == imageHash) { "Province image content differs from build metadata" }
+        val tag = "\"sha256-$imageHash\""
+        return (if (ifNoneMatch == tag) ResponseEntity.status(304) else ResponseEntity.ok())
+            .eTag(tag).cacheControl(CacheControl.noCache().cachePrivate().mustRevalidate())
+            .varyBy(HttpHeaders.COOKIE, HttpHeaders.AUTHORIZATION).contentType(MediaType.IMAGE_PNG)
+            .body(if (ifNoneMatch == tag) null else bytes)
+    }
+
+    private fun sha256(bytes: ByteArray): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(bytes).joinToString("") { "%02x".format(it) }
 
     private fun serveMapFile(
         mapCode: String,
