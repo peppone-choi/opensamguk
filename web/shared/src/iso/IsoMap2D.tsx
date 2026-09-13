@@ -18,6 +18,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { attachMapGestures } from './mapGestures';
+import { MapSurfaceCache, type SurfaceBounds } from './mapSurfaceCache';
+import { observePixelRatio } from './observePixelRatio';
 import {
   MAX_LEVEL,
   SEAT_ONLY_TILE_PIXELS,
@@ -183,6 +185,10 @@ export function IsoMap2D({
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const surfaceCache = useMemo(() => new MapSurfaceCache(),
+    [data, sprites, tintMode, tintStrength, nationColorByOwner]);
+  useEffect(() => () => surfaceCache.dispose(), [surfaceCache]);
+
   // 실제로 쓰이는 (재질, 마스크) 짝만 받는다. 93장을 전부 받을 필요가 없다.
   const needed = useMemo(() => {
     const { code, mask } = data.grid;
@@ -265,54 +271,14 @@ export function IsoMap2D({
       ];
     };
 
-    const draw = () => {
-      frame = 0;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = canvas.clientWidth || 1;
-      const h = canvas.clientHeight || 1;
-      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      if (!view.fitted) {
-        // 타일 중심 x 는 −(rows−1)·128 … (cols−1)·128, y 는 0 … (cols+rows−2)·64 를 훑는다.
-        // 여기에 스프라이트가 중심 밖으로 뻗는 만큼(가로 ±128, 위 96 + 최대 단차)을 더한다.
-        const lift = MAX_LEVEL * STEP_SCREEN_PIXELS;
-        const minX = -(rows - 1) * HALF_W - HALF_W;
-        const maxX = (cols - 1) * HALF_W + HALF_W;
-        const minY = -ANCHOR_Y - lift;
-        const maxY = (cols + rows - 2) * HALF_H + (160 - ANCHOR_Y);
-        view.scale = Math.min(w / (maxX - minX), h / (maxY - minY)) * 0.95;
-        view.minScale = view.scale;
-        view.panX = w / 2 - ((minX + maxX) / 2) * view.scale;
-        view.panY = h / 2 - ((minY + maxY) / 2) * view.scale;
-        view.fitted = true;
-      }
-
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      context.fillStyle = '#0c0f0e'; // 팔레트 --bg
-      context.fillRect(0, 0, w, h);
-      context.save();
-      context.translate(view.panX, view.panY);
-      context.scale(view.scale, view.scale);
-      context.imageSmoothingEnabled = view.scale < 1;
-
-      // 화면에 걸리는 타일만 그린다. 화면 → 격자 역변환 네 귀퉁이로 범위를 잡는다.
-      const toCell = (sx: number, sy: number): [number, number] => {
-        const x = (sx - view.panX) / view.scale;
-        const y = (sy - view.panY) / view.scale;
-        return [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
-      };
-      const corners = [toCell(0, 0), toCell(w, 0), toCell(0, h), toCell(w, h)];
-      const cs = corners.map((p) => p[0]);
-      const rs = corners.map((p) => p[1]);
-      // 높이만큼 위로 뜬 타일이 잘리지 않게 뒤쪽으로 넉넉히 잡는다(최대 6단 = 192px).
-      const pad = 8;
-      const c0 = Math.max(0, Math.floor(Math.min(...cs)) - pad);
-      const c1 = Math.min(cols - 1, Math.ceil(Math.max(...cs)) + pad);
-      const r0 = Math.max(0, Math.floor(Math.min(...rs)) - pad);
-      const r1 = Math.min(rows - 1, Math.ceil(Math.max(...rs)) + pad);
-
+    const drawSurface = (context: CanvasRenderingContext2D, bounds: SurfaceBounds) => {
+      const toCell = (x: number, y: number) => [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
+      const corners = [toCell(bounds.x, bounds.y), toCell(bounds.x + bounds.width, bounds.y),
+        toCell(bounds.x, bounds.y + bounds.height), toCell(bounds.x + bounds.width, bounds.y + bounds.height)];
+      const c0 = Math.max(0, Math.floor(Math.min(...corners.map(p => p[0]))) - 8);
+      const c1 = Math.min(cols - 1, Math.ceil(Math.max(...corners.map(p => p[0]))) + 8);
+      const r0 = Math.max(0, Math.floor(Math.min(...corners.map(p => p[1]))) - 8);
+      const r1 = Math.min(rows - 1, Math.ceil(Math.max(...corners.map(p => p[1]))) + 8);
       // 화가 알고리즘: 깊이 d = c+r 오름차순. 같은 d 안에서는 순서가 겹치지 않는다.
       const skirtLeft = sprites.get('skirts/skirt-left')!;
       const skirtRight = sprites.get('skirts/skirt-right')!;
@@ -362,8 +328,7 @@ export function IsoMap2D({
             const i = r * cols + c;
             if (playable[i] === 0 || isWater(code[i])) continue;
             // 주인 없는 縣 은 칠하지 않는다 — 지형이 그대로 보인다(ownerTint 주석 참조).
-            // 소유 표는 서버 provinceOccupancy 가 1,520 省 전부를 담아 오고, 한 縣의 省은
-            // 다 같은 주인이다(MapAdministrativeOwnership) — 그래서 땅에 빵꾸가 안 난다.
+            // 중립 관할의 표시 여부는 서버 점령 데이터에 따른다.
             const rgb = tintMode === 'commandery'
               ? ownerTint(parentOwner[i], nationColorByOwner)
               : ownerTint(owner[i], nationColorByOwner);
@@ -443,6 +408,70 @@ export function IsoMap2D({
           context.stroke(path);
         }
         context.restore();
+      }
+
+      return drawn;
+    };
+
+    const draw = () => {
+      frame = 0;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.clientWidth || 1;
+      const h = canvas.clientHeight || 1;
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
+      if (!view.fitted) {
+        // 타일 중심 x 는 −(rows−1)·128 … (cols−1)·128, y 는 0 … (cols+rows−2)·64 를 훑는다.
+        // 여기에 스프라이트가 중심 밖으로 뻗는 만큼(가로 ±128, 위 96 + 최대 단차)을 더한다.
+        const lift = MAX_LEVEL * STEP_SCREEN_PIXELS;
+        const minX = -(rows - 1) * HALF_W - HALF_W;
+        const maxX = (cols - 1) * HALF_W + HALF_W;
+        const minY = -ANCHOR_Y - lift;
+        const maxY = (cols + rows - 2) * HALF_H + (160 - ANCHOR_Y);
+        view.scale = Math.min(w / (maxX - minX), h / (maxY - minY)) * 0.95;
+        view.minScale = view.scale;
+        view.panX = w / 2 - ((minX + maxX) / 2) * view.scale;
+        view.panY = h / 2 - ((minY + maxY) / 2) * view.scale;
+        view.fitted = true;
+      }
+
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.fillStyle = '#0c0f0e'; // 팔레트 --bg
+      context.fillRect(0, 0, w, h);
+      context.save();
+      context.translate(view.panX, view.panY);
+      context.scale(view.scale, view.scale);
+      context.imageSmoothingEnabled = view.scale < 1;
+
+      // 화면에 걸리는 타일만 그린다. 화면 → 격자 역변환 네 귀퉁이로 범위를 잡는다.
+      const toCell = (sx: number, sy: number): [number, number] => {
+        const x = (sx - view.panX) / view.scale;
+        const y = (sy - view.panY) / view.scale;
+        return [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
+      };
+      const corners = [toCell(0, 0), toCell(w, 0), toCell(0, h), toCell(w, h)];
+      const cs = corners.map((p) => p[0]);
+      const rs = corners.map((p) => p[1]);
+      // 높이만큼 위로 뜬 타일이 잘리지 않게 뒤쪽으로 넉넉히 잡는다(최대 6단 = 192px).
+      const pad = 8;
+      const c0 = Math.max(0, Math.floor(Math.min(...cs)) - pad);
+      const c1 = Math.min(cols - 1, Math.ceil(Math.max(...cs)) + pad);
+      const r0 = Math.max(0, Math.floor(Math.min(...rs)) - pad);
+      const r1 = Math.min(rows - 1, Math.ceil(Math.max(...rs)) + pad);
+
+      const surface = surfaceCache.get({ width: w, height: h, ...view, dpr }, drawSurface);
+      const drawn = surface ? surface.tiles : drawSurface(context, {
+        x: -view.panX / view.scale, y: -view.panY / view.scale,
+        width: w / view.scale, height: h / view.scale,
+      });
+      if (surface) {
+        const b = surface.bounds;
+        // The surface is already rasterized at device resolution; avoid a second blur.
+        context.imageSmoothingEnabled = false;
+        context.drawImage(surface.canvas, b.x, b.y, b.width, b.height);
+        context.imageSmoothingEnabled = view.scale < 1;
       }
 
       // 城 건물 — 세계 좌표. 지형과 같은 배율로 서야 등급별 크기가 뜻을 갖는다.
@@ -679,19 +708,21 @@ export function IsoMap2D({
     canvas.addEventListener('click', onClick);
     const observer = new ResizeObserver(schedule);
     observer.observe(canvas);
+    const stopObservingPixelRatio = observePixelRatio(schedule);
     schedule();
 
     return () => {
       if (frame) cancelAnimationFrame(frame);
       zoomRef.current = null;
       observer.disconnect();
+      stopObservingPixelRatio();
       gestures.dispose();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
-  }, [data, sprites, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
+  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
     currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
     battlefields, onPickBattlefield]);
 
