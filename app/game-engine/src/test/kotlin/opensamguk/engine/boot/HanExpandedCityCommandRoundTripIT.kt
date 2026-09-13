@@ -1,5 +1,10 @@
 package opensamguk.engine.boot
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.read.LiveCityOwnership
+import opensamguk.gameapi.read.MapAdministrativeOwnership
+import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyCity
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
@@ -118,6 +123,36 @@ class HanExpandedCityCommandRoundTripIT {
             val world = InMemoryTurnWorld(load())
             assertEquals(sourceId, world.getGeneralById(actor.id)!!.cityId)
             assertEquals(if (attack) enemyId else nationId, world.getCityById(destination)!!.nationId)
+            val mapper = ObjectMapper()
+            val apiOwnership = MapAdministrativeOwnership(mapper, "unused", "unused", "unused")
+            val supplyProvider = HanSpatialSupplyProvider(mapper, "unused", "unused")
+            val coords = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
+                .toString(Charsets.UTF_8)).cities.associateBy { it.id }
+            val provinces = mapper.readTree(bundle.artifactBytes("data/map/han-tiles.json")).path("provinceRecords")
+            val seat = assertNotNull(coords.getValue(destination).provinceId)
+            val jurisdiction = provinces[seat].path("jurisdictionId").asText()
+            val canonicalOwners = apiOwnership.project("1020", emptyList(), bundle).provinceOccupancy.map { it.nationId }
+            val affected = (0 until provinces.size()).filter { index ->
+                provinces[index].path("jurisdictionId").asText() == jurisdiction &&
+                    canonicalOwners[index] == canonicalOwners[seat]
+            }.toSet()
+            assertTrue(seat in affected)
+            fun owners(cities: List<City>): List<Int> {
+                val live = cities.mapNotNull { city -> coords.getValue(city.id).provinceId?.let {
+                    LiveCityOwnership(city.id, it, city.nationId)
+                } }
+                val api = apiOwnership.project("1020", live, bundle)
+                assertEquals(cities.single { it.id == destination }.nationId,
+                    api.jurisdictionOwnership.single { it.jurisdictionId == jurisdiction }.nationId)
+                val network = supplyProvider.network("han-world-v3", 1020, live.map {
+                    val coord = coords.getValue(it.cityId)
+                    SpatialSupplyCity(it.cityId, it.provinceIndex, it.nationId, coord.physicalPlaceRef, coord.routeNodeKey)
+                }, world.waterControlSnapshot(), artifacts = bundle)
+                return api.provinceOccupancy.map { it.nationId }.also {
+                    assertEquals(it, network.provinceOwners.toList(), "API/supply parity destination=$destination")
+                }
+            }
+            val beforeOwners = owners(world.listCities())
             val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()),
                 world.getState().meta["hiddenSeed"] as String,
                 (world.getState().meta["startYear"] as Number).toInt())
@@ -127,6 +162,12 @@ class HanExpandedCityCommandRoundTripIT {
             assertEquals(command, handled.definition.key)
             assertEquals(destination, world.getGeneralById(actor.id)!!.cityId, "$command movement destination=$destination")
             assertEquals(nationId, world.getCityById(destination)!!.nationId, "$command owner destination=$destination")
+            val afterOwners = owners(world.listCities())
+            for (index in beforeOwners.indices) {
+                assertEquals(if (index in affected) nationId else beforeOwners[index], afterOwners[index],
+                    "$command destination=$destination province=$index")
+                if (attack && index in affected) assertEquals(enemyId, beforeOwners[index])
+            }
             val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, world.consumeDirtyState())
             assertTrue(payload.updatedGenerals.any { it.id == actor.id })
             if (attack) assertTrue(payload.updatedCities.any { it.id == destination })
@@ -134,6 +175,7 @@ class HanExpandedCityCommandRoundTripIT {
             val restored = load()
             assertEquals(destination, restored.generals.single { it.id == actor.id }.cityId)
             assertEquals(nationId, restored.cities.single { it.id == destination }.nationId)
+            assertEquals(afterOwners, owners(restored.cities), "cold reload API/supply owners destination=$destination")
             assertEquals(currentIds, restored.cities.map { it.id }.toSet())
             assertEquals(baseline.state.hanWorldVariant, restored.state.hanWorldVariant)
             assertEquals(bundle.projection.topology.contentHash, assertNotNull(restored.waterControlSnapshot).topologyHash)
