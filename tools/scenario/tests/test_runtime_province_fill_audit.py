@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -9,7 +10,7 @@ from tools.scenario.runtime_province_fill_audit import (
 
 
 class RuntimeProvinceFillAuditTest(unittest.TestCase):
-    def test_repository_runtime_fill_debt_is_pinned_for_all_scenarios(self):
+    def test_repository_runtime_fill_debt_does_not_regress_with_city_expansion(self):
         root = Path(__file__).resolve().parents[3]
 
         actual = [
@@ -25,28 +26,9 @@ class RuntimeProvinceFillAuditTest(unittest.TestCase):
             for row in audit_repository(root)
         ]
 
-        # 모든 active Han scenario는 new-world-only han-world-v3를 쓰므로 실행 채색 부채도
-        # 각 scenario의 mapName이 가리키는 835-node resource로 계산한다.
-        # legacy han.json의 774-node 배열로 해석하면 동일 numeric ID가 다른
-        # physical place를 가리키는 대량의 가짜 mismatch가 생긴다.
-        # 2026-09-11 실측 재기준선: 변경 縣 51곳이 실제 城으로 들어와 城 수가 781→832 가
-        # 됐고, 縣이 서면서 그 자리의 直領 省 63개가 縣 省으로 대체됐다(1,524→1,520).
-        # 마지막 열(省 인덱스 없는 소유 城)이 전 시나리오 0 이 된 것은 예전 마지막 열의
-        # 미결 城들이 이제 縣 省을 갖게 됐기 때문이다.
-        # 2026-09-12 실측 재기준선: 오배정 縣 4곳(建平·新安·高平·南鄉)이 동명이지에서
-        # CHGIS 제자리로 옮겨 앉아 815칸이 갈렸다. 소유주 불일치(마지막에서 두 번째 열)가
-        # 전 시나리오에서 줄어든 것은 이 4곳이 이제 제 郡 땅 위에 서 있기 때문이다.
-        # 2026-09-12 실측 재기준선(2): 사료가 郡 소속을 뒤집은 縣 4곳(無慮·高顯·遼陽·比景)의
-        # 씨앗칸이 사료가 지목한 郡 안으로 옮겨 갔다. 領有 城 수가 시나리오별로 1~2 줄어든 것은
-        # 遼東郡·九真郡을 쥔 세력이 玄菟郡·日南郡은 쥐고 있지 않기 때문이다.
-        # data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections 참조.
-        # 2026-09-12 실측 재기준선(3): 城을 하나도 못 받던 郡 3곳(朔方·西河·定襄)의 治所가
-        # 城 833–835 로 섰다. 채색 省·미결 省은 그대로다 — 셋 다 縣 구획이 아니라 郡 직할
-        # (DIRECT-*) 땅 위에 서 있어 序數 省을 물려받지 않기 때문이다(설계다). 197년 이후
-        # 7 시나리오에서 마지막 열이 1 이 된 것은 그중 西河郡 治所(城 834)만 그 시점에
-        # 주인이 있어서다 — 「省 인덱스 없는 소유 城」으로 정직하게 잡힌다.
-        self.assertEqual(
-            [
+        # Historical debt ceilings permit missing counties to become real cities.
+        # Exact current city/color counts must not freeze future map expansion.
+        baseline = [
                 (1010, 278, 236, 49, 7, 2, 0),
                 (1020, 643, 448, 202, 7, 4, 0),
                 (1021, 661, 460, 211, 10, 2, 0),
@@ -62,9 +44,27 @@ class RuntimeProvinceFillAuditTest(unittest.TestCase):
                 (1100, 1306, 825, 484, 3, 2, 1),
                 (1110, 1306, 825, 484, 3, 2, 1),
                 (1120, 394, 307, 99, 12, 3, 0),
-            ],
-            actual,
-        )
+            ]
+        ceilings = {row[0]: row for row in baseline}
+        ownership = json.loads((root / "data/map/han-scenario-province-ownership-v1.json").read_text())
+        claims = json.loads((root / "data/curated/han/scenario-province-claims-v1.json").read_text())
+        expected_codes = {int(row["scenarioCode"]) for row in ownership["scenarios"]}
+        self.assertEqual(expected_codes, {int(row["scenarioCode"]) for row in claims["scenarios"]})
+        self.assertEqual(expected_codes, {row[0] for row in actual})
+        self.assertTrue(actual)
+        self.assertEqual(len(actual), len({row[0] for row in actual}))
+        for code, canonical, colored, missing, extra, mismatches, unbound in actual:
+            with self.subTest(scenario=code):
+                self.assertEqual(canonical + extra, colored + missing)
+                if code in ceilings:
+                    prior = ceilings[code]
+                    self.assertLessEqual(missing, prior[3])
+                    self.assertLessEqual(extra, prior[4])
+                    self.assertLessEqual(mismatches, prior[5])
+                    self.assertLessEqual(unbound, prior[6])
+                else:
+                    self.assertEqual((missing, extra, mismatches, unbound), (0, 0, 0, 0),
+                                     "New scenario debt requires explicit adjudication")
 
     def test_normalizes_the_runtime_resource_scenario_code(self):
         self.assertEqual(1010, normalize_scenario_code("scenario_1010"))

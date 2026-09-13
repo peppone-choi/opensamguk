@@ -7,10 +7,10 @@
         "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
       },
       "administrativePlaceOverlay": {
-        "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
+        "sha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7"
       },
       "candidate": {
-        "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
+        "sha256": "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39"
       },
       "externalClaims": {
         "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
@@ -22,13 +22,13 @@
         "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       },
       "locationAdjudications": {
-        "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
+        "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88"
       },
       "reviewPolicy": {
-        "sha256": "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
+        "sha256": "7ac029ea55aa3b3a0afb9d10f67643a8d88682bd7f811d3d923520294bf7a475"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
+        "sha256": "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
       }
     }
   },
@@ -26541,6 +26541,303 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:109:河內郡:013",
+      "canonicalName": "脩武",
+      "displayName": "脩武",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 836,
+      "parentName": "河內郡",
+      "parentRef": "hhs-group:109:河內郡",
+      "physicalPlaceRef": "chgis:v6:cnty:82265",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0dd5fe30-f1d0-4616-8191-b3b3eae26d66",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:012",
+      "canonicalName": "眞定",
+      "displayName": "眞定",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 837,
+      "parentName": "常山國",
+      "parentRef": "hhs-group:110:常山國",
+      "physicalPlaceRef": "chgis:v6:cnty:88410",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "d7f66692-4abd-44cd-94e3-8b0750a106ae",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:110:鉅鹿郡:002",
+      "canonicalName": "鉅鹿",
+      "displayName": "鉅鹿",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 838,
+      "parentName": "鉅鹿郡",
+      "parentRef": "hhs-group:110:鉅鹿郡",
+      "physicalPlaceRef": "chgis:v6:cnty:87051",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8de160d3-de11-4976-b580-f73493dd3b47",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:111:東郡:011",
+      "canonicalName": "發干",
+      "displayName": "發干",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 839,
+      "parentName": "東郡",
+      "parentRef": "hhs-group:111:東郡",
+      "physicalPlaceRef": "chgis:v6:cnty:45323",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "178cce9d-9a9a-45e7-8bd5-3deaca47fb84",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:111:東平國:007",
+      "canonicalName": "寧陽",
+      "displayName": "寧陽",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 840,
+      "parentName": "東平國",
+      "parentRef": "hhs-group:111:東平國",
+      "physicalPlaceRef": "chgis:v6:cnty:45277",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b1bc82f5-4d65-453f-b625-cfd90f14ffde",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:111:琅邪國:011",
+      "canonicalName": "卽丘",
+      "displayName": "卽丘",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "MARQUISATE_NODE",
+      "numericCityId": 841,
+      "parentName": "琅邪國",
+      "parentRef": "hhs-group:111:琅邪國",
+      "physicalPlaceRef": "chgis:v6:cnty:85577",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8205f187-0098-463d-aa26-a4b52b71d0f3",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:014",
+      "canonicalName": "復陽",
+      "displayName": "復陽",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "MARQUISATE_NODE",
+      "numericCityId": 842,
+      "parentName": "南陽郡",
+      "parentRef": "hhs-group:112:南陽郡",
+      "physicalPlaceRef": "chgis:v6:cnty:82680",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "28dd474e-27b4-42d9-aafa-5b411bdf9517",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:004",
+      "canonicalName": "餘杭",
+      "displayName": "餘杭",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 843,
+      "parentName": "吳郡",
+      "parentRef": "hhs-group:112:吳郡",
+      "physicalPlaceRef": "chgis:v6:cnty:40085",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "3bbf7ce0-9f1f-4338-984d-ab0d6d609f24",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:112:濟南國:004",
+      "canonicalName": "臺",
+      "displayName": "臺",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 844,
+      "parentName": "濟南國",
+      "parentRef": "hhs-group:112:濟南國",
+      "physicalPlaceRef": "chgis:v6:cnty:45113",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "96e4fdb6-87c9-479a-bfec-0eb921836ca8",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:蜀郡:008",
+      "canonicalName": "汶江道",
+      "displayName": "汶江道",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "DAO_NODE",
+      "numericCityId": 845,
+      "parentName": "蜀郡",
+      "parentRef": "hhs-group:113:蜀郡",
+      "physicalPlaceRef": "chgis:v6:cnty:200253",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0ff30f4d-dedf-4367-86b5-9385f1797356",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:蜀郡:011",
+      "canonicalName": "绵虒道",
+      "displayName": "绵虒道",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "DAO_NODE",
+      "numericCityId": 846,
+      "parentName": "蜀郡",
+      "parentRef": "hhs-group:113:蜀郡",
+      "physicalPlaceRef": "chgis:v6:cnty:200261",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -26656,105 +26953,105 @@
         "resourceName": "scenario_1010.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
         "scenarioId": "1010",
-        "sha256": "f300cb8e828d524369a95dfeafda367a6dab95b9604a54ba2b6ce375b0208467",
+        "sha256": "20fb3211e1e74408d3957b217ab80fcecac4c67f8d548355cdb541b119cfc53d",
         "startYear": 181
       },
       {
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "f0955bee9886aac5b1bc4a891da787f9f31db14966def1afc6793d95bab93bb1",
+        "sha256": "da726c065a62aa3a0bc15a2c6089843e0d1f4bdd81a45e3b019dc8834fab682d",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "33eb97475ba9fc73b0154652b5135b8801278a31c8357ee83a246fdd73034867",
+        "sha256": "aa864d855de1ada5b816add3d60a00d67cd4885d1ebe6ed52c5a8a4d0f6170ec",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "519005f8e8e87bf0f71d987cdc2f723d30d7502ea28562e848d67a99f920d7ae",
+        "sha256": "36306c495f8670ea9b604381b1a249a13a9c2a3ed16c502bbf38e8873dc486dc",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "e2fedb907d8aa0304228fa0474f7d21fb4efddb72435c1968c4348df1f7f3698",
+        "sha256": "ccecc58f5f3134b6c00782bf9dcb35da39cebafd8dedbddb6451ca513e6f396f",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "1c1bed3a6a53cc3e84dc19e87a9b3609be0dc35151bfb0280f819c911f3a2fd5",
+        "sha256": "c5bebd9d7c895972b499a123824ee8a919a20644373fb45045d2e5f77a636974",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "b34304788515b2ee30f55ea82dc3b825f6ed757486f9986ca4700b08886677a4",
+        "sha256": "c0351dd7427f6b96dd6436ad2e70cbf2dbdba2958c13bb3ba8512bd832c0c903",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "24da33172578e5071c3cde740b14a75f594f23b79ff2170beaf7f539ae553db1",
+        "sha256": "1681bd136cfd684d43bc4d736199c54d7b49c053263a7614d9b1b32e415de9d0",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "913c017e5b57335bc10c6e190230d6c479d2e6e9ef1ebb24b7bb0e2eee4e9dfa",
+        "sha256": "c577bef1ff9e5b02404bbfe3fb54340696fda2d89ee5713532d9011dcdbccc2c",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "21c9d903c8cc298a2370af4db9745a106a1bda9e0ecb2f2886a3889db93129d7",
+        "sha256": "231d7437ffc49760eea15d42b850f5323c37cfe291e575c5dde2fd521b670b5c",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "5f3234539f5375f703f9f7220565fec06277e65d9d2d52ec20d2a5a634ebb899",
+        "sha256": "ad073bfe51401b25987f9326d965ee670bbcf65729ad43d4dd1a43cd1b5f659e",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "92da1dbac6741c603d63b6055b38121f405fac73dbe434942b4918b87ad94296",
+        "sha256": "241758ddb2a80d71010df444457c7fc9e4a1d7dc007f198c0b45f52f8feac69e",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "9dda3ebbb6ceea5fcd5b1ff3791ecf789ce54109fbfd9b71f57f319770199d71",
+        "sha256": "b57632412dd989b042b7f1a6037e57ac5028e5c1d8d005c546e39fce16b32d9c",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "873ea938a3cb4fc67c0b578be87f4c707743568a002377f17600677a974a1ce6",
+        "sha256": "2aa3bdbb3e97199a0c109d414489f818647018b096f131e771914cee45493212",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "4f6e72f12428cc26b194fcb23fc318a5209a123b7e329b2290cb4c4986b3a062",
+        "sha256": "50ef6fee148ca48705c1bd26b300ec0c4509e791b27a770a7cb6fb37e01282e1",
         "startYear": 188
       },
       {
@@ -26769,9 +27066,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 835,
+    "approvedCount": 846,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 835
+      "HHS_ADMINISTRATIVE_UNIT": 846
     }
   },
   "worldVersion": "han-world-v3"

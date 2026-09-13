@@ -146,13 +146,11 @@ class HanAiLifecycleReplayIT {
         },
     ): ReplayResult {
         assertEquals("han-world-v3", snapshot.state.config["mapName"], "scenario_1010 must exercise the new-world-only Han variant")
-        assertEquals(835, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
-        assertEquals((1..835).toSet(), snapshot.cities.map { it.id }.toSet())
-        // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「제남국 역성현」이다
-        // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」, 2026-09-12 「군현제 안에선 뭐뭐군 뭐뭐현으로
-        // 표기해」). 규칙은 tools/scenario/build_han_world.py display_name 이 한 번 계산해
-        // meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
-        assertEquals("제남국 역성현", snapshot.cities.single { it.id == 781 }.name)
+        val expectedCities = opensamguk.infra.seed.MapJson.loadFromClasspath("han-world-v3").cities
+        assertEquals(expectedCities.size, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
+        assertEquals(expectedCities.map { it.id }.toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals(expectedCities.associate { it.id to (it.displayName ?: it.name) },
+            snapshot.cities.associate { it.id to it.name })
         assertEquals(230, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 
         val world = InMemoryTurnWorld(snapshot)
@@ -282,7 +280,8 @@ class HanAiLifecycleReplayIT {
     }
 
     private fun attackFixture(base: WorldSnapshot): ControlledFixture {
-        val han = CityConstRegistry.of("han")
+        val han = opensamguk.logic.world.ActiveWorldMap.requireVariant(
+            base.state.config, base.state.meta, base.state.hanWorldVariant)
         require(421 in checkNotNull(han.byId(3)).path)
         require(CityConstRegistry.of("che").byId(421) == null)
         val actorNation = base.nations.first { nation -> base.generals.any { it.nationId == nation.id } }
@@ -403,7 +402,8 @@ class HanAiLifecycleReplayIT {
     }
 
     private fun foundingFixture(base: WorldSnapshot): ControlledFixture {
-        val han = CityConstRegistry.of("han")
+        val han = opensamguk.logic.world.ActiveWorldMap.requireVariant(
+            base.state.config, base.state.meta, base.state.hanWorldVariant)
         val city = checkNotNull(base.cities.firstOrNull { it.id == 75 && it.nationId == 0 })
         require(isFoundableCityLevel(checkNotNull(han.byId(city.id)).level))
         val actors = base.generals.take(2)
@@ -438,7 +438,8 @@ class HanAiLifecycleReplayIT {
     }
 
     private fun wanderingMoveFixture(base: WorldSnapshot): ControlledFixture {
-        val han = CityConstRegistry.of("han")
+        val han = opensamguk.logic.world.ActiveWorldMap.requireVariant(
+            base.state.config, base.state.meta, base.state.hanWorldVariant)
         require(421 in checkNotNull(han.byId(3)).path)
         require(CityConstRegistry.of("che").byId(421) == null)
         val actors = base.generals.take(2)
@@ -455,7 +456,14 @@ class HanAiLifecycleReplayIT {
                 )
             } else if (general.id == actors[1].id) {
                 general.copy(nationId = nationId, cityId = 3, officerLevel = 12, npcState = 2, turnTime = future)
-            } else general.copy(turnTime = future)
+            } else general.copy(
+                turnTime = future,
+                // The destination must be unoccupied by both a nation and another lord.
+                cityId = if (general.cityId == 421) 3 else general.cityId,
+            )
+        }
+        require(generals.none { it.cityId == 421 && it.officerLevel == 12 }) {
+            "Controlled destination occupied by lord: " + generals.filter { it.cityId == 421 && it.officerLevel == 12 }.map { it.id }
         }
         val wandering = Nation(
             id = nationId, name = "Han replay wanderer", color = "#654321", level = 0, capitalCityId = 0,

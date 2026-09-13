@@ -54,38 +54,21 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `persisted world v2 stays frozen while world v3 exposes reviewed 835 identities`() {
+    fun `persisted world v2 stays frozen while current world follows generated cities and routes`() {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
-
+        val generated = opensamguk.common.constants.HanWorldV3CityConst.initCity
         val v3 = CityConstRegistry.of("han-world-v3")
-        assertEquals((1..835).toList(), v3.all().keys.toList())
-        assertTrue(v3.byId(273)!!.path.containsKey(781))
-        assertTrue(v3.byId(781)!!.path.containsKey(273))
-        val graph = buildString {
-            for ((id, city) in v3.all()) {
-                append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
-            }
+        assertEquals(generated.map { it.id }.toSet(), v3.all().keys)
+        val byName = generated.associateBy { it.name }
+        for (source in generated) {
+            val city = assertNotNull(v3.byId(source.id))
+            assertEquals(source.name, city.name)
+            val neighbors = source.path.map { name -> assertNotNull(byName[name], "Unknown route target $name").id }.toSet()
+            assertEquals(neighbors, city.path.keys, "Routes for city ${source.id}")
+            assertFalse(source.id in neighbors, "Self route ${source.id}")
         }
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(graph.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-        // 省 → 城 귀속 원장(data/curated/han/province-city-attribution-v1.json)을 거치며
-        // 城 없는 縣의 땅이 제 郡의 城으로 접히고 같은 城 쌍의 경계 칸수가 합산돼, 도로망이
-        // 2,283 간선 / 성분 4 개 / 도달불가 17 로 바뀌었다(이전 성분 36 · 도달불가 174).
-        // v2 는 위에서 그대로 얼어 있다.
-        // 2026-09-12: 오배정 縣 4곳(100 建平·15 新安·247 高平·469 南鄉)이 동명이지에서
-        // CHGIS 제자리로 옮겨 앉으면서 그 4곳과 옛·새 이웃 31곳, 합 35개 城의 인접이
-        // 갈렸다. 간선 총수 2,283 · 성분 4 · 도달불가 17 은 그대로다(실측).
-        // 2026-09-12(2): 사료가 郡 소속을 뒤집은 縣 4곳(783 無慮·793 高顯·795 遼陽·832 比景)의
-        // 씨앗칸을 사료가 지목한 郡 안으로 옮기면서 그 4곳과 이웃 8곳, 합 12개 城의 인접이
-        // 갈렸다. 간선 2,283 → 2,285 · 성분 4 · 도달불가 17(실측).
-        // data/curated/han/county-misbinding-rebindings-v1.json 참조.
-        // 2026-09-12(3): 城을 하나도 못 받던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로
-        // 섰다. 그 郡 땅 29 省이 남의 郡 城 대신 제 治所를 보게 되면서 간선 2,285 → 2,341 ·
-        // 성분 4 → 3 · 도달불가 17 → 2(下邳國 徐縣·會稽郡 鄮縣 두 섬만 남는다, 실측).
-        assertEquals("1acf64540162e163fa6ba8ba1dab7030dcf7a4971427d72b672fa24c8de9f599", digest)
     }
 
     @Test

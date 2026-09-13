@@ -42,10 +42,12 @@ VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contra
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
 LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location)
-# + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 835}
+# + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location)
+# + 836..846 간체표 폴딩 결합 11곳 (w1-script-variant-county-join; 귀속 충돌 5곳 제외).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 846}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
+SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 # LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 邊郡 治所 8 곳, han-world-v3 는 거기에
 # 城 없던 郡治 3 곳(朔方·西河·定襄)과 변경 縣 51 곳이 더 붙는다. 어느 판인지는 selection.worldVersion
@@ -72,7 +74,7 @@ AUTHORITY_EXACT_FIELDS = tuple(VALIDATION_CONTRACT["externalAuthorityExactFields
 REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
-    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH}
+    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
 FORBIDDEN_FIELDS = frozenset(
@@ -109,11 +111,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
 PINNED_SOURCE_WITNESS_SHA256 = "fd0019d96389e74ed8dc79bae89d23b3b30a8db25d096f9162259a2b87bf7789"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
-PINNED_REVIEW_POLICY_SHA256 = "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39"
+PINNED_REVIEW_POLICY_SHA256 = "7ac029ea55aa3b3a0afb9d10f67643a8d88682bd7f811d3d923520294bf7a475"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -919,6 +921,24 @@ def adjudications_or_empty(adjudications: dict[str, JsonObject] | None) -> dict[
 
 def _location_claim_batch(point_ref: str) -> str:
     return FRONTIER_COUNTY_BATCH if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+
+
+def _script_variant_members(source_root: Path) -> frozenset:
+    # 생산 승인 모드는 별도 핀 게이트가 정책 파일의 존재·해시를 먼저 강제하므로, 여기서
+    # 파일이 없으면 fixture 루트다. 빈 집합이면 w1 노드는 w0b 기대와 어긋나 실패한다.
+    policy_path = _resolved_repository_path(source_root, PROVENANCE_DEPENDENCIES["reviewPolicy"], "review policy")
+    if not policy_path.is_file():
+        return frozenset()
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    batches = [row for row in policy.get("selectionBatches", []) if row.get("batchId") == SCRIPT_VARIANT_BATCH]
+    if len(batches) != 1 or batches[0].get("reviewState") != "APPROVED":
+        _fail("script-variant batch must appear exactly once as APPROVED in review policy")
+    members = batches[0].get("memberAdministrativeUnitIds")
+    if not isinstance(members, list) or not members or not all(isinstance(item, str) for item in members):
+        _fail("script-variant batch must declare a non-empty member unit list")
+    if len(set(members)) != len(members) or len(members) != batches[0].get("expectedCount"):
+        _fail("script-variant batch members must be unique and match its expected count")
+    return frozenset(members)
 
 
 def _claims_index(
@@ -1862,6 +1882,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
     used_claims: set[str] = set()
     ambiguous_count = 0
     used_adjudications: set[str] = set()
+    script_variant_members = _script_variant_members(documents.source_root)
     location_count = 0
     external_count = 0
     for node in raw_nodes:
@@ -1934,7 +1955,9 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             if claim_bound and join_status == "AMBIGUOUS_POINT" and unit_id in adjudications_or_empty(adjudications):
                 _fail(f"approved ambiguity cannot also bind a location claim: {unit_id}")
             if join_status == "RESOLVED_POINT":
-                expected_review_batch = "w0b-overlay-unique-220"
+                expected_review_batch = (
+                    SCRIPT_VARIANT_BATCH if unit_id in script_variant_members else "w0b-overlay-unique-220"
+                )
                 if node.get("physicalPlaceRef") not in refs:
                     _fail(f"resolved HHS binding physicalPlaceRef mismatch: {unit_id}")
                 adjudication = _mapping(node.get("locationAdjudication"), "locationAdjudication")

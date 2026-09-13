@@ -16,7 +16,7 @@
  ],
  "stats": {
   "linkCount": 69,
-  "medianKm": 47.3,
+  "medianKm": 44.4,
   "p90Km": 161.0,
   "maxKm": 397.3
  },
@@ -196,6 +196,14 @@
    "fromCityName": "서문",
    "toCityName": "합포",
    "distanceKm": 196.7
+  },
+  {
+   "canonicalGroup": "吳郡",
+   "fromProvinceIndex": 28,
+   "toProvinceIndex": 29,
+   "fromCityName": "여항",
+   "toCityName": "부춘",
+   "distanceKm": 24.2
   },
   {
    "canonicalGroup": "吳郡",
@@ -454,14 +462,6 @@
    "distanceKm": 38.6
   },
   {
-   "canonicalGroup": "琅邪國",
-   "fromProvinceIndex": 386,
-   "toProvinceIndex": 743,
-   "fromCityName": "증",
-   "toCityName": "개양",
-   "distanceKm": 52.1
-  },
-  {
    "canonicalGroup": "益州郡",
    "fromProvinceIndex": 414,
    "toProvinceIndex": 425,
@@ -511,11 +511,11 @@
   },
   {
    "canonicalGroup": "鉅鹿郡",
-   "fromProvinceIndex": 794,
-   "toProvinceIndex": 856,
-   "fromCityName": "임",
-   "toCityName": "남화",
-   "distanceKm": 12.6
+   "fromProvinceIndex": 773,
+   "toProvinceIndex": 862,
+   "fromCityName": "거록",
+   "toCityName": "평향",
+   "distanceKm": 0.0
   },
   {
    "canonicalGroup": "陳留郡",

@@ -248,7 +248,7 @@ class HanWorldV3Test(unittest.TestCase):
                 city["meta"]["isSeat"],
             )
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(835, len(actual))
+        self.assertEqual(846, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -401,7 +401,7 @@ class HanWorldV3Test(unittest.TestCase):
             )
         self.assertEqual(80, seats)
         # 704 + 변경 縣 51 = 755 (郡治 51곳은 이미 서 있어 縣으로 오지 않는다).
-        self.assertEqual(755, counties)
+        self.assertEqual(766, counties)
         # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
         self.assertNotIn(4, {city["level"] for city in world["cities"]})
 
@@ -517,8 +517,8 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(835, len(world["cities"]))
-        self.assertEqual(834, len(changed))
+        self.assertEqual(846, len(world["cities"]))
+        self.assertEqual(845, len(changed))
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

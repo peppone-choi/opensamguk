@@ -8,6 +8,28 @@ import kotlin.test.*
 class HanWorldArtifactsResolverTest {
     private val resolver = HanWorldArtifactsResolver(Path.of("..").toAbsolutePath().normalize())
 
+    @Test fun `current generated release resolves complete identities and rejects historical pins`() {
+        val mapPath = Path.of("src/main/resources/map/han-world-v3.json")
+        val map = com.fasterxml.jackson.databind.ObjectMapper().readTree(java.nio.file.Files.readAllBytes(mapPath))
+        val ids = map.path("cities").map { it.path("id").asInt() }
+        val selected = resolver.resolve(ids, emptyList())
+        assertEquals(ids.toSet(), selected.cityConst.all().keys)
+        assertEquals(ids.toSet(), selected.projection.bindingsByCityId.keys)
+        assertContentEquals(java.nio.file.Files.readAllBytes(mapPath),
+            selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json"))
+        for (path in listOf("data/map/han-scenario-province-ownership-v1.json",
+            "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
+            "data/map/han-commandery-supply-links-v1.json",
+            "data/curated/han/territory-disconnection-adjudications-v1.json",
+            "data/curated/han/supply-disconnection-adjudications-v3.json")) {
+            assertTrue(selected.artifactBytes(path).isNotEmpty(), path)
+        }
+        val prior = resolver.resolve((1..835).toList(), emptyList()).projection.topology
+        assertFailsWith<IllegalArgumentException> {
+            resolver.resolve(ids, listOf(HanWorldTopologyPin("province_control", prior.topologyRevision, prior.contentHash)))
+        }
+    }
+
     @Test fun `complete old and current rosters select distinct verified bundles without persisted pins`() {
         val old = resolver.resolve((1..832).toList(), emptyList())
         val current = resolver.resolve((1..835).toList(), emptyList())

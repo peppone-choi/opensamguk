@@ -231,6 +231,32 @@ class AdministrativePlaceOverlayTest(unittest.TestCase):
         self.assertEqual(["龟兹属国", "龜茲"], row["matchNames"])
         self.assertEqual("RESOLVED_POINT", row["joinStatus"])
 
+    def test_script_variant_without_table_stays_unjoined(self):
+        doc = MODULE.build_overlay(
+            catalog([unit(1, "餘杭")]),
+            [record("R1", "余杭县")],
+            source_year=220,
+        )
+
+        row = doc["administrativeUnits"][0]
+        self.assertEqual("NO_COORDINATE_CANDIDATE", row["joinStatus"])
+        self.assertNotIn("selectedCandidate", row)
+
+    def test_simplification_table_folds_script_variant_without_changing_source_reading(self):
+        doc = MODULE.build_overlay(
+            catalog([unit(1, "餘杭")]),
+            [record("R1", "余杭县")],
+            source_year=220,
+            simplification={"餘": "余"},
+        )
+
+        row = doc["administrativeUnits"][0]
+        self.assertEqual("RESOLVED_POINT", row["joinStatus"])
+        self.assertEqual("餘杭", row["sourceName"])
+        self.assertIn("余杭", row["matchNames"])
+        self.assertEqual("chgis:v6:cnty:R1", row["selectedCandidate"]["physicalPlaceId"])
+        self.assertIn("余杭", row["selectedCandidate"]["matchedNames"])
+
     def test_damaged_source_placeholder_is_never_auto_joined(self):
         doc = MODULE.build_overlay(
             catalog([unit(1, "参[�]", status="SOURCE_PLACEHOLDER")]),

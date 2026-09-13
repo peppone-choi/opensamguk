@@ -74,7 +74,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
         # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
         self.assertEqual(105_711, ledger["summary"]["directTerritoryCellCount"])
-        self.assertEqual(836, ledger["summary"]["exactApprovedRowCount"])
+        self.assertEqual(847, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -424,7 +424,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(836, len(expected))
+        self.assertEqual(847, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -569,8 +569,8 @@ class HanParentReconciliationTest(unittest.TestCase):
                 # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로 서면서 그 셋이
                 # 直轄 심사(BLOCKED_DIRECT_TERRITORY_REVIEW)에서 빠져 승인으로 옮겼다.
                 # 칸수는 그대로다 — 옮긴 세 행은 cellCount 가 0 인 治所 행이다.
-                "EXACT_APPROVED": 836,
-                "PROPOSED_GEOMETRIC": 285,
+                "EXACT_APPROVED": 847,
+                "PROPOSED_GEOMETRIC": 274,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
@@ -578,21 +578,21 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 95_026,
-                "PROPOSED_GEOMETRIC": 18_582,
+                "EXACT_APPROVED": 95_902,
+                "PROPOSED_GEOMETRIC": 17_706,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
-        self.assertEqual(353, summary["unresolvedRowCount"])
-        self.assertEqual(26_612, summary["unresolvedCellCount"])
+        self.assertEqual(342, summary["unresolvedRowCount"])
+        self.assertEqual(25_736, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 206, "cellCount": 11_191},
+            {"rowCount": 198, "cellCount": 10_405},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 79, "cellCount": 7_391},
+            {"rowCount": 76, "cellCount": 7_301},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -603,10 +603,10 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row.get("geometryDiagnostic", {}).get("distanceTie")
         }
 
-        # 70186 이 넷째로 합류했다 — 高平縣(45198)이 山陽郡 동명이지에서 安定郡 제자리로
-        # 옮겨 앉으면서 70186 의 최근접 앵커가 45198 과 70178 로 116 동률이 됐다.
-        self.assertEqual({"210170", "45113", "70186", "87625"}, set(tied))
-        self.assertEqual(310, sum(row["cellCount"] for row in tied.values()))
+        # 2026-09-14: w1 11곳 편입으로 45113(高平)이 직접 승인돼 tie에서 빠졌다.
+        # 남은 tie는 210170·70186·87625 세 행이다.
+        self.assertEqual({"210170", "70186", "87625"}, set(tied))
+        self.assertEqual(287, sum(row["cellCount"] for row in tied.values()))
         self.assertEqual(
             {"95318", "95341"},
             {
@@ -622,11 +622,11 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 281, "cellCount": 18_272},
+            {"rowCount": 271, "cellCount": 17_419},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
-            {"rowCount": 4, "cellCount": 310},
+            {"rowCount": 3, "cellCount": 287},
             self.ledger["summary"]["geometryDiagnostics"]["distanceTies"],
         )
         for row in self.ledger["rows"]:

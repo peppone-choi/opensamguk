@@ -431,12 +431,13 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         report = MODULE.validate_documents(documents)
 
         # 781 歷城 + 782–832 변경 縣 51 곳(w1-frontier-county-location) + 833–835 城 없던
-        # 郡治 3 곳(w0c-hhs-external-location). 전부 append-only 다.
-        self.assertEqual(835, report.approved_count)
+        # 郡治 3 곳(w0c-hhs-external-location) + 836–846 간체표 폴딩 결합 11 곳
+        # (w1-script-variant-county-join; 귀속 충돌 5곳은 defer). 전부 append-only 다.
+        self.assertEqual(846, report.approved_count)
         append = documents.migration["appendedRows"]
-        self.assertEqual(55, len(append))
+        self.assertEqual(66, len(append))
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(835, append[-1]["newCityId"])
+        self.assertEqual(846, append[-1]["newCityId"])
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
         for mutate, pattern in (
