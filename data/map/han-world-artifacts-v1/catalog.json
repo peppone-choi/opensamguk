@@ -1,0 +1,132 @@
+{
+  "catalogId": "han-world-strategic-artifact-sets-v1",
+  "schemaVersion": 1,
+  "variants": [
+    {
+      "cityCount": 832,
+      "files": [
+        {
+          "blob": "blobs/04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1.json",
+          "bytes": 2321498,
+          "path": "data/map/han-tiles.json",
+          "sha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
+        },
+        {
+          "blob": "blobs/8869784ba700386299007d0cc61d15bb7362b41d159da7bcf2d4ef825718b38c.json",
+          "bytes": 52368,
+          "path": "data/map/han-water-topology-v1.json",
+          "sha256": "8869784ba700386299007d0cc61d15bb7362b41d159da7bcf2d4ef825718b38c"
+        },
+        {
+          "blob": "blobs/922d440bad851fef94324b7831f481d2bef751a5705450a8e5548bb9cb5914eb.json",
+          "bytes": 27905,
+          "path": "data/curated/han/water-topology-adjudications-v1.json",
+          "sha256": "922d440bad851fef94324b7831f481d2bef751a5705450a8e5548bb9cb5914eb"
+        },
+        {
+          "blob": "blobs/51984390e8aece30b8e982dfc6efdbd624eb66f0c6f5e0f02b7ae38f0c55a38e.json",
+          "bytes": 821,
+          "path": "data/map/han-strategic-topology-manifest-v1.json",
+          "sha256": "51984390e8aece30b8e982dfc6efdbd624eb66f0c6f5e0f02b7ae38f0c55a38e"
+        },
+        {
+          "blob": "blobs/ed62e8cd1e2eff0fdb4c58552a8d1b6b36ea0b44c97443abca193bc50cc8b4db.json",
+          "bytes": 895954,
+          "path": "infra/src/main/resources/map/han-world-v3.json",
+          "sha256": "ed62e8cd1e2eff0fdb4c58552a8d1b6b36ea0b44c97443abca193bc50cc8b4db"
+        },
+        {
+          "blob": "blobs/500d0da25e61093fbd4a39d2ae74a106f44a81d8b8b9a9b1f09acdfb9dc0420f.json",
+          "bytes": 301575,
+          "path": "data/map/han-world-v3-manifest-v1.json",
+          "sha256": "500d0da25e61093fbd4a39d2ae74a106f44a81d8b8b9a9b1f09acdfb9dc0420f"
+        },
+        {
+          "blob": "blobs/674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934.json",
+          "bytes": 1080903,
+          "path": "data/curated/han/route-node-selection-v1.json",
+          "sha256": "674c962d78e28b4a83d6d207ce1f11837d1ef10450e8d9ee9d39be74adf07934"
+        },
+        {
+          "blob": "blobs/44ca2a3df0636a61cd6eb333d00227a779d6b68cea9f2c0f3bbd6dbb4094bcbc.json",
+          "bytes": 226043,
+          "path": "data/curated/han/route-node-migration-v1.json",
+          "sha256": "44ca2a3df0636a61cd6eb333d00227a779d6b68cea9f2c0f3bbd6dbb4094bcbc"
+        },
+        {
+          "blob": "blobs/a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670.json",
+          "bytes": 596941,
+          "path": "infra/src/main/resources/map/han-780-v1.json",
+          "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+        }
+      ],
+      "identitySha256": "c6f827b7ab48e5ec585b013e8f4e1861432910aa0fd2528f5576ccb17de3f23b",
+      "logicalMapName": "han-world-v3",
+      "sourceCommit": "cf5a77806212c1d8d08d617b292a6fb5fd7cc496",
+      "variantId": "han-world-v3-832"
+    },
+    {
+      "cityCount": 835,
+      "files": [
+        {
+          "blob": "blobs/04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1.json",
+          "bytes": 2321498,
+          "path": "data/map/han-tiles.json",
+          "sha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
+        },
+        {
+          "blob": "blobs/8869784ba700386299007d0cc61d15bb7362b41d159da7bcf2d4ef825718b38c.json",
+          "bytes": 52368,
+          "path": "data/map/han-water-topology-v1.json",
+          "sha256": "8869784ba700386299007d0cc61d15bb7362b41d159da7bcf2d4ef825718b38c"
+        },
+        {
+          "blob": "blobs/922d440bad851fef94324b7831f481d2bef751a5705450a8e5548bb9cb5914eb.json",
+          "bytes": 27905,
+          "path": "data/curated/han/water-topology-adjudications-v1.json",
+          "sha256": "922d440bad851fef94324b7831f481d2bef751a5705450a8e5548bb9cb5914eb"
+        },
+        {
+          "blob": "blobs/51984390e8aece30b8e982dfc6efdbd624eb66f0c6f5e0f02b7ae38f0c55a38e.json",
+          "bytes": 821,
+          "path": "data/map/han-strategic-topology-manifest-v1.json",
+          "sha256": "51984390e8aece30b8e982dfc6efdbd624eb66f0c6f5e0f02b7ae38f0c55a38e"
+        },
+        {
+          "blob": "blobs/9d4214ef82a3d59c0cf2d98385abf2d071ff2c468052a6179634094cfc7849b0.json",
+          "bytes": 908127,
+          "path": "infra/src/main/resources/map/han-world-v3.json",
+          "sha256": "9d4214ef82a3d59c0cf2d98385abf2d071ff2c468052a6179634094cfc7849b0"
+        },
+        {
+          "blob": "blobs/b14edf1d8886cfa25e00d70c176d2ea0a06ded09f2b75c4f2f6b3b0dc1fc2d32.json",
+          "bytes": 306332,
+          "path": "data/map/han-world-v3-manifest-v1.json",
+          "sha256": "b14edf1d8886cfa25e00d70c176d2ea0a06ded09f2b75c4f2f6b3b0dc1fc2d32"
+        },
+        {
+          "blob": "blobs/80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d.json",
+          "bytes": 1084341,
+          "path": "data/curated/han/route-node-selection-v1.json",
+          "sha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d"
+        },
+        {
+          "blob": "blobs/630f9d47bd4da3c2ed362e0c89d9e99ce31c9f541a9c45165ba19a3346784bcd.json",
+          "bytes": 226796,
+          "path": "data/curated/han/route-node-migration-v1.json",
+          "sha256": "630f9d47bd4da3c2ed362e0c89d9e99ce31c9f541a9c45165ba19a3346784bcd"
+        },
+        {
+          "blob": "blobs/a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670.json",
+          "bytes": 596941,
+          "path": "infra/src/main/resources/map/han-780-v1.json",
+          "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+        }
+      ],
+      "identitySha256": "b14634e34bc272a5982b61eaeb012f3ee212294c99ee41f239c2f484cd829527",
+      "logicalMapName": "han-world-v3",
+      "sourceCommit": "91fad09734e472b72a3b8720b0bce9f5a7ac3ae5",
+      "variantId": "han-world-v3-835"
+    }
+  ]
+}

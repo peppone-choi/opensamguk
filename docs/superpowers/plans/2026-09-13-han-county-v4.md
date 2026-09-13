@@ -1,0 +1,38 @@
+# 누락 현 도시화와 기존 세계 지도 호환성 실행 계획
+
+사용자 상위 목표: reports/opensamguk/tasks/2026-09-13-overall-goals.md (메타리포).
+누락 현은 독립 점령 도시로 추가한다. 인접 소유권 보간으로 대체하지 않는다.
+
+## 확인한 문제와 설계 결정
+
+현재 `han-world-v3` 이름 아래 운영 CF5 자산은 832도시, main 자산은 835도시다. 기존 832 routeNodeKey의 숫자 ID는 835에서도 유지된다(실제 JSON 비교: 재번호 0). 그러나 HanStrategicTopologyJson은 835개와 단일 경로/해시를 강제한다. 기존 세계가 같은 이름으로 최신 자산을 읽으면 부팅과 API가 불일치한다.
+
+DB mapName 및 도시 ID는 변경하지 않는다. 운영 832 자산 세트와 현재 835 자산 세트를 출처 커밋/파일 SHA256으로 동결하고, 전체 영속 도시 ID 집합과 보존된 공간 topology pin을 검사해 런타임 descriptor를 선택한다. 숫자 개수만으로 고르지 않는다. 알려지지 않은 집합이나 모호한 일치는 명시적으로 실패한다. 새 시드는 명시적 최신 버전만 선택한다. precheck 일부 도시 목록은 선택 근거가 될 수 없다.
+
+## 실행 순서
+
+1. **호환 자산 동결 및 계약 검사**
+   - CF5 `cf5a77806212c1d8d08d617b292a6fb5fd7cc496`와 835 기준 `91fad09734e472b72a3b8720b0bce9f5a7ac3ae5`에서 loader가 읽는 9개 파일을 원래 바이트로 보존한다.
+   - canonical manifest의 경로/해시는 바꾸지 않고 artifact-set resolver가 읽기 위치를 변경한다. 공통 파일은 content-addressed blob으로 중복 방지한다.
+   - 원본 커밋, 파일 크기/SHA, runtime ID/routeNodeKey/physicalPlaceRef 집합을 manifest에 기록한다. 832→835 기존 ID/물리 identity 불변을 검증한다.
+2. **런타임 descriptor 연결**
+   - CityConstRegistry에 descriptor별 CityConst를 제공하고 logicalMapName은 유지한다. TurnWorldState에는 DB flush 대상이 아닌 런타임 선택 값을 명시적으로 연결한다.
+   - WorldSnapshotLoader는 loadCities 이후, spatialTopologyFor 이전에 전체 도시와 영속 topology pin을 검증해 선택한다. ActiveWorldMapValidator는 선택한 variant로 검사한다.
+   - HanStrategicTopologyJson은 artifact-set/기대 ID집합으로 검증하고 variant별 cache를 사용한다. manifest byte 검증을 완화하지 않는다.
+   - API는 완전한 CityReadRepository 결과를 사용하는 resolver를 공유한다. Preview/GetConst/Topology/Terrain과 precheck, 엔진 이동·보급·월간·전투 소비 경로까지 같은 descriptor를 전달한다.
+   - config/meta에 runtime alias를 주입하지 않는다. 복사/flush/rehydrate 회귀를 검사한다.
+3. **누락 현 심사 및 V4 생성**
+   - 198 후보(188 물리 COUNTY+10 proxy)는 후보 원장이다. 외부 37거점은 별도 보류한다.
+   - 명칭/220년 기준 관할/존속/치소 후보/근거/불확실도/중복을 행별 검토한다. 실제 현이 확인되고 위치가 근사인 경우 출처와 uncertainty radius를 기록하여 정식 심사할 수 있다.
+   - 현재 8건 검토에서 錢唐·臨水의 군 귀속, 海昌의 都尉/縣 구분, 東部侯國의 원문 오독 문제를 먼저 해결한다. 기존 기하학 후보를 역사적 APPROVED로 일괄 승격하지 않는다.
+   - 검증된 항목만 V4 선택 원장에 추가한다. 기존 ID는 유지하고 신규 ID만 추가한다. 시나리오별 연대와 도시 초기값, province bindings, 경로를 함께 생성한다.
+4. **행동 및 운영 검증**
+   - 832/835 fixture 모두 preview/const/topology의 동일 variant, 초기 boot 및 rehydrate, 이동 명령·점령 결과와 flush 이후 재로딩을 검증한다.
+   - 832에서 한 ID만 바뀐 동일 개수 집합, topology pin 불일치, 잘못된 manifest/hash, partial-city precheck로 잘못 선택되는 경우를 거부한다.
+   - V4 신규 도시 선택→경로 미리보기→서버 이동→점령→관할 색 반영을 검증한다. 단절/중복/기존 ID 변경이 없어야 한다.
+   - 독립 리뷰, 필수 CI, PR 병합 후 immutable 이미지로 승격한다. 복구된 운영832 세계 격리 검증을 먼저 통과하고, 필요한 시점에만 승인된 scenario1020/current 초기화를 한 번 수행한다.
+   - 실서버 health/map/auth/명령/턴, Jira/GitHub 동일 근거, 작업 report와 clean worktree 정리까지 수행한다.
+
+## 후속 범위
+
+지도 캐시는 PR711로 별도 병합·승격 검증 중이다. 도로 전략성, 강·저의 플레이 영역 바깥 배치 검토, 한반도 소국 세분화는 상위 목표 순서로 계속한다. 이 계획은 해당 목표를 취소하지 않는다.
