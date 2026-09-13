@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "registryId": "han-route-node-key-registry-v1",
   "status": "ISSUED",
-  "issuedAt": "2026-08-22",
-  "issuedBy": "codex-w0c-root",
+  "issuedAt": "2026-09-14",
+  "issuedBy": "hermes-agent-w1",
   "issuanceAuthority": "user-blanket-approval-2026-08-22",
   "keyPolicy": {
     "format": "RFC_4122_UUID_V4_OPAQUE_LITERAL",
@@ -4244,6 +4244,72 @@
       "initialAdministrativeUnitId": "hhs:113:定襄郡:001",
       "issuanceReason": "CITYLESS_COMMANDERY_SEAT_V1_APPEND",
       "numericCityId": 835
+    },
+    {
+      "routeNodeKey": "0dd5fe30-f1d0-4616-8191-b3b3eae26d66",
+      "initialAdministrativeUnitId": "hhs:109:河內郡:013",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 836
+    },
+    {
+      "routeNodeKey": "d7f66692-4abd-44cd-94e3-8b0750a106ae",
+      "initialAdministrativeUnitId": "hhs:110:常山國:012",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 837
+    },
+    {
+      "routeNodeKey": "8de160d3-de11-4976-b580-f73493dd3b47",
+      "initialAdministrativeUnitId": "hhs:110:鉅鹿郡:002",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 838
+    },
+    {
+      "routeNodeKey": "178cce9d-9a9a-45e7-8bd5-3deaca47fb84",
+      "initialAdministrativeUnitId": "hhs:111:東郡:011",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 839
+    },
+    {
+      "routeNodeKey": "b1bc82f5-4d65-453f-b625-cfd90f14ffde",
+      "initialAdministrativeUnitId": "hhs:111:東平國:007",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 840
+    },
+    {
+      "routeNodeKey": "8205f187-0098-463d-aa26-a4b52b71d0f3",
+      "initialAdministrativeUnitId": "hhs:111:琅邪國:011",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 841
+    },
+    {
+      "routeNodeKey": "28dd474e-27b4-42d9-aafa-5b411bdf9517",
+      "initialAdministrativeUnitId": "hhs:112:南陽郡:014",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 842
+    },
+    {
+      "routeNodeKey": "3bbf7ce0-9f1f-4338-984d-ab0d6d609f24",
+      "initialAdministrativeUnitId": "hhs:112:吳郡:004",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 843
+    },
+    {
+      "routeNodeKey": "96e4fdb6-87c9-479a-bfec-0eb921836ca8",
+      "initialAdministrativeUnitId": "hhs:112:濟南國:004",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 844
+    },
+    {
+      "routeNodeKey": "0ff30f4d-dedf-4367-86b5-9385f1797356",
+      "initialAdministrativeUnitId": "hhs:113:蜀郡:008",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 845
+    },
+    {
+      "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f",
+      "initialAdministrativeUnitId": "hhs:113:蜀郡:011",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 846
     }
   ]
 }

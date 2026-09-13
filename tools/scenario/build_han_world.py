@@ -73,8 +73,9 @@ MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
 PROVINCE_ATTRIBUTION = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
 # han-world-v3 城 수: legacy 780 + 781 歷城 + 782..832 변경 縣 51 + 833..835 城 없던 郡治 3
-# (朔方·西河·定襄, route-node-key-registry-v1).
-V3_ROUTE_NODE_COUNT = 835
+# (朔方·西河·定襄, route-node-key-registry-v1) + 836..846 간체표 폴딩 결합 11
+# (w1-script-variant-county-join, route-node-review-policy-v1; 귀속 충돌 5곳 제외).
+V3_ROUTE_NODE_COUNT = 846
 ADMIN_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.

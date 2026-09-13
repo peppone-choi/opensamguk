@@ -58,14 +58,14 @@
         "decisionCellCounts": {
           "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
           "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-          "EXACT_APPROVED": 80956,
-          "PROPOSED_GEOMETRIC": 18169
+          "EXACT_APPROVED": 81832,
+          "PROPOSED_GEOMETRIC": 17293
         },
         "decisionRowCounts": {
           "BLOCKED_DIRECT_TERRITORY_REVIEW": 30,
           "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-          "EXACT_APPROVED": 785,
-          "PROPOSED_GEOMETRIC": 283
+          "EXACT_APPROVED": 796,
+          "PROPOSED_GEOMETRIC": 272
         },
         "directTerritoryCellCount": 120194,
         "directTerritoryProvinceCount": 526,
@@ -73,31 +73,31 @@
           "pendingCandidateJunCount": 17,
           "rejectedSourcedGroupJunCount": 2
         },
-        "exactApprovedCellCount": 80956,
-        "exactApprovedRowCount": 785,
+        "exactApprovedCellCount": 81832,
+        "exactApprovedRowCount": 796,
         "geometryDiagnostics": {
           "distanceTies": {
-            "cellCount": 69,
-            "rowCount": 3
+            "cellCount": 46,
+            "rowCount": 2
           },
           "multiGroupJun": {
-            "cellCount": 7826,
-            "rowCount": 84
+            "cellCount": 7736,
+            "rowCount": 81
           },
           "singleGroupJun": {
-            "cellCount": 10343,
-            "rowCount": 199
+            "cellCount": 9557,
+            "rowCount": 191
           },
           "uniqueNearest": {
-            "cellCount": 18100,
-            "rowCount": 280
+            "cellCount": 17247,
+            "rowCount": 270
           }
         },
         "landCellCount": 227349,
         "landOwnerRowCount": 1138,
         "provinceRecordCount": 1524,
-        "unresolvedCellCount": 26199,
-        "unresolvedRowCount": 353
+        "unresolvedCellCount": 25323,
+        "unresolvedRowCount": 342
       }
     },
     "priorSummary": {
@@ -109,14 +109,14 @@
       "decisionCellCounts": {
         "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
         "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-        "EXACT_APPROVED": 95396,
-        "PROPOSED_GEOMETRIC": 18177
+        "EXACT_APPROVED": 96272,
+        "PROPOSED_GEOMETRIC": 17301
       },
       "decisionRowCounts": {
         "BLOCKED_DIRECT_TERRITORY_REVIEW": 29,
         "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-        "EXACT_APPROVED": 836,
-        "PROPOSED_GEOMETRIC": 284
+        "EXACT_APPROVED": 847,
+        "PROPOSED_GEOMETRIC": 273
       },
       "directTerritoryCellCount": 105746,
       "directTerritoryProvinceCount": 463,
@@ -124,31 +124,31 @@
         "pendingCandidateJunCount": 16,
         "rejectedSourcedGroupJunCount": 2
       },
-      "exactApprovedCellCount": 95396,
-      "exactApprovedRowCount": 836,
+      "exactApprovedCellCount": 96272,
+      "exactApprovedRowCount": 847,
       "geometryDiagnostics": {
         "distanceTies": {
-          "cellCount": 69,
-          "rowCount": 3
+          "cellCount": 46,
+          "rowCount": 2
         },
         "multiGroupJun": {
-          "cellCount": 7826,
-          "rowCount": 84
+          "cellCount": 7736,
+          "rowCount": 81
         },
         "singleGroupJun": {
-          "cellCount": 10351,
-          "rowCount": 200
+          "cellCount": 9565,
+          "rowCount": 192
         },
         "uniqueNearest": {
-          "cellCount": 18108,
-          "rowCount": 281
+          "cellCount": 17255,
+          "rowCount": 271
         }
       },
       "landCellCount": 227349,
       "landOwnerRowCount": 1189,
       "provinceRecordCount": 1520,
-      "unresolvedCellCount": 26207,
-      "unresolvedRowCount": 353
+      "unresolvedCellCount": 25331,
+      "unresolvedRowCount": 342
     }
   },
   "directTerritoryJunReviews": [
@@ -285,7 +285,7 @@
   "inputs": {
     "data/curated/han/administrative-place-bindings-v1.json": {
       "path": "data/curated/han/administrative-place-bindings-v1.json",
-      "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
+      "sha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7"
     },
     "data/curated/han/administrative-temporal-adjudications-v1.json": {
       "path": "data/curated/han/administrative-temporal-adjudications-v1.json",
@@ -297,19 +297,19 @@
     },
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
+      "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88"
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "4a300fa410d6b2d8358f435a9941c31f186f3e75d2a17ef9bd46567af58f8afe"
+      "sha256": "3dbb0e8d1fde68bcc803b4ff838de6f66ae37869dc9d39297534a9523c70d3e7"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
+      "sha256": "e37bf2ec65d00bebc494f4a009abc8fe5090f2d90d33e628281af60b9d8d15a3"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d"
+      "sha256": "6ae212eae555e24365d2afdaf28b24f2dab979443ade753fdf0bedfd4cb4c096"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -1015,9 +1015,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:200253",
+        "routeNodeKey": "0ff30f4d-dedf-4367-86b5-9385f1797356"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:蜀郡:008",
       "cellCount": 235,
       "cityId": "200253",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -1034,20 +1045,7 @@
           57
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "96055",
-            "candidateAdministrativeGroupId": "hhs-group:113:蜀郡",
-            "candidateAdministrativeUnitId": "hhs:113:蜀郡:010",
-            "squaredGridDistance": 16
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:113:蜀郡"
@@ -1058,9 +1056,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:200261",
+        "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:113:蜀郡:011",
       "cellCount": 238,
       "cityId": "200261",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -1077,20 +1086,7 @@
           57
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "96055",
-            "candidateAdministrativeGroupId": "hhs-group:113:蜀郡",
-            "candidateAdministrativeUnitId": "hhs:113:蜀郡:010",
-            "squaredGridDistance": 405
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:113:蜀郡"
@@ -1641,10 +1637,10 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "87236",
+            "anchorCityId": "88410",
             "candidateAdministrativeGroupId": "hhs-group:110:常山國",
-            "candidateAdministrativeUnitId": "hhs:110:常山國:008",
-            "squaredGridDistance": 17
+            "candidateAdministrativeUnitId": "hhs:110:常山國:012",
+            "squaredGridDistance": 1
           }
         ]
       },
@@ -5015,9 +5011,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:40085",
+        "routeNodeKey": "3bbf7ce0-9f1f-4338-984d-ab0d6d609f24"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:112:吳郡:004",
       "cellCount": 92,
       "cityId": "40085",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -5034,20 +5041,7 @@
           52
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "40088",
-            "candidateAdministrativeGroupId": "hhs-group:112:吳郡",
-            "candidateAdministrativeUnitId": "hhs:112:吳郡:010",
-            "squaredGridDistance": 85
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:112:吳郡"
@@ -5292,10 +5286,10 @@
         "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "40088",
+            "anchorCityId": "40085",
             "candidateAdministrativeGroupId": "hhs-group:112:吳郡",
-            "candidateAdministrativeUnitId": "hhs:112:吳郡:010",
-            "squaredGridDistance": 97
+            "candidateAdministrativeUnitId": "hhs:112:吳郡:004",
+            "squaredGridDistance": 36
           }
         ]
       },
@@ -18919,9 +18913,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:45113",
+        "routeNodeKey": "96e4fdb6-87c9-479a-bfec-0eb921836ca8"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:112:濟南國:004",
       "cellCount": 23,
       "cityId": "45113",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -18938,26 +18943,7 @@
           35
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": true,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "45028",
-            "candidateAdministrativeGroupId": "hhs-group:112:濟南國",
-            "candidateAdministrativeUnitId": "hhs:112:濟南國:005",
-            "squaredGridDistance": 17
-          },
-          {
-            "anchorCityId": "45049",
-            "candidateAdministrativeGroupId": "hhs-group:112:濟南國",
-            "candidateAdministrativeUnitId": "hhs:112:濟南國:006",
-            "squaredGridDistance": 17
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:112:濟南國"
@@ -20134,9 +20120,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:45277",
+        "routeNodeKey": "b1bc82f5-4d65-453f-b625-cfd90f14ffde"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:111:東平國:007",
       "cellCount": 33,
       "cityId": "45277",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -20153,20 +20150,7 @@
           24
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "85681",
-            "candidateAdministrativeGroupId": "hhs-group:111:東平國",
-            "candidateAdministrativeUnitId": "hhs:111:東平國:001",
-            "squaredGridDistance": 61
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:東平國",
@@ -20509,9 +20493,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:45323",
+        "routeNodeKey": "178cce9d-9a9a-45e7-8bd5-3deaca47fb84"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:111:東郡:011",
       "cellCount": 42,
       "cityId": "45323",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -20528,20 +20523,7 @@
           23
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "45303",
-            "candidateAdministrativeGroupId": "hhs-group:111:東郡",
-            "candidateAdministrativeUnitId": "hhs:111:東郡:005",
-            "squaredGridDistance": 50
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:東郡"
@@ -27397,9 +27379,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:82265",
+        "routeNodeKey": "0dd5fe30-f1d0-4616-8191-b3b3eae26d66"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:109:河內郡:013",
       "cellCount": 39,
       "cityId": "82265",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -27416,20 +27409,7 @@
           1
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "82260",
-            "candidateAdministrativeGroupId": "hhs-group:109:河內郡",
-            "candidateAdministrativeUnitId": "hhs:109:河內郡:012",
-            "squaredGridDistance": 26
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:109:河內郡"
@@ -29313,9 +29293,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:82680",
+        "routeNodeKey": "28dd474e-27b4-42d9-aafa-5b411bdf9517"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:112:南陽郡:014",
       "cellCount": 68,
       "cityId": "82680",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -29332,20 +29323,7 @@
           41
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "43618",
-            "candidateAdministrativeGroupId": "hhs-group:112:南陽郡",
-            "candidateAdministrativeUnitId": "hhs:112:南陽郡:018",
-            "squaredGridDistance": 41
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:112:南陽郡"
@@ -34728,9 +34706,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:85577",
+        "routeNodeKey": "8205f187-0098-463d-aa26-a4b52b71d0f3"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:111:琅邪國:011",
       "cellCount": 49,
       "cityId": "85577",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -34747,20 +34736,7 @@
           31
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "85594",
-            "candidateAdministrativeGroupId": "hhs-group:111:琅邪國",
-            "candidateAdministrativeUnitId": "hhs:111:琅邪國:001",
-            "squaredGridDistance": 25
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:琅邪國"
@@ -36136,9 +36112,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:87051",
+        "routeNodeKey": "8de160d3-de11-4976-b580-f73493dd3b47"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:110:鉅鹿郡:002",
       "cellCount": 12,
       "cityId": "87051",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -36155,20 +36142,7 @@
           14
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "87177",
-            "candidateAdministrativeGroupId": "hhs-group:110:鉅鹿郡",
-            "candidateAdministrativeUnitId": "hhs:110:鉅鹿郡:006",
-            "squaredGridDistance": 18
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:110:鉅鹿郡",
@@ -39639,10 +39613,10 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "87177",
+            "anchorCityId": "87051",
             "candidateAdministrativeGroupId": "hhs-group:110:鉅鹿郡",
-            "candidateAdministrativeUnitId": "hhs:110:鉅鹿郡:006",
-            "squaredGridDistance": 29
+            "candidateAdministrativeUnitId": "hhs:110:鉅鹿郡:002",
+            "squaredGridDistance": 5
           }
         ]
       },
@@ -40012,10 +39986,10 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "87236",
+            "anchorCityId": "88410",
             "candidateAdministrativeGroupId": "hhs-group:110:常山國",
-            "candidateAdministrativeUnitId": "hhs:110:常山國:008",
-            "squaredGridDistance": 9
+            "candidateAdministrativeUnitId": "hhs:110:常山國:012",
+            "squaredGridDistance": 1
           }
         ]
       },
@@ -40775,9 +40749,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:88410",
+        "routeNodeKey": "d7f66692-4abd-44cd-94e3-8b0750a106ae"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:110:常山國:012",
       "cellCount": 45,
       "cityId": "88410",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -40794,20 +40779,7 @@
           15
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "87543",
-            "candidateAdministrativeGroupId": "hhs-group:110:中山國",
-            "candidateAdministrativeUnitId": "hhs:110:中山國:003",
-            "squaredGridDistance": 13
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:110:中山國",
@@ -43842,10 +43814,10 @@
         "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "96055",
+            "anchorCityId": "200253",
             "candidateAdministrativeGroupId": "hhs-group:113:蜀郡",
-            "candidateAdministrativeUnitId": "hhs:113:蜀郡:010",
-            "squaredGridDistance": 365
+            "candidateAdministrativeUnitId": "hhs:113:蜀郡:008",
+            "squaredGridDistance": 269
           }
         ]
       },
@@ -48786,14 +48758,14 @@
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 95026,
-      "PROPOSED_GEOMETRIC": 18582
+      "EXACT_APPROVED": 95902,
+      "PROPOSED_GEOMETRIC": 17706
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 836,
-      "PROPOSED_GEOMETRIC": 285
+      "EXACT_APPROVED": 847,
+      "PROPOSED_GEOMETRIC": 274
     },
     "directTerritoryCellCount": 105711,
     "directTerritoryProvinceCount": 463,
@@ -48801,30 +48773,30 @@
       "pendingCandidateJunCount": 15,
       "rejectedSourcedGroupJunCount": 2
     },
-    "exactApprovedCellCount": 95026,
-    "exactApprovedRowCount": 836,
+    "exactApprovedCellCount": 95902,
+    "exactApprovedRowCount": 847,
     "geometryDiagnostics": {
       "distanceTies": {
-        "cellCount": 310,
-        "rowCount": 4
+        "cellCount": 287,
+        "rowCount": 3
       },
       "multiGroupJun": {
-        "cellCount": 7391,
-        "rowCount": 79
+        "cellCount": 7301,
+        "rowCount": 76
       },
       "singleGroupJun": {
-        "cellCount": 11191,
-        "rowCount": 206
+        "cellCount": 10405,
+        "rowCount": 198
       },
       "uniqueNearest": {
-        "cellCount": 18272,
-        "rowCount": 281
+        "cellCount": 17419,
+        "rowCount": 271
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1189,
     "provinceRecordCount": 1520,
-    "unresolvedCellCount": 26612,
-    "unresolvedRowCount": 353
+    "unresolvedCellCount": 25736,
+    "unresolvedRowCount": 342
   }
 }

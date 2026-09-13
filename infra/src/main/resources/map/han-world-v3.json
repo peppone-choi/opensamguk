@@ -1422,18 +1422,13 @@
         32,
         33,
         36,
-        37,
         38,
         39,
         40,
         43,
         45,
         46,
-        48,
-        223,
-        252,
-        257,
-        297
+        48
       ],
       "meta": {
         "jun": "하내군",
@@ -1710,7 +1705,8 @@
         43,
         46,
         50,
-        297
+        297,
+        836
       ],
       "meta": {
         "jun": "하내군",
@@ -1752,12 +1748,12 @@
         "wall": 1000
       },
       "connections": [
-        30,
         31,
         34,
         42,
         43,
-        223
+        223,
+        836
       ],
       "meta": {
         "jun": "하내군",
@@ -2038,7 +2034,8 @@
         31,
         32,
         36,
-        37
+        37,
+        836
       ],
       "meta": {
         "jun": "하내군",
@@ -6879,7 +6876,8 @@
         179,
         182,
         187,
-        220
+        220,
+        837
       ],
       "meta": {
         "jun": "중산국",
@@ -6971,10 +6969,10 @@
         231,
         242,
         245,
-        248,
         265,
         274,
-        276
+        276,
+        840
       ],
       "meta": {
         "jun": "노국",
@@ -7953,7 +7951,7 @@
         168,
         170,
         173,
-        213
+        838
       ],
       "meta": {
         "jun": "안평국",
@@ -7999,7 +7997,8 @@
         169,
         173,
         175,
-        213
+        213,
+        838
       ],
       "meta": {
         "jun": "안평국",
@@ -8146,10 +8145,10 @@
         187,
         188,
         209,
-        213,
         215,
         216,
-        219
+        219,
+        838
       ],
       "meta": {
         "jun": "안평국",
@@ -8334,16 +8333,15 @@
       "connections": [
         146,
         178,
-        179,
         180,
-        181,
         182,
         183,
         184,
         207,
         228,
         230,
-        671
+        671,
+        837
       ],
       "meta": {
         "jun": "상산국",
@@ -8433,11 +8431,11 @@
       "connections": [
         146,
         151,
-        177,
         181,
         185,
         212,
-        220
+        220,
+        837
       ],
       "meta": {
         "jun": "상산국",
@@ -8530,10 +8528,10 @@
         152,
         155,
         158,
-        177,
         179,
         184,
-        186
+        186,
+        837
       ],
       "meta": {
         "jun": "상산국",
@@ -8669,7 +8667,8 @@
         177,
         180,
         181,
-        186
+        186,
+        837
       ],
       "meta": {
         "jun": "상산국",
@@ -8809,7 +8808,8 @@
         182,
         183,
         209,
-        213
+        213,
+        838
       ],
       "meta": {
         "jun": "상산국",
@@ -9932,7 +9932,8 @@
         235,
         254,
         256,
-        258
+        258,
+        839
       ],
       "meta": {
         "jun": "동군",
@@ -10020,13 +10021,12 @@
         "wall": 1000
       },
       "connections": [
-        169,
         170,
-        173,
         175,
         187,
         220,
-        221
+        221,
+        838
       ],
       "meta": {
         "jun": "거록군",
@@ -10442,7 +10442,8 @@
       "connections": [
         248,
         249,
-        251
+        251,
+        840
       ],
       "meta": {
         "jun": "동평국",
@@ -10484,7 +10485,6 @@
         "wall": 3000
       },
       "connections": [
-        30,
         34,
         37,
         206,
@@ -10500,7 +10500,8 @@
         673,
         674,
         689,
-        693
+        693,
+        836
       ],
       "meta": {
         "jun": "위군",
@@ -10548,7 +10549,7 @@
         234,
         236,
         237,
-        254
+        839
       ],
       "meta": {
         "jun": "위군",
@@ -10917,7 +10918,7 @@
         224,
         226,
         235,
-        254
+        839
       ],
       "meta": {
         "jun": "위군",
@@ -11006,10 +11007,10 @@
         224,
         236,
         253,
-        254,
         260,
         277,
-        285
+        285,
+        839
       ],
       "meta": {
         "jun": "위군",
@@ -11286,8 +11287,8 @@
         239,
         241,
         245,
-        248,
-        249
+        249,
+        840
       ],
       "meta": {
         "jun": "임성국",
@@ -11573,7 +11574,8 @@
         262,
         327,
         328,
-        336
+        336,
+        841
       ],
       "meta": {
         "jun": "동해군",
@@ -11662,15 +11664,13 @@
         "wall": 3000
       },
       "connections": [
-        148,
         222,
-        240,
-        249,
         251,
         259,
         273,
         274,
-        276
+        276,
+        840
       ],
       "meta": {
         "jun": "동평국",
@@ -11714,10 +11714,10 @@
       "connections": [
         222,
         240,
-        248,
         250,
         251,
-        277
+        277,
+        840
       ],
       "meta": {
         "jun": "동평국",
@@ -11852,11 +11852,11 @@
         "wall": 1000
       },
       "connections": [
-        30,
         257,
         289,
         294,
-        297
+        297,
+        836
       ],
       "meta": {
         "jun": "동군",
@@ -11946,12 +11946,10 @@
       "connections": [
         205,
         211,
-        224,
-        232,
-        234,
         258,
         282,
-        285
+        285,
+        839
       ],
       "meta": {
         "jun": "동군",
@@ -12086,12 +12084,12 @@
         "wall": 1000
       },
       "connections": [
-        30,
         223,
         252,
         260,
         261,
-        289
+        289,
+        836
       ],
       "meta": {
         "jun": "동군",
@@ -12893,7 +12891,8 @@
       "connections": [
         148,
         248,
-        276
+        276,
+        840
       ],
       "meta": {
         "jun": "제북국",
@@ -13404,7 +13403,8 @@
         234,
         254,
         277,
-        282
+        282,
+        839
       ],
       "meta": {
         "jun": "제음군",
@@ -13975,11 +13975,11 @@
         "wall": 1500
       },
       "connections": [
-        30,
         36,
         50,
         59,
-        252
+        252,
+        836
       ],
       "meta": {
         "jun": "진류군",
@@ -15354,7 +15354,7 @@
         328,
         330,
         333,
-        336
+        841
       ],
       "meta": {
         "jun": "동해군",
@@ -15498,8 +15498,8 @@
         327,
         329,
         333,
-        336,
-        343
+        343,
+        841
       ],
       "meta": {
         "jun": "동해군",
@@ -15782,11 +15782,10 @@
         246,
         262,
         272,
-        327,
-        330,
         337,
         339,
-        343
+        343,
+        841
       ],
       "meta": {
         "jun": "낭사국",
@@ -16106,7 +16105,8 @@
         272,
         329,
         330,
-        336
+        336,
+        841
       ],
       "meta": {
         "jun": "낭사국",
@@ -17074,7 +17074,8 @@
       "connections": [
         265,
         384,
-        781
+        781,
+        844
       ],
       "meta": {
         "jun": "평원군",
@@ -17996,7 +17997,8 @@
         390,
         392,
         395,
-        781
+        781,
+        844
       ],
       "meta": {
         "jun": "제남국",
@@ -18134,7 +18136,8 @@
         384,
         385,
         388,
-        389
+        389,
+        844
       ],
       "meta": {
         "jun": "제남국",
@@ -18229,7 +18232,8 @@
         384,
         385,
         387,
-        390
+        390,
+        844
       ],
       "meta": {
         "jun": "제남국",
@@ -19300,17 +19304,12 @@
         414,
         421,
         423,
-        424,
         427,
         430,
         431,
-        432,
         433,
         437,
         438,
-        462,
-        463,
-        466,
         469,
         597
       ],
@@ -19865,12 +19864,12 @@
         "wall": 1500
       },
       "connections": [
-        412,
         418,
         420,
         428,
         432,
-        463
+        463,
+        842
       ],
       "meta": {
         "jun": "남양군",
@@ -20244,12 +20243,12 @@
       },
       "connections": [
         402,
-        412,
         420,
         424,
         425,
         461,
-        462
+        462,
+        842
       ],
       "meta": {
         "jun": "남양군",
@@ -21656,12 +21655,12 @@
         "wall": 1000
       },
       "connections": [
-        412,
         432,
         458,
         461,
         466,
-        473
+        473,
+        842
       ],
       "meta": {
         "jun": "강하군",
@@ -21706,10 +21705,10 @@
         92,
         137,
         145,
-        412,
         418,
         424,
-        466
+        466,
+        842
       ],
       "meta": {
         "jun": "강하군",
@@ -21847,12 +21846,12 @@
       },
       "connections": [
         92,
-        412,
         462,
         463,
         465,
         468,
-        473
+        473,
+        842
       ],
       "meta": {
         "jun": "강하군",
@@ -23402,7 +23401,8 @@
         540,
         568,
         569,
-        591
+        591,
+        843
       ],
       "meta": {
         "jun": "단양군",
@@ -24263,8 +24263,7 @@
         521,
         522,
         536,
-        540,
-        546
+        843
       ],
       "meta": {
         "jun": "오군",
@@ -25114,7 +25113,8 @@
         568,
         581,
         591,
-        773
+        773,
+        843
       ],
       "meta": {
         "jun": "회계군",
@@ -25287,10 +25287,10 @@
       },
       "connections": [
         499,
-        518,
         536,
         538,
-        546
+        546,
+        843
       ],
       "meta": {
         "jun": "회계군",
@@ -25554,10 +25554,10 @@
         "wall": 1000
       },
       "connections": [
-        518,
         536,
         537,
-        540
+        540,
+        843
       ],
       "meta": {
         "jun": "회계군",
@@ -28695,12 +28695,12 @@
       },
       "connections": [
         583,
-        619,
-        620,
         632,
         634,
         660,
-        664
+        664,
+        845,
+        846
       ],
       "meta": {
         "jun": "촉군",
@@ -28971,10 +28971,11 @@
         "wall": 1500
       },
       "connections": [
-        613,
         614,
         620,
-        632
+        632,
+        845,
+        846
       ],
       "meta": {
         "jun": "촉군",
@@ -29016,12 +29017,12 @@
         "wall": 3000
       },
       "connections": [
-        613,
         614,
         619,
         621,
         623,
-        625
+        625,
+        846
       ],
       "meta": {
         "jun": "촉군속국",
@@ -29586,7 +29587,8 @@
         614,
         617,
         619,
-        634
+        634,
+        845
       ],
       "meta": {
         "jun": "촉군",
@@ -29676,7 +29678,8 @@
       },
       "connections": [
         613,
-        632
+        632,
+        845
       ],
       "meta": {
         "jun": "촉군",
@@ -38925,6 +38928,514 @@
       "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360",
       "physicalPlaceRef": "external:v1:X024",
       "administrativeUnitId": "hhs:113:定襄郡:001"
+    },
+    {
+      "id": 836,
+      "name": "수무",
+      "x": 367,
+      "y": 201,
+      "level": 11,
+      "region": 1,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        36,
+        37,
+        43,
+        223,
+        252,
+        257,
+        297
+      ],
+      "meta": {
+        "jun": "하내군",
+        "junCh": "河內郡",
+        "ju": "사예",
+        "seat": "회현",
+        "nameCh": "修武县",
+        "isSeat": false,
+        "displayName": "하내군 수무현"
+      },
+      "provinceId": 564,
+      "spatialProvinceId": "82265",
+      "spatialProvinceIndex": 564,
+      "routeNodeKey": "0dd5fe30-f1d0-4616-8191-b3b3eae26d66",
+      "physicalPlaceRef": "chgis:v6:cnty:82265",
+      "administrativeUnitId": "hhs:109:河內郡:013"
+    },
+    {
+      "id": 837,
+      "name": "진정",
+      "x": 375,
+      "y": 147,
+      "level": 11,
+      "region": 3,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        146,
+        177,
+        179,
+        181,
+        184
+      ],
+      "meta": {
+        "jun": "상산국",
+        "junCh": "常山國",
+        "ju": "기주",
+        "seat": "원씨현",
+        "nameCh": "真定县",
+        "isSeat": false,
+        "displayName": "상산국 진정현"
+      },
+      "provinceId": 880,
+      "spatialProvinceId": "88410",
+      "spatialProvinceIndex": 880,
+      "routeNodeKey": "d7f66692-4abd-44cd-94e3-8b0750a106ae",
+      "physicalPlaceRef": "chgis:v6:cnty:88410",
+      "administrativeUnitId": "hhs:110:常山國:012"
+    },
+    {
+      "id": 838,
+      "name": "거록",
+      "x": 381,
+      "y": 158,
+      "level": 11,
+      "region": 3,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        169,
+        170,
+        173,
+        187,
+        213
+      ],
+      "meta": {
+        "jun": "거록군",
+        "junCh": "鉅鹿郡",
+        "ju": "기주",
+        "seat": "영도현",
+        "nameCh": "巨鹿县",
+        "isSeat": false,
+        "displayName": "거록군 거록현"
+      },
+      "provinceId": 773,
+      "spatialProvinceId": "87051",
+      "spatialProvinceIndex": 773,
+      "routeNodeKey": "8de160d3-de11-4976-b580-f73493dd3b47",
+      "physicalPlaceRef": "chgis:v6:cnty:87051",
+      "administrativeUnitId": "hhs:110:鉅鹿郡:002"
+    },
+    {
+      "id": 839,
+      "name": "발간",
+      "x": 389,
+      "y": 185,
+      "level": 11,
+      "region": 4,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        211,
+        224,
+        232,
+        234,
+        254,
+        285
+      ],
+      "meta": {
+        "jun": "동군",
+        "junCh": "東郡",
+        "ju": "연주",
+        "seat": "연현",
+        "nameCh": "发干县",
+        "isSeat": false,
+        "displayName": "동군 발간현"
+      },
+      "provinceId": 400,
+      "spatialProvinceId": "45323",
+      "spatialProvinceIndex": 400,
+      "routeNodeKey": "178cce9d-9a9a-45e7-8bd5-3deaca47fb84",
+      "physicalPlaceRef": "chgis:v6:cnty:45323",
+      "administrativeUnitId": "hhs:111:東郡:011"
+    },
+    {
+      "id": 840,
+      "name": "영양(東平國)",
+      "x": 414,
+      "y": 193,
+      "level": 10,
+      "region": 4,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        148,
+        222,
+        240,
+        248,
+        249,
+        274
+      ],
+      "meta": {
+        "jun": "동평국",
+        "junCh": "東平國",
+        "ju": "연주",
+        "seat": "무염현",
+        "nameCh": "宁阳县",
+        "isSeat": false,
+        "displayName": "동평국 영양현"
+      },
+      "provinceId": 391,
+      "spatialProvinceId": "45277",
+      "spatialProvinceIndex": 391,
+      "routeNodeKey": "b1bc82f5-4d65-453f-b625-cfd90f14ffde",
+      "physicalPlaceRef": "chgis:v6:cnty:45277",
+      "administrativeUnitId": "hhs:111:東平國:007"
+    },
+    {
+      "id": 841,
+      "name": "즉구",
+      "x": 441,
+      "y": 209,
+      "level": 11,
+      "region": 5,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        246,
+        327,
+        330,
+        336,
+        343
+      ],
+      "meta": {
+        "jun": "낭사국",
+        "junCh": "琅邪國",
+        "ju": "서주",
+        "seat": "개양현",
+        "nameCh": "即丘县",
+        "isSeat": false,
+        "displayName": "낭사국 즉구현"
+      },
+      "provinceId": 740,
+      "spatialProvinceId": "85577",
+      "spatialProvinceIndex": 740,
+      "routeNodeKey": "8205f187-0098-463d-aa26-a4b52b71d0f3",
+      "physicalPlaceRef": "chgis:v6:cnty:85577",
+      "administrativeUnitId": "hhs:111:琅邪國:011"
+    },
+    {
+      "id": 842,
+      "name": "복양",
+      "x": 360,
+      "y": 267,
+      "level": 10,
+      "region": 7,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        424,
+        432,
+        462,
+        463,
+        466
+      ],
+      "meta": {
+        "jun": "남양군",
+        "junCh": "南陽郡",
+        "ju": "형주",
+        "seat": "완현",
+        "nameCh": "复阳县",
+        "isSeat": false,
+        "displayName": "남양군 복양현"
+      },
+      "provinceId": 610,
+      "spatialProvinceId": "82680",
+      "spatialProvinceIndex": 610,
+      "routeNodeKey": "28dd474e-27b4-42d9-aafa-5b411bdf9517",
+      "physicalPlaceRef": "chgis:v6:cnty:82680",
+      "administrativeUnitId": "hhs:112:南陽郡:014"
+    },
+    {
+      "id": 843,
+      "name": "여항",
+      "x": 467,
+      "y": 299,
+      "level": 10,
+      "region": 8,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        499,
+        518,
+        536,
+        540,
+        546
+      ],
+      "meta": {
+        "jun": "오군",
+        "junCh": "吳郡",
+        "ju": "양주",
+        "seat": "오현",
+        "nameCh": "余杭县",
+        "isSeat": false,
+        "displayName": "오군 여항현"
+      },
+      "provinceId": 28,
+      "spatialProvinceId": "40085",
+      "spatialProvinceIndex": 28,
+      "routeNodeKey": "3bbf7ce0-9f1f-4338-984d-ab0d6d609f24",
+      "physicalPlaceRef": "chgis:v6:cnty:40085",
+      "administrativeUnitId": "hhs:112:吳郡:004"
+    },
+    {
+      "id": 844,
+      "name": "태",
+      "x": 421,
+      "y": 172,
+      "level": 11,
+      "region": 6,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        364,
+        384,
+        387,
+        389
+      ],
+      "meta": {
+        "jun": "제남국",
+        "junCh": "濟南國",
+        "ju": "청주",
+        "seat": "동평릉현",
+        "nameCh": "台县",
+        "isSeat": false,
+        "displayName": "제남국 태현"
+      },
+      "provinceId": 362,
+      "spatialProvinceId": "45113",
+      "spatialProvinceIndex": 362,
+      "routeNodeKey": "96e4fdb6-87c9-479a-bfec-0eb921836ca8",
+      "physicalPlaceRef": "chgis:v6:cnty:45113",
+      "administrativeUnitId": "hhs:112:濟南國:004"
+    },
+    {
+      "id": 845,
+      "name": "문강",
+      "x": 174,
+      "y": 260,
+      "level": 10,
+      "region": 9,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        613,
+        619,
+        632,
+        634,
+        846
+      ],
+      "meta": {
+        "jun": "촉군",
+        "junCh": "蜀郡",
+        "ju": "익주",
+        "seat": "성도현",
+        "nameCh": "汶江道",
+        "isSeat": false,
+        "displayName": "촉군 문강현"
+      },
+      "provinceId": 16,
+      "spatialProvinceId": "200253",
+      "spatialProvinceIndex": 16,
+      "routeNodeKey": "0ff30f4d-dedf-4367-86b5-9385f1797356",
+      "physicalPlaceRef": "chgis:v6:cnty:200253",
+      "administrativeUnitId": "hhs:113:蜀郡:008"
+    },
+    {
+      "id": 846,
+      "name": "면사",
+      "x": 161,
+      "y": 268,
+      "level": 10,
+      "region": 9,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        613,
+        619,
+        620,
+        845
+      ],
+      "meta": {
+        "jun": "촉군",
+        "junCh": "蜀郡",
+        "ju": "익주",
+        "seat": "성도현",
+        "nameCh": "绵虒道",
+        "isSeat": false,
+        "displayName": "촉군 면사현"
+      },
+      "provinceId": 17,
+      "spatialProvinceId": "200261",
+      "spatialProvinceIndex": 17,
+      "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f",
+      "physicalPlaceRef": "chgis:v6:cnty:200261",
+      "administrativeUnitId": "hhs:113:蜀郡:011"
     }
   ]
 }

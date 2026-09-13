@@ -11,12 +11,12 @@
   "trackedReviewInputs": {
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23",
+      "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88",
       "role": "LOCATION_ADJUDICATION_REVIEW"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d",
+      "sha256": "6ae212eae555e24365d2afdaf28b24f2dab979443ade753fdf0bedfd4cb4c096",
       "role": "ROUTE_NODE_SELECTION_REVIEW"
     }
   },

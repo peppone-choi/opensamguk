@@ -19,13 +19,14 @@ LEGACY_SELECTION_COUNT = 780
 # 결합하되, 별도 batch 로 센다 — physicalPlaceId 이름공간이 둘을 가른다(tools/map/materialize_frontier_counties.py).
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
+SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 #: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch 둘. append 행은 여기만 쓴다.
 LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH})
-APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND"}
+APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND"}
 # 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
 # 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
-EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51}
+EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, SCRIPT_VARIANT_BATCH: 11}
 EXPECTED_LOCATION_CLAIM_COUNT = EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
 EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51}
@@ -185,14 +186,23 @@ def _location_claim_eligible(unit: JsonObject, overlay_row: JsonObject, rejected
 
 
 def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObject, claims: JsonObject,
-                        units: dict[str, JsonObject],
+                        units: dict[str, JsonObject], script_variant_members: frozenset[str],
+                        deferred_commandery: frozenset[str] = frozenset(),
                         ) -> tuple[dict[str, tuple[str, str]], dict[str, JsonObject]]:
     selected: dict[str, tuple[str, str]] = {}
     rejected_homonyms: set[str] = set()
     for unit_id, row in overlay.items():
         if row.get("joinStatus") == "RESOLVED_POINT":
+            if unit_id in deferred_commandery:
+                # 귀속 심사 대기: 결합은 유지하되 선정에서 제외한다.
+                continue
             place = obj(row, "selectedCandidate")
-            selected[unit_id] = (text(place, "physicalPlaceId"), "w0b-overlay-unique-220")
+            batch = SCRIPT_VARIANT_BATCH if unit_id in script_variant_members else "w0b-overlay-unique-220"
+            selected[unit_id] = (text(place, "physicalPlaceId"), batch)
+    if script_variant_members - set(selected) or any(
+        selected[unit_id][1] != SCRIPT_VARIANT_BATCH for unit_id in script_variant_members
+    ):
+        raise MaterializationContractError("script-variant batch members must all resolve to overlay points")
     ambiguous = {unit_id for unit_id, row in overlay.items() if row.get("joinStatus") == "AMBIGUOUS_POINT"}
     reviewed: set[str] = set()
     for decision in rows(adjudications, "adjudications"):
@@ -317,9 +327,14 @@ def _policy_corrections(policy: JsonObject, current: dict[int, JsonObject], sele
     return corrected, binding_ids, physical_ids
 
 
-def _existing_matches(selected: dict[str, tuple[str, str]], current: dict[int, JsonObject]) -> dict[str, tuple[int, str]]:
+def _existing_matches(selected: dict[str, tuple[str, str]], current: dict[int, JsonObject],
+                      append_only_units: frozenset[str] = frozenset()) -> dict[str, tuple[int, str]]:
     matched: dict[str, tuple[int, str]] = {}
     for unit_id, (place_id, _) in selected.items():
+        if unit_id in append_only_units:
+            # 승인된 append 전용 단위는 legacy 슬롯을 차지하지 않는다. 기존 780 슬롯 균형을
+            # 건드리지 않고 새 numericCityId로만 편입된다.
+            continue
         for old_id, candidate in current.items():
             proposed = candidate.get("proposedAdministrativeUnitId")
             options = candidate.get("candidateAdministrativeUnitIds", [])
@@ -383,7 +398,24 @@ def build_outputs(
     if len(overlay) != 1180 or overlay_doc.get("sourceYear") != 220:
         raise MaterializationContractError("overlay must cover 1,180 identities at year 220")
     current, pool = _candidate_index(candidate)
-    selected, claim_index = _reviewed_selection(overlay, adjudications, claims, units)
+    script_variant_batches = [row for row in rows(policy, "selectionBatches") if text(row, "batchId") == SCRIPT_VARIANT_BATCH]
+    if len(script_variant_batches) != 1:
+        raise MaterializationContractError("script-variant batch must appear exactly once in policy")
+    script_variant_members = frozenset(strings(script_variant_batches[0], "memberAdministrativeUnitIds"))
+    if len(script_variant_members) != number(script_variant_batches[0], "expectedCount"):
+        raise MaterializationContractError("script-variant batch members must match its expected count")
+    deferred = obj(policy, "deferredCommanderyAdjudication") if "deferredCommanderyAdjudication" in policy else None
+    deferred_commandery = frozenset()
+    if deferred is not None:
+        if deferred.get("reviewState") != "DEFERRED":
+            raise MaterializationContractError("deferred commandery adjudication must stay DEFERRED")
+        deferred_commandery = frozenset(text(row, "administrativeUnitId") for row in rows(deferred, "members"))
+        if len(deferred_commandery) != 5 or not deferred_commandery.isdisjoint(script_variant_members):
+            raise MaterializationContractError("deferred members must be exactly the 5 reviewed holds outside w1")
+        for unit_id in deferred_commandery:
+            if overlay.get(unit_id, {}).get("joinStatus") != "RESOLVED_POINT":
+                raise MaterializationContractError("deferred members must keep their resolved overlay joins")
+    selected, claim_index = _reviewed_selection(overlay, adjudications, claims, units, script_variant_members, deferred_commandery)
     if set(selected) - pool or policy.get("status") != "APPROVED":
         raise MaterializationContractError("approved selection is outside the candidate pool")
     if (any(row.get("reviewState") != "APPROVED" for row in rows(policy, "selectionBatches"))
@@ -405,7 +437,7 @@ def build_outputs(
     ):
         raise MaterializationContractError("scenario activation policy drift")
     keys = _uuid_keys(registry, set(selected))
-    matched = _existing_matches(selected, current)
+    matched = _existing_matches(selected, current, script_variant_members)
     corrections, binding_ids, physical_ids = _policy_corrections(policy, current, selected)
     matched.update(corrections)
     if len({value[0] for value in matched.values()}) != len(matched):
@@ -514,6 +546,10 @@ def build_outputs(
         unit = units[unit_id]
         place_id, batch_id = selected[unit_id]
         if batch_id == "w0b-overlay-unique-220":
+            location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
+            location_claim_id = None
+        elif batch_id == SCRIPT_VARIANT_BATCH:
+            # 정책 명시 11곳: 오버레이 단일·무경합 결합이라 claim 없이 W0B 상당 판정으로 붙는다.
             location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
             location_claim_id = None
         elif batch_id in LOCATION_ONLY_BATCHES and unit_id in claim_index:

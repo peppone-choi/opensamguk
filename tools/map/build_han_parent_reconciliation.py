@@ -40,8 +40,9 @@ REFERENCE_YEAR = 220
 # 780 legacy route nodes + 781 歷城 (LICHENG_MOVEMENT_V2_APPEND) + 782–832 frontier counties
 # (FRONTIER_COUNTY_V1_APPEND, tools/scenario/append_frontier_county_route_ledgers.py)
 # + 833–835 城 없던 郡治 3곳 (CITYLESS_COMMANDERY_SEAT_V1_APPEND,
-# tools/scenario/append_cityless_commandery_seat_ledgers.py).
-APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3
+# tools/scenario/append_cityless_commandery_seat_ledgers.py)
+# + 836–846 간체표 폴딩 결합 11곳 (w1-script-variant-county-join, route-node-review-policy-v1; 귀속 충돌 5곳 제외).
+APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 11
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
     "schemaVersion", "adjudicationSetId", "referenceYear", "sourceWitnesses", "adjudications"
@@ -553,7 +554,7 @@ def _validate_review_chain(
     batches = policy.get("selectionBatches")
     if (
         not isinstance(batches, list)
-        or len(batches) != 4
+        or len(batches) != 5
         or not all(isinstance(row, dict) for row in batches)
         or {
         (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
@@ -564,6 +565,7 @@ def _validate_review_chain(
             ("w0c-reviewed-ambiguity", 50, "APPROVED"),
             ("w0c-hhs-external-location", 11, "APPROVED"),
             ("w1-frontier-county-location", 51, "APPROVED"),
+            ("w1-script-variant-county-join", 11, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")
@@ -618,7 +620,7 @@ def _validate_review_chain(
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "batchId",
-        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location"},
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join"},
         "approved route-node selection rationale",
     )
     _require_closed_enum(
@@ -1321,11 +1323,13 @@ def _assert_locked_contract(
         "cityLinkedCellCount": 107_156,
         "directTerritoryCellCount": 120_193,
         # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 경로 노드로 서면서 782 → 785.
-        "exactApprovedRowCount": 785,
-        "exactApprovedCellCount": 80_963,
+        # 2026-09-14: w1 간체표 폴딩 결합 11곳이 城 836–846 으로 서면서 785 → 796(귀속 충돌 5곳은 defer).
+        # unresolved 353 → 342, 승인 셀 +872 = 미결 셀 -872 로 보존된다.
+        "exactApprovedRowCount": 796,
+        "exactApprovedCellCount": 81_839,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
-        "unresolvedRowCount": 353,
-        "unresolvedCellCount": 26_193,
+        "unresolvedRowCount": 342,
+        "unresolvedCellCount": 25_317,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1337,10 +1341,12 @@ def _assert_locked_contract(
         # 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json) 뒤 東萊郡·北海國 jun 이 단일 郡國志
         # 그룹으로 정리되어 5행 185셀이 multi→single 로 옮겨갔다. 歷城 39셀을 平原郡에서
         # 濟南國으로 재판정하면 해당 1행만 multi→single 로 추가 이동하고 결정 수는 그대로다.
-        "singleGroupJun": {"rowCount": 199, "cellCount": 10_343},
-        "multiGroupJun": {"rowCount": 84, "cellCount": 7_820},
-        "uniqueNearest": {"rowCount": 280, "cellCount": 18_094},
-        "distanceTies": {"rowCount": 3, "cellCount": 69},
+        # 2026-09-14: w1 11곳 편입(8 single + 3 multi, 872셀). 이웃 郡 jun 구성 변화로 3행이
+        # single→multi 진단 캐스케이드(74셀, 판정 불변). 45113은 tie였다(ties 3→2).
+        "singleGroupJun": {"rowCount": 191, "cellCount": 9_557},
+        "multiGroupJun": {"rowCount": 81, "cellCount": 7_730},
+        "uniqueNearest": {"rowCount": 270, "cellCount": 17_241},
+        "distanceTies": {"rowCount": 2, "cellCount": 46},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
     # 그 3행이 직할지 검토 대기에서 빠져 33 → 30 이다(셀 수는 0행이라 그대로).

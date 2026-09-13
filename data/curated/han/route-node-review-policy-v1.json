@@ -2,12 +2,12 @@
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
     "externalLocationClaimCount": 11,
-    "hhsAdministrativeBindingCount": 835,
+    "hhsAdministrativeBindingCount": 846,
     "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 835,
+    "routeNodeCount": 846,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51
   },
@@ -70,12 +70,12 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764"
+      "sha256": "e37bf2ec65d00bebc494f4a009abc8fe5090f2d90d33e628281af60b9d8d15a3"
     },
-    "coordinateOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
+    "coordinateOverlaySha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7",
     "locationAdjudications": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
+      "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88"
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
@@ -83,7 +83,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "c229fe4414a51f9292fcb8d4bd1b95e222d9b4a7ead2c256e62d491f10eb2702"
+      "sha256": "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
     }
   },
   "legacyAttributionCorrections": [
@@ -275,7 +275,7 @@
     "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim"
   },
   "policyId": "han-w0c-route-node-review-policy-v1",
-  "reviewAuthority": "user-blanket-approval-2026-08-22",
+  "reviewAuthority": "user-approval-2026-09-14",
   "reviewDecisionAnchors": {
     "historicalConflictDecisionSet": {
       "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -290,8 +290,8 @@
       "rowCount": 101
     }
   },
-  "reviewedAt": "2026-08-22",
-  "reviewedBy": "codex-w0c-root",
+  "reviewedAt": "2026-09-14",
+  "reviewedBy": "hermes-agent-w1",
   "scenarioActivationPolicy": {
     "chgisBindingRule": "W0 pins reviewed place identity only; runtime lifecycle is not derived here",
     "expectedScenarioCount": 31,
@@ -331,7 +331,63 @@
       "expectedCount": 51,
       "reviewState": "APPROVED",
       "selectionRationale": "續漢書 郡國志가 樂浪·遼東·玄菟·遼東屬國·交趾·九真·日南에 적은 屬縣 가운데 CHGIS county 경계 밖이라 물리점이 없던 51 곳을 frontier-counties-v1 검토 원장의 좌표 claim으로 결합한다. 역사 binding은 모두 HHS identity다."
+    },
+    {
+      "batchId": "w1-script-variant-county-join",
+      "criteria": "간체표(han-name-simplification-v1) 폴딩으로 단일·무경합 결합된 HHS 단위 중 정책 명시 구성원 16곳",
+      "expectedCount": 11,
+      "memberAdministrativeUnitIds": [
+        "hhs:109:河內郡:013",
+        "hhs:110:常山國:012",
+        "hhs:110:鉅鹿郡:002",
+        "hhs:111:東郡:011",
+        "hhs:111:東平國:007",
+        "hhs:111:琅邪國:011",
+        "hhs:112:南陽郡:014",
+        "hhs:112:吳郡:004",
+        "hhs:112:濟南國:004",
+        "hhs:113:蜀郡:008",
+        "hhs:113:蜀郡:011"
+      ],
+      "reviewState": "APPROVED",
+      "selectionRationale": "번체 정본명과 간체 CHGIS 점의 표기 괴리로 탈락했던 행을 폴딩으로 결합한다. 餘杭은 사료 교차검증 완료, 나머지 15곳은 HHS 등재+220년 활성점+무경합까지이며 치소 동일성·판본 대조 미완료를 수용한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다. 정본-타일 郡 귀속이 어긋난 5곳(餘汗·桑乾·鉅野·广甯·鉅平)은 표시 군명 오류가 나므로 이번 배치에서 제외하고 별도 귀속 심사로 넘긴다."
     }
   ],
-  "status": "APPROVED"
+  "status": "APPROVED",
+  "deferredCommanderyAdjudication": {
+    "reviewState": "DEFERRED",
+    "reason": "정본-타일 郡 귀속이 어긋나 표시 군명이 틀어지는 5곳. 귀속 심사 후 별도 배치로 편입한다.",
+    "members": [
+      {
+        "administrativeUnitId": "hhs:111:山陽郡:003",
+        "sourceName": "鉅野",
+        "hhsParent": "山陽郡",
+        "tileParent": "濟陰郡"
+      },
+      {
+        "administrativeUnitId": "hhs:111:泰山郡:004",
+        "sourceName": "鉅平",
+        "hhsParent": "泰山郡",
+        "tileParent": "魯國"
+      },
+      {
+        "administrativeUnitId": "hhs:112:豫章郡:012",
+        "sourceName": "餘汗",
+        "hhsParent": "豫章郡",
+        "tileParent": "鄱陽郡"
+      },
+      {
+        "administrativeUnitId": "hhs:113:上谷郡:004",
+        "sourceName": "广甯",
+        "hhsParent": "上谷郡",
+        "tileParent": "鮮卑"
+      },
+      {
+        "administrativeUnitId": "hhs:113:代郡:002",
+        "sourceName": "桑乾",
+        "hhsParent": "代郡",
+        "tileParent": "上谷郡"
+      }
+    ]
+  }
 }

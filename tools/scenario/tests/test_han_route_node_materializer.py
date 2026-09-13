@@ -37,8 +37,8 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         migration = result.migration
 
         self.assertEqual("han-world-v3", result.selection["worldVersion"])
-        self.assertEqual(835, len(nodes))
-        self.assertEqual(list(range(1, 836)), sorted(row["numericCityId"] for row in nodes))
+        self.assertEqual(846, len(nodes))
+        self.assertEqual(list(range(1, 847)), sorted(row["numericCityId"] for row in nodes))
         legacy_triples = [
             [
                 row["numericCityId"],
@@ -63,8 +63,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         self.assertNotIn("legacyCityId", licheng)
         self.assertNotIn("legacyNodeFingerprint", licheng)
         self.assertNotIn("legacyDisposition", licheng)
-        # 782–832 는 변경 縣 51곳, 833–835 는 城 없던 郡治 3곳이 같은 append-only 규약으로 붙은 행이다 —
-        # 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고, 총 55행이어야 한다.
+        # 782–832 는 변경 縣 51곳, 833–835 는 城 없던 郡治 3곳, 836–846 은 간체표 폴딩 결합 11곳이
+        # 같은 append-only 규약으로 붙은 행이다 — 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고,
+        # 총 66행이어야 한다(귀속 충돌 5곳은 defer).
         self.assertEqual(
             {
                 "newCityId": 781,
@@ -75,9 +76,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             },
             migration["appendedRows"][0],
         )
-        self.assertEqual(55, len(migration["appendedRows"]))
+        self.assertEqual(66, len(migration["appendedRows"]))
         self.assertEqual(780, len(migration["rows"]))
-        self.assertEqual(55, migration["summary"]["appendedIdentityCount"])
+        self.assertEqual(66, migration["summary"]["appendedIdentityCount"])
         self.assertEqual(
             "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
             MODULE._digest(inputs.han),
@@ -114,7 +115,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
     def test_real_approved_ledgers_materialize_exact_contract(self) -> None:
         result = MODULE.materialize(MODULE.default_inputs())
 
-        self.assertEqual(835, len(result.selection["routeNodes"]))
+        self.assertEqual(846, len(result.selection["routeNodes"]))
         self.assertEqual(780, len(result.migration["rows"]))
         self.assertEqual(31, result.selection["scenarioCatalog"]["resourceCount"])
         self.assertEqual(101, result.migration["summary"]["routeNodeReplacementCount"])

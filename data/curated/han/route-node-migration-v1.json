@@ -384,6 +384,83 @@
       "newCityId": 835,
       "physicalPlaceRef": "external:v1:X024",
       "routeNodeKey": "50661067-a838-49f6-b685-f8b663ac6360"
+    },
+    {
+      "administrativeUnitId": "hhs:109:河內郡:013",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 836,
+      "physicalPlaceRef": "chgis:v6:cnty:82265",
+      "routeNodeKey": "0dd5fe30-f1d0-4616-8191-b3b3eae26d66"
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:012",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 837,
+      "physicalPlaceRef": "chgis:v6:cnty:88410",
+      "routeNodeKey": "d7f66692-4abd-44cd-94e3-8b0750a106ae"
+    },
+    {
+      "administrativeUnitId": "hhs:110:鉅鹿郡:002",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 838,
+      "physicalPlaceRef": "chgis:v6:cnty:87051",
+      "routeNodeKey": "8de160d3-de11-4976-b580-f73493dd3b47"
+    },
+    {
+      "administrativeUnitId": "hhs:111:東郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 839,
+      "physicalPlaceRef": "chgis:v6:cnty:45323",
+      "routeNodeKey": "178cce9d-9a9a-45e7-8bd5-3deaca47fb84"
+    },
+    {
+      "administrativeUnitId": "hhs:111:東平國:007",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 840,
+      "physicalPlaceRef": "chgis:v6:cnty:45277",
+      "routeNodeKey": "b1bc82f5-4d65-453f-b625-cfd90f14ffde"
+    },
+    {
+      "administrativeUnitId": "hhs:111:琅邪國:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 841,
+      "physicalPlaceRef": "chgis:v6:cnty:85577",
+      "routeNodeKey": "8205f187-0098-463d-aa26-a4b52b71d0f3"
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:014",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 842,
+      "physicalPlaceRef": "chgis:v6:cnty:82680",
+      "routeNodeKey": "28dd474e-27b4-42d9-aafa-5b411bdf9517"
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 843,
+      "physicalPlaceRef": "chgis:v6:cnty:40085",
+      "routeNodeKey": "3bbf7ce0-9f1f-4338-984d-ab0d6d609f24"
+    },
+    {
+      "administrativeUnitId": "hhs:112:濟南國:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 844,
+      "physicalPlaceRef": "chgis:v6:cnty:45113",
+      "routeNodeKey": "96e4fdb6-87c9-479a-bfec-0eb921836ca8"
+    },
+    {
+      "administrativeUnitId": "hhs:113:蜀郡:008",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 845,
+      "physicalPlaceRef": "chgis:v6:cnty:200253",
+      "routeNodeKey": "0ff30f4d-dedf-4367-86b5-9385f1797356"
+    },
+    {
+      "administrativeUnitId": "hhs:113:蜀郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 846,
+      "physicalPlaceRef": "chgis:v6:cnty:200261",
+      "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -5908,11 +5985,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "970b02b7f99599441644d91e6870e66944d77159aa4de5724188f0c9fdeb6764",
+  "sourceCandidateSha256": "e37bf2ec65d00bebc494f4a009abc8fe5090f2d90d33e628281af60b9d8d15a3",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "80255ca17b3746f486793809d4023c4d15c244a250ac9dddd2a64375340b776d",
+  "sourceSelectionSha256": "6ae212eae555e24365d2afdaf28b24f2dab979443ade753fdf0bedfd4cb4c096",
   "summary": {
-    "appendedIdentityCount": 55,
+    "appendedIdentityCount": 66,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

@@ -143,12 +143,13 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
             for row in census["sourceGroups"]
             if row["sourceVolume"] == 112 and row["sourceCommanderyNameCh"] == "濟南國"
         )
+        # 2026-09-14: 濟南國:004 臺이 간체표 폴딩으로 결합되어 10곳 전부 RESOLVED다.
         self.assertEqual(
-            {"NO_COORDINATE_CANDIDATE": 1, "RESOLVED_POINT": 9},
+            {"RESOLVED_POINT": 10},
             jinan["bindingStatusCounts"],
         )
-        self.assertEqual(9, jinan["resolvedCurrentJurisdictionCount"])
-        self.assertEqual(9, jinan["sourceParentMatchCount"])
+        self.assertEqual(10, jinan["resolvedCurrentJurisdictionCount"])
+        self.assertEqual(10, jinan["sourceParentMatchCount"])
 
     def test_detects_disconnected_and_fully_enclosed_components(self) -> None:
         result = audit_document(synthetic_document(), {"groups": []}, {"administrativeUnits": []})

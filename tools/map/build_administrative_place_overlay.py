@@ -42,7 +42,8 @@ def load_simplification_table(path: Path = SIMPLIFICATION_TABLE) -> dict[str, st
     document = json.loads(path.read_text(encoding="utf-8"))
     table = document.get("table")
     if not isinstance(table, dict) or not all(
-        isinstance(key, str) and isinstance(value, str) for key, value in table.items()
+        isinstance(key, str) and isinstance(value, str) and len(key) == 1 and len(value) == 1
+        for key, value in table.items()
     ):
         raise ValueError("simplification table must map single characters to single characters")
     return dict(table)
