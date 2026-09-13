@@ -27,7 +27,8 @@ class HanWorldArtifactsResolver(private val root: Path = Path.of(".")) {
     private val cache = ConcurrentHashMap<HanWorldVariant, ResolvedHanWorldArtifacts>()
 
     fun artifacts(variant: HanWorldVariant): ResolvedHanWorldArtifacts = cache.computeIfAbsent(variant) {
-        HanHistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
+        if (it == HanWorldVariant.V3_846) Han846Artifacts.load(root)
+        else HanHistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
     }
 
     /** The caller must provide the complete world roster and all world-scoped persisted pins. */

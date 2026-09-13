@@ -1,0 +1,11 @@
+# PR716: 846-world runtime completion
+
+The appended cities must be selectable, reachable, conquerable and persisted in a new world. Historical 832/835 worlds must continue selecting their original immutable bundles. A larger generated map alone is insufficient.
+
+1. Regenerate the candidate scenario catalog after committed scenario changes; confirm candidate rows are unchanged, update reviewed input anchors after independent review, rematerialize selection/migration and downstream reconciliation. Run scenario contract checks without weakening hash validation.
+2. Introduce a separate immutable 846 artifact catalog covering the nine strategic assets and five ownership/supply companions. Pin catalog and file hashes/lengths/path sets. Keep the historical catalogs and blobs unchanged. Freeze matching 846 CityConst/GateIndex snapshots and register an explicit HanWorldVariant. Resolve complete ID sets and all supplied spatial pins exactly.
+3. Route the new variant through the shared resolver. Package the new bundle in API and engine images. Compare terrain bytes across all variants; if distinct, provide per-variant derived PNGs rather than invalidating old worlds.
+4. Test 832/835/846 load and fresh JDBC reload, API roster/metadata/topology/terrain/PNG, command and supply consistency, and wrong-roster/wrong-pin rejection. Current-world tests compare the generated release assets and functional invariants rather than permanent city-count/name or graph-digest constants. Frozen historical fixtures retain exact identity tests.
+5. Independently review the full change, update PR716, require all CI, merge, obtain immutable images. Perform isolated proofs and the approved pep release cycle. A new-city reset is scenario_1020 generation/turn_term=current only when needed, once per release. Verify actual selected/moved/conquered new cities and live authenticated command/turn flow; synchronize Jira/GitHub and reports.
+
+Open evidence gaps: the expansion report's claimed review coverage and node-class counts need reconciliation with actual source rows; delayed five jurisdiction conflicts remain excluded until adjudicated. Do not treat game-test rejection as historical evidence for permanent exclusion. Existing 198-candidate scope and non-county stronghold provinces remain active beyond this batch.

@@ -58,7 +58,7 @@ class HanHistoricalWorldRoundTripIT {
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
         hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant })
 
-    @Test fun `real flush and fresh loader preserve both world identities and changed names`() {
+    @Test fun `real flush and fresh loader preserve all registered world identities and changed names`() {
         HanWorldVariant.entries.forEachIndexed { index, variant ->
             val id = index + 1
             val before = loader(id).buildSnapshot()
