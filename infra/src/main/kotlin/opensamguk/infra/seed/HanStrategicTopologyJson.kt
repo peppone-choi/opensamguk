@@ -44,7 +44,13 @@ object HanStrategicTopologyJson {
         load(mapName) { Files.readAllBytes(root.resolve(it)) }
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
-    fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
+    fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
+        loadVersion(mapName, 835, readArtifact)
+
+    internal fun artifactPaths(): Set<String> = paths.toSet()
+
+    internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
+        require(cityCount == 832 || cityCount == 835) { "Unregistered historical Han route roster" }
         require(mapName == MAP) { "Strategic topology is only supported for $MAP; got $mapName" }
         try {
             val bytes = paths.associateWith { readArtifact(it).copyOf() }
@@ -178,7 +184,7 @@ object HanStrategicTopologyJson {
                 },
                 water.array("waterZones").sortedBy { it.text("id") }.associate { it.text("id") to it.text("connectionStatus") },
             )
-            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds), blockers, presentation)
+            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount), blockers, presentation)
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
@@ -197,7 +203,7 @@ object HanStrategicTopologyJson {
         require(manifest.objectField("outputs").text("worldJsonSha256") == hashes.getValue(WORLD)) { "World JSON byte pin mismatch" }
     }
 
-    private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>): List<HanStrategicRouteBinding> {
+    private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>, cityCount: Int): List<HanStrategicRouteBinding> {
         val world = docs.getValue(WORLD)
         val selection = docs.getValue(SELECTION)
         val migration = docs.getValue(MIGRATION)
@@ -209,12 +215,12 @@ object HanStrategicTopologyJson {
         val runtime = world.array("cities")
         val selected = selection.array("routeNodes")
         val manifested = docs.getValue(WORLD_MANIFEST).array("routeNodes")
-        require(runtime.size == 835 && selected.size == 835 && manifested.size == 835) { "V3 route roster must contain 835 nodes" }
+        require(runtime.size == cityCount && selected.size == cityCount && manifested.size == cityCount) { "V3 route roster must contain $cityCount nodes" }
         data class Identity(val id: Int, val key: String, val physical: String)
         fun identities(rows: List<JsonNode>, idField: String): Set<Identity> {
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }
-            require(result.map { it.id }.toSet() == (1..835).toSet() && result.map { it.key }.toSet().size == 835 &&
-                result.map { it.physical }.toSet().size == 835) { "Duplicate or missing runtime/route/physical identity" }
+            require(result.map { it.id }.toSet() == (1..cityCount).toSet() && result.map { it.key }.toSet().size == cityCount &&
+                result.map { it.physical }.toSet().size == cityCount) { "Duplicate or missing runtime/route/physical identity" }
             return result.toSet()
         }
         val expected = identities(selected, "numericCityId")
