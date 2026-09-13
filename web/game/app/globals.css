@@ -2751,8 +2751,15 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 1023px) {
   .shell-main { min-width: 0; }
   .iso-zoom button, .map-btn-stack button { min-width: 44px; min-height: 44px; }
+  /* Keep settings and the legend below the map instead of over touch gestures. */
   .map-btn-stack { max-width: calc(100% - 154px); }
   .map-btn-stack button { white-space: normal; }
+  .map-viewer-canvas--iso { aspect-ratio: auto; }
+  .map-viewer-canvas--iso .iso-stage { height: clamp(320px, 55dvh, 560px); }
+  .map-viewer-canvas--iso .map-btn-stack { position: static; max-width: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-top: 1px solid var(--line); }
+  .map-viewer-canvas--iso .map-btn-stack button { margin: 0; flex: 1 1 150px; white-space: normal; }
+  .map-legend { position: static; margin-top: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map-legend__row:first-child { grid-column: 1 / -1; }
   .dept-nav--vertical .dept-nav__entry, .dept-nav--vertical .dept-nav__group > button { min-height: 44px; }
   .city-select { flex-wrap: wrap; }
   .city-select select { min-width: 0; max-width: 100%; }

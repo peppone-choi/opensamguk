@@ -426,7 +426,7 @@ export default function MapViewer({
             >
                 {title}
             </div>
-            <div className="map-viewer-canvas">
+            <div className={`map-viewer-canvas${legacyCanvas ? '' : ' map-viewer-canvas--iso'}`}>
                 {legacyCanvas ? (
                     <HanMapCanvas
                         mapCode={data.mapCode}
