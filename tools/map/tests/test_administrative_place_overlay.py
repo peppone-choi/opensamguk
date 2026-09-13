@@ -257,6 +257,20 @@ class AdministrativePlaceOverlayTest(unittest.TestCase):
         self.assertEqual("chgis:v6:cnty:R1", row["selectedCandidate"]["physicalPlaceId"])
         self.assertIn("余杭", row["selectedCandidate"]["matchedNames"])
 
+    def test_reviewed_wu_piling_variants_use_real_table_and_preserve_source(self):
+        for source_name, physical_name in (("呉", "吴县"), ("毘陵", "毗陵县")):
+            with self.subTest(source_name=source_name):
+                doc = MODULE.build_overlay(
+                    catalog([unit(1, source_name)]),
+                    [record("R1", physical_name)],
+                    source_year=220,
+                    simplification=MODULE.load_simplification_table(),
+                )
+                row = doc["administrativeUnits"][0]
+                self.assertEqual("RESOLVED_POINT", row["joinStatus"])
+                self.assertEqual(source_name, row["sourceName"])
+                self.assertEqual("chgis:v6:cnty:R1", row["selectedCandidate"]["physicalPlaceId"])
+
     def test_damaged_source_placeholder_is_never_auto_joined(self):
         doc = MODULE.build_overlay(
             catalog([unit(1, "参[�]", status="SOURCE_PLACEHOLDER")]),
