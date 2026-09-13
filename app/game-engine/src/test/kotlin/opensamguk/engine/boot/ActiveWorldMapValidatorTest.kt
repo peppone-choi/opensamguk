@@ -65,8 +65,12 @@ class ActiveWorldMapValidatorTest {
     }
 
     @Test
-    fun `new world v3 validates only the reviewed 835 identity domain`() {
-        ActiveWorldMapValidator.validate(snapshot("han-world-v3", 1..835, listOf(781), listOf(1)))
+    fun `new world v3 validates the complete current identity domain`() {
+        val ids = opensamguk.infra.seed.MapJson.loadFromClasspath("han-world-v3").cities.map { it.id }
+        ActiveWorldMapValidator.validate(snapshot("han-world-v3", ids, listOf(ids.last()), listOf(ids.first())))
+        assertFailsWith<IllegalStateException> {
+            ActiveWorldMapValidator.validate(snapshot("han-world-v3", ids.dropLast(1)))
+        }
         assertFailsWith<IllegalStateException> {
             ActiveWorldMapValidator.validate(snapshot("han-world-v3", 1..774))
         }
