@@ -2,7 +2,7 @@
  "schemaVersion": 1,
  "tableId": "han-name-simplification-v1",
  "note": "지명 대조용 繁→簡 글자표. 정본 administrative-units.json 은 卷마다 繁/簡 저본이 섞여 있고(卷113 계열이 簡體), 타일 원장 nameCh 는 簡體, 나무위키 수확분은 繁體다. 같은 縣을 같은 縣으로보려면 한 축으로 눕혀야 한다. 이 표는 OpenCC t2s 로 생성했고 저장소는 opencc 를 런타임 의존으로쓰지 않는다 — 표가 산출물이다.",
- "generator": "OpenCC t2s (opencc-python-reimplemented), 스크래치 venv",
+ "generator": "OpenCC t2s base (opencc-python-reimplemented), plus explicit reviewedVariantAdditions; no runtime OpenCC dependency",
  "scope": "정본·타일·런타임 지도·나무위키 원장에 실제로 쓰인 글자만",
  "normalizationRule": "접미사는 타일에만 붙는 것만 뗀다 — 侯国/侯國/属国/屬國/公国/公國 (2자) 그리고 县/縣 (1자). 國·道·郡·尹 은 정본에서 이름의 일부다(安國·夷道) — 떼면 安·夷 가 되어 어긋난다.",
  "validation": {
@@ -235,6 +235,30 @@
   "黨": "党",
   "齊": "齐",
   "龍": "龙",
-  "龜": "龟"
- }
+  "龜": "龟",
+  "呉": "吴",
+  "毘": "毗"
+ },
+ "reviewedVariantAdditions": [
+  {
+   "from": "呉",
+   "to": "吴",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 吳郡 first county 呉; CHGIS40404 吴县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_40404"
+   ]
+  },
+  {
+   "from": "毘",
+   "to": "毗",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 吳郡 毘陵; CHGIS40451 毗陵县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_40451"
+   ]
+  }
+ ]
 }
