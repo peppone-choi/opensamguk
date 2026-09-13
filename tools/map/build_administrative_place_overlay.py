@@ -17,6 +17,7 @@ CATALOG = ROOT / "data/curated/han/administrative-units.json"
 CHGIS_COUNTY_DBF = ROOT / "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf"
 BINDINGS = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
 OUT = ROOT / "data/map/administrative-place-overlay.json"
+SIMPLIFICATION_TABLE = ROOT / "data/curated/han/han-name-simplification-v1.json"
 SOURCE_YEAR = 220
 JOIN_STATUSES = (
     "RESOLVED_POINT",
@@ -35,6 +36,20 @@ REQUIRED_DBF_FIELDS = {
     "END_YR",
     "SYS_ID",
 }
+
+
+def load_simplification_table(path: Path = SIMPLIFICATION_TABLE) -> dict[str, str]:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    table = document.get("table")
+    if not isinstance(table, dict) or not all(
+        isinstance(key, str) and isinstance(value, str) for key, value in table.items()
+    ):
+        raise ValueError("simplification table must map single characters to single characters")
+    return dict(table)
+
+
+def fold_script(value: str, table: dict[str, str]) -> str:
+    return "".join(table.get(char, char) for char in value)
 
 
 def normalize_name(value: str) -> str:
@@ -271,30 +286,46 @@ def candidate_payload(record: dict, matched_fields: list[str], matched_names: li
     }
 
 
-def build_name_index(records: list[dict], source_year: int) -> dict[str, list[tuple[dict, str]]]:
+def build_name_index(
+    records: list[dict], source_year: int, simplification: dict[str, str] | None = None
+) -> dict[str, list[tuple[dict, str]]]:
     index = defaultdict(list)
     for record in active_records(records, source_year):
         for field_name in ("NAME_CH", "NAME_FT"):
             raw = unicodedata.normalize("NFC", str(record[field_name]).strip())
-            for key in dict.fromkeys((raw, normalize_name(raw))):
+            keys = dict.fromkeys((raw, normalize_name(raw)))
+            if simplification:
+                for key in list(keys):
+                    folded = fold_script(key, simplification)
+                    if folded and folded not in keys:
+                        keys[folded] = None
+            for key in keys:
                 if key:
                     index[key].append((record, field_name))
     return index
 
 
-def match_names(unit: dict) -> list[str]:
+def match_names(unit: dict, simplification: dict[str, str] | None = None) -> list[str]:
     if unit.get("sourceNameStatus") == "SOURCE_PLACEHOLDER":
         return []
     names = [unicodedata.normalize("NFC", str(unit["sourceName"]).strip())]
     correction = unit.get("nameCorrection")
     if correction:
         names.append(unicodedata.normalize("NFC", str(correction["correctedName"]).strip()))
-    return list(dict.fromkeys(name for name in names if name))
+    ordered = list(dict.fromkeys(name for name in names if name))
+    if simplification:
+        for name in list(ordered):
+            folded = fold_script(name, simplification)
+            if folded and folded not in ordered:
+                ordered.append(folded)
+    return ordered
 
 
-def candidates_for_unit(unit: dict, name_index: dict[str, list[tuple[dict, str]]]) -> list[dict]:
+def candidates_for_unit(
+    unit: dict, name_index: dict[str, list[tuple[dict, str]]], simplification: dict[str, str] | None = None
+) -> list[dict]:
     by_record = {}
-    for match_name in match_names(unit):
+    for match_name in match_names(unit, simplification):
         for record, field_name in name_index.get(match_name, []):
             key = physical_place_id(record)
             state = by_record.setdefault(
@@ -400,7 +431,12 @@ def administrative_unit_id(unit: dict) -> str:
     return f'hhs:{unit["sourceVolume"]}:{unit["canonicalGroup"]}:{unit["ordinal"]:03d}'
 
 
-def unit_payload(unit: dict, candidates: list[dict], candidate_users: dict[str, list[str]]) -> dict:
+def unit_payload(
+    unit: dict,
+    candidates: list[dict],
+    candidate_users: dict[str, list[str]],
+    simplification: dict[str, str] | None = None,
+) -> dict:
     identity = {
         "sourceVolume": int(unit["sourceVolume"]),
         "canonicalGroup": unit["canonicalGroup"],
@@ -413,7 +449,7 @@ def unit_payload(unit: dict, candidates: list[dict], candidate_users: dict[str, 
         "sourceNameStatus": unit["sourceNameStatus"],
         "unitType": unit["unitType"],
         "sourceCitation": unit["sourceCitation"],
-        "matchNames": match_names(unit),
+        "matchNames": match_names(unit, simplification),
         "candidateCount": len(candidates),
     }
     if "nameCorrection" in unit:
@@ -452,12 +488,13 @@ def build_overlay(
     source_year: int = SOURCE_YEAR,
     *,
     reviewed_bindings: dict | None = None,
+    simplification: dict[str, str] | None = None,
 ) -> dict:
     if source_year != SOURCE_YEAR:
         raise ValueError("source year must be exactly 220")
     validate_catalog(catalog)
     validate_active_records(records, source_year)
-    name_index = build_name_index(records, source_year)
+    name_index = build_name_index(records, source_year, simplification)
     reviewed = reviewed_physical_places(reviewed_bindings, catalog)
     active_by_place_id = {
         physical_place_id(record): record for record in active_records(records, source_year)
@@ -466,7 +503,7 @@ def build_overlay(
     candidate_users = defaultdict(list)
     for group in catalog["groups"]:
         for unit in group["units"]:
-            candidates = candidates_for_unit(unit, name_index)
+            candidates = candidates_for_unit(unit, name_index, simplification)
             candidates = apply_reviewed_candidate(
                 unit,
                 candidates,
@@ -476,7 +513,7 @@ def build_overlay(
             matched_units.append((unit, candidates))
             for candidate in candidates:
                 candidate_users[candidate["physicalPlaceId"]].append(administrative_unit_id(unit))
-    rows = [unit_payload(unit, candidates, candidate_users) for unit, candidates in matched_units]
+    rows = [unit_payload(unit, candidates, candidate_users, simplification) for unit, candidates in matched_units]
     status_counts = Counter(row["joinStatus"] for row in rows)
     unsafe_selections = sum(
         row["joinStatus"] == "AMBIGUOUS_POINT" and "selectedCandidate" in row
@@ -491,7 +528,11 @@ def build_overlay(
             "unitNames": ["sourceName", "independently cited nameCorrection.correctedName"],
             "chgisFields": ["NAME_CH", "NAME_FT"],
             "temporalPredicate": "BEG_YR <= sourceYear <= END_YR",
-            "namePredicate": "NFC exact match on the original or one-suffix-removed CHGIS name",
+            "namePredicate": (
+                "NFC exact match on the original or one-suffix-removed CHGIS name; "
+                "when a simplification table is supplied, folded script variants are "
+                "indexed and matched alongside the originals (source readings unchanged)"
+            ),
             "reviewedBindingPolicy": (
                 "an exact reviewed administrativeUnitId/physicalPlaceId pair may select an active "
                 "CHGIS record; a conflicting name candidate fails closed"
@@ -518,11 +559,13 @@ def build_document(catalog_path: Path, dbf_path: Path, reviewed_bindings_path: P
         raise ValueError("W0 catalog must declare exactly 105 groups and 1,180 units")
     records, field_names = read_dbf(dbf_path, SOURCE_YEAR)
     reviewed_bindings = json.loads(reviewed_bindings_path.read_text(encoding="utf-8"))
+    simplification = load_simplification_table(ROOT / "data/curated/han/han-name-simplification-v1.json")
     document = build_overlay(
         catalog,
         records,
         SOURCE_YEAR,
         reviewed_bindings=reviewed_bindings,
+        simplification=simplification,
     )
     active_count = len(records)
     document["provenance"] = {
@@ -533,6 +576,8 @@ def build_document(catalog_path: Path, dbf_path: Path, reviewed_bindings_path: P
         "chgisDbfFields": field_names,
         "reviewedBindingsPath": source_label(reviewed_bindings_path),
         "reviewedBindingsSha256": sha256(reviewed_bindings_path),
+        "simplificationTablePath": "data/curated/han/han-name-simplification-v1.json",
+        "simplificationTableSha256": sha256(ROOT / "data/curated/han/han-name-simplification-v1.json"),
         "activeRecordCount": active_count,
         "generator": "tools/map/build_administrative_place_overlay.py",
         "redistribution": "generated coordinate overlay remains gitignored under ADR-LITE-039",
