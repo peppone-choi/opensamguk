@@ -268,6 +268,8 @@ data class TurnWorldState(
     val worldVersion: Long = 0L,
     /** OPENSAM-131: active writer fence epoch observed at load. */
     val writerEpoch: Long = 0L,
+    /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
+    val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
 )
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"

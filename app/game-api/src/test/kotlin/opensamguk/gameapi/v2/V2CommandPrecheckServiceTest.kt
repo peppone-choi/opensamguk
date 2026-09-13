@@ -202,7 +202,12 @@ class V2CommandPrecheckServiceTest {
                 GeneralPositionState("r1", "a".repeat(64), 10, StrategicNodeRef.LandProvince("45776"), 1,
                     BattlefieldPresence("changban", "b".repeat(64), fromCityId)), emptyMap()))
         } else null
-        val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, fields)
+        val worldArtifacts = mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
+        val bundle = mock(opensamguk.infra.seed.ResolvedHanWorldArtifacts::class.java)
+        `when`(bundle.variant).thenReturn(HanWorldVariant.V3_835)
+        `when`(worldArtifacts.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
+            WorldStateReadEntity(id = 1), emptyList(), bundle))
+        val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, fields, worldArtifacts)
         return V2CommandPrecheckService(states, jdbc, GameApiProcessWorld(1), loadTopology)
     }
 }

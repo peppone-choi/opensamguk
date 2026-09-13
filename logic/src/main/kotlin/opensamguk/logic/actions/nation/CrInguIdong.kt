@@ -112,7 +112,7 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         val amount = (ctx.args["amount"] as? Number)?.toInt() ?: 0
         val cost = getCost((ctx.env["develCost"] as Number).toInt(), amount)
-        val cityConstVariant = (ctx.env["mapName"] as? String)?.let(CityConstRegistry::find)
+        val cityConstVariant = ctx.selectedCityConst()
         val nearIds = cityConstVariant?.let { variant ->
             CalcCityDistance.nearCity(ctx.cityId ?: 0, 1, variant)
                 .filterTo(LinkedHashSet()) { variant.byId(it) != null }
@@ -139,7 +139,7 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
         val dest = d.destCity ?: return
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val cityConstVariant = CityConstRegistry.of(context.env.mapName)
+        val cityConstVariant = context.env.cityConst
         val destCityName = cityConstVariant.byId(destCityId)?.displayName ?: cityConstVariant.byId(dest.id)?.displayName ?: ""
         val argAmount = (context.args["amount"] as? Number)?.toInt() ?: 0
 

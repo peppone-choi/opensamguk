@@ -60,7 +60,7 @@ internal class AiDistanceListCache(
         require(maxEntries > 0) { "maxEntries must be positive" }
     }
 
-    private data class Key(val mapName: String, val cityIds: List<Int>)
+    private data class Key(val mapIdentity: Any, val cityIds: List<Int>)
 
     private val entries = object : LinkedHashMap<Key, Map<Int, Map<Int, Int>>>(maxEntries + 1, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Key, Map<Int, Map<Int, Int>>>?): Boolean =
@@ -68,11 +68,11 @@ internal class AiDistanceListCache(
     }
 
     fun getOrCompute(
-        mapName: String,
+        mapIdentity: Any,
         cityIds: List<Int>,
         compute: (List<Int>) -> Map<Int, Map<Int, Int>>,
     ): Map<Int, Map<Int, Int>> {
-        val key = Key(mapName, cityIds.toList())
+        val key = Key(mapIdentity, cityIds.toList())
         return entries[key] ?: compute(key.cityIds).also { entries[key] = it }
     }
 }
@@ -202,7 +202,7 @@ class AiTurnAdapter(
         cityIds: List<Int>,
         cityConst: CityConstVariant = activeCityConst(),
     ): Map<Int, Map<Int, Int>> {
-        return distanceListCache.getOrCompute(cityConst.mapName, cityIds) { orderedCityIds ->
+        return distanceListCache.getOrCompute(cityConst, cityIds) { orderedCityIds ->
             AiDistance.searchAllDistanceByCityList(orderedCityIds, cityConst)
         }
     }
@@ -661,6 +661,7 @@ class AiTurnAdapter(
                 destNationId = (rawArgs["destNationID"] as? Number)?.toInt(),
                 env = stagedEnv,
                 mode = ConstraintMode.FULL,
+            hanWorldVariant = world.getState().hanWorldVariant,
             )
             candidateVerdict(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
         }
@@ -780,7 +781,7 @@ class AiTurnAdapter(
         world.getNationById(nationId)?.tech?.toInt() ?: 0
 
     private fun activeCityConst(state: TurnWorldState = world.getState()): CityConstVariant {
-        return ActiveWorldMap.requireVariant(state.config, state.meta)
+        return ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
     }
 
     private fun commandEnvMap(

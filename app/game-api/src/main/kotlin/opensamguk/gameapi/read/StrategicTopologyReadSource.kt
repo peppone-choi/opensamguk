@@ -19,10 +19,13 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
     fun binding(worldId: Int): StrategicTopologyBinding = StrategicTopologyBinding.from(worldId, projection)
 
     val presentation: StrategicMapTopologyDto by lazy {
-        val projection = projection
+        presentationFor(projection)
+    }
+
+    fun presentationFor(projection: HanStrategicRouteProjection): StrategicMapTopologyDto {
         val topology = projection.topology
         val display = requireNotNull(projection.presentation)
-        StrategicMapTopologyDto(
+        return StrategicMapTopologyDto(
             topology.landProvinceIds.sorted(), display.geometries,
             topology.waterZones.sortedBy { it.id }.map { zone -> StrategicWaterZoneDto(
                 zone.id, zone.kind.name, zone.geometryRef, display.zoneConnections.getValue(zone.id),

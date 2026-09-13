@@ -41,8 +41,9 @@ class HanSupplyDisconnectionPolicyLoader(
         activeMapName: String,
         scenarioCode: Int,
         liveCities: List<SpatialSupplyCity>,
+        artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null,
     ): Map<Int, SupplyFallbackPolicy> {
-        val canonical = canonical(activeMapName)
+        val canonical = canonical(activeMapName, artifacts)
         val liveById = liveCities.associateBy { it.cityId }
         check(liveById.size == liveCities.size) { "Runtime contains duplicate city ids" }
         return loadActive(canonical, scenarioCode) { row ->
@@ -85,22 +86,23 @@ class HanSupplyDisconnectionPolicyLoader(
         return result
     }
 
-    private fun canonical(activeMapName: String): CanonicalPolicies = synchronized(cached) {
-        cached.getOrPut(activeMapName) { loadCanonical(activeMapName) }
+    private fun canonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null): CanonicalPolicies = synchronized(cached) {
+        require(artifacts == null || activeMapName == "han-world-v3")
+        cached.getOrPut(artifacts?.variant?.artifactId ?: activeMapName) { loadCanonical(activeMapName, artifacts) }
     }
 
-    private fun loadCanonical(activeMapName: String): CanonicalPolicies {
+    private fun loadCanonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts?): CanonicalPolicies {
         try {
             val (activeLedgerPath, activeRuntimeMapPath, schemaVersion) = when (activeMapName) {
                 "han", "han-world-v2" -> Triple(ledgerPath, runtimeMapPath, 1)
                 "han-world-v3" -> Triple(v3LedgerPath, v3RuntimeMapPath, 2)
                 else -> error("Unsupported Han supply policy map $activeMapName")
             }
-            val tiles = readTree(mapPath)
+            val tiles = artifacts?.let { objectMapper.readTree(it.artifactBytes("data/map/han-tiles.json")) } ?: readTree(mapPath)
             val provinces = tiles.requiredArray("provinceRecords")
             val jurisdictionIds = tiles.requiredArray("jurisdictionRecords")
                 .map { it.requiredText("id") }.toSet()
-            val runtimeRoot = readTree(activeRuntimeMapPath)
+            val runtimeRoot = artifacts?.let { objectMapper.readTree(it.artifactBytes("infra/src/main/resources/map/han-world-v3.json")) } ?: readTree(activeRuntimeMapPath)
             if (schemaVersion == 2) {
                 check(runtimeRoot.path("_meta").requiredText("map") == activeMapName) {
                     "Han V3 runtime map domain drift"
@@ -111,13 +113,13 @@ class HanSupplyDisconnectionPolicyLoader(
             val runtimeById = runtimeCities.associateBy { it.requiredInt("id") }
             check(runtimeById.size == runtimeCities.size) { "Han runtime map contains duplicate city ids" }
 
-            val sourceRoot = readTree(sourceLedgerPath)
+            val sourceRoot = artifacts?.let { objectMapper.readTree(it.artifactBytes("data/curated/han/territory-disconnection-adjudications-v1.json")) } ?: readTree(sourceLedgerPath)
             check(sourceRoot.requiredInt("schemaVersion") == 1) { "Han source ledger schemaVersion must be 1" }
             val sourceRows = sourceRoot.requiredArray("adjudications")
             val sourceByKey = sourceRows.associateBy { it.requiredText("componentKey") }
             check(sourceByKey.size == sourceRows.size) { "Han source ledger contains duplicate component keys" }
 
-            val root = readTree(activeLedgerPath)
+            val root = artifacts?.let { objectMapper.readTree(it.artifactBytes("data/curated/han/supply-disconnection-adjudications-v3.json")) } ?: readTree(activeLedgerPath)
             check(root.requiredInt("schemaVersion") == schemaVersion) {
                 "Han supply ledger schemaVersion must be $schemaVersion for $activeMapName"
             }

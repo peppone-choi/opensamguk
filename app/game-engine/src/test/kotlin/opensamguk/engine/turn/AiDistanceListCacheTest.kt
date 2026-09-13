@@ -6,6 +6,26 @@ import kotlin.test.assertEquals
 class AiDistanceListCacheTest {
 
     @Test
+    fun `historical variants with the same logical name and city subset do not share distances`() {
+        val cache = AiDistanceListCache()
+        val old = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.HanWorldVariant.V3_832)
+        val newer = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.HanWorldVariant.V3_835)
+        assertEquals(old.mapName, newer.mapName)
+        val ids = old.all().keys.intersect(newer.all().keys).take(2)
+        var calls = 0
+        fun lookup(variant: opensamguk.logic.world.CityConstVariant) = cache.getOrCompute(variant, ids) {
+            calls++
+            mapOf(ids.first() to mapOf(ids.last() to calls))
+        }
+        val first = lookup(old)
+        val second = lookup(newer)
+        assertEquals(2, calls)
+        assertEquals(first, lookup(old))
+        assertEquals(second, lookup(newer))
+        assertEquals(2, calls)
+    }
+
+    @Test
     fun `least recently used matrix is evicted and recomputes deterministically`() {
         val cache = AiDistanceListCache(maxEntries = 2)
         val computeCounts = linkedMapOf<List<Int>, Int>()

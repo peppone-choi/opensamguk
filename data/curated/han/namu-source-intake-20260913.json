@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "scope": "SUPPLIED_TEXT_INTAKE_NOT_HISTORICAL_ADJUDICATION",
+  "sources": [
+    {
+      "sourceId": "5fc94ca2eb5c2afd2c40856180dd299ffaa2b2f7cdfa09476e6cca68f7586e3b",
+      "title": "삼국지/지명/사례교위부",
+      "sha256": "5fc94ca2eb5c2afd2c40856180dd299ffaa2b2f7cdfa09476e6cca68f7586e3b",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부",
+      "sourceLastModified": "2026-07-15 07:47:14",
+      "lineCount": 841,
+      "attachmentCount": 1,
+      "previousSourceId": "547b51d1dc251c680550a02184f0b4156115dd5bbafca06a76abd9186952704f",
+      "recordCount": 185,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "dd5c32d5595cbecc87bf1b42fcf674c662468e25973d4a383e2e34dd0207b379",
+      "title": "삼국지/지명/연주",
+      "sha256": "dd5c32d5595cbecc87bf1b42fcf674c662468e25973d4a383e2e34dd0207b379",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/연주",
+      "sourceLastModified": "2026-08-11 21:14:57",
+      "lineCount": 689,
+      "attachmentCount": 1,
+      "previousSourceId": "107784c7757c73c16c9f847573f929383cb0bc5211ae2bbb66e71c7f1af1fa19",
+      "recordCount": 160,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "6cb62fa288394f9a4a0d07cb23ac5f1628df99efe238baf585afacbeaadfee9d",
+      "title": "삼국지/지명/예주",
+      "sha256": "6cb62fa288394f9a4a0d07cb23ac5f1628df99efe238baf585afacbeaadfee9d",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/예주",
+      "sourceLastModified": "2026-08-02 16:18:24",
+      "lineCount": 1124,
+      "attachmentCount": 1,
+      "previousSourceId": "f237d47659e211d7e0bdffde38ae34e5b1ade0391e00825cebcb59a578d9312e",
+      "recordCount": 168,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "8dbba6e4287cd00c6e5ac58182bcb271887000c570c523c75a262108b7439ff6",
+      "title": "삼국지/지명/기주",
+      "sha256": "8dbba6e4287cd00c6e5ac58182bcb271887000c570c523c75a262108b7439ff6",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/기주",
+      "sourceLastModified": "2026-07-30 08:27:32",
+      "lineCount": 888,
+      "attachmentCount": 1,
+      "previousSourceId": "a6c1d7cb8dd1ac355be6be5c4655ff0aaf748971cf2963a32843d91829c9cde8",
+      "recordCount": 195,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "c9f81283ba3e9dcee0aeef04630b78e675285b0ec56afa23ec6bf914ec17279b",
+      "title": "삼국지/지명/유주",
+      "sha256": "c9f81283ba3e9dcee0aeef04630b78e675285b0ec56afa23ec6bf914ec17279b",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주",
+      "sourceLastModified": "2026-07-15 07:47:15",
+      "lineCount": 885,
+      "attachmentCount": 1,
+      "previousSourceId": "2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2",
+      "recordCount": 193,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "149e9326945491c4f227f5ab7569c1e77a5e38fcb2aaa2bd14414a1d23f5749e",
+      "title": "삼국지/지명/병주",
+      "sha256": "149e9326945491c4f227f5ab7569c1e77a5e38fcb2aaa2bd14414a1d23f5749e",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주",
+      "sourceLastModified": "2026-07-31 20:36:51",
+      "lineCount": 828,
+      "attachmentCount": 1,
+      "previousSourceId": "538467d8b236e72159c2b7006ffd46eb4383e880bb9be59b3150d96069446594",
+      "recordCount": 199,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "b6f6693bf0bb5c1d2e0f7d58244c740daec1a31278824c79fc8aa5e1099b5ab7",
+      "title": "삼국지/지명/옹주",
+      "sha256": "b6f6693bf0bb5c1d2e0f7d58244c740daec1a31278824c79fc8aa5e1099b5ab7",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주",
+      "sourceLastModified": "2026-07-15 07:47:15",
+      "lineCount": 965,
+      "attachmentCount": 1,
+      "previousSourceId": "f8c772d27facd3dcd37812ed7efd9f0c674d937d9c8302f803430f9d1c394014",
+      "recordCount": 200,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "e473aaf9f6a685b7b73c420284179be61a0c99a81df81badaf9b2239045484b4",
+      "title": "삼국지/지명/양주(감숙)",
+      "sha256": "e473aaf9f6a685b7b73c420284179be61a0c99a81df81badaf9b2239045484b4",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/양주(감숙)",
+      "sourceLastModified": "2026-08-21 23:25:02",
+      "lineCount": 467,
+      "attachmentCount": 1,
+      "previousSourceId": "5241113b8e208c57749418210fdd2e61be57247c3a7363282310cb2bd445a4e2",
+      "recordCount": 99,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "3a387a985f8d21a24ea82986619aa01d2131c76d80ed5b6a88c32296015a5850",
+      "title": "삼국지/지명/익주",
+      "sha256": "3a387a985f8d21a24ea82986619aa01d2131c76d80ed5b6a88c32296015a5850",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주",
+      "sourceLastModified": "2026-07-15 07:47:15",
+      "lineCount": 1211,
+      "attachmentCount": 1,
+      "previousSourceId": "3dbff015f0a87b906a744ced72e233177de6a5323271b4e53f4dbdab5d1d60e0",
+      "recordCount": 239,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "e194c4b6beaccf462707d85bf11ea6039df9f1c2092881a4960d396510d3fd5e",
+      "title": "삼국지/지명/청주",
+      "sha256": "e194c4b6beaccf462707d85bf11ea6039df9f1c2092881a4960d396510d3fd5e",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주",
+      "sourceLastModified": "2026-07-15 07:47:15",
+      "lineCount": 641,
+      "attachmentCount": 1,
+      "previousSourceId": "0a7587fb8f1581fd663a00540e46dd8df45a5a530e6c6534fb00430257015f9f",
+      "recordCount": 135,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "299078a2da5914bbe3833c1e371a9ae8e20a85a5670a34de62eea0d2614ede13",
+      "title": "삼국지/지명/서주",
+      "sha256": "299078a2da5914bbe3833c1e371a9ae8e20a85a5670a34de62eea0d2614ede13",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/서주",
+      "sourceLastModified": "2026-07-23 08:51:20",
+      "lineCount": 630,
+      "attachmentCount": 1,
+      "previousSourceId": "a78f1d9c50da74748ef9d816c7a507a08f113f03ae04245936383da7a3118c7d",
+      "recordCount": 144,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "19252a4430d085d69fe066b4763aabb85637fcbc1ce4d27d55075bc4e4b2351e",
+      "title": "삼국지/지명/형주",
+      "sha256": "19252a4430d085d69fe066b4763aabb85637fcbc1ce4d27d55075bc4e4b2351e",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/형주",
+      "sourceLastModified": "2026-08-25 07:00:19",
+      "lineCount": 1424,
+      "attachmentCount": 1,
+      "previousSourceId": "579ab2083f3e6e6d3fc3237e273859092229b232632bc19b75d6b1688b28f896",
+      "recordCount": 304,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "02dfd4772757290cb9cfab3663c98756e94078621755cc60cf7a90b7d354b18b",
+      "title": "삼국지/지명/양주(강동)",
+      "sha256": "02dfd4772757290cb9cfab3663c98756e94078621755cc60cf7a90b7d354b18b",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/양주(강동)",
+      "sourceLastModified": "2026-08-29 13:25:35",
+      "lineCount": 1360,
+      "attachmentCount": 1,
+      "previousSourceId": "89c8afe1d1e88a7a660a5dcf4cfe750060dd4eb4267cb413eac4be8145656a56",
+      "recordCount": 290,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    },
+    {
+      "sourceId": "92f81aa6bdd65877768d7e6966dc4452741a3e91a83e197bd71241de33f12036",
+      "title": "삼국지/지명/교주",
+      "sha256": "92f81aa6bdd65877768d7e6966dc4452741a3e91a83e197bd71241de33f12036",
+      "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주",
+      "sourceLastModified": "2026-08-25 08:11:21",
+      "lineCount": 731,
+      "attachmentCount": 1,
+      "previousSourceId": "cb5cece8ea8ffb4d88e7836f5cf94d477d5b2f251e990c4ffc73f175cd539fe8",
+      "recordCount": 147,
+      "parsedRecordsEquivalentIgnoringAttribution": true
+    }
+  ],
+  "recordKinds": {
+    "OTHER_NAMED_SITE": 687,
+    "COUNTY_HEADING": 1971
+  },
+  "notes": [
+    "Source bytes differ from the previous intake. Equivalence compares extracted records excluding source identifiers and line numbers, not all narrative prose.",
+    "OTHER_NAMED_SITE includes administrative headings, tombs and natural features; it is not an approved playable-site list.",
+    "津 is a crossing or ferry name, not automatic evidence for city level 鎭.",
+    "No city, province, level or ownership is approved by this intake."
+  ]
+}

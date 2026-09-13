@@ -40,7 +40,7 @@ fun cheGamchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nation
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         // che_감축.php:63 — origCityLevel = CityConst::byID(capital)->level (정적 시나리오 레벨 = 감축 하한).
         // 확장(증축)으로 정적 레벨 위로 키운 분만 되돌릴 수 있어 현재 level 이 origCityLevel 보다 커야 한다.
-        val cityConstVariant = (ctx.env["mapName"] as? String)?.let(CityConstRegistry::find)
+        val cityConstVariant = ctx.selectedCityConst()
         val origCityLevel = ctx.destCityId?.let { cityConstVariant?.byId(it)?.level } ?: Int.MAX_VALUE
         // che_감축.php:69-70 — 두 ReqDestCityValue (둘 다 '더이상 감축할 수 없습니다.'): level>4 + level>origCityLevel.
         return listOf(
@@ -93,7 +93,7 @@ fun cheGamchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nation
         )
 
         // logs (che_감축.php:198 general action + :201 global action)
-        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.displayName ?: ""
+        val destName = context.env.cityConst.byId(capital.id)?.displayName ?: ""
         val josaUl = JosaUtil.pick(destName, "을")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<G><b>$destName</b></>$josaUl 감축했습니다. <1>${context.date}</>")

@@ -80,11 +80,11 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `live city seat override matches the map API projection`() {
-        val city = SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 12)
+    fun `captured city territory matches the map API projection`() {
+        val city = SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 77)
         val engine = provider().network(1020, listOf(city))
         val api = MapAdministrativeOwnership(mapper, mapPath, ownershipPath, allowlistPath)
-            .project(1020.toString(), listOf(LiveCityOwnership(720, 846, 12)))
+            .project(1020.toString(), listOf(LiveCityOwnership(720, 846, 77)))
 
         assertEquals(api.provinceOccupancy.map { it.nationId }, engine.provinceOwners.toList())
         assertEquals(846, engine.cityProvinceIndices.getValue(720))
@@ -151,19 +151,50 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `changed Yuyang Lu live owner overrides only its seat province`() {
+    fun `captured jurisdiction updates provinces sharing the seat baseline owner`() {
         val root = mapper.readTree(Path(mapPath).toFile())
         val lu = root.path("jurisdictionRecords").single { it.path("id").asText() == "87436" }
         val provinceIds = root.path("provinceRecords").map { it.path("id").asText() }
         val indices = lu.path("provinceIds").map { provinceIds.indexOf(it.asText()) }
+        val baseline = provider().network(1020, emptyList()).provinceOwners
         val network = provider().network(
             1020,
             listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 77)),
         )
 
-        assertEquals(7, indices.size)
-        assertEquals(77, network.provinceOwners[846])
-        assertEquals(setOf(12), indices.filter { it != 846 }.map { network.provinceOwners[it] }.toSet())
+        assertTrue(indices.size > 1, "capture fixture must cover multiple provinces")
+        indices.forEach { index ->
+            val expected = if (baseline[index] == baseline[846]) 77 else baseline[index]
+            assertEquals(expected, network.provinceOwners[index], "province $index")
+        }
+    }
+
+    @Test
+    fun `capture preserves split baseline ownership and cached scenario owners`() {
+        val map = mapper.readTree(Path(mapPath).toFile())
+        val provinces = map.path("provinceRecords")
+        val jurisdiction = provinces[846].path("jurisdictionId").asText()
+        val splitIndex = (0 until provinces.size()).first {
+            it != 846 && provinces[it].path("jurisdictionId").asText() == jurisdiction
+        }
+        val splitId = provinces[splitIndex].path("id").asText()
+        val ownership = mapper.readTree(Path(ownershipPath).toFile())
+        val assignment = ownership.path("scenarios").single { it.path("scenarioCode").asInt() == 1020 }
+            .path("assignments").single { it.path("provinceId").asText() == splitId }
+        (assignment as com.fasterxml.jackson.databind.node.ObjectNode).put("ownerNationId", 88)
+        val file = createTempFile("split-ownership", ".json")
+        try {
+            mapper.writeValue(file.toFile(), ownership)
+            val provider = HanSpatialSupplyProvider(mapper, mapPath, file.toString())
+            val baseline = provider.network(1020, emptyList()).provinceOwners.toList()
+            val captured = provider.network(1020, listOf(SpatialSupplyCity(720, 846, 77)))
+            assertEquals(77, captured.provinceOwners[846])
+            assertEquals(88, captured.provinceOwners[splitIndex])
+            captured.provinceOwners[splitIndex] = 99
+            assertEquals(baseline, provider.network(1020, emptyList()).provinceOwners.toList())
+        } finally {
+            file.deleteIfExists()
+        }
     }
 
     @Test

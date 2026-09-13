@@ -238,7 +238,13 @@ open class RecruitAlgorithm(
         val unitSet = activeUnitSet(ctx) ?: UnitSetTable.CHE_UNIT_SET
         if (UnitSetTable.byId(unitSet, reqCrewTypeId) == null) return false
         val unit = UnitCatalog.byId(unitSet, reqCrewTypeId) ?: return false
-        val cityConst = CityConstRegistry.find(activeMapName(ctx)) ?: return false
+        val mapName = activeMapName(ctx)
+        val cityConst = if (mapName == "han-world-v3") {
+            CityConstRegistry.hanWorld(ctx.hanWorldVariant ?: return false)
+        } else {
+            if (ctx.hanWorldVariant != null) return false
+            CityConstRegistry.find(mapName) ?: return false
+        }
         val ownCities = ownedCityLevels(ctx, view, general, nation)
         val ownRegions = ownedRegions(ctx, view, ownCities.keys, cityConst)
         val relYear = relYear(ctx)

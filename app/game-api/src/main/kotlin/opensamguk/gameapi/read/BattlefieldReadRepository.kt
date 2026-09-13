@@ -13,12 +13,15 @@ data class BattlefieldReadState(val topologyRevision: String, val topologyHash: 
 @Repository
 class BattlefieldReadRepository(
     private val jdbc: NamedParameterJdbcTemplate,
-    private val source: StrategicTopologyReadSource,
+    private val artifacts: ActiveWorldArtifactResolver,
     processWorld: GameApiProcessWorld,
 ) {
     private val worldId = processWorld.worldId.value
+    @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     fun read(generalId: Int): BattlefieldReadState {
-        val topology = source.projection.topology
+        val selected = requireNotNull(artifacts.resolve())
+        require(selected.world.id == worldId) { "Battlefield world does not match process world" }
+        val topology = requireNotNull(selected.artifacts).projection.topology
         val rows = jdbc.query(
             "SELECT * FROM general_spatial_position WHERE world_id = :world AND general_id = :general",
             mapOf("world" to worldId, "general" to generalId),
@@ -27,7 +30,7 @@ class BattlefieldReadRepository(
         require(rows.size <= 1)
         val position = GeneralPositionSnapshot.fromTopology(topology, rows).stateFor(generalId)
         position?.battlefield?.let { HistoricalBattlefieldCatalog.validatePresence(position.node, it) }
-        val cities = jdbc.queryForList("SELECT id FROM city WHERE world_id = :world", mapOf("world" to worldId), Int::class.java)
+        val cities = selected.cities.map { it.id }
         return BattlefieldReadState(topology.topologyRevision, topology.contentHash, position,
             HistoricalBattlefieldCatalog.cityAnchors().filterKeys { it in cities })
     }

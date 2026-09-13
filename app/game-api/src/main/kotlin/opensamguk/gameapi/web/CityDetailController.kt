@@ -44,6 +44,7 @@ class CityDetailController(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val world: WorldStateReadRepository,
+    private val worldArtifacts: opensamguk.gameapi.read.ActiveWorldArtifactResolver? = null,
 ) {
 
     /**
@@ -380,6 +381,9 @@ class CityDetailController(
         // 활성 맵 이름이 없거나 깨졌으면 던지지 않고 빈 표로 둔다 — 이름 표기 하나 때문에
         // 도시 화면 전체가 500 이 되면 안 된다. 그럼 등급(영현/장현)만으로 가른다.
         val mapCode = runCatching { ActiveWorldMap.requireName(active) }.getOrNull() ?: return emptyMap()
+        if (mapCode == "han-world-v3") {
+            return requireNotNull(worldArtifacts) { "Historical city names require selected world artifacts" }.cityNames()
+        }
         return MapJson.loadFromClasspath(mapCode).cities
             .mapNotNull { city -> city.nameCh?.let { city.id to it } }
             .toMap()

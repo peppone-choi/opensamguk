@@ -52,8 +52,7 @@ class CheGanghaeng(
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
         notSameDestCity(),                                                     // NotSameDestCity (php:54)
         nearCity(3) { c, _ ->
-            val mapName = c.env["mapName"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME
-            CalcCityDistance.nearCity(c.cityId ?: 0, 3, CityConstRegistry.of(mapName))
+            c.selectedCityConst()?.let { CalcCityDistance.nearCity(c.cityId ?: 0, 3, it) } ?: emptySet()
         },
         reqGeneralGold { c, _ -> getCostGold(envOf(c)) },                      // ReqGeneralGold(reqGold) (php:56)
         reqGeneralRice { _, _ -> 0 },                                          // ReqGeneralRice(reqRice=0) (php:57)
@@ -66,7 +65,7 @@ class CheGanghaeng(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: d.destCity?.id
         ?: error("강행 requires a destCityID")
-        val cityConst = CityConstRegistry.of(env.mapName)
+        val cityConst = env.cityConst
         val destCityName = d.destCity?.let { cityConst.byId(it.id)?.displayName } ?: cityConst.byId(destCityId)?.displayName
         ?: error("unknown dest city $destCityId")
         val josaRo = JosaUtil.pick(destCityName, "로")

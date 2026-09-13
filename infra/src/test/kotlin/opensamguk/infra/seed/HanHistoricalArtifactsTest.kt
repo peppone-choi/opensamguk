@@ -28,14 +28,6 @@ class HanHistoricalArtifactsTest {
     }
 
     @Test
-    fun `current frozen set has the same validated projection as existing default assets`() {
-        val frozen = HanHistoricalArtifacts.loadFromDirectory(root, "han-world-v3-835")
-        val current = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
-        assertEquals(current.topology.contentHash, frozen.topology.contentHash)
-        assertEquals(current.bindingsByCityId, frozen.bindingsByCityId)
-    }
-
-    @Test
     fun `modified catalog bytes cannot authorize a different archive`() {
         val directory = temporary.resolve("data/map/han-world-artifacts-v1")
         Files.createDirectories(directory)

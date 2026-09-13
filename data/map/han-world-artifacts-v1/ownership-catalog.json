@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "variants": [
+    {
+      "variantId": "han-world-v3-832",
+      "sourceCommit": "cf5a77806212c1d8d08d617b292a6fb5fd7cc496",
+      "files": [
+        {
+          "path": "data/map/han-scenario-province-ownership-v1.json",
+          "sha256": "71bdbd7eee9a51ab715a42aedb3163540e8b837b65cc08d43c5083a8e59f8360",
+          "bytes": 18242785,
+          "blob": "blobs/71bdbd7eee9a51ab715a42aedb3163540e8b837b65cc08d43c5083a8e59f8360.json.gz",
+          "compressedSha256": "c23c6228050c968e7fc5f8979f58a723c096a4756abc30207abd497c1f436842"
+        },
+        {
+          "path": "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
+          "sha256": "824aafbbd047ba993afa24ebc1080db155868331a6154dbf5aa7c7bc6ed74819",
+          "bytes": 786,
+          "blob": "blobs/824aafbbd047ba993afa24ebc1080db155868331a6154dbf5aa7c7bc6ed74819.json.gz",
+          "compressedSha256": "c9ba29bc60d8ca2eb8ee71fe42144d98a72a77322fafd71aca101e4d6686e0dc"
+        },
+        {
+          "path": "data/map/han-commandery-supply-links-v1.json",
+          "sha256": "0ef88ce885b838f239f75d74efb5815e5f266b0a894618cc1ac35b0d6e975ee9",
+          "bytes": 12941,
+          "blob": "blobs/0ef88ce885b838f239f75d74efb5815e5f266b0a894618cc1ac35b0d6e975ee9.json.gz",
+          "compressedSha256": "f5449cb056e84580620fca221576dfbbddd519ff9c722e93ea6178bfa3310fe8"
+        },
+        {
+          "path": "data/curated/han/territory-disconnection-adjudications-v1.json",
+          "sha256": "bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6",
+          "bytes": 1946724,
+          "blob": "blobs/bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6.json.gz",
+          "compressedSha256": "9c7014c725d0d5f3f08c1bdd433dbdce63971e09b2ccca4f2c9c28f4db7556c8"
+        },
+        {
+          "path": "data/curated/han/supply-disconnection-adjudications-v3.json",
+          "sha256": "4a3fe748ef63031d65a05a9f6475bbbd22bd66e7902f0288f7e4d71179b2923d",
+          "bytes": 1362,
+          "blob": "blobs/4a3fe748ef63031d65a05a9f6475bbbd22bd66e7902f0288f7e4d71179b2923d.json.gz",
+          "compressedSha256": "c70d8195cd76d0d99e533ddab8ad0ebf6fbd1b3b01dea43d86d2375ff6d62f92"
+        }
+      ]
+    },
+    {
+      "variantId": "han-world-v3-835",
+      "sourceCommit": "91fad09734e472b72a3b8720b0bce9f5a7ac3ae5",
+      "files": [
+        {
+          "path": "data/map/han-scenario-province-ownership-v1.json",
+          "sha256": "b92f9bd96685805a1a8b40d437c026b9c2715921dd4cec30415fbe8c1d1d939d",
+          "bytes": 18242785,
+          "blob": "blobs/b92f9bd96685805a1a8b40d437c026b9c2715921dd4cec30415fbe8c1d1d939d.json.gz",
+          "compressedSha256": "d6bb739bd63fb43e9ed0680561b3da7da50827aed461859fe8f45ca9ae1243c6"
+        },
+        {
+          "path": "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
+          "sha256": "824aafbbd047ba993afa24ebc1080db155868331a6154dbf5aa7c7bc6ed74819",
+          "bytes": 786,
+          "blob": "blobs/824aafbbd047ba993afa24ebc1080db155868331a6154dbf5aa7c7bc6ed74819.json.gz",
+          "compressedSha256": "c9ba29bc60d8ca2eb8ee71fe42144d98a72a77322fafd71aca101e4d6686e0dc"
+        },
+        {
+          "path": "data/map/han-commandery-supply-links-v1.json",
+          "sha256": "0ef88ce885b838f239f75d74efb5815e5f266b0a894618cc1ac35b0d6e975ee9",
+          "bytes": 12941,
+          "blob": "blobs/0ef88ce885b838f239f75d74efb5815e5f266b0a894618cc1ac35b0d6e975ee9.json.gz",
+          "compressedSha256": "f5449cb056e84580620fca221576dfbbddd519ff9c722e93ea6178bfa3310fe8"
+        },
+        {
+          "path": "data/curated/han/territory-disconnection-adjudications-v1.json",
+          "sha256": "bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6",
+          "bytes": 1946724,
+          "blob": "blobs/bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6.json.gz",
+          "compressedSha256": "9c7014c725d0d5f3f08c1bdd433dbdce63971e09b2ccca4f2c9c28f4db7556c8"
+        },
+        {
+          "path": "data/curated/han/supply-disconnection-adjudications-v3.json",
+          "sha256": "4a3fe748ef63031d65a05a9f6475bbbd22bd66e7902f0288f7e4d71179b2923d",
+          "bytes": 1362,
+          "blob": "blobs/4a3fe748ef63031d65a05a9f6475bbbd22bd66e7902f0288f7e4d71179b2923d.json.gz",
+          "compressedSha256": "c70d8195cd76d0d99e533ddab8ad0ebf6fbd1b3b01dea43d86d2375ff6d62f92"
+        }
+      ]
+    }
+  ]
+}

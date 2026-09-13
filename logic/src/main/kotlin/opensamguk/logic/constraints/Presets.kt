@@ -25,7 +25,13 @@ fun activeMapDestCity() = object : Constraint {
         val cityId = ctx.destCityId ?: return ConstraintResult.Deny("Invalid destination city.", name)
         val mapName = ctx.env["mapName"] as? String
             ?: return ConstraintResult.Deny("Invalid active map.", name)
-        val variant = CityConstRegistry.find(mapName)
+        if (mapName == "han-world-v3" && ctx.hanWorldVariant == null) {
+            return ConstraintResult.Deny("Invalid active map.", name)
+        }
+        val variant = if (ctx.hanWorldVariant != null) {
+            if (mapName != "han-world-v3") return ConstraintResult.Deny("Invalid active map.", name)
+            CityConstRegistry.hanWorld(ctx.hanWorldVariant)
+        } else CityConstRegistry.find(mapName)
             ?: return ConstraintResult.Deny("Invalid active map.", name)
         return if (variant.byId(cityId) != null && view.has(RequirementKey.DestCity(cityId))) {
             ConstraintResult.Allow

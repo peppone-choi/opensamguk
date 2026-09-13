@@ -32,6 +32,33 @@ import kotlin.test.assertTrue
  */
 class RecruitAlgorithmTest {
 
+    @Test
+    fun `historical recruitment uses selected gate catalogue in PRECHECK and FULL`() {
+        // 834 carries the 屠各 + 并州 gates only in the 835 archive. The reduced view deliberately
+        // supplies that city to both variants: recruitment must not consult the current catalogue.
+        val actor = general(cityId = 834)
+        val state = view(g = actor, c = city(id = 834), n = nation.copy(tech = 3000.0))
+        for (mode in listOf(ConstraintMode.PRECHECK, ConstraintMode.FULL)) {
+            val base = constraintCtx(emptyMap(), mode = mode, cityId = 834,
+                env = mapOf("mapName" to "han-world-v3", "unitSet" to "han", "ownCities" to mapOf(834 to 5)))
+            val older = base.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_832)
+            val newer = base.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_835)
+            assertTrue(jingbyeong().crewTypeAvailability(older, state, 2144) is ConstraintResult.Deny)
+            assertEquals(ConstraintResult.Allow, jingbyeong().crewTypeAvailability(newer, state, 2144))
+            assertTrue(jingbyeong().crewTypeAvailability(base, state, 2144) is ConstraintResult.Deny)
+        }
+    }
+
+    @Test
+    fun `legacy recruitment keeps its catalogue and rejects historical identity mismatch`() {
+        val state = view(g = general(cityId = 3), c = city(id = 3), n = nation.copy(tech = 3000.0))
+        val legacy = constraintCtx(emptyMap(), cityId = 3, env = mapOf("mapName" to "che"))
+        assertEquals(ConstraintResult.Allow, jingbyeong().crewTypeAvailability(legacy, state, 1104))
+        assertTrue(jingbyeong().crewTypeAvailability(
+            legacy.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_835), state, 1104,
+        ) is ConstraintResult.Deny)
+    }
+
     private val pipeline = GeneralActionPipeline()
     private val MONTH = 3
     private val date = "12:34"

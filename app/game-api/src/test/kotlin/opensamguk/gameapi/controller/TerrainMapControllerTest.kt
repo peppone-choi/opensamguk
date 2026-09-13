@@ -19,35 +19,67 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 class TerrainMapControllerTest {
 
     @Test
-    fun `V3 terrain ETag pins exact bytes even when file size and timestamp are unchanged`() {
-        val dir = Files.createTempDirectory("v3-terrain-hash")
-        val canonical = dir.resolve("han-tiles.json")
-        val v3 = dir.resolve("han-world-v3-tiles.json")
-        val first = "{\"v\":1}".toByteArray()
-        val second = "{\"v\":2}".toByteArray()
-        try {
-            Files.write(v3, first)
-            val timestamp = Files.getLastModifiedTime(v3)
+    fun `V3 terrain uses selected historical bytes and revalidates private caches`() {
+        val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val mvc = MockMvcBuilders.standaloneSetup(TerrainMapController("/nonexistent/han-tiles.json", worlds)).build()
+        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            val selected = artifacts.artifacts(variant)
+            org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
+                opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), selected))
+            val bytes = selected.artifactBytes("data/map/han-tiles.json")
             val expected = "\"sha256-" + java.security.MessageDigest.getInstance("SHA-256")
-                .digest(first).joinToString("") { "%02x".format(it) } + "\""
-            val mvc = mockMvc(canonical.toString())
+                .digest(bytes).joinToString("") { "%02x".format(it) } + "\""
             mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3"))
-                .andExpect(status().isOk)
+                .andExpect(status().isOk).andExpect(content().bytes(bytes))
                 .andExpect(header().string(HttpHeaders.ETAG, expected))
-            Files.write(v3, second)
-            Files.setLastModifiedTime(v3, timestamp)
-            mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3")
-                .header(HttpHeaders.IF_NONE_MATCH, expected))
-                .andExpect(status().isOk)
-                .andExpect(content().bytes(second))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-cache, must-revalidate, private"))
+            mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3").header(HttpHeaders.IF_NONE_MATCH, expected))
+                .andExpect(status().isNotModified)
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-cache, must-revalidate, private"))
+        }
+    }
+
+    @Test
+    fun `historical province image validates source and content before cached response`() {
+        val dir = Files.createTempDirectory("historical-provinces")
+        val image = dir.resolve("han-world-v3-provinces.png")
+        val metadata = dir.resolve("han-world-v3-provinces.meta.json")
+        val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val controller = TerrainMapController(dir.resolve("han-tiles.json").toString(), worlds)
+        fun hash(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
+        val bytes = byteArrayOf(1, 2, 3)
+        try {
+            Files.write(image, bytes)
+            for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+                val bundle = artifacts.artifacts(variant)
+                org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
+                    opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), bundle))
+                val sourceHash = hash(bundle.artifactBytes("data/map/han-tiles.json"))
+                Files.writeString(metadata, """{"sourceSha256":"$sourceHash","pngSha256":"${hash(bytes)}"}""")
+                val response = controller.provinces("han-world-v3", null)
+                kotlin.test.assertEquals(200, response.statusCode.value())
+                kotlin.test.assertContentEquals(bytes, response.body)
+                val cached = controller.provinces("han-world-v3", response.headers.eTag)
+                kotlin.test.assertEquals(304, cached.statusCode.value())
+                kotlin.test.assertEquals("no-cache, must-revalidate, private", cached.headers.cacheControl)
+                Files.write(image, byteArrayOf(9))
+                kotlin.test.assertFailsWith<IllegalArgumentException> { controller.provinces("han-world-v3", response.headers.eTag) }
+                Files.write(image, bytes)
+                Files.writeString(metadata, """{"sourceSha256":"wrong","pngSha256":"${hash(bytes)}"}""")
+                kotlin.test.assertFailsWith<IllegalArgumentException> { controller.provinces("han-world-v3", response.headers.eTag) }
+            }
         } finally {
-            Files.deleteIfExists(v3)
+            Files.deleteIfExists(image)
+            Files.deleteIfExists(metadata)
             Files.deleteIfExists(dir)
         }
     }
 
     private fun mockMvc(file: String): MockMvc =
-        MockMvcBuilders.standaloneSetup(TerrainMapController(file)).build()
+        MockMvcBuilders.standaloneSetup(TerrainMapController(file, org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java))).build()
 
     @Test
     fun `맵을 주입하지 않으면 폴백 없이 404 로 답한다`() {

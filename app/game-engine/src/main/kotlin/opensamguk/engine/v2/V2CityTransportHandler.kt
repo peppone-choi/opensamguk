@@ -6,7 +6,7 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.v2.command.V2CityTransportArgs
 import opensamguk.logic.v2.command.V2CityTransportContext
 import opensamguk.logic.v2.command.V2CityTransportDecision
@@ -40,7 +40,9 @@ class V2CityTransportHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val ledger: V2CityLedgerStore,
-    private val loadTopology: () -> HanStrategicRouteProjection = HanStrategicTopologyJson::loadDefault,
+    private val loadTopology: () -> HanStrategicRouteProjection = {
+        historicalTransportTopology(world.getState(), historicalArtifacts)
+    },
 ) {
     fun handle(command: CityTransport): TurnDaemonCommandResult {
         if (world.isGeneralAtBattlefield(command.generalId)) {
@@ -68,7 +70,7 @@ class V2CityTransportHandler(
                 hopDistance = if (strategic || from == null || to == null) {
                     null
                 } else {
-                    mapName?.let(CityConstRegistry::find)?.let { map ->
+                    mapName?.let { ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant) }?.let { map ->
                         CalcCityDistance.calcCityDistance(from.id, to.id, cityConst = map)
                     }
                 },
@@ -100,6 +102,7 @@ class V2CityTransportHandler(
     }
 
     companion object {
+        private val historicalArtifacts = HanWorldArtifactsResolver()
         const val ACTION_CODE = "v2CityTransport"
 
         internal fun applied(command: CityTransport): TurnDaemonCommandResult =
@@ -134,4 +137,14 @@ class V2CityTransportHandler(
         fun unavailable(command: CityTransport): TurnDaemonCommandResult =
             rejected(command, "v2 도시 원장이 없는 월드입니다.")
     }
+}
+
+internal fun historicalTransportTopology(
+    state: opensamguk.engine.turn.TurnWorldState,
+    artifacts: HanWorldArtifactsResolver,
+): HanStrategicRouteProjection {
+    require(ActiveWorldMap.requireName(state.config, state.meta) == HAN_WORLD_V3_MAP_NAME)
+    return artifacts.artifacts(requireNotNull(state.hanWorldVariant) {
+        "V3 transport requires the boot-validated historical map identity"
+    }).projection
 }

@@ -30,6 +30,20 @@ import kotlin.test.assertTrue
  */
 class V2CityTransportRulesTest {
 
+    @Test
+    fun `transport topology follows boot selected historical identity`() {
+        handler(listOf(273, 781), mapName = "han-world-v3")
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        for (variant in HanWorldVariant.entries) {
+            val state = lastWorld.getState().copy(hanWorldVariant = variant)
+            assertEquals(artifacts.artifacts(variant).projection.topology.contentHash,
+                historicalTransportTopology(state, artifacts).topology.contentHash)
+        }
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            historicalTransportTopology(lastWorld.getState(), artifacts)
+        }
+    }
+
     private val full = V2CityLedgerEntry(gold = 100_000, rice = 100_000, garrison = 100_000)
 
     private fun decide(
@@ -118,6 +132,7 @@ class V2CityTransportRulesTest {
 
     private fun handler(
         cityIds: List<Int>, crew: Int = 2000, nationId: Int = 1, mapName: String? = "che",
+        hanWorldVariant: HanWorldVariant? = null,
         loadTopology: () -> HanStrategicRouteProjection = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") },
     ): V2CityTransportHandler {
         val world = InMemoryTurnWorld(
@@ -129,6 +144,7 @@ class V2CityTransportRulesTest {
                     tickSeconds = 3600,
                     lastTurnTime = t0,
                     config = mapName?.let { mapOf("mapName" to it) }.orEmpty(),
+                    hanWorldVariant = hanWorldVariant,
                 ),
                 generals = listOf(
                     TurnGeneral(
@@ -186,13 +202,16 @@ class V2CityTransportRulesTest {
     }
 
     @Test
-    fun `real V3 Lu Licheng pinned route applies both ledgers and does not move escort`() {
-        val load = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
+    fun `both historical V3 pinned routes apply both ledgers and do not move escort`() {
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        for (variant in HanWorldVariant.entries) {
+        val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
             V2CityTransportArgs(273, 781, 100, 0, 0, null), load,
         )).path
         assertEquals(listOf("land:45098", "land:45022"), route.nodeKeys)
-        val h = handler(listOf(273, 781), mapName = "han-world-v3", loadTopology = load)
+        val h = handler(listOf(273, 781), mapName = "han-world-v3", hanWorldVariant = variant,
+            loadTopology = { historicalTransportTopology(lastWorld.getState(), artifacts) })
         lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 1000, riceDelta = 1000, garrisonDelta = 1000)
         val result = h.handle(CityTransport(
             generalId = 10, fromCityId = 273, toCityId = 781, gold = 100, rice = 200, garrison = 300,
@@ -203,6 +222,7 @@ class V2CityTransportRulesTest {
         assertEquals(V2CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
         assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
         assertEquals(273, lastWorld.getGeneralById(10)?.cityId)
+        }
     }
 
     @Test

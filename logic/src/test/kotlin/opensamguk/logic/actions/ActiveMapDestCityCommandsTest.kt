@@ -29,6 +29,21 @@ class ActiveMapDestCityCommandsTest {
     )
 
     @Test
+    fun `same logical map restricts destination by historical variant in both modes`() {
+        val old = opensamguk.logic.world.HanWorldVariant.V3_832
+        val newer = opensamguk.logic.world.HanWorldVariant.V3_835
+        val added = (opensamguk.logic.world.CityConstRegistry.hanWorld(newer).all().keys -
+            opensamguk.logic.world.CityConstRegistry.hanWorld(old).all().keys).first()
+        for (mode in ConstraintMode.entries) {
+            val context = ConstraintContext(actorId = 1, destCityId = added, env = mapOf("mapName" to "han-world-v3"), mode = mode, hanWorldVariant = old)
+            val gate = opensamguk.logic.constraints.activeMapDestCity()
+            kotlin.test.assertIs<ConstraintResult.Deny>(gate.test(context.copy(hanWorldVariant = null), cityView(added)))
+            kotlin.test.assertIs<ConstraintResult.Deny>(gate.test(context, cityView(added)))
+            assertEquals(ConstraintResult.Allow, gate.test(context.copy(hanWorldVariant = newer), cityView(added)))
+        }
+    }
+
+    @Test
     fun `destination commands parse Han-only ids and validate them against the active map`() {
         for ((code, rawArgs) in commands) {
             val definition = registry.resolve(code)

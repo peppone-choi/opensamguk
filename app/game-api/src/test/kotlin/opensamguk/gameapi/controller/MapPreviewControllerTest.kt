@@ -40,16 +40,18 @@ class MapPreviewControllerTest {
     private val administrativeOwnership = mock(MapAdministrativeOwnership::class.java)
     private val objectMapper = ObjectMapper()
 
-    private fun mockMvc(strategicLoader: () -> opensamguk.logic.world.HanStrategicRouteProjection = {
-        opensamguk.infra.seed.HanStrategicTopologyJson.loadFromDirectory(java.nio.file.Path.of("../.."), "han-world-v3")
-    }): MockMvc =
-        MockMvcBuilders.standaloneSetup(
-            MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, administrativeOwnership, objectMapper,
-                opensamguk.gameapi.read.StrategicTopologyReadSource(strategicLoader)),
-        ).build()
+    private val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
+    private val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+    private fun resolver(): opensamguk.gameapi.read.ActiveWorldArtifactResolver {
+        `when`(worldRepo.findProcessWorld()).thenAnswer { worldRepo.findAll().firstOrNull() }
+        return opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cityRepo, pins, artifacts)
+    }
+    private fun mockMvc(): MockMvc = MockMvcBuilders.standaloneSetup(
+        MapPreviewController(nationRepo, resolver(), nationEnv, administrativeOwnership, objectMapper),
+    ).setControllerAdvice(MapStrategicTopologyErrors()).build()
 
     private fun city(id: Int, level: Int, nationId: Int, region: Int = 0) =
-        CityReadEntity(id = id, nationId = nationId, level = level, region = region)
+        CityReadEntity(id = id, worldId = 1, nationId = nationId, level = level, region = region)
 
     private fun nation(id: Int, name: String, color: String) =
         NationReadEntity(id = id, name = name, color = color)
@@ -203,49 +205,28 @@ class MapPreviewControllerTest {
     }
 
     @Test
-    fun `world v3 preview exposes runtime Licheng as interactive city 781`() {
-        `when`(worldRepo.findAll()).thenReturn(
-            listOf(
-                WorldStateReadEntity(
-                    id = 1, scenarioCode = "scenario_1050", currentYear = 200, currentMonth = 1,
-                    config = mapOf("mapName" to "han-world-v3"),
-                ),
-            ),
-        )
-        `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 781, level = 11, nationId = 1, region = 6)))
-        `when`(nationRepo.findAll()).thenReturn(emptyList())
-        `when`(
-            administrativeOwnership.project(
-                "scenario_1050",
-                listOf(opensamguk.gameapi.read.LiveCityOwnership(781, 349, 1)),
-            ),
-        ).thenReturn(AdministrativeOwnershipSnapshot(emptyList(), emptyList(), emptyList()))
-
-        mockMvc().perform(get("/api/map/preview"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.mapCode").value("han-world-v3"))
-            .andExpect(jsonPath("$.strategicTopology.mapCode").value("han-world-v3"))
-            .andExpect(jsonPath("$.strategicTopology.worldId").value(1))
-            .andExpect(jsonPath("$.strategicTopology.baseTilesSha256").value("04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"))
-            .andExpect(jsonPath("$.cities.length()").value(1))
-            .andExpect(jsonPath("$.cities[0].id").value(781))
-            .andExpect(jsonPath("$.cities[0].name").value("역성"))
-            .andExpect(jsonPath("$.cities[0].commanderyName").value("제남국"))
-            .andExpect(jsonPath("$.cities[0].provinceId").value(349))
-    }
-
-    @Test
-    fun `unavailable water artifacts do not erase the existing V3 land preview`() {
+    fun `historical preview uses complete selected roster and rejects inconsistent pins`() {
         `when`(worldRepo.findAll()).thenReturn(listOf(WorldStateReadEntity(id = 1,
             scenarioCode = "scenario_1050", config = mapOf("mapName" to "han-world-v3"))))
-        `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 781, level = 11, nationId = 1)))
+        `when`(pins.readPins(1)).thenReturn(emptyList())
         `when`(nationRepo.findAll()).thenReturn(emptyList())
-        mockMvc { throw IllegalArgumentException("strategic artifact hash mismatch") }
-            .perform(get("/api/map/preview"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.cities[0].id").value(781))
-            .andExpect(jsonPath("$.mapCode").value("han-world-v3"))
-            .andExpect(jsonPath("$.strategicTopology").doesNotExist())
+        val mvc = mockMvc()
+        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            val selected = artifacts.artifacts(variant)
+            val map = opensamguk.infra.seed.MapJson.loadMap(selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
+            `when`(cityRepo.findAll()).thenReturn(map.cities.map { city(it.id, 5, 0) })
+            val response = mvc.perform(get("/api/map/preview")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.strategicTopology.topologyHash").value(selected.projection.topology.contentHash))
+                .andExpect(jsonPath("$.cities.length()").value(map.cities.size)).andReturn().response.contentAsString
+            val returned = objectMapper.readTree(response)["cities"].associateBy { it["id"].asInt() }
+            map.cities.forEach { expected ->
+                kotlin.test.assertEquals(expected.x, returned.getValue(expected.id)["x"].asDouble())
+                kotlin.test.assertEquals(expected.y, returned.getValue(expected.id)["y"].asDouble())
+            }
+        }
+        `when`(pins.readPins(1)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", "wrong", "wrong")))
+        mvc.perform(get("/api/map/preview")).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("STRATEGIC_STATE_INVALID"))
     }
 
     @Test
@@ -256,9 +237,8 @@ class MapPreviewControllerTest {
 
         val failure = assertThrows<IllegalStateException> {
             MapPreviewController(
-                cityRepo,
                 nationRepo,
-                worldRepo,
+                resolver(),
                 nationEnv,
                 administrativeOwnership,
                 objectMapper,
@@ -284,7 +264,7 @@ class MapPreviewControllerTest {
             ),
         )
         `when`(cityRepo.findAll()).thenReturn(
-            listOf(CityReadEntity(id = 3, nationId = 1, level = 8, region = 2, frontState = 1, state = 7)), // 낙양
+            listOf(CityReadEntity(id = 3, worldId = 1, nationId = 1, level = 8, region = 2, frontState = 1, state = 7)), // 낙양
         )
         `when`(nationRepo.findAll()).thenReturn(
             listOf(nation(id = 1, name = "위", color = "#c62828")),

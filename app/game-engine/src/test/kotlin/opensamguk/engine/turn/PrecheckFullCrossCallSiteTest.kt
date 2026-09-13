@@ -17,6 +17,11 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.HanWorldTopologyPin
+import opensamguk.gameapi.read.ActiveWorldArtifactResolver
+import opensamguk.gameapi.read.WorldArtifactIdentityReadRepository
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.Instant
@@ -51,6 +56,7 @@ class PrecheckFullCrossCallSiteTest {
 
     private val pipeline = GeneralActionPipeline()
     private val registry = CommandRegistry(pipeline)
+    private val historicalArtifacts = HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
 
     private val ACTION = "che_농지개간"
     private val RECRUIT_ACTION = "che_징병"
@@ -91,7 +97,21 @@ class PrecheckFullCrossCallSiteTest {
         val nationRice: Int = 100_000,
         val mapName: String? = "che",
         val unitSet: String? = null,
+        val historicalVariant: HanWorldVariant = HanWorldVariant.V3_835,
     )
+
+    private fun Fixture.historicalBundle() = if (mapName == "han-world-v3") {
+        val bundle = historicalArtifacts.artifacts(historicalVariant)
+        // Selection sees the complete historical roster, never the reduced command fixture.
+        historicalArtifacts.resolve(bundle.cityConst.all().keys, historicalPins(historicalVariant))
+    } else null
+
+    private fun historicalPins(variant: HanWorldVariant): List<HanWorldTopologyPin> {
+        val topology = historicalArtifacts.artifacts(variant).projection.topology
+        return listOf("water_zone_control", "province_control", "general_spatial_position").map {
+            HanWorldTopologyPin(it, topology.topologyRevision, topology.contentHash)
+        }
+    }
 
     private fun Fixture.worldConfig(): Map<String, Any?> = linkedMapOf<String, Any?>(
         "startYear" to START_YEAR,
@@ -164,7 +184,20 @@ class PrecheckFullCrossCallSiteTest {
         `when`(diplomacies.findBySrcNationId(NATION_ID)).thenReturn(diplomacyRows)
         `when`(cities.findAll()).thenReturn(listOfNotNull(city, destCity, routeCity))
         `when`(worldStates.findAll()).thenReturn(listOf(worldState))
-        val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
+        val worldArtifacts = f.historicalBundle()?.let { bundle ->
+            // Keep actor/destination view stubs above partial. Identity has a separate full-world
+            // repository, and still runs the real resolver's exact roster and pin validation.
+            val identityCities = mock(CityReadRepository::class.java)
+            `when`(identityCities.findAll()).thenReturn(bundle.cityConst.all().keys.map {
+                CityReadEntity(id = it, worldId = worldState.id)
+            })
+            `when`(worldStates.findProcessWorld()).thenReturn(worldState)
+            val identityPins = mock(WorldArtifactIdentityReadRepository::class.java)
+            `when`(identityPins.readPins(worldState.id)).thenReturn(historicalPins(bundle.variant))
+            ActiveWorldArtifactResolver(worldStates, identityCities, identityPins, historicalArtifacts)
+        }
+        val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates,
+            worldArtifacts = worldArtifacts)
         return CommandPrecheckService(factory, registry)
     }
 
@@ -213,6 +246,7 @@ class PrecheckFullCrossCallSiteTest {
         val state = TurnWorldState(
             id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
             config = f.worldConfig(),
+            hanWorldVariant = f.historicalBundle()?.variant,
         )
         val world = InMemoryTurnWorld(
             WorldSnapshot(
@@ -270,13 +304,15 @@ class PrecheckFullCrossCallSiteTest {
 
     @Test
     fun `Han world v3 Lu to Licheng is allowed by PRECHECK and FULL`() {
-        val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v3")
-        assertAvailableAgreement(
-            action = "che_이동",
-            fixture = fixture,
-            argJson = """{"destCityID":781}""",
-            args = linkedMapOf("destCityID" to 781),
-        )
+        HanWorldVariant.entries.forEach { variant ->
+            val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v3", historicalVariant = variant)
+            assertAvailableAgreement(
+                action = "che_이동",
+                fixture = fixture,
+                argJson = """{"destCityID":781}""",
+                args = linkedMapOf("destCityID" to 781),
+            )
+        }
     }
 
     @Test

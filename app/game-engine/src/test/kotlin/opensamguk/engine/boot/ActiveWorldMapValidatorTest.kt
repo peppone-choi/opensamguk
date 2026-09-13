@@ -15,6 +15,16 @@ import kotlin.test.assertFailsWith
 class ActiveWorldMapValidatorTest {
 
     @Test
+    fun `resolved 832 runtime identity survives state copy without changing stored map config`() {
+        val original = snapshot("han-world-v3", 1..832)
+        val state = original.state.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_832)
+        ActiveWorldMapValidator.validate(original.copy(state = state.copy(currentMonth = 2)))
+        assertEquals(original.state.config, state.config)
+        assertEquals(original.state.meta, state.meta)
+        assertFailsWith<IllegalStateException> { ActiveWorldMapValidator.validate(original) }
+    }
+
+    @Test
     fun `exact compatibility city ids and positive references validate`() {
         ActiveWorldMapValidator.validate(snapshot("han-780-v1", 1..780, listOf(775), listOf(780)))
     }

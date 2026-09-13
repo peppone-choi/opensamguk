@@ -44,7 +44,7 @@ import kotlin.test.assertTrue
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 835 V3 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / manifest-defined cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -89,9 +89,10 @@ class ScenarioBootIT {
         jdbc = JdbcTemplate(dataSource)
         named = NamedParameterJdbcTemplate(dataSource)
         bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = opensamguk.common.world.WorldId(1))
-        val topology = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3").topology
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
         loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1),
-            waterTopologyLoader = { topology })
+            waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+            hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant })
     }
 
     @AfterAll
@@ -107,20 +108,22 @@ class ScenarioBootIT {
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
         assertEquals(230, count("general"))
-        assertEquals(835, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
+        val expectedCities = opensamguk.infra.seed.MapJson.loadFromClasspath("han-world-v3").cities
+        assertEquals(expectedCities.size, count("city"))
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
         assertEquals(230, snapshot.generals.size)
         assertEquals("han-world-v3", snapshot.state.config["mapName"])
-        assertEquals(835, snapshot.cities.size)
-        assertEquals((1..835).toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals(expectedCities.size, snapshot.cities.size)
+        assertEquals(expectedCities.map { it.id }.toSet(), snapshot.cities.map { it.id }.toSet())
         // name 컬럼에는 식별자가 아니라 표기가 들어간다 — 「역성(濟南國)」이 아니라 「제남국 역성현」이다
         // (2026-09-11 「로그와 맵의 현 이름을 같게 만들어」, 2026-09-12 「군현제 안에선 뭐뭐군 뭐뭐현으로
         // 표기해」). 규칙은 tools/scenario/build_han_world.py display_name 이 한 번 계산해
         // meta.displayName 으로 싣고 ScenarioImporter 가 그대로 넣는다.
-        assertEquals("제남국 역성현", snapshot.cities.single { it.id == 781 }.name)
+        assertEquals(expectedCities.associate { it.id to (it.displayName ?: it.name) },
+            snapshot.cities.associate { it.id to it.name })
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)

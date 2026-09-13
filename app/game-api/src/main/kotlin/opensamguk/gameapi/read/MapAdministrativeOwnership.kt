@@ -1,5 +1,6 @@
 package opensamguk.gameapi.read
 
+import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
@@ -56,12 +57,18 @@ class MapAdministrativeOwnership(
 ) {
     @Volatile
     private var cached: CachedCanonicalData? = null
+    private val historicalData = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, CanonicalData>()
 
     fun project(
         scenarioCode: String,
         liveCities: List<LiveCityOwnership>,
+        artifacts: ResolvedHanWorldArtifacts? = null,
     ): AdministrativeOwnershipSnapshot {
-        val canonical = canonicalData()
+        val canonical = if (artifacts == null) canonicalData() else historicalData.computeIfAbsent(artifacts.variant) {
+            loadCanonicalData(objectMapper.readTree(artifacts.artifactBytes("data/map/han-tiles.json")),
+                objectMapper.readTree(artifacts.artifactBytes("data/map/han-scenario-province-ownership-v1.json")),
+                objectMapper.readTree(artifacts.artifactBytes("data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json")))
+        }
         val numericScenarioCode = Regex("^(?:scenario_)?([1-9][0-9]*)$").matchEntire(scenarioCode)
             ?.groupValues?.get(1)?.toIntOrNull()
             ?: error("Unsupported Han scenario code: $scenarioCode")
@@ -156,7 +163,11 @@ class MapAdministrativeOwnership(
     }
 
     private fun loadCanonicalData(mapFile: Path, ownershipFile: Path, allowlistFile: Path): CanonicalData {
-        val mapRoot = objectMapper.readTree(mapFile.toFile())
+        return loadCanonicalData(objectMapper.readTree(mapFile.toFile()), objectMapper.readTree(ownershipFile.toFile()),
+            objectMapper.readTree(allowlistFile.toFile()))
+    }
+
+    private fun loadCanonicalData(mapRoot: JsonNode, ownershipRoot: JsonNode, allowlistRoot: JsonNode): CanonicalData {
         val provinces = mapRoot.requiredArray("provinceRecords").map { node ->
             CanonicalProvince(node.requiredText("id"), node.requiredText("jurisdictionId"))
         }
@@ -244,7 +255,6 @@ class MapAdministrativeOwnership(
             }
         }
 
-        val allowlistRoot = objectMapper.readTree(allowlistFile.toFile())
         val conflictAllowlist = allowlistRoot.requiredArray("entries").associate { entry ->
             val scenarioCode = entry.requiredInt("scenarioCode")
             val jurisdictionId = entry.requiredText("jurisdictionId")
@@ -264,7 +274,6 @@ class MapAdministrativeOwnership(
             "Duplicate jurisdiction conflict allowlist entry"
         }
 
-        val ownershipRoot = objectMapper.readTree(ownershipFile.toFile())
         val usedAllowances = mutableSetOf<Pair<Int, String>>()
         val scenarioOwners = ownershipRoot.requiredArray("scenarios").associate { scenario ->
             val scenarioCode = scenario.requiredInt("scenarioCode")

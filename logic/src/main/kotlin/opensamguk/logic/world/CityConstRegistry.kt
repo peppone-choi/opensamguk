@@ -7,6 +7,10 @@ import opensamguk.common.constants.HanCityConst
 import opensamguk.common.constants.HanGateIndex
 import opensamguk.common.constants.Han780V1CityConst
 import opensamguk.common.constants.Han780V1GateIndex
+import opensamguk.common.constants.HanWorldV3832CityConst
+import opensamguk.common.constants.HanWorldV3832GateIndex
+import opensamguk.common.constants.HanWorldV3835CityConst
+import opensamguk.common.constants.HanWorldV3835GateIndex
 import opensamguk.common.constants.HanWorldV3CityConst
 import opensamguk.common.constants.HanWorldV3GateIndex
 
@@ -331,7 +335,22 @@ private val hanWorldV3 = HanCityConstVariant(
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
 
+private val historicalHanWorlds: Map<HanWorldVariant, CityConstVariant> by lazy {
+    mapOf(
+        HanWorldVariant.V3_832 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV3832CityConst.initCity, HanWorldV3832GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        HanWorldVariant.V3_835 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV3835CityConst.initCity, HanWorldV3835GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+    )
+}
+
 object CityConstRegistry {
+    fun hanWorld(variant: HanWorldVariant): CityConstVariant = historicalHanWorlds.getValue(variant)
+
     const val DEFAULT_MAP_NAME = "che"
 
     /** 'miniche' $initCity override — `scenario/map/miniche.php`, 78 rows, faithful transcription. */

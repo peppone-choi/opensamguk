@@ -17,23 +17,45 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
-/**
- * W3 — [GetConstController] 슬라이스 테스트. DB/레포 주입이 전혀 없는 정적 상수 서비스이므로
- * MockMvc standalone만으로 검증한다(PHP `GetConst`는 NO_SESSION·DB-free 정적 API).
- *
- * 검증 포인트:
- *  - gameUnitConst가 `GameUnitConst.all()`의 모든 병종을 노출(첫 행 = 성벽 id 1000).
- *  - cityConst가 `CityConst.all()`의 94개 도시를 노출(id 1 = 업).
- *  - cityConstMap.region/level이 라벨→int 한 방향으로 노출(하북→1, 수→1).
-     *  - iAction 키맵이 nationType 표시명/소개와 crewtype value를 노출.
- *  - gameConst 번들에 표시 상수가 담김(maxTurn 등).
- */
+/** Const responses preserve legacy defaults and select historical city metadata by world identity. */
 class GetConstControllerTest {
+
+    private fun controller(worldRepo: WorldStateReadRepository): GetConstController {
+        `when`(worldRepo.findProcessWorld()).thenAnswer { worldRepo.findAll().firstOrNull() }
+        val cities = mock(opensamguk.gameapi.read.CityReadRepository::class.java)
+        val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
+        return GetConstController(opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cities, pins,
+            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))))
+    }
+
+    @Test
+    fun `historical city metadata and paths come from the selected artifact`() {
+        val worldRepo = mock(WorldStateReadRepository::class.java)
+        `when`(worldRepo.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 7, config = mapOf("mapName" to "han-world-v3")))
+        val cities = mock(opensamguk.gameapi.read.CityReadRepository::class.java)
+        val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
+        `when`(pins.readPins(7)).thenReturn(emptyList())
+        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val api = GetConstController(opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cities, pins, artifacts))
+        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            val selected = artifacts.artifacts(variant)
+            `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { opensamguk.gameapi.read.CityReadEntity(id = it, worldId = 7) })
+            val json = selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8)
+            val details = MapJson.loadCityDetails(json)
+            val response = kotlin.test.assertNotNull(api.getConst().body)
+            kotlin.test.assertEquals(details.map { it.id }, response.cityConst.map { it.id })
+            kotlin.test.assertEquals(MapJson.loadMap(json).width, response.mapWidth)
+            details.zip(response.cityConst).forEach { (expected, actual) ->
+                kotlin.test.assertEquals(expected.connections.toSet(), actual.path.keys)
+                kotlin.test.assertEquals(expected.name, actual.name)
+            }
+        }
+    }
 
     private fun mockMvc(worlds: List<WorldStateReadEntity> = emptyList()): MockMvc {
         val worldRepo = mock(WorldStateReadRepository::class.java)
         `when`(worldRepo.findAll()).thenReturn(worlds)
-        return MockMvcBuilders.standaloneSetup(GetConstController(worldRepo)).build()
+        return MockMvcBuilders.standaloneSetup(controller(worldRepo)).build()
     }
 
     @Test
@@ -139,7 +161,7 @@ class GetConstControllerTest {
         )
 
         val failure = assertThrows<IllegalStateException> {
-            GetConstController(worldRepo).getConst()
+            controller(worldRepo).getConst()
         }
 
         assertTrue(failure.message.orEmpty().contains("id=9 scenario=scenario_broken has no active mapName"))
@@ -159,7 +181,7 @@ class GetConstControllerTest {
         )
 
         val failure = assertThrows<IllegalStateException> {
-            GetConstController(worldRepo).getConst()
+            controller(worldRepo).getConst()
         }
 
         assertTrue(failure.message.orEmpty().contains("id=10 scenario=scenario_unknown has invalid active mapName"))
