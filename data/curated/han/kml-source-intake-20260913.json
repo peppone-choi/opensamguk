@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "scope": "SUPPLIED_MAP_INTAKE_NOT_HISTORICAL_ADJUDICATION",
+  "sources": [
+    {
+      "filename": "삼국지 지도(서기 260년 경 기준).kml",
+      "sha256": "b1f1a6b6941f9066e74201de4481d8557e75d1e54bf6bb7aa1678f4d88e088c6",
+      "xmlSha256": "b1f1a6b6941f9066e74201de4481d8557e75d1e54bf6bb7aa1678f4d88e088c6",
+      "pointCount": 3222,
+      "polygonCount": 0
+    },
+    {
+      "filename": "삼국지 지도(서기 260년 경 기준).kmz",
+      "sha256": "602c435b83f540bca5cee3ea7a89b76dfe3149a4b2d21713d5b0a981200f5b62",
+      "xmlSha256": "310d26b1f26891f4f1df6ffbe095b39308b635677dd7fae69a4ca8e8953ab895",
+      "pointCount": 3222,
+      "polygonCount": 0
+    }
+  ],
+  "placemarkFactsEquivalent": true,
+  "comparisonFields": [
+    "folder",
+    "name",
+    "description",
+    "coordinates",
+    "extendedData"
+  ],
+  "folderCounts": {
+    "사예교위부(司隸校尉部)·유주(幽州)": 521,
+    "옹주(雍州)·청주(靑州)": 464,
+    "예주(豫州)·병주(幷州)": 386,
+    "기주(冀州)·서주(徐州)": 322,
+    "연주(兗州)·양주(凉州)": 292,
+    "익주(益州)": 280,
+    "양주(揚州)": 316,
+    "형주(荊州)": 355,
+    "교주(交州)": 115,
+    "새외(塞外)": 171
+  },
+  "notes": [
+    "All geometries are points; this source does not supply province boundaries or road polylines.",
+    "3222 is the source placemark count, not an approved city count.",
+    "KML coordinates are longitude,latitude,altitude.",
+    "Style definitions differ between the two containers.",
+    "Names and descriptions may include aliases, temporal changes and non-playable features."
+  ]
+}

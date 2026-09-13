@@ -92,6 +92,10 @@ def parse_page(text: str, *, title: str, source_id: str) -> dict:
     for number, raw in enumerate(lines, 1):
         value = raw.strip()
         section_match = SECTION.match(value)
+        # Browser selection can put the edit marker on its own line. Preserve
+        # original line numbers, and require the marker to distinguish the TOC.
+        if section_match is None and number < len(lines) and lines[number].strip() == '[편집]':
+            section_match = SECTION.match(value + '[편집]')
         if section_match:
             body_started = True
             close_record(number - 1)

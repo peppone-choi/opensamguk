@@ -15,6 +15,14 @@ class NamuSourceParserTest(unittest.TestCase):
     def page(self, text):
         return PARSER.parse_page(text, title='삼국지/지명/옹주', source_id='fixture')
 
+    def test_split_edit_marker_keeps_source_lines_and_ignores_contents(self):
+        result = self.page("2. 여남군(汝南郡)\n목차 뒤 문구\n2. 여남군(汝南郡)\n[편집]\n평예현(平輿縣): 여남군 치소\n위치: 《32.9, 114.6》\n")
+        self.assertEqual(1, len(result['sections']))
+        self.assertEqual(3, result['sections'][0]['line'])
+        self.assertEqual(['平輿縣'], result['records'][0]['namesHan'])
+        self.assertEqual(5, result['records'][0]['lineStart'])
+        self.assertEqual(6, result['records'][0]['locations'][0]['line'])
+
     def test_group_alias_and_county_timeline_keep_separate_attribution(self):
         result = self.page('''9. 천수군(天水郡)[편집]
 지명
