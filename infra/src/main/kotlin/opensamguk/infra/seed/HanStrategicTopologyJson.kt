@@ -45,12 +45,12 @@ object HanStrategicTopologyJson {
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
     fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
-        loadVersion(mapName, 835, readArtifact)
+        loadVersion(mapName, 846, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
 
     internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
-        require(cityCount == 832 || cityCount == 835) { "Unregistered historical Han route roster" }
+        require(cityCount == 832 || cityCount == 835 || cityCount == 846) { "Unregistered historical Han route roster" }
         require(mapName == MAP) { "Strategic topology is only supported for $MAP; got $mapName" }
         try {
             val bytes = paths.associateWith { readArtifact(it).copyOf() }

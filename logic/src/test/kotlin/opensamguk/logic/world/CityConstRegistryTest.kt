@@ -54,13 +54,13 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `persisted world v2 stays frozen while world v3 exposes reviewed 835 identities`() {
+    fun `persisted world v2 stays frozen while world v3 exposes reviewed 846 identities`() {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
 
         val v3 = CityConstRegistry.of("han-world-v3")
-        assertEquals((1..835).toList(), v3.all().keys.toList())
+        assertEquals((1..846).toList(), v3.all().keys.toList())
         assertTrue(v3.byId(273)!!.path.containsKey(781))
         assertTrue(v3.byId(781)!!.path.containsKey(273))
         val graph = buildString {
