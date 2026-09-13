@@ -2,7 +2,8 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.*
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.logic.world.HanWorldVariant
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -155,6 +156,31 @@ class MapStrategicTopologyControllerTest {
     }
 
     @Test
+    fun `each registered world uses its own control identity and cache hash`() {
+        admin()
+        for (variant in HanWorldVariant.entries) {
+            val client = mvc()
+            val selected = artifacts.artifacts(variant)
+            `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map {
+                CityReadEntity(id = it, worldId = 7)
+            })
+            jdbc.rows = listOf(row(hash = selected.projection.topology.contentHash,
+                topologyRevision = selected.projection.topology.topologyRevision))
+            client.perform(get("/api/map/strategic-topology")
+                .queryParam("knownTopologyHash", selected.projection.topology.contentHash))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.binding.topologyHash").value(selected.projection.topology.contentHash))
+                .andExpect(jsonPath("$.topology").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.controls[0].status").value("BLOCKED"))
+            val other = HanWorldVariant.entries.first { it != variant }
+            client.perform(get("/api/map/strategic-topology")
+                .queryParam("knownTopologyHash", artifacts.artifacts(other).projection.topology.contentHash))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.topology").exists())
+        }
+    }
+
+    @Test
     fun `legacy maps are unsupported and never read the water control table`() {
         jdbc.rejectReads = true
         for (map in listOf("han", "han-world-v2", "han-780-v1", "che")) {
@@ -189,9 +215,9 @@ class MapStrategicTopologyControllerTest {
     }
 
     private fun row(zone: String = "water-zone:coastal-qiongzhou-strait", hash: String = loaded.topology.contentHash,
-        controller: Long? = 1L, contests: String = "[]", revision: Long = 1L): ResultSet = mock(ResultSet::class.java).also {
+        topologyRevision: String = loaded.topology.topologyRevision, controller: Long? = 1L, contests: String = "[]", revision: Long = 1L): ResultSet = mock(ResultSet::class.java).also {
         `when`(it.getString("water_zone_id")).thenReturn(zone)
-        `when`(it.getString("topology_revision")).thenReturn(loaded.topology.topologyRevision)
+        `when`(it.getString("topology_revision")).thenReturn(topologyRevision)
         `when`(it.getString("topology_hash")).thenReturn(hash)
         `when`(it.getObject("controlling_nation_id")).thenReturn(controller)
         `when`(it.getString("contesting_nation_ids")).thenReturn(contests)
@@ -215,6 +241,6 @@ class MapStrategicTopologyControllerTest {
     }
 
     companion object {
-        private val loaded by lazy { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
+        private val loaded by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_835).projection }
     }
 }
