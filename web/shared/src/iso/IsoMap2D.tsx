@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { attachMapGestures } from './mapGestures';
 import { MapSurfaceCache, type SurfaceBounds } from './mapSurfaceCache';
+import { observePixelRatio } from './observePixelRatio';
 import {
   MAX_LEVEL,
   SEAT_ONLY_TILE_PIXELS,
@@ -707,12 +708,14 @@ export function IsoMap2D({
     canvas.addEventListener('click', onClick);
     const observer = new ResizeObserver(schedule);
     observer.observe(canvas);
+    const stopObservingPixelRatio = observePixelRatio(schedule);
     schedule();
 
     return () => {
       if (frame) cancelAnimationFrame(frame);
       zoomRef.current = null;
       observer.disconnect();
+      stopObservingPixelRatio();
       gestures.dispose();
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerleave', onLeave);
