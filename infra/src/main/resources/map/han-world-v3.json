@@ -14667,11 +14667,11 @@
         319,
         505,
         507,
-        515,
         517,
         519,
         520,
-        550
+        550,
+        848
       ],
       "meta": {
         "jun": "광릉군",
@@ -14855,7 +14855,8 @@
       "connections": [
         312,
         515,
-        520
+        520,
+        848
       ],
       "meta": {
         "jun": "광릉군",
@@ -23394,7 +23395,6 @@
         510,
         511,
         512,
-        518,
         530,
         536,
         538,
@@ -23402,7 +23402,8 @@
         568,
         569,
         591,
-        843
+        843,
+        847
       ],
       "meta": {
         "jun": "단양군",
@@ -23492,9 +23493,9 @@
       },
       "connections": [
         499,
-        518,
         536,
-        591
+        591,
+        847
       ],
       "meta": {
         "jun": "단양군",
@@ -24123,12 +24124,12 @@
         "wall": 1500
       },
       "connections": [
-        312,
         316,
         516,
-        519,
         520,
-        591
+        591,
+        847,
+        848
       ],
       "meta": {
         "jun": "오군",
@@ -24172,7 +24173,8 @@
       "connections": [
         515,
         518,
-        522
+        522,
+        847
       ],
       "meta": {
         "jun": "오군",
@@ -24257,13 +24259,11 @@
         "wall": 1500
       },
       "connections": [
-        499,
-        501,
         516,
         521,
         522,
         536,
-        843
+        847
       ],
       "meta": {
         "jun": "오군",
@@ -24306,8 +24306,8 @@
       },
       "connections": [
         312,
-        515,
-        517
+        517,
+        848
       ],
       "meta": {
         "jun": "오군",
@@ -24440,7 +24440,8 @@
       "connections": [
         516,
         518,
-        521
+        521,
+        847
       ],
       "meta": {
         "jun": "오군",
@@ -25114,7 +25115,8 @@
         581,
         591,
         773,
-        843
+        843,
+        847
       ],
       "meta": {
         "jun": "회계군",
@@ -32304,7 +32306,7 @@
     },
     {
       "id": 691,
-      "name": "오",
+      "name": "오(太原郡)",
       "x": 333,
       "y": 167,
       "level": 11,
@@ -39280,10 +39282,10 @@
       },
       "connections": [
         499,
-        518,
         536,
         540,
-        546
+        546,
+        847
       ],
       "meta": {
         "jun": "오군",
@@ -39436,6 +39438,100 @@
       "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f",
       "physicalPlaceRef": "chgis:v6:cnty:200261",
       "administrativeUnitId": "hhs:113:蜀郡:011"
+    },
+    {
+      "id": 847,
+      "name": "오(吳郡)",
+      "x": 480,
+      "y": 274,
+      "level": 7,
+      "region": 8,
+      "max": {
+        "population": 486200,
+        "agriculture": 10000,
+        "commerce": 9800,
+        "security": 8000,
+        "defence": 10000,
+        "wall": 9900
+      },
+      "initial": {
+        "population": 150000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 4000,
+        "wall": 4000
+      },
+      "connections": [
+        499,
+        501,
+        515,
+        516,
+        518,
+        522,
+        536,
+        843
+      ],
+      "meta": {
+        "jun": "오군",
+        "junCh": "吳郡",
+        "ju": "양주",
+        "seat": "오현",
+        "nameCh": "吴县",
+        "isSeat": true,
+        "displayName": "오군 오현"
+      },
+      "provinceId": 44,
+      "spatialProvinceId": "40404",
+      "spatialProvinceIndex": 44,
+      "routeNodeKey": "181684d1-8a68-4181-9063-4b340fa318d7",
+      "physicalPlaceRef": "chgis:v6:cnty:40404",
+      "administrativeUnitId": "hhs:112:吳郡:001"
+    },
+    {
+      "id": 848,
+      "name": "비릉",
+      "x": 468,
+      "y": 265,
+      "level": 10,
+      "region": 8,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
+      },
+      "connections": [
+        312,
+        316,
+        515,
+        519
+      ],
+      "meta": {
+        "jun": "오군",
+        "junCh": "吳郡",
+        "ju": "양주",
+        "seat": "오현",
+        "nameCh": "毗陵县",
+        "isSeat": false,
+        "displayName": "오군 비릉현"
+      },
+      "provinceId": 47,
+      "spatialProvinceId": "40451",
+      "spatialProvinceIndex": 47,
+      "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8",
+      "physicalPlaceRef": "chgis:v6:cnty:40451",
+      "administrativeUnitId": "hhs:112:吳郡:005"
     }
   ]
 }

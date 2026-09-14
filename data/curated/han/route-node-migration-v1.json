@@ -461,6 +461,20 @@
       "newCityId": 846,
       "physicalPlaceRef": "chgis:v6:cnty:200261",
       "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f"
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:001",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 847,
+      "physicalPlaceRef": "chgis:v6:cnty:40404",
+      "routeNodeKey": "181684d1-8a68-4181-9063-4b340fa318d7"
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:005",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 848,
+      "physicalPlaceRef": "chgis:v6:cnty:40451",
+      "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -5985,11 +5999,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39",
+  "sourceCandidateSha256": "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "f5b09a2c9df5d9c9b6e5a893f5e684dedb185195240b51e06acd350cd8665115",
+  "sourceSelectionSha256": "a0686666bdf952a533529ad84a05d7865401d1e619281ae8d1c8a670314be84b",
   "summary": {
-    "appendedIdentityCount": 66,
+    "appendedIdentityCount": 68,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

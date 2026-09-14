@@ -53,13 +53,14 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 앞 판(1082/155/55/206/22)에서 옮긴 것은 城을 하나도 못 받던 郡 3곳(朔方·西河·定襄)의
         # 治所가 城 833–835 로 서면서다. 그 郡 땅 29 省이 남의 郡 城을 보던 T5 에서 제 縣 治所를
         # 보는 OWN_COUNTY_SEAT 로 돌아왔다(206 → 177, 1082 → 1111).
-        # 2026-09-14: w1 11곳 편입. 11 OWN + 인근 재귀속으로 OWN 1111 → 1123.
-        # 귀속 충돌 5곳은 defer되어 T5·gap 구조는 835판과 같다(177·48·199 유지).
+        # 2026-09-14: w1 11곳 편입으로 OWN 1111 → 1123.
+        # 2026-09-14: 吳縣(847, 吳郡 군치)·毘陵(848) 편입으로 OWN 1123 → 1125,
+        # 인근 4省 재귀속(T5 52 → 48, T4 146 → 148).
         self.assertEqual(
             {
-                "OWN_COUNTY_SEAT": 1123,
-                "SAME_COMMANDERY_SEAT": 146,
-                "SAME_COMMANDERY_NEAREST": 52,
+                "OWN_COUNTY_SEAT": 1125,
+                "SAME_COMMANDERY_SEAT": 148,
+                "SAME_COMMANDERY_NEAREST": 48,
                 "ADJACENT_COMMANDERY_NEAREST": 177,
                 "COMMANDERY_HAS_NO_CITY": 22,
             },

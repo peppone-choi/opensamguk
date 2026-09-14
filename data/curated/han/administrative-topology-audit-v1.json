@@ -5066,14 +5066,14 @@
     "sourceUnitCount": 1180,
     "bindingStatusCounts": {
       "AMBIGUOUS_POINT": 55,
-      "NO_COORDINATE_CANDIDATE": 383,
-      "RESOLVED_POINT": 739,
+      "NO_COORDINATE_CANDIDATE": 381,
+      "RESOLVED_POINT": 741,
       "SOURCE_PLACEHOLDER": 3
     },
-    "resolvedCurrentJurisdictionCount": 739,
-    "sourceParentMatchCount": 694,
+    "resolvedCurrentJurisdictionCount": 741,
+    "sourceParentMatchCount": 696,
     "sourceParentMismatchCount": 45,
-    "noCoordinateCandidateCount": 383,
+    "noCoordinateCandidateCount": 381,
     "resolvedPlaceAbsentCount": 0,
     "sourceGroups": [
       {
@@ -5757,11 +5757,11 @@
         "sourceVolume": 112,
         "sourceUnitCount": 13,
         "bindingStatusCounts": {
-          "NO_COORDINATE_CANDIDATE": 3,
-          "RESOLVED_POINT": 10
+          "NO_COORDINATE_CANDIDATE": 1,
+          "RESOLVED_POINT": 12
         },
-        "resolvedCurrentJurisdictionCount": 10,
-        "sourceParentMatchCount": 10,
+        "resolvedCurrentJurisdictionCount": 12,
+        "sourceParentMatchCount": 12,
         "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
@@ -7962,7 +7962,7 @@
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 13,
-        "sourceResolvedCurrentJurisdictionCount": 10,
+        "sourceResolvedCurrentJurisdictionCount": 12,
         "sourceParentMismatchCount": 0
       },
       {
@@ -9492,7 +9492,7 @@
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
     },
     "administrativePlaceBindings": {
-      "sha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7"
+      "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
     },
     "externalRegionHierarchyPolicy": {
       "sha256": "6e3188aa5b6cf8bad465ef54a61029412663d371ea08bb0c91b487cfd1a40693"

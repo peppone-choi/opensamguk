@@ -97,13 +97,13 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
 
     def test_world_v3_loader_verifies_manifest_and_has_all_832_nodes(self) -> None:
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        self.assertEqual(846, len({city for group in by_jun.values() for city in group}))
+        self.assertEqual(848, len({city for group in by_jun.values() for city in group}))
         self.assertIn(781, by_jun["제남국"])
 
     def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
         self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        known = set(range(1, 847))
+        known = set(range(1, 849))
         ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
         che2jun = {
             key: value["jun"]
@@ -135,10 +135,11 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             self.assertEqual(
                 row["routeNodeKey"], selection_by_id[row["newCityId"]]["routeNodeKey"]
             )
-        # 782–832 는 변경 縣 51곳, 833–835 는 城 없던 郡治 3곳, 836–846 은 간체표 폴딩 결합 11곳이
+        # 782–832 는 변경 縣 51곳, 833–835 는 城 없던 郡治 3곳, 836–846 은 간체표 폴딩 결합 11곳,
+        # 847 吳縣·848 毘陵은 이체자 폴딩 결합 2곳이
         # 같은 append-only 규약으로 붙은 행이다 — 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고,
-        # 총 66행이어야 한다(귀속 충돌 5곳은 defer).
-        self.assertEqual(66, len(migration_doc["appendedRows"]))
+        # 총 68행이어야 한다(귀속 충돌 5곳은 defer).
+        self.assertEqual(68, len(migration_doc["appendedRows"]))
         self.assertEqual(
             {
                 "administrativeUnitId": "hhs:112:濟南國:010",
@@ -150,7 +151,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             migration_doc["appendedRows"][0],
         )
         self.assertEqual(
-            list(range(781, 847)),
+            list(range(781, 849)),
             [row["newCityId"] for row in migration_doc["appendedRows"]],
         )
         self.assertEqual(

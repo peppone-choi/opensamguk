@@ -248,7 +248,7 @@ class HanWorldV3Test(unittest.TestCase):
                 city["meta"]["isSeat"],
             )
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(846, len(actual))
+        self.assertEqual(848, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -399,19 +399,20 @@ class HanWorldV3Test(unittest.TestCase):
                 dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name])),
                 city["initial"], city["name"],
             )
-        self.assertEqual(80, seats)
-        # 704 + 변경 縣 51 = 755 (郡治 51곳은 이미 서 있어 縣으로 오지 않는다).
-        self.assertEqual(766, counties)
+        self.assertEqual(81, seats)
+        # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767 (郡治는 縣으로 오지 않는다).
+        self.assertEqual(767, counties)
         # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
         self.assertNotIn(4, {city["level"] for city in world["cities"]})
 
-    def test_23_commanderies_still_have_no_seat_in_the_world(self) -> None:
+    def test_22_commanderies_still_have_no_seat_in_the_world(self) -> None:
         """아직 못 고친 결함을 숫자로 못박아 둔다.
 
-        v3 의 郡 103 중 23 은 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
+        v3 의 郡 103 중 22 는 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
         東郡 濮陽 처럼 CHGIS 에 점 자체가 없는 곳이 있고, 齊國 臨淄(85234) ·
-        泰山郡 奉高(85697) · 東海郡 郯城(85649) · 吳郡 吳(40404) · 魯國 魯(45180) ·
+        泰山郡 奉高(85697) · 東海郡 郯城(85649) · 魯國 魯(45180) ·
         鉅鹿郡 廮陶(87061) 처럼 지형에는 있는데 選定에서 빠진 곳이 있다.
+        吳郡 吳(40404)는 847 오현으로 治所를 세우면서 이 목록에서 빠졌다.
         치소를 새로 세우는 것은 選定 원장을 고치는 별건이라 여기서는 현황만 고정한다.
         """
         selection = json.loads(
@@ -425,7 +426,7 @@ class HanWorldV3Test(unittest.TestCase):
             if "COMMANDERY_SEAT" not in roles
         )
         self.assertEqual(103, len(by_parent))
-        self.assertEqual(23, len(seatless))
+        self.assertEqual(22, len(seatless))
         self.assertIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
 
@@ -517,8 +518,8 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(846, len(world["cities"]))
-        self.assertEqual(845, len(changed))
+        self.assertEqual(848, len(world["cities"]))
+        self.assertEqual(847, len(changed))
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

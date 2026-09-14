@@ -4310,6 +4310,18 @@
       "initialAdministrativeUnitId": "hhs:113:蜀郡:011",
       "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
       "numericCityId": 846
+    },
+    {
+      "routeNodeKey": "181684d1-8a68-4181-9063-4b340fa318d7",
+      "initialAdministrativeUnitId": "hhs:112:吳郡:001",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 847
+    },
+    {
+      "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8",
+      "initialAdministrativeUnitId": "hhs:112:吳郡:005",
+      "issuanceReason": "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND",
+      "numericCityId": 848
     }
   ]
 }

@@ -14,19 +14,19 @@
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
     "tilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
-    "selectionSha256": "f5b09a2c9df5d9c9b6e5a893f5e684dedb185195240b51e06acd350cd8665115"
+    "selectionSha256": "a0686666bdf952a533529ad84a05d7865401d1e619281ae8d1c8a670314be84b"
   },
   "summary": {
     "provinceCount": 1520,
     "basisCounts": {
-      "OWN_COUNTY_SEAT": 1123,
-      "SAME_COMMANDERY_SEAT": 146,
-      "SAME_COMMANDERY_NEAREST": 52,
+      "OWN_COUNTY_SEAT": 1125,
+      "SAME_COMMANDERY_SEAT": 148,
+      "SAME_COMMANDERY_NEAREST": 48,
       "ADJACENT_COMMANDERY_NEAREST": 177,
       "COMMANDERY_HAS_NO_CITY": 22
     },
     "attributedProvinceCount": 1498,
-    "distinctRouteNodeCount": 846,
+    "distinctRouteNodeCount": 848,
     "commanderiesWithoutCity": [
       {
         "commanderyId": "PARENT-0111",
@@ -709,10 +709,10 @@
       "jurisdictionId": "40111",
       "commanderyId": "PARENT-0052",
       "commanderyNameCh": "吳郡",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 518,
+      "basis": "SAME_COMMANDERY_SEAT",
+      "routeNodeId": 847,
       "routeNodeKey": null,
-      "cityPlaceId": "40088",
+      "cityPlaceId": "40404",
       "adjacencyHops": null
     },
     {
@@ -733,10 +733,10 @@
       "jurisdictionId": "40132",
       "commanderyId": "PARENT-0052",
       "commanderyNameCh": "吳郡",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 518,
+      "basis": "SAME_COMMANDERY_SEAT",
+      "routeNodeId": 847,
       "routeNodeKey": null,
-      "cityPlaceId": "40088",
+      "cityPlaceId": "40404",
       "adjacencyHops": null
     },
     {
@@ -853,10 +853,10 @@
       "jurisdictionId": "40404",
       "commanderyId": "PARENT-0052",
       "commanderyNameCh": "吳郡",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 516,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 847,
       "routeNodeKey": null,
-      "cityPlaceId": "40126",
+      "cityPlaceId": "40404",
       "adjacencyHops": null
     },
     {
@@ -889,10 +889,10 @@
       "jurisdictionId": "40451",
       "commanderyId": "PARENT-0052",
       "commanderyNameCh": "吳郡",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 515,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 848,
       "routeNodeKey": null,
-      "cityPlaceId": "40565",
+      "cityPlaceId": "40451",
       "adjacencyHops": null
     },
     {

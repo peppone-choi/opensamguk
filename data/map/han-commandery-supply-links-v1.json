@@ -15,7 +15,7 @@
   548
  ],
  "stats": {
-  "linkCount": 69,
+  "linkCount": 68,
   "medianKm": 44.4,
   "p90Km": 161.0,
   "maxKm": 397.3
@@ -204,14 +204,6 @@
    "fromCityName": "여항",
    "toCityName": "부춘",
    "distanceKm": 24.2
-  },
-  {
-   "canonicalGroup": "吳郡",
-   "fromProvinceIndex": 46,
-   "toProvinceIndex": 48,
-   "fromCityName": "무석",
-   "toCityName": "양선",
-   "distanceKm": 51.8
   },
   {
    "canonicalGroup": "太原郡",

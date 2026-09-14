@@ -1,0 +1,11 @@
+# Han world v3 release: 848 identities
+
+This immutable release snapshot contains nine strategic loader inputs and five ownership/supply companions. The catalog records each original path, raw SHA-256 and byte length, and deterministic gzip blob hash. `sourceBaseCommit` records the reviewed source checkout; the exact release bytes are identified by the file hashes, including regenerated scenario provenance after that commit.
+
+Do not regenerate this directory in place when future cities, names or boundaries change. Register a new release identity instead. The historical `han-world-artifacts-v1` 832/835 catalogs and the `han-world-v3-846-artifacts-v1` catalog remain unchanged.
+
+The terrain bytes match all historical releases. Their shared source-validated PNG remains applicable; this does not imply that a future terrain revision can reuse that PNG.
+
+This release adds 847 吳縣 (hhs:112:吳郡:001, chgis 40404, 吳郡 seat) and 848 毘陵縣 (hhs:112:吳郡:005, chgis 40451, non-seat) via reviewed variant-character folding. Source spellings (呉/毘陵) are preserved; the 220 affiliation reconstruction is not claimed. Previously unattested city 516 烏程縣 is a different county and is unchanged.
+
+Runtime loading verifies the pinned catalog hash, complete expected path set and every raw/compressed hash and length before the existing strategic loader validates cross-file identity and topology. World selection must use the complete city roster plus all persisted spatial pins, never only the city count.
