@@ -14,6 +14,12 @@ REQUIRED = {
     "data/curated/han/route-node-migration-v1.json",
     "data/curated/han/water-topology-adjudications-v1.json",
 }
+# Frozen per-release bundles must ship inside both images; the loader refuses to
+# fall back to mutable files. New releases extend this set (846 stays for old worlds).
+REQUIRED_DIRS = {
+    "data/map/han-world-v3-846-artifacts-v1",
+    "data/map/han-world-v3-848-artifacts-v1",
+}
 
 
 def exact_copies(document):
@@ -29,9 +35,13 @@ class StrategicTopologyPackagingTest(unittest.TestCase):
         for name in ("game-api", "game-engine"):
             with self.subTest(image=name):
                 document = (ROOT / "docker" / f"{name}.Dockerfile").read_text()
-                self.assertTrue(REQUIRED <= exact_copies(document))
+                copies = exact_copies(document)
+                self.assertTrue(REQUIRED <= copies)
+                self.assertTrue(REQUIRED_DIRS <= copies)
                 for path in REQUIRED:
                     self.assertTrue((ROOT / path).is_file(), path)
+                for path in REQUIRED_DIRS:
+                    self.assertTrue((ROOT / path).is_dir(), path)
         for resource in ("han-world-v3.json", "han-780-v1.json"):
             self.assertTrue((ROOT / "infra/src/main/resources/map" / resource).is_file())
 
