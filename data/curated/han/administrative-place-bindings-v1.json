@@ -8716,13 +8716,16 @@
     },
     {
       "administrativeUnitId": "hhs:112:吳郡:001",
-      "candidateCount": 0,
+      "candidateCount": 1,
       "identity": {
         "canonicalGroup": "吳郡",
         "ordinal": 1,
         "sourceVolume": 112
       },
-      "joinStatus": "NO_COORDINATE_CANDIDATE"
+      "joinStatus": "RESOLVED_POINT",
+      "selectedCandidate": {
+        "physicalPlaceId": "chgis:v6:cnty:40404"
+      }
     },
     {
       "administrativeUnitId": "hhs:112:吳郡:002",
@@ -8765,13 +8768,16 @@
     },
     {
       "administrativeUnitId": "hhs:112:吳郡:005",
-      "candidateCount": 0,
+      "candidateCount": 1,
       "identity": {
         "canonicalGroup": "吳郡",
         "ordinal": 5,
         "sourceVolume": 112
       },
-      "joinStatus": "NO_COORDINATE_CANDIDATE"
+      "joinStatus": "RESOLVED_POINT",
+      "selectedCandidate": {
+        "physicalPlaceId": "chgis:v6:cnty:40451"
+      }
     },
     {
       "administrativeUnitId": "hhs:112:吳郡:006",

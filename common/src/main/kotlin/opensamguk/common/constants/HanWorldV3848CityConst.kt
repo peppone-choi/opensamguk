@@ -1,3 +1,4 @@
+// Frozen 848-identity release snapshot. Future generators must not overwrite.
 package opensamguk.common.constants
 
 import opensamguk.common.constants.CityConst.RawCity
@@ -12,7 +13,7 @@ import opensamguk.common.constants.CityConst.RawCity
  * (generateCities 가 regionMap/levelMap 의 getValue 로 라벨을 푼다). 배선은 이 파일의
  * 소관이 아니다 — HanCityConstVariant 가 한다.
  */
-object HanWorldV3CityConst {
+object HanWorldV3848CityConst {
     // 城 표를 한 listOf 로 내면 <clinit> 이 JVM 메서드 64KB 한도를 넘는다
     // (MethodTooLargeException). 150 개씩 함수로 쪼개 합친다.
     val initCity: List<RawCity> = chunk0() + chunk1() + chunk2() + chunk3() + chunk4() + chunk5()

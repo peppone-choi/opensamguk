@@ -8262,7 +8262,7 @@
     },
     {
       "candidateKey": "current:sha256:785c08ac27147c2b402e0c872ee263986286afbd9e795c2567992503e80b8d7a",
-      "classification": "HHS_UNMAPPED",
+      "classification": "HHS_RESOLVED",
       "legacyCityId": 514,
       "legacyIsSeat": true,
       "legacyNameCh": "吴县",
@@ -8271,8 +8271,9 @@
       "legacyTileId": "40404",
       "origin": "CURRENT_780",
       "ownerGroupResolution": "CANONICAL_EXACT",
-      "physicalPlaceAdministrativeUnitCount": 0,
+      "physicalPlaceAdministrativeUnitCount": 1,
       "physicalPlaceRef": "chgis:v6:cnty:40404",
+      "proposedAdministrativeUnitId": "hhs:112:吳郡:001",
       "reviewState": "PENDING"
     },
     {
@@ -21684,7 +21685,10 @@
       "candidateKey": "replacement:hhs:112:吳郡:001",
       "canonicalGroup": "吳郡",
       "origin": "HHS_REPLACEMENT_POOL",
-      "overlayJoinStatus": "NO_COORDINATE_CANDIDATE",
+      "overlayJoinStatus": "RESOLVED_POINT",
+      "physicalPlaceRefs": [
+        "chgis:v6:cnty:40404"
+      ],
       "reviewState": "PENDING",
       "sourceName": "呉",
       "sourceNameStatus": "SOURCE_LITERAL",
@@ -21737,7 +21741,10 @@
       "candidateKey": "replacement:hhs:112:吳郡:005",
       "canonicalGroup": "吳郡",
       "origin": "HHS_REPLACEMENT_POOL",
-      "overlayJoinStatus": "NO_COORDINATE_CANDIDATE",
+      "overlayJoinStatus": "RESOLVED_POINT",
+      "physicalPlaceRefs": [
+        "chgis:v6:cnty:40451"
+      ],
       "reviewState": "PENDING",
       "sourceName": "毘陵",
       "sourceNameStatus": "SOURCE_LITERAL",
@@ -27849,7 +27856,7 @@
       },
       "administrativePlaceOverlay": {
         "path": "data/curated/han/administrative-place-bindings-v1.json",
-        "sha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7"
+        "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
       "legacyHanMap": {
         "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -27974,67 +27981,67 @@
     {
       "code": "1030",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
-      "resourceSha256": "36306c495f8670ea9b604381b1a249a13a9c2a3ed16c502bbf38e8873dc486dc",
+      "resourceSha256": "676040e28a6308642928868957bc50da1d5be01162913a2363e377d6e2760128",
       "startYear": 191
     },
     {
       "code": "1031",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
-      "resourceSha256": "ccecc58f5f3134b6c00782bf9dcb35da39cebafd8dedbddb6451ca513e6f396f",
+      "resourceSha256": "7f14860803187eae4f31367515524e96e927394ed433e9ec696168cc214cd8fd",
       "startYear": 192
     },
     {
       "code": "1040",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
-      "resourceSha256": "c5bebd9d7c895972b499a123824ee8a919a20644373fb45045d2e5f77a636974",
+      "resourceSha256": "0be30141b1f7dfebcdb7a8fe27aeb4fd8df9d8142dc64429f3e3ae63c4bea2a3",
       "startYear": 193
     },
     {
       "code": "1041",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
-      "resourceSha256": "c0351dd7427f6b96dd6436ad2e70cbf2dbdba2958c13bb3ba8512bd832c0c903",
+      "resourceSha256": "ed404a67861112e11816d40bd5471ac719b91c69f87677bda0dba202a740f92e",
       "startYear": 194
     },
     {
       "code": "1050",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
-      "resourceSha256": "1681bd136cfd684d43bc4d736199c54d7b49c053263a7614d9b1b32e415de9d0",
+      "resourceSha256": "3ae9d74b2e303657caca5bef32b147e41b3195116cd77af6fa0d646937cf260b",
       "startYear": 197
     },
     {
       "code": "1060",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
-      "resourceSha256": "c577bef1ff9e5b02404bbfe3fb54340696fda2d89ee5713532d9011dcdbccc2c",
+      "resourceSha256": "ead5089fe4a586b98a66194875cf58f2c69ca06329780d281e687902da736a93",
       "startYear": 199
     },
     {
       "code": "1070",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
-      "resourceSha256": "231d7437ffc49760eea15d42b850f5323c37cfe291e575c5dde2fd521b670b5c",
+      "resourceSha256": "8d4383ace1b9d3e656c6785469bc144283911cd0102eb727eaa1098efa6878fd",
       "startYear": 204
     },
     {
       "code": "1080",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
-      "resourceSha256": "ad073bfe51401b25987f9326d965ee670bbcf65729ad43d4dd1a43cd1b5f659e",
+      "resourceSha256": "f5572f1f2c943d2a67e2c3d554fc75edd46262a981fb1ab667a18de4209067a0",
       "startYear": 210
     },
     {
       "code": "1090",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
-      "resourceSha256": "241758ddb2a80d71010df444457c7fc9e4a1d7dc007f198c0b45f52f8feac69e",
+      "resourceSha256": "17b762124351268e811beabeb51ed9abf3211f22f14536627155e52fb9a50425",
       "startYear": 216
     },
     {
       "code": "1100",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
-      "resourceSha256": "b57632412dd989b042b7f1a6037e57ac5028e5c1d8d005c546e39fce16b32d9c",
+      "resourceSha256": "130bf72d7c1c64874e2f4d96a63ee4bf9b012e55a250aa2b57f84450a733ddc2",
       "startYear": 222
     },
     {
       "code": "1110",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
-      "resourceSha256": "2aa3bdbb3e97199a0c109d414489f818647018b096f131e771914cee45493212",
+      "resourceSha256": "03bc0738f4eaa46e1f0bdd9cd1295ea63b73a2e81bce8d3245e143ac4e989a5e",
       "startYear": 225
     },
     {
@@ -28058,8 +28065,8 @@
       "EXTERNAL_OR_LATER_OR_MOVING": 45,
       "HHS_AMBIGUOUS": 41,
       "HHS_ATTRIBUTION_CONFLICT": 21,
-      "HHS_RESOLVED": 617,
-      "HHS_UNMAPPED": 56
+      "HHS_RESOLVED": 618,
+      "HHS_UNMAPPED": 55
     },
     "correctionCandidateCount": 1,
     "externalTileCount": 45,
@@ -28073,6 +28080,6 @@
     "reviewStateCounts": {
       "PENDING": 1960
     },
-    "uniqueCompatibleAdministrativeUnitCount": 658
+    "uniqueCompatibleAdministrativeUnitCount": 659
   }
 }

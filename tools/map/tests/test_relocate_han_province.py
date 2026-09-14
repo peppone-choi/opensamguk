@@ -78,13 +78,13 @@ class GeukRelocationTest(unittest.TestCase):
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
         # 2026-09-14: w1 11곳 편입. EXACT 95026→95902, unresolved 26612→25736.
         self.assertEqual(121638, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(95902, result['summary']['exactApprovedCellCount'])
-        self.assertEqual(25736, result['summary']['unresolvedCellCount'])
+        self.assertEqual(96096, result['summary']['exactApprovedCellCount'])
+        self.assertEqual(25542, result['summary']['unresolvedCellCount'])
         rebinding = result['countyRebindingProjection']
         self.assertEqual(2035, rebinding['changedCellCount'])
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
-        self.assertEqual(96272, rebinding['priorSummary']['exactApprovedCellCount'])
-        self.assertEqual(25331, rebinding['priorSummary']['unresolvedCellCount'])
+        self.assertEqual(96466, rebinding['priorSummary']['exactApprovedCellCount'])
+        self.assertEqual(25137, rebinding['priorSummary']['unresolvedCellCount'])
         # 縣 51곳을 세운 뒤로 재배치 투영은 그 縣 단계가 재귀로 증명하는 **앞 단계 원장**
         # 안에 실려 온다 — 재바인딩이 그 위에 한 겹 더 얹혔을 뿐 같은 61칸이다.
         self.assertEqual(

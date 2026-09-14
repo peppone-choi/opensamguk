@@ -2,12 +2,12 @@
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
     "externalLocationClaimCount": 11,
-    "hhsAdministrativeBindingCount": 846,
+    "hhsAdministrativeBindingCount": 848,
     "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 846,
+    "routeNodeCount": 848,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51
   },
@@ -70,12 +70,12 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39"
+      "sha256": "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8"
     },
-    "coordinateOverlaySha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7",
+    "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88"
+      "sha256": "88e88f4fecee05b3cf59e2024e46716689f5e447589127a152b58a5854a3b4ea"
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
@@ -83,7 +83,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
+      "sha256": "25e405205b3a773ef10e669fc70c7da4c5ab475755cfe6419e0cd22caf9d3312"
     }
   },
   "legacyAttributionCorrections": [
@@ -334,8 +334,8 @@
     },
     {
       "batchId": "w1-script-variant-county-join",
-      "criteria": "간체표(han-name-simplification-v1) 폴딩으로 단일·무경합 결합된 HHS 단위 중 정책 명시 구성원 16곳",
-      "expectedCount": 11,
+      "criteria": "간체/검토 이체자표 폴딩으로 단일·무경합 결합된 정책 명시 HHS 구성원",
+      "expectedCount": 13,
       "memberAdministrativeUnitIds": [
         "hhs:109:河內郡:013",
         "hhs:110:常山國:012",
@@ -347,10 +347,26 @@
         "hhs:112:吳郡:004",
         "hhs:112:濟南國:004",
         "hhs:113:蜀郡:008",
-        "hhs:113:蜀郡:011"
+        "hhs:113:蜀郡:011",
+        "hhs:112:吳郡:001",
+        "hhs:112:吳郡:005"
       ],
       "reviewState": "APPROVED",
-      "selectionRationale": "번체 정본명과 간체 CHGIS 점의 표기 괴리로 탈락했던 행을 폴딩으로 결합한다. 餘杭은 사료 교차검증 완료, 나머지 15곳은 HHS 등재+220년 활성점+무경합까지이며 치소 동일성·판본 대조 미완료를 수용한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다. 정본-타일 郡 귀속이 어긋난 5곳(餘汗·桑乾·鉅野·广甯·鉅平)은 표시 군명 오류가 나므로 이번 배치에서 제외하고 별도 귀속 심사로 넘긴다."
+      "selectionRationale": "번체 정본명과 간체 CHGIS 점의 표기 괴리로 탈락했던 행을 폴딩으로 결합한다. 餘杭은 사료 교차검증 완료, 나머지 15곳은 HHS 등재+220년 활성점+무경합까지이며 치소 동일성·판본 대조 미완료를 수용한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다. 정본-타일 郡 귀속이 어긋난 5곳(餘汗·桑乾·鉅野·广甯·鉅平)은 표시 군명 오류가 나므로 이번 배치에서 제외하고 별도 귀속 심사로 넘긴다.",
+      "amendmentEvidence": {
+        "units": [
+          "hhs:112:吳郡:001",
+          "hhs:112:吳郡:005"
+        ],
+        "basis": "HHS112 source readings 呉/毘陵 and CHGIS40404/40451; matching preserves source spelling. Existing game 吳郡 jurisdiction is retained.",
+        "temporalLimitation": "Piling agriculture commission establishment date is inferred inconsistently as 198/222 by CHGIS; exact 220 parent reconstruction is not claimed.",
+        "sourceUrls": [
+          "https://zh.wikisource.org/wiki/後漢書/卷112",
+          "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_40404",
+          "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_40451",
+          "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_32365"
+        ]
+      }
     }
   ],
   "status": "APPROVED",

@@ -7,10 +7,10 @@
         "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
       },
       "administrativePlaceOverlay": {
-        "sha256": "30bb3643f486957e765bcbf61b671b4661da428d00a5324e9a15c8be1395f2d7"
+        "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
       "candidate": {
-        "sha256": "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39"
+        "sha256": "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8"
       },
       "externalClaims": {
         "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
@@ -22,13 +22,13 @@
         "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       },
       "locationAdjudications": {
-        "sha256": "f9a45f4d1b0b88446f739e885d7151659ef3d1ace12af53474eee1975c7def88"
+        "sha256": "88e88f4fecee05b3cf59e2024e46716689f5e447589127a152b58a5854a3b4ea"
       },
       "reviewPolicy": {
-        "sha256": "7ac029ea55aa3b3a0afb9d10f67643a8d88682bd7f811d3d923520294bf7a475"
+        "sha256": "4dd638f922398ce7ab831b83b47743baec16aec16a59916f235dd443bd87fd76"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
+        "sha256": "25e405205b3a773ef10e669fc70c7da4c5ab475755cfe6419e0cd22caf9d3312"
       }
     }
   },
@@ -26838,6 +26838,60 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:001",
+      "canonicalName": "呉",
+      "displayName": "呉",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 847,
+      "parentName": "吳郡",
+      "parentRef": "hhs-group:112:吳郡",
+      "physicalPlaceRef": "chgis:v6:cnty:40404",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "181684d1-8a68-4181-9063-4b340fa318d7",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:112:吳郡:005",
+      "canonicalName": "毘陵",
+      "displayName": "毘陵",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 848,
+      "parentName": "吳郡",
+      "parentRef": "hhs-group:112:吳郡",
+      "physicalPlaceRef": "chgis:v6:cnty:40451",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-script-variant-county-join",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-script-variant-county-join"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -26974,77 +27028,77 @@
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "36306c495f8670ea9b604381b1a249a13a9c2a3ed16c502bbf38e8873dc486dc",
+        "sha256": "676040e28a6308642928868957bc50da1d5be01162913a2363e377d6e2760128",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "ccecc58f5f3134b6c00782bf9dcb35da39cebafd8dedbddb6451ca513e6f396f",
+        "sha256": "7f14860803187eae4f31367515524e96e927394ed433e9ec696168cc214cd8fd",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "c5bebd9d7c895972b499a123824ee8a919a20644373fb45045d2e5f77a636974",
+        "sha256": "0be30141b1f7dfebcdb7a8fe27aeb4fd8df9d8142dc64429f3e3ae63c4bea2a3",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "c0351dd7427f6b96dd6436ad2e70cbf2dbdba2958c13bb3ba8512bd832c0c903",
+        "sha256": "ed404a67861112e11816d40bd5471ac719b91c69f87677bda0dba202a740f92e",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "1681bd136cfd684d43bc4d736199c54d7b49c053263a7614d9b1b32e415de9d0",
+        "sha256": "3ae9d74b2e303657caca5bef32b147e41b3195116cd77af6fa0d646937cf260b",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "c577bef1ff9e5b02404bbfe3fb54340696fda2d89ee5713532d9011dcdbccc2c",
+        "sha256": "ead5089fe4a586b98a66194875cf58f2c69ca06329780d281e687902da736a93",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "231d7437ffc49760eea15d42b850f5323c37cfe291e575c5dde2fd521b670b5c",
+        "sha256": "8d4383ace1b9d3e656c6785469bc144283911cd0102eb727eaa1098efa6878fd",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "ad073bfe51401b25987f9326d965ee670bbcf65729ad43d4dd1a43cd1b5f659e",
+        "sha256": "f5572f1f2c943d2a67e2c3d554fc75edd46262a981fb1ab667a18de4209067a0",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "241758ddb2a80d71010df444457c7fc9e4a1d7dc007f198c0b45f52f8feac69e",
+        "sha256": "17b762124351268e811beabeb51ed9abf3211f22f14536627155e52fb9a50425",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "b57632412dd989b042b7f1a6037e57ac5028e5c1d8d005c546e39fce16b32d9c",
+        "sha256": "130bf72d7c1c64874e2f4d96a63ee4bf9b012e55a250aa2b57f84450a733ddc2",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "2aa3bdbb3e97199a0c109d414489f818647018b096f131e771914cee45493212",
+        "sha256": "03bc0738f4eaa46e1f0bdd9cd1295ea63b73a2e81bce8d3245e143ac4e989a5e",
         "startYear": 225
       },
       {
@@ -27066,9 +27120,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 846,
+    "approvedCount": 848,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 846
+      "HHS_ADMINISTRATIVE_UNIT": 848
     }
   },
   "worldVersion": "han-world-v3"

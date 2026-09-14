@@ -3,16 +3,16 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "f5b09a2c9df5d9c9b6e5a893f5e684dedb185195240b51e06acd350cd8665115",
-    "migrationSha256": "b6b3a0fa7cac03e6f5bef9210d50ee62fbf1b30555ee0b01e9b436b3d8351eac",
+    "selectionSha256": "a0686666bdf952a533529ad84a05d7865401d1e619281ae8d1c8a670314be84b",
+    "migrationSha256": "3a0d21a78eec6ac3ba7cc77e512a2534e78d462a49913eafadb60c51d49e368f",
     "hanTilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
-    "provinceCityAttributionSha256": "4273c14d0b5611c5fa35be915514330877d428db9aed88823eaf3c4b1f6387e9",
+    "provinceCityAttributionSha256": "e6951a34ddb6abd602ce1bacfec5d7f7c2f0c6a14740aa8eace4ed8bf9ffa9bc",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "661745c4fd79f1addbc7d3fc2794a5f4c701700bd2737cc78ea60eccacbc41a0",
-    "cityConstSha256": "ddcc6dc0395e0742cf665a4e3bf09078e45951ba778008ea8954245531ed5c51",
-    "gateIndexSha256": "993b712d3b614714542d19cc8f123fbe39fcf63f9202047d7eceebdc30bce582"
+    "worldJsonSha256": "8aebaa5f33dd07e32bb4105fbb19fd11a384f8e73fd401ac181954f5534f9d79",
+    "cityConstSha256": "ca619a6efb08afc724f284607cea58457d3d5f285100280ae6de90b3bb16fa0a",
+    "gateIndexSha256": "7a49bc48112673bcfd2e41cfb1aa221cc380b07dbaa7ceacf50a8ba2297fee5b"
   },
   "routeNodes": [
     {
@@ -4244,6 +4244,16 @@
       "routeNodeKey": "b03a49a2-5224-4cb3-a961-e9a8b107fc0f",
       "numericCityId": 846,
       "physicalPlaceRef": "chgis:v6:cnty:200261"
+    },
+    {
+      "routeNodeKey": "181684d1-8a68-4181-9063-4b340fa318d7",
+      "numericCityId": 847,
+      "physicalPlaceRef": "chgis:v6:cnty:40404"
+    },
+    {
+      "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8",
+      "numericCityId": 848,
+      "physicalPlaceRef": "chgis:v6:cnty:40451"
     }
   ],
   "countyAdjacency": [
@@ -9559,11 +9569,6 @@
     },
     {
       "a": 312,
-      "b": 515,
-      "sharedBoundaryCells": 1
-    },
-    {
-      "a": 312,
       "b": 517,
       "sharedBoundaryCells": 1
     },
@@ -9581,6 +9586,11 @@
       "a": 312,
       "b": 550,
       "sharedBoundaryCells": 7
+    },
+    {
+      "a": 312,
+      "b": 848,
+      "sharedBoundaryCells": 1
     },
     {
       "a": 313,
@@ -9615,12 +9625,17 @@
     {
       "a": 316,
       "b": 515,
-      "sharedBoundaryCells": 35
+      "sharedBoundaryCells": 14
     },
     {
       "a": 316,
       "b": 520,
       "sharedBoundaryCells": 7
+    },
+    {
+      "a": 316,
+      "b": 848,
+      "sharedBoundaryCells": 21
     },
     {
       "a": 317,
@@ -12194,11 +12209,6 @@
     },
     {
       "a": 499,
-      "b": 518,
-      "sharedBoundaryCells": 10
-    },
-    {
-      "a": 499,
       "b": 530,
       "sharedBoundaryCells": 18
     },
@@ -12238,6 +12248,11 @@
       "sharedBoundaryCells": 17
     },
     {
+      "a": 499,
+      "b": 847,
+      "sharedBoundaryCells": 10
+    },
+    {
       "a": 500,
       "b": 505,
       "sharedBoundaryCells": 9
@@ -12264,11 +12279,6 @@
     },
     {
       "a": 501,
-      "b": 518,
-      "sharedBoundaryCells": 4
-    },
-    {
-      "a": 501,
       "b": 536,
       "sharedBoundaryCells": 7
     },
@@ -12276,6 +12286,11 @@
       "a": 501,
       "b": 591,
       "sharedBoundaryCells": 9
+    },
+    {
+      "a": 501,
+      "b": 847,
+      "sharedBoundaryCells": 4
     },
     {
       "a": 503,
@@ -12420,12 +12435,7 @@
     {
       "a": 515,
       "b": 516,
-      "sharedBoundaryCells": 14
-    },
-    {
-      "a": 515,
-      "b": 519,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 3
     },
     {
       "a": 515,
@@ -12438,6 +12448,16 @@
       "sharedBoundaryCells": 11
     },
     {
+      "a": 515,
+      "b": 847,
+      "sharedBoundaryCells": 11
+    },
+    {
+      "a": 515,
+      "b": 848,
+      "sharedBoundaryCells": 6
+    },
+    {
       "a": 516,
       "b": 518,
       "sharedBoundaryCells": 5
@@ -12445,7 +12465,12 @@
     {
       "a": 516,
       "b": 522,
-      "sharedBoundaryCells": 17
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 516,
+      "b": 847,
+      "sharedBoundaryCells": 18
     },
     {
       "a": 517,
@@ -12465,12 +12490,17 @@
     {
       "a": 518,
       "b": 536,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 6
     },
     {
       "a": 518,
-      "b": 843,
-      "sharedBoundaryCells": 5
+      "b": 847,
+      "sharedBoundaryCells": 24
+    },
+    {
+      "a": 519,
+      "b": 848,
+      "sharedBoundaryCells": 6
     },
     {
       "a": 520,
@@ -12481,6 +12511,11 @@
       "a": 521,
       "b": 522,
       "sharedBoundaryCells": 19
+    },
+    {
+      "a": 522,
+      "b": 847,
+      "sharedBoundaryCells": 9
     },
     {
       "a": 523,
@@ -12701,6 +12736,11 @@
       "a": 536,
       "b": 843,
       "sharedBoundaryCells": 13
+    },
+    {
+      "a": 536,
+      "b": 847,
+      "sharedBoundaryCells": 18
     },
     {
       "a": 537,
@@ -16096,6 +16136,11 @@
       "a": 834,
       "b": 835,
       "sharedBoundaryCells": 31
+    },
+    {
+      "a": 843,
+      "b": 847,
+      "sharedBoundaryCells": 5
     },
     {
       "a": 845,

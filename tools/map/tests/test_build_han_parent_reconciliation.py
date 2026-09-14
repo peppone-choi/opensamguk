@@ -74,7 +74,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
         # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
         self.assertEqual(105_711, ledger["summary"]["directTerritoryCellCount"])
-        self.assertEqual(847, ledger["summary"]["exactApprovedRowCount"])
+        self.assertEqual(849, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -424,7 +424,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(847, len(expected))
+        self.assertEqual(849, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -569,8 +569,8 @@ class HanParentReconciliationTest(unittest.TestCase):
                 # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로 서면서 그 셋이
                 # 直轄 심사(BLOCKED_DIRECT_TERRITORY_REVIEW)에서 빠져 승인으로 옮겼다.
                 # 칸수는 그대로다 — 옮긴 세 행은 cellCount 가 0 인 治所 행이다.
-                "EXACT_APPROVED": 847,
-                "PROPOSED_GEOMETRIC": 274,
+                "EXACT_APPROVED": 849,
+                "PROPOSED_GEOMETRIC": 272,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
@@ -578,17 +578,17 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 95_902,
-                "PROPOSED_GEOMETRIC": 17_706,
+                "EXACT_APPROVED": 96_096,
+                "PROPOSED_GEOMETRIC": 17_512,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
-        self.assertEqual(342, summary["unresolvedRowCount"])
-        self.assertEqual(25_736, summary["unresolvedCellCount"])
+        self.assertEqual(340, summary["unresolvedRowCount"])
+        self.assertEqual(25_542, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 198, "cellCount": 10_405},
+            {"rowCount": 196, "cellCount": 10_211},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
@@ -622,7 +622,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 271, "cellCount": 17_419},
+            {"rowCount": 269, "cellCount": 17_225},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(

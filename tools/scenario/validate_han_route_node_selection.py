@@ -43,8 +43,8 @@ VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="ut
 LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location)
 # + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location)
-# + 836..846 간체표 폴딩 결합 11곳 (w1-script-variant-county-join; 귀속 충돌 5곳 제외).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 846}
+# + 836..846 간체표 폴딩 결합 11곳 + 847 吳縣·848 毘陵 이체자 폴딩 결합 2곳 (w1-script-variant-county-join).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 848}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
@@ -111,11 +111,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "8c466c80e65ca511ffbad4a4b4f2841e492f1c314bf17dac2896a8bc14a5a668"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "25e405205b3a773ef10e669fc70c7da4c5ab475755cfe6419e0cd22caf9d3312"
 PINNED_SOURCE_WITNESS_SHA256 = "fd0019d96389e74ed8dc79bae89d23b3b30a8db25d096f9162259a2b87bf7789"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "17619ce57b1f3f50599efc090df88f0838ae594f88468c0981c097db70919f39"
-PINNED_REVIEW_POLICY_SHA256 = "7ac029ea55aa3b3a0afb9d10f67643a8d88682bd7f811d3d923520294bf7a475"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8"
+PINNED_REVIEW_POLICY_SHA256 = "4dd638f922398ce7ab831b83b47743baec16aec16a59916f235dd443bd87fd76"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
