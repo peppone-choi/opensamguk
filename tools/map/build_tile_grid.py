@@ -223,6 +223,30 @@ def rle(rows: list[list[int]]) -> list[list[int]]:
     return out
 
 
+def assert_no_orphan_land(
+    owner_runs: list[list[int]], terrain_rows: list[str], cols: int
+) -> None:
+    """R2 (ADR-LITE-052) — 육지 셀 무소속 금지.
+
+    owner -1 은 수역(SEA·LAKE)과 플레이 범위 밖(OUT_OF_SCOPE)에만 허용된다. 소속 없는
+    육지는 데이터 버그이므로 깨뜨린다. 지형 코드는 build_terrain_grid.py 와 같은 순서
+    (SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·OUT_OF_SCOPE = 0..9).
+    """
+    land_kinds = frozenset("1235678")
+    cursor = 0
+    orphan_land: list[tuple[int, int]] = []
+    for value, count in owner_runs:
+        if value == -1:
+            for _ in range(count):
+                y, x = divmod(cursor, cols)
+                if terrain_rows[y][x] in land_kinds and len(orphan_land) < 5:
+                    orphan_land.append((x, y))
+                cursor += 1
+        else:
+            cursor += count
+    assert not orphan_land, f"소속 없는 육지(데이터 버그): {orphan_land} …"
+
+
 def resolve_province_record_names(
         records: list[dict], parent_regions: list[dict], cities: list[dict],
         parent_seats: list[int]) -> list[dict]:
@@ -624,6 +648,7 @@ def build(
     assert all(len(r) == cols for r in grid["terrain"]) and len(grid["terrain"]) == rows, "지형 행/열"
     off = [c["name"] for c in cities if c["seat"] and grid["terrain"][c["row"]][c["col"]] == 0]
     assert not off, f"군치가 바다 위에 있다: {off[:5]}"
+    assert_no_orphan_land(owner, grid["terrain"], cols)
     # 郡 명부. adjacency 의 a/b 가 이 배열의 인덱스다 — 이름 없이 인덱스만 넘기면
     # 프런트가 어느 郡인지 알 수 없다. kr() 호출은 미스 가드보다 먼저 끝나야 한다 —
     # return 리터럴 안에 두면 가드를 지난 뒤에야 평가돼 juns 전용 이름(河閒國 등

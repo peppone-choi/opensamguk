@@ -42,9 +42,10 @@ data class AdministrativeOwnershipSnapshot(
  * Spatial occupancy, jurisdiction ownership and commandery control deliberately remain three
  * separate values. In particular, mixed direct province assignments are never collapsed into a
  * representative province colour. A live city overrides the political owner of its unique
- * jurisdiction and the occupancy of every province of that jurisdiction that shares the seat
- * province's canonical owner; provinces the canonical table deliberately assigned to someone else
- * keep that assignment.
+ * jurisdiction and the occupancy of **every** province of that jurisdiction (R1, ADR-LITE-052:
+ * 현 단위 소유권). Provinces the canonical table deliberately assigned to someone else keep
+ * that assignment only in the initial static placement (no live cities); a live conquest
+ * covers them too.
  */
 @Component
 class MapAdministrativeOwnership(
@@ -93,21 +94,20 @@ class MapAdministrativeOwnership(
             jurisdiction.id to (liveOwner ?: directOwners.getValue(jurisdiction.seatProvinceId))
         }
 
-        // 한 縣은 여러 省을 가질 수 있다(han-tiles jurisdictionRecords.provinceIds). 城을 빼앗으면
-        // 그 縣의 治所 省만 색이 바뀌던 탓에 같은 縣 안에서 한 칸만 칠해지고 나머지가 공백으로
-        // 남는 「빵꾸」가 났다. 그래서 치소와 **같은 기준 소유자**를 가진 省은 治所와 함께 움직인다.
+        // R1 (ADR-LITE-052) — 현 단위 소유권. 한 縣은 여러 省을 가질 수 있고
+        // (han-tiles jurisdictionRecords.provinceIds), 城을 빼앗으면 그 縣의 소속 프로빈스
+        // 전체가 함께 움직인다. 치소 省만 바뀌던 탓에 남던 「빵꾸」가 없어진다.
         //
-        // 기준 소유자가 치소와 다른 省은 그대로 둔다 — 그건 심사된 분할이다
-        // (han-scenario-jurisdiction-conflict-allowlist-v1: 1100/1110 上庸縣 45934, 魏 현치 ·
-        // 蜀 인접 直領). 클래스 주석의 「대표 省 색으로 뭉개지 않는다」 계약은 여기서 지켜진다.
+        // 기준 소유자가 치소와 다른 省(심사된 분할)은 초기 정적 배치에서 그대로 보인다 —
+        // 그건 han-scenario-jurisdiction-conflict-allowlist-v1 검증이 지키는 초기 데이터
+        // 계약이다(1100/1110 上庸縣 45934, 魏 현치 · 蜀 인접 直領). live 점령이 들어오면
+        // 분할 칸도 함께 넘어간다. 클래스 주석의 「대표 省 색으로 뭉개지 않는다」 계약은
+        // 초기 배치에서 지켜진다.
         val liveProvinceOverrides = buildMap {
             liveCityByJurisdiction.forEach { (jurisdictionId, city) ->
                 val jurisdiction = canonical.jurisdictionById.getValue(jurisdictionId)
-                val seatBaseline = directOwners.getValue(jurisdiction.seatProvinceId)
                 jurisdiction.provinceIds.forEach { provinceId ->
-                    if (directOwners.getValue(provinceId) == seatBaseline) {
-                        put(provinceId, city.nationId)
-                    }
+                    put(provinceId, city.nationId)
                 }
             }
         }

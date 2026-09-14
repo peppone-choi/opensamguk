@@ -47,6 +47,9 @@ class MapAdministrativeOwnershipTest {
 
     @Test
     fun `projects direct spatial ownership without choosing a representative province color`() {
+        // R1(ADR-LITE-052): live 점령은 縣 소속 전체에 번진다. J1 의 P2 는 기준표상
+        // 2 였지만 live city 10(소유 4)이 들어오면 4 가 된다. 초기 배치(대표색 뭉개기
+        // 금지)는 liveCities 가 비었을 때의 모양이다.
         val projection = fixtureProjection().project(
             scenarioCode = "scenario_1010",
             liveCities = listOf(LiveCityOwnership(cityId = 10, provinceIndex = 1, nationId = 4)),
@@ -55,7 +58,7 @@ class MapAdministrativeOwnershipTest {
         assertEquals(
             listOf(
                 ProvinceOccupancyProjection("P1", 0, 4),
-                ProvinceOccupancyProjection("P2", 1, 2),
+                ProvinceOccupancyProjection("P2", 1, 4),
                 ProvinceOccupancyProjection("P3", 2, 2),
                 ProvinceOccupancyProjection("P4", 3, 2),
             ),
@@ -75,9 +78,10 @@ class MapAdministrativeOwnershipTest {
     }
 
     @Test
-    fun `a live city recolors every province of its county that shares the seat baseline`() {
+    fun `a live city recolors every province of its county`() {
         // 縣 J2 는 省 P3(治所) · P4 를 함께 가진다. 城을 빼앗으면 두 칸이 같이 바뀌어야 한다 —
-        // 治所만 바뀌면 같은 縣 안에 색이 빠진 칸이 남는다(프로빈스 빵꾸).
+        // 治所만 바뀌면 같은 縣 안에 색이 빠진 칸이 남는다(프로빈스 빵꾸). R1(ADR-LITE-052):
+        // 현 크기와 무관하게 소속 프로빈스 전체가 함께 움직인다.
         val projection = fixtureProjection().project(
             scenarioCode = "scenario_1010",
             liveCities = listOf(LiveCityOwnership(cityId = 20, provinceIndex = 2, nationId = 7)),
@@ -95,16 +99,39 @@ class MapAdministrativeOwnershipTest {
     }
 
     @Test
-    fun `an adjudicated split province keeps its canonical owner when the county seat falls`() {
+    fun `a neutral province of the county follows the conquest instead of staying neutral`() {
+        // 빵꾸 방지가 중립 분류와 충돌하지 않는다: 같은 縣의 중립 칸(P4, owner 0)도
+        // 점령에 따라 넘어간다. 중립 고정이 아니다(중립 점령은 기본값=가능으로 진행).
+        val projection = fixtureProjectionWithNeutralP4().project(
+            scenarioCode = "scenario_1010",
+            liveCities = listOf(LiveCityOwnership(cityId = 20, provinceIndex = 2, nationId = 7)),
+        )
+
+        assertEquals(
+            listOf(
+                ProvinceOccupancyProjection("P1", 0, 1),
+                ProvinceOccupancyProjection("P2", 1, 2),
+                ProvinceOccupancyProjection("P3", 2, 7),
+                ProvinceOccupancyProjection("P4", 3, 7),
+            ),
+            projection.provinceOccupancy,
+        )
+    }
+
+    @Test
+    fun `an adjudicated split keeps its canonical owner statically but follows a live conquest`() {
         // J1 의 P2 는 기준표가 치소(P1, 소유 1)와 다른 세력 2 에게 준 칸이다
-        // (충돌 허용 원장). 城이 넘어가도 이 칸은 대표 색으로 뭉개지 않는다.
-        val projection = fixtureProjection().project(
+        // (충돌 허용 원장). 초기 정적 배치에서는 대표 색으로 뭉개지지 않는다.
+        val static = fixtureProjection().project("scenario_1010", emptyList())
+        assertEquals(1, static.provinceOccupancy.single { it.provinceRecordId == "P1" }.nationId)
+        assertEquals(2, static.provinceOccupancy.single { it.provinceRecordId == "P2" }.nationId)
+        // R1(ADR-LITE-052): live 점령이 들어오면 심사 분할 칸도 함께 넘어간다.
+        val captured = fixtureProjection().project(
             scenarioCode = "scenario_1010",
             liveCities = listOf(LiveCityOwnership(cityId = 10, provinceIndex = 0, nationId = 4)),
         )
-
-        assertEquals(4, projection.provinceOccupancy.single { it.provinceRecordId == "P1" }.nationId)
-        assertEquals(2, projection.provinceOccupancy.single { it.provinceRecordId == "P2" }.nationId)
+        assertEquals(4, captured.provinceOccupancy.single { it.provinceRecordId == "P1" }.nationId)
+        assertEquals(4, captured.provinceOccupancy.single { it.provinceRecordId == "P2" }.nationId)
     }
 
     @Test
@@ -202,6 +229,68 @@ class MapAdministrativeOwnershipTest {
             assertEquals(1, owners.map { it.nationId }.toSet().size, "scenario $scenarioCode Shu owner")
             assertEquals(true, owners.first().nationId > 0, "scenario $scenarioCode Shu is owned")
         }
+    }
+
+    private fun fixtureProjectionWithNeutralP4(): MapAdministrativeOwnership {
+        val mapPath = tempDir.resolve("han-tiles-neutral.json")
+        Files.writeString(
+            mapPath,
+            """
+            {
+              "provinceRecords": [
+                {"id":"P1","jurisdictionId":"J1"},
+                {"id":"P2","jurisdictionId":"J1"},
+                {"id":"P3","jurisdictionId":"J2"},
+                {"id":"P4","jurisdictionId":"J2"}
+              ],
+              "jurisdictionRecords": [
+                {"id":"J1","commanderyId":"C1","seatPlaceId":"P1","provinceIds":["P1","P2"]},
+                {"id":"J2","commanderyId":"C1","seatPlaceId":"P3","provinceIds":["P3","P4"]}
+              ],
+              "commanderyRecords": [
+                {"id":"C1","seatJurisdictionId":"J1","jurisdictionIds":["J1","J2"]}
+              ]
+            }
+            """.trimIndent(),
+        )
+        val ownershipPath = tempDir.resolve("han-scenario-province-ownership-neutral.json")
+        Files.writeString(
+            ownershipPath,
+            """
+            {
+              "scenarios": [{
+                "scenarioCode": 1010,
+                "effectiveYear": 184,
+                "assignments": [
+                  {"provinceId":"P1","ownerNationId":1,"evidenceIds":["TEST-EVIDENCE-1"]},
+                  {"provinceId":"P2","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]},
+                  {"provinceId":"P3","ownerNationId":2,"evidenceIds":["TEST-EVIDENCE-2"]},
+                  {"provinceId":"P4","ownerNationId":0,"evidenceIds":["TEST-EVIDENCE-2"]}
+                ]
+              }]
+            }
+            """.trimIndent(),
+        )
+        val allowlistPath = tempDir.resolve("han-scenario-jurisdiction-conflict-allowlist-neutral.json")
+        Files.writeString(
+            allowlistPath,
+            """
+            {"entries":[
+              {"scenarioCode":1010,"effectiveYear":184,"jurisdictionId":"J1",
+               "ownerNationIds":[1,2],"reason":"test conflict",
+               "evidenceIds":["TEST-EVIDENCE-1","TEST-EVIDENCE-2"]},
+              {"scenarioCode":1010,"effectiveYear":184,"jurisdictionId":"J2",
+               "ownerNationIds":[0,2],"reason":"test neutral split",
+               "evidenceIds":["TEST-EVIDENCE-2"]}
+            ]}
+            """.trimIndent(),
+        )
+        return MapAdministrativeOwnership(
+            objectMapper = ObjectMapper(),
+            mapPath = mapPath.toString(),
+            ownershipPath = ownershipPath.toString(),
+            conflictAllowlistPath = allowlistPath.toString(),
+        )
     }
 
     private fun fixtureProjection(allowMixedJurisdiction: Boolean = true): MapAdministrativeOwnership {

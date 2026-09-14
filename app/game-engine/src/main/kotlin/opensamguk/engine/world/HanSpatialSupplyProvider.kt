@@ -27,8 +27,10 @@ data class SpatialSupplyCity(
  * Loads the canonical Han province topology and scenario occupancy used by monthly supply.
  *
  * The projection deliberately matches MapAdministrativeOwnership: scenario direct occupancy is the
- * base, and each mapped runtime city overrides member provinces sharing its seat's baseline owner.
- * Provinces with a different scenario baseline owner retain that reviewed split ownership.
+ * base, and each mapped runtime city overrides **every** member province of its jurisdiction
+ * (R1, ADR-LITE-052: 현 단위 소유권). Provinces with a different scenario baseline owner keep
+ * that reviewed split ownership only in the initial static placement; a live conquest covers
+ * them too.
  */
 @Component
 class HanSpatialSupplyProvider(
@@ -103,12 +105,11 @@ class HanSpatialSupplyProvider(
                     "$seatProvinceIndex of jurisdiction $jurisdictionId"
             }
         }
+        // R1 (ADR-LITE-052) — 현 단위 소유권. 점령한 城의 縣 소속 프로빈스 전체가 함께
+        // 넘어간다(치소 省만 바뀌던 「빵꾸」 해소). 초기 정적 배치의 심사 분할은 그대로 둔다.
         canonical.provinceJurisdictions.forEachIndexed { provinceIndex, jurisdictionId ->
             val city = cityByJurisdiction[jurisdictionId] ?: return@forEachIndexed
-            val seatProvinceIndex = canonical.jurisdictionSeatProvince.getValue(jurisdictionId)
-            if (baselineOwners[provinceIndex] == baselineOwners[seatProvinceIndex]) {
-                owners[provinceIndex] = city.nationId
-            }
+            owners[provinceIndex] = city.nationId
         }
 
         return SpatialSupplyNetwork(

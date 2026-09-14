@@ -151,12 +151,11 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `captured jurisdiction updates provinces sharing the seat baseline owner`() {
+    fun `captured jurisdiction updates every member province (R1 county level ownership)`() {
         val root = mapper.readTree(Path(mapPath).toFile())
         val lu = root.path("jurisdictionRecords").single { it.path("id").asText() == "87436" }
         val provinceIds = root.path("provinceRecords").map { it.path("id").asText() }
         val indices = lu.path("provinceIds").map { provinceIds.indexOf(it.asText()) }
-        val baseline = provider().network(1020, emptyList()).provinceOwners
         val network = provider().network(
             1020,
             listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 77)),
@@ -164,13 +163,12 @@ class HanSpatialSupplyProviderTest {
 
         assertTrue(indices.size > 1, "capture fixture must cover multiple provinces")
         indices.forEach { index ->
-            val expected = if (baseline[index] == baseline[846]) 77 else baseline[index]
-            assertEquals(expected, network.provinceOwners[index], "province $index")
+            assertEquals(77, network.provinceOwners[index], "province $index")
         }
     }
 
     @Test
-    fun `capture preserves split baseline ownership and cached scenario owners`() {
+    fun `capture covers a split baseline province while static placement keeps it`() {
         val map = mapper.readTree(Path(mapPath).toFile())
         val provinces = map.path("provinceRecords")
         val jurisdiction = provinces[846].path("jurisdictionId").asText()
@@ -187,9 +185,11 @@ class HanSpatialSupplyProviderTest {
             mapper.writeValue(file.toFile(), ownership)
             val provider = HanSpatialSupplyProvider(mapper, mapPath, file.toString())
             val baseline = provider.network(1020, emptyList()).provinceOwners.toList()
+            assertEquals(88, baseline[splitIndex])
+            // R1(ADR-LITE-052): live 점령은 심사 분할 칸도 함께 넘긴다.
             val captured = provider.network(1020, listOf(SpatialSupplyCity(720, 846, 77)))
             assertEquals(77, captured.provinceOwners[846])
-            assertEquals(88, captured.provinceOwners[splitIndex])
+            assertEquals(77, captured.provinceOwners[splitIndex])
             captured.provinceOwners[splitIndex] = 99
             assertEquals(baseline, provider.network(1020, emptyList()).provinceOwners.toList())
         } finally {
