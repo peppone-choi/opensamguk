@@ -120,5 +120,58 @@ class TestOwnerGridStaysNearItsLabel(unittest.TestCase):
         self.assertEqual(set(range(len(tiles["provinceRecords"]))), owned)
 
 
+class OrphanLandIntakeTest(unittest.TestCase):
+    """R2 (ADR-LITE-052) — 육지 셀 무소속 금지.
+
+    owner -1 은 수역(SEA·LAKE)과 플레이 범위 밖(OUT_OF_SCOPE)에만 있다. 소속 없는
+    육지는 데이터 버그다. 생성기 게이트(`build_tile_grid.assert_no_orphan_land`)와
+    커밋된 han-tiles.json 실측을 함께 못박는다.
+    """
+
+    def test_gate_accepts_water_and_rejects_land(self):
+        from tools.map import build_tile_grid as tile_builder
+
+        cols = 4
+        # 전부 바다 -1 → 통과. 육지(PLAIN=1) 한 칸만 -1 → 좌표와 함께 실패.
+        tile_builder.assert_no_orphan_land([[-1, 8]], ["0000", "0000"], cols)
+        with self.assertRaises(AssertionError) as failure:
+            tile_builder.assert_no_orphan_land([[-1, 8]], ["0000", "0100"], cols)
+        self.assertIn("(1, 1)", str(failure.exception))
+
+    def test_committed_tiles_have_no_orphan_land(self):
+        from tools.map import build_tile_grid as tile_builder
+
+        tiles = json.loads(TILES.read_text())
+        cols = tiles["_meta"]["cols"]
+        tile_builder.assert_no_orphan_land(tiles["owner"], tiles["terrain"], cols)
+
+    def test_southeast_coast_window_around_xiling_has_no_orphan_land(self):
+        # 시범 데이터: 동남 해안 서릉현(西陵县, tile 416,316) 일대. 강(3)·호수(4)와
+        # 육지가 섞인 창이므로 게이트가 수역을 오탐하지 않음도 함께 보인다.
+        tiles = json.load(TILES.open(encoding="utf-8"))
+        cols = tiles["_meta"]["cols"]
+        terrain = tiles["terrain"]
+        owner_runs = tiles["owner"]
+        flat: list[int] = []
+        for value, count in owner_runs:
+            flat.extend([value] * count)
+        water = land = 0
+        orphans = []
+        for row in range(290, 351):
+            for col in range(380, 461):
+                pos = row * cols + col
+                kind = terrain[row][col]
+                if flat[pos] == -1:
+                    if kind in "1235678":
+                        orphans.append((col, row))
+                    elif kind in "034":
+                        water += 1
+                elif kind in "1235678":
+                    land += 1
+        self.assertTrue(water > 0, "demo window must contain water cells")
+        self.assertTrue(land > 0, "demo window must contain owned land cells")
+        self.assertEqual([], orphans)
+
+
 if __name__ == "__main__":
     unittest.main()
