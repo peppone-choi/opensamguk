@@ -39,6 +39,19 @@ class HanWorldArtifactsResolverTest {
         assertEquals(old.cityConst.all().keys, old.projection.bindingsByCityId.keys)
     }
 
+    @Test fun `frozen 846 and 848 rosters select distinct pinned bundles`() {
+        val selected846 = resolver.resolve((1..846).toList(), emptyList())
+        assertEquals(HanWorldVariant.V3_846, selected846.variant)
+        val selected848 = resolver.resolve((1..848).toList(), emptyList())
+        assertEquals(HanWorldVariant.V3_848, selected848.variant)
+        assertEquals((1..846).toList(), selected846.cityConst.all().keys.sorted())
+        assertEquals((1..848).toList(), selected848.cityConst.all().keys.sorted())
+        assertNotEquals(
+            selected846.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toList(),
+            selected848.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toList(),
+        )
+    }
+
     @Test fun `same size altered identity partial and duplicate rosters fail closed`() {
         for (ids in listOf((2..833).toList(), (1..10).toList(), (1..832).toList() + 832)) {
             assertFailsWith<IllegalArgumentException> { resolver.resolve(ids, emptyList()) }
