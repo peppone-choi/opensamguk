@@ -295,9 +295,15 @@ const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
 const CITY_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
-const CITY_MARKER_URLS: Record<number, string> = Object.fromEntries(
-  CITY_LEVELS.map((level) => [level, `/city/cast_${level}.png`]),
-);
+const CITY_MARKER_ASSET_SCALES = [1, 2] as const;
+type CityMarkerAssetScale = typeof CITY_MARKER_ASSET_SCALES[number];
+const CITY_MARKER_URLS = CITY_MARKER_ASSET_SCALES.flatMap((assetScale) => (
+  CITY_LEVELS.map((level) => ({
+    assetScale,
+    level,
+    url: `/city/${assetScale}x/cast_${level}.png`,
+  }))
+));
 const CITY_LEVEL_VISUAL_EXTENT: Record<number, number> = {
   1: 42, 2: 40, 3: 44, 4: 40,
   5: 48, 6: 52, 7: 56, 8: 60, 9: 62,
@@ -751,7 +757,15 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
   ]));
 }
 
-type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
+type CityMarkerImages = Partial<Record<string, HTMLImageElement>>;
+
+export function cityMarkerAssetScale(dpr: number): CityMarkerAssetScale {
+  return dpr >= 1.5 ? 2 : 1;
+}
+
+function cityMarkerImageKey(assetScale: CityMarkerAssetScale, level: number): string {
+  return `${assetScale}x:${level}`;
+}
 
 export type CityMarkerZoom = 0.5 | 0.75 | 1 | 1.5;
 
@@ -1256,7 +1270,9 @@ function drawScene(
       city, level, x, y, requestedMarkerZoom, dpr, view,
     );
     const radius = cityMarkerRadius(level, dpr) * (markerZoom ?? 0.5);
-    const marker = markerImages[level];
+    const assetScale = cityMarkerAssetScale(dpr);
+    const marker = markerImages[cityMarkerImageKey(assetScale, level)]
+      ?? markerImages[cityMarkerImageKey(assetScale === 2 ? 1 : 2, level)];
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
 
@@ -1785,11 +1801,11 @@ export function HanMapCanvas({
 
   useEffect(() => {
     let alive = true;
-    const pending = Object.entries(CITY_MARKER_URLS).map(([level, url]) => {
+    const pending = CITY_MARKER_URLS.map(({ assetScale, level, url }) => {
       const image = new Image();
       image.onload = () => {
         if (!alive) return;
-        markerImagesRef.current[Number(level)] = image;
+        markerImagesRef.current[cityMarkerImageKey(assetScale, level)] = image;
         render();
       };
       image.src = url;
