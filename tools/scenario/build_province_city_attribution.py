@@ -69,6 +69,9 @@ BASIS_ORDER = (
 )
 # 郡 경계를 넘는 유일한 basis. 검사가 「郡 경계를 안 넘는다」를 걸 때 여기만 예외로 둔다.
 CROSSES_COMMANDERY_BOUNDARY = "ADJACENT_COMMANDERY_NEAREST"
+# 수·진·관 거점 城은 제 省(OWN_COUNTY_SEAT)만 갖는다. 郡治·최근접·이웃 郡 폴백의 대상이 되면 몇 칸짜리
+# 요새가 城 없는 郡 땅 전체를 배후지로 끌어간다 — 卒本 땅이 安平口로 넘어가 公孫氏 樂浪 사슬이 끊겼다.
+STRATEGIC_SITE_NODE_CLASSES = frozenset({"FERRY_NODE", "FORT_NODE", "PASS_NODE"})
 
 
 def sha256_path(path: Path) -> str:
@@ -119,6 +122,8 @@ def build_rows(tiles: dict, selection: dict) -> tuple[list[dict], Counter, list[
     commandery_nodes: dict[str, list[tuple[dict, int | None]]] = defaultdict(list)
     commandery_seat_node: dict[str, dict] = {}
     for jurisdiction_id, node in county_node.items():
+        if node.get("nodeClass") in STRATEGIC_SITE_NODE_CLASSES:
+            continue
         commandery_id = jurisdictions[jurisdiction_id]["commanderyId"]
         commandery_nodes[commandery_id].append(
             (node, seat_province_index.get(jurisdiction_id))
@@ -227,7 +232,10 @@ def _spread_to_cityless_provinces(
                     assigned[other]
                     for other in neighbours[neighbour]
                     if other in assigned
+                    and assigned[other].get("nodeClass") not in STRATEGIC_SITE_NODE_CLASSES
                 ]
+                if not candidates:
+                    continue
                 settled[neighbour] = min(candidates, key=lambda node: node["numericCityId"])
         assigned.update(settled)
         for index in settled:

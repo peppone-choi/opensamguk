@@ -267,6 +267,7 @@ def audit_documents(
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
     used_policy_keys: set[tuple[int, int]] = set()
+    spatially_supplied_keys: set[tuple[int, int]] = set()
     for scenario_code in scenario_codes:
         scenario = scenarios[scenario_code]
         owner_by_city, capitals = _scenario_runtime(scenario)
@@ -318,6 +319,7 @@ def audit_documents(
             if province_owners.get(runtime_by_id[city_id].get("provinceId")) == owner_by_city[city_id]
             and runtime_by_id[city_id].get("provinceId") in spatial_reached
         }
+        spatially_supplied_keys.update((scenario_code, city_id) for city_id in spatial_supplied)
 
         counts = Counter({verdict: 0 for verdict in VERDICTS})
         for city_id in owned_city_ids:
@@ -426,6 +428,10 @@ def audit_documents(
             and not supply_degree.get(province_index)
         ):
             for scenario_code in sorted(owned_scenarios_by_city[city_id]):
+                # 縣 인접이 0 이어도 郡 내부 보급선(ADR-LITE-051)으로 런타임 보급망에 닿으면 끊긴 城이
+                # 아니다 — 보호 행이 붙을 절단 자체가 없다(東部侯官 956: 섬 조각 + 豫章郡 보급선).
+                if (scenario_code, city_id) in spatially_supplied_keys:
+                    continue
                 active_protection = [
                     row for row in _active_decisions(ledger_rows, scenario_code, city_id)
                     if row.get("decision") in PROTECT_DECISIONS

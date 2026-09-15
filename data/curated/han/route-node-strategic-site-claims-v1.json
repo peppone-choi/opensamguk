@@ -1,0 +1,1840 @@
+{
+  "schemaVersion": 1,
+  "claimSetId": "han-w3-route-node-strategic-site-claims-v1",
+  "status": "APPROVED",
+  "reviewAuthority": "user-approval-2026-09-15",
+  "reviewedAt": "2026-09-15",
+  "policy": {
+    "purpose": "縣이 아닌 거점(수·진·관)에 REVIEWED_SOURCE_CLAIM 경로 노드를 준다(ADR-LITE-052).",
+    "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+    "lifecycleClaimed": false,
+    "carveLedgerSha256": "16c4e6c87e9be1f5940c9c119a5cea73f03d4732acfefc9e24c220c3e81e74c2"
+  },
+  "claims": [
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-ancheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-ancheng",
+      "canonicalName": "安城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0050",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-ancheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-ancheng",
+        "commanderyId": "PARENT-0050",
+        "seatPlaceId": "ss-ancheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "ancheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-anfengjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-anfengjin",
+      "canonicalName": "安風津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0050",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-anfengjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-anfengjin",
+        "commanderyId": "PARENT-0050",
+        "seatPlaceId": "ss-anfengjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "anfengjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-anpingkou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-anpingkou",
+      "canonicalName": "安平口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "卒本",
+      "parentRef": "han-tiles-commandery:PARENT-0112",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-anpingkou",
+      "tileBinding": {
+        "jurisdictionId": "ss-anpingkou",
+        "commanderyId": "PARENT-0112",
+        "seatPlaceId": "ss-anpingkou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "anpingkou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-boluojin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-boluojin",
+      "canonicalName": "薄落津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "安平國",
+      "parentRef": "han-tiles-commandery:PARENT-0017",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-boluojin",
+      "tileBinding": {
+        "jurisdictionId": "ss-boluojin",
+        "commanderyId": "PARENT-0017",
+        "seatPlaceId": "ss-boluojin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "boluojin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-cangtingjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-cangtingjin",
+      "canonicalName": "倉亭津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0023",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-cangtingjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-cangtingjin",
+        "commanderyId": "PARENT-0023",
+        "seatPlaceId": "ss-cangtingjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "cangtingjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-dadu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-dadu",
+      "canonicalName": "大渡",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廣漢郡",
+      "parentRef": "han-tiles-commandery:PARENT-0056",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-dadu",
+      "tileBinding": {
+        "jurisdictionId": "ss-dadu",
+        "commanderyId": "PARENT-0056",
+        "seatPlaceId": "ss-dadu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "dadu",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-danglikou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-danglikou",
+      "canonicalName": "當利口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-danglikou",
+      "tileBinding": {
+        "jurisdictionId": "ss-danglikou",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-danglikou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "danglikou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-dengsai",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-dengsai",
+      "canonicalName": "鄧塞",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "襄陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0160",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-dengsai",
+      "tileBinding": {
+        "jurisdictionId": "ss-dengsai",
+        "commanderyId": "PARENT-0160",
+        "seatPlaceId": "ss-dengsai"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "dengsai",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-dongpu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-dongpu",
+      "canonicalName": "洞浦",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-dongpu",
+      "tileBinding": {
+        "jurisdictionId": "ss-dongpu",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-dongpu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "dongpu",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-doujin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-doujin",
+      "canonicalName": "郖津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "弘農郡",
+      "parentRef": "han-tiles-commandery:PARENT-0003",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-doujin",
+      "tileBinding": {
+        "jurisdictionId": "ss-doujin",
+        "commanderyId": "PARENT-0003",
+        "seatPlaceId": "ss-doujin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "doujin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-fancheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-fancheng",
+      "canonicalName": "樊城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "襄陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0160",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-fancheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-fancheng",
+        "commanderyId": "PARENT-0160",
+        "seatPlaceId": "ss-fancheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "fancheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-fancheng-liaoxi",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-fancheng-liaoxi",
+      "canonicalName": "凡城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "遼西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0093",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-fancheng-liaoxi",
+      "tileBinding": {
+        "jurisdictionId": "ss-fancheng-liaoxi",
+        "commanderyId": "PARENT-0093",
+        "seatPlaceId": "ss-fancheng-liaoxi"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "fancheng-liaoxi",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-fankou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-fankou",
+      "canonicalName": "樊口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-fankou",
+      "tileBinding": {
+        "jurisdictionId": "ss-fankou",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "ss-fankou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "fankou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-guandu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-guandu",
+      "canonicalName": "官渡",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-guandu",
+      "tileBinding": {
+        "jurisdictionId": "ss-guandu",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "ss-guandu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "guandu",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-guokou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-guokou",
+      "canonicalName": "渦口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-guokou",
+      "tileBinding": {
+        "jurisdictionId": "ss-guokou",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-guokou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "guokou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-guoshiwu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-guoshiwu",
+      "canonicalName": "郭氏塢",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-guoshiwu",
+      "tileBinding": {
+        "jurisdictionId": "ss-guoshiwu",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "ss-guoshiwu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "guoshiwu",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-hanguguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-hanguguan",
+      "canonicalName": "函谷關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hanguguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-hanguguan",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "ss-hanguguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "hanguguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-hanjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-hanjin",
+      "canonicalName": "漢津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hanjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-hanjin",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "ss-hanjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "hanjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-hengjiangjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-hengjiangjin",
+      "canonicalName": "橫江津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hengjiangjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-hengjiangjin",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-hengjiangjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "hengjiangjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-huangbaicheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-huangbaicheng",
+      "canonicalName": "黃白城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "左馮翊",
+      "parentRef": "han-tiles-commandery:PARENT-0005",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-huangbaicheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-huangbaicheng",
+        "commanderyId": "PARENT-0005",
+        "seatPlaceId": "ss-huangbaicheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "huangbaicheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-hukouguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-hukouguan",
+      "canonicalName": "壺口關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "上黨郡",
+      "parentRef": "han-tiles-commandery:PARENT-0078",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hukouguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-hukouguan",
+        "commanderyId": "PARENT-0078",
+        "seatPlaceId": "ss-hukouguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "hukouguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-hulaoguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-hulaoguan",
+      "canonicalName": "虎牢關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河內郡",
+      "parentRef": "han-tiles-commandery:PARENT-0001",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hulaoguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-hulaoguan",
+        "commanderyId": "PARENT-0001",
+        "seatPlaceId": "ss-hulaoguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "hulaoguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-jiange",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-jiange",
+      "canonicalName": "劍閣",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-jiange",
+      "tileBinding": {
+        "jurisdictionId": "ss-jiange",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "ss-jiange"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "jiange",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-jiaoqiucheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-jiaoqiucheng",
+      "canonicalName": "椒丘城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-jiaoqiucheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-jiaoqiucheng",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "ss-jiaoqiucheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "jiaoqiucheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-jingcheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-jingcheng",
+      "canonicalName": "京城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廣陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0033",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-jingcheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-jingcheng",
+        "commanderyId": "PARENT-0033",
+        "seatPlaceId": "ss-jingcheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "jingcheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-jingcheng-dangyang",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-jingcheng-dangyang",
+      "canonicalName": "荊城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-jingcheng-dangyang",
+      "tileBinding": {
+        "jurisdictionId": "ss-jingcheng-dangyang",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "ss-jingcheng-dangyang"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "jingcheng-dangyang",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-jukou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-jukou",
+      "canonicalName": "擧口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-jukou",
+      "tileBinding": {
+        "jurisdictionId": "ss-jukou",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "ss-jukou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "jukou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-lankou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-lankou",
+      "canonicalName": "濫口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河內郡",
+      "parentRef": "han-tiles-commandery:PARENT-0001",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-lankou",
+      "tileBinding": {
+        "jurisdictionId": "ss-lankou",
+        "commanderyId": "PARENT-0001",
+        "seatPlaceId": "ss-lankou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "lankou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-liangkou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-liangkou",
+      "canonicalName": "梁口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "卒本",
+      "parentRef": "han-tiles-commandery:PARENT-0112",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-liangkou",
+      "tileBinding": {
+        "jurisdictionId": "ss-liangkou",
+        "commanderyId": "PARENT-0112",
+        "seatPlaceId": "ss-liangkou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "liangkou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-liaokou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-liaokou",
+      "canonicalName": "遼口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "遼東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0094",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-liaokou",
+      "tileBinding": {
+        "jurisdictionId": "ss-liaokou",
+        "commanderyId": "PARENT-0094",
+        "seatPlaceId": "ss-liaokou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "liaokou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-licheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-licheng",
+      "canonicalName": "歷城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0067",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-licheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-licheng",
+        "commanderyId": "PARENT-0067",
+        "seatPlaceId": "ss-licheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "licheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-lieliucheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-lieliucheng",
+      "canonicalName": "列柳城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-lieliucheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-lieliucheng",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "ss-lieliucheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "lieliucheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-lucheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-lucheng",
+      "canonicalName": "鹵城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0067",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-lucheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-lucheng",
+        "commanderyId": "PARENT-0067",
+        "seatPlaceId": "ss-lucheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "lucheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-lukou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-lukou",
+      "canonicalName": "陸口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-lukou",
+      "tileBinding": {
+        "jurisdictionId": "ss-lukou",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "ss-lukou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "lukou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-lulongsai",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-lulongsai",
+      "canonicalName": "盧龍塞",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右北平郡",
+      "parentRef": "han-tiles-commandery:PARENT-0092",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-lulongsai",
+      "tileBinding": {
+        "jurisdictionId": "ss-lulongsai",
+        "commanderyId": "PARENT-0092",
+        "seatPlaceId": "ss-lulongsai"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "lulongsai",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-maicheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-maicheng",
+      "canonicalName": "麥城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-maicheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-maicheng",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "ss-maicheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "maicheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-maocheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-maocheng",
+      "canonicalName": "毛城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "魏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0013",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-maocheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-maocheng",
+        "commanderyId": "PARENT-0013",
+        "seatPlaceId": "ss-maocheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "maocheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-mengjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-mengjin",
+      "canonicalName": "孟津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-mengjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-mengjin",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "ss-mengjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "mengjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-mobeiying",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-mobeiying",
+      "canonicalName": "摩陂營",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "潁川郡",
+      "parentRef": "han-tiles-commandery:PARENT-0007",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-mobeiying",
+      "tileBinding": {
+        "jurisdictionId": "ss-mobeiying",
+        "commanderyId": "PARENT-0007",
+        "seatPlaceId": "ss-mobeiying"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "mobeiying",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-mulansai",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-mulansai",
+      "canonicalName": "木蘭塞",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-mulansai",
+      "tileBinding": {
+        "jurisdictionId": "ss-mulansai",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "ss-mulansai"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "mulansai",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-nanan-xiakou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-nanan-xiakou",
+      "canonicalName": "南安峽口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "犍為郡",
+      "parentRef": "han-tiles-commandery:PARENT-0058",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-nanan-xiakou",
+      "tileBinding": {
+        "jurisdictionId": "ss-nanan-xiakou",
+        "commanderyId": "PARENT-0058",
+        "seatPlaceId": "ss-nanan-xiakou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "nanan-xiakou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-niuzhuying",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-niuzhuying",
+      "canonicalName": "牛渚營",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-niuzhuying",
+      "tileBinding": {
+        "jurisdictionId": "ss-niuzhuying",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "ss-niuzhuying"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "niuzhuying",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-oukou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-oukou",
+      "canonicalName": "漚口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "長沙郡",
+      "parentRef": "han-tiles-commandery:PARENT-0047",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-oukou",
+      "tileBinding": {
+        "jurisdictionId": "ss-oukou",
+        "commanderyId": "PARENT-0047",
+        "seatPlaceId": "ss-oukou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "oukou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-pubanjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-pubanjin",
+      "canonicalName": "蒲坂津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0002",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-pubanjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-pubanjin",
+        "commanderyId": "PARENT-0002",
+        "seatPlaceId": "ss-pubanjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "pubanjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-qikou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-qikou",
+      "canonicalName": "祁口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-qikou",
+      "tileBinding": {
+        "jurisdictionId": "ss-qikou",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "ss-qikou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "qikou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-qiliying",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-qiliying",
+      "canonicalName": "崎離營",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "帶方郡",
+      "parentRef": "han-tiles-commandery:PARENT-0130",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-qiliying",
+      "tileBinding": {
+        "jurisdictionId": "ss-qiliying",
+        "commanderyId": "PARENT-0130",
+        "seatPlaceId": "ss-qiliying"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "qiliying",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-qucheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-qucheng",
+      "canonicalName": "麴城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "隴西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0066",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-qucheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-qucheng",
+        "commanderyId": "PARENT-0066",
+        "seatPlaceId": "ss-qucheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "qucheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-ruxukou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-ruxukou",
+      "canonicalName": "濡須口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-ruxukou",
+      "tileBinding": {
+        "jurisdictionId": "ss-ruxukou",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "ss-ruxukou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "ruxukou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-shangchangcheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-shangchangcheng",
+      "canonicalName": "上昶城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-shangchangcheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-shangchangcheng",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "ss-shangchangcheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "shangchangcheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-shanjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-shanjin",
+      "canonicalName": "陝津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "弘農郡",
+      "parentRef": "han-tiles-commandery:PARENT-0003",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-shanjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-shanjin",
+        "commanderyId": "PARENT-0003",
+        "seatPlaceId": "ss-shanjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "shanjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-shitoucheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-shitoucheng",
+      "canonicalName": "石頭城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-shitoucheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-shitoucheng",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "ss-shitoucheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "shitoucheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-shiying",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-shiying",
+      "canonicalName": "石營",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "隴西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0066",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-shiying",
+      "tileBinding": {
+        "jurisdictionId": "ss-shiying",
+        "commanderyId": "PARENT-0066",
+        "seatPlaceId": "ss-shiying"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "shiying",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-shukou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-shukou",
+      "canonicalName": "舒口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-shukou",
+      "tileBinding": {
+        "jurisdictionId": "ss-shukou",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-shukou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "shukou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-sikou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-sikou",
+      "canonicalName": "泗口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "下邳國",
+      "parentRef": "han-tiles-commandery:PARENT-0034",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-sikou",
+      "tileBinding": {
+        "jurisdictionId": "ss-sikou",
+        "commanderyId": "PARENT-0034",
+        "seatPlaceId": "ss-sikou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "sikou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-tajin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-tajin",
+      "canonicalName": "沓津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "遼東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0094",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-tajin",
+      "tileBinding": {
+        "jurisdictionId": "ss-tajin",
+        "commanderyId": "PARENT-0094",
+        "seatPlaceId": "ss-tajin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "tajin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-wakou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-wakou",
+      "canonicalName": "瓦口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-wakou",
+      "tileBinding": {
+        "jurisdictionId": "ss-wakou",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "ss-wakou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "wakou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-wankou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-wankou",
+      "canonicalName": "皖口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-wankou",
+      "tileBinding": {
+        "jurisdictionId": "ss-wankou",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "ss-wankou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "wankou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-wansuiwu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-wansuiwu",
+      "canonicalName": "萬歲塢",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-wansuiwu",
+      "tileBinding": {
+        "jurisdictionId": "ss-wansuiwu",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "ss-wansuiwu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "wansuiwu",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-wuguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-wuguan",
+      "canonicalName": "武關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "京兆尹",
+      "parentRef": "han-tiles-commandery:PARENT-0004",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-wuguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-wuguan",
+        "commanderyId": "PARENT-0004",
+        "seatPlaceId": "ss-wuguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "wuguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-wuqiangkou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-wuqiangkou",
+      "canonicalName": "無彊口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0050",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-wuqiangkou",
+      "tileBinding": {
+        "jurisdictionId": "ss-wuqiangkou",
+        "commanderyId": "PARENT-0050",
+        "seatPlaceId": "ss-wuqiangkou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "wuqiangkou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xiakou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xiakou",
+      "canonicalName": "峽口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "宜都郡",
+      "parentRef": "han-tiles-commandery:PARENT-0126",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xiakou",
+      "tileBinding": {
+        "jurisdictionId": "ss-xiakou",
+        "commanderyId": "PARENT-0126",
+        "seatPlaceId": "ss-xiakou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xiakou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xiaopingjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xiaopingjin",
+      "canonicalName": "小平津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xiaopingjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-xiaopingjin",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "ss-xiaopingjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xiaopingjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xiaoyaojin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xiaoyaojin",
+      "canonicalName": "逍遙津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "九江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0048",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xiaoyaojin",
+      "tileBinding": {
+        "jurisdictionId": "ss-xiaoyaojin",
+        "commanderyId": "PARENT-0048",
+        "seatPlaceId": "ss-xiaoyaojin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xiaoyaojin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xieguguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xieguguan",
+      "canonicalName": "斜谷關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xieguguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-xieguguan",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "ss-xieguguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "xieguguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xingguocheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xingguocheng",
+      "canonicalName": "興國城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0067",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xingguocheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-xingguocheng",
+        "commanderyId": "PARENT-0067",
+        "seatPlaceId": "ss-xingguocheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xingguocheng",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xisai",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xisai",
+      "canonicalName": "西塞",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "蘄春郡",
+      "parentRef": "han-tiles-commandery:PARENT-0159",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xisai",
+      "tileBinding": {
+        "jurisdictionId": "ss-xisai",
+        "commanderyId": "PARENT-0159",
+        "seatPlaceId": "ss-xisai"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xisai",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-xunkou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-xunkou",
+      "canonicalName": "尋口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-xunkou",
+      "tileBinding": {
+        "jurisdictionId": "ss-xunkou",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "ss-xunkou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "xunkou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-yanganguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-yanganguan",
+      "canonicalName": "陽安關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-yanganguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-yanganguan",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "ss-yanganguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "yanganguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-yangpingguan",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-yangpingguan",
+      "canonicalName": "陽平關",
+      "nodeClass": "PASS_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-yangpingguan",
+      "tileBinding": {
+        "jurisdictionId": "ss-yangpingguan",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "ss-yangpingguan"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-passes-v1.json",
+        "datasetSha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429",
+        "siteId": "yangpingguan",
+        "role": "PASS"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-yanjin",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-yanjin",
+      "canonicalName": "延津",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0023",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-yanjin",
+      "tileBinding": {
+        "jurisdictionId": "ss-yanjin",
+        "commanderyId": "PARENT-0023",
+        "seatPlaceId": "ss-yanjin"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "yanjin",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-yiquanwu",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-yiquanwu",
+      "canonicalName": "一泉塢",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "弘農郡",
+      "parentRef": "han-tiles-commandery:PARENT-0003",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-yiquanwu",
+      "tileBinding": {
+        "jurisdictionId": "ss-yiquanwu",
+        "commanderyId": "PARENT-0003",
+        "seatPlaceId": "ss-yiquanwu"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "yiquanwu",
+        "role": "FORT"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-zhanyinkou",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-zhanyinkou",
+      "canonicalName": "鸇陰口",
+      "nodeClass": "FERRY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "金城郡",
+      "parentRef": "han-tiles-commandery:PARENT-0069",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-zhanyinkou",
+      "tileBinding": {
+        "jurisdictionId": "ss-zhanyinkou",
+        "commanderyId": "PARENT-0069",
+        "seatPlaceId": "ss-zhanyinkou"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "zhanyinkou",
+        "role": "FERRY"
+      }
+    },
+    {
+      "sourceClaimId": "han-strategic-site-route-claim-v1-zuocheng",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "STRATEGIC_SITE",
+      "subjectKey": "strategic-site:ss-zuocheng",
+      "canonicalName": "左城",
+      "nodeClass": "FORT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "酒泉郡",
+      "parentRef": "han-tiles-commandery:PARENT-0074",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-zuocheng",
+      "tileBinding": {
+        "jurisdictionId": "ss-zuocheng",
+        "commanderyId": "PARENT-0074",
+        "seatPlaceId": "ss-zuocheng"
+      },
+      "evidence": {
+        "kind": "STRATEGIC_SITE_LEDGER",
+        "datasetPath": "data/curated/han/strategic-strongholds-v1.json",
+        "datasetSha256": "a838d86fdf85fc0428a3160a72cfa644a545c36597f6233c6da6a789078c458a",
+        "siteId": "zuocheng",
+        "role": "FORT"
+      }
+    }
+  ]
+}

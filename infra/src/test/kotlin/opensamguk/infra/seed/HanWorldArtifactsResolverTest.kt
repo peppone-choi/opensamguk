@@ -52,6 +52,17 @@ class HanWorldArtifactsResolverTest {
         )
     }
 
+    @Test fun `1097 roster selects its own pinned bundle with strategic-site provinces`() {
+        val selected = resolver.resolve((1..1097).toList(), emptyList())
+        assertEquals(HanWorldVariant.V3_1097, selected.variant)
+        assertEquals((1..1097).toList(), selected.cityConst.all().keys.sorted())
+        assertEquals(1593, selected.projection.topology.landProvinceIds.size)
+        assertNotEquals(
+            resolver.resolve((1..848).toList(), emptyList()).projection.topology.contentHash,
+            selected.projection.topology.contentHash,
+        )
+    }
+
     @Test fun `same size altered identity partial and duplicate rosters fail closed`() {
         for (ids in listOf((2..833).toList(), (1..10).toList(), (1..832).toList() + 832)) {
             assertFailsWith<IllegalArgumentException> { resolver.resolve(ids, emptyList()) }

@@ -38,7 +38,8 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
         ))
         self.assertTrue(all(
             jurisdictions[jurisdiction_id]["kind"]
-            in {"COUNTY", "MARQUISATE", "EXTERNAL_SETTLEMENT"}
+            # STRATEGIC_SITE: 縣 省에서 떼어 받은 수·진·관 거점 관할(carve_strategic_site_provinces).
+            in {"COUNTY", "MARQUISATE", "EXTERNAL_SETTLEMENT", "STRATEGIC_SITE"}
             for jurisdiction_id in chinese_jurisdictions
         ))
 

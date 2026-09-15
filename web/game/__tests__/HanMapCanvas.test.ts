@@ -432,8 +432,9 @@ describe('지도 아이콘 배율과 앵커', () => {
         // 1,070 = han-tiles.json 의 jurisdictionRecords 실측. 南鄉郡이 제 이름의 縣(71022 南鄉)을
         // 되찾으면서 그 자리를 지키던 합성 관할 JURISDICTION-PARENT-0113-SEAT 이 접혔다
         // (data/curated/han/county-misbinding-rebindings-v1.json · supersedesJurisdictionSeatRecovery).
-        expect(jurisdictions).toHaveLength(1_070);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_070);
+        // 2026-09-15: 수·진·관 거점 73 곳이 제 관할(STRATEGIC_SITE)을 받아 1,143 이다.
+        expect(jurisdictions).toHaveLength(1_143);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_143);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',

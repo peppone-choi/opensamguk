@@ -233,12 +233,6 @@ export {
   type CityIconInput,
 } from './iso/cityIconLevel';
 export {
-  PASS_LEVEL,
-  STRATEGIC_PASSES,
-  placeStrategicPasses,
-  type StrategicPass,
-} from './iso/strategicPasses';
-export {
   CITY_SEED_RESEATS,
   applyCitySeedReseats,
   type CitySeedReseat,

@@ -20,11 +20,14 @@ LAT = (33.0, 43.0)
 # 비정이 갈리는 실체 (원장 conf=DISPUTED). 도시 승격 금지 — 바뀌면 심사해야 풀린다.
 DISPUTED_KOREA_PLACES = frozenset({"X030", "X040", "X041", "X047", "X055"})
 
-# 도시가 물리 참조로 거는 외부 실체 (郡治 좌표). 720/X003 등 11곳. 새 연결이
+# 도시가 물리 참조로 거는 외부 실체 (郡治 좌표). 720/X003 등 13곳. 새 연결이
 # 생기면 심사해야 풀린다(승격 기구 작업).
+# X004 帶方郡 治所는 2026-09-15 城 없던 縣 관할 승격(w2, 사용자 승인)으로 연결됐다 — 帶方郡은
+# 建安 연간 公孫康이 세운 漢 郡이고 DISPUTED 가 아니다(route-node-jurisdiction-claims-v1).
+# X027 張掖屬國 候官도 같은 승격으로 연결됐다(한반도 밖이지만 이 집합은 전역 external 연결이다).
 LINKED_COMMANDERY_EXTERNALS = frozenset({
-    "X000", "X001", "X002", "X003", "X005", "X006", "X007",
-    "X011", "X023", "X024", "X026",
+    "X000", "X001", "X002", "X003", "X004", "X005", "X006", "X007",
+    "X011", "X023", "X024", "X026", "X027",
 })
 
 
@@ -65,7 +68,7 @@ class KoreaPeninsulaAuditTest(unittest.TestCase):
                 # 비교하지 않는다 — 외부 郡 기록(X003 樂浪郡 등)과 그 郡 도시들의 junCh는
                 # 정상적으로 겹친다.
                 self.assertNotIn(place["nameCh"], city_name_ch)
-        # 도시가 거는 외부 실체는 핀된 郡治 11곳뿐이다. 새 연결(승격)은 심사 대상이다.
+        # 도시가 거는 외부 실체는 핀된 郡治 13곳뿐이다. 새 연결(승격)은 심사 대상이다.
         self.assertEqual(LINKED_COMMANDERY_EXTERNALS, linked_ids)
 
     def test_disputed_places_are_not_playable_cities(self):

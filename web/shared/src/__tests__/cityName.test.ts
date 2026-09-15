@@ -121,8 +121,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
   it('행정 단위 꼬리를 달고 온다 — 縣 판정의 첫 규칙이 산다', () => {
     // 835 실측 756 → 848 실측 767. 늘어난 13곳 중 汶江道·绵虒道 2곳은 道 꼬리라
     // 县 집계에 안 잡힌다(道도 縣 한 급이라 등급 규칙으로는 잡힌다).
+    // 2026-09-15 城 없던 縣 관할 176곳(849–1024) 편입으로 931. 거점 73곳은 縣 꼬리가 없다.
     const counties = world.cities.filter((c) => c.meta.nameCh.endsWith('县'));
-    expect(counties.length).toBe(767);
+    expect(counties.length).toBe(931);
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
@@ -130,15 +131,21 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 물려받고 있었기 때문이다(build_han_world.build_v3 에서 고쳤다). 77 → 80 은
     // 城을 하나도 못 받던 朔方·西河·定襄 3 郡의 治所가 선 것이고, 80 → 81 은
     // 847 오현이 吳郡 治所로 선 것이다(848 비릉현은 장현).
-    const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11);
-    expect(outside.length).toBe(81);
+    // 2026-09-15: w2 治所 18곳이 더해져 郡治 99. 수·진·관 거점 73곳(등급 1–3)은 縣 이 아니라 따로 센다.
+    const sites = world.cities.filter((c) => c.level >= 1 && c.level <= 3);
+    expect(sites.length).toBe(73);
+    expect(sites.filter((c) => isHanCounty({
+      id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
+    }))).toEqual([]);
+    const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
+    expect(outside.length).toBe(99);
     const rest = outside
       .filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
-    // 郡治는 이제 한 곳도 안 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
-    // 싣는다. 0 건이 「조회가 죽었다」가 아님은 위 outside 81 이 같이 못박는다.
-    expect(rest).toEqual([]);
+    // 郡治는 이제 한 곳만 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
+    // 싣는다. 남는 候官은 張掖屬國 都尉 治所라 縣 이름이 사료에 안 남았다(route-node-jurisdiction-claims-v1).
+    expect(rest).toEqual(['후관']);
   });
 
   it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
@@ -166,7 +173,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
     expect(wrong).toEqual([]);
     // 0 건이 「조회가 죽었다」가 아님을 같이 못박는다. 邊境 郡 7 곳이 治所 縣 이름을 받으면서
     // 이 표본은 8 → 1(龜茲屬國)로 줄었다.
-    expect(sample.map((c) => c.meta.nameCh)).toEqual(['龜茲屬國']);
+    // 2026-09-15 w2 로 公國·國 꼬리 3곳(宋公国·卫国·舆国)이 더해졌다 — 생성기 display_name 도
+    // 縣 으로 보지 않아 두 규칙이 같은 표기를 낸다(아래 displayName 전수 대조).
+    expect(sample.map((c) => c.meta.nameCh)).toEqual(['龜茲屬國', '宋公国', '卫国', '舆国']);
   });
 });
 
@@ -212,14 +221,21 @@ describe('han-world-v3 의 meta.displayName', () => {
       '735 구진군: 구진군 서포현',
       '736 교지군: 교지군 용편현',
       '745 일남군: 일남군 서권현',
+      // 같은 郡 같은 글자 두 縣(CHGIS 가 자리를 둘 적었다) — 앞선 城은 표기를 지키고 새 城만 가른다.
+      '977 한창(巴郡): 파군 한창현(汉昌)',
+      '989 부평(北地郡): 북지군 부평현(富平)',
+      // 같은 한글 독음의 두 거점(渦口·瓦口) — 漢字 어간으로만 갈린다.
+      '1039 와구(九江郡): 와구(渦口)',
+      '1080 와구(巴郡): 와구(瓦口)',
     ]);
-    expect(world.cities.length).toBe(848);
+    expect(world.cities.length).toBe(1097);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
     const changed = world.cities.filter((c) => c.meta.displayName !== c.name);
     // 834 → 847. 같게 남는 건 704 구자속국 하나뿐이다.
-    expect(changed.length).toBe(847);
+    // 2026-09-15: 1028. 이름이 곧 표기인 城(704 구자속국·867 송공·991 후관 등)만 같게 남는다.
+    expect(changed.length).toBe(1028);
   });
 
   it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {

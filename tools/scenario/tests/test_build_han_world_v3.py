@@ -40,6 +40,9 @@ class HanWorldV3Test(unittest.TestCase):
             if node.get("legacyDisposition") == "REPLACED" or city_id > 780:
                 place_id = node["physicalPlaceRef"].rsplit(":", 1)[-1]
                 physical_name = physical_by_id[place_id]["name"]
+                correction = build_han_world.CLAIM_NODE_READING_CORRECTIONS.get(place_id)
+                if city_id > build_han_world.V3_STABLE_NAME_MAX_ID and correction:
+                    physical_name = correction
                 base_names[city_id] = next(
                     (
                         physical_name.removesuffix(tail)
@@ -51,10 +54,16 @@ class HanWorldV3Test(unittest.TestCase):
             else:
                 base_names[city_id] = legacy_by_id[city_id]["name"]
         base_counts = Counter(base_names.values())
+        # 848 판까지 실려 나간 이름은 새 城과 겹쳐도 그대로다 — 옛 城이 하나뿐인 이름이면 새 城만 한정한다.
+        stable = build_han_world.V3_STABLE_NAME_MAX_ID
+        stable_counts = Counter(name for city_id, name in base_names.items() if city_id <= stable)
         expected_names = {
             node["numericCityId"]: (
                 f'{base_names[node["numericCityId"]]}({node["parentName"]})'
-                if base_counts[base_names[node["numericCityId"]]] > 1
+                if base_counts[base_names[node["numericCityId"]]] > 1 and not (
+                    node["numericCityId"] <= stable
+                    and stable_counts[base_names[node["numericCityId"]]] == 1
+                )
                 else base_names[node["numericCityId"]]
             )
             for node in selection
@@ -248,7 +257,7 @@ class HanWorldV3Test(unittest.TestCase):
                 city["meta"]["isSeat"],
             )
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(848, len(actual))
+        self.assertEqual(1097, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -380,15 +389,21 @@ class HanWorldV3Test(unittest.TestCase):
             (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
         )
         seat_role = {node["numericCityId"]: node["seatRole"] for node in selection}
+        node_class = {node["numericCityId"]: node["nodeClass"] for node in selection}
         levels = build_han_world.LEVELS
         maxes = build_han_world.che_max_by_level()
 
         commandery_grades = {"소", "중", "대", "특", "경"}
         county_grades = {"영현", "장현"}
-        seats = counties = 0
+        # 縣이 아닌 거점은 기존 사다리 수 1·진 2·관 3 에 선다(ADR-LITE-052).
+        site_grades = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
+        seats = counties = sites = 0
         for city in world["cities"]:
             name = levels[city["level"] - 1]
-            if seat_role[city["id"]] == "COMMANDERY_SEAT":
+            if node_class[city["id"]] in site_grades:
+                self.assertEqual(site_grades[node_class[city["id"]]], name, city["name"])
+                sites += 1
+            elif seat_role[city["id"]] == "COMMANDERY_SEAT":
                 self.assertIn(name, commandery_grades, city["name"])
                 seats += 1
             else:
@@ -399,20 +414,25 @@ class HanWorldV3Test(unittest.TestCase):
                 dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name])),
                 city["initial"], city["name"],
             )
-        self.assertEqual(81, seats)
-        # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767 (郡治는 縣으로 오지 않는다).
-        self.assertEqual(767, counties)
+        # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
+        self.assertEqual(99, seats)
+        # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
+        self.assertEqual(925, counties)
+        self.assertEqual(73, sites)
         # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
         self.assertNotIn(4, {city["level"] for city in world["cities"]})
 
     def test_22_commanderies_still_have_no_seat_in_the_world(self) -> None:
         """아직 못 고친 결함을 숫자로 못박아 둔다.
 
-        v3 의 郡 103 중 22 는 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
-        東郡 濮陽 처럼 CHGIS 에 점 자체가 없는 곳이 있고, 齊國 臨淄(85234) ·
-        泰山郡 奉高(85697) · 東海郡 郯城(85649) · 魯國 魯(45180) ·
-        鉅鹿郡 廮陶(87061) 처럼 지형에는 있는데 選定에서 빠진 곳이 있다.
-        吳郡 吳(40404)는 847 오현으로 治所를 세우면서 이 목록에서 빠졌다.
+        v3 의 郡 123 중 24 는 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
+        東郡 濮陽 처럼 CHGIS 에 점 자체가 없는 곳이 있고, 齊國 臨淄(85234) · 東海郡 郯城(85649)
+        처럼 지형에는 있는데 選定에서 빠진 곳이 있다.
+        吳郡 吳(40404)는 847 오현으로, 泰山郡 奉高(85697)·魯國 魯(45180)·鉅鹿郡 廮陶(87061)는
+        w2 治所 관할 claim 으로 治所를 세우면서 이 목록에서 빠졌다. 郡이 103 → 123 이 된 것은
+        w2 가 郡國志 밖 郡(新都·漢昌·廬陵 …)의 縣을 올린 몫이다. 그중 巴西·新城·襄陽·鄱陽·高涼 은
+        治所 城(閬中·房陵·襄陽·鄱陽·高涼)이 郡國志 郡(巴郡·漢中·南郡·豫章·合浦) 이름으로 이미 서 있어,
+        鮮卑 는 治所가 郡國 밖 세력 점이라 seatless 로 더해졌다.
         치소를 새로 세우는 것은 選定 원장을 고치는 별건이라 여기서는 현황만 고정한다.
         """
         selection = json.loads(
@@ -425,8 +445,9 @@ class HanWorldV3Test(unittest.TestCase):
             parent for parent, roles in by_parent.items()
             if "COMMANDERY_SEAT" not in roles
         )
-        self.assertEqual(103, len(by_parent))
-        self.assertEqual(22, len(seatless))
+        # 2026-09-15 거점 편입으로 郡 3 곳(卒本·宜都·蘄春)이 거점 城만 갖고 더해져 126 / 27 이다.
+        self.assertEqual(126, len(by_parent))
+        self.assertEqual(27, len(seatless))
         self.assertIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
 
@@ -510,6 +531,12 @@ class DisplayNameTest(unittest.TestCase):
                 (735, "구진군", "구진군 서포현"),
                 (736, "교지군", "교지군 용편현"),
                 (745, "일남군", "일남군 서권현"),
+                # 같은 郡 같은 글자 두 縣 — CHGIS 가 자리를 둘 적었다. 앞선 城은 표기를 지키고 새 城만 가른다.
+                (977, "한창(巴郡)", "파군 한창현(汉昌)"),
+                (989, "부평(北地郡)", "북지군 부평현(富平)"),
+                # 같은 한글 독음의 두 거점(渦口·瓦口) — 거점은 郡을 앞에 세우지 않아 漢字 어간으로만 갈린다.
+                (1039, "와구(九江郡)", "와구(渦口)"),
+                (1080, "와구(巴郡)", "와구(瓦口)"),
             ],
             mismatched,
         )
@@ -518,8 +545,8 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(848, len(world["cities"]))
-        self.assertEqual(847, len(changed))
+        self.assertEqual(1097, len(world["cities"]))
+        self.assertEqual(1028, len(changed))
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

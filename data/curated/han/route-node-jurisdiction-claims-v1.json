@@ -1,0 +1,5038 @@
+{
+  "schemaVersion": 1,
+  "claimSetId": "han-w2-route-node-jurisdiction-claims-v1",
+  "status": "APPROVED",
+  "reviewAuthority": "user-approval-2026-09-15",
+  "reviewedAt": "2026-09-15",
+  "policy": {
+    "purpose": "郡國志 식별자가 없는 han-tiles 縣 관할에 REVIEWED_SOURCE_CLAIM 경로 노드를 준다.",
+    "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+    "lifecycleClaimed": false,
+    "tilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
+  },
+  "claims": [
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44385",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44385",
+      "canonicalName": "滎陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "chgis:v6:cnty:44385",
+      "tileBinding": {
+        "jurisdictionId": "44385",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "44385"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44385",
+        "nameCh": "荥阳县",
+        "nameFt": "滎陽縣",
+        "beginYear": -221,
+        "endYear": 492
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82465",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82465",
+      "canonicalName": "苑陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "chgis:v6:cnty:82465",
+      "tileBinding": {
+        "jurisdictionId": "82465",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "82465"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82465",
+        "nameCh": "苑陵县",
+        "nameFt": "苑陵縣",
+        "beginYear": 23,
+        "endYear": 605
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82846",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82846",
+      "canonicalName": "偃師",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河南尹",
+      "parentRef": "han-tiles-commandery:PARENT-0000",
+      "physicalPlaceRef": "chgis:v6:cnty:82846",
+      "tileBinding": {
+        "jurisdictionId": "82846",
+        "commanderyId": "PARENT-0000",
+        "seatPlaceId": "82846"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82846",
+        "nameCh": "偃师县",
+        "nameFt": "偃師縣",
+        "beginYear": 23,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82439",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82439",
+      "canonicalName": "成皋",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河內郡",
+      "parentRef": "han-tiles-commandery:PARENT-0001",
+      "physicalPlaceRef": "chgis:v6:cnty:82439",
+      "tileBinding": {
+        "jurisdictionId": "82439",
+        "commanderyId": "PARENT-0001",
+        "seatPlaceId": "82439"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82439",
+        "nameCh": "成皋县",
+        "nameFt": "成皋縣",
+        "beginYear": -205,
+        "endYear": 534
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82519",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82519",
+      "canonicalName": "平皋",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河內郡",
+      "parentRef": "han-tiles-commandery:PARENT-0001",
+      "physicalPlaceRef": "chgis:v6:cnty:82519",
+      "tileBinding": {
+        "jurisdictionId": "82519",
+        "commanderyId": "PARENT-0001",
+        "seatPlaceId": "82519"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82519",
+        "nameCh": "平皋县",
+        "nameFt": "平皋縣",
+        "beginYear": -206,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95423",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95423",
+      "canonicalName": "絳邑",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0002",
+      "physicalPlaceRef": "chgis:v6:cnty:95423",
+      "tileBinding": {
+        "jurisdictionId": "95423",
+        "commanderyId": "PARENT-0002",
+        "seatPlaceId": "95423"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95423",
+        "nameCh": "绛邑县",
+        "nameFt": "絳邑縣",
+        "beginYear": 35,
+        "endYear": 486
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95495",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95495",
+      "canonicalName": "蒲阪",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0002",
+      "physicalPlaceRef": "chgis:v6:cnty:95495",
+      "tileBinding": {
+        "jurisdictionId": "95495",
+        "commanderyId": "PARENT-0002",
+        "seatPlaceId": "95495"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95495",
+        "nameCh": "蒲坂县",
+        "nameFt": "蒲阪縣",
+        "beginYear": 23,
+        "endYear": 595
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95667",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95667",
+      "canonicalName": "狐讘",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0002",
+      "physicalPlaceRef": "chgis:v6:cnty:95667",
+      "tileBinding": {
+        "jurisdictionId": "95667",
+        "commanderyId": "PARENT-0002",
+        "seatPlaceId": "95667"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95667",
+        "nameCh": "狐讘县",
+        "nameFt": "狐讘縣",
+        "beginYear": 220,
+        "endYear": 435
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82841",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82841",
+      "canonicalName": "新成",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "弘農郡",
+      "parentRef": "han-tiles-commandery:PARENT-0003",
+      "physicalPlaceRef": "chgis:v6:cnty:82841",
+      "tileBinding": {
+        "jurisdictionId": "82841",
+        "commanderyId": "PARENT-0003",
+        "seatPlaceId": "82841"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82841",
+        "nameCh": "新成县",
+        "nameFt": "新成縣",
+        "beginYear": -299,
+        "endYear": 595
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200094",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200094",
+      "canonicalName": "上洛",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "京兆尹",
+      "parentRef": "han-tiles-commandery:PARENT-0004",
+      "physicalPlaceRef": "chgis:v6:cnty:200094",
+      "tileBinding": {
+        "jurisdictionId": "200094",
+        "commanderyId": "PARENT-0004",
+        "seatPlaceId": "200094"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200094",
+        "nameCh": "上洛县",
+        "nameFt": "上洛縣",
+        "beginYear": 220,
+        "endYear": 1263
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70647",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70647",
+      "canonicalName": "霸城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "京兆尹",
+      "parentRef": "han-tiles-commandery:PARENT-0004",
+      "physicalPlaceRef": "chgis:v6:cnty:70647",
+      "tileBinding": {
+        "jurisdictionId": "70647",
+        "commanderyId": "PARENT-0004",
+        "seatPlaceId": "70647"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70647",
+        "nameCh": "霸城县",
+        "nameFt": "霸城縣",
+        "beginYear": 220,
+        "endYear": 444
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70741",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70741",
+      "canonicalName": "高陸",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "左馮翊",
+      "parentRef": "han-tiles-commandery:PARENT-0005",
+      "physicalPlaceRef": "chgis:v6:cnty:70741",
+      "tileBinding": {
+        "jurisdictionId": "70741",
+        "commanderyId": "PARENT-0005",
+        "seatPlaceId": "70741"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70741",
+        "nameCh": "高陆县",
+        "nameFt": "高陸縣",
+        "beginYear": 220,
+        "endYear": 515
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70797",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70797",
+      "canonicalName": "下邽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "左馮翊",
+      "parentRef": "han-tiles-commandery:PARENT-0005",
+      "physicalPlaceRef": "chgis:v6:cnty:70797",
+      "tileBinding": {
+        "jurisdictionId": "70797",
+        "commanderyId": "PARENT-0005",
+        "seatPlaceId": "70797"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70797",
+        "nameCh": "下邽县",
+        "nameFt": "下邽縣",
+        "beginYear": 159,
+        "endYear": 385
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70715",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70715",
+      "canonicalName": "始平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "chgis:v6:cnty:70715",
+      "tileBinding": {
+        "jurisdictionId": "70715",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "70715"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70715",
+        "nameCh": "始平县",
+        "nameFt": "始平縣",
+        "beginYear": 220,
+        "endYear": 356
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70952",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70952",
+      "canonicalName": "隃麋",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "右扶風",
+      "parentRef": "han-tiles-commandery:PARENT-0006",
+      "physicalPlaceRef": "chgis:v6:cnty:70952",
+      "tileBinding": {
+        "jurisdictionId": "70952",
+        "commanderyId": "PARENT-0006",
+        "seatPlaceId": "70952"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70952",
+        "nameCh": "隃麋县",
+        "nameFt": "隃麋縣",
+        "beginYear": 23,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82976",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82976",
+      "canonicalName": "郟",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "潁川郡",
+      "parentRef": "han-tiles-commandery:PARENT-0007",
+      "physicalPlaceRef": "chgis:v6:cnty:82976",
+      "tileBinding": {
+        "jurisdictionId": "82976",
+        "commanderyId": "PARENT-0007",
+        "seatPlaceId": "82976"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82976",
+        "nameCh": "郏县",
+        "nameFt": "郟縣",
+        "beginYear": -207,
+        "endYear": 497
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-83026",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:83026",
+      "canonicalName": "繁昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "潁川郡",
+      "parentRef": "han-tiles-commandery:PARENT-0007",
+      "physicalPlaceRef": "chgis:v6:cnty:83026",
+      "tileBinding": {
+        "jurisdictionId": "83026",
+        "commanderyId": "PARENT-0007",
+        "seatPlaceId": "83026"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "83026",
+        "nameCh": "繁昌县",
+        "nameFt": "繁昌縣",
+        "beginYear": 220,
+        "endYear": 626
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43328",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43328",
+      "canonicalName": "慎",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "汝南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0008",
+      "physicalPlaceRef": "chgis:v6:cnty:43328",
+      "tileBinding": {
+        "jurisdictionId": "43328",
+        "commanderyId": "PARENT-0008",
+        "seatPlaceId": "43328"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43328",
+        "nameCh": "慎县",
+        "nameFt": "慎縣",
+        "beginYear": 23,
+        "endYear": 412
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43366",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43366",
+      "canonicalName": "宋公",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "汝南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0008",
+      "physicalPlaceRef": "chgis:v6:cnty:43366",
+      "tileBinding": {
+        "jurisdictionId": "43366",
+        "commanderyId": "PARENT-0008",
+        "seatPlaceId": "43366"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43366",
+        "nameCh": "宋公国",
+        "nameFt": "宋公國",
+        "beginYear": 79,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82594",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82594",
+      "canonicalName": "褒信",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "汝南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0008",
+      "physicalPlaceRef": "chgis:v6:cnty:82594",
+      "tileBinding": {
+        "jurisdictionId": "82594",
+        "commanderyId": "PARENT-0008",
+        "seatPlaceId": "82594"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82594",
+        "nameCh": "褒信县",
+        "nameFt": "褒信縣",
+        "beginYear": 220,
+        "endYear": 416
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-83168",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:83168",
+      "canonicalName": "慎陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "汝南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0008",
+      "physicalPlaceRef": "chgis:v6:cnty:83168",
+      "tileBinding": {
+        "jurisdictionId": "83168",
+        "commanderyId": "PARENT-0008",
+        "seatPlaceId": "83168"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "83168",
+        "nameCh": "慎阳县",
+        "nameFt": "慎陽縣",
+        "beginYear": -206,
+        "endYear": 386
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-83170",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:83170",
+      "canonicalName": "朗陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "汝南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0008",
+      "physicalPlaceRef": "chgis:v6:cnty:83170",
+      "tileBinding": {
+        "jurisdictionId": "83170",
+        "commanderyId": "PARENT-0008",
+        "seatPlaceId": "83170"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "83170",
+        "nameCh": "朗陵县",
+        "nameFt": "朗陵縣",
+        "beginYear": -206,
+        "endYear": 471
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42794",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42794",
+      "canonicalName": "碭",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "梁國",
+      "parentRef": "han-tiles-commandery:PARENT-0009",
+      "physicalPlaceRef": "chgis:v6:cnty:42794",
+      "tileBinding": {
+        "jurisdictionId": "42794",
+        "commanderyId": "PARENT-0009",
+        "seatPlaceId": "42794"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42794",
+        "nameCh": "砀县",
+        "nameFt": "碭縣",
+        "beginYear": 23,
+        "endYear": 265
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85047",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85047",
+      "canonicalName": "已氏",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "梁國",
+      "parentRef": "han-tiles-commandery:PARENT-0009",
+      "physicalPlaceRef": "chgis:v6:cnty:85047",
+      "tileBinding": {
+        "jurisdictionId": "85047",
+        "commanderyId": "PARENT-0009",
+        "seatPlaceId": "85047"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85047",
+        "nameCh": "已氏县",
+        "nameFt": "已氏縣",
+        "beginYear": 23,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82175",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82175",
+      "canonicalName": "[阝焉]",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "陳國",
+      "parentRef": "han-tiles-commandery:PARENT-0011",
+      "physicalPlaceRef": "chgis:v6:cnty:82175",
+      "tileBinding": {
+        "jurisdictionId": "82175",
+        "commanderyId": "PARENT-0011",
+        "seatPlaceId": "82175"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82175",
+        "nameCh": "[阝焉]县",
+        "nameFt": "[阝焉]縣",
+        "beginYear": 23,
+        "endYear": 288
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45180",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45180",
+      "canonicalName": "魯",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "魯國",
+      "parentRef": "han-tiles-commandery:PARENT-0012",
+      "physicalPlaceRef": "chgis:v6:cnty:45180",
+      "tileBinding": {
+        "jurisdictionId": "45180",
+        "commanderyId": "PARENT-0012",
+        "seatPlaceId": "45180"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45180",
+        "nameCh": "鲁县",
+        "nameFt": "魯縣",
+        "beginYear": -182,
+        "endYear": 582
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85669",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85669",
+      "canonicalName": "巨平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "魯國",
+      "parentRef": "han-tiles-commandery:PARENT-0012",
+      "physicalPlaceRef": "chgis:v6:cnty:85669",
+      "tileBinding": {
+        "jurisdictionId": "85669",
+        "commanderyId": "PARENT-0012",
+        "seatPlaceId": "85669"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85669",
+        "nameCh": "巨平县",
+        "nameFt": "巨平縣",
+        "beginYear": -122,
+        "endYear": 468
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85083",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85083",
+      "canonicalName": "衛",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "魏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0013",
+      "physicalPlaceRef": "chgis:v6:cnty:85083",
+      "tileBinding": {
+        "jurisdictionId": "85083",
+        "commanderyId": "PARENT-0013",
+        "seatPlaceId": "85083"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85083",
+        "nameCh": "卫国",
+        "nameFt": "衛國",
+        "beginYear": 37,
+        "endYear": 265
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87150",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87150",
+      "canonicalName": "涉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "魏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0013",
+      "physicalPlaceRef": "chgis:v6:cnty:87150",
+      "tileBinding": {
+        "jurisdictionId": "87150",
+        "commanderyId": "PARENT-0013",
+        "seatPlaceId": "87150"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87150",
+        "nameCh": "涉县",
+        "nameFt": "涉縣",
+        "beginYear": 196,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95304",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95304",
+      "canonicalName": "轑河",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "魏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0013",
+      "physicalPlaceRef": "chgis:v6:cnty:95304",
+      "tileBinding": {
+        "jurisdictionId": "95304",
+        "commanderyId": "PARENT-0013",
+        "seatPlaceId": "95304"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95304",
+        "nameCh": "轑河县",
+        "nameFt": "轑河縣",
+        "beginYear": 215,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87061",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87061",
+      "canonicalName": "廮陶",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "鉅鹿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0014",
+      "physicalPlaceRef": "chgis:v6:cnty:87061",
+      "tileBinding": {
+        "jurisdictionId": "87061",
+        "commanderyId": "PARENT-0014",
+        "seatPlaceId": "87061"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87061",
+        "nameCh": "廮陶县",
+        "nameFt": "廮陶縣",
+        "beginYear": -202,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87319",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87319",
+      "canonicalName": "南深澤",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鉅鹿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0014",
+      "physicalPlaceRef": "chgis:v6:cnty:87319",
+      "tileBinding": {
+        "jurisdictionId": "87319",
+        "commanderyId": "PARENT-0014",
+        "seatPlaceId": "87319"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87319",
+        "nameCh": "南深泽县",
+        "nameFt": "南深澤縣",
+        "beginYear": -117,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87489",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87489",
+      "canonicalName": "張",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鉅鹿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0014",
+      "physicalPlaceRef": "chgis:v6:cnty:87489",
+      "tileBinding": {
+        "jurisdictionId": "87489",
+        "commanderyId": "PARENT-0014",
+        "seatPlaceId": "87489"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87489",
+        "nameCh": "张县",
+        "nameFt": "張縣",
+        "beginYear": -203,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87490",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87490",
+      "canonicalName": "朝平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鉅鹿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0014",
+      "physicalPlaceRef": "chgis:v6:cnty:87490",
+      "tileBinding": {
+        "jurisdictionId": "87490",
+        "commanderyId": "PARENT-0014",
+        "seatPlaceId": "87490"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87490",
+        "nameCh": "朝平县",
+        "nameFt": "朝平縣",
+        "beginYear": -203,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87506",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87506",
+      "canonicalName": "廣鄉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鉅鹿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0014",
+      "physicalPlaceRef": "chgis:v6:cnty:87506",
+      "tileBinding": {
+        "jurisdictionId": "87506",
+        "commanderyId": "PARENT-0014",
+        "seatPlaceId": "87506"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87506",
+        "nameCh": "广乡县",
+        "nameFt": "廣鄉縣",
+        "beginYear": -203,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87091",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87091",
+      "canonicalName": "石邑",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "常山國",
+      "parentRef": "han-tiles-commandery:PARENT-0015",
+      "physicalPlaceRef": "chgis:v6:cnty:87091",
+      "tileBinding": {
+        "jurisdictionId": "87091",
+        "commanderyId": "PARENT-0015",
+        "seatPlaceId": "87091"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87091",
+        "nameCh": "石邑县",
+        "nameFt": "石邑縣",
+        "beginYear": 196,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44996",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44996",
+      "canonicalName": "魏昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "中山國",
+      "parentRef": "han-tiles-commandery:PARENT-0016",
+      "physicalPlaceRef": "chgis:v6:cnty:44996",
+      "tileBinding": {
+        "jurisdictionId": "44996",
+        "commanderyId": "PARENT-0016",
+        "seatPlaceId": "44996"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44996",
+        "nameCh": "魏昌县",
+        "nameFt": "魏昌縣",
+        "beginYear": 220,
+        "endYear": 549
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87549",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87549",
+      "canonicalName": "安喜",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "中山國",
+      "parentRef": "han-tiles-commandery:PARENT-0016",
+      "physicalPlaceRef": "chgis:v6:cnty:87549",
+      "tileBinding": {
+        "jurisdictionId": "87549",
+        "commanderyId": "PARENT-0016",
+        "seatPlaceId": "87549"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87549",
+        "nameCh": "安喜县",
+        "nameFt": "安喜縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87624",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87624",
+      "canonicalName": "博陸",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "中山國",
+      "parentRef": "han-tiles-commandery:PARENT-0016",
+      "physicalPlaceRef": "chgis:v6:cnty:87624",
+      "tileBinding": {
+        "jurisdictionId": "87624",
+        "commanderyId": "PARENT-0016",
+        "seatPlaceId": "87624"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87624",
+        "nameCh": "博陆县",
+        "nameFt": "博陸縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87055",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87055",
+      "canonicalName": "南?",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "安平國",
+      "parentRef": "han-tiles-commandery:PARENT-0017",
+      "physicalPlaceRef": "chgis:v6:cnty:87055",
+      "tileBinding": {
+        "jurisdictionId": "87055",
+        "commanderyId": "PARENT-0017",
+        "seatPlaceId": "87055"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87055",
+        "nameCh": "南?县",
+        "nameFt": "南?縣",
+        "beginYear": 22,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87189",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87189",
+      "canonicalName": "經",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "安平國",
+      "parentRef": "han-tiles-commandery:PARENT-0017",
+      "physicalPlaceRef": "chgis:v6:cnty:87189",
+      "tileBinding": {
+        "jurisdictionId": "87189",
+        "commanderyId": "PARENT-0017",
+        "seatPlaceId": "87189"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87189",
+        "nameCh": "经县",
+        "nameFt": "經縣",
+        "beginYear": -144,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87600",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87600",
+      "canonicalName": "蓚",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河閒國",
+      "parentRef": "han-tiles-commandery:PARENT-0018",
+      "physicalPlaceRef": "chgis:v6:cnty:87600",
+      "tileBinding": {
+        "jurisdictionId": "87600",
+        "commanderyId": "PARENT-0018",
+        "seatPlaceId": "87600"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87600",
+        "nameCh": "蓚县",
+        "nameFt": "蓚縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-88003",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:88003",
+      "canonicalName": "河間",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "河閒國",
+      "parentRef": "han-tiles-commandery:PARENT-0018",
+      "physicalPlaceRef": "chgis:v6:cnty:88003",
+      "tileBinding": {
+        "jurisdictionId": "88003",
+        "commanderyId": "PARENT-0018",
+        "seatPlaceId": "88003"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "88003",
+        "nameCh": "河间县",
+        "nameFt": "河間縣",
+        "beginYear": 2,
+        "endYear": 1911
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85202",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85202",
+      "canonicalName": "靈縣（零縣）",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "清河國",
+      "parentRef": "han-tiles-commandery:PARENT-0019",
+      "physicalPlaceRef": "chgis:v6:cnty:85202",
+      "tileBinding": {
+        "jurisdictionId": "85202",
+        "commanderyId": "PARENT-0019",
+        "seatPlaceId": "85202"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85202",
+        "nameCh": "灵县（零县）",
+        "nameFt": "靈縣（零縣）",
+        "beginYear": 97,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87389",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87389",
+      "canonicalName": "饒安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "勃海郡",
+      "parentRef": "han-tiles-commandery:PARENT-0021",
+      "physicalPlaceRef": "chgis:v6:cnty:87389",
+      "tileBinding": {
+        "jurisdictionId": "87389",
+        "commanderyId": "PARENT-0021",
+        "seatPlaceId": "87389"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87389",
+        "nameCh": "饶安县",
+        "nameFt": "饒安縣",
+        "beginYear": 168,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87625",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87625",
+      "canonicalName": "新樂",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "勃海郡",
+      "parentRef": "han-tiles-commandery:PARENT-0021",
+      "physicalPlaceRef": "chgis:v6:cnty:87625",
+      "tileBinding": {
+        "jurisdictionId": "87625",
+        "commanderyId": "PARENT-0021",
+        "seatPlaceId": "87625"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87625",
+        "nameCh": "新乐县",
+        "nameFt": "新樂縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44354",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44354",
+      "canonicalName": "鄢陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "陳留郡",
+      "parentRef": "han-tiles-commandery:PARENT-0022",
+      "physicalPlaceRef": "chgis:v6:cnty:44354",
+      "tileBinding": {
+        "jurisdictionId": "44354",
+        "commanderyId": "PARENT-0022",
+        "seatPlaceId": "44354"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44354",
+        "nameCh": "鄢陵县",
+        "nameFt": "鄢陵縣",
+        "beginYear": 220,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82087",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82087",
+      "canonicalName": "已吾",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "陳留郡",
+      "parentRef": "han-tiles-commandery:PARENT-0022",
+      "physicalPlaceRef": "chgis:v6:cnty:82087",
+      "tileBinding": {
+        "jurisdictionId": "82087",
+        "commanderyId": "PARENT-0022",
+        "seatPlaceId": "82087"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82087",
+        "nameCh": "已吾县",
+        "nameFt": "已吾縣",
+        "beginYear": 100,
+        "endYear": 265
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45127",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45127",
+      "canonicalName": "茬",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "泰山郡",
+      "parentRef": "han-tiles-commandery:PARENT-0026",
+      "physicalPlaceRef": "chgis:v6:cnty:45127",
+      "tileBinding": {
+        "jurisdictionId": "45127",
+        "commanderyId": "PARENT-0026",
+        "seatPlaceId": "45127"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45127",
+        "nameCh": "茬县",
+        "nameFt": "茬縣",
+        "beginYear": -122,
+        "endYear": 231
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85629",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85629",
+      "canonicalName": "蒙陰",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "泰山郡",
+      "parentRef": "han-tiles-commandery:PARENT-0026",
+      "physicalPlaceRef": "chgis:v6:cnty:85629",
+      "tileBinding": {
+        "jurisdictionId": "85629",
+        "commanderyId": "PARENT-0026",
+        "seatPlaceId": "85629"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85629",
+        "nameCh": "蒙阴县",
+        "nameFt": "蒙陰縣",
+        "beginYear": 198,
+        "endYear": 265
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85673",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85673",
+      "canonicalName": "平陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "泰山郡",
+      "parentRef": "han-tiles-commandery:PARENT-0026",
+      "physicalPlaceRef": "chgis:v6:cnty:85673",
+      "tileBinding": {
+        "jurisdictionId": "85673",
+        "commanderyId": "PARENT-0026",
+        "seatPlaceId": "85673"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85673",
+        "nameCh": "平阳县",
+        "nameFt": "平陽縣",
+        "beginYear": 220,
+        "endYear": 268
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85697",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85697",
+      "canonicalName": "奉高",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "泰山郡",
+      "parentRef": "han-tiles-commandery:PARENT-0026",
+      "physicalPlaceRef": "chgis:v6:cnty:85697",
+      "tileBinding": {
+        "jurisdictionId": "85697",
+        "commanderyId": "PARENT-0026",
+        "seatPlaceId": "85697"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85697",
+        "nameCh": "奉高县",
+        "nameFt": "奉高縣",
+        "beginYear": -122,
+        "endYear": 585
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45192",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45192",
+      "canonicalName": "鄒",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "山陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0028",
+      "physicalPlaceRef": "chgis:v6:cnty:45192",
+      "tileBinding": {
+        "jurisdictionId": "45192",
+        "commanderyId": "PARENT-0028",
+        "seatPlaceId": "45192"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45192",
+        "nameCh": "邹县",
+        "nameFt": "鄒縣",
+        "beginYear": 23,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85158",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85158",
+      "canonicalName": "金鄉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "山陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0028",
+      "physicalPlaceRef": "chgis:v6:cnty:85158",
+      "tileBinding": {
+        "jurisdictionId": "85158",
+        "commanderyId": "PARENT-0028",
+        "seatPlaceId": "85158"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85158",
+        "nameCh": "金乡县",
+        "nameFt": "金鄉縣",
+        "beginYear": 24,
+        "endYear": 478
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85044",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85044",
+      "canonicalName": "黎",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "濟陰郡",
+      "parentRef": "han-tiles-commandery:PARENT-0029",
+      "physicalPlaceRef": "chgis:v6:cnty:85044",
+      "tileBinding": {
+        "jurisdictionId": "85044",
+        "commanderyId": "PARENT-0029",
+        "seatPlaceId": "85044"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85044",
+        "nameCh": "黎县",
+        "nameFt": "黎縣",
+        "beginYear": 23,
+        "endYear": 290
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85108",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85108",
+      "canonicalName": "巨野",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "濟陰郡",
+      "parentRef": "han-tiles-commandery:PARENT-0029",
+      "physicalPlaceRef": "chgis:v6:cnty:85108",
+      "tileBinding": {
+        "jurisdictionId": "85108",
+        "commanderyId": "PARENT-0029",
+        "seatPlaceId": "85108"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85108",
+        "nameCh": "巨野县",
+        "nameFt": "巨野縣",
+        "beginYear": -202,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42888",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42888",
+      "canonicalName": "贛榆",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東海郡",
+      "parentRef": "han-tiles-commandery:PARENT-0030",
+      "physicalPlaceRef": "chgis:v6:cnty:42888",
+      "tileBinding": {
+        "jurisdictionId": "42888",
+        "commanderyId": "PARENT-0030",
+        "seatPlaceId": "42888"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42888",
+        "nameCh": "赣榆县",
+        "nameFt": "贛榆縣",
+        "beginYear": -201,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45299",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45299",
+      "canonicalName": "合城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東海郡",
+      "parentRef": "han-tiles-commandery:PARENT-0030",
+      "physicalPlaceRef": "chgis:v6:cnty:45299",
+      "tileBinding": {
+        "jurisdictionId": "45299",
+        "commanderyId": "PARENT-0030",
+        "seatPlaceId": "45299"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45299",
+        "nameCh": "合城县",
+        "nameFt": "合城縣",
+        "beginYear": 220,
+        "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85649",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85649",
+      "canonicalName": "郯城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東海郡",
+      "parentRef": "han-tiles-commandery:PARENT-0030",
+      "physicalPlaceRef": "chgis:v6:cnty:85649",
+      "tileBinding": {
+        "jurisdictionId": "85649",
+        "commanderyId": "PARENT-0030",
+        "seatPlaceId": "85649"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85649",
+        "nameCh": "郯城县",
+        "nameFt": "郯城縣",
+        "beginYear": -212,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85616",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85616",
+      "canonicalName": "華",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "琅邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0031",
+      "physicalPlaceRef": "chgis:v6:cnty:85616",
+      "tileBinding": {
+        "jurisdictionId": "85616",
+        "commanderyId": "PARENT-0031",
+        "seatPlaceId": "85616"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85616",
+        "nameCh": "华县",
+        "nameFt": "華縣",
+        "beginYear": 158,
+        "endYear": 311
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42698",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42698",
+      "canonicalName": "輿",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廣陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0033",
+      "physicalPlaceRef": "chgis:v6:cnty:42698",
+      "tileBinding": {
+        "jurisdictionId": "42698",
+        "commanderyId": "PARENT-0033",
+        "seatPlaceId": "42698"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42698",
+        "nameCh": "舆国",
+        "nameFt": "輿國",
+        "beginYear": 23,
+        "endYear": 223
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42702",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42702",
+      "canonicalName": "海陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廣陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0033",
+      "physicalPlaceRef": "chgis:v6:cnty:42702",
+      "tileBinding": {
+        "jurisdictionId": "42702",
+        "commanderyId": "PARENT-0033",
+        "seatPlaceId": "42702"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42702",
+        "nameCh": "海陵县",
+        "nameFt": "海陵縣",
+        "beginYear": 23,
+        "endYear": 223
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42714",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42714",
+      "canonicalName": "高郵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廣陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0033",
+      "physicalPlaceRef": "chgis:v6:cnty:42714",
+      "tileBinding": {
+        "jurisdictionId": "42714",
+        "commanderyId": "PARENT-0033",
+        "seatPlaceId": "42714"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42714",
+        "nameCh": "高邮县",
+        "nameFt": "高郵縣",
+        "beginYear": -201,
+        "endYear": 223
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45119",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45119",
+      "canonicalName": "高苑",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "濟南國",
+      "parentRef": "han-tiles-commandery:PARENT-0035",
+      "physicalPlaceRef": "chgis:v6:cnty:45119",
+      "tileBinding": {
+        "jurisdictionId": "45119",
+        "commanderyId": "PARENT-0035",
+        "seatPlaceId": "45119"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45119",
+        "nameCh": "高苑县",
+        "nameFt": "高苑縣",
+        "beginYear": 23,
+        "endYear": 315
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45122",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45122",
+      "canonicalName": "漯陰",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "濟南國",
+      "parentRef": "han-tiles-commandery:PARENT-0035",
+      "physicalPlaceRef": "chgis:v6:cnty:45122",
+      "tileBinding": {
+        "jurisdictionId": "45122",
+        "commanderyId": "PARENT-0035",
+        "seatPlaceId": "45122"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45122",
+        "nameCh": "漯阴县",
+        "nameFt": "漯陰縣",
+        "beginYear": 23,
+        "endYear": 408
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200038",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200038",
+      "canonicalName": "漯沃",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "平原郡",
+      "parentRef": "han-tiles-commandery:PARENT-0036",
+      "physicalPlaceRef": "chgis:v6:cnty:200038",
+      "tileBinding": {
+        "jurisdictionId": "200038",
+        "commanderyId": "PARENT-0036",
+        "seatPlaceId": "200038"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200038",
+        "nameCh": "漯沃县",
+        "nameFt": "漯沃縣",
+        "beginYear": 213,
+        "endYear": 468
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45107",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45107",
+      "canonicalName": "西平昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "平原郡",
+      "parentRef": "han-tiles-commandery:PARENT-0036",
+      "physicalPlaceRef": "chgis:v6:cnty:45107",
+      "tileBinding": {
+        "jurisdictionId": "45107",
+        "commanderyId": "PARENT-0036",
+        "seatPlaceId": "45107"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45107",
+        "nameCh": "西平昌县",
+        "nameFt": "西平昌縣",
+        "beginYear": 136,
+        "endYear": 315
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85262",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85262",
+      "canonicalName": "廣饒",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "樂安國",
+      "parentRef": "han-tiles-commandery:PARENT-0037",
+      "physicalPlaceRef": "chgis:v6:cnty:85262",
+      "tileBinding": {
+        "jurisdictionId": "85262",
+        "commanderyId": "PARENT-0037",
+        "seatPlaceId": "85262"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85262",
+        "nameCh": "广饶县",
+        "nameFt": "廣饒縣",
+        "beginYear": 206,
+        "endYear": 582
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85376",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85376",
+      "canonicalName": "[巾弓玄]（忄弓玄，扌弓玄）",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東萊郡",
+      "parentRef": "han-tiles-commandery:PARENT-0039",
+      "physicalPlaceRef": "chgis:v6:cnty:85376",
+      "tileBinding": {
+        "jurisdictionId": "85376",
+        "commanderyId": "PARENT-0039",
+        "seatPlaceId": "85376"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85376",
+        "nameCh": "[巾弓玄]（忄弓玄，扌弓玄）侯国",
+        "nameFt": "[巾弓玄]（忄弓玄，扌弓玄）侯國",
+        "beginYear": 30,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85448",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85448",
+      "canonicalName": "曲成（城）",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東萊郡",
+      "parentRef": "han-tiles-commandery:PARENT-0039",
+      "physicalPlaceRef": "chgis:v6:cnty:85448",
+      "tileBinding": {
+        "jurisdictionId": "85448",
+        "commanderyId": "PARENT-0039",
+        "seatPlaceId": "85448"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85448",
+        "nameCh": "曲成（城）县",
+        "nameFt": "曲成（城）縣",
+        "beginYear": 190,
+        "endYear": 468
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-85234",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:85234",
+      "canonicalName": "臨淄",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "齊國",
+      "parentRef": "han-tiles-commandery:PARENT-0040",
+      "physicalPlaceRef": "chgis:v6:cnty:85234",
+      "tileBinding": {
+        "jurisdictionId": "85234",
+        "commanderyId": "PARENT-0040",
+        "seatPlaceId": "85234"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "85234",
+        "nameCh": "临淄县",
+        "nameFt": "臨淄縣",
+        "beginYear": 23,
+        "endYear": 555
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-82692",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:82692",
+      "canonicalName": "湼陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0041",
+      "physicalPlaceRef": "chgis:v6:cnty:82692",
+      "tileBinding": {
+        "jurisdictionId": "82692",
+        "commanderyId": "PARENT-0041",
+        "seatPlaceId": "82692"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "82692",
+        "nameCh": "湼阳县",
+        "nameFt": "湼陽縣",
+        "beginYear": 23,
+        "endYear": 582
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43727",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43727",
+      "canonicalName": "旌陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "chgis:v6:cnty:43727",
+      "tileBinding": {
+        "jurisdictionId": "43727",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "43727"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43727",
+        "nameCh": "旌阳县",
+        "nameFt": "旌陽縣",
+        "beginYear": 208,
+        "endYear": 440
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44514",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44514",
+      "canonicalName": "北井",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "chgis:v6:cnty:44514",
+      "tileBinding": {
+        "jurisdictionId": "44514",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "44514"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44514",
+        "nameCh": "北井县",
+        "nameFt": "北井縣",
+        "beginYear": 209,
+        "endYear": 566
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45820",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45820",
+      "canonicalName": "佷山",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "chgis:v6:cnty:45820",
+      "tileBinding": {
+        "jurisdictionId": "45820",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "45820"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45820",
+        "nameCh": "佷山县",
+        "nameFt": "佷山縣",
+        "beginYear": -202,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45956",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45956",
+      "canonicalName": "沶鄉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "南郡",
+      "parentRef": "han-tiles-commandery:PARENT-0042",
+      "physicalPlaceRef": "chgis:v6:cnty:45956",
+      "tileBinding": {
+        "jurisdictionId": "45956",
+        "commanderyId": "PARENT-0042",
+        "seatPlaceId": "45956"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45956",
+        "nameCh": "沶乡县",
+        "nameFt": "沶鄉縣",
+        "beginYear": 220,
+        "endYear": 463
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41117",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41117",
+      "canonicalName": "西安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "chgis:v6:cnty:41117",
+      "tileBinding": {
+        "jurisdictionId": "41117",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "41117"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41117",
+        "nameCh": "西安县",
+        "nameFt": "西安縣",
+        "beginYear": 199,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43447",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43447",
+      "canonicalName": "陽新",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "chgis:v6:cnty:43447",
+      "tileBinding": {
+        "jurisdictionId": "43447",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "43447"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43447",
+        "nameCh": "阳新县",
+        "nameFt": "陽新縣",
+        "beginYear": 210,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43609",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43609",
+      "canonicalName": "石陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "江夏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0043",
+      "physicalPlaceRef": "chgis:v6:cnty:43609",
+      "tileBinding": {
+        "jurisdictionId": "43609",
+        "commanderyId": "PARENT-0043",
+        "seatPlaceId": "43609"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43609",
+        "nameCh": "石阳县",
+        "nameFt": "石陽縣",
+        "beginYear": 208,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40922",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40922",
+      "canonicalName": "永新",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "長沙郡",
+      "parentRef": "han-tiles-commandery:PARENT-0047",
+      "physicalPlaceRef": "chgis:v6:cnty:40922",
+      "tileBinding": {
+        "jurisdictionId": "40922",
+        "commanderyId": "PARENT-0047",
+        "seatPlaceId": "40922"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40922",
+        "nameCh": "永新县",
+        "nameFt": "永新縣",
+        "beginYear": 215,
+        "endYear": 590
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41770",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41770",
+      "canonicalName": "茶陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "長沙郡",
+      "parentRef": "han-tiles-commandery:PARENT-0047",
+      "physicalPlaceRef": "chgis:v6:cnty:41770",
+      "tileBinding": {
+        "jurisdictionId": "41770",
+        "commanderyId": "PARENT-0047",
+        "seatPlaceId": "41770"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41770",
+        "nameCh": "茶陵县",
+        "nameFt": "茶陵縣",
+        "beginYear": 23,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41843",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41843",
+      "canonicalName": "臨烝",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "長沙郡",
+      "parentRef": "han-tiles-commandery:PARENT-0047",
+      "physicalPlaceRef": "chgis:v6:cnty:41843",
+      "tileBinding": {
+        "jurisdictionId": "41843",
+        "commanderyId": "PARENT-0047",
+        "seatPlaceId": "41843"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41843",
+        "nameCh": "临烝县",
+        "nameFt": "臨烝縣",
+        "beginYear": 196,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40091",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40091",
+      "canonicalName": "臨水",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:40091",
+      "tileBinding": {
+        "jurisdictionId": "40091",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "40091"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40091",
+        "nameCh": "临水县",
+        "nameFt": "臨水縣",
+        "beginYear": 211,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40145",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40145",
+      "canonicalName": "原鄉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:40145",
+      "tileBinding": {
+        "jurisdictionId": "40145",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "40145"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40145",
+        "nameCh": "原乡县",
+        "nameFt": "原鄉縣",
+        "beginYear": 185,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40147",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40147",
+      "canonicalName": "安吉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:40147",
+      "tileBinding": {
+        "jurisdictionId": "40147",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "40147"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40147",
+        "nameCh": "安吉县",
+        "nameFt": "安吉縣",
+        "beginYear": 185,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40523",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40523",
+      "canonicalName": "建業",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:40523",
+      "tileBinding": {
+        "jurisdictionId": "40523",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "40523"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40523",
+        "nameCh": "建业县",
+        "nameFt": "建業縣",
+        "beginYear": 212,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41174",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41174",
+      "canonicalName": "樂安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41174",
+      "tileBinding": {
+        "jurisdictionId": "41174",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41174"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41174",
+        "nameCh": "乐安县",
+        "nameFt": "樂安縣",
+        "beginYear": 185,
+        "endYear": 559
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41305",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41305",
+      "canonicalName": "宛陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41305",
+      "tileBinding": {
+        "jurisdictionId": "41305",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41305"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41305",
+        "nameCh": "宣城县",
+        "nameFt": "宛陵縣",
+        "beginYear": 147,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41306",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41306",
+      "canonicalName": "懷安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41306",
+      "tileBinding": {
+        "jurisdictionId": "41306",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41306"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41306",
+        "nameCh": "怀安县",
+        "nameFt": "懷安縣",
+        "beginYear": 208,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41310",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41310",
+      "canonicalName": "寧國",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41310",
+      "tileBinding": {
+        "jurisdictionId": "41310",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41310"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41310",
+        "nameCh": "宁国县",
+        "nameFt": "寧國縣",
+        "beginYear": 208,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41314",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41314",
+      "canonicalName": "安吳",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41314",
+      "tileBinding": {
+        "jurisdictionId": "41314",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41314"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41314",
+        "nameCh": "安吴县",
+        "nameFt": "安吳縣",
+        "beginYear": 196,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41325",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41325",
+      "canonicalName": "休陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41325",
+      "tileBinding": {
+        "jurisdictionId": "41325",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41325"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41325",
+        "nameCh": "休阳县",
+        "nameFt": "休陽縣",
+        "beginYear": 208,
+        "endYear": 257
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41338",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41338",
+      "canonicalName": "黎陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41338",
+      "tileBinding": {
+        "jurisdictionId": "41338",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41338"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41338",
+        "nameCh": "黎阳县",
+        "nameFt": "黎陽縣",
+        "beginYear": 208,
+        "endYear": 463
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41355",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41355",
+      "canonicalName": "廣封",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "丹陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0049",
+      "physicalPlaceRef": "chgis:v6:cnty:41355",
+      "tileBinding": {
+        "jurisdictionId": "41355",
+        "commanderyId": "PARENT-0049",
+        "seatPlaceId": "41355"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41355",
+        "nameCh": "广德县",
+        "nameFt": "廣封縣",
+        "beginYear": 185,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-43134",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:43134",
+      "canonicalName": "灊",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬江郡",
+      "parentRef": "han-tiles-commandery:PARENT-0050",
+      "physicalPlaceRef": "chgis:v6:cnty:43134",
+      "tileBinding": {
+        "jurisdictionId": "43134",
+        "commanderyId": "PARENT-0050",
+        "seatPlaceId": "43134"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "43134",
+        "nameCh": "灊县",
+        "nameFt": "灊縣",
+        "beginYear": -202,
+        "endYear": 546
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40078",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40078",
+      "canonicalName": "錢唐",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40078",
+      "tileBinding": {
+        "jurisdictionId": "40078",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40078"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40078",
+        "nameCh": "钱唐县",
+        "nameFt": "錢唐縣",
+        "beginYear": 23,
+        "endYear": 620
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40242",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40242",
+      "canonicalName": "漢興",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40242",
+      "tileBinding": {
+        "jurisdictionId": "40242",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40242"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40242",
+        "nameCh": "汉兴县",
+        "nameFt": "漢興縣",
+        "beginYear": 196,
+        "endYear": 259
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40377",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40377",
+      "canonicalName": "永",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40377",
+      "tileBinding": {
+        "jurisdictionId": "40377",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40377"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40377",
+        "nameCh": "永县",
+        "nameFt": "永縣",
+        "beginYear": 195,
+        "endYear": 221
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40610",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40610",
+      "canonicalName": "松陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40610",
+      "tileBinding": {
+        "jurisdictionId": "40610",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40610"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40610",
+        "nameCh": "松阳县",
+        "nameFt": "松陽縣",
+        "beginYear": 203,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40616",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40616",
+      "canonicalName": "遂昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40616",
+      "tileBinding": {
+        "jurisdictionId": "40616",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40616"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40616",
+        "nameCh": "遂昌县",
+        "nameFt": "遂昌縣",
+        "beginYear": 218,
+        "endYear": 238
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40663",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40663",
+      "canonicalName": "始寧",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40663",
+      "tileBinding": {
+        "jurisdictionId": "40663",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40663"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40663",
+        "nameCh": "始平县",
+        "nameFt": "始寧縣",
+        "beginYear": 191,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40703",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40703",
+      "canonicalName": "長山",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40703",
+      "tileBinding": {
+        "jurisdictionId": "40703",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40703"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40703",
+        "nameCh": "长山县",
+        "nameFt": "長山縣",
+        "beginYear": 192,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40716",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40716",
+      "canonicalName": "豐安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40716",
+      "tileBinding": {
+        "jurisdictionId": "40716",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40716"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40716",
+        "nameCh": "丰安县",
+        "nameFt": "豐安縣",
+        "beginYear": 195,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40722",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40722",
+      "canonicalName": "吳寧",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40722",
+      "tileBinding": {
+        "jurisdictionId": "40722",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40722"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40722",
+        "nameCh": "吴宁县",
+        "nameFt": "吳寧縣",
+        "beginYear": 195,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40775",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40775",
+      "canonicalName": "始寧",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "會稽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0051",
+      "physicalPlaceRef": "chgis:v6:cnty:40775",
+      "tileBinding": {
+        "jurisdictionId": "40775",
+        "commanderyId": "PARENT-0051",
+        "seatPlaceId": "40775"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40775",
+        "nameCh": "始宁县",
+        "nameFt": "始寧縣",
+        "beginYear": 129,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40111",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40111",
+      "canonicalName": "海昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "吳郡",
+      "parentRef": "han-tiles-commandery:PARENT-0052",
+      "physicalPlaceRef": "chgis:v6:cnty:40111",
+      "tileBinding": {
+        "jurisdictionId": "40111",
+        "commanderyId": "PARENT-0052",
+        "seatPlaceId": "40111"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40111",
+        "nameCh": "海昌县",
+        "nameFt": "海昌縣",
+        "beginYear": 201,
+        "endYear": 257
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40132",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40132",
+      "canonicalName": "永安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "吳郡",
+      "parentRef": "han-tiles-commandery:PARENT-0052",
+      "physicalPlaceRef": "chgis:v6:cnty:40132",
+      "tileBinding": {
+        "jurisdictionId": "40132",
+        "commanderyId": "PARENT-0052",
+        "seatPlaceId": "40132"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40132",
+        "nameCh": "永安县",
+        "nameFt": "永安縣",
+        "beginYear": 194,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40165",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40165",
+      "canonicalName": "東部侯官",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40165",
+      "tileBinding": {
+        "jurisdictionId": "40165",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40165"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40165",
+        "nameCh": "东部侯官县",
+        "nameFt": "東部侯官縣",
+        "beginYear": 30,
+        "endYear": 259
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40228",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40228",
+      "canonicalName": "建安",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40228",
+      "tileBinding": {
+        "jurisdictionId": "40228",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40228"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40228",
+        "nameCh": "建安县",
+        "nameFt": "建安縣",
+        "beginYear": 196,
+        "endYear": 1911
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40303",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40303",
+      "canonicalName": "南平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40303",
+      "tileBinding": {
+        "jurisdictionId": "40303",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40303"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40303",
+        "nameCh": "南平县",
+        "nameFt": "南平縣",
+        "beginYear": 196,
+        "endYear": 281
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40861",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40861",
+      "canonicalName": "楊都",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40861",
+      "tileBinding": {
+        "jurisdictionId": "40861",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40861"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40861",
+        "nameCh": "杨都县",
+        "nameFt": "楊都縣",
+        "beginYear": 220,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40885",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40885",
+      "canonicalName": "高昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40885",
+      "tileBinding": {
+        "jurisdictionId": "40885",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40885"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40885",
+        "nameCh": "高昌县",
+        "nameFt": "高昌縣",
+        "beginYear": 191,
+        "endYear": 534
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40889",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40889",
+      "canonicalName": "西昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40889",
+      "tileBinding": {
+        "jurisdictionId": "40889",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40889"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40889",
+        "nameCh": "西昌县",
+        "nameFt": "西昌縣",
+        "beginYear": 191,
+        "endYear": 590
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40918",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40918",
+      "canonicalName": "遂興",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40918",
+      "tileBinding": {
+        "jurisdictionId": "40918",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40918"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40918",
+        "nameCh": "遂兴县",
+        "nameFt": "遂興縣",
+        "beginYear": 199,
+        "endYear": 221
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40958",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40958",
+      "canonicalName": "漢平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:40958",
+      "tileBinding": {
+        "jurisdictionId": "40958",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "40958"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40958",
+        "nameCh": "汉平县",
+        "nameFt": "漢平縣",
+        "beginYear": 185,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41097",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41097",
+      "canonicalName": "富城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41097",
+      "tileBinding": {
+        "jurisdictionId": "41097",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41097"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41097",
+        "nameCh": "富城县",
+        "nameFt": "富城縣",
+        "beginYear": 210,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41111",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41111",
+      "canonicalName": "新吳",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41111",
+      "tileBinding": {
+        "jurisdictionId": "41111",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41111"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41111",
+        "nameCh": "新吴县",
+        "nameFt": "新吳縣",
+        "beginYear": 185,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41136",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41136",
+      "canonicalName": "海昏",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41136",
+      "tileBinding": {
+        "jurisdictionId": "41136",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41136"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41136",
+        "nameCh": "海昏侯国",
+        "nameFt": "海昏侯國",
+        "beginYear": 23,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41142",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41142",
+      "canonicalName": "永修",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41142",
+      "tileBinding": {
+        "jurisdictionId": "41142",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41142"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41142",
+        "nameCh": "永修县",
+        "nameFt": "永修縣",
+        "beginYear": 185,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41220",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41220",
+      "canonicalName": "上蔡",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41220",
+      "tileBinding": {
+        "jurisdictionId": "41220",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41220"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41220",
+        "nameCh": "上蔡县",
+        "nameFt": "上蔡縣",
+        "beginYear": 185,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41224",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41224",
+      "canonicalName": "宜豐",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "豫章郡",
+      "parentRef": "han-tiles-commandery:PARENT-0053",
+      "physicalPlaceRef": "chgis:v6:cnty:41224",
+      "tileBinding": {
+        "jurisdictionId": "41224",
+        "commanderyId": "PARENT-0053",
+        "seatPlaceId": "41224"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41224",
+        "nameCh": "宜丰县",
+        "nameFt": "宜豐縣",
+        "beginYear": 200,
+        "endYear": 418
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200048",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200048",
+      "canonicalName": "褒中",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "chgis:v6:cnty:200048",
+      "tileBinding": {
+        "jurisdictionId": "200048",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "200048"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200048",
+        "nameCh": "褒中县",
+        "nameFt": "褒中縣",
+        "beginYear": -75,
+        "endYear": 228
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45930",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45930",
+      "canonicalName": "綏陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "chgis:v6:cnty:45930",
+      "tileBinding": {
+        "jurisdictionId": "45930",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "45930"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45930",
+        "nameCh": "绥阳县",
+        "nameFt": "綏陽縣",
+        "beginYear": 220,
+        "endYear": 226
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45949",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45949",
+      "canonicalName": "武陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "chgis:v6:cnty:45949",
+      "tileBinding": {
+        "jurisdictionId": "45949",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "45949"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45949",
+        "nameCh": "武陵县",
+        "nameFt": "武陵縣",
+        "beginYear": 220,
+        "endYear": 576
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-71009",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:71009",
+      "canonicalName": "龍亭",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢中郡",
+      "parentRef": "han-tiles-commandery:PARENT-0054",
+      "physicalPlaceRef": "chgis:v6:cnty:71009",
+      "tileBinding": {
+        "jurisdictionId": "71009",
+        "commanderyId": "PARENT-0054",
+        "seatPlaceId": "71009"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "71009",
+        "nameCh": "龙亭侯国",
+        "nameFt": "龍亭侯國",
+        "beginYear": 114,
+        "endYear": 514
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44505",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44505",
+      "canonicalName": "漢豐",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "chgis:v6:cnty:44505",
+      "tileBinding": {
+        "jurisdictionId": "44505",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "44505"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44505",
+        "nameCh": "汉丰县",
+        "nameFt": "漢豐縣",
+        "beginYear": 216,
+        "endYear": 552
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44515",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44515",
+      "canonicalName": "羊渠",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "chgis:v6:cnty:44515",
+      "tileBinding": {
+        "jurisdictionId": "44515",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "44515"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44515",
+        "nameCh": "羊渠县",
+        "nameFt": "羊渠縣",
+        "beginYear": 216,
+        "endYear": 229
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44587",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44587",
+      "canonicalName": "漢壽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "chgis:v6:cnty:44587",
+      "tileBinding": {
+        "jurisdictionId": "44587",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "44587"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44587",
+        "nameCh": "汉寿县",
+        "nameFt": "漢壽縣",
+        "beginYear": 217,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44621",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44621",
+      "canonicalName": "漢昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴郡",
+      "parentRef": "han-tiles-commandery:PARENT-0055",
+      "physicalPlaceRef": "chgis:v6:cnty:44621",
+      "tileBinding": {
+        "jurisdictionId": "44621",
+        "commanderyId": "PARENT-0055",
+        "seatPlaceId": "44621"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44621",
+        "nameCh": "汉昌县",
+        "nameFt": "漢昌縣",
+        "beginYear": 96,
+        "endYear": 524
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-96436",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:96436",
+      "canonicalName": "蠶陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "蜀郡",
+      "parentRef": "han-tiles-commandery:PARENT-0057",
+      "physicalPlaceRef": "chgis:v6:cnty:96436",
+      "tileBinding": {
+        "jurisdictionId": "96436",
+        "commanderyId": "PARENT-0057",
+        "seatPlaceId": "96436"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "96436",
+        "nameCh": "蚕陵县",
+        "nameFt": "蠶陵縣",
+        "beginYear": 23,
+        "endYear": 346
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45458",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45458",
+      "canonicalName": "南昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "犍為郡",
+      "parentRef": "han-tiles-commandery:PARENT-0058",
+      "physicalPlaceRef": "chgis:v6:cnty:45458",
+      "tileBinding": {
+        "jurisdictionId": "45458",
+        "commanderyId": "PARENT-0058",
+        "seatPlaceId": "45458"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45458",
+        "nameCh": "南昌县",
+        "nameFt": "南昌縣",
+        "beginYear": 214,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-99341",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:99341",
+      "canonicalName": "談稿",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "牂牁郡",
+      "parentRef": "han-tiles-commandery:PARENT-0059",
+      "physicalPlaceRef": "chgis:v6:cnty:99341",
+      "tileBinding": {
+        "jurisdictionId": "99341",
+        "commanderyId": "PARENT-0059",
+        "seatPlaceId": "99341"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "99341",
+        "nameCh": "谈稿县",
+        "nameFt": "談稿縣",
+        "beginYear": -111,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200281",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200281",
+      "canonicalName": "笮秦",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "越巂郡",
+      "parentRef": "han-tiles-commandery:PARENT-0060",
+      "physicalPlaceRef": "chgis:v6:cnty:200281",
+      "tileBinding": {
+        "jurisdictionId": "200281",
+        "commanderyId": "PARENT-0060",
+        "seatPlaceId": "200281"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200281",
+        "nameCh": "笮秦县",
+        "nameFt": "笮秦縣",
+        "beginYear": -111,
+        "endYear": 224
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200284",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200284",
+      "canonicalName": "定笮",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "越巂郡",
+      "parentRef": "han-tiles-commandery:PARENT-0060",
+      "physicalPlaceRef": "chgis:v6:cnty:200284",
+      "tileBinding": {
+        "jurisdictionId": "200284",
+        "commanderyId": "PARENT-0060",
+        "seatPlaceId": "200284"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200284",
+        "nameCh": "定笮县",
+        "nameFt": "定笮縣",
+        "beginYear": -111,
+        "endYear": 486
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45547",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45547",
+      "canonicalName": "弄棟",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "越巂郡",
+      "parentRef": "han-tiles-commandery:PARENT-0060",
+      "physicalPlaceRef": "chgis:v6:cnty:45547",
+      "tileBinding": {
+        "jurisdictionId": "45547",
+        "commanderyId": "PARENT-0060",
+        "seatPlaceId": "45547"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45547",
+        "nameCh": "弄栋县",
+        "nameFt": "弄棟縣",
+        "beginYear": -109,
+        "endYear": 548
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45381",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45381",
+      "canonicalName": "嶲唐",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "永昌郡",
+      "parentRef": "han-tiles-commandery:PARENT-0062",
+      "physicalPlaceRef": "chgis:v6:cnty:45381",
+      "tileBinding": {
+        "jurisdictionId": "45381",
+        "commanderyId": "PARENT-0062",
+        "seatPlaceId": "45381"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45381",
+        "nameCh": "嶲唐县",
+        "nameFt": "嶲唐縣",
+        "beginYear": -109,
+        "endYear": 342
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-96006",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:96006",
+      "canonicalName": "廣武",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "廣漢屬國",
+      "parentRef": "han-tiles-commandery:PARENT-0063",
+      "physicalPlaceRef": "chgis:v6:cnty:96006",
+      "tileBinding": {
+        "jurisdictionId": "96006",
+        "commanderyId": "PARENT-0063",
+        "seatPlaceId": "96006"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "96006",
+        "nameCh": "广武县",
+        "nameFt": "廣武縣",
+        "beginYear": 215,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70033",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70033",
+      "canonicalName": "新興",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "隴西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0066",
+      "physicalPlaceRef": "chgis:v6:cnty:70033",
+      "tileBinding": {
+        "jurisdictionId": "70033",
+        "commanderyId": "PARENT-0066",
+        "seatPlaceId": "70033"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70033",
+        "nameCh": "新兴县",
+        "nameFt": "新興縣",
+        "beginYear": 188,
+        "endYear": 557
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70156",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70156",
+      "canonicalName": "鶉陰",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "金城郡",
+      "parentRef": "han-tiles-commandery:PARENT-0069",
+      "physicalPlaceRef": "chgis:v6:cnty:70156",
+      "tileBinding": {
+        "jurisdictionId": "70156",
+        "commanderyId": "PARENT-0069",
+        "seatPlaceId": "70156"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70156",
+        "nameCh": "鹑阴县",
+        "nameFt": "鶉陰縣",
+        "beginYear": -114,
+        "endYear": 265
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70186",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70186",
+      "canonicalName": "涇陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "安定郡",
+      "parentRef": "han-tiles-commandery:PARENT-0070",
+      "physicalPlaceRef": "chgis:v6:cnty:70186",
+      "tileBinding": {
+        "jurisdictionId": "70186",
+        "commanderyId": "PARENT-0070",
+        "seatPlaceId": "70186"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70186",
+        "nameCh": "泾阳县",
+        "nameFt": "涇陽縣",
+        "beginYear": 161,
+        "endYear": 534
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70523",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70523",
+      "canonicalName": "富平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "北地郡",
+      "parentRef": "han-tiles-commandery:PARENT-0071",
+      "physicalPlaceRef": "chgis:v6:cnty:70523",
+      "tileBinding": {
+        "jurisdictionId": "70523",
+        "commanderyId": "PARENT-0071",
+        "seatPlaceId": "70523"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70523",
+        "nameCh": "富平县",
+        "nameFt": "富平縣",
+        "beginYear": 111,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70598",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70598",
+      "canonicalName": "淵泉",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "酒泉郡",
+      "parentRef": "han-tiles-commandery:PARENT-0074",
+      "physicalPlaceRef": "chgis:v6:cnty:70598",
+      "tileBinding": {
+        "jurisdictionId": "70598",
+        "commanderyId": "PARENT-0074",
+        "seatPlaceId": "70598"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70598",
+        "nameCh": "渊泉县",
+        "nameFt": "淵泉縣",
+        "beginYear": -88,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0076-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0076-SEAT",
+      "canonicalName": "候官",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "張掖屬國",
+      "parentRef": "han-tiles-commandery:PARENT-0076",
+      "physicalPlaceRef": "external:v1:X027",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0076-SEAT",
+        "commanderyId": "PARENT-0076",
+        "seatPlaceId": "X027"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0076-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95061",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95061",
+      "canonicalName": "浧陶",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鴈門郡",
+      "parentRef": "han-tiles-commandery:PARENT-0085",
+      "physicalPlaceRef": "chgis:v6:cnty:95061",
+      "tileBinding": {
+        "jurisdictionId": "95061",
+        "commanderyId": "PARENT-0085",
+        "seatPlaceId": "95061"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95061",
+        "nameCh": "浧陶县",
+        "nameFt": "浧陶縣",
+        "beginYear": -201,
+        "endYear": 309
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87297",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87297",
+      "canonicalName": "易城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "涿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0087",
+      "physicalPlaceRef": "chgis:v6:cnty:87297",
+      "tileBinding": {
+        "jurisdictionId": "87297",
+        "commanderyId": "PARENT-0087",
+        "seatPlaceId": "87297"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87297",
+        "nameCh": "易城县",
+        "nameFt": "易城縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87301",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87301",
+      "canonicalName": "容城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "涿郡",
+      "parentRef": "han-tiles-commandery:PARENT-0087",
+      "physicalPlaceRef": "chgis:v6:cnty:87301",
+      "tileBinding": {
+        "jurisdictionId": "87301",
+        "commanderyId": "PARENT-0087",
+        "seatPlaceId": "87301"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87301",
+        "nameCh": "容城县",
+        "nameFt": "容城縣",
+        "beginYear": 215,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87424",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87424",
+      "canonicalName": "桑幹",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "上谷郡",
+      "parentRef": "han-tiles-commandery:PARENT-0090",
+      "physicalPlaceRef": "chgis:v6:cnty:87424",
+      "tileBinding": {
+        "jurisdictionId": "87424",
+        "commanderyId": "PARENT-0090",
+        "seatPlaceId": "87424"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87424",
+        "nameCh": "桑干县",
+        "nameFt": "桑幹縣",
+        "beginYear": 23,
+        "endYear": 220
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87638",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87638",
+      "canonicalName": "下洛",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "上谷郡",
+      "parentRef": "han-tiles-commandery:PARENT-0090",
+      "physicalPlaceRef": "chgis:v6:cnty:87638",
+      "tileBinding": {
+        "jurisdictionId": "87638",
+        "commanderyId": "PARENT-0090",
+        "seatPlaceId": "87638"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87638",
+        "nameCh": "下洛县",
+        "nameFt": "下洛縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42352",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42352",
+      "canonicalName": "端溪",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "蒼梧郡",
+      "parentRef": "han-tiles-commandery:PARENT-0099",
+      "physicalPlaceRef": "chgis:v6:cnty:42352",
+      "tileBinding": {
+        "jurisdictionId": "42352",
+        "commanderyId": "PARENT-0099",
+        "seatPlaceId": "42352"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42352",
+        "nameCh": "端溪县",
+        "nameFt": "端溪縣",
+        "beginYear": -111,
+        "endYear": 1375
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-95375",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:95375",
+      "canonicalName": "樂平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "樂平郡",
+      "parentRef": "han-tiles-commandery:PARENT-0106",
+      "physicalPlaceRef": "chgis:v6:cnty:95375",
+      "tileBinding": {
+        "jurisdictionId": "95375",
+        "commanderyId": "PARENT-0106",
+        "seatPlaceId": "95375"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "95375",
+        "nameCh": "乐平县",
+        "nameFt": "樂平縣",
+        "beginYear": 215,
+        "endYear": 447
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0107-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0107-SEAT",
+      "canonicalName": "樂陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "樂陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0107",
+      "physicalPlaceRef": "chgis:v6:pref:210487",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0107-SEAT",
+        "commanderyId": "PARENT-0107",
+        "seatPlaceId": "210487"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0107-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44564",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44564",
+      "canonicalName": "西充國",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0129",
+      "physicalPlaceRef": "chgis:v6:cnty:44564",
+      "tileBinding": {
+        "jurisdictionId": "44564",
+        "commanderyId": "PARENT-0129",
+        "seatPlaceId": "44564"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44564",
+        "nameCh": "西充国县",
+        "nameFt": "西充國縣",
+        "beginYear": 193,
+        "endYear": 305
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-44570",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:44570",
+      "canonicalName": "南充國",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "巴西郡",
+      "parentRef": "han-tiles-commandery:PARENT-0129",
+      "physicalPlaceRef": "chgis:v6:cnty:44570",
+      "tileBinding": {
+        "jurisdictionId": "44570",
+        "commanderyId": "PARENT-0129",
+        "seatPlaceId": "44570"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "44570",
+        "nameCh": "南充国县",
+        "nameFt": "南充國縣",
+        "beginYear": 193,
+        "endYear": 434
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0130-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0130-SEAT",
+      "canonicalName": "帶方",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "帶方郡",
+      "parentRef": "han-tiles-commandery:PARENT-0130",
+      "physicalPlaceRef": "external:v1:X004",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0130-SEAT",
+        "commanderyId": "PARENT-0130",
+        "seatPlaceId": "X004"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0130-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0132-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0132-SEAT",
+      "canonicalName": "臨渭",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "廣魏郡",
+      "parentRef": "han-tiles-commandery:PARENT-0132",
+      "physicalPlaceRef": "chgis:v6:pref:211782",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0132-SEAT",
+        "commanderyId": "PARENT-0132",
+        "seatPlaceId": "211782"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0132-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40899",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40899",
+      "canonicalName": "陽城",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0133",
+      "physicalPlaceRef": "chgis:v6:cnty:40899",
+      "tileBinding": {
+        "jurisdictionId": "40899",
+        "commanderyId": "PARENT-0133",
+        "seatPlaceId": "40899"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40899",
+        "nameCh": "阳城县",
+        "nameFt": "陽城縣",
+        "beginYear": 191,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40940",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40940",
+      "canonicalName": "興平",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "廬陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0133",
+      "physicalPlaceRef": "chgis:v6:cnty:40940",
+      "tileBinding": {
+        "jurisdictionId": "40940",
+        "commanderyId": "PARENT-0133",
+        "seatPlaceId": "40940"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40940",
+        "nameCh": "兴平县",
+        "nameFt": "興平縣",
+        "beginYear": 194,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40957",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40957",
+      "canonicalName": "巴丘",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "廬陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0133",
+      "physicalPlaceRef": "chgis:v6:cnty:40957",
+      "tileBinding": {
+        "jurisdictionId": "40957",
+        "commanderyId": "PARENT-0133",
+        "seatPlaceId": "40957"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40957",
+        "nameCh": "巴丘县",
+        "nameFt": "巴丘縣",
+        "beginYear": 200,
+        "endYear": 590
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0138-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0138-SEAT",
+      "canonicalName": "九原",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "新興郡",
+      "parentRef": "han-tiles-commandery:PARENT-0138",
+      "physicalPlaceRef": "chgis:v6:pref:210009",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0138-SEAT",
+        "commanderyId": "PARENT-0138",
+        "seatPlaceId": "210009"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0138-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200173",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200173",
+      "canonicalName": "安富",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "新城郡",
+      "parentRef": "han-tiles-commandery:PARENT-0139",
+      "physicalPlaceRef": "chgis:v6:cnty:200173",
+      "tileBinding": {
+        "jurisdictionId": "200173",
+        "commanderyId": "PARENT-0139",
+        "seatPlaceId": "200173"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200173",
+        "nameCh": "安富县",
+        "nameFt": "安富縣",
+        "beginYear": 220,
+        "endYear": 488
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40804",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40804",
+      "canonicalName": "始新",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "新都郡",
+      "parentRef": "han-tiles-commandery:PARENT-0141",
+      "physicalPlaceRef": "chgis:v6:cnty:40804",
+      "tileBinding": {
+        "jurisdictionId": "40804",
+        "commanderyId": "PARENT-0141",
+        "seatPlaceId": "40804"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40804",
+        "nameCh": "始新县",
+        "nameFt": "始新縣",
+        "beginYear": 208,
+        "endYear": 588
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-40820",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:40820",
+      "canonicalName": "新定",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "新都郡",
+      "parentRef": "han-tiles-commandery:PARENT-0141",
+      "physicalPlaceRef": "chgis:v6:cnty:40820",
+      "tileBinding": {
+        "jurisdictionId": "40820",
+        "commanderyId": "PARENT-0141",
+        "seatPlaceId": "40820"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "40820",
+        "nameCh": "新定县",
+        "nameFt": "新定縣",
+        "beginYear": 208,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41729",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41729",
+      "canonicalName": "劉陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "漢昌郡",
+      "parentRef": "han-tiles-commandery:PARENT-0146",
+      "physicalPlaceRef": "chgis:v6:cnty:41729",
+      "tileBinding": {
+        "jurisdictionId": "41729",
+        "commanderyId": "PARENT-0146",
+        "seatPlaceId": "41729"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41729",
+        "nameCh": "刘阳县",
+        "nameFt": "劉陽縣",
+        "beginYear": 196,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42093",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42093",
+      "canonicalName": "漢昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "漢昌郡",
+      "parentRef": "han-tiles-commandery:PARENT-0146",
+      "physicalPlaceRef": "chgis:v6:cnty:42093",
+      "tileBinding": {
+        "jurisdictionId": "42093",
+        "commanderyId": "PARENT-0146",
+        "seatPlaceId": "42093"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42093",
+        "nameCh": "汉昌县",
+        "nameFt": "漢昌縣",
+        "beginYear": 147,
+        "endYear": 221
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-200176",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:200176",
+      "canonicalName": "丹興",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "涪陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0150",
+      "physicalPlaceRef": "chgis:v6:cnty:200176",
+      "tileBinding": {
+        "jurisdictionId": "200176",
+        "commanderyId": "PARENT-0150",
+        "seatPlaceId": "200176"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "200176",
+        "nameCh": "丹兴县",
+        "nameFt": "丹興縣",
+        "beginYear": 201,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-JURISDICTION-PARENT-0154-SEAT",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:JURISDICTION-PARENT-0154-SEAT",
+      "canonicalName": "甘陵",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "甘陵郡",
+      "parentRef": "han-tiles-commandery:PARENT-0154",
+      "physicalPlaceRef": "chgis:v6:pref:210369",
+      "tileBinding": {
+        "jurisdictionId": "JURISDICTION-PARENT-0154-SEAT",
+        "commanderyId": "PARENT-0154",
+        "seatPlaceId": "210369"
+      },
+      "evidence": {
+        "kind": "JURISDICTION_SEAT_RECOVERY",
+        "datasetPath": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+        "datasetSha256": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
+        "jurisdictionId": "JURISDICTION-PARENT-0154-SEAT"
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-45696",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:45696",
+      "canonicalName": "中廬",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "襄陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0160",
+      "physicalPlaceRef": "chgis:v6:cnty:45696",
+      "tileBinding": {
+        "jurisdictionId": "45696",
+        "commanderyId": "PARENT-0160",
+        "seatPlaceId": "45696"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "45696",
+        "nameCh": "中庐县",
+        "nameFt": "中廬縣",
+        "beginYear": 208,
+        "endYear": 551
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-70620",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:70620",
+      "canonicalName": "西都",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "西平郡",
+      "parentRef": "han-tiles-commandery:PARENT-0162",
+      "physicalPlaceRef": "chgis:v6:cnty:70620",
+      "tileBinding": {
+        "jurisdictionId": "70620",
+        "commanderyId": "PARENT-0162",
+        "seatPlaceId": "70620"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "70620",
+        "nameCh": "西都县",
+        "nameFt": "西都縣",
+        "beginYear": -208,
+        "endYear": 460
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41170",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41170",
+      "canonicalName": "余汗",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鄱陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0166",
+      "physicalPlaceRef": "chgis:v6:cnty:41170",
+      "tileBinding": {
+        "jurisdictionId": "41170",
+        "commanderyId": "PARENT-0166",
+        "seatPlaceId": "41170"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41170",
+        "nameCh": "余汗县",
+        "nameFt": "余汗縣",
+        "beginYear": 23,
+        "endYear": 419
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41195",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41195",
+      "canonicalName": "廣昌",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鄱陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0166",
+      "physicalPlaceRef": "chgis:v6:cnty:41195",
+      "tileBinding": {
+        "jurisdictionId": "41195",
+        "commanderyId": "PARENT-0166",
+        "seatPlaceId": "41195"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41195",
+        "nameCh": "广昌县",
+        "nameFt": "廣昌縣",
+        "beginYear": 210,
+        "endYear": 279
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41198",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41198",
+      "canonicalName": "上饒",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鄱陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0166",
+      "physicalPlaceRef": "chgis:v6:cnty:41198",
+      "tileBinding": {
+        "jurisdictionId": "41198",
+        "commanderyId": "PARENT-0166",
+        "seatPlaceId": "41198"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41198",
+        "nameCh": "上饶县",
+        "nameFt": "上饒縣",
+        "beginYear": 199,
+        "endYear": 315
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-41202",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:41202",
+      "canonicalName": "葛陽",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鄱陽郡",
+      "parentRef": "han-tiles-commandery:PARENT-0166",
+      "physicalPlaceRef": "chgis:v6:cnty:41202",
+      "tileBinding": {
+        "jurisdictionId": "41202",
+        "commanderyId": "PARENT-0166",
+        "seatPlaceId": "41202"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "41202",
+        "nameCh": "葛阳县",
+        "nameFt": "葛陽縣",
+        "beginYear": 199,
+        "endYear": 591
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87273",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87273",
+      "canonicalName": "棗強",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "長樂郡",
+      "parentRef": "han-tiles-commandery:PARENT-0167",
+      "physicalPlaceRef": "chgis:v6:cnty:87273",
+      "tileBinding": {
+        "jurisdictionId": "87273",
+        "commanderyId": "PARENT-0167",
+        "seatPlaceId": "87273"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87273",
+        "nameCh": "枣强县",
+        "nameFt": "棗強縣",
+        "beginYear": 220,
+        "endYear": 316
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42277",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42277",
+      "canonicalName": "臨允",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "高涼郡",
+      "parentRef": "han-tiles-commandery:PARENT-0169",
+      "physicalPlaceRef": "chgis:v6:cnty:42277",
+      "tileBinding": {
+        "jurisdictionId": "42277",
+        "commanderyId": "PARENT-0169",
+        "seatPlaceId": "42277"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42277",
+        "nameCh": "临允县",
+        "nameFt": "臨允縣",
+        "beginYear": -111,
+        "endYear": 478
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-42301",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:42301",
+      "canonicalName": "安寧",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "高涼郡",
+      "parentRef": "han-tiles-commandery:PARENT-0169",
+      "physicalPlaceRef": "chgis:v6:cnty:42301",
+      "tileBinding": {
+        "jurisdictionId": "42301",
+        "commanderyId": "PARENT-0169",
+        "seatPlaceId": "42301"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "42301",
+        "nameCh": "安宁县",
+        "nameFt": "安寧縣",
+        "beginYear": 220,
+        "endYear": 510
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-87125",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:87125",
+      "canonicalName": "廣寧",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "鮮卑",
+      "parentRef": "han-tiles-commandery:PARENT-0170",
+      "physicalPlaceRef": "chgis:v6:cnty:87125",
+      "tileBinding": {
+        "jurisdictionId": "87125",
+        "commanderyId": "PARENT-0170",
+        "seatPlaceId": "87125"
+      },
+      "evidence": {
+        "kind": "CHGIS_V6_COUNTY_POINT",
+        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
+        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "sysId": "87125",
+        "nameCh": "广宁县",
+        "nameFt": "廣寧縣",
+        "beginYear": 23,
+        "endYear": 264
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "jurisdictionId": "70634",
+      "seatPlaceId": "70634",
+      "nameCh": "杜",
+      "commanderyNameCh": "京兆尹",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 5,
+      "detail": "杜(220–264)는 杜陵(23–264)과 같은 자리 杜城이다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "85064",
+      "seatPlaceId": "85064",
+      "nameCh": "鄄良县",
+      "commanderyNameCh": "濟陰郡",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 285,
+      "detail": "鄄良縣(14–220)은 鄄城縣(23–434)과 같은 자리다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "85281",
+      "seatPlaceId": "85281",
+      "nameCh": "益都县",
+      "commanderyNameCh": "樂安國",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 382,
+      "detail": "益都縣(220–555)은 益侯國(75–220)의 개명이다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "85377",
+      "seatPlaceId": "85377",
+      "nameCh": "㡉县",
+      "commanderyNameCh": "東萊郡",
+      "reason": "SAME_PLACE_AS_CANDIDATE",
+      "keptJurisdictionId": "85376",
+      "detail": "㡉縣(220–555)은 㡉侯國(30–220)의 개명이다 — 㡉侯國을 세운다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "45748",
+      "seatPlaceId": "45748",
+      "nameCh": "赞县",
+      "commanderyNameCh": "南陽郡",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 411,
+      "detail": "贊縣(220–222)과 陰縣은 CHGIS 좌표가 같다(乾德故城).",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
+      "seatPlaceId": "X023",
+      "nameCh": "離石縣",
+      "commanderyNameCh": "西河郡",
+      "reason": "ALREADY_ROUTE_NODE",
+      "routeNodeCityId": 834,
+      "detail": "治所 점이 이미 경로 노드다. 省 연결은 build_han_world 대리 治所 省 규칙이 붙인다."
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT",
+      "seatPlaceId": "X024",
+      "nameCh": "善無縣",
+      "commanderyNameCh": "定襄郡",
+      "reason": "ALREADY_ROUTE_NODE",
+      "routeNodeCityId": 835,
+      "detail": "治所 점이 이미 경로 노드다. 省 연결은 build_han_world 대리 治所 省 규칙이 붙인다."
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT",
+      "seatPlaceId": "X011",
+      "nameCh": "臨戎縣",
+      "commanderyNameCh": "朔方郡",
+      "reason": "ALREADY_ROUTE_NODE",
+      "routeNodeCityId": 833,
+      "detail": "治所 점이 이미 경로 노드다. 省 연결은 build_han_world 대리 治所 省 규칙이 붙인다."
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+      "seatPlaceId": "211738",
+      "nameCh": "漆縣",
+      "commanderyNameCh": "新平郡",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 80,
+      "detail": "新平郡 治所 漆縣은 右扶風에서 이속된 漆縣(0.02 km)이다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+      "seatPlaceId": "32365",
+      "nameCh": "毗陵縣",
+      "commanderyNameCh": "毗陵典農校尉",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 848,
+      "detail": "毗陵典農校尉 治所는 毘陵縣(848)과 경위도가 같다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+      "seatPlaceId": "211064",
+      "nameCh": "汶山縣",
+      "commanderyNameCh": "汶山郡",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 846,
+      "detail": "汶山郡 治所 汶山縣은 綿虒道(846)와 같은 자리다(0.02 km).",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
+      "seatPlaceId": "87628",
+      "nameCh": "東平舒縣",
+      "commanderyNameCh": "章武郡",
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "routeNodeCityId": 191,
+      "detail": "章武郡 治所 東平舒縣은 河閒國 東平舒縣(191)과 1.04 km 다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+    }
+  ]
+}

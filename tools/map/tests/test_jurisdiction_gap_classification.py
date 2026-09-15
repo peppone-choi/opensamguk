@@ -8,7 +8,7 @@
 - STATIC_NEUTRAL: 대응 도시 없이 기준 소유 0 (중립색, 설계상 정상)
 - STATIC_OWNED: 대응 도시 없이 기준 소유 균일 (색칠됨, 공백 아님)
 - STATIC_SPLIT_ALLOWLIST: 대응 도시 없이 혼합 + 충돌 허용 원장 등재 (심사 분할)
-- EXTERNAL: 타일 관할 자체가 없는 외부 명의 (routeKey 핀 4건)
+- EXTERNAL: 타일 관할 자체가 없는 외부 명의 — 2026-09-15 부로 0건이다
 - ORPHAN_LAND: R2 위반 (육지 무소속) — 별도 게이트와 이중으로 잡는다
 
 개수·이름을 고정하지 않는다. 새로 들어오는 도시·관할은 위 분류 중 하나에 반드시
@@ -26,14 +26,10 @@ OWNERSHIP = ROOT / "data" / "map" / "han-scenario-province-ownership-v1.json"
 ALLOWLIST = ROOT / "data" / "map" / "han-scenario-jurisdiction-conflict-allowlist-v1.json"
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
 
-# 외부 명의로 타일 관할이 없는 도시 (routeNodeKey 핀). 704 龜茲屬國 + 城 없던 郡治
-# 833–835(朔方·西河·定襄). 새 외부 도시가 생기면 분류에 추가해야 실패가 풀린다.
-KNOWN_EXTERNAL_ROUTE_KEYS = frozenset({
-    "9e8250ce-7619-4da4-8924-929bd0260db1",
-    "60e964d2-fa8a-49d7-a07a-85b70d987b76",
-    "332fa1c1-c727-47b8-b935-af0222ad0a39",
-    "50661067-a838-49f6-b685-f8b663ac6360",
-})
+# 외부 명의로 타일 관할이 없는 도시 (routeNodeKey 핀). 704 龜茲屬國과 城 없던 郡治
+# 833–835(朔方·西河·定襄)는 2026-09-15 대리 治所 省 규칙(build_han_world.stand_in_seat_provinces)으로
+# 제 직할 省을 얻어 이 목록에서 빠졌다. 새 외부 도시가 생기면 분류에 추가해야 실패가 풀린다.
+KNOWN_EXTERNAL_ROUTE_KEYS = frozenset()
 
 
 def classify():

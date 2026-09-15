@@ -7,9 +7,10 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 848,
+    "routeNodeCount": 1097,
     "sourcePlaceholderCount": 0,
-    "frontierCountyClaimCount": 51
+    "frontierCountyClaimCount": 51,
+    "reviewedSourceClaimBindingCount": 249
   },
   "forbiddenSelections": {
     "canonicalNames": [
@@ -32,7 +33,6 @@
       "ALIAS_ONLY"
     ],
     "physicalPlaceIds": [
-      "external:v1:X004",
       "external:v1:X028",
       "external:v1:X029",
       "external:v1:X030",
@@ -70,7 +70,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8"
+      "sha256": "cae8128650b22325519e333b4a0d1386b5528b1f2c03515805dd4f090684a0e5"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -83,7 +83,15 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "25e405205b3a773ef10e669fc70c7da4c5ab475755cfe6419e0cd22caf9d3312"
+      "sha256": "eedf62ce4648e22f41650a3503f018d69e0fbe475ea428376695fad167f2dadd"
+    },
+    "jurisdictionRouteClaims": {
+      "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
+      "sha256": "22734281a19a5f40cfadd9d5c9e40973749d0f7eacbfb663b308b6f202d435c4"
+    },
+    "strategicSiteRouteClaims": {
+      "path": "data/curated/han/route-node-strategic-site-claims-v1.json",
+      "sha256": "58759310ca6cfdebb58c1f75b03de716f599e31a9de70ec1315dc513d805ff99"
     }
   },
   "legacyAttributionCorrections": [
@@ -367,6 +375,22 @@
           "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_32365"
         ]
       }
+    },
+    {
+      "batchId": "w2-cityless-jurisdiction-route-claim",
+      "criteria": "han-tiles COUNTY jurisdiction without a route node, bound by an APPROVED route-node-jurisdiction-claims-v1 ROUTE_NODE claim",
+      "expectedCount": 176,
+      "reviewState": "APPROVED",
+      "selectionRationale": "지도 縣 관할 가운데 게임 城이 없어 빈 프로빈스로 남던 곳을 사용자 결정(2026-09-15, 188 곳 전부 승격)에 따라 경로 노드로 올린다. 郡國志 식별자가 없으므로 HHS 결속이 아니라 CHGIS 縣 점 또는 대리 治所 관할을 근거로 한 source claim 결속이다. 같은 자리의 동일 실체와 이미 경로 노드인 治所는 원장 excluded 에 남긴다.",
+      "claimLedger": "data/curated/han/route-node-jurisdiction-claims-v1.json"
+    },
+    {
+      "batchId": "w3-strategic-site-route-claim",
+      "criteria": "strategic-site-province-carves-v1 placement with an APPROVED route-node-strategic-site-claims-v1 ROUTE_NODE claim",
+      "expectedCount": 73,
+      "reviewState": "APPROVED",
+      "selectionRationale": "ADR-LITE-052 비현 거점(關·津·鎭)을 기존 城 등급 체계(수 1·진 2·관 3) 아래 경로 노드로 올린다. 正史 근거는 거점 원장에, 省 기하는 縣 省에서 떼어 낸 분할 원장에 있다(2026-09-15 사용자 결정).",
+      "claimLedger": "data/curated/han/route-node-strategic-site-claims-v1.json"
     }
   ],
   "status": "APPROVED",

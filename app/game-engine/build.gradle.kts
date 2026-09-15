@@ -166,6 +166,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // 판별 테스트는 등록된 한 세계 판 번들을 전부 한 JVM 에 올린다. 판마다 원문 ~26MB 와 투영이 캐시에 남아,
+    // 다섯 번째 판(han-world-v3-1097)부터 Gradle 기본 512MB 에서 힙이 찼다(PrecheckFullCrossCallSiteTest).
+    maxHeapSize = "1g"
     inputs.files(v2NamingConventionSources)
         .withPropertyName("v2NamingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)

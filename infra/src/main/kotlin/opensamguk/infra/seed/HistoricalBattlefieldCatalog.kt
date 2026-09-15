@@ -31,9 +31,15 @@ object HistoricalBattlefieldCatalog {
             // 城의 물리 장소는 출처에 따라 도메인이 셋이다 — CHGIS 표제(chgis), 중국 밖
             // 외부 정치체(external), 그리고 CHGIS 에 표제가 없어 심사 원장이 자체 발급한
             // 변경경계 縣(curated). 어느 쪽이든 접두어 뒤는 그 城의 省 id 와 같아야 한다.
+            // 縣 층 기록이 없는 대리 治所는 CHGIS 郡(pref) 층 점이고, 수·진·관 거점은 분할 원장이 발급한
+            // 장소다(curated:strategic-site-v1). 대리 治所 城(704·833–835·w2 대리 治所)은 제 점이 아니라
+            // 그 점이 선 郡 직할 省(DIRECT-…)에 앉는다 — build_han_world.stand_in_seat_provinces.
             val physical = row.get("physicalPlaceRef").textValue()
-            require(physical in setOf("chgis:v6:cnty:$province", "external:v1:$province",
-                "curated:frontier-county-v1:$province")) {
+            val sameId = physical in setOf("chgis:v6:cnty:$province", "chgis:v6:pref:$province", "external:v1:$province",
+                "curated:frontier-county-v1:$province", "curated:strategic-site-v1:$province")
+            val standInSeat = province.startsWith("DIRECT-") &&
+                listOf("chgis:v6:cnty:", "chgis:v6:pref:", "external:v1:").any { physical.startsWith(it) }
+            require(sameId || standInSeat) {
                 "Runtime city $id has inconsistent physical binding"
             }
             require(result.put(id, StrategicNodeRef.LandProvince(province)) == null) { "Duplicate runtime city" }

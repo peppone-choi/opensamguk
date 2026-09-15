@@ -8,7 +8,6 @@ import {
   type PlacedCity,
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
-import { PASS_LEVEL, STRATEGIC_PASSES } from '../iso/strategicPasses';
 import { RASTER_GROUP } from '../isoTileGrid';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -322,9 +321,9 @@ describe('firstPickableCity', () => {
   });
 });
 
-describe('placeGameCities 가 關 을 같이 세운다', () => {
-  // 투영·격자는 저장소의 실제 지형 표에서 읽는다. 여기가 배선 게이트다 —
-  // placeGameCities 에서 placeStrategicPasses 를 빼면 이 묶음이 빨개진다.
+describe('placeGameCities 는 표시 전용 거점을 덧대지 않는다', () => {
+  // 투영·격자는 저장소의 실제 지형 표에서 읽는다. 關 8 곳을 포함한 수·진·관 거점은 이제 게임 城
+  // (han-world-v3 1025–1097)이라 서버가 실어 보낸다. 여기서 또 세우면 같은 자리에 두 번 선다.
   const tiles = JSON.parse(
     readFileSync(resolve(__dirname, '../../../..', 'data/map/han-tiles.json'), 'utf-8'),
   ) as { _meta: { projection: unknown; cols: number; rows: number } };
@@ -339,36 +338,14 @@ describe('placeGameCities 가 關 을 같이 세운다', () => {
     projection: tiles._meta.projection,
   } as typeof data;
 
-  it('게임 城 이 하나도 없어도 關 8 곳은 선다', () => {
+  it('게임 城 이 하나도 없으면 關 도 서지 않는다', () => {
     const placed = placeGameCities([], real, options);
-    const passes = placed.filter((c) => c.level === PASS_LEVEL);
-    expect(passes).toHaveLength(STRATEGIC_PASSES.length);
-    expect(passes.map((p) => p.name).sort()).toEqual(
-      STRATEGIC_PASSES.map((p) => p.nameKo).sort(),
-    );
-    // 전부 음수 id — 눌러도 들어갈 데가 없다.
-    expect(passes.every(isExternalPlace)).toBe(true);
-  });
-
-  // 발자국 규약은 「정수 (col,row) 가 다이아몬드 **중심**」이다(fitFootprintsInTile 주석).
-  // 그래서 중심에서 벗어난 양의 마름모 노름이 1-drawScale 을 넘지 않아야 제 칸 안이다.
-  // 한 칸에 혼자면 drawScale 1 · 예산 0 이라 정확히 칸 한가운데에 선다.
-  const insideOwnTile = (city: PlacedCity) => {
-    const budget = 1 - city.drawScale + 1e-9;
-    expect(
-      Math.abs(city.drawCol - city.tileCol) + Math.abs(city.drawRow - city.tileRow),
-      city.name,
-    ).toBeLessThanOrEqual(budget);
-  };
-
-  it('關 도 fitFootprintsInTile 을 지난다 — 제 칸 안에 선다', () => {
-    const passes = placeGameCities([], real, options).filter((c) => c.level === PASS_LEVEL);
-    expect(passes.length).toBeGreaterThan(0);
-    for (const pass of passes) insideOwnTile(pass);
+    expect(placed.filter((c) => c.level === 3)).toHaveLength(0);
+    expect(placed.filter((c) => c.id <= -1_000_000)).toHaveLength(0);
   });
 
   // 변경 縣 51 곳은 더는 여기서 덧대지 않는다 — han-world-v3 城 782–832 로 서버가 실어
-  // 보낸다. 게임 城 이 하나도 없으면 關 8 곳과 郡國 밖 세력만 선다.
+  // 보낸다. 게임 城 이 하나도 없으면 郡國 밖 세력만 선다.
   it('게임 城 이 없으면 표시 전용 縣 은 한 곳도 없다', () => {
     const placed = placeGameCities([], real, options);
     expect(placed.filter((c) => c.id < -1_000_008)).toHaveLength(0);

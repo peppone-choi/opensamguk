@@ -22,7 +22,9 @@
 // 그 넷만 좌표 폴백을 쓴다. 폴백은 기존 캔버스의 mapCityToTile 과 같은 선형식이다.
 //
 // 郡國 밖 세력(EXTERNAL_PLACE)도 여기서 같이 앉힌다 — 중원과 다른 그림으로 그리지 않는다.
-// 자세한 것은 아래 placeExternalPlaces 주석. 關(관문)도 마찬가지로 덧댄다(strategicPasses.ts).
+// 자세한 것은 아래 placeExternalPlaces 주석. 關(관문)은 한때 여기서 표시 전용으로 덧댔지만(strategicPasses.ts),
+// 2026-09-15 부로 수·진·관 거점 73 곳이 han-tiles 省을 떼어 받아 han-world-v3 城 1025–1097 로 선다 —
+// 다른 城 과 같은 길로 들어오므로 덧대면 두 번 그려진다.
 // 변경 縣(交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 屬縣 51 곳)은 한때 여기서 표시 전용으로
 // 덧댔지만(PR #698 frontierCounties.ts), 2026-09-11 부로 han-tiles 縣 구획 → 경로 노드 →
 // han-world-v3 城 782–832 로 서버 세계에 들어갔다 — 다른 城 과 같은 길로 들어온다.
@@ -32,7 +34,6 @@ import { RASTER_GROUP } from '../isoTileGrid';
 import { isOwnedNationVisual } from '../nationVisual';
 import { externalPlaceLevel } from './externalPlaceTier';
 import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanMapCanvas';
-import { placeStrategicPasses } from './strategicPasses';
 
 /** 배치 입력. MapPreviewCity 에서 필요한 만큼만 뽑은 모양이다. */
 export interface GameCityInput {
@@ -191,11 +192,6 @@ export function placeGameCities(
   }
 
   placed.push(...placeExternalPlaces(data.cities, grid, covered));
-  // 關(관문)도 같이 세운다. 게임 城 목록에 없는 길목이라 여기서 덧대는 수밖에 없다 —
-  // 자세한 것과 근거는 strategicPasses.ts.
-  placed.push(...placeStrategicPasses(
-    data.projection, { cols: sourceCols, rows: sourceRows }, grid,
-  ));
   fitFootprintsInTile(placed);
   return placed;
 }

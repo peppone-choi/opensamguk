@@ -513,9 +513,31 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
     """
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
+    before, carved = carving.peel(document)
+    if carved is not None:
+        # 거점 省은 기증 縣 省에서 조각 수를 늘리지 않게 떼어 냈다(carve 규칙). 앞 단계 심사 행이 그대로
+        # 성립해야 하고, 떼어 낸 칸만큼 기증 조각의 cellCount 가 준 것이 이 단계의 전부다.
+        prior = check(before, ledger)
+        if prior["errors"]:
+            raise ValueError("prior territory review fails before the strategic-site carve: " + repr(prior["errors"]))
+        rows, projection = _reviewed_rows(before, ledger, rows)
+        stage = carving.stage_for(document, carved)
+        # 거점 관할은 기증 縣과 같은 郡이라 그 郡 조각의 구성원으로 들어간다. 앞 단계 행에서 달라진 것이
+        # 거점 id 가 더해진 것뿐일 때만 행을 투영한다 — 그 밖의 차이는 그대로 드리프트로 잡힌다.
+        site_ids = {row["placeId"] for row in stage["placements"]}
+        current = {row["componentKey"]: row for row in inventory(document)}
+        projected = []
+        for row in rows:
+            now = current.get(row["componentKey"])
+            added = set(now["memberIds"]) - set(row["memberIds"]) if now else set()
+            if now and added and added <= site_ids and set(row["memberIds"]) <= set(now["memberIds"]):
+                row = {**row, "memberIds": now["memberIds"], "memberNamesCh": now["memberNamesCh"]}
+            projected.append(row)
+        return projected, {"strategicSiteCarveStage": stage["outputDocumentSha256"], "priorProjection": projection}
     if frontier.PLACEMENTS.exists():
         placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
         stage = placements.get("priorStage")

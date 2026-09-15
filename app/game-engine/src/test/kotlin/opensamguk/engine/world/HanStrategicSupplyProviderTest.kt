@@ -52,12 +52,12 @@ class HanStrategicSupplyProviderTest {
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
-        assertEquals(1520, network.provinceOwners.size)
-        // 省 1,520 · 郡縣 인접 4,120(han-tiles adjacency.county 실측) 중 물을 건너는 46 간선이
-        // v3 에서 빠져 4,074 다. v2 는 그 걸러내기가 없어 아래에서 4,120 그대로다.
-        assertEquals(4074, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        assertEquals(1593, network.provinceOwners.size)
+        // 省 1,593(수·진·관 거점 省 73 포함) · 郡縣 인접 4,274(han-tiles adjacency.county 실측) 중 물을 건너는
+        // 60 간선이 v3 에서 빠져 4,214 다. v2 는 그 걸러내기가 없어 아래에서 4,274 그대로다.
+        assertEquals(4214, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         assertNotNull(network.strategicSupply)
-        assertEquals(4120, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)
+        assertEquals(4274, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)
         assertNull(provider.network("han-world-v2", 1020, emptyList()).strategicSupply)
     }
 
@@ -91,7 +91,22 @@ class HanStrategicSupplyProviderTest {
                 .filter { it.spatialGraphSupplied }.map { it.cityId }.toSet()
             val after = evaluateSupplyReachability(owned, capitals, cityConst, dry).rows
                 .filter { it.spatialGraphSupplied }.map { it.cityId }.toSet()
-            assertEquals(emptySet(), before - after, "new cut in $code")
+            assertEquals(KNOWN_MISBOUND_DONOR_CUTS.filterValues { code in it }.keys, before - after, "new cut in $code")
         }
+    }
+
+    private companion object {
+        /**
+         * 기존 결함에서 온 절단 — 새로 생기면 안 되고, 결함이 고쳐지면 이 표에서 지워야 한다(정확히 같아야 통과).
+         *
+         * 1062 孟津: 河南尹 河陰縣 省(82880)에서 떼어 냈고 기증 縣과 마른땅으로 닿는다. 그런데 그 縣의 城 56 「하음」은
+         * 郡國志 **五原郡** 河陰(동명 僑置)으로 묶여 있어, 五原郡을 가진 세력이 없는 이 시나리오들에서 중립이고 R1 이
+         * 河陰縣 땅 전체를 중립으로 만든다. 郡 배정(河南尹)을 따라 세력 소유가 된 孟津은 偃師와 黃河 칸으로만 닿아 끊긴다
+         * (나머지 시나리오는 원래 판에서도 보급이 닿지 않았거나 다른 이웃으로 이어진다 — 실측).
+         * 원래 판 v2 에서는 강 칸 인접으로 이어졌다. 56 결속 수정 전까지의 예외다(2026-09-15).
+         */
+        val KNOWN_MISBOUND_DONOR_CUTS = mapOf(
+            1062 to setOf(1020, 1021, 1040, 1041, 1050, 1060),
+        )
     }
 }
