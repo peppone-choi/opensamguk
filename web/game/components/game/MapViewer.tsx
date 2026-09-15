@@ -245,15 +245,19 @@ export default function MapViewer({
         setFailed(false);
         setTileMissing(false);
         setStrategicTopology(null);
-        api.mapPreview(controller.signal)
+        // 초기 로딩 단축: 미리보기와 월드 조회는 서로 안 기다린다(§4). 월드 실패는
+        // 미리보기만으로 내려앉히는 기존 동작을 그대로 둔다 — world 실패가 전체를
+        // 깨뜨리지 않도록 먼저 잡아 둔다. 수역은 미리보기 binding 이 필요해서 직렬 유지.
+        const previewRequest = api.mapPreview(controller.signal);
+        const worldRequest = live
+            ? api.worldMap(0, showMe).catch(() => null)
+            : Promise.resolve(null);
+        previewRequest
             .then(async (preview) => {
                 if (!live) return { data: preview, myCity: null };
-                try {
-                    const world = await api.worldMap(0, showMe);
-                    return world.mapName === preview.mapCode ? mergeLive(preview, world) : { data: preview, myCity: null };
-                } catch {
-                    return { data: preview, myCity: null };
-                }
+                const world = await worldRequest;
+                return world && world.mapName === preview.mapCode
+                    ? mergeLive(preview, world) : { data: preview, myCity: null };
             })
             .then(async (result) => {
                 if (!active || !serverUnchanged()) return;

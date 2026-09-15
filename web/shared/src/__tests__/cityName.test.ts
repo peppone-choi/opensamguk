@@ -68,7 +68,7 @@ describe('cityDisplayName', () => {
     expect(cityDisplayName(city(507, '문안현', 11, '文安县'))).toBe('문안현');
   });
 
-  // 같은 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 단다(han-world-v3 835 중 136 곳).
+  // 같은 독음이 겹치면 생성기가 소속 郡이나 번호를 뒤에 단다(han-world-v3 848 중 139 곳).
   // 그건 식별자를 유일하게 만드는 장치고, 화면에서는 뗀다(2026-09-10 「군을 빼」).
   it('한정자를 떼고 현을 붙인다', () => {
     expect(cityDisplayName(city(2, '의씨(河東郡)', 11, '猗氏县'))).toBe('의씨현');
@@ -119,22 +119,25 @@ describe('han-world-v3 의 meta.nameCh', () => {
   ) as { cities: { id: number; name: string; level: number; meta: { nameCh: string } }[] };
 
   it('행정 단위 꼬리를 달고 온다 — 縣 판정의 첫 규칙이 산다', () => {
+    // 835 실측 756 → 848 실측 767. 늘어난 13곳 중 汶江道·绵虒道 2곳은 道 꼬리라
+    // 县 집계에 안 잡힌다(道도 縣 한 급이라 등급 규칙으로는 잡힌다).
     const counties = world.cities.filter((c) => c.meta.nameCh.endsWith('县'));
-    expect(counties.length).toBe(756);
+    expect(counties.length).toBe(767);
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
-    // 縣 등급(10·11) 밖 = 郡治 80 곳. 예전에는 175 였다 — 縣 93 곳이 郡 등급을
+    // 縣 등급(10·11) 밖 = 郡治 81 곳. 예전에는 175 였다 — 縣 93 곳이 郡 등급을
     // 물려받고 있었기 때문이다(build_han_world.build_v3 에서 고쳤다). 77 → 80 은
-    // 城을 하나도 못 받던 朔方·西河·定襄 3 郡의 治所가 선 것이다.
+    // 城을 하나도 못 받던 朔方·西河·定襄 3 郡의 治所가 선 것이고, 80 → 81 은
+    // 847 오현이 吳郡 治所로 선 것이다(848 비릉현은 장현).
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11);
-    expect(outside.length).toBe(80);
+    expect(outside.length).toBe(81);
     const rest = outside
       .filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
     // 郡治는 이제 한 곳도 안 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
-    // 싣는다. 0 건이 「조회가 죽었다」가 아님은 위 outside 80 이 같이 못박는다.
+    // 싣는다. 0 건이 「조회가 죽었다」가 아님은 위 outside 81 이 같이 못박는다.
     expect(rest).toEqual([]);
   });
 
@@ -171,7 +174,7 @@ describe('han-world-v3 의 meta.nameCh', () => {
 //
 // 「로그와 맵의 현 이름을 같게 만들어」(2026-09-11) 이후 규칙이 두 군데 산다 — 여기(지도가
 // 쓴다)와 tools/scenario/build_han_world.py 의 display_name(서버 로그·DB 이름이 쓴다).
-// 두 구현이 갈리면 같은 城이 또 두 이름으로 불린다. 그래서 835 곳을 전수로 맞춰 본다.
+// 두 구현이 갈리면 같은 城이 또 두 이름으로 불린다. 그래서 전수로 맞춰 본다.
 describe('han-world-v3 의 meta.displayName', () => {
   const ROOT = resolve(__dirname, '../../../..');
   const world = JSON.parse(
@@ -183,14 +186,14 @@ describe('han-world-v3 의 meta.displayName', () => {
     }[];
   };
 
-  it('835 곳 전부가 cityDisplayName 과 같은 값이다', () => {
+  it('전부가 cityDisplayName 과 같은 값이다', () => {
     const mismatched = world.cities
       .filter((c) => c.meta.displayName !== cityDisplayName({
         id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh, jun: c.meta.jun,
       }))
       .map((c) => `${c.id} ${c.name}: ${c.meta.displayName}`);
     // 郡 을 앞에 세워도 안 갈리는 同音異字 縣 6 곳만 예외다. 생성기가 漢字 어간을 뒤에 달아
-    // 가르는데(build_han_world.build_v3), 그건 835 곳을 한꺼번에 봐야 알 수 있는 판정이라
+    // 가르는데(build_han_world.build_v3), 그건 전수를 한꺼번에 봐야 알 수 있는 판정이라
     // 城 하나만 보는 이 함수로는 못 만든다 — 그래서 서버가 실어 보낸 displayName 이 정본이다.
     expect(mismatched).toEqual([
       '129 양성(潁川郡)#129: 영천군 양성현(襄城)',
@@ -210,12 +213,13 @@ describe('han-world-v3 의 meta.displayName', () => {
       '736 교지군: 교지군 용편현',
       '745 일남군: 일남군 서권현',
     ]);
-    expect(world.cities.length).toBe(835);
+    expect(world.cities.length).toBe(848);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
     const changed = world.cities.filter((c) => c.meta.displayName !== c.name);
-    expect(changed.length).toBe(834);
+    // 834 → 847. 같게 남는 건 704 구자속국 하나뿐이다.
+    expect(changed.length).toBe(847);
   });
 
   it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {

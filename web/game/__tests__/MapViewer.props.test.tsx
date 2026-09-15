@@ -177,6 +177,26 @@ describe('MapViewer data props', () => {
     expect(mocks.iso?.currentCityId).toBe(11);
   });
 
+  it('requests preview and world in parallel instead of serially (§4 initial loading)', async () => {
+    let resolvePreview!: (value: typeof MAP) => void;
+    let resolveWorld!: (value: typeof WORLD) => void;
+    mocks.mapPreview.mockImplementation(() => new Promise<typeof MAP>((resolve) => { resolvePreview = resolve; }));
+    mocks.worldMap.mockImplementation(() => new Promise<typeof WORLD>((resolve) => { resolveWorld = resolve; }));
+    render(<MapViewer live />);
+    await waitFor(() => expect(mocks.mapPreview).toHaveBeenCalledTimes(1));
+    // 미리보기가 끝나기 전에 월드 조회가 이미 나갔어야 한다 — 직렬이면 아직 안 나간다.
+    expect(mocks.worldMap).toHaveBeenCalledTimes(1);
+    resolveWorld(WORLD);
+    resolvePreview(MAP);
+    await waitFor(() => expect(mocks.iso?.nations).toContainEqual({ id: 2, name: '오', color: '#0000ff' }));
+  });
+
+  it('falls back to preview-only when the parallel world request fails', async () => {
+    mocks.worldMap.mockRejectedValueOnce(new Error('offline'));
+    render(<MapViewer live />);
+    await waitFor(() => expect(mocks.iso?.cities?.[0]).toMatchObject({ id: 11, nationId: 1 }));
+  });
+
   it('forwards the optional initial focus profile unchanged', () => {
     render(<MapViewer legacyCanvas mapData={MAP} initialFocus="current-city-close" />);
     expect(mocks.props?.initialFocus).toBe('current-city-close');
