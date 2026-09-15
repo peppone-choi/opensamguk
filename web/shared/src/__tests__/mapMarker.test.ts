@@ -83,6 +83,28 @@ describe('drawCityFlag', () => {
     expect(capital.calls.filter(([name]) => name === 'arc')).toHaveLength(1);
   });
 
+  it('국가 글자를 천에 쓰고, 깃대 길이(반환값)는 글자가 없을 때와 같다', () => {
+    const context = fakeContext();
+    const top = drawCityFlag(context, 100, 200, {
+      color: 'rgb(40 40 200)', capital: false, k: 1, glyph: '조',
+    });
+    expect(top).toBe(200 - 18);
+    const [, text] = context.calls.find(([name]) => name === 'fillText')!;
+    expect(text[0]).toBe('조');
+    // 어두운 파랑 깃발 위에는 밝은 글자.
+    expect(text[3]).toBe('#ece6d8');
+
+    const light = fakeContext();
+    drawCityFlag(light, 0, 0, { color: 'rgb(235 225 120)', capital: false, k: 1, glyph: '원' });
+    expect(light.calls.find(([name]) => name === 'fillText')![1][3]).toBe('#0c0f0e');
+  });
+
+  it('글자가 없으면 아무것도 쓰지 않는다', () => {
+    const context = fakeContext();
+    drawCityFlag(context, 0, 0, { color: '#c0392b', capital: false, k: 1 });
+    expect(context.calls.some(([name]) => name === 'fillText')).toBe(false);
+  });
+
   it('중립은 회색 깃발이 서고, 그래도 깃발은 선다', () => {
     const context = fakeContext();
     const spy = vi.spyOn(context, 'fill');

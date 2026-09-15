@@ -22,6 +22,7 @@ import {
   SEAT_ONLY_TILE_PIXELS,
   TERRAIN,
   TERRAIN_ASSET_NAME,
+  bannerColor,
   cityDisplayName,
   cityIconLevel,
   cityLabelBox,
@@ -31,12 +32,13 @@ import {
   drawCityRing,
   dropOverlappingLabels,
   firstPickableCity,
+  isAchromaticNationColor,
   isExternalPlace,
   isWater,
   luminancePreserving,
   markerScale,
   mixToward,
-  normaliseNationColor,
+  assignNationGlyphs,
   ownerTint,
   type IsoMapData,
   type IsoBattlefieldMarker,
@@ -403,6 +405,42 @@ export function IsoMap3D({
         commanderyBorders = null;
         const LIFT = 0.02;
         const nationBand: number[] = [];
+        // 국경 잉크 띠 안쪽의 국가색 띠 — 색(= 세력 판정 키)마다 한 벌. 2D 판과 같은 규칙이다:
+        // 채우기만으로는 황록·황갈 지형과 같은 색상대 국가, 무채색 국가가 땅에 묻혔다(tint.ts).
+        const colorBands = new Map<string, number[]>();
+        const achromaticGaps: number[] = [];
+        const NATION_INK = 0.16;
+        const COLOR_BAND = 0.12;
+        /**
+         * 변 (x1,z1)-(x2,z2) 의 한쪽(side = ±1, 법선 방향)에 잉크 띠 바로 옆으로 붙는 색 띠.
+         * 무채색이면 끊어 긋는다 — 한 변을 두 토막으로.
+         */
+        const colorBand = (key: string, x1: number, z1: number, x2: number, z2: number,
+          h: number, side: number) => {
+          if (key === '') return;
+          let out = colorBands.get(key);
+          if (!out) {
+            out = [];
+            colorBands.set(key, out);
+          }
+          const dx = x2 - x1;
+          const dz = z2 - z1;
+          const len = Math.hypot(dx, dz) || 1;
+          const nx = (-dz / len) * side;
+          const nz = (dx / len) * side;
+          const o = NATION_INK / 2 + COLOR_BAND / 2;
+          const pieces: [number, number][] = isAchromaticNationColor(key)
+            ? [[0.08, 0.42], [0.58, 0.92]]
+            : [[0, 1]];
+          for (const [t0, t1] of pieces) {
+            band(out, x1 + dx * t0 + nx * o, z1 + dz * t0 + nz * o,
+              x1 + dx * t1 + nx * o, z1 + dz * t1 + nz * o, h, COLOR_BAND);
+          }
+          if (pieces.length > 1) {
+            // 끊긴 틈은 잉크로 메운다 — 틈으로 지형이 비치면 「띠가 깨졌다」로 읽힌다.
+            band(achromaticGaps, x1 + nx * o, z1 + nz * o, x2 + nx * o, z2 + nz * o, h, COLOR_BAND);
+          }
+        };
         const commanderyBand: number[] = [];
         const countyLine: number[] = [];
         const paint = paintRef.current;
@@ -444,7 +482,14 @@ export function IsoMap3D({
               const other = nationKey(j);
               if (other === null) continue;
               const h = Math.max(surface(i), surface(j)) + LIFT;
-              if (other !== key) band(nationBand, x1, z1, x2, z2, h, 0.16);
+              if (other !== key) {
+                band(nationBand, x1, z1, x2, z2, h, NATION_INK);
+                // 두 변 모두 i 가 음(−x·−z)쪽, j 가 양쪽이다. band() 법선 (−dz, dx) 는
+                // 세로 금(dz>0)에서 −x, 가로 금(dx>0)에서 +z 를 가리킨다.
+                const iSide = x1 === x2 ? 1 : -1;
+                colorBand(key, x1, z1, x2, z2, h, iSide);
+                colorBand(other, x1, z1, x2, z2, h, -iSide);
+              }
               else if (parentOwner[j] !== parentOwner[i]) {
                 band(commanderyBand, x1, z1, x2, z2, h, 0.08);
               } else if (owner[j] !== owner[i]) {
@@ -466,6 +511,14 @@ export function IsoMap3D({
           return mesh;
         };
         bandMesh(nationBand, 0x0c0f0e, 0.9);
+        // 불투명 띠끼리는 renderOrder 로 순서를 준다 — 틈 메우는 잉크가 먼저, 끊긴 회색 토막이 위.
+        const gaps = bandMesh(achromaticGaps, 0x0c0f0e, 1);
+        if (gaps) gaps.renderOrder = 1;
+        for (const [key, data3] of colorBands) {
+          const { r, g, b } = bannerColor(key);
+          const mesh = bandMesh(data3, new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace).getHex(), 1);
+          if (mesh) mesh.renderOrder = 2;
+        }
         commanderyBorders = bandMesh(commanderyBand, 0x0c0f0e, 0.55);
         if (countyLine.length > 0) {
           const geometry = new THREE.BufferGeometry();
@@ -530,6 +583,25 @@ export function IsoMap3D({
           }
         }
       }
+      // 깃대를 꽂을 지붕 높이(세계 단위). 모델 경계상자에서 바로 읽는다 — 예전에는 모든 城 을
+      // 「대략 한 세계 단위」로 보고 같은 높이에 깃발을 띄워서, 장현(지붕 0.31)은 깃발이
+      // 지붕 위로 한참 떠 있었다(2026-09-15 「성과 깃발의 위치를 좀 가깝게」).
+      const glyphs = assignNationGlyphs(
+        cities.filter((city) => city.nationColor).map((city) => city.nationName),
+      );
+      const roofByTier = new Map<string, number>();
+      for (const tier of BUILDING_TIERS) {
+        const geometry = loaded.building.get(tier.name);
+        if (!geometry) continue;
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+        if (geometry.boundingBox) roofByTier.set(tier.name, geometry.boundingBox.max.y);
+      }
+      const roofHeight = (city: PlacedCity): number | null => {
+        const iconLevel = cityIconLevel(city);
+        const tier = BUILDING_TIERS.find((t) => iconLevel >= t.from && iconLevel <= t.to);
+        const roof = tier ? roofByTier.get(tier.name) : undefined;
+        return roof === undefined ? null : roof * city.drawScale;
+      };
       // 城 은 세력색을 곱하지 않는다 — 등급별 실루엣이 색에 먹히면 城 크기가 안 읽힌다.
       // 소속은 아래 라벨 층의 색 점이 말한다.
       setStats({
@@ -630,12 +702,12 @@ export function IsoMap3D({
         // 사라지고 당기면 화면을 덮는다 — 2D 판이 그래서 「깃발이 없다」는 소리를 들었다.
         const tileWidth = (Math.SQRT2 * h) / span;
         const k = markerScale(tileWidth / 256);
-        // 깃대 밑동을 건물 꼭대기쯤으로 올린다(건물이 대략 한 세계 단위다).
-        const lift = Math.max(12, (h / span) * 1.1);
+        // 지붕을 모르는 城 만 예전처럼 「대략 한 세계 단위」 위에 세운다.
+        const fallbackLift = Math.max(12, (h / span) * 1.1);
         const half = Math.max(15 * k, tileWidth * 0.22);
         const below = Math.max(9, tileWidth * 0.22);
 
-        const drawn: { city: PlacedCity; sx: number; sy: number }[] = [];
+        const drawn: { city: PlacedCity; sx: number; sy: number; flagY: number }[] = [];
         for (const city of cities) {
           if (seatOnly && !city.seat) continue;
           const i = city.tileRow * cols + city.tileCol;
@@ -646,17 +718,27 @@ export function IsoMap3D({
           const sx = (projected.x * 0.5 + 0.5) * w;
           const sy = (-projected.y * 0.5 + 0.5) * h;
           if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
-          drawn.push({ city, sx, sy });
+          // 깃대 밑동 = 지붕 꼭대기를 투영한 자리. 조금 박아 세운다(2D cityFlagBase 와 같은 규칙).
+          let flagY = sy - fallbackLift;
+          const roof = roofHeight(city);
+          if (roof !== null) {
+            projected.set(city.drawCol - halfCols, y(baseHeight[i]) + roof, city.drawRow - halfRows);
+            projected.project(camera);
+            const roofLift = sy - (-projected.y * 0.5 + 0.5) * h;
+            flagY = sy - Math.max(3, roofLift - Math.min(4, roofLift * 0.15));
+          }
+          drawn.push({ city, sx, sy, flagY });
         }
         // 뒤쪽 城 부터 그린다 — 화면 아래일수록 앞이다.
         drawn.sort((a, b) => a.sy - b.sy);
 
         cityHits.length = 0;
-        for (const { city, sx, sy } of drawn) {
-          const top = drawCityFlag(overlayContext, sx, sy - lift, {
-            color: city.nationColor ? rgbCss(normaliseNationColor(city.nationColor)) : null,
+        for (const { city, sx, sy, flagY } of drawn) {
+          const top = drawCityFlag(overlayContext, sx, flagY, {
+            color: city.nationColor ? rgbCss(bannerColor(city.nationColor)) : null,
             capital: city.isCapital,
             k,
+            glyph: city.nationColor && city.nationName ? (glyphs.get(city.nationName) ?? null) : null,
           });
           // 집기 상자는 깃발 꼭대기부터 칸 아래까지 — 깃발을 얹어도 城 을 얹어도 잡힌다.
           // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —

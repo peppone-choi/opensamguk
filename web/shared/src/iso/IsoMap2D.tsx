@@ -15,6 +15,10 @@
 // 같은 방식). 배포본은 불투명 덮어쓰기였고 그다음은 곱하기였다 — 전자는 지형이 한 픽셀도
 // 안 보였고(reports/opensamguk/tasks/2026-09-09-design-re-review.md) 후자는 어두운 국가색이
 // 땅을 통째로 눌렀다. 색만으로는 세력 범위가 안 읽히므로 縣·郡·국가 경계선을 함께 긋는다.
+//
+// 그런데 지형 스프라이트가 전부 황록~황갈이라 채우기만으로는 그 색상대 국가와 무채색 국가가
+// 땅에 묻혔다(2026-09-15 실측, tint.ts 주석). 그래서 국경 잉크선 **안쪽**에 선명한 국가색 띠를
+// 두른다. 띠 옆은 지형이 아니라 잉크라 어떤 땅 위에서도 색이 선다.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { attachMapGestures } from './mapGestures';
@@ -38,9 +42,11 @@ import {
   drawCityName,
   drawCityRing,
   dropOverlappingLabels,
+  assignNationGlyphs,
   markerScale,
 } from './marker';
-import { normaliseNationColor, ownerTint, rgbCss, type TintMode } from './tint';
+import { cityFlagBase, spriteRoofLift } from './buildingRoof';
+import { bannerColor, isAchromaticNationColor, ownerTint, rgbCss, type TintMode } from './tint';
 import { cityDisplayName } from './cityName';
 import { cityIconLevel } from './cityIconLevel';
 import { isExternalPlace, type IsoBattlefieldMarker, type PlacedCity } from './placeGameCities';
@@ -185,6 +191,11 @@ export function IsoMap2D({
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // 깃발 글자 — 이 지도에 선 나라끼리 안 겹치게 한 번에 정한다(assignNationGlyphs).
+  const glyphs = useMemo(
+    () => assignNationGlyphs(cities.filter((city) => city.nationColor).map((city) => city.nationName)),
+    [cities],
+  );
   const surfaceCache = useMemo(() => new MapSurfaceCache(),
     [data, sprites, tintMode, tintStrength, nationColorByOwner]);
   useEffect(() => () => surfaceCache.dispose(), [surfaceCache]);
@@ -369,6 +380,33 @@ export function IsoMap2D({
         const nationPath = new Path2D();
         const commanderyPath = new Path2D();
         const countyPath = new Path2D();
+        // 국가색 띠 — 색(= 세력 판정 키)마다 한 벌. 국경 한 변에서 양쪽 나라가 각자 제 쪽에 긋는다.
+        const bandPaths = new Map<string, Path2D>();
+        const nationWidth = Math.max(1.2, Math.min(3, tilePixels / 12));
+        const bandWidth = Math.max(1.5, Math.min(5, tilePixels / 9));
+        // 띠 중심선이 국경선에서 떨어진 거리(세계 px). 잉크선 반 폭 + 띠 반 폭.
+        const bandOffset = (nationWidth / 2 + bandWidth / 2) / view.scale;
+        const addBand = (key: string, ax: number, ay: number, bx: number, by: number,
+          towardX: number, towardY: number) => {
+          if (key === '') return;
+          const ex = bx - ax;
+          const ey = by - ay;
+          const len = Math.hypot(ex, ey) || 1;
+          let nx = -ey / len;
+          let ny = ex / len;
+          // 법선을 그 나라 타일 쪽으로 돌린다.
+          if (nx * (towardX - (ax + bx) / 2) + ny * (towardY - (ay + by) / 2) < 0) {
+            nx = -nx;
+            ny = -ny;
+          }
+          let path = bandPaths.get(key);
+          if (!path) {
+            path = new Path2D();
+            bandPaths.set(key, path);
+          }
+          path.moveTo(ax + nx * bandOffset, ay + ny * bandOffset);
+          path.lineTo(bx + nx * bandOffset, by + ny * bandOffset);
+        };
         for (let r = r0; r <= r1; r += 1) {
           for (let c = c0; c <= c1; c += 1) {
             const i = r * cols + c;
@@ -389,6 +427,13 @@ export function IsoMap2D({
               if (!path) continue;
               path.moveTo(ax, ay);
               path.lineTo(bx, by);
+              if (path === nationPath) {
+                // 이웃 타일 중심은 이 타일 중심을 변 중점에 대해 뒤집은 자리다.
+                const mx = (ax + bx) / 2;
+                const my = (ay + by) / 2;
+                addBand(key, ax, ay, bx, by, x, y);
+                addBand(other, ax, ay, bx, by, 2 * mx - x, 2 * my - y);
+              }
             }
           }
         }
@@ -396,7 +441,25 @@ export function IsoMap2D({
         context.lineCap = 'round';
         // 선 굵기는 화면 기준이다 — 확대해도 국경이 두꺼워지지 않는다. 다만 축소할수록
         // 조금 가늘게 간다. 전체 보기에서 3px 국경은 縣 한 칸(13px)의 1/4 라 땅을 먹는다.
-        const nationWidth = Math.max(1.2, Math.min(3, tilePixels / 12));
+        // 띠를 먼저 긋고 잉크선을 위에 얹는다 — 모서리에서 띠가 이웃 쪽으로 새도 금이 덮는다.
+        context.lineCap = 'square';
+        for (const [key, path] of bandPaths) {
+          context.lineWidth = bandWidth / view.scale;
+          if (isAchromaticNationColor(key)) {
+            // 무채색은 'color' 합성으로 색이 안 나온다. 잉크 바탕에 회색 띠를 끊어 그어
+            // 「주인 없음」이 아니라 「회색 세력」임을 보인다.
+            context.setLineDash([]);
+            context.strokeStyle = 'rgba(12, 15, 14, 0.85)';
+            context.stroke(path);
+            context.setLineDash([(bandWidth * 2.2) / view.scale, (bandWidth * 1.4) / view.scale]);
+          } else {
+            context.setLineDash([]);
+          }
+          context.strokeStyle = rgbCss(bannerColor(key));
+          context.stroke(path);
+        }
+        context.setLineDash([]);
+        context.lineCap = 'round';
         const strokes: [Path2D, string, number][] = [
           [countyPath, 'rgba(12, 15, 14, 0.26)', 1],
           [commanderyPath, 'rgba(12, 15, 14, 0.5)', Math.min(1.8, nationWidth * 0.6)],
@@ -484,16 +547,18 @@ export function IsoMap2D({
           && city.row >= r0 - 1 && city.row <= r1 + 1)
         .sort((a, b) => (a.col + a.row) - (b.col + b.row));
       let drawnCities = 0;
-      const placedOnScreen: { city: PlacedCity; sx: number; sy: number }[] = [];
+      const placedOnScreen: { city: PlacedCity; sx: number; sy: number; roofLift: number | null }[] = [];
       for (const city of visible) {
         // 깃발·이름·집기 상자는 건물이 실제로 선 자리에 붙어야 한다 — 예전엔 소수 원좌표를
         // 써서 깃발이 옆 칸에 혼자 떠 있었다.
         const [x, y] = tileScreen(city.drawCol, city.drawRow, city.tileCol, city.tileRow);
-        placedOnScreen.push({
+        const placed = {
           city,
           sx: view.panX + x * view.scale,
           sy: view.panY + y * view.scale,
-        });
+          roofLift: null as number | null,
+        };
+        placedOnScreen.push(placed);
         // 城 등급이 아니라 **그림 등급**으로 고른다 — v3 가 이민족 자리에 물려준 漢 縣이
         // 천막으로 서는 걸 막는다(cityIconLevel.ts).
         const iconLevel = cityIconLevel(city);
@@ -504,6 +569,7 @@ export function IsoMap2D({
         // 그리는 자리는 col/row 가 아니라 drawCol/drawRow 다 — 칸 안에 들도록 눌러 둔 값이다.
         const [bx, by] = tileScreen(city.drawCol, city.drawRow, city.tileCol, city.tileRow);
         const k = OBJECT_SCALE * city.drawScale;
+        placed.roofLift = spriteRoofLift(tier.file, k, view.scale);
         context.drawImage(
           sprite,
           bx - OBJECT_ANCHOR_X * k,
@@ -520,14 +586,15 @@ export function IsoMap2D({
       // 깃발·이름·전장은 배율을 따라가지 않는다. 세계 좌표로 그리면 전체 보기에서 1px 로
       // 사라지고 당기면 화면을 덮는다 — 배포본이 그래서 전장 두 곳만 도드라져 보였다.
       const k = markerScale(view.scale);
-      const flagLift = Math.max(11, 96 * view.scale);
       hits.length = 0;
-      for (const { city, sx, sy } of placedOnScreen) {
+      for (const { city, sx, sy, roofLift } of placedOnScreen) {
         if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
-        const top = drawCityFlag(context, sx, sy - flagLift, {
-          color: city.nationColor ? rgbCss(normaliseNationColor(city.nationColor)) : null,
+        // 깃대는 그 城 그림의 지붕에 꽂는다(buildingRoof.ts).
+        const top = drawCityFlag(context, sx, cityFlagBase(sy, roofLift, view.scale), {
+          color: city.nationColor ? rgbCss(bannerColor(city.nationColor)) : null,
           capital: city.isCapital,
           k,
+          glyph: city.nationColor && city.nationName ? (glyphs.get(city.nationName) ?? null) : null,
         });
         // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
         // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —
@@ -722,7 +789,7 @@ export function IsoMap2D({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
-  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
+  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, glyphs, hideCityNames,
     currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
     battlefields, onPickBattlefield]);
 

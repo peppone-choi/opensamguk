@@ -9,6 +9,14 @@
 
 /** 정규화 대역. 팔레트의 --bronze #d3b064(S 0.55 L 0.61)·--moss #697e58(S 0.18 L 0.42) 사이. */
 const SATURATION = 0.42;
+/**
+ * 지형과 색상이 겹치는 국가의 채도. 지형 스프라이트 평균이 전부 황록~황갈(색상 35~64°)이라
+ * 그 근처 국가(원소 #E5BD11·공손찬 #F76E19·도겸 #CDE4AC)는 0.42 로 칠하면 땅색과 구분이
+ * 안 됐다 — 칠하기 전후 ΔE76 이 6~11(2026-09-15 실측). 이 대역만 채도를 올린다.
+ */
+const TERRAIN_HUE_SATURATION = 0.7;
+const TERRAIN_HUE_FROM = 20 / 360;
+const TERRAIN_HUE_TO = 90 / 360; // 도겸 #CDE4AC 가 85° 다
 const LIGHT_MIN = 0.44;
 const LIGHT_MAX = 0.68;
 
@@ -75,7 +83,33 @@ export function normaliseNationColor(hex: string): Rgb {
   if (!rgb) return hslToRgb(0, 0, LIGHT_MAX);
   const [h, s, l] = rgbToHsl(rgb);
   const light = LIGHT_MIN + (LIGHT_MAX - LIGHT_MIN) * l;
-  return hslToRgb(h, s === 0 ? 0 : SATURATION, light);
+  if (s === 0) return hslToRgb(h, 0, light);
+  const terrainHue = h >= TERRAIN_HUE_FROM && h <= TERRAIN_HUE_TO;
+  return hslToRgb(h, terrainHue ? TERRAIN_HUE_SATURATION : SATURATION, light);
+}
+
+/** 무채색(회색·검정·흰색) 국가색인가. 'color' 합성으로는 이런 나라가 **색으로 안 나온다**. */
+export function isAchromaticNationColor(hex: string): boolean {
+  const rgb = parseHex(hex);
+  if (!rgb) return false;
+  return Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b) < 0.02;
+}
+
+/**
+ * 깃발·국경 띠에 쓰는 **선명한** 세력색. 땅에 까는 normaliseNationColor 와 색상(hue)은 같고
+ * 채도·명도만 다르다 — 같은 나라가 땅에서는 은은하게, 띠·깃발에서는 또렷하게 읽힌다.
+ *
+ * 띠와 깃발은 지형이 아니라 잉크선·잉크 테두리에 붙어 서므로 지형색에 먹히지 않는다.
+ * 무채색은 명도만 대역으로 누르고 회색으로 남긴다(띠를 끊어 그어 구분한다).
+ */
+export function bannerColor(hex: string): Rgb {
+  const rgb = parseHex(hex);
+  if (!rgb) return hslToRgb(0, 0, 0.55);
+  const [h, s, l] = rgbToHsl(rgb);
+  // 무채색 하한 0.5 — 띠는 잉크(#0c0f0e) 바로 옆에 서므로 더 어두우면 동탁 #595959 의 띠가
+  // 국경선에 녹아 사라졌다(2026-09-15 실화면).
+  if (isAchromaticNationColor(hex)) return hslToRgb(0, 0, Math.min(0.92, Math.max(0.5, l)));
+  return hslToRgb(h, Math.min(0.9, Math.max(0.62, s)), Math.min(0.62, Math.max(0.4, l)));
 }
 
 /**
