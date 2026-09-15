@@ -205,6 +205,8 @@ export {
 } from './iso/placeGameCities';
 export {
   normaliseNationColor,
+  bannerColor,
+  isAchromaticNationColor,
   indexTint,
   ownerTint,
   mixToward,
@@ -245,10 +247,18 @@ export {
   drawCityFlag,
   drawCityName,
   drawCityRing,
+  nationGlyph,
+  assignNationGlyphs,
   cityLabelBox,
   dropOverlappingLabels,
   markerScale,
   type CityFlagOptions,
   type LabelBox,
 } from './iso/marker';
+export {
+  SPRITE_ROOF_TOP_PX,
+  SPRITE_GROUND_CENTER_Y,
+  spriteRoofLift,
+  cityFlagBase,
+} from './iso/buildingRoof';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';

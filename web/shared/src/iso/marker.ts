@@ -19,11 +19,83 @@ const INK = 'rgba(12, 15, 14, 0.85)'; // --bg
 const NEUTRAL = '#8e8879'; // --muted
 
 export interface CityFlagOptions {
-  /** 세력색(정규화 끝난 css 색). 중립이면 null — 회색 깃발이 선다. */
+  /** 세력색(bannerColor 를 거친 css 색). 중립이면 null — 회색 깃발이 선다. */
   color: string | null;
   capital: boolean;
   /** markerScale 의 결과. */
   k: number;
+  /**
+   * 깃발에 쓰는 국가 글자(nationGlyph). 색이 같거나 가까운 나라(동탁·금선·한수 무채색 셋,
+   * 조조 #2424E9·김상 #0000FF)는 색만으로 못 가른다 — 글자가 가른다.
+   */
+  glyph?: string | null;
+}
+
+function glyphLetters(name: string | null | undefined): string[] {
+  return name ? (name.match(/[\p{L}\p{N}]/gu) ?? []) : [];
+}
+
+/**
+ * 국가 이름 → 깃발 글자 하나. 앞에 붙은 기호(NPC 국가의 ㉿ 등)는 건너뛰고 첫 글자를 쓴다.
+ * 여러 나라가 한 화면에 있으면 assignNationGlyphs 를 써라 — 성씨가 겹친다.
+ */
+export function nationGlyph(name: string | null | undefined): string | null {
+  return glyphLetters(name)[0] ?? null;
+}
+
+/**
+ * 한 지도에 선 나라들의 깃발 글자를 **서로 겹치지 않게** 정한다.
+ *
+ * 첫 글자(성씨)만 쓰면 반동탁연합 시나리오에서 「유」가 다섯(유표·유언·유우·유대·유비),
+ * 「공」·「장」이 셋씩 겹쳤다(2026-09-15 실화면). 규칙:
+ *   1) 첫 글자가 혼자면 첫 글자.
+ *   2) 겹치면 끝 글자(이름) — 1) 에서 쓰인 글자나 다른 겹친 나라의 끝 글자와 안 겹칠 때.
+ *   3) 그래도 겹치면 첫 글자 + 끝 글자 두 자.
+ * 이름 순서와 무관하게 같은 결과가 나온다.
+ */
+export function assignNationGlyphs(names: Iterable<string | null | undefined>): Map<string, string> {
+  const unique = [...new Set([...names].filter((name): name is string => glyphLetters(name).length > 0))];
+  const byFirst = new Map<string, string[]>();
+  for (const name of unique) {
+    const first = glyphLetters(name)[0];
+    byFirst.set(first, [...(byFirst.get(first) ?? []), name]);
+  }
+  const result = new Map<string, string>();
+  const taken = new Set<string>();
+  const collided: string[] = [];
+  for (const [first, group] of byFirst) {
+    if (group.length === 1) {
+      result.set(group[0], first);
+      taken.add(first);
+    } else collided.push(...group);
+  }
+  const lastCount = new Map<string, number>();
+  const lastOf = (name: string) => {
+    const letters = glyphLetters(name);
+    return letters.length > 1 ? letters[letters.length - 1] : null;
+  };
+  for (const name of collided) {
+    const last = lastOf(name);
+    if (last) lastCount.set(last, (lastCount.get(last) ?? 0) + 1);
+  }
+  for (const name of collided) {
+    const letters = glyphLetters(name);
+    const last = lastOf(name);
+    if (last && !taken.has(last) && lastCount.get(last) === 1) result.set(name, last);
+    else result.set(name, last ? `${letters[0]}${last}` : letters[0]);
+  }
+  return result;
+}
+
+/** 깃발 바탕 위 글자색. 밝은 깃발엔 잉크, 어두운 깃발엔 --text. */
+function glyphInk(css: string): string {
+  const m = css.match(/rgb\((\d+)\s+(\d+)\s+(\d+)\)|#([0-9a-fA-F]{6})/);
+  if (!m) return '#0c0f0e';
+  const [r, g, b] = m[4]
+    ? [0, 2, 4].map((i) => Number.parseInt(m[4].slice(i, i + 2), 16))
+    : [m[1], m[2], m[3]].map(Number);
+  const luma = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luma >= 0.5 ? '#0c0f0e' : '#ece6d8';
 }
 
 /**
@@ -34,13 +106,14 @@ export function drawCityFlag(
   context: CanvasRenderingContext2D,
   x: number,
   y: number,
-  { color, capital, k }: CityFlagOptions,
+  { color, capital, k, glyph }: CityFlagOptions,
 ): number {
   const size = (capital ? 11 : 9) * k;
   const pole = size * 2;
   const top = y - pole;
-  const w = size * 1.5;
-  const h = size * 1.05;
+  // 글자가 들어가면 천을 넓힌다. 깃대 길이(= 반환값)는 그대로라 집기 상자가 안 흔들린다.
+  const w = size * (glyph ? 1.95 : 1.5);
+  const h = size * (glyph ? 1.4 : 1.05);
 
   context.save();
   // 깃대. 어두운 잉크라 밝은 지형 위에서도 형태가 선다.
@@ -67,6 +140,18 @@ export function drawCityFlag(
   context.strokeStyle = INK;
   context.lineWidth = Math.max(1, size * 0.12);
   context.stroke();
+
+  if (glyph) {
+    const fill = color ?? NEUTRAL;
+    // 두 자면 제비꼬리 홈 앞 몸통에 들어가게 줄인다.
+    const room = (w - size * 0.42) / [...glyph].length;
+    context.font = `700 ${Math.round(Math.min(h * 0.78, room * 0.92))}px "Pretendard Variable", Pretendard, sans-serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = glyphInk(fill);
+    // 제비꼬리 홈을 피해 천의 왼쪽 몸통 가운데에 둔다.
+    context.fillText(glyph, x + (w - size * 0.42) / 2, top + h / 2 + h * 0.04);
+  }
 
   if (capital) {
     // 수도는 깃대 끝에 금색 구슬을 단다 — 색만으로는 못 가른다.
