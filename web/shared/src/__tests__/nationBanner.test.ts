@@ -111,6 +111,16 @@ describe('assignNationGlyphs', () => {
     expect(clash.get('장연')).toBe('연');
   });
 
+  it('두 자 후보까지 겹치면 다른 조합을 고른다 — 유상·유중상', () => {
+    const glyphs = assignNationGlyphs(['유상', '유중상']);
+    expect(new Set(glyphs.values()).size).toBe(2);
+    expect(glyphs.get('유상')).toBe('유상');
+    expect(glyphs.get('유중상')).toBe('유중');
+    // 기호만 다른 같은 글자 이름도 겹치지 않는다.
+    const same = assignNationGlyphs(['유', '㉿유']);
+    expect(new Set(same.values()).size).toBe(2);
+  });
+
   it('이름 순서가 바뀌어도 결과가 같다', () => {
     const forward = assignNationGlyphs(LIVE);
     const backward = assignNationGlyphs([...LIVE].reverse());

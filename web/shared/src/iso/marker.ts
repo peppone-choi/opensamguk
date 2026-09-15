@@ -50,7 +50,7 @@ export function nationGlyph(name: string | null | undefined): string | null {
  * 「공」·「장」이 셋씩 겹쳤다(2026-09-15 실화면). 규칙:
  *   1) 첫 글자가 혼자면 첫 글자.
  *   2) 겹치면 끝 글자(이름) — 1) 에서 쓰인 글자나 다른 겹친 나라의 끝 글자와 안 겹칠 때.
- *   3) 그래도 겹치면 첫 글자 + 끝 글자 두 자.
+ *   3) 그래도 겹치면 첫 글자 + 끝 글자 두 자. 그 두 자도 이미 쓰였으면 다른 조합.
  * 이름 순서와 무관하게 같은 결과가 나온다.
  */
 export function assignNationGlyphs(names: Iterable<string | null | undefined>): Map<string, string> {
@@ -78,11 +78,27 @@ export function assignNationGlyphs(names: Iterable<string | null | undefined>): 
     const last = lastOf(name);
     if (last) lastCount.set(last, (lastCount.get(last) ?? 0) + 1);
   }
+  const fallback: string[] = [];
   for (const name of collided) {
-    const letters = glyphLetters(name);
     const last = lastOf(name);
-    if (last && !taken.has(last) && lastCount.get(last) === 1) result.set(name, last);
-    else result.set(name, last ? `${letters[0]}${last}` : letters[0]);
+    if (last && !taken.has(last) && lastCount.get(last) === 1) {
+      result.set(name, last);
+      taken.add(last);
+    } else fallback.push(name);
+  }
+  // 두 자 후보끼리도 겹칠 수 있다(유상·유중상 → 둘 다 「유상」). 이름순으로 돌며 안 쓰인
+  // 조합을 고른다 — 첫 글자 + 끝 글자, 첫 글자 + 가운데 글자들, 이름 전체, 번호.
+  for (const name of fallback.sort()) {
+    const letters = glyphLetters(name);
+    const candidates = letters.length > 1
+      ? [...letters.slice(1).reverse().map((letter) => `${letters[0]}${letter}`), letters.join('')]
+      : [letters[0]];
+    let glyph = candidates.find((candidate) => !taken.has(candidate));
+    for (let n = 2; !glyph; n += 1) {
+      if (!taken.has(`${letters[0]}${n}`)) glyph = `${letters[0]}${n}`;
+    }
+    result.set(name, glyph);
+    taken.add(glyph);
   }
   return result;
 }
