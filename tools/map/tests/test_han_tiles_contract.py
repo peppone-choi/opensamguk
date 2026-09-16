@@ -725,11 +725,12 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
         binding = contract_validator.water_overlay_base_binding(base, base_bytes)
 
         self.assertEqual(
-            "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f",
+            # 2026-09-15 수·진·관 거점 省 분할 단계(carve_strategic_site_provinces) 뒤의 han-tiles.
+            "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
-        self.assertEqual(1_520, len(binding["landProvinceIds"]))
+        self.assertEqual(1_594, len(binding["landProvinceIds"]))
 
 
 if __name__ == "__main__":

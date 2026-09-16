@@ -24,7 +24,8 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
     def test_committed_pilot_is_valid_and_river_activation_remains_blocked(self):
         result = self.audit.audit_materialized()
 
-        self.assertEqual(1_520, result["counts"]["landProvinceIds"])
+        # 1,520 省 + 수·진·관 거점 省 73.
+        self.assertEqual(1_594, result["counts"]["landProvinceIds"])
         self.assertEqual(2, result["counts"]["waterZones"])
         self.assertEqual({"COASTAL_SEA": 1, "LAKE_BASIN": 1}, result["zoneKinds"])
         self.assertEqual({}, result["edgeModes"])

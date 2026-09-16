@@ -54,8 +54,11 @@ class HanExpandedCityCommandRoundTripIT {
 
     @Test fun `each city added since historical roster supports move conquest and cold reload`() {
         val currentIds = MapJson.loadFromClasspath("han-world-v3").cities.map { it.id }.toSet()
+        // 길 없는 섬 城(956 東部侯官 — 閩 해안)은 이동·출병의 출발지가 없다. 격리 원장은 연결성 테스트
+        // (KNOWN_ISOLATED)가 지키고, 여기서는 길로 닿는 새 城만 명령 왕복을 잰다.
+        val isolated = MapJson.loadCityDetailsFromClasspath("han-world-v3").filter { it.connections.isEmpty() }.map { it.id }.toSet()
         val olderIds = artifacts.artifacts(HanWorldVariant.V3_835).cityConst.all().keys
-        val additions = (currentIds - olderIds).sorted()
+        val additions = (currentIds - olderIds - isolated).sorted()
         assertTrue(additions.isNotEmpty(), "expansion evidence must exercise added cities")
         for (destination in additions) for (command in listOf("che_이동", "che_출병")) {
             // SeedBootstrap deliberately requires a single configured world per database.

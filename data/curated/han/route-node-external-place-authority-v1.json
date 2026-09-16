@@ -434,6 +434,13 @@
       "recordId": "X024",
       "subjectKey": "hhs:113:定襄郡:001",
       "wikidataId": "Q1196894"
+    },
+    {
+      "canonicalName": "平阴",
+      "physicalPlaceId": "chgis:v6:cnty:82879",
+      "recordId": "82879",
+      "subjectKey": "hhs:109:河南尹:011",
+      "wikidataId": null
     }
   ],
   "schemaVersion": 1

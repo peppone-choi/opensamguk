@@ -116,10 +116,11 @@ class ConquerCityResetTest {
         // 생성기(build_han_world.py)가 그런 城을 제 郡 治所와 직결하도록 고쳤다.
         //
         // 「고립 0곳」만 세지 않는다 — 두 덩어리로 갈라져도 path 는 비어 있지 않다. 전수 도달을 본다.
-        for (variant in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME),
-                               CityConstRegistry.hanWorld(HanWorldVariant.V3_848))) {
+        for ((variant, size) in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME) to 1098,
+                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_848) to 848,
+                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1098) to 1098)) {
             val all = variant.all()
-            assertEquals(848, all.size)
+            assertEquals(size, all.size)
             assertEquals(emptyList(), all.keys.sorted().filter { checkNotNull(variant.byId(it)).path.isEmpty() },
                 "고립 城 이 있다: ${variant.mapName}")
             val reached = mutableSetOf(1)

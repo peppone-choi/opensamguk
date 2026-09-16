@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 848 도시).
+"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 1098 도시).
 
 바꾸는 것은 네 가지뿐이다.
   1. `map.mapName` → legacy "han-world-v2" / --map 지정 시 "han-world-v3"
@@ -49,6 +49,34 @@ ROUTE_CANDIDATES = ROOT / "data/curated/han/route-node-selection-candidates-v1.j
 CHE_TO_JUN = ROOT / "tools/scenario/che_to_jun.json"
 OWNERSHIP = ROOT / "tools/scenario/han_ownership.json"
 PALETTE = ROOT / "tools/scenario/nation_symbol_colors.json"
+SITE_CARVES = ROOT / "data/curated/han/strategic-site-province-carves-v1.json"
+PROVINCE_ATTRIBUTION = ROOT / "data/curated/han/province-city-attribution-v1.json"
+
+
+def strategic_site_heirs() -> dict[int, int]:
+    """거점 城 → 그 거점 省을 떼어 준 기증 省이 귀속된 城.
+
+    郡國 밖 땅(卒本 등)에서 떼어 낸 거점은 지배표의 郡 배정으로는 주인이 안 정해진다. 그 땅은 이미
+    省→城 귀속(province-city-attribution-v1)으로 어느 城의 땅이었으므로, 거점도 그 城의 주인을 따른다
+    (R1 현 단위 소유권과 같은 원리). 이렇게 두지 않으면 그 땅을 지나던 보급·이동이 주인 없는 거점
+    城에서 끊긴다 — 1070~1110 公孫氏 樂浪 사슬이 安平口에서 끊겼다(실측 2026-09-15).
+    """
+    if not SITE_CARVES.is_file():
+        return {}
+    world = _load_verified_v3_world()
+    city_by_place = {row["physicalPlaceRef"].rsplit(":", 1)[-1]: row["id"] for row in world["cities"]}
+    attribution = {
+        row["provinceId"]: row["routeNodeId"]
+        for row in json.loads(PROVINCE_ATTRIBUTION.read_text(encoding="utf-8"))["rows"]
+    }
+    heirs: dict[int, int] = {}
+    stage = json.loads(SITE_CARVES.read_text(encoding="utf-8"))["geometry"]["stages"][0]
+    for placement in stage["placements"]:
+        site = city_by_place[placement["placeId"]]
+        heir = attribution.get(placement["donorProvinceId"])
+        if heir is not None and heir != site:
+            heirs[site] = heir
+    return dict(sorted(heirs.items()))
 
 
 def canonical_parent_names() -> frozenset[str]:
@@ -123,7 +151,7 @@ def _load_verified_v3_world() -> dict:
         (row["routeNodeKey"], row["id"], row["physicalPlaceRef"])
         for row in world["cities"]
     }
-    if manifest_nodes != world_nodes or len(world_nodes) != 848:
+    if manifest_nodes != world_nodes or len(world_nodes) != 1098:
         raise ValueError("han-world-v3 manifest route-node set mismatch")
     return world
 
@@ -213,7 +241,8 @@ def load_world(map_name: str = "han") -> tuple[dict[str, list[int]], dict[str, i
 
 def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str, int],
             seat_of: dict[str, int], che2jun: dict[str, str], own: dict,
-            city_id_migration: dict[int, int] | None = None) -> tuple[dict, list[str]]:
+            city_id_migration: dict[int, int] | None = None,
+            site_heirs: dict[int, int] | None = None) -> tuple[dict, list[str]]:
     warn: list[str] = []
     doc = json.loads(json.dumps(doc))            # 깊은 복사 — 원본을 건드리지 않는다
     # b2c795a2 already projected these 15 resources into the 781-node identity
@@ -340,6 +369,16 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
                 row[NATION_SCALE] = 0
             warn.append(f"{code}: 세력 '{nation}' 은 領有 郡이 없어 방랑군(level 0)으로 뒀다")
 
+    # 郡 배정으로 주인이 안 정해진 거점 城은 기증 땅이 귀속된 城의 주인을 따른다(strategic_site_heirs).
+    rows_by_nation = {row[0]: row for row in doc.get("nation") or [] if len(row) > NATION_CITIES}
+    for site, heir in (site_heirs or {}).items():
+        nation = owner_of.get(heir)
+        if site in taken or nation is None or nation not in rows_by_nation:
+            continue
+        taken[site] = nation
+        owner_of[site] = nation
+        rows_by_nation[nation][NATION_CITIES].append(site)
+
     for key in GENERAL_KEYS:
         for g in doc.get(key) or []:
             if len(g) <= LOC_SLOT or not g[LOC_SLOT]:
@@ -413,7 +452,8 @@ def main() -> int:
         raw = path.read_text(encoding="utf-8")
         doc = json.loads(raw)
         out, w = rewrite(
-            doc, code, by_jun, id_of, seat_of, che2jun, own, city_id_migration
+            doc, code, by_jun, id_of, seat_of, che2jun, own, city_id_migration,
+            strategic_site_heirs() if args.map == "han-world-v3" else None,
         )
         warns += w
         blob = json.dumps(out, ensure_ascii=False, indent=2) + "\n"

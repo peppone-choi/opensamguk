@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.scenario.han_route_node_selection import (
+    CLAIM_BATCHES,
     BuildResult,
     EXPECTED_LOCATION_CLAIM_COUNT,
     JsonObject,
@@ -50,6 +51,8 @@ class MaterializerInputs:
     tiles: Path
     scenario_dir: Path
     source_witness: Path
+    jurisdiction_claims: Path
+    strategic_site_claims: Path
 
 
 def default_inputs() -> MaterializerInputs:
@@ -65,6 +68,8 @@ def default_inputs() -> MaterializerInputs:
         tiles=ROOT / "data/map/han-780-v1-tiles.json",
         scenario_dir=SCENARIOS,
         source_witness=SOURCE_WITNESS,
+        jurisdiction_claims=CURATED / "route-node-jurisdiction-claims-v1.json",
+        strategic_site_claims=CURATED / "route-node-strategic-site-claims-v1.json",
     )
 
 
@@ -210,6 +215,8 @@ def _verify_policy(inputs: MaterializerInputs, policy: JsonObject, candidate: Js
         "locationAdjudications": _verify_hash("adjudication", obj(approved, "locationAdjudications"), inputs.adjudications),
         "externalClaims": _verify_hash("location claim", obj(approved, "locationClaims"), inputs.source_claims),
         "routeNodeKeyRegistry": _verify_hash("route-node registry", obj(approved, "routeNodeKeyRegistry"), inputs.key_registry),
+        "jurisdictionRouteClaims": _verify_hash("jurisdiction route claims", obj(approved, "jurisdictionRouteClaims"), inputs.jurisdiction_claims),
+        "strategicSiteRouteClaims": _verify_hash("strategic site route claims", obj(approved, "strategicSiteRouteClaims"), inputs.strategic_site_claims),
     }
     candidate_inputs = obj(obj(candidate, "provenance"), "inputs")
     for label, path in (("administrativeCatalog", inputs.catalog), ("administrativePlaceOverlay", inputs.overlay),
@@ -231,7 +238,9 @@ def materialize(inputs: MaterializerInputs) -> BuildResult:
     _verify_location_claim_sources(claims, inputs.source_witness)
     provenance = _verify_policy(inputs, policy, candidate)
     result = build_outputs(candidate, catalog, overlay, policy, adjudications, claims, registry,
-                           _scenario_resources(candidate, inputs.scenario_dir), provenance)
+                           _scenario_resources(candidate, inputs.scenario_dir), provenance,
+                           {CLAIM_BATCHES[0].batch_id: _load(inputs.jurisdiction_claims),
+                            CLAIM_BATCHES[1].batch_id: _load(inputs.strategic_site_claims)})
     selection_hash = hashlib.sha256(serialize(result.selection).encode()).hexdigest()
     migration = dict(result.migration)
     migration["sourceSelectionSha256"] = selection_hash
@@ -246,7 +255,7 @@ def copy_default_inputs(destination: Path) -> MaterializerInputs:
     scenario_dir.mkdir()
     copied: dict[str, Path] = {}
     for field in ("candidate", "catalog", "overlay", "review_policy", "adjudications",
-                  "source_claims", "source_witness", "key_registry", "han", "tiles"):
+                  "source_claims", "source_witness", "key_registry", "han", "tiles", "jurisdiction_claims", "strategic_site_claims"):
         source_path = getattr(source, field)
         copied[field] = Path(shutil.copy2(source_path, destination / source_path.name))
     candidate = _load(source.candidate)
@@ -262,7 +271,8 @@ def _parser() -> argparse.ArgumentParser:
     for option, field in (("candidate", "candidate"), ("catalog", "catalog"), ("overlay", "overlay"),
                           ("review-policy", "review_policy"), ("adjudications", "adjudications"),
                           ("source-claims", "source_claims"), ("source-witness", "source_witness"),
-                          ("key-registry", "key_registry"),
+                          ("key-registry", "key_registry"), ("jurisdiction-claims", "jurisdiction_claims"),
+                          ("strategic-site-claims", "strategic_site_claims"),
                           ("han", "han"), ("tiles", "tiles"), ("scenario-dir", "scenario_dir")):
         parser.add_argument(f"--{option}", type=Path, default=getattr(defaults, field))
     parser.add_argument("--selection-output", type=Path, default=CURATED / "route-node-selection-v1.json")

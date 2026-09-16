@@ -37,6 +37,8 @@ PROVENANCE_DEPENDENCIES = {
     "locationAdjudications": Path("data/curated/han/route-node-location-adjudications-v1.json"),
     "reviewPolicy": Path("data/curated/han/route-node-review-policy-v1.json"),
     "routeNodeKeyRegistry": Path("data/curated/han/route-node-key-registry-v1.json"),
+    "jurisdictionRouteClaims": Path("data/curated/han/route-node-jurisdiction-claims-v1.json"),
+    "strategicSiteRouteClaims": Path("data/curated/han/route-node-strategic-site-claims-v1.json"),
 }
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
@@ -44,17 +46,37 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # han-world-v3 = 780 legacy + 781 歷城 + 782..832 frontier 縣 51 (w1-frontier-county-location)
 # + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location)
 # + 836..846 간체표 폴딩 결합 11곳 + 847 吳縣·848 毘陵 이체자 폴딩 결합 2곳 (w1-script-variant-county-join).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 848}
+# + 849..1024 城 없던 han-tiles 縣 관할 176곳 (w2-cityless-jurisdiction-route-claim, REVIEWED_SOURCE_CLAIM).
+# + 1025..1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
+# + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1098}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
+JURISDICTION_CLAIM_BATCH = "w2-cityless-jurisdiction-route-claim"
+STRATEGIC_SITE_CLAIM_BATCH = "w3-strategic-site-route-claim"
+VACATED_LOCATION_BATCH = "w4-vacated-county-location"
+VACATED_LOCATION_UNITS = frozenset({"hhs:109:河南尹:011"})
+# source claim batch: (provenance 입력 이름, subjectKey 접두사, subjectType, 허용 nodeClass, 허용 seatRole, world 판별 수)
+SOURCE_CLAIM_BATCHES = {
+    JURISDICTION_CLAIM_BATCH: {
+        "input": "jurisdictionRouteClaims", "subjectPrefix": "han-tiles-jurisdiction:",
+        "subjectType": "ADMINISTRATIVE_PLACE", "nodeClasses": frozenset({"COUNTY_NODE"}),
+        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 176},
+    },
+    STRATEGIC_SITE_CLAIM_BATCH: {
+        "input": "strategicSiteRouteClaims", "subjectPrefix": "strategic-site:",
+        "subjectType": "STRATEGIC_SITE", "nodeClasses": frozenset({"FERRY_NODE", "FORT_NODE", "PASS_NODE"}),
+        "seatRoles": frozenset({"NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 73},
+    },
+}
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 # LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 邊郡 治所 8 곳, han-world-v3 는 거기에
 # 城 없던 郡治 3 곳(朔方·西河·定襄)과 변경 縣 51 곳이 더 붙는다. 어느 판인지는 selection.worldVersion
 # 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, VACATED_LOCATION_BATCH: 1},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -74,7 +96,8 @@ AUTHORITY_EXACT_FIELDS = tuple(VALIDATION_CONTRACT["externalAuthorityExactFields
 REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
-    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH}
+    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH,
+     JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH, VACATED_LOCATION_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
 FORBIDDEN_FIELDS = frozenset(
@@ -111,12 +134,12 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "25e405205b3a773ef10e669fc70c7da4c5ab475755cfe6419e0cd22caf9d3312"
-PINNED_SOURCE_WITNESS_SHA256 = "fd0019d96389e74ed8dc79bae89d23b3b30a8db25d096f9162259a2b87bf7789"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
+PINNED_SOURCE_WITNESS_SHA256 = "86f82f4deb4394667ef0c3d298ac0b743192515e6328c0bb2ca6ef670de80fa8"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "620e2113f1b0dcab23643c2d7f6892f33f4abff90983cf712dc7eca51e1cbed8"
-PINNED_REVIEW_POLICY_SHA256 = "4dd638f922398ce7ab831b83b47743baec16aec16a59916f235dd443bd87fd76"
-PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
+PINNED_REVIEW_POLICY_SHA256 = "1d5bfe89f5feb67413162df389ede8bd063d3b3f5d5f7d2920b73ce0c6693e55"
+PINNED_VALIDATION_CONTRACT_SHA256 = "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
@@ -266,13 +289,13 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     selection_provenance = _mapping(documents.selection.get("provenance"), "selection provenance")
     _allowed_keys(selection_provenance, frozenset({"generator", "inputs"}), "selection provenance")
     selection_inputs = _mapping(selection_provenance.get("inputs"), "selection provenance inputs")
-    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
+    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "jurisdictionRouteClaims", "strategicSiteRouteClaims", "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
     for value in selection_inputs.values():
         _allowed_keys(_mapping(value, "selection provenance input"), frozenset({"sha256"}), "selection provenance input")
     selection_summary = _mapping(documents.selection.get("summary"), "selection summary")
     _allowed_keys(selection_summary, frozenset({"approvedCount", "historicalBindingCounts"}), "selection summary")
     if "historicalBindingCounts" in selection_summary:
-        _allowed_keys(_mapping(selection_summary.get("historicalBindingCounts"), "historicalBindingCounts"), frozenset({"HHS_ADMINISTRATIVE_UNIT"}), "historicalBindingCounts")
+        _allowed_keys(_mapping(selection_summary.get("historicalBindingCounts"), "historicalBindingCounts"), frozenset({"HHS_ADMINISTRATIVE_UNIT", "REVIEWED_SOURCE_CLAIM"}), "historicalBindingCounts")
     review_policy = _mapping(documents.selection.get("reviewPolicy"), "selection reviewPolicy")
     _allowed_keys(review_policy, frozenset({"forbiddenSelections", "legacyAttributionCorrections", "numericCityIdChangeAllowed", "policyId", "reviewDecisionAnchors"}), "selection reviewPolicy")
     if "reviewDecisionAnchors" in review_policy:
@@ -288,7 +311,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
         _allowed_keys(_mapping(row, "migration row"), frozenset({"disposition", "newCityId", "oldCityId", "oldNodeFingerprint", "routeNodeKey"}), "migration row")
     if "appendedRows" in documents.migration:
         for row in _rows(documents.migration, "appendedRows"):
-            _allowed_keys(_mapping(row, "migration appended row"), frozenset({"administrativeUnitId", "disposition", "newCityId", "physicalPlaceRef", "routeNodeKey"}), "migration appended row")
+            _allowed_keys(_mapping(row, "migration appended row"), frozenset({"administrativeUnitId", "disposition", "newCityId", "physicalPlaceRef", "routeNodeKey", "sourceClaimId"}), "migration appended row")
     _allowed_keys(_mapping(documents.migration.get("referenceInventory"), "migration referenceInventory"), frozenset({"derivedReseed", "immutableAudit", "inPlaceRewrite", "mutable", "unknownPayloadPolicy"}), "migration referenceInventory")
     rewrite_surfaces = _mapping(documents.migration.get("rewriteSurfaces"), "migration rewriteSurfaces")
     _allowed_keys(rewrite_surfaces, frozenset({"derivedArtifacts", "immutableAudit", "scenarioResources"}), "migration rewriteSurfaces")
@@ -303,7 +326,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     for row in _rows(documents.route_key_registry, "keys"):
         _allowed_keys(_mapping(row, "route-node key registry row"), frozenset({"initialAdministrativeUnitId", "issuanceReason", "numericCityId", "routeNodeKey"}), "route-node key registry row")
 POINT_REFERENCE = re.compile(
-    r"^(?:chgis:v6:cnty:[^:\s]+|external:v1:[^:\s]+|wikidata:Q[1-9][0-9]*|curated:[a-z0-9][a-z0-9:_-]*)$"
+    r"^(?:chgis:v6:(?:cnty|pref):[^:\s]+|external:v1:[^:\s]+|wikidata:Q[1-9][0-9]*|curated:[a-z0-9][a-z0-9:_-]*)$"
 )
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 ROUTE_SUBJECT_TYPES = frozenset({"AdministrativePlace", "AnchoredPlace"})
@@ -919,7 +942,9 @@ def adjudications_or_empty(adjudications: dict[str, JsonObject] | None) -> dict[
     return {} if adjudications is None else adjudications
 
 
-def _location_claim_batch(point_ref: str) -> str:
+def _location_claim_batch(point_ref: str, subject_key: str | None = None) -> str:
+    if subject_key in VACATED_LOCATION_UNITS:
+        return VACATED_LOCATION_BATCH
     return FRONTIER_COUNTY_BATCH if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
 
 
@@ -982,7 +1007,7 @@ def _claims_index(
         point_ref = _text(resolution, "physicalPlaceId")
         if POINT_REFERENCE.fullmatch(point_ref) is None:
             _fail(f"external claim physicalPlaceRef is not a point reference: {point_ref}")
-        batch_counts[_location_claim_batch(point_ref)] += 1
+        batch_counts[_location_claim_batch(point_ref, subject_key)] += 1
         dataset_ref = _mapping(resolution.get("coordinateDatasetRef"), "coordinateDatasetRef")
         if set(dataset_ref) != COORDINATE_DATASET_FIELDS:
             _fail(f"LOCATION_ONLY coordinateDatasetRef fields must be exact: {claim_id}")
@@ -1033,7 +1058,7 @@ def _claims_index(
             _fail(f"identity-only external claim rationale cannot assert lifecycle: {claim_id}")
         indexed[claim_id] = {
             **claim,
-            "reviewBatchId": _location_claim_batch(point_ref),
+            "reviewBatchId": _location_claim_batch(point_ref, subject_key),
             "claimRole": "LOCATION",
             "subjectType": "AdministrativePlace",
             "subjectKey": subject_key,
@@ -1042,6 +1067,105 @@ def _claims_index(
         }
     if dict(batch_counts) != expected_counts:
         _fail(f"LOCATION_ONLY claim batches must be exactly {expected_counts}: {dict(batch_counts)}")
+    return indexed
+
+
+JURISDICTION_CLAIM_FIELDS = frozenset({
+    "sourceClaimId", "claimRole", "reviewState", "subjectType", "subjectKey", "canonicalName", "nodeClass",
+    "seatRole", "parentName", "parentRef", "physicalPlaceRef", "tileBinding", "evidence",
+})
+JURISDICTION_CLAIM_EVIDENCE_FIELDS = {
+    "CHGIS_V6_COUNTY_POINT": frozenset({"kind", "datasetPath", "datasetSha256", "sysId", "nameCh", "nameFt",
+                                        "beginYear", "endYear"}),
+    "JURISDICTION_SEAT_RECOVERY": frozenset({"kind", "datasetPath", "datasetSha256", "jurisdictionId"}),
+    "STRATEGIC_SITE_LEDGER": frozenset({"kind", "datasetPath", "datasetSha256", "siteId", "role"}),
+}
+EVIDENCE_KINDS_BY_BATCH = {
+    JURISDICTION_CLAIM_BATCH: frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
+    STRATEGIC_SITE_CLAIM_BATCH: frozenset({"STRATEGIC_SITE_LEDGER"}),
+}
+STRATEGIC_SITE_NODE_CLASS_BY_ROLE = {"FERRY": "FERRY_NODE", "FORT": "FORT_NODE", "PASS": "PASS_NODE"}
+
+
+def _source_claims_index(source_root: Path, world_version: str) -> dict[str, dict]:
+    """source claim batch 전체 — claim id → (claim + reviewBatchId)."""
+    indexed: dict[str, dict] = {}
+    for batch_id, batch in SOURCE_CLAIM_BATCHES.items():
+        for claim_id, claim in _jurisdiction_claims_index(
+            source_root, batch["counts"][world_version], batch_id,
+        ).items():
+            if claim_id in indexed:
+                _fail(f"source claim id repeats across batches: {claim_id}")
+            indexed[claim_id] = {**claim, "reviewBatchId": batch_id}
+    subjects = [claim["subjectKey"] for claim in indexed.values()]
+    if len(subjects) != len(set(subjects)):
+        _fail("source claim subjectKey repeats across batches")
+    return indexed
+
+
+def _jurisdiction_claims_index(source_root: Path, expected_count: int,
+                               batch_id: str = JURISDICTION_CLAIM_BATCH) -> dict[str, dict]:
+    """source claim batch 하나의 ROUTE_NODE claim. 기대 수가 0 인 판(780)은 원장이 없어도 된다."""
+    batch = SOURCE_CLAIM_BATCHES[batch_id]
+    path = _resolved_repository_path(source_root, PROVENANCE_DEPENDENCIES[batch["input"]], batch["input"])
+    if not path.is_file():
+        if expected_count:
+            _fail("jurisdiction route claim ledger is required by this world version")
+        return {}
+    document = _load(path)
+    _require_schema_version_one(document, "jurisdiction route claims")
+    _forbid_fields(document, "jurisdictionRouteClaims")
+    if document.get("status") != "APPROVED":
+        _fail("jurisdiction route claim ledger must be APPROVED")
+    indexed: dict[str, dict] = {}
+    subjects: set[str] = set()
+    claim_rows = [_mapping(value, "jurisdiction route claim") for value in _rows(document, "claims")]
+    if len(claim_rows) != expected_count:
+        _fail(f"jurisdiction route claim ledger must contain exactly {expected_count} claims")
+    for claim in claim_rows:
+        claim_id = _text(claim, "sourceClaimId")
+        _require_exact_keys(claim, set(JURISDICTION_CLAIM_FIELDS), f"jurisdiction route claim {claim_id}")
+        if claim.get("claimRole") != "ROUTE_NODE" or claim.get("reviewState") != "APPROVED":
+            _fail(f"jurisdiction route claim must be an APPROVED ROUTE_NODE claim: {claim_id}")
+        if claim.get("subjectType") != batch["subjectType"] or claim.get("nodeClass") not in batch["nodeClasses"]:
+            _fail(f"{batch_id} claim subjectType/nodeClass is outside its batch: {claim_id}")
+        if claim.get("seatRole") not in batch["seatRoles"]:
+            _fail(f"{batch_id} claim seatRole is invalid: {claim_id}")
+        binding = _mapping(claim.get("tileBinding"), "jurisdiction route claim tileBinding")
+        _require_exact_keys(binding, {"jurisdictionId", "commanderyId", "seatPlaceId"}, "tileBinding")
+        subject = _text(claim, "subjectKey")
+        if subject != batch["subjectPrefix"] + _text(binding, "jurisdictionId"):
+            _fail(f"jurisdiction route claim subjectKey must name its tile jurisdiction: {claim_id}")
+        if _text(claim, "parentRef") != f"han-tiles-commandery:{_text(binding, 'commanderyId')}":
+            _fail(f"jurisdiction route claim parentRef must name its tile commandery: {claim_id}")
+        place = _text(claim, "physicalPlaceRef")
+        if POINT_REFERENCE.fullmatch(place) is None or place.rsplit(":", 1)[-1] != _text(binding, "seatPlaceId"):
+            _fail(f"jurisdiction route claim physicalPlaceRef must be its seat point: {claim_id}")
+        evidence = _mapping(claim.get("evidence"), "jurisdiction route claim evidence")
+        allowed = JURISDICTION_CLAIM_EVIDENCE_FIELDS.get(_text(evidence, "kind"))
+        if allowed is None or evidence["kind"] not in EVIDENCE_KINDS_BY_BATCH[batch_id]:
+            _fail(f"jurisdiction route claim evidence kind is not reviewable: {claim_id}")
+        _require_exact_keys(evidence, set(allowed), f"jurisdiction route claim evidence {claim_id}")
+        if SHA256.fullmatch(_text(evidence, "datasetSha256")) is None:
+            _fail(f"jurisdiction route claim evidence hash is malformed: {claim_id}")
+        if evidence["kind"] == "CHGIS_V6_COUNTY_POINT" and (
+            _text(evidence, "sysId") != _text(binding, "seatPlaceId") or not place.startswith("chgis:v6:cnty:")
+        ):
+            _fail(f"CHGIS county evidence must be the seat point record: {claim_id}")
+        if evidence["kind"] == "STRATEGIC_SITE_LEDGER" and (
+            place != f"curated:strategic-site-v1:{_text(binding, 'seatPlaceId')}"
+            or _text(binding, "seatPlaceId") != f"ss-{_text(evidence, 'siteId')}"
+            or STRATEGIC_SITE_NODE_CLASS_BY_ROLE.get(_text(evidence, "role")) != claim.get("nodeClass")
+        ):
+            _fail(f"strategic-site evidence must name its own carved place and role: {claim_id}")
+        if evidence["kind"] == "JURISDICTION_SEAT_RECOVERY" and (
+            _text(evidence, "jurisdictionId") != _text(binding, "jurisdictionId")
+        ):
+            _fail(f"seat recovery evidence must name its own jurisdiction: {claim_id}")
+        if claim_id in indexed or subject in subjects:
+            _fail(f"duplicate jurisdiction route claim: {claim_id}")
+        indexed[claim_id] = claim
+        subjects.add(subject)
     return indexed
 
 
@@ -1277,7 +1401,8 @@ def _validate_review_policy_inputs(
         approved,
         frozenset({
             "administrativeCatalogSha256", "candidateManifest", "coordinateOverlaySha256",
-            "locationAdjudications", "locationClaims", "routeNodeKeyRegistry",
+            "jurisdictionRouteClaims", "locationAdjudications", "locationClaims", "routeNodeKeyRegistry",
+            "strategicSiteRouteClaims",
         }),
         "review policy inputs",
     )
@@ -1307,6 +1432,13 @@ def _validate_review_policy_inputs(
             )),
         ),
     )
+    for batch in SOURCE_CLAIM_BATCHES.values():
+        name = batch["input"]
+        claims_path = _resolved_repository_path(documents.source_root, PROVENANCE_DEPENDENCIES[name], name)
+        if name in approved or claims_path.is_file():
+            references = (*references, (
+                name, PROVENANCE_DEPENDENCIES[name], _sha256(claims_path) if claims_path.is_file() else "",
+            ))
     for name, expected_path, expected_hash in references:
         reference = _mapping(approved.get(name), f"review policy {name}")
         _allowed_keys(reference, frozenset({"path", "sha256"}), f"review policy {name}")
@@ -1679,6 +1811,7 @@ def _validate_migration(
             or key in used_keys
             or _integer(node, "numericCityId") != new_id
             or node.get("administrativeUnitId") != row.get("administrativeUnitId")
+            or node.get("sourceClaimId") != row.get("sourceClaimId")
             or node.get("physicalPlaceRef") != row.get("physicalPlaceRef")
             or any(
                 field in node
@@ -1826,6 +1959,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
     expected_claim_counts = EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD[_world_version(documents.selection)]
     expected_claim_count = sum(expected_claim_counts.values())
     claims = _claims_index(documents.external_claims, documents.source_root, expected_claim_counts)
+    jurisdiction_claims = _source_claims_index(documents.source_root, _world_version(documents.selection))
     adjudications, rejected_homonyms = (
         _reviewed_location_adjudication_index(documents)
         if documents.production_approval_mode
@@ -2000,19 +2134,29 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             elif "locationClaimId" in node:
                 _fail("locationClaimId is only valid for units without a surviving coordinate candidate")
         else:
-            expected_review_batch = "w0c-hhs-external-location"
             claim_id = binding[1]
-            claim = claims.get(claim_id)
+            claim = jurisdiction_claims.get(claim_id)
+            expected_review_batch = claim["reviewBatchId"] if claim else JURISDICTION_CLAIM_BATCH
             if claim is None:
-                _fail(f"dangling external sourceClaimId: {claim_id}")
-            if claim.get("claimRole") != "ROUTE_NODE":
-                _fail(f"route-node binding must reference a ROUTE_NODE claim: {claim_id}")
-            if claim.get("subjectType") not in ROUTE_SUBJECT_TYPES:
-                _fail(f"{claim.get('subjectType')} cannot bind a RouteNode")
-            if claim.get("physicalPlaceRef") != node.get("physicalPlaceRef"):
-                _fail(f"external binding physicalPlaceRef mismatch: {claim_id}")
-            if claim.get("subjectName") != node.get("displayName"):
-                _fail(f"external binding subjectName mismatch: {claim_id}")
+                _fail(f"dangling jurisdiction route sourceClaimId: {claim_id}")
+            if legacy_id is not None:
+                _fail(f"source-claim route node must be a new-world append: {claim_id}")
+            subject = _text(claim, "subjectKey")
+            registry_key, registry_numeric_id = route_key_registry.get(subject, (None, None))
+            if registry_key != node.get("routeNodeKey") or registry_numeric_id != _integer(node, "numericCityId"):
+                _fail(f"route-node key registry mismatch for {subject}")
+            expected_metadata = {
+                "nodeClass": claim["nodeClass"], "displayName": claim["canonicalName"],
+                "canonicalName": claim["canonicalName"], "parentName": claim["parentName"],
+                "parentRef": claim["parentRef"], "seatRole": claim["seatRole"],
+                "physicalPlaceRef": claim["physicalPlaceRef"],
+            }
+            for field, expected in expected_metadata.items():
+                if node.get(field) != expected:
+                    _fail(f"jurisdiction route claim metadata mismatch for {field}: {claim_id}")
+            adjudication = _mapping(node.get("locationAdjudication"), "locationAdjudication")
+            if adjudication != {"kind": "APPROVED_ROUTE_NODE_CLAIM", "sourceClaimId": claim_id}:
+                _fail(f"source-claim route node must cite its approved ROUTE_NODE claim: {claim_id}")
             if claim_id in used_claims:
                 _fail(f"external claim reference must be unique: {claim_id}")
             used_claims.add(claim_id)
@@ -2027,10 +2171,11 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
         present_runtime_fields = FORBIDDEN_RUNTIME_NODE_FIELDS.intersection(node)
         if present_runtime_fields:
             _fail(f"W0 route node must not claim runtime lifecycle fields: {sorted(present_runtime_fields)}")
-    if used_claims != set(claims) or location_count != expected_claim_count or external_count != 0:
+    if (used_claims != set(claims) | set(jurisdiction_claims) or location_count != expected_claim_count
+            or external_count != len(jurisdiction_claims)):
         _fail(
-            f"all exactly {expected_claim_count} LOCATION_ONLY claims must be used by one route node each; "
-            "external bindings are forbidden"
+            f"all exactly {expected_claim_count} LOCATION_ONLY claims and {len(jurisdiction_claims)} "
+            "jurisdiction ROUTE_NODE claims must be used by one route node each"
         )
     if adjudications is not None and used_adjudications != set(adjudications):
         _fail("selection must exhaust the 50-row pinned location-adjudication ledger")

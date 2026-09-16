@@ -868,10 +868,17 @@ def _materialize_fragment_document(document: dict, ledger: dict) -> dict:
 
 def materialize_document(document: dict, ledger: dict) -> dict:
     """Validate prior decisions before composing an exact later relocation stage."""
+    from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
 
+    carve_peeled, carved = carving.peel(document)
+    if carved is not None:
+        reviewed = materialize_document(carve_peeled, ledger)
+        if reviewed != carve_peeled:
+            raise ValueError("strategic-site carve input is not the canonical prior stage output")
+        return carving.reapply(reviewed, carved)
     peeled, rebound = frontier.peel_rebinding(document)
     if rebound is not None:
         reviewed = materialize_document(peeled, ledger)

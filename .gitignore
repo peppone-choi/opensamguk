@@ -82,6 +82,7 @@ data/map/*
 !data/map/han-world-artifacts-v1/
 !data/map/han-world-v3-846-artifacts-v1/
 !data/map/han-world-v3-848-artifacts-v1/
+!data/map/han-world-v3-1098-artifacts-v1/
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
 # Reviewed 15-scenario ownership materialization; generated deterministically from committed claims.

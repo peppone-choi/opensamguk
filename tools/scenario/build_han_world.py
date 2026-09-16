@@ -76,7 +76,14 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # (朔方·西河·定襄, route-node-key-registry-v1) + 836..846 간체표 폴딩 결합 11
 # (w1-script-variant-county-join, route-node-review-policy-v1; 귀속 충돌 5곳 제외)
 # + 847 吳縣(吳郡 군치)·848 毘陵(이체자 폴딩 결합 2).
-V3_ROUTE_NODE_COUNT = 848
+# + 849..1024 城 없던 han-tiles 縣 관할 176곳(REVIEWED_SOURCE_CLAIM, route-node-jurisdiction-claims-v1).
+# + 1025..1097 수·진·관 거점 73곳(REVIEWED_SOURCE_CLAIM, route-node-strategic-site-claims-v1).
+# + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
+V3_ROUTE_NODE_COUNT = 1098
+# 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
+STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
+# 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.
+V3_STABLE_NAME_MAX_ID = 848
 ADMIN_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.
@@ -668,9 +675,24 @@ def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[
     return kotlin_gate(index), index, missing
 
 
-def runtime_place_name(city: dict) -> str:
-    normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(city.get("id")))
-    if normalization and isinstance(normalization.get("runtimeName"), str):
+# 경로 노드로 새로 선 城(849..)의 한글 독음 교정. han-tiles 표기가 다른 縣 이름을 달고 있는 곳만 적는다
+# (물리점 id → 줄기). 漢字는 CHGIS NAME_CH 그대로다 — 宣城은 宛陵과 다른 縣(南陵 弋江鎭)이다.
+CLAIM_NODE_READING_CORRECTIONS = {
+    "41305": "선성",   # 宣城县 — 타일 표기 「완릉현」
+    "41355": "광덕",   # 广德县 — 타일 표기 「광봉현」
+    "40663": "시평",   # 始平县 — 타일 표기 「시령현」(始寧과 겹침)
+}
+
+
+def runtime_place_name(city: dict, city_id: int | None = None) -> str:
+    """물리점의 런타임 이름 줄기. city_id 가 주어지면(새로 선 城) 그 번호에 묶인 정규화만 쓴다."""
+    place_id = str(city.get("id"))
+    if city_id is not None and place_id in CLAIM_NODE_READING_CORRECTIONS:
+        return CLAIM_NODE_READING_CORRECTIONS[place_id]
+    normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(place_id)
+    if normalization and isinstance(normalization.get("runtimeName"), str) and (
+        city_id is None or normalization.get("runtimeCityId") == city_id
+    ):
         return normalization["runtimeName"]
     name = city["name"]
     if city.get("kind") != "COUNTY":
@@ -1080,6 +1102,44 @@ def _sha256_path(path: Path) -> str:
     return _sha256_bytes(path.read_bytes())
 
 
+def stand_in_seat_provinces(tiles: dict) -> dict[str, int]:
+    """縣 구획 없이 선 治所 점 → 그 점이 선 직할 省 인덱스.
+
+    jurisdiction-seat-recoveries-v1 이 城 없는 郡에 세운 대리 治所 관할은 省이 전부 郡 직할
+    구획이라 cityIndex 가 비어 있다. 治所 점의 칸이 그 관할의 省 가운데 cityIndex 가 빈 것
+    위에 있으면 그 省을 治所 城의 省으로 인정한다. 칸의 주인만 읽는다 — 경계를 새로 긋거나
+    이웃 省을 끌어오지 않는다. 한 점이 여러 관할의 治所이면 모호하므로 인정하지 않는다.
+    """
+    meta = tiles["_meta"]
+    cols = meta["cols"]
+    owner: list[int] = []
+    for value, count in tiles["owner"]:
+        owner.extend([value] * count)
+    if len(owner) != cols * meta["rows"]:
+        raise AssertionError("owner run-length does not fill the grid")
+    provinces = tiles["provinceRecords"]
+    bound_cities = {row["cityIndex"] for row in provinces if row.get("cityIndex") is not None}
+    seats: dict[str, list[dict]] = defaultdict(list)
+    for row in tiles["jurisdictionRecords"]:
+        seats[str(row["seatPlaceId"])].append(row)
+    index_by_id = {row["id"]: index for index, row in enumerate(provinces)}
+    result: dict[str, int] = {}
+    for city_index, city in enumerate(tiles["cities"]):
+        place = str(city["id"])
+        if city_index in bound_cities or len(seats.get(place, [])) != 1:
+            continue
+        jurisdiction = seats[place][0]
+        province_index = owner[city["row"] * cols + city["col"]]
+        if province_index < 0 or provinces[province_index]["id"] not in jurisdiction["provinceIds"]:
+            continue
+        if provinces[province_index].get("cityIndex") is not None:
+            continue
+        if index_by_id[provinces[province_index]["id"]] != province_index:
+            raise AssertionError("provinceRecords ids must be unique")
+        result[place] = province_index
+    return result
+
+
 def build_v3() -> tuple[str, str, str, str]:
     selection = json.loads(SELECTION.read_text(encoding="utf-8"))
     migration = json.loads(MIGRATION.read_text(encoding="utf-8"))
@@ -1147,6 +1207,7 @@ def build_v3() -> tuple[str, str, str, str]:
             return node["parentName"]
         place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
         return parent_by_id[jurisdiction_by_id[place]["commanderyId"]]["nameCh"]
+    stand_in_province_by_place = stand_in_seat_provinces(tiles)
     route_by_place: dict[str, int] = {}
     for node in nodes:
         place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
@@ -1279,7 +1340,7 @@ def build_v3() -> tuple[str, str, str, str]:
             stand_in = stand_in_seat_by_place.get(place)
             out.update({
                 "id": cid,
-                "name": runtime_place_name(stand_in or physical),
+                "name": runtime_place_name(stand_in or physical, cid if cid > V3_STABLE_NAME_MAX_ID else None),
                 "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
                 "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
                 "meta": {
@@ -1309,16 +1370,19 @@ def build_v3() -> tuple[str, str, str, str]:
             "nameCh": stand_in_seat_by_place.get(place, physical)["nameCh"],
             "isSeat": node["seatRole"] == "COMMANDERY_SEAT",
         }
-        level_name = v3_level(parent_ch, node["seatRole"] == "COMMANDERY_SEAT")
+        level_name = STRATEGIC_SITE_LEVEL_BY_NODE_CLASS.get(node["nodeClass"]) or v3_level(
+            parent_ch, node["seatRole"] == "COMMANDERY_SEAT"
+        )
         out["level"] = LEVEL_ID[level_name]
         out["max"] = dict(v3_maxes[level_name])
         out["initial"] = dict(zip(STAT_KEYS, BUILD_INIT[level_name]))
-        # 省이 안 붙는 城이 넷 있다 — 龜茲屬國(704)과 城 없던 郡 3곳의 治所(833–835).
-        # 넷 다 縣 구획이 아니라 郡 직할(DIRECT-*) 땅 위에 서 있고, 직할 省 463 행은
-        # 전부 cityIndex 가 비어 있다(설계다). 타일 소유 격자로 메우면 「縣 구획이 없는
-        # 물리점은 序數 省을 물려받지 않는다」는 런타임 계약(HanStrategicTopologyJson.kt:248)과
-        # 어긋난다 — 클라이언트는 그 넷만 좌표 폴백으로 앉힌다(placeGameCities.ts).
+        # 縣 구획(cityIndex)이 없는 城은 대리 治所 관할의 직할 省에 앉는다 — 龜茲屬國(704),
+        # 城 없던 郡의 治所(833–835), 그리고 w2 로 올라온 대리 治所들. 규칙은
+        # stand_in_seat_provinces 주석과 HanStrategicTopologyJson.standInSeatProvince 가 같다.
         province = province_by_city_index.get(city_index_by_place[place])
+        if province is None and place in stand_in_province_by_place:
+            province_index = stand_in_province_by_place[place]
+            province = (province_index, tiles["provinceRecords"][province_index])
         if province is not None:
             province_index, province_record = province
             out["provinceId"] = province_index
@@ -1327,7 +1391,10 @@ def build_v3() -> tuple[str, str, str, str]:
         out["connections"] = sorted(connections[cid])
         out["routeNodeKey"] = node["routeNodeKey"]
         out["physicalPlaceRef"] = node["physicalPlaceRef"]
-        out["administrativeUnitId"] = node["administrativeUnitId"]
+        if "administrativeUnitId" in node:
+            out["administrativeUnitId"] = node["administrativeUnitId"]
+        else:
+            out["sourceClaimId"] = node["sourceClaimId"]
         out_cities.append(out)
 
     # RawCity resolves paths by display name.  Qualify only collisions so the
@@ -1335,8 +1402,13 @@ def build_v3() -> tuple[str, str, str, str]:
     # with the same Korean reading.
     name_counts = Counter(row["name"] for row in out_cities)
     node_by_id = {row["numericCityId"]: row for row in nodes}
+    # 848 판까지 이미 실려 나간 런타임 이름은 뒤에 온 城 때문에 바뀌지 않는다. 겹치는 이름에
+    # 옛 城이 하나뿐이면 그 城은 그대로 두고 새 城(849..)에만 郡을 단다.
+    stable_names = Counter(row["name"] for row in out_cities if row["id"] <= V3_STABLE_NAME_MAX_ID)
     for row in out_cities:
-        if name_counts[row["name"]] > 1:
+        if name_counts[row["name"]] > 1 and not (
+            row["id"] <= V3_STABLE_NAME_MAX_ID and stable_names[row["name"]] == 1
+        ):
             row["name"] = f'{row["name"]}({node_by_id[row["id"]]["parentName"]})'
     qualified_counts = Counter(row["name"] for row in out_cities)
     for row in out_cities:
@@ -1358,14 +1430,30 @@ def build_v3() -> tuple[str, str, str, str]:
     # 양성현」이다(潁川 2·零陵 2·廬江 2). 그런 칸만 漢字 어간을 뒤에 달아 가른다. 식별자용
     # 「#129」 와 달리 사람이 읽을 수 있는 구분이고, 겹치지 않는 표기는 손대지 않는다.
     shown_counts = Counter(row["meta"]["displayName"] for row in out_cities)
+    stable_shown = Counter(
+        row["meta"]["displayName"] for row in out_cities if row["id"] <= V3_STABLE_NAME_MAX_ID
+    )
     for row in out_cities:
-        if shown_counts[row["meta"]["displayName"]] > 1:
+        shown = row["meta"]["displayName"]
+        if shown_counts[shown] > 1 and not (
+            row["id"] <= V3_STABLE_NAME_MAX_ID and stable_shown[shown] == 1
+        ):
             stem = row["meta"]["nameCh"]
             for unit in COUNTY_UNITS + NON_COUNTY_UNITS:
                 if stem.endswith(unit):
                     stem = stem[: -len(unit)]
                     break
             row["meta"]["displayName"] = f'{row["meta"]["displayName"]}({stem})'
+    # 같은 郡·같은 글자의 두 縣(僑置·이치로 CHGIS 가 자리를 둘 적은 곳 — 巴郡 漢昌, 北地郡 富平)은
+    # 漢字 어간으로도 안 갈린다. 번호가 앞선 城은 그대로 두고 뒤의 城에만 순번을 단다.
+    shown_counts = Counter(row["meta"]["displayName"] for row in out_cities)
+    seen_shown: Counter = Counter()
+    for row in out_cities:
+        shown = row["meta"]["displayName"]
+        if shown_counts[shown] > 1:
+            seen_shown[shown] += 1
+            if seen_shown[shown] > 1:
+                row["meta"]["displayName"] = f'{shown}·{seen_shown[shown]}'
     if len({row["meta"]["displayName"] for row in out_cities}) != len(out_cities):
         raise AssertionError("han-world-v3 화면 이름은 城마다 하나여야 한다")
 

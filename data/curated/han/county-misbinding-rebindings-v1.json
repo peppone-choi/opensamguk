@@ -5,7 +5,7 @@
   "reviewedAt": "2026-09-12",
   "note": "같은 이름의 다른 곳에 결속된 縣의 **좌표를 실제로 갈아끼운다**. county-misbinding-adjudications-v1.json 이 결속 오류를 판정하고 郡 내부 연결에서 빼는 데서 멈췄고(「좌표를 실제로 갈아끼우는 것은 별도 작업이다」), 이 원장이 그 별도 작업이다.",
   "rootCause": "build_han_places.py 가 --year 220 단면을 뜬다. 建安 말에 없어진 後漢 縣은 그 단면에서 떨어지고, 같은 이름으로 孫吳·蜀漢이 남쪽에 세운 縣이 유일 후보로 남아 그 좌표가 들어왔다. 세계는 187년인데 단면은 220년이다.",
-  "runtimeKeyPolicy": "runtimePlaceKey(= han-tiles cities.id = provinceRecords.id = physicalPlaceRef 꼬리)는 **바꾸지 않는다**. build_han_world.py 가 physicalPlaceRef 꼬리로 han-tiles 城을 찾고(cities_by_place), 경로노드 키는 한 번 발급되면 불변이며, 바로잡은 CHGIS 기록 5건(82138·82916·211761·96062·70227)은 220년 단면에 아예 없어 키로 쓸 수도 없다. 게다가 210962(南鄉郡)는 이미 han-tiles 城으로 있어 키가 충돌한다. 그래서 키는 불투명한 런타임 식별자로 두고, **좌표의 출처를 이 원장이 바로잡은 물리 장소로 명시**한다.",
+  "runtimeKeyPolicy": "runtimePlaceKey(= han-tiles cities.id = provinceRecords.id = physicalPlaceRef 꼬리)는 **바꾸지 않는다**. build_han_world.py 가 physicalPlaceRef 꼬리로 han-tiles 城을 찾고(cities_by_place), 경로노드 키는 한 번 발급되면 불변이며, 바로잡은 CHGIS 기록 5건(82138·82916·211761·96062·70227)과 CHGIS 기록이 없어 2차 원장 좌표를 쓴 2건(五原郡 九原·河陰)은 220년 단면에 아예 없어 키로 쓸 수도 없다. 게다가 210962(南鄉郡)는 이미 han-tiles 城으로 있어 키가 충돌한다. 그래서 키는 불투명한 런타임 식별자로 두고, **좌표의 출처를 이 원장이 바로잡은 물리 장소로 명시**한다.",
   "sourceLedger": "data/curated/han/county-misbinding-adjudications-v1.json",
   "chgisSource": {
     "county": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
@@ -272,6 +272,102 @@
         }
       ],
       "destinationParentRegionId": "PARENT-0080"
+    },
+    {
+      "runtimePlaceKey": "95698",
+      "numericCityId": 680,
+      "administrativeUnitId": "hhs:113:五原郡:001",
+      "canonicalGroup": "五原郡",
+      "sourceName": "九原",
+      "decision": "RELOCATE_TO_SOURCE_ATTESTED_EXTERNAL_LAND",
+      "incorrectPhysicalPlace": {
+        "ref": "chgis:v6:cnty:95698",
+        "nameFt": "九原縣",
+        "begYr": 215,
+        "endYr": 445,
+        "lon": 112.731201,
+        "lat": 38.398563,
+        "presLoc": "今山西忻州市区",
+        "why": "建安 20년(215) 五原郡을 廢하고 百姓을 옮겨 新興郡 아래 세운 **僑置** 九原縣이다. 220년 래스터에서 五原郡 땅은 이 忻州 飛地 37칸뿐이고, 진짜 五原(바오터우)은 南匈奴 땅으로 칠해졌다. 1007 「구원(新興郡)」이 이 자리의 진짜 治所라 두 城이 0.02km 로 겹쳐 보였다(ADR-LITE-055)."
+      },
+      "correctedPhysicalPlace": {
+        "ref": "curated:namu-place-locations-v1:五原郡:九原",
+        "nameFt": "九原縣",
+        "lon": 109.7665,
+        "lat": 40.6337,
+        "presLoc": "내몽골 바오터우시",
+        "why": "漢 九原縣의 CHGIS 기록은 없다(cnty 九原縣은 僑置 95698 하나뿐, pref 豐州는 北齊 武鄕·福建 南安뿐). 讀史方輿紀要가 그 자리를 豐州城(隋 開皇 5년)으로 못박으므로 좌표는 2차 원장(나무위키 수확본)을 쓰고, 같은 원장의 河陰 좌표가 사료 방향(豐州西南)과 맞는지로 교차 확인한다.",
+        "precision": "SECONDARY_SOURCE_COORDINATE_CROSSCHECKED"
+      },
+      "sourceQuotes": [
+        {
+          "source": "後漢書 卷113 志第二十三 郡國五 (續漢書 郡國志)",
+          "quote": "五原郡秦置为九原，武帝更名。十城 … 〖九原〗〖五原〗〖临沃〗〖文国〗〖河阴〗…",
+          "note": "소속: 五原郡 治所(첫째)."
+        },
+        {
+          "source": "讀史方輿紀要 卷61 陝西十 榆林鎮",
+          "quote": "豐州城…漢爲九原縣，五原郡治焉。…後漢仍爲五原郡。漢末，沒於匈奴。…隋開皇五年始置豐州於此。",
+          "note": "위치: 隋 豐州城 = 漢 九原縣."
+        }
+      ],
+      "destinationParentRegionId": "PARENT-0082",
+      "hostParentRegionId": "PARENT-0114"
+    },
+    {
+      "runtimePlaceKey": "82880",
+      "numericCityId": 56,
+      "administrativeUnitId": "hhs:113:五原郡:005",
+      "canonicalGroup": "五原郡",
+      "sourceName": "河陰",
+      "decision": "RELOCATE_TO_SOURCE_ATTESTED_EXTERNAL_LAND",
+      "incorrectPhysicalPlace": {
+        "ref": "chgis:v6:cnty:82880",
+        "nameFt": "河陰縣",
+        "begYr": 220,
+        "endYr": 421,
+        "lon": 112.64783,
+        "lat": 34.81961,
+        "presLoc": "今河南孟津东老城东北",
+        "why": "魏가 220년에 河南尹 平陰縣의 이름을 바꾼 河陰縣이다(같은 좌표의 CHGIS 82879 平陰縣 -249~219). 五原郡 城이 河南尹 땅을 차지해 河南尹 平陰 城이 없었고, 1097 孟津 거점이 이 省에서 떼어져 56 의 주인을 따라 개시 보급이 끊겼다."
+      },
+      "correctedPhysicalPlace": {
+        "ref": "curated:namu-place-locations-v1:五原郡:河陰",
+        "nameFt": "河陰縣",
+        "lon": 109.67278,
+        "lat": 40.47495,
+        "presLoc": "내몽골 어얼둬쓰시 다라터기",
+        "why": "漢 五原郡 河陰縣의 CHGIS 기록은 없다. 讀史方輿紀要가 「豐州西南」이라 하므로, 2차 원장 좌표가 九原 기준점의 서남(경도 −0.094°·위도 −0.159°)에 있는지 확인하고 쓴다.",
+        "precision": "SECONDARY_SOURCE_COORDINATE_CROSSCHECKED"
+      },
+      "sourceQuotes": [
+        {
+          "source": "後漢書 卷113 志第二十三 郡國五 (續漢書 郡國志)",
+          "quote": "五原郡 … 〖河阴〗",
+          "note": "소속: 五原郡 十城의 다섯째."
+        },
+        {
+          "source": "讀史方輿紀要 卷61 陝西十 榆林鎮 成宜城 조목",
+          "quote": "河陰城，在豐州西南。漢縣，屬五原郡。後漢末，廢。",
+          "note": "위치: 豐州(=漢 九原)의 서남."
+        }
+      ],
+      "destinationParentRegionId": "PARENT-0082",
+      "hostParentRegionId": "PARENT-0114",
+      "leaveBehind": {
+        "runtimePlaceKey": "82879",
+        "ref": "chgis:v6:cnty:82879",
+        "nameCh": "平阴县",
+        "nameFt": "平陰縣",
+        "displayName": "평음현",
+        "begYr": -249,
+        "endYr": 219,
+        "lon": 112.64783,
+        "lat": 34.81961,
+        "presLoc": "今河南孟津东老城东北",
+        "administrativeUnitId": "hhs:109:河南尹:011",
+        "why": "옛 발자국은 河南尹 平陰縣 그 자체다(郡國志 河南尹 二十一城 〖平陰〗). 이웃에 흡수시키지 않고 平陰의 省·관할·점으로 남긴다."
+      }
     }
   ],
   "notInSource": [],
@@ -490,7 +586,7 @@
     "stages": [
       {
         "inputDocumentSha256": "0c036d9f13999c9883e8125e7cdf5f07f230f906d447f13fcbf0f30211cc376c",
-        "outputDocumentSha256": "9ac9a0fad3a0aa8a532c7e0d1313d2ae97f8c1cfc406fe2e2ba4142de418491c",
+        "outputDocumentSha256": "e2058a14ee0b3062bbf39837296efaff79e943b08c2c2d1b6fe991b592eefe88",
         "outputCityOrder": [
           "85377",
           "85376",
@@ -1629,9 +1725,952 @@
           "71009",
           "70596",
           "42184",
-          "X026"
+          "X026",
+          "82879"
         ],
         "ownerDelta": [
+          {
+            "col": 323,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 319,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 318,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 317,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 316,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 316,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 316,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 316,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 325,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 326,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 325,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 326,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 115,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 379,
+            "row": 153,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 380,
+            "row": 153,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 380,
+            "row": 154,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 381,
+            "row": 154,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 379,
+            "row": 155,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 380,
+            "row": 155,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 381,
+            "row": 155,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 378,
+            "row": 156,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 379,
+            "row": 156,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 380,
+            "row": 156,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 156,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 382,
+            "row": 156,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 377,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 378,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 379,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 380,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 157,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 383,
+            "row": 157,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 380,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 158,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 384,
+            "row": 158,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 381,
+            "row": 159,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 159,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 159,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 384,
+            "row": 159,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 385,
+            "row": 159,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 382,
+            "row": 160,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 384,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 385,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 386,
+            "row": 160,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 385,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 386,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 387,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
+          },
           {
             "col": 255,
             "row": 201,
@@ -2533,6 +3572,30 @@
             "after": "40645"
           },
           {
+            "col": 372,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 379,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
             "col": 359,
             "row": 231,
             "before": "82871",
@@ -2575,6 +3638,60 @@
             "after": "40645"
           },
           {
+            "col": 371,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 372,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 373,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 375,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 376,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 379,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 380,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
             "col": 359,
             "row": 232,
             "before": "82871",
@@ -2609,6 +3726,42 @@
             "row": 232,
             "before": "82871",
             "after": "40645"
+          },
+          {
+            "col": 373,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 374,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 375,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 376,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
           },
           {
             "col": 358,
@@ -2651,6 +3804,12 @@
             "row": 233,
             "before": "82871",
             "after": "40645"
+          },
+          {
+            "col": 378,
+            "row": 233,
+            "before": "82880",
+            "after": "82879"
           },
           {
             "col": 358,
@@ -9547,6 +10706,40 @@
               "lat": 35.86716,
               "parentRegionId": "PARENT-0080"
             }
+          },
+          {
+            "runtimePlaceKey": "95698",
+            "before": {
+              "col": 379,
+              "row": 155,
+              "lon": 112.731201,
+              "lat": 38.398563,
+              "parentRegionId": "PARENT-0082"
+            },
+            "after": {
+              "col": 324,
+              "row": 107,
+              "lon": 109.7665,
+              "lat": 40.6337,
+              "parentRegionId": "PARENT-0082"
+            }
+          },
+          {
+            "runtimePlaceKey": "82880",
+            "before": {
+              "col": 377,
+              "row": 231,
+              "lon": 112.64783,
+              "lat": 34.81961,
+              "parentRegionId": "PARENT-0000"
+            },
+            "after": {
+              "col": 322,
+              "row": 111,
+              "lon": 109.67278,
+              "lat": 40.47495,
+              "parentRegionId": "PARENT-0082"
+            }
           }
         ],
         "recordDelta": [
@@ -9633,6 +10826,27 @@
             "field": "parentRegionId",
             "before": "PARENT-0054",
             "after": "PARENT-0113"
+          },
+          {
+            "collection": "provinceRecords",
+            "id": "82880",
+            "field": "geometryBasis",
+            "before": "HISTORICAL_SEAT_ADAPTED",
+            "after": "CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION"
+          },
+          {
+            "collection": "provinceRecords",
+            "id": "82880",
+            "field": "parentRegionId",
+            "before": "PARENT-0000",
+            "after": "PARENT-0082"
+          },
+          {
+            "collection": "provinceRecords",
+            "id": "95698",
+            "field": "geometryBasis",
+            "before": "HISTORICAL_SEAT_ADAPTED",
+            "after": "CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION"
           },
           {
             "collection": "provinceRecords",
@@ -9727,6 +10941,56 @@
             "after": [
               "71022",
               "DIRECT-PARENT-0113-9a25366ea685"
+            ]
+          },
+          {
+            "collection": "jurisdictionRecords",
+            "id": "82880",
+            "field": "commanderyId",
+            "before": "PARENT-0000",
+            "after": "PARENT-0082"
+          },
+          {
+            "collection": "commanderyRecords",
+            "id": "PARENT-0000",
+            "field": "jurisdictionIds",
+            "before": [
+              "44320",
+              "44356",
+              "44384",
+              "44385",
+              "82458",
+              "82461",
+              "82465",
+              "82520",
+              "82523",
+              "82525",
+              "82531",
+              "82828",
+              "82830",
+              "82843",
+              "82846",
+              "82852",
+              "82880"
+            ],
+            "after": [
+              "44320",
+              "44356",
+              "44384",
+              "44385",
+              "82458",
+              "82461",
+              "82465",
+              "82520",
+              "82523",
+              "82525",
+              "82531",
+              "82828",
+              "82830",
+              "82843",
+              "82846",
+              "82852",
+              "82879"
             ]
           },
           {
@@ -10039,6 +11303,18 @@
           },
           {
             "collection": "commanderyRecords",
+            "id": "PARENT-0082",
+            "field": "jurisdictionIds",
+            "before": [
+              "95698"
+            ],
+            "after": [
+              "82880",
+              "95698"
+            ]
+          },
+          {
+            "collection": "commanderyRecords",
             "id": "PARENT-0113",
             "field": "jurisdictionIds",
             "before": [
@@ -10054,6 +11330,48 @@
             "field": "seatJurisdictionId",
             "before": "JURISDICTION-PARENT-0113-SEAT",
             "after": "71022"
+          },
+          {
+            "collection": "juns",
+            "id": 82,
+            "field": "col",
+            "before": 379,
+            "after": 324
+          },
+          {
+            "collection": "juns",
+            "id": 82,
+            "field": "row",
+            "before": 155,
+            "after": 107
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "col",
+            "before": 379,
+            "after": 324
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "lat",
+            "before": 38.398563,
+            "after": 40.6337
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "lon",
+            "before": 112.731201,
+            "after": 109.7665
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "row",
+            "before": 155,
+            "after": 107
           },
           {
             "collection": "cities",
@@ -10197,6 +11515,34 @@
           },
           {
             "collection": "cities",
+            "id": 687,
+            "field": "col",
+            "before": 377,
+            "after": 322
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "lat",
+            "before": 34.81961,
+            "after": 40.47495
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "lon",
+            "before": 112.64783,
+            "after": 109.67278
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "row",
+            "before": 231,
+            "after": 111
+          },
+          {
+            "collection": "cities",
             "id": 1106,
             "field": "col",
             "before": 452,
@@ -10240,11 +11586,83 @@
               ]
             }
           }
+        ],
+        "recordAdditions": [
+          {
+            "collection": "provinceRecords",
+            "index": 1524,
+            "row": {
+              "administrativeSystem": "HAN_COMMANDERY",
+              "kind": "SPATIAL_PROVINCE",
+              "geometryBasis": "HISTORICAL_SEAT_ADAPTED",
+              "confidence": "REVIEWED",
+              "assignmentBasis": "HISTORICAL_SEAT",
+              "assignmentConfidence": "REVIEWED",
+              "id": "82879",
+              "displayName": "평음현",
+              "nameCh": "平阴县",
+              "parentRegionId": "PARENT-0000",
+              "cityIndex": 1138,
+              "jurisdictionId": "82879"
+            }
+          },
+          {
+            "collection": "jurisdictionRecords",
+            "index": 1019,
+            "row": {
+              "id": "82879",
+              "displayName": "평음현",
+              "nameCh": "平阴县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0000",
+              "seatPlaceId": "82879",
+              "provinceIds": [
+                "82879"
+              ]
+            }
+          },
+          {
+            "collection": "cities",
+            "index": 1138,
+            "row": {
+              "id": "82879",
+              "name": "평음현",
+              "nameCh": "平阴县",
+              "level": 5,
+              "kind": "COUNTY",
+              "seat": false,
+              "zhi": true,
+              "col": 377,
+              "row": 231,
+              "lon": 112.64783,
+              "lat": 34.81961
+            }
+          },
+          {
+            "collection": "_meta.counts",
+            "index": -1,
+            "row": {
+              "cities": 1138,
+              "seats": 172,
+              "regions": 38,
+              "adjCounty": 4161,
+              "adjCommandery": 412,
+              "COUNTY": 961,
+              "EXTERNAL_PLACE": 37,
+              "COMMANDERY": 120,
+              "KINGDOM": 17,
+              "PROVINCE": 3,
+              "provinces": 1524,
+              "parentRegions": 172,
+              "jurisdictions": 1020,
+              "commanderies": 172
+            }
+          }
         ]
       },
       {
         "inputDocumentSha256": "e3d6cd76ffccc2e24b2ac696f9c06540ffa9f4fcf3f1b46267f0bc61f1961bfb",
-        "outputDocumentSha256": "9336bb4e9f342845101390ea2a5c2c0db30185435447d4bba8c2f29745bde30c",
+        "outputDocumentSha256": "8e4ce398a8852febe79b737534bda84e6927f411e39e65b89c4c175b02b5bd12",
         "outputCityOrder": [
           "85377",
           "85376",
@@ -11434,7 +12852,8 @@
           "fc-rinan-002",
           "fc-rinan-003",
           "fc-rinan-004",
-          "fc-rinan-005"
+          "fc-rinan-005",
+          "82879"
         ],
         "ownerDelta": [
           {
@@ -14144,6 +15563,24 @@
             "after": "fc-liaodong-008"
           },
           {
+            "col": 323,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 103,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
             "col": 587,
             "row": 103,
             "before": "fc-xuantu-004",
@@ -14154,6 +15591,930 @@
             "row": 103,
             "before": "fc-xuantu-004",
             "after": "fc-liaodong-008"
+          },
+          {
+            "col": 321,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 104,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 319,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 105,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 318,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 106,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 317,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 107,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 316,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 321,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 108,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 316,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 328,
+            "row": 109,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 316,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 322,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 323,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 327,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 110,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 316,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 317,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 324,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 325,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "95698"
+          },
+          {
+            "col": 326,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 111,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 318,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 325,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 326,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 328,
+            "row": 112,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 319,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 325,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 326,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 327,
+            "row": 113,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 320,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 322,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 323,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 324,
+            "row": 114,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 321,
+            "row": 115,
+            "before": "DIRECT-PARENT-0114-4c8b60010121",
+            "after": "82880"
+          },
+          {
+            "col": 379,
+            "row": 153,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 380,
+            "row": 153,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 380,
+            "row": 154,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 381,
+            "row": 154,
+            "before": "95698",
+            "after": "95125"
+          },
+          {
+            "col": 379,
+            "row": 155,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 380,
+            "row": 155,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 381,
+            "row": 155,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 378,
+            "row": 156,
+            "before": "95698",
+            "after": "DIRECT-PARENT-0138-877c5fc0e884"
+          },
+          {
+            "col": 379,
+            "row": 156,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 380,
+            "row": 156,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 156,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 382,
+            "row": 156,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 377,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 378,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 379,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 380,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 157,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 157,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 383,
+            "row": 157,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 380,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 381,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 158,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 158,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 384,
+            "row": 158,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 381,
+            "row": 159,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 382,
+            "row": 159,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 159,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 384,
+            "row": 159,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 385,
+            "row": 159,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 382,
+            "row": 160,
+            "before": "95698",
+            "after": "95627"
+          },
+          {
+            "col": 383,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 384,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 385,
+            "row": 160,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 386,
+            "row": 160,
+            "before": "95698",
+            "after": "95676"
+          },
+          {
+            "col": 385,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 386,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
+          },
+          {
+            "col": 387,
+            "row": 161,
+            "before": "95698",
+            "after": "95641"
           },
           {
             "col": 255,
@@ -15056,6 +17417,30 @@
             "after": "40645"
           },
           {
+            "col": 372,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 379,
+            "row": 230,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
             "col": 359,
             "row": 231,
             "before": "82871",
@@ -15098,6 +17483,60 @@
             "after": "40645"
           },
           {
+            "col": 371,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 372,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 373,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 375,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 376,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 379,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 380,
+            "row": 231,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
             "col": 359,
             "row": 232,
             "before": "82871",
@@ -15132,6 +17571,42 @@
             "row": 232,
             "before": "82871",
             "after": "40645"
+          },
+          {
+            "col": 373,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 374,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 375,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 376,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 377,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
+          },
+          {
+            "col": 378,
+            "row": 232,
+            "before": "82880",
+            "after": "82879"
           },
           {
             "col": 358,
@@ -15174,6 +17649,12 @@
             "row": 233,
             "before": "82871",
             "after": "40645"
+          },
+          {
+            "col": 378,
+            "row": 233,
+            "before": "82880",
+            "after": "82879"
           },
           {
             "col": 358,
@@ -26674,6 +29155,40 @@
             }
           },
           {
+            "runtimePlaceKey": "95698",
+            "before": {
+              "col": 379,
+              "row": 155,
+              "lon": 112.731201,
+              "lat": 38.398563,
+              "parentRegionId": "PARENT-0082"
+            },
+            "after": {
+              "col": 324,
+              "row": 107,
+              "lon": 109.7665,
+              "lat": 40.6337,
+              "parentRegionId": "PARENT-0082"
+            }
+          },
+          {
+            "runtimePlaceKey": "82880",
+            "before": {
+              "col": 377,
+              "row": 231,
+              "lon": 112.64783,
+              "lat": 34.81961,
+              "parentRegionId": "PARENT-0000"
+            },
+            "after": {
+              "col": 322,
+              "row": 111,
+              "lon": 109.67278,
+              "lat": 40.47495,
+              "parentRegionId": "PARENT-0082"
+            }
+          },
+          {
             "runtimePlaceKey": "fc-liaodong-003",
             "before": {
               "col": 546,
@@ -26829,6 +29344,27 @@
           },
           {
             "collection": "provinceRecords",
+            "id": "82880",
+            "field": "geometryBasis",
+            "before": "HISTORICAL_SEAT_ADAPTED",
+            "after": "CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION"
+          },
+          {
+            "collection": "provinceRecords",
+            "id": "82880",
+            "field": "parentRegionId",
+            "before": "PARENT-0000",
+            "after": "PARENT-0082"
+          },
+          {
+            "collection": "provinceRecords",
+            "id": "95698",
+            "field": "geometryBasis",
+            "before": "HISTORICAL_SEAT_ADAPTED",
+            "after": "CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION"
+          },
+          {
+            "collection": "provinceRecords",
             "id": "DIRECT-PARENT-0054-27a76df70ed1",
             "field": "jurisdictionId",
             "before": "71022",
@@ -26980,6 +29516,13 @@
           },
           {
             "collection": "jurisdictionRecords",
+            "id": "82880",
+            "field": "commanderyId",
+            "before": "PARENT-0000",
+            "after": "PARENT-0082"
+          },
+          {
+            "collection": "jurisdictionRecords",
             "id": "fc-liaodong-003",
             "field": "commanderyId",
             "before": "PARENT-0097",
@@ -27005,6 +29548,49 @@
             "field": "commanderyId",
             "before": "PARENT-0094",
             "after": "PARENT-0095"
+          },
+          {
+            "collection": "commanderyRecords",
+            "id": "PARENT-0000",
+            "field": "jurisdictionIds",
+            "before": [
+              "44320",
+              "44356",
+              "44384",
+              "44385",
+              "82458",
+              "82461",
+              "82465",
+              "82520",
+              "82523",
+              "82525",
+              "82531",
+              "82828",
+              "82830",
+              "82843",
+              "82846",
+              "82852",
+              "82880"
+            ],
+            "after": [
+              "44320",
+              "44356",
+              "44384",
+              "44385",
+              "82458",
+              "82461",
+              "82465",
+              "82520",
+              "82523",
+              "82525",
+              "82531",
+              "82828",
+              "82830",
+              "82843",
+              "82846",
+              "82852",
+              "82879"
+            ]
           },
           {
             "collection": "commanderyRecords",
@@ -27316,6 +29902,18 @@
           },
           {
             "collection": "commanderyRecords",
+            "id": "PARENT-0082",
+            "field": "jurisdictionIds",
+            "before": [
+              "95698"
+            ],
+            "after": [
+              "82880",
+              "95698"
+            ]
+          },
+          {
+            "collection": "commanderyRecords",
             "id": "PARENT-0094",
             "field": "jurisdictionIds",
             "before": [
@@ -27438,6 +30036,48 @@
             "field": "seatJurisdictionId",
             "before": "JURISDICTION-PARENT-0113-SEAT",
             "after": "71022"
+          },
+          {
+            "collection": "juns",
+            "id": 82,
+            "field": "col",
+            "before": 379,
+            "after": 324
+          },
+          {
+            "collection": "juns",
+            "id": 82,
+            "field": "row",
+            "before": 155,
+            "after": 107
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "col",
+            "before": 379,
+            "after": 324
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "lat",
+            "before": 38.398563,
+            "after": 40.6337
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "lon",
+            "before": 112.731201,
+            "after": 109.7665
+          },
+          {
+            "collection": "cities",
+            "id": 98,
+            "field": "row",
+            "before": 155,
+            "after": 107
           },
           {
             "collection": "cities",
@@ -27581,6 +30221,34 @@
           },
           {
             "collection": "cities",
+            "id": 687,
+            "field": "col",
+            "before": 377,
+            "after": 322
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "lat",
+            "before": 34.81961,
+            "after": 40.47495
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "lon",
+            "before": 112.64783,
+            "after": 109.67278
+          },
+          {
+            "collection": "cities",
+            "id": 687,
+            "field": "row",
+            "before": 231,
+            "after": 111
+          },
+          {
+            "collection": "cities",
             "id": 1106,
             "field": "col",
             "before": 452,
@@ -27680,9 +30348,82 @@
               ]
             }
           }
+        ],
+        "recordAdditions": [
+          {
+            "collection": "provinceRecords",
+            "index": 1520,
+            "row": {
+              "administrativeSystem": "HAN_COMMANDERY",
+              "kind": "SPATIAL_PROVINCE",
+              "geometryBasis": "HISTORICAL_SEAT_ADAPTED",
+              "confidence": "REVIEWED",
+              "assignmentBasis": "HISTORICAL_SEAT",
+              "assignmentConfidence": "REVIEWED",
+              "id": "82879",
+              "displayName": "평음현",
+              "nameCh": "平阴县",
+              "parentRegionId": "PARENT-0000",
+              "cityIndex": 1189,
+              "jurisdictionId": "82879"
+            }
+          },
+          {
+            "collection": "jurisdictionRecords",
+            "index": 1070,
+            "row": {
+              "id": "82879",
+              "displayName": "평음현",
+              "nameCh": "平阴县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0000",
+              "seatPlaceId": "82879",
+              "provinceIds": [
+                "82879"
+              ]
+            }
+          },
+          {
+            "collection": "cities",
+            "index": 1189,
+            "row": {
+              "id": "82879",
+              "name": "평음현",
+              "nameCh": "平阴县",
+              "level": 5,
+              "kind": "COUNTY",
+              "seat": false,
+              "zhi": true,
+              "col": 377,
+              "row": 231,
+              "lon": 112.64783,
+              "lat": 34.81961
+            }
+          },
+          {
+            "collection": "_meta.counts",
+            "index": -1,
+            "row": {
+              "cities": 1189,
+              "seats": 172,
+              "regions": 38,
+              "adjCounty": 4118,
+              "adjCommandery": 412,
+              "COUNTY": 1012,
+              "EXTERNAL_PLACE": 37,
+              "COMMANDERY": 120,
+              "KINGDOM": 17,
+              "PROVINCE": 3,
+              "provinces": 1520,
+              "parentRegions": 172,
+              "jurisdictions": 1071,
+              "commanderies": 172
+            }
+          }
         ]
       }
     ]
   },
-  "notInSourceResolved": "2026-09-16: 651 南安·773 定陽 은 CHGIS v6 에 漢代 기록이 없어 NOT_IN_CHGIS_V6 로만 남아 있었고, 그동안 孫吳 땅의 동명 縣(豫章郡 南安·孫氏 定陽)에 그대로 서 있었다. 1차 사료(續漢書 郡國志 소속 + 讀史方輿紀要 위치)가 지목한 자리의 CHGIS 기록을 기준점으로 삼아 rebindings 로 옮겼다 (decision RELOCATE_TO_SOURCE_ATTESTED_ANCHOR). 옛 판정의 좌표(namu-place-locations-v1)는 각 행의 alternativesConsidered 에 남긴다."
+  "notInSourceResolved": "2026-09-16: 651 南安·773 定陽 은 CHGIS v6 에 漢代 기록이 없어 NOT_IN_CHGIS_V6 로만 남아 있었고, 그동안 孫吳 땅의 동명 縣(豫章郡 南安·孫氏 定陽)에 그대로 서 있었다. 1차 사료(續漢書 郡國志 소속 + 讀史方輿紀要 위치)가 지목한 자리의 CHGIS 기록을 기준점으로 삼아 rebindings 로 옮겼다 (decision RELOCATE_TO_SOURCE_ATTESTED_ANCHOR). 옛 판정의 좌표(namu-place-locations-v1)는 각 행의 alternativesConsidered 에 남긴다.",
+  "externalLandNote": "2026-09-16: 五原郡은 220년 래스터에서 忻州 僑置 飛地(建安 20년 新興郡)만 남고 본토(바오터우)는 南匈奴 땅이다. 세계는 187년이므로 郡國志 五原郡 城은 본토에 선다 — decision RELOCATE_TO_SOURCE_ATTESTED_EXTERNAL_LAND 가 hostParentRegionId(南匈奴) 省에서 발자국을 떼어 destinationParentRegionId(五原郡)로 소속을 바꾼다. 河陰이 비운 河南尹 발자국은 leaveBehind 로 平陰縣(CHGIS 82879, 郡國志 河南尹 〖平陰〗)의 省·관할·점이 된다."
 }

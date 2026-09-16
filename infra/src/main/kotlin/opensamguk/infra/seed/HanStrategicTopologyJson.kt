@@ -45,12 +45,21 @@ object HanStrategicTopologyJson {
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
     fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
-        loadVersion(mapName, 848, readArtifact)
+        loadVersion(mapName, 1098, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
 
+    /**
+     * 판마다의 省 수. 848 판까지는 1,520 省이다. 뒤 판은 수·진·관 거점 省을 縣 省에서 떼어
+     * 배열 끝에 붙였다(tools/map/carve_strategic_site_provinces.py) — 앞 인덱스는 그대로다.
+     */
+    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594)
+
+    /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
+    private const val FIRST_STAND_IN_SEAT_ROSTER = 849
+
     internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
-        require(cityCount == 832 || cityCount == 835 || cityCount == 846 || cityCount == 848) { "Unregistered historical Han route roster" }
+        val expectedLandCount = requireNotNull(landCountByRoster[cityCount]) { "Unregistered historical Han route roster" }
         require(mapName == MAP) { "Strategic topology is only supported for $MAP; got $mapName" }
         try {
             val bytes = paths.associateWith { readArtifact(it).copyOf() }
@@ -79,7 +88,8 @@ object HanStrategicTopologyJson {
             val provinces = tiles.array("provinceRecords")
             val landIds = provinces.map { it.text("id") }
             // 省 1,520 — 변경경계 51 縣을 세우며 直領을 다시 나눠 1,524 에서 줄었다(han-tiles 실측).
-            require(landIds.size == 1520 && landIds.toSet().size == landIds.size) { "Canonical land identity set changed" }
+            // 1098 판은 平陰 省 1(오결속 재바인딩 leaveBehind)과 수·진·관 거점 省 73 을 배열 끝에 붙여 1,594 다.
+            require(landIds.size == expectedLandCount && landIds.toSet().size == landIds.size) { "Canonical land identity set changed" }
             val terrain = tiles.array("terrain").map { it.stringValue() }
             require(terrain.size == rows && terrain.all { it.length == cols }) { "Malformed terrain rows" }
             val legend = meta.objectField("terrainLegend")
@@ -184,7 +194,8 @@ object HanStrategicTopologyJson {
                 },
                 water.array("waterZones").sortedBy { it.text("id") }.associate { it.text("id") to it.text("connectionStatus") },
             )
-            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount), blockers, presentation)
+            val standIn = if (cityCount >= FIRST_STAND_IN_SEAT_ROSTER) standInSeatProvinces(tiles, provinces, owner, cols) else emptyMap()
+            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount, standIn), blockers, presentation)
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
@@ -203,7 +214,29 @@ object HanStrategicTopologyJson {
         require(manifest.objectField("outputs").text("worldJsonSha256") == hashes.getValue(WORLD)) { "World JSON byte pin mismatch" }
     }
 
-    private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>, cityCount: Int): List<HanStrategicRouteBinding> {
+    /**
+     * 縣 구획(cityIndex) 없이 선 治所 점 → 그 점이 선 직할 省. build_han_world.stand_in_seat_provinces 와 같은 규칙이다.
+     * 한 관할의 治所로만 쓰이는 점이고, 그 칸의 省이 제 관할 省이면서 cityIndex 가 비어 있을 때만 인정한다.
+     */
+    private fun standInSeatProvinces(tiles: JsonNode, provinces: List<JsonNode>, owner: IntArray, cols: Int): Map<Int, Int> {
+        val cities = tiles.array("cities")
+        val bound = provinces.mapNotNull { row -> row["cityIndex"]?.takeUnless { it.isNull }?.intValue() }.toSet()
+        val seats = tiles.array("jurisdictionRecords").groupBy { it.text("seatPlaceId") }
+        val result = mutableMapOf<Int, Int>()
+        cities.forEachIndexed { index, city ->
+            val jurisdictions = seats[city.text("id")] ?: return@forEachIndexed
+            if (index in bound || jurisdictions.size != 1) return@forEachIndexed
+            val province = owner[city.integer("row") * cols + city.integer("col")]
+            if (province < 0) return@forEachIndexed
+            val record = provinces[province]
+            val ownIds = jurisdictions.single().array("provinceIds").map { it.stringValue() }
+            if (record.text("id") in ownIds && (record["cityIndex"] == null || record["cityIndex"].isNull)) result[index] = province
+        }
+        return result
+    }
+
+    private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>,
+        cityCount: Int, standInSeatProvinces: Map<Int, Int> = emptyMap()): List<HanStrategicRouteBinding> {
         val world = docs.getValue(WORLD)
         val selection = docs.getValue(SELECTION)
         val migration = docs.getValue(MIGRATION)
@@ -241,6 +274,10 @@ object HanStrategicTopologyJson {
             val physical = city.text("physicalPlaceRef")
             val placeId = when {
                 physical.startsWith("chgis:v6:cnty:") -> physical.removePrefix("chgis:v6:cnty:")
+                // 縣 층에 기록이 없는 대리 治所는 CHGIS 郡(pref) 층 점 위에 선다(route-node-jurisdiction-claims-v1).
+                physical.startsWith("chgis:v6:pref:") -> physical.removePrefix("chgis:v6:pref:")
+                // 수·진·관 거점은 분할 원장이 자체 발급한 장소다(strategic-site-province-carves-v1).
+                physical.startsWith("curated:strategic-site-v1:") -> physical.removePrefix("curated:strategic-site-v1:")
                 physical.startsWith("external:v1:") -> physical.removePrefix("external:v1:")
                 // 변경경계 縣은 CHGIS 에 표제가 없어 심사 원장이 자체 발급한 장소다
                 // (data/curated/han/frontier-county-placements-v1.json).
@@ -249,7 +286,7 @@ object HanStrategicTopologyJson {
                 else -> throw IllegalArgumentException("Unsupported physical reference domain")
             }
             val placeIndex = requireNotNull(physicalIndex[placeId]) { "Unknown physical place $physical" }
-            val provinceIndex = provinceByCity[placeIndex]
+            val provinceIndex = provinceByCity[placeIndex] ?: standInSeatProvinces[placeIndex]
             if (provinceIndex == null) {
                 require(listOf("provinceId", "spatialProvinceIndex", "spatialProvinceId").all { !city.hasNonNull(it) }) {
                     "Unmapped physical place must not inherit an ordinal province"

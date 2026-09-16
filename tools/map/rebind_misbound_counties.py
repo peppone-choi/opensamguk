@@ -193,8 +193,15 @@ def _relocate(document: dict, owner, records: list[dict], cities: list[dict],
               index_by_id: dict, jurisdiction_by_id: dict, commandery_by_id: dict,
               labels: list[dict], key: str, seat: tuple[int, int], destination: str,
               coordinate: tuple[float, float], geometry_basis: str,
-              supersede: dict | None) -> None:
-    """省 하나를 목적지 郡 안의 한 칸으로 옮기고, 그 주변을 새 발자국으로 깎는다."""
+              supersede: dict | None, host_parent: str | None = None,
+              leave_behind: dict | None = None) -> None:
+    """省 하나를 목적지 郡 안의 한 칸으로 옮기고, 그 주변을 새 발자국으로 깎는다.
+
+    host_parent: 사료 자리가 목적지 郡의 220년 래스터 밖(郡國 밖 세력 땅)일 때, 발자국을 떼어 올
+    땅의 부모. 떼어 낸 省은 목적지 郡으로 소속을 바꾼다(五原郡 — 220년 래스터에선 南匈奴 땅이다).
+    leave_behind: 옛 발자국이 다른 縣의 **실재하는** 자리일 때, 이웃에 흡수시키지 않고 그 縣의
+    省·관할·점으로 남긴다(배열 끝에 붙인다 — 기존 인덱스는 밀리지 않는다).
+    """
     rows, cols = owner.shape
     index = index_by_id[key]
     record = records[index]
@@ -204,10 +211,16 @@ def _relocate(document: dict, owner, records: list[dict], cities: list[dict],
     donor = int(owner[seat])
     if donor < 0:
         raise ValueError(f'{key}: the destination cell falls on unplayable ground')
-    if records[donor]['parentRegionId'] != destination:
-        raise ValueError(f'{key}: the destination cell is not inside {destination}')
+    if records[donor]['parentRegionId'] != (host_parent or destination):
+        raise ValueError(f'{key}: the destination cell is not inside {host_parent or destination}')
+    if host_parent is not None and records[donor].get('cityIndex') is not None:
+        raise ValueError(f'{key}: an external host province must not carry a settlement point')
     origin_parent = record['parentRegionId']
-    _dissolve(owner, index, records)
+    if leave_behind is not None:
+        _leave_behind(document, owner, records, cities, index_by_id, jurisdiction_by_id,
+                      commandery_by_id, index, city, origin_parent, leave_behind)
+    else:
+        _dissolve(owner, index, records)
     donor_city = records[donor].get('cityIndex')
     donor_seat = None
     if donor_city is not None:
@@ -248,10 +261,60 @@ def _relocate(document: dict, owner, records: list[dict], cities: list[dict],
     target = commandery_by_id[destination]
     target['jurisdictionIds'] = sorted(set(target['jurisdictionIds']) | {jurisdiction['id']})
     if origin.get('seatJurisdictionId') == jurisdiction['id']:
-        raise ValueError(f'{key}: a commandery seat cannot be relocated by this ledger')
+        if origin_parent != destination:
+            raise ValueError(f'{key}: a commandery seat cannot be moved to another commandery')
+        # 같은 郡 안에서 治所를 제자리로 옮긴다(五原郡 九原). 郡 행의 표시 칸도 함께 간다.
+        jun = next((row for row in document['juns']
+                    if document['cities'][row['seat']] is city), None)
+        if jun is None:
+            raise ValueError(f'{key}: the relocated seat has no commandery display row')
+        jun['col'], jun['row'] = seat[1], seat[0]
     if supersede is not None:
         _supersede_seat_recovery(document, records, index_by_id, jurisdiction_by_id,
                                  jurisdiction, target, seat, key, supersede)
+
+
+def _leave_behind(document: dict, owner, records: list[dict], cities: list[dict],
+                  index_by_id: dict, jurisdiction_by_id: dict, commandery_by_id: dict,
+                  index: int, city: dict, origin_parent: str, row: dict) -> None:
+    """옮겨 가는 城이 비운 발자국을 사료상 실재하는 縣에 그대로 넘긴다."""
+    place_id = row['runtimePlaceKey']
+    if place_id in index_by_id or place_id in jurisdiction_by_id:
+        raise ValueError(f'{place_id}: the left-behind county already exists')
+    if any(str(existing['id']) == place_id for existing in cities):
+        raise ValueError(f'{place_id}: the left-behind point already exists')
+    if (city['lon'], city['lat']) != (row['lon'], row['lat']):
+        raise ValueError(f'{place_id}: the left-behind county does not share the vacated point')
+    template = records[index]
+    new_index = len(records)
+    new_city_index = len(cities)
+    cities.append({
+        'id': place_id, 'name': row['displayName'], 'nameCh': row['nameCh'],
+        'level': city['level'], 'kind': 'COUNTY', 'seat': False, 'zhi': True,
+        'col': city['col'], 'row': city['row'], 'lon': row['lon'], 'lat': row['lat'],
+    })
+    records.append({
+        **{key: template[key] for key in ('administrativeSystem', 'kind', 'geometryBasis',
+                                            'confidence', 'assignmentBasis', 'assignmentConfidence')},
+        'id': place_id, 'displayName': row['displayName'], 'nameCh': row['nameCh'],
+        'parentRegionId': origin_parent, 'cityIndex': new_city_index, 'jurisdictionId': place_id,
+    })
+    index_by_id[place_id] = new_index
+    jurisdiction = {
+        'id': place_id, 'displayName': row['displayName'], 'nameCh': row['nameCh'],
+        'kind': 'COUNTY', 'commanderyId': origin_parent, 'seatPlaceId': place_id,
+        'provinceIds': [place_id],
+    }
+    document['jurisdictionRecords'].append(jurisdiction)
+    jurisdiction_by_id[place_id] = jurisdiction
+    commandery = commandery_by_id[origin_parent]
+    commandery['jurisdictionIds'] = sorted(set(commandery['jurisdictionIds']) | {place_id})
+    owner[owner == index] = new_index
+    counts = document['_meta'].get('counts')
+    if isinstance(counts, dict):
+        for field in ('cities', 'provinces', 'jurisdictions', 'COUNTY'):
+            if field in counts:
+                counts[field] += 1
 
 
 def apply_rebindings(source: dict, ledger: dict) -> tuple[dict, list[dict], list[dict]]:
@@ -280,7 +343,9 @@ def apply_rebindings(source: dict, ledger: dict) -> tuple[dict, list[dict], list
                   rebinding['destinationParentRegionId'],
                   (corrected['lon'], corrected['lat']),
                   'CORRECTED_PHYSICAL_PLACE_LOCAL_ADAPTATION',
-                  rebinding.get('supersedesJurisdictionSeatRecovery'))
+                  rebinding.get('supersedesJurisdictionSeatRecovery'),
+                  host_parent=rebinding.get('hostParentRegionId'),
+                  leave_behind=rebinding.get('leaveBehind'))
     corrections = ledger.get('commanderyCorrections', [])
     present = [row for row in corrections if row['runtimePlaceKey'] in index_by_id]
     if present and len(present) != len(corrections):
@@ -367,8 +432,12 @@ def _record_delta(source: dict, document: dict) -> tuple[list[dict], list[dict]]
     for collection in RECORD_COLLECTIONS:
         before = {row['id']: row for row in source[collection]}
         after = {row['id']: row for row in document[collection]}
-        if set(after) - set(before):
-            raise ValueError(f'{collection} gained rows')
+        gained = set(after) - set(before)
+        # 떠난 자리를 넘겨받는 縣만 새로 생긴다. 반드시 배열 끝에 붙어 있어야 되돌릴 수 있다.
+        tail = [row['id'] for row in document[collection][len(document[collection]) - len(gained):]] if gained else []
+        if gained and set(tail) != gained:
+            raise ValueError(f'{collection} gained rows that are not appended at the end')
+        # 새 행은 _record_additions 가 통째로 싣는다 — 필드 델타에서는 뺀다.
         for index, row in enumerate(source[collection]):
             if row['id'] not in after:
                 removals.append({'collection': collection, 'index': index, 'row': row})
@@ -379,8 +448,13 @@ def _record_delta(source: dict, document: dict) -> tuple[list[dict], list[dict]]
                 if before[key].get(field) != after[key].get(field):
                     delta.append({'collection': collection, 'id': key, 'field': field,
                                   'before': before[key].get(field), 'after': after[key].get(field)})
-    if len(source['cities']) != len(document['cities']):
-        raise ValueError('cities gained or lost rows')
+    if len(source['cities']) > len(document['cities']):
+        raise ValueError('cities lost rows')
+    for index, (before_jun, after_jun) in enumerate(zip(source['juns'], document['juns'])):
+        for field in sorted(set(before_jun) | set(after_jun)):
+            if before_jun.get(field) != after_jun.get(field):
+                delta.append({'collection': 'juns', 'id': index, 'field': field,
+                              'before': before_jun.get(field), 'after': after_jun.get(field)})
     for index, (before_city, after_city) in enumerate(zip(source['cities'], document['cities'])):
         for field in sorted(set(before_city) | set(after_city)):
             if before_city.get(field) != after_city.get(field):
@@ -389,7 +463,22 @@ def _record_delta(source: dict, document: dict) -> tuple[list[dict], list[dict]]
     return delta, removals
 
 
-DELTA_KEYS = ('ownerDelta', 'labelDelta', 'recordDelta', 'recordRemovals')
+def _record_additions(source: dict, document: dict) -> list[dict]:
+    """배열 끝에 새로 붙은 행(떠난 자리를 넘겨받은 縣)과 그 앞의 _meta.counts."""
+    additions: list[dict] = []
+    for collection in RECORD_COLLECTIONS + ('cities',):
+        # 길이로 세면 안 된다 — 같은 단계에서 다른 행이 지워지면(대리 治所 관할 접기) 길이가 같다.
+        known = {str(row['id']) for row in source[collection]}
+        for index, row in enumerate(document[collection]):
+            if str(row['id']) not in known:
+                additions.append({'collection': collection, 'index': index, 'row': row})
+    if additions:
+        additions.append({'collection': '_meta.counts', 'index': -1,
+                          'row': copy.deepcopy(source['_meta'].get('counts'))})
+    return additions
+
+
+DELTA_KEYS = ('ownerDelta', 'labelDelta', 'recordDelta', 'recordRemovals', 'recordAdditions')
 
 
 def stage_for(document: dict, ledger: dict) -> dict | None:
@@ -423,12 +512,19 @@ def restore_document(document: dict, ledger: dict) -> dict:
     index_by_id = {record['id']: index for index, record in enumerate(restored['provinceRecords'])}
     for entry in geometry['ownerDelta']:
         owner[entry['row'], entry['col']] = index_by_id[entry['before']]
+    for entry in sorted(geometry.get('recordAdditions', []), key=lambda row: -row['index']):
+        if entry['collection'] == '_meta.counts':
+            restored['_meta']['counts'] = copy.deepcopy(entry['row'])
+            continue
+        if restored[entry['collection']][entry['index']] != entry['row']:
+            raise ValueError(f"{entry['collection']}[{entry['index']}] is not the appended row")
+        del restored[entry['collection']][entry['index']]
     for entry in sorted(geometry.get('recordRemovals', []), key=lambda row: row['index']):
         restored[entry['collection']].insert(entry['index'], copy.deepcopy(entry['row']))
     rows_by_id = {collection: {row['id']: row for row in restored[collection]}
                   for collection in RECORD_COLLECTIONS}
     for entry in geometry['recordDelta']:
-        row = (restored['cities'][entry['id']] if entry['collection'] == 'cities'
+        row = (restored[entry['collection']][entry['id']] if entry['collection'] in ('cities', 'juns')
                else rows_by_id[entry['collection']][entry['id']])
         if row.get(entry['field']) != entry['after']:
             raise ValueError(f"{entry['collection']}/{entry['id']}/{entry['field']} is not the rebound value")
@@ -486,13 +582,14 @@ def main() -> int:
         return 1 if problems else 0
     document, delta, labels = apply_rebindings(source, ledger)
     records, removals = _record_delta(source, document)
+    additions = _record_additions(source, document)
     if args.prepare:
         geometry = ledger.get('geometry') or {}
         stage = {'inputDocumentSha256': digest(source),
                  'outputDocumentSha256': digest(document),
                  'outputCityOrder': [row['id'] for row in document['cities']],
                  'ownerDelta': delta, 'labelDelta': labels, 'recordDelta': records,
-                 'recordRemovals': removals}
+                 'recordRemovals': removals, 'recordAdditions': additions}
         known = {row['inputDocumentSha256']: row for row in geometry.get('stages', [])}
         pinned = known.get(stage['inputDocumentSha256'])
         if pinned is not None:

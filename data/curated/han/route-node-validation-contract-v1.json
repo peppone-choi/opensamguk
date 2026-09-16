@@ -2,7 +2,10 @@
   "allowedNodeClasses": [
     "COUNTY_NODE",
     "DAO_NODE",
+    "FERRY_NODE",
+    "FORT_NODE",
     "MARQUISATE_NODE",
+    "PASS_NODE",
     "TOWN_NODE"
   ],
   "contractId": "han-w0-route-node-validation-contract-v1",
@@ -28,7 +31,6 @@
       "ALIAS_ONLY"
     ],
     "physicalPlaceIds": [
-      "external:v1:X004",
       "external:v1:X028",
       "external:v1:X029",
       "external:v1:X030",

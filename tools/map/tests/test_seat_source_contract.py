@@ -250,10 +250,11 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         dup = self._collisions([c["name"] for c in self.cities])
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
-        self.assertEqual(95, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(215, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        # 2026-09-15: 수·진·관 거점이 들어오며 「와구」(渦口·瓦口) 한 이름이 새로 겹쳤다.
+        self.assertEqual(96, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(217, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            78, len(different),
+            79, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 
@@ -533,7 +534,8 @@ class CoordinateAxisTolerance(unittest.TestCase):
         # (陝西 鎮巴)에 묶여 있다가 제자리(河南 淅川)로 돌아오면서 南鄉郡 治所와 0.0km 로
         # 겹쳤다. data/curated/han/county-misbinding-rebindings-v1.json 참조.
         self.assertEqual(
-            {1.0: 9, 2.0: 11, 5.0: 11}, counts,
+            # 2026-09-16: `신흥군` 이 빠졌다(9/11/11 → 8/10/10) — 겹치던 九原县(95698, 僑置)이 五原郡 본토로 옮겨 갔다.
+            {1.0: 8, 2.0: 10, 5.0: 10}, counts,
             f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
         )
 

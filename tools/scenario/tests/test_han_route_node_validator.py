@@ -433,12 +433,15 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         # 781 歷城 + 782–832 변경 縣 51 곳(w1-frontier-county-location) + 833–835 城 없던
         # 郡治 3 곳(w0c-hhs-external-location) + 836–846 간체표 폴딩 결합 11 곳
         # + 847 吳縣·848 毘陵 이체자 폴딩 결합 2 곳
-        # (w1-script-variant-county-join; 귀속 충돌 5곳은 defer). 전부 append-only 다.
-        self.assertEqual(848, report.approved_count)
+        # (w1-script-variant-county-join; 귀속 충돌 5곳은 defer)
+        # + 849–1024 城 없던 縣 관할 176 곳(w2-cityless-jurisdiction-route-claim)
+        # + 1025–1097 수·진·관 거점 73 곳(w3-strategic-site-route-claim). 전부 append-only 다.
+        self.assertEqual(1098, report.approved_count)
         append = documents.migration["appendedRows"]
-        self.assertEqual(68, len(append))
+        self.assertEqual(318, len(append))  # + 2026-09-16 河南尹 平陰(1098), w4-vacated-county-location
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(848, append[-1]["newCityId"])
+        self.assertEqual(1098, append[-1]["newCityId"])
+        self.assertEqual(249, sum(1 for row in append if "sourceClaimId" in row))
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
         for mutate, pattern in (
@@ -1222,7 +1225,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         extra["locationResolution"]["physicalPlaceId"] = "external:v1:X999"
         documents.external_claims["claims"].append(extra)
 
-        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 62|unused"):
+        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 63|unused"):
             MODULE.validate_documents(documents)
 
     def test_location_claim_source_snapshot_hash_is_verified(self) -> None:
@@ -1905,7 +1908,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
 
     def test_validation_contract_is_independently_hash_pinned(self) -> None:
         self.assertEqual(
-            "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973",
+            "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3",
             hashlib.sha256(MODULE.VALIDATION_CONTRACT_PATH.read_bytes()).hexdigest(),
         )
 

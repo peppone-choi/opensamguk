@@ -35,16 +35,20 @@ function displaced(owner: Int32Array): string[] {
 }
 
 describe('stampSeatOwners', () => {
-  it('다수결만 쓰면 게임 城 39 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
+  it('다수결만 쓰면 게임 城 70 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
     // 이 수가 0 이 되면 downsampleOwner 쪽이 이미 고쳐졌다는 뜻이니 이 게이트를 다시 봐라.
     // 실측: 781 城 시절 162 → 변경 縣 51 곳이 城 782–832 로 서면서 189 → 2026-09-11
     // rasterGroup 을 4 에서 2 로 내리면서 35. 블록이 좁아지니 治所가 제 縣 땅을
     // 다수결로 지켜 내는 자리가 늘었다. → 2026-09-12 오배정 縣 8 곳을 제자리로 되돌리며
     // han-tiles 815 칸이 주인을 바꾸어 39(#704 가 이 핀을 같이 안 옮겨 빨갛게 남아 있었다).
-    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(39);
+    // → 2026-09-15 城 없던 縣 176 곳과 4~8 칸짜리 수·진·관 거점 省 73 곳이 서며 71. 작은 省의 治所는
+    // 다수결 블록에서 이웃에게 지기 쉽다 — 아래 도장 찍기가 고치는 몫이다.
+    // → 2026-09-16 城 1098 에서 70. 구원(680)이 忻州 飛地를 떠나 1007 과 칸을 나누지 않고, 정양(773)이 上郡 제자리로
+    // 가서 빠졌다. 하음(56)은 바오터우의 60 칸 省이 九原과 블록을 나누며 새로 들었다.
+    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(70);
   });
 
-  it('治所 칸을 되돌리면 39 → 5 로 줄고, 남는 5 는 전부 칸을 나눠 쓰는 城 이다', () => {
+  it('治所 칸을 되돌리면 70 → 11 로 줄고, 남는 11 은 전부 칸을 나눠 쓰는 城 이다', () => {
     const owner = stampSeatOwners(
       downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP),
       source, srcCols, cols, rows, seat, RASTER_GROUP,
@@ -52,7 +56,8 @@ describe('stampSeatOwners', () => {
     const left = displaced(owner);
     // 781 城 시절 44 → 832 城 시절 48 → rasterGroup 2 에서 5.
     // 남는 다섯은 광척·치평·성무·성양·양추 — 원본 셀이 한두 칸 차이라 더 못 갈린다.
-    expect(left).toHaveLength(5);
+    // 2026-09-15 城 1097 에서 11 — 아래 단언대로 전부 한 타일에 治所가 둘 이상 드는 자리다.
+    expect(left).toHaveLength(11);
 
     // 남는 것은 물리적으로 못 고친다 — 한 칸에 治所가 둘 이상 들면 색은 하나뿐이다.
     // 그래도 「그냥 남았다」로 두지 않는다: 남은 城 은 전부 그런 칸에 있어야 한다.

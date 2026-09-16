@@ -691,7 +691,9 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual((1520, 1070, 172), (
+        # 2026-09-15: 수·진·관 거점 73 곳이 제 省·관할을 받아 배열 끝에 붙었다(1,593 · 1,143).
+        # 2026-09-16 1098: 平陰 省·관할이 더해져 1,594 · 1,144.
+        self.assertEqual((1594, 1144, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
@@ -701,9 +703,14 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 물 때문에 키울 수 없고, 영역 단절 판정 원장이 이 두 省 id 를 직접 참조하므로
         # 郡治 省으로 접어 없앨 수도 없다(administrative-topology-audit-v1 의
         # provinceTopology.belowMinimum 이 같은 두 행을 기록한다).
+        # 거점 省 두 곳도 예외다 — 발자국은 남는 기증 縣 省과 마른땅 경계를 나눠야 한다(런타임 보급이 마른땅
+        # 경계만 잇는다). 孟津은 河陰縣 省이 20 칸짜리 가는 띠라 5 칸, 樊城은 8 칸이면 漢水 가의 맞닿는 마른땅
+        # 칸까지 먹어 7 칸으로 섰다(strategic-site-province-carves-v1).
         island_remnants = {
             "DIRECT-PARENT-0130-23501b7ffcdd": 7,
             "DIRECT-PARENT-0102-ce418dfe67e6": 6,
+            "ss-mengjin": 5,
+            "ss-fancheng": 7,
         }
         below = {
             tiles["provinceRecords"][index]["id"]: count
@@ -739,7 +746,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
             frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
         )
         self.assertEqual(ledger["outputCitiesSha256"], json_digest(prior["cities"]))
-        self.assertEqual(ledger["outputJunsSha256"], json_digest(tiles["juns"]))
+        # 2026-09-16 1098: 오배정 재바인딩이 五原郡 治所 칸을 바오터우로 옮기므로 juns 도 복원본과 대조한다.
+        self.assertEqual(ledger["outputJunsSha256"], json_digest(prior["juns"]))
         self.assertEqual(
             ledger["seatOwnerSha256"],
             hashlib.sha256(

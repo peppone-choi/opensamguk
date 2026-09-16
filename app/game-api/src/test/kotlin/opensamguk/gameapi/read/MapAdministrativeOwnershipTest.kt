@@ -30,6 +30,30 @@ class MapAdministrativeOwnershipTest {
     }
 
     @Test
+    fun `a nation founded on a stand-in commandery seat paints its own territory`() {
+        // 2026-09-16 pep: NPC 금선이 城 835 「정양군 선무현」(定襄郡 대리 治所)에 건국했는데 지도에 색이
+        // 하나도 안 칠해졌다. 848 판에서 그 城은 provinceId 가 없어 live 점령 투영(城 → 省 → 관할)에서
+        // 빠졌고, 땅은 시나리오 초기 주인 색으로 남았다. 1098 판은 대리 治所 省 규칙으로 704·833–835 를
+        // 직할 省에 앉힌다 — 신생 국가가 그 城 하나만 가져도 제 관할 省을 칠해야 한다.
+        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val artifacts = resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1098)
+        val map = opensamguk.infra.seed.MapJson.loadMap(
+            artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8),
+        )
+        assertEquals(emptyList<Int>(), map.cities.filter { it.provinceId == null }.map { it.id }, "省 없는 城")
+        val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
+        for (cityId in listOf(704, 833, 834, 835)) {
+            val city = map.cities.single { it.id == cityId }
+            val founded = projection.project(
+                "scenario_1020", listOf(LiveCityOwnership(city.id, requireNotNull(city.provinceId), 4242)), artifacts,
+            )
+            val painted = founded.provinceOccupancy.filter { it.nationId == 4242 }.map { it.provinceIndex }
+            org.junit.jupiter.api.Assertions.assertTrue(city.provinceId in painted, "city $cityId must paint its own province")
+            assertEquals(1, founded.jurisdictionOwnership.count { it.nationId == 4242 }, "city $cityId jurisdiction")
+        }
+    }
+
+    @Test
     fun `commandery tie fallback prefers the lowest positive owner over neutral`() {
         assertEquals(1, resolveCommanderyController(mapOf(0 to 2, 1 to 2, 2 to 1), seatOwner = 2))
         assertEquals(0, resolveCommanderyController(mapOf(0 to 2), seatOwner = 0))
@@ -180,7 +204,8 @@ class MapAdministrativeOwnershipTest {
 
         scenarioCodes.forEach { scenarioCode ->
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
-            assertEquals(1_520, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
+            // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
+            assertEquals(1_594, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
             // 1,071 에서 1,070 으로 — 南鄉郡(PARENT-0113)의 합성 치소 관할
             // JURISDICTION-PARENT-0113-SEAT 하나가 접혔다. 동명이지(漢中 南鄉縣)에 잘못
             // 묶여 있던 진짜 南鄉縣(71022)이 제자리로 돌아와 그 임시 관할과 같은 칸에
@@ -188,7 +213,8 @@ class MapAdministrativeOwnershipTest {
             // 실물 縣이 그 省들을 받고 郡의 치소 관할이 된다.
             // data/curated/han/county-misbinding-rebindings-v1.json 의
             // supersedesJurisdictionSeatRecovery 참조.
-            assertEquals(1_070, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            // 2026-09-16 1098: + 平陰 관할 1 + 거점 관할 73 = 1,144.
+            assertEquals(1_144, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             assertEquals(172, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(
                 snapshot.provinceOccupancy.size,

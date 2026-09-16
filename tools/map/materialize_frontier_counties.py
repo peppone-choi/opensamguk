@@ -140,8 +140,11 @@ def peel_rebinding(document: dict) -> tuple[dict, dict | None]:
 
     배열 순서만 뒤바뀐 문서도 같은 답을 내야 한다 — 지문을 대기 전에 원장이 적어 둔
     cities[] 순서로 되돌린다(프론티어 단계의 outputCityOrder 계약과 같다)."""
+    from tools.map import carve_strategic_site_provinces as carving
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
+    # 거점 省 분할은 재바인딩보다도 나중 단계다. 먼저 벗겨야 재바인딩 지문이 맞는다.
+    document, _ = carving.peel(document)
     if not rebinding.LEDGER.is_file():
         return document, None
     ledger = json.loads(rebinding.LEDGER.read_text(encoding="utf-8"))
@@ -638,7 +641,10 @@ def main() -> int:
     ledger = json.loads(args.ledger.read_text(encoding="utf-8"))
     # 오배정 縣 재바인딩은 프론티어 縣보다 나중 단계다. 벗겨 내고 세운 뒤 다시 얹어야
     # 프론티어 배치 원장이 제 입력 지문 그대로 남는다(재바인딩은 그 郡들을 건드리지 않는다).
+    # 거점 省 분할(carve_strategic_site_provinces)은 그보다 더 나중이라 가장 먼저 벗기고 가장 늦게 얹는다.
+    from tools.map import carve_strategic_site_provinces as carving
     from tools.map import rebind_misbound_counties as rebinding
+    document, carved = carving.peel(document)
     document, rebound = peel_rebinding(document)
     if has_frontier_counties(document):
         if not args.placements.is_file():
@@ -658,6 +664,8 @@ def main() -> int:
     }
     if rebound is not None:
         updated, _, _ = rebinding.apply_rebindings(updated, rebound)
+    if carved is not None:
+        updated = carving.reapply(updated, carved)
     tiles_blob = _dump(updated)
     placement_blob = json.dumps(placement_document, ensure_ascii=False, indent=2) + "\n"
     if args.check:

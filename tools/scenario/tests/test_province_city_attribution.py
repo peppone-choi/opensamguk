@@ -56,12 +56,17 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 2026-09-14: w1 11곳 편입으로 OWN 1111 → 1123.
         # 2026-09-14: 吳縣(847, 吳郡 군치)·毘陵(848) 편입으로 OWN 1123 → 1125,
         # 인근 4省 재귀속(T5 52 → 48, T4 146 → 148).
+        # 2026-09-15: 城 없던 縣 관할 176곳(w2) 편입 + 대리 治所 城 12곳의 직할 省 연결로
+        # OWN 1125 → 1346. 제 縣 城이 생긴 省이 郡治(T2 148 → 5)·같은 郡 최근접(T3 48 → 4)·
+        # 이웃 郡 폴백(T5 177 → 143)에서 빠져나왔다. 城이 하나도 없는 섬 성분(22)은 그대로다.
+        # 같은 날 거점 省 73곳이 縣 省에서 떨어져 나와 제 거점 城을 가져 OWN 1346 → 1419 이다(나머지 불변 —
+        # 거점 城은 남의 省 귀속 대상이 되지 않는다). 2026-09-16 河南尹 平陰(1098) 이 떠난 자리 省을 제 城으로 가져 1419 → 1420.
         self.assertEqual(
             {
-                "OWN_COUNTY_SEAT": 1125,
-                "SAME_COMMANDERY_SEAT": 148,
-                "SAME_COMMANDERY_NEAREST": 48,
-                "ADJACENT_COMMANDERY_NEAREST": 177,
+                "OWN_COUNTY_SEAT": 1420,
+                "SAME_COMMANDERY_SEAT": 5,
+                "SAME_COMMANDERY_NEAREST": 4,
+                "ADJACENT_COMMANDERY_NEAREST": 143,
                 "COMMANDERY_HAS_NO_CITY": 22,
             },
             dict(self.basis),
@@ -118,12 +123,16 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 朔方·西河·定襄 治所가 경로 노드로 선 것이다
         # (tools/scenario/append_cityless_commandery_seat_ledgers.py).
         # 귀속 충돌 5곳 defer로 gap·T5 구조는 그대로다(w1-script-variant-county-join 11곳).
-        self.assertEqual(48, len(self.gaps))
+        # 48 → 34 는 w2 가 城 없던 郡 14곳(廣漢屬國·廣魏·廬陵·張掖屬國·新興·新都·樂平·樂陵·涪陵·漢昌·
+        # 甘陵·西平·長樂·鮮卑)에 城을 세운 것이다.
+        # 남은 34 중 30 은 郡國 밖 세력이고, 新平·毗陵典農校尉·汶山·章武 4곳은 治所가 기존 城과
+        # 같은 자리라 새 城을 세우지 않았다(route-node-jurisdiction-claims-v1 excluded).
+        self.assertEqual(34, len(self.gaps))
         for gap in self.gaps:
             self.assertIsNotNone(gap["seatPlaceId"], gap)
             self.assertGreater(gap["provinceCount"], 0, gap)
         self.assertEqual(
-            199, sum(gap["provinceCount"] for gap in self.gaps)
+            165, sum(gap["provinceCount"] for gap in self.gaps)
         )
 
     def test_cityless_land_is_walked_out_to_the_nearest_city(self) -> None:
@@ -133,7 +142,7 @@ class ProvinceCityAttributionTest(unittest.TestCase):
             row for row in self.rows
             if row["basis"] == attribution.CROSSES_COMMANDERY_BOUNDARY
         ]
-        self.assertEqual(177, len(walked))
+        self.assertEqual(143, len(walked))
         jurisdictions = {
             str(row["id"]): row for row in self.tiles["jurisdictionRecords"]
         }

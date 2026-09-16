@@ -143,6 +143,7 @@ def audit_documents(
     ledger: dict[str, Any],
     source_ledger: dict[str, Any],
     include_unsupplied: bool = False,
+    commandery_links: list[dict[str, Any]] | None = None,
 ) -> AuditResult:
     errors: list[str] = []
     rows: list[dict[str, Any]] = []
@@ -259,14 +260,15 @@ def audit_documents(
             if len(active) > 1:
                 errors.append(f"city {city_id} scenario {scenario_code} has overlapping active decision rows")
 
-    commandery_links_path = ROOT / "data/map/han-commandery-supply-links-v1.json"
-    commandery_links = (
-        _load_json(commandery_links_path)["links"] if commandery_links_path.is_file() else []
-    )
+    # 郡 내부 보급선은 호출자가 넘긴다. 예전에는 여기서 저장소 파일을 직접 읽어, 문서 인자만 바꾼
+    # fixture 감사에도 실제 보급선이 섞였다 — 2026-09-16 보급선이 바뀌자 우연히 fixture 省 인덱스와
+    # 겹쳐 차수 0 가드 테스트 셋이 빨개졌다. 저장소 감사는 audit_repository 가 읽어 넘긴다.
+    commandery_links = list(commandery_links or [])
     ownership_by_scenario = {
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
     used_policy_keys: set[tuple[int, int]] = set()
+    spatially_supplied_keys: set[tuple[int, int]] = set()
     for scenario_code in scenario_codes:
         scenario = scenarios[scenario_code]
         owner_by_city, capitals = _scenario_runtime(scenario)
@@ -318,6 +320,7 @@ def audit_documents(
             if province_owners.get(runtime_by_id[city_id].get("provinceId")) == owner_by_city[city_id]
             and runtime_by_id[city_id].get("provinceId") in spatial_reached
         }
+        spatially_supplied_keys.update((scenario_code, city_id) for city_id in spatial_supplied)
 
         counts = Counter({verdict: 0 for verdict in VERDICTS})
         for city_id in owned_city_ids:
@@ -426,6 +429,10 @@ def audit_documents(
             and not supply_degree.get(province_index)
         ):
             for scenario_code in sorted(owned_scenarios_by_city[city_id]):
+                # 縣 인접이 0 이어도 郡 내부 보급선(ADR-LITE-051)으로 런타임 보급망에 닿으면 끊긴 城이
+                # 아니다 — 보호 행이 붙을 절단 자체가 없다(東部侯官 956: 섬 조각 + 豫章郡 보급선).
+                if (scenario_code, city_id) in spatially_supplied_keys:
+                    continue
                 active_protection = [
                     row for row in _active_decisions(ledger_rows, scenario_code, city_id)
                     if row.get("decision") in PROTECT_DECISIONS
@@ -447,6 +454,9 @@ def audit_documents(
     )
 
 
+COMMANDERY_LINKS_PATH = ROOT / "data/map/han-commandery-supply-links-v1.json"
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -466,6 +476,7 @@ def audit_repository(map_name: str = "han-world-v3", include_unsupplied: bool = 
         _load_json(ledger_path),
         _load_json(SOURCE_LEDGER_PATH),
         include_unsupplied=include_unsupplied,
+        commandery_links=_load_json(COMMANDERY_LINKS_PATH)["links"],
     )
 
 

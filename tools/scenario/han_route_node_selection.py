@@ -21,15 +21,62 @@ FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
-#: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch 둘. append 행은 여기만 쓴다.
-LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH})
-APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND"}
+# 오결속 城이 비운 발자국에 제 이름의 郡國志 縣을 세우는 batch(2026-09-16). 五原郡 河陰(56)이 河南尹
+# 平陰縣의 220 년 개명 기록(CHGIS 82880)을 차지해 平陰이 NO_COORDINATE_CANDIDATE 로 남아 있었다.
+# 河陰을 제자리로 옮기면서 옛 발자국을 平陰(CHGIS 82879)에 넘겼다(county-misbinding-rebindings-v1 leaveBehind).
+# claim 배치(w2·w3) **뒤에** 번호를 받는다 — 앞 판의 번호를 한 칸도 밀지 않기 위해서다.
+VACATED_LOCATION_BATCH = "w4-vacated-county-location"
+VACATED_LOCATION_ISSUANCE = "VACATED_COUNTY_LOCATION_V1_APPEND"
+VACATED_LOCATION_UNITS = frozenset({"hhs:109:河南尹:011"})
+#: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch. append 행은 여기만 쓴다.
+LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH, VACATED_LOCATION_BATCH})
+@dataclass(frozen=True, slots=True)
+class ClaimBatch:
+    """郡國志 식별자 없이 source claim 으로 경로 노드를 세우는 batch 한 줄.
+
+    subjectKey 는 `subject_prefix + tileBinding.jurisdictionId` 이고, 번호는 앞 batch 뒤에 이어진다.
+    """
+    batch_id: str
+    issuance_reason: str
+    subject_prefix: str
+    subject_type: str
+    node_classes: frozenset[str]
+    seat_roles: frozenset[str]
+    evidence_kinds: frozenset[str]
+    expected_count: int
+    policy_input: str
+    ledger_path: str
+
+
+CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
+    # 郡國志 식별자가 없는 han-tiles 縣 관할(tools/scenario/append_cityless_jurisdiction_route_claims.py).
+    ClaimBatch(
+        "w2-cityless-jurisdiction-route-claim", "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND",
+        "han-tiles-jurisdiction:", "ADMINISTRATIVE_PLACE", frozenset({"COUNTY_NODE"}),
+        frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
+        176, "jurisdictionRouteClaims", "data/curated/han/route-node-jurisdiction-claims-v1.json",
+    ),
+    # 縣이 아닌 수·진·관 거점(ADR-LITE-052, tools/scenario/append_strategic_site_route_claims.py).
+    ClaimBatch(
+        "w3-strategic-site-route-claim", "STRATEGIC_SITE_ROUTE_CLAIM_V1_APPEND",
+        "strategic-site:", "STRATEGIC_SITE", frozenset({"FERRY_NODE", "FORT_NODE", "PASS_NODE"}),
+        frozenset({"NON_SEAT"}), frozenset({"STRATEGIC_SITE_LEDGER"}),
+        73, "strategicSiteRouteClaims", "data/curated/han/route-node-strategic-site-claims-v1.json",
+    ),
+)
+JURISDICTION_CLAIM_BATCH = CLAIM_BATCHES[0].batch_id
+CLAIM_BATCH_BY_ID = {batch.batch_id: batch for batch in CLAIM_BATCHES}
+APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND", VACATED_LOCATION_ISSUANCE} | {batch.issuance_reason for batch in CLAIM_BATCHES}
 # 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
 # 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
-EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, SCRIPT_VARIANT_BATCH: 13}
-EXPECTED_LOCATION_CLAIM_COUNT = EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
+EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
+EXPECTED_JURISDICTION_CLAIM_COUNT = sum(batch.expected_count for batch in CLAIM_BATCHES)
+EXPECTED_BATCH_COUNTS = {**EXPECTED_HHS_BATCH_COUNTS, **{batch.batch_id: batch.expected_count for batch in CLAIM_BATCHES}}
+EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
+                                 + EXPECTED_BATCH_COUNTS[VACATED_LOCATION_BATCH])
+HHS_SELECTION_COUNT = sum(EXPECTED_HHS_BATCH_COUNTS.values())
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
-EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51}
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -65,7 +112,7 @@ EXPECTED_REWRITE_SURFACES: JsonObject = {
 }
 EXPECTED_FORBIDDEN_SELECTIONS: JsonObject = {
     "physicalPlaceIds": [
-        "external:v1:X004", "external:v1:X028", "external:v1:X029", "external:v1:X030",
+        "external:v1:X028", "external:v1:X029", "external:v1:X030",
         "external:v1:X031", "external:v1:X032", "external:v1:X033", "external:v1:X034",
         "external:v1:X035", "external:v1:X036", "external:v1:X037", "external:v1:X038",
         "external:v1:X040", "external:v1:X041", "external:v1:X042", "external:v1:X043",
@@ -253,12 +300,54 @@ def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObjec
         if unit_id in selected or unit_id in claim_index or any(row.get("sourceClaimId") == claim_id for row in claim_index.values()):
             raise MaterializationContractError("location claim duplicates a selected binding")
         place_id = text(resolution, "physicalPlaceId")
-        batch_id = FRONTIER_COUNTY_BATCH if place_id.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+        if unit_id in VACATED_LOCATION_UNITS:
+            batch_id = VACATED_LOCATION_BATCH
+        elif place_id.startswith(FRONTIER_COUNTY_PLACE_PREFIX):
+            batch_id = FRONTIER_COUNTY_BATCH
+        else:
+            batch_id = EXTERNAL_LOCATION_BATCH
         selected[unit_id] = (place_id, batch_id)
         claim_index[unit_id] = claim
-    if len(selected) != SELECTION_COUNT or len({value[0] for value in selected.values()}) != SELECTION_COUNT:
+    if len(selected) != HHS_SELECTION_COUNT or len({value[0] for value in selected.values()}) != HHS_SELECTION_COUNT:
         raise MaterializationContractError("duplicate physicalPlaceRef or selection count drift")
     return selected, claim_index
+
+
+JURISDICTION_CLAIM_FIELDS = frozenset({
+    "sourceClaimId", "claimRole", "reviewState", "subjectType", "subjectKey", "canonicalName", "nodeClass",
+    "seatRole", "parentName", "parentRef", "physicalPlaceRef", "tileBinding", "evidence",
+})
+
+
+def _jurisdiction_claims(document: JsonObject, policy: JsonObject, batch: ClaimBatch = CLAIM_BATCHES[0]) -> list[JsonObject]:
+    """source claim batch 하나의 ROUTE_NODE claim — 필드·결속 규약을 fail-closed 로 본다."""
+    batches = [row for row in rows(policy, "selectionBatches") if text(row, "batchId") == batch.batch_id]
+    if len(batches) != 1 or document.get("status") != "APPROVED":
+        raise MaterializationContractError(f"{batch.batch_id} must appear once and its ledger must be APPROVED")
+    claims = rows(document, "claims")
+    if len(claims) != batch.expected_count or number(batches[0], "expectedCount") != len(claims):
+        raise MaterializationContractError(f"{batch.batch_id} claim count drift")
+    seen_claims: set[str] = set()
+    seen_subjects: set[str] = set()
+    for claim in claims:
+        claim_id = text(claim, "sourceClaimId")
+        if set(claim) != JURISDICTION_CLAIM_FIELDS:
+            raise MaterializationContractError(f"jurisdiction claim fields must be exact: {claim_id}")
+        if (claim.get("claimRole") != "ROUTE_NODE" or claim.get("reviewState") != "APPROVED"
+                or claim.get("subjectType") != batch.subject_type or claim.get("nodeClass") not in batch.node_classes
+                or claim.get("seatRole") not in batch.seat_roles):
+            raise MaterializationContractError(f"claim is not an approved {batch.batch_id} ROUTE_NODE claim: {claim_id}")
+        subject = text(claim, "subjectKey")
+        binding = obj(claim, "tileBinding")
+        if subject != batch.subject_prefix + text(binding, "jurisdictionId"):
+            raise MaterializationContractError(f"jurisdiction claim subjectKey must name its tile jurisdiction: {claim_id}")
+        if text(obj(claim, "evidence"), "kind") not in batch.evidence_kinds:
+            raise MaterializationContractError(f"jurisdiction claim evidence kind is not reviewable: {claim_id}")
+        if claim_id in seen_claims or subject in seen_subjects:
+            raise MaterializationContractError(f"duplicate jurisdiction claim: {claim_id}")
+        seen_claims.add(claim_id)
+        seen_subjects.add(subject)
+    return claims
 
 
 def _forbidden_policy(policy: JsonObject) -> JsonObject:
@@ -369,6 +458,10 @@ def _uuid_keys(registry: JsonObject, selected_ids: set[str]) -> dict[str, str]:
 
 
 def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[str, int]:
+    """append 번호. 앞선 HHS append 는 781 부터 끊김 없이, claim 배치는 그 뒤, 비운 자리 縣은 맨 뒤다.
+
+    끊김 없음은 **전체 append 합집합**으로 본다 — 비운 자리 縣(w4)이 claim 배치 뒤에 붙어도
+    어떤 번호도 건너뛰거나 겹치지 않는다."""
     appended: dict[str, int] = {}
     for row in rows(registry, "keys"):
         if "numericCityId" not in row:
@@ -378,6 +471,8 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
         if (
             unit_id not in selected_ids
             or row.get("issuanceReason") not in APPEND_ISSUANCE_REASONS
+            or any((row.get("issuanceReason") == batch.issuance_reason)
+                   != unit_id.startswith(batch.subject_prefix) for batch in CLAIM_BATCHES)
             or unit_id in appended
         ):
             raise MaterializationContractError("append-only numeric registry row is malformed")
@@ -385,13 +480,18 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
     expected = list(range(LEGACY_SELECTION_COUNT + 1, LEGACY_SELECTION_COUNT + len(appended) + 1))
     if sorted(appended.values()) != expected:
         raise MaterializationContractError("append-only numeric IDs must be next never-issued sequence")
+    late = {unit_id for unit_id in appended if unit_id in VACATED_LOCATION_UNITS}
+    if late and min(appended[unit_id] for unit_id in late) <= max(
+        (value for unit_id, value in appended.items() if unit_id not in late), default=0
+    ):
+        raise MaterializationContractError("vacated-county append IDs must follow every earlier append")
     return appended
 
 
 def build_outputs(
     candidate: JsonObject, catalog: JsonObject, overlay_doc: JsonObject, policy: JsonObject,
     adjudications: JsonObject, claims: JsonObject, registry: JsonObject,
-    scenarios: list[JsonObject], provenance: JsonObject,
+    scenarios: list[JsonObject], provenance: JsonObject, claim_documents: dict[str, JsonObject],
 ) -> BuildResult:
     ordered, units = _catalog(catalog)
     overlay = {text(row, "administrativeUnitId"): row for row in rows(overlay_doc, "administrativeUnits")}
@@ -419,7 +519,7 @@ def build_outputs(
     if set(selected) - pool or policy.get("status") != "APPROVED":
         raise MaterializationContractError("approved selection is outside the candidate pool")
     if (any(row.get("reviewState") != "APPROVED" for row in rows(policy, "selectionBatches"))
-            or {text(row, "batchId"): number(row, "expectedCount") for row in rows(policy, "selectionBatches")} != EXPECTED_BATCH_COUNTS or Counter(value[1] for value in selected.values()) != Counter(EXPECTED_BATCH_COUNTS)):
+            or {text(row, "batchId"): number(row, "expectedCount") for row in rows(policy, "selectionBatches")} != EXPECTED_BATCH_COUNTS or Counter(value[1] for value in selected.values()) != Counter(EXPECTED_HHS_BATCH_COUNTS)):
         raise MaterializationContractError("policy count drift")
     if obj(policy, "expectedSelection") != EXPECTED_SELECTION:
         raise MaterializationContractError("policy count drift")
@@ -436,13 +536,29 @@ def build_outputs(
         != "NOT_CLAIMED_BY_W0_DATA_CONTRACT"
     ):
         raise MaterializationContractError("scenario activation policy drift")
-    keys = _uuid_keys(registry, set(selected))
+    if set(claim_documents) != set(CLAIM_BATCH_BY_ID):
+        raise MaterializationContractError("every source-claim batch requires exactly its claim ledger")
+    route_claims = [(batch, claim) for batch in CLAIM_BATCHES
+                    for claim in _jurisdiction_claims(claim_documents[batch.batch_id], policy, batch)]
+    claim_subjects = {text(claim, "subjectKey") for _, claim in route_claims}
+    if len(claim_subjects) != len(route_claims):
+        raise MaterializationContractError("source-claim subjects must be unique across batches")
+    if claim_subjects & set(selected):
+        raise MaterializationContractError("jurisdiction claim subject collides with an HHS binding")
+    keys = _uuid_keys(registry, set(selected) | claim_subjects)
     matched = _existing_matches(selected, current, script_variant_members)
     corrections, binding_ids, physical_ids = _policy_corrections(policy, current, selected)
     matched.update(corrections)
     if len({value[0] for value in matched.values()}) != len(matched):
         raise MaterializationContractError("same-node corrections reuse a legacy slot")
-    appended_ids = _appended_numeric_ids(registry, set(selected))
+    appended_ids = _appended_numeric_ids(registry, set(selected) | claim_subjects)
+    claim_numeric_ids = {subject: appended_ids.pop(subject) for subject in claim_subjects}
+    floor = max(value for unit_id, value in appended_ids.items() if unit_id not in VACATED_LOCATION_UNITS)
+    for batch in CLAIM_BATCHES:
+        batch_ids = [claim_numeric_ids[text(claim, "subjectKey")] for owner, claim in route_claims if owner is batch]
+        if min(batch_ids) <= floor:
+            raise MaterializationContractError(f"{batch.batch_id} numeric IDs must follow every earlier append")
+        floor = max(batch_ids)
     retired = sorted(set(range(1, LEGACY_SELECTION_COUNT + 1)) - {value[0] for value in matched.values()})
     replacements = [
         unit_id
@@ -553,6 +669,7 @@ def build_outputs(
             location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
             location_claim_id = None
         elif batch_id in LOCATION_ONLY_BATCHES and unit_id in claim_index:
+            # 비운 자리 縣(w4)도 CHGIS 점이 220 년 단면에 없어 같은 LOCATION_ONLY 규약으로 붙는다.
             # 변경 縣 51곳과 城 없던 郡治 3곳은 둘 다 CHGIS 점이 없어 승인된 LOCATION_ONLY claim 으로
             # 결합한다. 이름공간만 다르고(curated:frontier-county-v1 / external:v1) 규약은 같다.
             location_claim_id = text(claim_index[unit_id], "sourceClaimId")
@@ -594,6 +711,41 @@ def build_outputs(
             "physicalPlaceRef": place_id,
             "disposition": "APPENDED_NEW_WORLD_IDENTITY",
         })
+    for batch, claim in sorted(route_claims, key=lambda row: claim_numeric_ids[text(row[1], "subjectKey")]):
+        subject, claim_id = text(claim, "subjectKey"), text(claim, "sourceClaimId")
+        numeric_id = claim_numeric_ids[subject]
+        route_nodes.append({
+            "numericCityId": numeric_id,
+            "routeNodeKey": keys[subject],
+            "reviewState": "APPROVED",
+            "nodeClass": text(claim, "nodeClass"),
+            "displayName": text(claim, "canonicalName"),
+            "canonicalName": text(claim, "canonicalName"),
+            "seatRole": text(claim, "seatRole"),
+            "parentName": text(claim, "parentName"),
+            "parentRef": text(claim, "parentRef"),
+            "physicalPlaceRef": text(claim, "physicalPlaceRef"),
+            "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+            "sourceClaimId": claim_id,
+            "locationAdjudication": {"kind": "APPROVED_ROUTE_NODE_CLAIM", "sourceClaimId": claim_id},
+            "selectionRationale": {
+                "method": "APPROVED_REVIEW_BATCH",
+                "batchId": batch.batch_id,
+                "reviewPolicyId": text(policy, "policyId"),
+                "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+                "evidenceRefs": ["data/curated/han/route-node-review-policy-v1.json", batch.batch_id],
+            },
+        })
+        appended_rows.append({
+            "newCityId": numeric_id,
+            "routeNodeKey": keys[subject],
+            "sourceClaimId": claim_id,
+            "physicalPlaceRef": text(claim, "physicalPlaceRef"),
+            "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+        })
+    places = [node["physicalPlaceRef"] for node in route_nodes if isinstance(node, dict)]
+    if len(places) != SELECTION_COUNT or len(set(places)) != SELECTION_COUNT:
+        raise MaterializationContractError("route nodes must carry unique physicalPlaceRef values")
     _enforce_forbidden_selection(route_nodes, forbidden)
     replacement_decisions = [
         {key: node[key] for key in ("legacyCityId", "administrativeUnitId", "physicalPlaceRef", "routeNodeKey")}
@@ -629,13 +781,16 @@ def build_outputs(
         "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim",
     }:
         raise MaterializationContractError("numeric assignment policy drift")
+    # HHS append 가 claim 배치 뒤에 번호를 받을 수 있으므로(w4) 출력은 번호 순으로 고정한다.
+    route_nodes.sort(key=lambda node: number(node, "numericCityId"))
+    appended_rows.sort(key=lambda row: number(row, "newCityId"))
     selection: JsonObject = {"schemaVersion": 1, "selectionId": "han-route-node-selection-v1", "worldVersion": "han-world-v3", "reviewState": "APPROVED", "baselineYear": 220,
                              "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT", "scenarioCatalog": {"resourceCount": len(scenarios), "resources": list[JsonValue](scenarios)},
                              "reviewPolicy": {"policyId": text(policy, "policyId"), "forbiddenSelections": forbidden,
                                               "reviewDecisionAnchors": decision_anchors,
                                               "numericCityIdChangeAllowed": False,
                                               "legacyAttributionCorrections": [number(row, "oldCityId") for row in rows(policy, "legacyAttributionCorrections")]},
-                             "provenance": provenance, "summary": {"approvedCount": SELECTION_COUNT, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": SELECTION_COUNT}}, "routeNodes": route_nodes}
+                             "provenance": provenance, "summary": {"approvedCount": SELECTION_COUNT, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": HHS_SELECTION_COUNT, "REVIEWED_SOURCE_CLAIM": EXPECTED_JURISDICTION_CLAIM_COUNT}}, "routeNodes": route_nodes}
     migration: JsonObject = {"schemaVersion": 1, "migrationId": "han-route-node-migration-v1", "mode": "NEW_WORLD_ONLY", "targetWorldVersion": "han-world-v3", "sourceSelectionId": "han-route-node-selection-v1",
                              "referenceInventory": {"mutable": MUTABLE_REFERENCES, "immutableAudit": IMMUTABLE_AUDIT_REFERENCES,
                                                     "derivedReseed": DERIVED_RESEED_REFERENCES,

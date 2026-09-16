@@ -67,16 +67,17 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
 
         ledger = module.build_ledger(documents, input_records)
 
-        self.assertEqual(1_520, ledger["summary"]["provinceRecordCount"])
-        self.assertEqual(1_057, ledger["summary"]["cityLinkedProvinceCount"])
+        # 2026-09-16 1098: 平陰 省(82879)이 재바인딩 단계에서 배열 끝에 붙어 거점 분할 전 문서도 1,521 省·城 연결 1,058 이다.
+        self.assertEqual(1_521, ledger["summary"]["provinceRecordCount"])
+        self.assertEqual(1_058, ledger["summary"]["cityLinkedProvinceCount"])
         self.assertEqual(463, ledger["summary"]["directTerritoryProvinceCount"])
         self.assertEqual(227_349, ledger["summary"]["landCellCount"])
         # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
         # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
-        # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다: 옛 자리(江西 南康·浙江 江山)의 발자국 367칸이
-        # 이웃에 흡수되며 13칸이 城 없는 直領 이웃으로 갔다(105_711 → 105_724, 城 연결 −13).
-        self.assertEqual(105_724, ledger["summary"]["directTerritoryCellCount"])
-        self.assertEqual(849, ledger["summary"]["exactApprovedRowCount"])
+        # 2026-09-16 1098: 五原郡 九原·河陰이 南匈奴 직할 省에서 120칸을 떼어 城 연결로 옮기고 忻州 飛地가 이웃에 흡수됐다.
+        self.assertEqual(105_607, ledger["summary"]["directTerritoryCellCount"])
+        # 2026-09-15: w2 城 없던 縣 관할 176곳(849–1024) 편입 — 경로 노드 전부가 제 城 행에 정확 승인된다.
+        self.assertEqual(1025, ledger["summary"]["exactApprovedRowCount"])  # + 2026-09-16 1098 平陰
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -398,11 +399,16 @@ class HanParentReconciliationTest(unittest.TestCase):
             for city in self.documents["data/map/han-tiles.json"]["cities"]
         }
         expected = {}
+        # 수·진·관 거점은 부모 재조정 대상이 아니다 — 원장은 분할 전 문서로 세운다(strategicSiteCarveProjection).
+        site_classes = {"FERRY_NODE", "FORT_NODE", "PASS_NODE"}
         for route_node in selection["routeNodes"]:
             terminal = route_node["physicalPlaceRef"].rsplit(":", 1)[-1]
+            if route_node.get("nodeClass") in site_classes:
+                continue
             if route_node["reviewState"] == "APPROVED" and terminal in tile_city_ids:
                 expected[terminal] = {
-                    "administrativeUnitId": route_node["administrativeUnitId"],
+                    # w2 source claim 노드는 郡國志 단위가 없어 claim id 가 그 자리의 결속 id 다.
+                    "administrativeUnitId": route_node.get("administrativeUnitId") or route_node["sourceClaimId"],
                     "physicalPlaceRef": route_node["physicalPlaceRef"],
                     "routeNodeKey": route_node["routeNodeKey"],
                 }
@@ -426,7 +432,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(849, len(expected))
+        self.assertEqual(1025, len(expected))  # + 2026-09-16 1098 平陰
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -554,15 +560,17 @@ class HanParentReconciliationTest(unittest.TestCase):
         for row in self.ledger["rows"]:
             decision_cells[row["decision"]] += row["cellCount"]
 
-        self.assertEqual(1_189, len(self.ledger["rows"]))
-        self.assertEqual(1_189, len(self.rows))
+        # + 2026-09-16 1098 平陰(82879) 행.
+        self.assertEqual(1_190, len(self.ledger["rows"]))
+        self.assertEqual(1_190, len(self.rows))
         # 오배정 縣 4곳(建平·新安·高平·南鄉)을 CHGIS 제자리 좌표로 되돌린 뒤의 실측이다 —
         # 815칸이 움직였고, 治所를 얻은 南鄉郡(PARENT-0113)이 直轄 심사에서 빠졌다.
         # 앞 단계 값은 ledger['countyRebindingProjection']['priorSummary'] 가 들고 있다.
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
         # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다 — 옛 발자국 367칸 중 13칸이
         # 直領 이웃으로 가서 121_638 → 121_625(直領 +13 과 짝).
-        self.assertEqual(121_625, sum(row["cellCount"] for row in self.ledger["rows"]))
+        # 2026-09-16 1098: 1097 리베이스 + 五原郡 본토 이동 + 平陰 뒤의 실측(城 연결 칸 = 행 합).
+        self.assertEqual(121_742, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(227_349, summary["landCellCount"])
         self.assertEqual(
             summary["landCellCount"],
@@ -573,10 +581,14 @@ class HanParentReconciliationTest(unittest.TestCase):
                 # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 城 833–835 로 서면서 그 셋이
                 # 直轄 심사(BLOCKED_DIRECT_TERRITORY_REVIEW)에서 빠져 승인으로 옮겼다.
                 # 칸수는 그대로다 — 옮긴 세 행은 cellCount 가 0 인 治所 행이다.
-                "EXACT_APPROVED": 849,
-                "PROPOSED_GEOMETRIC": 272,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 28,
-                "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
+                # 2026-09-15: w2 편입으로 기하 제안 157·直轄 심사 17·外部 세력 심사 1 행이 승인으로,
+                # 直轄 심사 7·外部 세력 심사 1 행이 기하 제안으로 옮겼다.
+                # 남은 直轄 4 는 治所가 기존 城과 같은 자리라 새 城을 세우지 않은 郡(新平·毗陵典農校尉·汶山·章武)이다.
+                # 2026-09-16 1098: 平陰 승인 +1, 五原郡 표시점 X010 이 外部 세력 심사 → 기하 제안.
+                "EXACT_APPROVED": 1025,
+                "PROPOSED_GEOMETRIC": 124,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 4,
+                "BLOCKED_EXTERNAL_POLITY_REVIEW": 37,
             },
             dict(decisions),
         )
@@ -584,25 +596,21 @@ class HanParentReconciliationTest(unittest.TestCase):
         # 빠지고(13칸은 直領으로), 91칸이 심사 전(PROPOSED_GEOMETRIC) 이웃 4곳으로 갔다.
         self.assertEqual(
             {
-                "EXACT_APPROVED": 95_992,
-                "PROPOSED_GEOMETRIC": 17_603,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
-                "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
+                "EXACT_APPROVED": 115_299,
+                "PROPOSED_GEOMETRIC": 567,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 0,
+                "BLOCKED_EXTERNAL_POLITY_REVIEW": 5_876,
             },
             dict(decision_cells),
         )
-        self.assertEqual(340, summary["unresolvedRowCount"])
-        self.assertEqual(25_633, summary["unresolvedCellCount"])
-        # 2026-09-16 南安·定陽 재바인딩: 두 縣이 豫章郡·會稽郡 땅에 서 있던 동안 두 郡 행의
-        # 郡 그룹이 [豫章郡, 犍為郡]·[會稽郡, 上郡] 으로 섞여 multi 로 잡혔다. 제자리로 가자
-        # 두 郡의 심사 전 행 26개가 single 로 옮겼다(196/10_211 → 222/14_811,
-        # 76/7_301 → 50/2_792). 행 합 272 는 그대로고 칸 합 +91 은 위 흡수분이다.
+        self.assertEqual(165, summary["unresolvedRowCount"])
+        self.assertEqual(6_443, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 222, "cellCount": 14_811},
+            {"rowCount": 53, "cellCount": 229},  # + 2026-09-16 1098 X010(0칸)
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 50, "cellCount": 2_792},
+            {"rowCount": 71, "cellCount": 338},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -614,9 +622,9 @@ class HanParentReconciliationTest(unittest.TestCase):
         }
 
         # 2026-09-14: w1 11곳 편입으로 45113(高平)이 직접 승인돼 tie에서 빠졌다.
-        # 남은 tie는 210170·70186·87625 세 행이다.
-        self.assertEqual({"210170", "70186", "87625"}, set(tied))
-        self.assertEqual(287, sum(row["cellCount"] for row in tied.values()))
+        # 2026-09-15: w2 편입으로 70186·87625 가 직접 승인돼 빠지고, 이웃 앵커가 늘어난 210688 이 새로 tie 가 됐다.
+        self.assertEqual({"210170", "210688"}, set(tied))
+        self.assertEqual(0, sum(row["cellCount"] for row in tied.values()))
         self.assertEqual(
             {"95318", "95341"},
             {
@@ -635,11 +643,11 @@ class HanParentReconciliationTest(unittest.TestCase):
         # 심사 전(PROPOSED_GEOMETRIC)인 이웃 4곳(40610 +36·40616 +8·41198 +40·41202 +7)으로
         # 흡수돼 17_225 → 17_316. 행 수는 그대로다.
         self.assertEqual(
-            {"rowCount": 269, "cellCount": 17_316},
+            {"rowCount": 122, "cellCount": 567},  # + 2026-09-16 1098 X010(0칸)
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
-            {"rowCount": 3, "cellCount": 287},
+            {"rowCount": 2, "cellCount": 0},
             self.ledger["summary"]["geometryDiagnostics"]["distanceTies"],
         )
         for row in self.ledger["rows"]:
@@ -720,8 +728,10 @@ class HanParentReconciliationTest(unittest.TestCase):
             == "DISPUTED"
         ]
 
-        self.assertEqual(40, len(rows))
-        self.assertEqual({"87125"}, without_exact_external_candidate)
+        # 2026-09-15: 鮮卑 땅의 廣寧縣(87125)이 w2 城으로 승인돼 빠졌다 — 남은 행은 전부 외부 실체 후보를 가진다.
+        # 2026-09-16 1098: 五原郡 표시점 X010 이 南匈奴 땅에서 五原郡 발자국 안으로 들어와 外部 세력 심사에서 빠졌다.
+        self.assertEqual(37, len(rows))
+        self.assertEqual(set(), without_exact_external_candidate)
         self.assertTrue(disputed)
         self.assertTrue(
             all(row["externalReview"]["reviewState"] == "PENDING_EXTERNAL_POLITY_REVIEW" for row in rows)
@@ -742,11 +752,9 @@ class HanParentReconciliationTest(unittest.TestCase):
         ]
 
         # 5 에서 2 로 — 朔方·西河·定襄 세 郡은 治所가 城 833–835 로 서면서 直轄 심사에서
-        # 빠져 EXACT_APPROVED 로 옮겼다. 남은 둘은 治所 縣 이름이 사료에 안 남은 屬國이다.
-        self.assertEqual(
-            {"廣漢屬國", "張掖屬國"},
-            {row["seatJunDiagnostic"]["nameCh"] for row in rejected},
-        )
+        # 빠져 EXACT_APPROVED 로 옮겼다. 2 에서 0 으로 — 남아 있던 廣漢屬國·張掖屬國도
+        # 2026-09-15 w2 에서 城(廣武·候官)을 얻었다.
+        self.assertEqual(set(), {row["seatJunDiagnostic"]["nameCh"] for row in rejected})
         self.assertTrue(
             all(row["directTerritoryReview"]["sourcedAdministrativeUnitIds"] for row in rejected)
         )
@@ -754,7 +762,9 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertEqual(
             # 16 에서 15 로 — 南鄉郡이 治所(南鄉縣)를 얻어 直轄 후보에서 빠졌다.
             # 5 에서 2 로 — 朔方·西河·定襄 治所가 城 833–835 로 섰다.
-            {"rejectedSourcedGroupJunCount": 2, "pendingCandidateJunCount": 15},
+            # 2026-09-15: w2 로 屬國 2·直轄 후보 11 이 빠졌다. 남은 4 는 治所가 기존 城과 같은 자리라
+            # 새 城을 세우지 않은 新平·毗陵典農校尉·汶山·章武다.
+            {"rejectedSourcedGroupJunCount": 0, "pendingCandidateJunCount": 4},
             self.ledger["summary"]["directTerritoryReview"],
         )
 
