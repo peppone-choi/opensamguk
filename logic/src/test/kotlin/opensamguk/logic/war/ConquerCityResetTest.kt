@@ -6,7 +6,12 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.world.CalcCityDistance
+import opensamguk.common.constants.HanWorldV3CityConst
+import opensamguk.common.constants.HanWorldV3GateIndex
 import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
+import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
+import opensamguk.logic.world.HanCityConstVariant
 import opensamguk.logic.world.HanWorldVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -89,30 +94,59 @@ class ConquerCityResetTest {
 
     // --- 끊긴 지도: 링으로 못 닿는 城 만 남아도 멈추지 않는다 -------------------------------------------
 
+    /** 그 城들만 그래프에서 떼어 낸 han-world-v3 표 — 「링으로 못 닿는다」를 지도 결함 없이 만든다. */
+    private fun v3WithCitiesCutOff(vararg ids: Int): CityConstVariant {
+        val cut = ids.toSet()
+        val names = HanWorldV3CityConst.initCity.filter { it.id in cut }.map { it.name }.toSet()
+        val rows = HanWorldV3CityConst.initCity.map { row ->
+            if (row.id in cut) row.copy(path = emptyList())
+            else row.copy(path = row.path.filterNot { it in names })
+        }
+        return HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, rows, HanWorldV3GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        )
+    }
+
     @Test
-    fun `han-world-v3 848 의 고립 城 은 305 와 548 둘뿐이다`() {
-        // 프로덕션(pep)이 쓰는 표다. 846 개는 한 덩어리로 이어져 있고 이 둘만 path 가 비어 있다.
-        // 이 사실이 깨지면(지도가 고쳐지면) 아래 회귀들의 전제가 사라진 것이다 — 그때 다시 판단해라.
-        val v3 = CityConstRegistry.hanWorld(HanWorldVariant.V3_848)
-        val isolated = (1..848).filter { checkNotNull(v3.byId(it)).path.isEmpty() }
-        assertEquals(listOf(305, 548), isolated, "고립 城 은 305 서(下邳國) 와 548 무(會稽郡) 뿐이다")
+    fun `han-world-v3 는 고립 城 이 없고 1 번에서 전수 도달한다`() {
+        // 2026-09-16 이전에는 305 서(下邳國)·548 무(會稽郡) 두 곳의 path 가 비어 있었다. 둘 다
+        // 래스터에서 물에 갇힌 縣이라 省 인접 투영이 간선을 하나도 못 냈고, 도겸이 {305, 547} 만
+        // 가진 채 547 을 잃자 findNextCapital 이 305 에 영영 못 닿아 프로덕션이 14시간 멈췄다.
+        // 생성기(build_han_world.py)가 그런 城을 제 郡 治所와 직결하도록 고쳤다.
+        //
+        // 「고립 0곳」만 세지 않는다 — 두 덩어리로 갈라져도 path 는 비어 있지 않다. 전수 도달을 본다.
+        for (variant in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME),
+                               CityConstRegistry.hanWorld(HanWorldVariant.V3_848))) {
+            val all = variant.all()
+            assertEquals(848, all.size)
+            assertEquals(emptyList(), all.keys.sorted().filter { checkNotNull(variant.byId(it)).path.isEmpty() },
+                "고립 城 이 있다: ${variant.mapName}")
+            val reached = mutableSetOf(1)
+            val queue = ArrayDeque(listOf(1))
+            while (queue.isNotEmpty()) {
+                for (next in checkNotNull(variant.byId(queue.removeFirst())).path.keys) {
+                    if (reached.add(next)) queue.addLast(next)
+                }
+            }
+            assertEquals(all.keys, reached, "1 번에서 전수 도달해야 한다: ${variant.mapName}")
+        }
     }
 
     @Test
     fun `링으로 못 닿는 城 만 남으면 던지지 않고 그 城 을 고른다`() {
-        // 2026-09-16 pep 실측 재현: 도겸이 {305 서(下邳國), 547 은} 두 城. 수도 547 이 함락됐는데
-        // 305 는 path 가 비어 BFS 로 영영 못 닿는다. 예전에는 여기서 IllegalStateException 이 나
-        // 월드가 14 시간 멈췄다(실패 62472 회, 성공 59 회에서 정지).
-        val v3 = CityConstRegistry.hanWorld(HanWorldVariant.V3_848)
-        assertEquals(305, ConquerCity.findNextCapital(547, linkedMapOf(305 to 12_345), v3))
+        // 2026-09-16 pep 정지 재현. 지도는 고쳤지만 폴백 자체는 계속 지킨다 — 시나리오·리셋·
+        // 장래 표가 다시 끊어진 그래프를 낼 수 있고, 그때 월드를 멈추면 안 된다.
+        val cut = v3WithCitiesCutOff(305)
+        assertEquals(305, ConquerCity.findNextCapital(547, linkedMapOf(305 to 12_345), cut))
     }
 
     @Test
     fun `못 닿는 城 이 여럿이면 최대 인구, 동수면 번호가 큰 쪽`() {
-        val v3 = CityConstRegistry.hanWorld(HanWorldVariant.V3_848)
-        assertEquals(548, ConquerCity.findNextCapital(547, linkedMapOf(305 to 900, 548 to 5_000), v3))
+        val cut = v3WithCitiesCutOff(305, 548)
+        assertEquals(548, ConquerCity.findNextCapital(547, linkedMapOf(305 to 900, 548 to 5_000), cut))
         // 동수면 城 번호 오름차순에서 나중 것 — 링 안의 LAST-on-tie 규칙과 같다.
-        assertEquals(548, ConquerCity.findNextCapital(547, linkedMapOf(305 to 5_000, 548 to 5_000), v3))
+        assertEquals(548, ConquerCity.findNextCapital(547, linkedMapOf(305 to 5_000, 548 to 5_000), cut))
     }
 
     @Test
@@ -125,9 +159,9 @@ class ConquerCityResetTest {
     fun `길이 이어져 있으면 폴백이 아니라 링 순서가 이긴다`() {
         // 폴백은 번호가 큰 쪽으로 기우는데, 링이 살아 있으면 가까운 쪽이 이겨야 한다 —
         // 폴백이 정상 경로를 가로채지 않는다는 증거다(기존 골든 보호).
-        val v3 = CityConstRegistry.hanWorld(HanWorldVariant.V3_848)
-        val near = checkNotNull(v3.byId(547)).path.keys.first()
-        assertEquals(near, ConquerCity.findNextCapital(547, linkedMapOf(near to 1, 548 to 9_999_999), v3))
+        val cut = v3WithCitiesCutOff(305)
+        val near = checkNotNull(cut.byId(547)).path.keys.first()
+        assertEquals(near, ConquerCity.findNextCapital(547, linkedMapOf(near to 1, 305 to 9_999_999), cut))
     }
 
     // --- winner tie-break: attacker-match moves the general; mismatch = 양도 log only ----------------------

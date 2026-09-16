@@ -296,21 +296,24 @@ class HanSupplyDisagreementAuditTest(unittest.TestCase):
         self.assertEqual("CITY_ONLY_PROTECTED", city["verdict"])
         self.assertEqual(None, city["decision"])
 
-    def test_committed_v3_domain_has_only_reviewed_degree_zero_protections(self):
+    def test_committed_v3_domain_has_no_remaining_degree_zero_protection(self):
+        # 2026-09-16 이전에는 305 徐縣·548 鄮縣이 PROTECT_GEOMETRY_DEFECT 로 보호돼 있었다.
+        # 판정(「섬이 아니라 기하 결함」)은 그대로지만 결함 자체를 생성기에서 고쳤으므로
+        # 보호는 은퇴했다 — 원장의 resolvedDecisions 에 근거가 남아 있다. 두 城은 이제
+        # 두 모델(城 그래프 · 省 보급망) 모두에서 닿는다.
         result = audit_repository("han-world-v3")
 
         self.assertEqual([], result.errors)
         self.assertEqual(15, len(result.summaries))
-        protected = {
-            (row["runtimeCityId"], row.get("physicalPlaceRef"), row["verdict"])
-            for row in result.rows
-            if row.get("decision") == "PROTECT_GEOMETRY_DEFECT"
-        }
-        self.assertEqual({
-            (305, "chgis:v6:cnty:43252", "BOTH_UNSUPPLIED_PROTECTED"),
-            (548, "chgis:v6:cnty:40740", "BOTH_UNSUPPLIED_PROTECTED"),
-        }, protected)
-        self.assertFalse(any(row["runtimeCityId"] == 364 and row.get("decision") for row in result.rows))
+        self.assertEqual([], [row for row in result.rows if row.get("decision")])
+        # 두 城은 자기를 소유한 모든 시나리오에서 BOTH_SUPPLIED 다 — 불일치 행에 안 실린다.
+        self.assertEqual([], [row for row in result.rows if row["runtimeCityId"] in {305, 548}])
+        with_unsupplied = audit_repository("han-world-v3", include_unsupplied=True)
+        self.assertEqual([], with_unsupplied.errors)
+        self.assertEqual(
+            [], [row for row in with_unsupplied.rows if row["runtimeCityId"] in {305, 548}],
+            "305·548 은 이제 어느 시나리오에서도 끊기지 않는다",
+        )
 
 
 if __name__ == "__main__":

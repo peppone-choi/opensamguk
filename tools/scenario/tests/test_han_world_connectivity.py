@@ -7,9 +7,7 @@ che_이동은 CityConst 인접 그래프의 1홉이다. 클라이언트 거리 �
 - 모든 간선은 양방향이다(편도는 의도치 않은 지름길·막다른 길이다).
 - 자기 자신으로의 간선은 없다.
 - 존재하지 않는 도시를 가리키는 간선은 없다.
-- 고립(차수 0) 도시가 없고 그래프는 단일 연결 요소다(단절 도시 금지).
-  단, 실측된 외딴땅 2곳(305 徐县·548 鄮县)은 수역에 갇힌 래스터 섬으로 명시
-  핀한다 — 새로 생기는 단절은 실패다.
+- 고립(차수 0) 도시가 없고 그래프는 단일 연결 요소다 — 예외 없이 0곳이다.
 """
 
 import json
@@ -20,11 +18,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
 
-# 수역에 갇혀 인접이 없는 래스터 섬 (실측 2026-09-15, §5).
-# 305 徐县(下邳國): 육지 9칸이 호수에 둘러싸임. 548 鄮县(會稽郡): 육지 37칸이 바다에
-# 둘러싸임. 섬 실체 vs 래스터 artifact 판정은 미결 — 무단 육교 금지. 새로 생기는
-# 단절 도시는 이 집합 밖이므로 실패한다.
-KNOWN_ISOLATED_CITIES = frozenset({305, 548})
+# 2026-09-15 에는 305 徐县(下邳國, 육지 9칸이 호수에 둘러싸임)·548 鄮县(會稽郡, 육지
+# 37칸이 바다에 둘러싸임)을 예외로 핀해 두었다. 판정이 끝나 예외는 없어졌다 — 육교를
+# 지어낸 것이 아니라, 續漢書 郡國志가 실은 소속 郡의 治所와 직결한다(縣을 다스리는 곳이다).
+# 규칙은 tools/scenario/build_han_world.py 의 「물에 갇힌 縣 보정」이고, 생성기 자체가
+# 끊긴 그래프를 내지 않는다. 여기서는 산출물만 다시 잰다.
 
 
 def load():
@@ -54,7 +52,7 @@ class WorldConnectivityTest(unittest.TestCase):
 
     def test_no_isolated_cities_and_single_connected_component(self):
         isolated = sorted(a for a, neighbours in self.adj.items() if not neighbours)
-        self.assertEqual(sorted(KNOWN_ISOLATED_CITIES), isolated)
+        self.assertEqual([], isolated)
         start = next(a for a, neighbours in self.adj.items() if neighbours)
         seen = {start}
         queue = deque([start])
@@ -64,8 +62,7 @@ class WorldConnectivityTest(unittest.TestCase):
                 if neighbour not in seen:
                     seen.add(neighbour)
                     queue.append(neighbour)
-        self.assertEqual(set(self.adj) - KNOWN_ISOLATED_CITIES, seen - KNOWN_ISOLATED_CITIES)
-        self.assertTrue(KNOWN_ISOLATED_CITIES <= set(self.adj))
+        self.assertEqual(set(self.adj), seen)
 
 
 if __name__ == "__main__":

@@ -140,11 +140,9 @@ class SpatialSupplyNetworkWiringTest {
                     spatial.network(mapName, scenario, cities, strategicProjection = projection)
                 },
             )()
-            val expectedPolicies = buildSet {
-                if (scenarioCode in 1020..1110) add(305)
-                if (scenarioCode in 1030..1110) add(548)
-            }
-            assertEquals(expectedPolicies, snapshot?.fallbackPolicies?.keys, "scenario $scenarioCode")
+            // 2026-09-16 지도 수리로 305·548 의 보호가 은퇴했고, 남은 활성 정책은 없다.
+            // 정책이 다시 생기면 그건 새로운 심사 결과라 이 기대값도 같이 움직여야 한다.
+            assertEquals(emptySet(), snapshot?.fallbackPolicies?.keys, "scenario $scenarioCode")
             assertEquals(null, snapshot?.fallbackPolicies?.get(364), "Zhu-a scenario $scenarioCode")
         }
     }
