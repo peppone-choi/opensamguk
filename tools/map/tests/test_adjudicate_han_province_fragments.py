@@ -746,7 +746,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
             frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
         )
         self.assertEqual(ledger["outputCitiesSha256"], json_digest(prior["cities"]))
-        self.assertEqual(ledger["outputJunsSha256"], json_digest(tiles["juns"]))
+        # 2026-09-16 1098: 오배정 재바인딩이 五原郡 治所 칸을 바오터우로 옮기므로 juns 도 복원본과 대조한다.
+        self.assertEqual(ledger["outputJunsSha256"], json_digest(prior["juns"]))
         self.assertEqual(
             ledger["seatOwnerSha256"],
             hashlib.sha256(

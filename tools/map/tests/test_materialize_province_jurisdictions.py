@@ -62,7 +62,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_143, len(tiles["jurisdictionRecords"]))
+        self.assertEqual(1_144, len(tiles["jurisdictionRecords"]))  # 2026-09-16 1098: 平陰 관할 +1
         self.assertEqual(172, len(tiles["commanderyRecords"]))
         # Preserve the original Licheng geometry proof before the separate Geuk stage.
         from tools.map import materialize_frontier_counties as frontier
@@ -135,7 +135,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_143, len(document["jurisdictionRecords"]))
+        self.assertEqual(1_144, len(document["jurisdictionRecords"]))  # 2026-09-16 1098: 平陰 관할 +1
         self.assertEqual(172, len(document["commanderyRecords"]))
 
     def test_ningyang_row_reparents_a_pristine_in_memory_source_parent_fixture(self) -> None:
@@ -478,7 +478,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1143, len(jurisdictions))
+        self.assertEqual(1144, len(jurisdictions))  # 2026-09-16 1098: 平陰 관할 +1
         self.assertEqual(172, len(commanderies))
         self.assertEqual({"SPATIAL_PROVINCE"}, {record["kind"] for record in provinces})
         self.assertEqual(len(provinces), len({record["id"] for record in provinces}))

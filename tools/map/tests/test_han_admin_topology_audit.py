@@ -410,8 +410,9 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         # 2026-09-16 1098: 五原郡이 바오터우 본토로 돌아가 南匈奴 땅에 완전히 둘러싸였다(10 → 11).
         self.assertEqual(11, snapshot["commanderyTopology"]["fullyEnclosedCount"])
-        # 65 → 62: 관할 하나뿐이던 郡 3 곳에 거점 관할이 더해졌다.
-        self.assertEqual(62, snapshot["singleJurisdictionCommanderyCount"])
+        # 64 → 61: 관할 하나뿐이던 郡 3 곳(宜都·卒本·蘄春)에 거점 관할이 더해졌다.
+        # 2026-09-16 1098: 五原郡에 河陰·九原 두 관할이 돌아와 61 → 60.
+        self.assertEqual(60, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])
         self.assertEqual(38, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])
