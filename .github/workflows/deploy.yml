@@ -356,6 +356,12 @@ jobs:
           fi
           if ! MAINTENANCE_STATE="$(maintenance_response_state "$MAINTENANCE_RESPONSE" open absent 2>/dev/null)"; then
             echo "ERROR: source deployment requires an initially open maintenance-v1 controller" >&2
+            echo "state=${MAINTENANCE_RESPONSE:-<none>}" >&2
+            # 이 검사는 **의도적으로** 블라인드 재시도를 막는다. 다만 실패한 배포가 남긴 고아 창
+            # (state=drained)이 흔한 원인이고, 그 복구는 전용 도구가 이미 갖고 있다. 2026-09-16 에
+            # 그 창이 5시간 방치된 것은 도구가 없어서가 아니라 여기서 이름을 대지 않아서였다.
+            echo "hint: drained 이면 bootstrap-deployer.yml 을 action=release / confirm='RELEASE MAINTENANCE' 로 돌려라." >&2
+            echo "hint: 상태를 먼저 읽으려면 같은 워크플로를 action=diagnose / confirm=DIAGNOSE 로 돌려라(읽기 전용)." >&2
             exit 1
           fi
           if ! MAINTENANCE_RESPONSE="$(maintenance_http POST /maintenance/enter-if-idle 10 2>/dev/null)"; then
