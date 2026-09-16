@@ -476,6 +476,10 @@ object ConquerCity {
      * ring-iteration order wins (the `if($cityPop < $maxCityPop) continue;` overwrite-on-equality; decision
      * #7 — NOT Euclidean Math.hypot, NOT first-max).
      *
+     * 링을 다 돌아도 못 찾았는데 남은 城 이 있으면(끊긴 지도) 던지지 않고 城 번호 오름차순으로
+     * 같은 규칙을 적용해 고른다 — 지도 결함이 월드를 영구히 멈추면 안 된다. 진짜로 남은 城 이
+     * 하나도 없을 때만 던진다.
+     *
      * @param ownedCityPop the defender's OTHER owned cities (city!=capital) → pop.
      */
     fun findNextCapital(
@@ -495,6 +499,26 @@ object ConquerCity {
             }
             if (minCity != 0) return minCity
         }
+        // 링을 다 돌았는데 못 찾았다 — 그런데 남은 城 이 있으면 그것은 「도시가 없다」가 아니라
+        // **길이 없다**는 뜻이다. han-world-v3(848)에는 path 가 빈 城 이 40 곳 있어서(장안(京兆尹)·
+        // 서(下邳國) 등) 그 城 만 남은 나라는 BFS 로 영영 못 닿는다. 여기서 던지면 그 한 틱이
+        // 실패하고, 실패한 틱은 플러시 전이라 월드가 그대로 남아 다음 틱이 같은 자리에서 또 죽는다 —
+        // 세계 전체가 영구히 멈춘다(2026-09-16 pep: 도겸이 {305 서, 547 은} 두 城 중 수도 547 을
+        // 잃고 305 로 못 닿아 14 시간 정지, 실패 62472 회).
+        //
+        // 지도 결함은 **진행을 막을 이유가 아니라 견뎌야 할 상태다.** 링 순서를 못 쓰면 링 안에서
+        // 쓰던 규칙(최대 인구, 동수면 나중 것)을 城 번호 오름차순에 그대로 적용해 고른다 —
+        // 결정적이라 재생에도 같은 답이 나온다. 길이 이어져 있으면 위 루프가 이미 답을 냈으므로
+        // 기존 골든은 이 경로를 타지 않는다.
+        var fallbackCity = 0
+        var fallbackPop = 0
+        for (cityId in ownedCityPop.keys.sorted()) {
+            val pop = ownedCityPop.getValue(cityId)
+            if (pop < fallbackPop) continue           // `<` strict → 동수는 덮어쓴다 → 나중 것이 이긴다.
+            fallbackCity = cityId
+            fallbackPop = pop
+        }
+        if (fallbackCity != 0) return fallbackCity
         throw IllegalStateException("도시가 남지 않았는데 긴천을 시도하고 있습니다")
     }
 }
