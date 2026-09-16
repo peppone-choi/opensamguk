@@ -2701,20 +2701,19 @@
         "id": "PARENT-0051",
         "displayName": "회계군",
         "componentCellCounts": [
-          3234,
+          3134,
           30,
           27,
           7
         ],
         "components": [
           {
-            "cellCount": 3234,
+            "cellCount": 3134,
             "memberIds": [
               "40078",
               "40242",
               "40610",
               "40616",
-              "40624",
               "40638",
               "40655",
               "40663",
@@ -2793,7 +2792,7 @@
         "id": "PARENT-0053",
         "displayName": "예장군",
         "componentCellCounts": [
-          6981,
+          7021,
           72,
           28,
           9,
@@ -2801,14 +2800,13 @@
         ],
         "components": [
           {
-            "cellCount": 6981,
+            "cellCount": 7021,
             "memberIds": [
               "40228",
               "40303",
               "40830",
               "40835",
               "40861",
-              "40871",
               "40878",
               "40885",
               "40886",
@@ -3607,7 +3605,7 @@
       }
     ]
   },
-  "singleJurisdictionCommanderyCount": 65,
+  "singleJurisdictionCommanderyCount": 64,
   "singleJurisdictionCommanderies": [
     {
       "id": "PARENT-0063",
@@ -3966,118 +3964,6 @@
       ],
       "sourceUnitsWithoutCoordinateCandidate": [],
       "requiresMissingCountyReview": false
-    },
-    {
-      "id": "PARENT-0080",
-      "displayName": "상군",
-      "nameCh": "上郡",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "70418",
-      "sourceGroupMatch": true,
-      "sourceVolume": 113,
-      "sourceCitation": {
-        "corpusPath": "data/corpus/hhs-113.txt",
-        "line": 563,
-        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
-        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
-      },
-      "traditionalTextCitation": {
-        "source": "Chinese Text Project",
-        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
-        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
-        "locator": "n79407-n79420"
-      },
-      "sourceEnumeratedUnitCount": 10,
-      "sourceUnitNames": [
-        "肤施",
-        "白土",
-        "漆垣",
-        "奢延",
-        "雕阴",
-        "桢林",
-        "定阳",
-        "高奴",
-        "龟兹属国",
-        "候官"
-      ],
-      "sourceUnits": [
-        {
-          "sourceName": "肤施",
-          "ordinal": 1,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "白土",
-          "ordinal": 2,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "漆垣",
-          "ordinal": 3,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "奢延",
-          "ordinal": 4,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "雕阴",
-          "ordinal": 5,
-          "joinStatus": "RESOLVED_POINT",
-          "physicalPlaceId": "chgis:v6:cnty:70418",
-          "currentJurisdictionId": "70418",
-          "currentCommanderyId": "PARENT-0080"
-        },
-        {
-          "sourceName": "桢林",
-          "ordinal": 6,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "定阳",
-          "ordinal": 7,
-          "joinStatus": "RESOLVED_POINT",
-          "physicalPlaceId": "chgis:v6:cnty:40624",
-          "currentJurisdictionId": "40624",
-          "currentCommanderyId": "PARENT-0051"
-        },
-        {
-          "sourceName": "高奴",
-          "ordinal": 8,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "龟兹属国",
-          "ordinal": 9,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "候官",
-          "ordinal": 10,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        }
-      ],
-      "sourceBindingStatusCounts": {
-        "NO_COORDINATE_CANDIDATE": 8,
-        "RESOLVED_POINT": 2
-      },
-      "sourceResolvedPhysicalPlaceIds": [
-        "chgis:v6:cnty:40624",
-        "chgis:v6:cnty:70418"
-      ],
-      "sourceUnitsWithoutCoordinateCandidate": [
-        "肤施",
-        "白土",
-        "漆垣",
-        "奢延",
-        "桢林",
-        "高奴",
-        "龟兹属国",
-        "候官"
-      ],
-      "requiresMissingCountyReview": true
     },
     {
       "id": "PARENT-0081",
@@ -5071,8 +4957,8 @@
       "SOURCE_PLACEHOLDER": 3
     },
     "resolvedCurrentJurisdictionCount": 741,
-    "sourceParentMatchCount": 696,
-    "sourceParentMismatchCount": 45,
+    "sourceParentMatchCount": 698,
+    "sourceParentMismatchCount": 43,
     "noCoordinateCandidateCount": 381,
     "resolvedPlaceAbsentCount": 0,
     "sourceGroups": [
@@ -6006,11 +5892,10 @@
           "RESOLVED_POINT": 2
         },
         "resolvedCurrentJurisdictionCount": 2,
-        "sourceParentMatchCount": 1,
-        "sourceParentMismatchCount": 1,
+        "sourceParentMatchCount": 2,
+        "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0051",
           "PARENT-0080"
         ]
       },
@@ -6526,11 +6411,10 @@
           "RESOLVED_POINT": 9
         },
         "resolvedCurrentJurisdictionCount": 9,
-        "sourceParentMatchCount": 6,
-        "sourceParentMismatchCount": 3,
+        "sourceParentMatchCount": 7,
+        "sourceParentMismatchCount": 2,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0053",
           "PARENT-0058",
           "PARENT-0147"
         ]
@@ -7097,18 +6981,6 @@
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       },
       {
-        "sourceName": "定阳",
-        "sourceCommanderyNameCh": "上郡",
-        "sourceVolume": 113,
-        "ordinal": 7,
-        "currentJurisdictionId": "40624",
-        "currentJurisdictionDisplayName": "정양현",
-        "currentCommanderyId": "PARENT-0051",
-        "currentCommanderyDisplayName": "회계군",
-        "currentCommanderyNameCh": "會稽郡",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
         "sourceName": "河阴",
         "sourceCommanderyNameCh": "五原郡",
         "sourceVolume": 113,
@@ -7286,18 +7158,6 @@
         "currentCommanderyId": "PARENT-0061",
         "currentCommanderyDisplayName": "익주군",
         "currentCommanderyNameCh": "益州郡",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
-        "sourceName": "南安",
-        "sourceCommanderyNameCh": "犍為郡",
-        "sourceVolume": 113,
-        "ordinal": 4,
-        "currentJurisdictionId": "40871",
-        "currentJurisdictionDisplayName": "남안현",
-        "currentCommanderyId": "PARENT-0053",
-        "currentCommanderyDisplayName": "예장군",
-        "currentCommanderyNameCh": "豫章郡",
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       },
       {
@@ -7946,7 +7806,7 @@
         "currentCommanderyDisplayName": "회계군",
         "currentCommanderyNameCh": "會稽郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 24,
+        "currentJurisdictionCount": 23,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 14,
@@ -7970,7 +7830,7 @@
         "currentCommanderyDisplayName": "예장군",
         "currentCommanderyNameCh": "豫章郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 32,
+        "currentJurisdictionCount": 31,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 21,
@@ -8030,12 +7890,12 @@
         "currentCommanderyDisplayName": "건위군",
         "currentCommanderyNameCh": "犍為郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 8,
+        "currentJurisdictionCount": 9,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 9,
         "sourceResolvedCurrentJurisdictionCount": 9,
-        "sourceParentMismatchCount": 3
+        "sourceParentMismatchCount": 2
       },
       {
         "currentCommanderyId": "PARENT-0059",
@@ -8294,12 +8154,12 @@
         "currentCommanderyDisplayName": "상군",
         "currentCommanderyNameCh": "上郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 10,
         "sourceResolvedCurrentJurisdictionCount": 2,
-        "sourceParentMismatchCount": 1
+        "sourceParentMismatchCount": 0
       },
       {
         "currentCommanderyId": "PARENT-0081",
@@ -9486,7 +9346,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
+      "sha256": "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

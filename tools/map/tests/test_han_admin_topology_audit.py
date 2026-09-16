@@ -407,7 +407,9 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # commandery 단절 하나가 해소된다.
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
-        self.assertEqual(65, snapshot["singleJurisdictionCommanderyCount"])
+        # 65 → 64: 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다. 上郡(PARENT-0080)이
+        # 제 縣 定陽을 되찾아 관할 1곳짜리 郡에서 벗어났다.
+        self.assertEqual(64, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])
         self.assertEqual(38, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])

@@ -13,7 +13,7 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
+    "tilesSha256": "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f",
     "selectionSha256": "a0686666bdf952a533529ad84a05d7865401d1e619281ae8d1c8a670314be84b"
   },
   "summary": {
@@ -1031,8 +1031,8 @@
       "provinceId": "40624",
       "provinceIndex": 59,
       "jurisdictionId": "40624",
-      "commanderyId": "PARENT-0051",
-      "commanderyNameCh": "會稽郡",
+      "commanderyId": "PARENT-0080",
+      "commanderyNameCh": "上郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 773,
       "routeNodeKey": null,
@@ -1331,8 +1331,8 @@
       "provinceId": "40871",
       "provinceIndex": 84,
       "jurisdictionId": "40871",
-      "commanderyId": "PARENT-0053",
-      "commanderyNameCh": "豫章郡",
+      "commanderyId": "PARENT-0058",
+      "commanderyNameCh": "犍為郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 651,
       "routeNodeKey": null,

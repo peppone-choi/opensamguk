@@ -5,8 +5,8 @@
   "generatorPolicyVersion": 1,
   "sources": {
     "claimsSha256": "90e3d91b43f1a5f67ca9eea3dc7f0671aa3226a6a0b9733f346a5888b001fe4b",
-    "mapSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
-    "scenarioCatalogSha256": "d9b9641f4d101a69352fedf78b313cdfa70182297f7cc898165c7f622af8d7ed"
+    "mapSha256": "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f",
+    "scenarioCatalogSha256": "ec893db265c8a26fcf2487c09eb09829d32fb645b61b793be0861e35edcb50d6"
   },
   "scenarios": [
     {
@@ -27292,19 +27292,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "40871",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1020-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N005-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "scenarioCode": 1020,
@@ -53139,19 +53139,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "40871",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 6,
+          "ownerNationKey": "S1021-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N006-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N006-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N006-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "scenarioCode": 1021,
@@ -78561,19 +78561,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "40624",
-          "ownerNationId": 16,
-          "ownerNationKey": "S1030-N016",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1030-N016-ADMIN",
+          "winningClaimId": "S1030-BASELINE",
           "claimTrace": [
-            "S1030-N016-ADMIN"
+            "S1030-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1030-N016-PLACEMENT-EVIDENCE"
+            "S1030-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷13 위서 왕랑전 「逆賊故會稽太守王朗」 / 資治通鑑 卷062"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1030,
@@ -78986,19 +78986,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "40871",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N004-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
         },
         {
           "scenarioCode": 1030,
@@ -104408,19 +104408,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "40624",
-          "ownerNationId": 21,
-          "ownerNationKey": "S1031-N021",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1031-N021-ADMIN",
+          "winningClaimId": "S1031-BASELINE",
           "claimTrace": [
-            "S1031-N021-ADMIN"
+            "S1031-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1031-N021-PLACEMENT-EVIDENCE"
+            "S1031-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷13 위서 왕랑전 「逆賊故會稽太守王朗」 / 資治通鑑 卷062"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1031,
@@ -104833,19 +104833,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "40871",
-          "ownerNationId": 16,
-          "ownerNationKey": "S1031-N016",
+          "ownerNationId": 6,
+          "ownerNationKey": "S1031-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1031-N016-ADMIN",
+          "winningClaimId": "S1031-N006-ADMIN",
           "claimTrace": [
-            "S1031-N016-ADMIN"
+            "S1031-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-N016-PLACEMENT-EVIDENCE"
+            "S1031-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷13 위서 화흠전 「(歆)…拜豫章太守」 / 資治通鑑 卷062 「豫章太守華歆」"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1031,
@@ -130255,19 +130255,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "40624",
-          "ownerNationId": 3,
-          "ownerNationKey": "S1040-N003",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1040-N003-ADMIN",
+          "winningClaimId": "S1040-BASELINE",
           "claimTrace": [
-            "S1040-N003-ADMIN"
+            "S1040-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1040-N003-PLACEMENT-EVIDENCE"
+            "S1040-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1040,
@@ -130680,19 +130680,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "40871",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1040-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N005-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1040,
@@ -156102,19 +156102,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "40624",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1041-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1041-N019-ADMIN",
+          "winningClaimId": "S1041-BASELINE",
           "claimTrace": [
-            "S1041-N019-ADMIN"
+            "S1041-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1041-N019-PLACEMENT-EVIDENCE"
+            "S1041-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1041,
@@ -156527,19 +156527,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "40871",
-          "ownerNationId": 15,
-          "ownerNationKey": "S1041-N015",
+          "ownerNationId": 6,
+          "ownerNationKey": "S1041-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1041-N015-ADMIN",
+          "winningClaimId": "S1041-N006-ADMIN",
           "claimTrace": [
-            "S1041-N015-ADMIN"
+            "S1041-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-N015-PLACEMENT-EVIDENCE"
+            "S1041-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷13 위서 화흠전 「(歆)…拜豫章太守」 / 資治通鑑 卷062 「豫章太守華歆」"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1041,
@@ -181949,19 +181949,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1050-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1050-N002-ADMIN",
+          "winningClaimId": "S1050-BASELINE",
           "claimTrace": [
-            "S1050-N002-ADMIN"
+            "S1050-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1050-N002-PLACEMENT-EVIDENCE"
+            "S1050-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062 / 三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1050,
@@ -182374,19 +182374,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1050-N002",
+          "ownerNationId": 5,
+          "ownerNationKey": "S1050-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1050-N002-ADMIN",
+          "winningClaimId": "S1050-N005-ADMIN",
           "claimTrace": [
-            "S1050-N002-ADMIN"
+            "S1050-N005-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-N002-PLACEMENT-EVIDENCE"
+            "S1050-N005-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062 / 三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1050,
@@ -207796,19 +207796,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1060-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1060-N002-ADMIN",
+          "winningClaimId": "S1060-BASELINE",
           "claimTrace": [
-            "S1060-N002-ADMIN"
+            "S1060-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1060-N002-PLACEMENT-EVIDENCE"
+            "S1060-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1060,
@@ -208221,19 +208221,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1060-N002",
+          "ownerNationId": 4,
+          "ownerNationKey": "S1060-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1060-N002-ADMIN",
+          "winningClaimId": "S1060-N004-ADMIN",
           "claimTrace": [
-            "S1060-N002-ADMIN"
+            "S1060-N004-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-N002-PLACEMENT-EVIDENCE"
+            "S1060-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1060,
@@ -233644,19 +233644,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1070-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1070-N002-ADMIN",
+          "winningClaimId": "S1070-BASELINE",
           "claimTrace": [
-            "S1070-N002-ADMIN"
+            "S1070-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1070-N002-PLACEMENT-EVIDENCE"
+            "S1070-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1070,
@@ -234069,19 +234069,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1070-N002",
+          "ownerNationId": 3,
+          "ownerNationKey": "S1070-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1070-N002-ADMIN",
+          "winningClaimId": "S1070-N003-ADMIN",
           "claimTrace": [
-            "S1070-N002-ADMIN"
+            "S1070-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-N002-PLACEMENT-EVIDENCE"
+            "S1070-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1070,
@@ -259491,19 +259491,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1080-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1080-N002-ADMIN",
+          "winningClaimId": "S1080-BASELINE",
           "claimTrace": [
-            "S1080-N002-ADMIN"
+            "S1080-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1080-N002-PLACEMENT-EVIDENCE"
+            "S1080-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복 / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1080,
@@ -259916,19 +259916,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1080-N002",
+          "ownerNationId": 4,
+          "ownerNationKey": "S1080-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1080-N002-ADMIN",
+          "winningClaimId": "S1080-N004-ADMIN",
           "claimTrace": [
-            "S1080-N002-ADMIN"
+            "S1080-N004-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-N002-PLACEMENT-EVIDENCE"
+            "S1080-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복 / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1080,
@@ -285338,19 +285338,19 @@
         {
           "scenarioCode": 1090,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1090-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1090-N002-ADMIN",
+          "winningClaimId": "S1090-BASELINE",
           "claimTrace": [
-            "S1090-N002-ADMIN"
+            "S1090-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1090-N002-PLACEMENT-EVIDENCE"
+            "S1090-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷47 오서 오주전 건안20년 「遂分荊州、長沙、江夏、桂陽以東屬權，南郡、零陵、武陵以西屬備」 / 資治通鑑 卷067 「以湘水為界」 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」 / 三國志 卷60 오서 여대전 「(岱)…遷廬陵太守」(219년경) / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1090,
@@ -285763,19 +285763,19 @@
         {
           "scenarioCode": 1090,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1090-N002",
+          "ownerNationId": 3,
+          "ownerNationKey": "S1090-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1090-N002-ADMIN",
+          "winningClaimId": "S1090-N003-ADMIN",
           "claimTrace": [
-            "S1090-N002-ADMIN"
+            "S1090-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-N002-PLACEMENT-EVIDENCE"
+            "S1090-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷47 오서 오주전 건안20년 「遂分荊州、長沙、江夏、桂陽以東屬權，南郡、零陵、武陵以西屬備」 / 資治通鑑 卷067 「以湘水為界」 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」 / 三國志 卷60 오서 여대전 「(岱)…遷廬陵太守」(219년경) / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재"
+          "rationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷41 촉서 곽준전 「先主定蜀…乃分廣漢為梓潼郡，以峻為梓潼太守」(214) — 재동군 창설 근거 / 資治通鑑 卷068 건안24년 「漢中王備所置宜都太守樊友委郡走」 — 219년 시점 유비 소유 / 三國志 卷39 촉서 여예전 「遷巴西太守」 등 촉한기 巴西太守 다수 — 촉한 치하 巴西郡 존재 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다 / 三國志 卷01 위서 무제기 건안20년 「復漢寧郡爲漢中；分漢中之安陽、西城爲西城郡，置太守；分錫、上庸郡，置都尉」 — 서성군 창설(215) — 219년 劉封·孟達이 上庸·西城 방면을 취했다"
         },
         {
           "scenarioCode": 1090,
@@ -311185,19 +311185,19 @@
         {
           "scenarioCode": 1100,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1100-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1100-N002-ADMIN",
+          "winningClaimId": "S1100-BASELINE",
           "claimTrace": [
-            "S1100-N002-ADMIN"
+            "S1100-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1100-N002-PLACEMENT-EVIDENCE"
+            "S1100-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1100,
@@ -311610,19 +311610,19 @@
         {
           "scenarioCode": 1100,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1100-N002",
+          "ownerNationId": 3,
+          "ownerNationKey": "S1100-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1100-N002-ADMIN",
+          "winningClaimId": "S1100-N003-ADMIN",
           "claimTrace": [
-            "S1100-N002-ADMIN"
+            "S1100-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1100-N002-PLACEMENT-EVIDENCE"
+            "S1100-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
+          "rationale": "三國志 卷33 後主傳 「三年夏四月，先主殂於永安宮。五月，後主襲位於成都」 — 225년 군주는 劉禪 / 三國志 卷43 呂凱傳 「凱與府丞蜀郡王伉帥厲吏民，閉境拒闓」 및 「雍闓、高定逼其東北，而凱等守義不與交通」 — 영창군은 도로가 끊긴 채 촉에 충성 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 225년에는 폐지되어 巴西로 환속된 탕거 현역이므로 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 유비의 익주 평정 뒤 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년 / 華陽國志 卷一 巴志 — 고릉군(뒤의 巴東)은 益州 소속이며 治所 魚復=白帝城 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "scenarioCode": 1100,
@@ -337034,19 +337034,19 @@
         {
           "scenarioCode": 1110,
           "provinceId": "40624",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1110-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1110-N002-ADMIN",
+          "winningClaimId": "S1110-BASELINE",
           "claimTrace": [
-            "S1110-N002-ADMIN"
+            "S1110-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1110-N002-PLACEMENT-EVIDENCE"
+            "S1110-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1110,
@@ -337459,19 +337459,19 @@
         {
           "scenarioCode": 1110,
           "provinceId": "40871",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1110-N002",
+          "ownerNationId": 3,
+          "ownerNationKey": "S1110-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1110-N002-ADMIN",
+          "winningClaimId": "S1110-N003-ADMIN",
           "claimTrace": [
-            "S1110-N002-ADMIN"
+            "S1110-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1110-N002-PLACEMENT-EVIDENCE"
+            "S1110-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
+          "rationale": "三國志 卷33 後主傳 건흥3년 「丞相亮南征四郡，四郡皆平」 — 228년 남중은 유선 조정에 복귀 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 폐지된 탕거 현역은 巴西로 환속된 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 무도·음평 획득은 229년 / 華陽國志 巴志 — 고릉군(뒤의 巴東)은 益州 소속 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "scenarioCode": 1110,

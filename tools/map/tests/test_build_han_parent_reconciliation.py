@@ -73,7 +73,9 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         self.assertEqual(227_349, ledger["summary"]["landCellCount"])
         # 105_746 에서 35칸이 縣 省으로 넘어갔다 — 재바인딩으로 縣이 제 郡 땅에 서면서
         # 直領이던 칸이 城에 결속됐고, cityLinkedCellCount 가 정확히 같은 35칸 늘었다.
-        self.assertEqual(105_711, ledger["summary"]["directTerritoryCellCount"])
+        # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다: 옛 자리(江西 南康·浙江 江山)의 발자국 367칸이
+        # 이웃에 흡수되며 13칸이 城 없는 直領 이웃으로 갔다(105_711 → 105_724, 城 연결 −13).
+        self.assertEqual(105_724, ledger["summary"]["directTerritoryCellCount"])
         self.assertEqual(849, ledger["summary"]["exactApprovedRowCount"])
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
@@ -558,7 +560,9 @@ class HanParentReconciliationTest(unittest.TestCase):
         # 815칸이 움직였고, 治所를 얻은 南鄉郡(PARENT-0113)이 直轄 심사에서 빠졌다.
         # 앞 단계 값은 ledger['countyRebindingProjection']['priorSummary'] 가 들고 있다.
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
-        self.assertEqual(121_638, sum(row["cellCount"] for row in self.ledger["rows"]))
+        # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다 — 옛 발자국 367칸 중 13칸이
+        # 直領 이웃으로 가서 121_638 → 121_625(直領 +13 과 짝).
+        self.assertEqual(121_625, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(227_349, summary["landCellCount"])
         self.assertEqual(
             summary["landCellCount"],
@@ -576,23 +580,29 @@ class HanParentReconciliationTest(unittest.TestCase):
             },
             dict(decisions),
         )
+        # 2026-09-16 南安·定陽 재바인딩: 옛 발자국 367칸이 이웃에 흡수되며 승인 행에서 104칸이
+        # 빠지고(13칸은 直領으로), 91칸이 심사 전(PROPOSED_GEOMETRIC) 이웃 4곳으로 갔다.
         self.assertEqual(
             {
-                "EXACT_APPROVED": 96_096,
-                "PROPOSED_GEOMETRIC": 17_512,
+                "EXACT_APPROVED": 95_992,
+                "PROPOSED_GEOMETRIC": 17_603,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
         self.assertEqual(340, summary["unresolvedRowCount"])
-        self.assertEqual(25_542, summary["unresolvedCellCount"])
+        self.assertEqual(25_633, summary["unresolvedCellCount"])
+        # 2026-09-16 南安·定陽 재바인딩: 두 縣이 豫章郡·會稽郡 땅에 서 있던 동안 두 郡 행의
+        # 郡 그룹이 [豫章郡, 犍為郡]·[會稽郡, 上郡] 으로 섞여 multi 로 잡혔다. 제자리로 가자
+        # 두 郡의 심사 전 행 26개가 single 로 옮겼다(196/10_211 → 222/14_811,
+        # 76/7_301 → 50/2_792). 행 합 272 는 그대로고 칸 합 +91 은 위 흡수분이다.
         self.assertEqual(
-            {"rowCount": 196, "cellCount": 10_211},
+            {"rowCount": 222, "cellCount": 14_811},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 76, "cellCount": 7_301},
+            {"rowCount": 50, "cellCount": 2_792},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -621,8 +631,11 @@ class HanParentReconciliationTest(unittest.TestCase):
                 for candidate in tied["210170"]["geometryDiagnostic"]["nearestCandidates"]
             ],
         )
+        # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다 — 옛 발자국 중 91칸이 아직
+        # 심사 전(PROPOSED_GEOMETRIC)인 이웃 4곳(40610 +36·40616 +8·41198 +40·41202 +7)으로
+        # 흡수돼 17_225 → 17_316. 행 수는 그대로다.
         self.assertEqual(
-            {"rowCount": 269, "cellCount": 17_225},
+            {"rowCount": 269, "cellCount": 17_316},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
