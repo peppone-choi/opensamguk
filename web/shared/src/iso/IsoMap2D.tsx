@@ -42,7 +42,7 @@ import {
   drawCityName,
   drawCityRing,
   dropOverlappingLabels,
-  assignNationGlyphs,
+  nationGlyph,
   markerScale,
 } from './marker';
 import { cityFlagBase, spriteRoofLift } from './buildingRoof';
@@ -191,11 +191,6 @@ export function IsoMap2D({
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 깃발 글자 — 이 지도에 선 나라끼리 안 겹치게 한 번에 정한다(assignNationGlyphs).
-  const glyphs = useMemo(
-    () => assignNationGlyphs(cities.filter((city) => city.nationColor).map((city) => city.nationName)),
-    [cities],
-  );
   const surfaceCache = useMemo(() => new MapSurfaceCache(),
     [data, sprites, tintMode, tintStrength, nationColorByOwner]);
   useEffect(() => () => surfaceCache.dispose(), [surfaceCache]);
@@ -594,7 +589,7 @@ export function IsoMap2D({
           color: city.nationColor ? rgbCss(bannerColor(city.nationColor)) : null,
           capital: city.isCapital,
           k,
-          glyph: city.nationColor && city.nationName ? (glyphs.get(city.nationName) ?? null) : null,
+          glyph: city.nationColor ? nationGlyph(city.nationName) : null,
         });
         // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
         // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —
@@ -789,7 +784,7 @@ export function IsoMap2D({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
-  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, glyphs, hideCityNames,
+  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
     currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
     battlefields, onPickBattlefield]);
 

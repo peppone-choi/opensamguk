@@ -38,7 +38,7 @@ import {
   luminancePreserving,
   markerScale,
   mixToward,
-  assignNationGlyphs,
+  nationGlyph,
   ownerTint,
   type IsoMapData,
   type IsoBattlefieldMarker,
@@ -586,9 +586,6 @@ export function IsoMap3D({
       // 깃대를 꽂을 지붕 높이(세계 단위). 모델 경계상자에서 바로 읽는다 — 예전에는 모든 城 을
       // 「대략 한 세계 단위」로 보고 같은 높이에 깃발을 띄워서, 장현(지붕 0.31)은 깃발이
       // 지붕 위로 한참 떠 있었다(2026-09-15 「성과 깃발의 위치를 좀 가깝게」).
-      const glyphs = assignNationGlyphs(
-        cities.filter((city) => city.nationColor).map((city) => city.nationName),
-      );
       const roofByTier = new Map<string, number>();
       for (const tier of BUILDING_TIERS) {
         const geometry = loaded.building.get(tier.name);
@@ -738,7 +735,7 @@ export function IsoMap3D({
             color: city.nationColor ? rgbCss(bannerColor(city.nationColor)) : null,
             capital: city.isCapital,
             k,
-            glyph: city.nationColor && city.nationName ? (glyphs.get(city.nationName) ?? null) : null,
+            glyph: city.nationColor ? nationGlyph(city.nationName) : null,
           });
           // 집기 상자는 깃발 꼭대기부터 칸 아래까지 — 깃발을 얹어도 城 을 얹어도 잡힌다.
           // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —

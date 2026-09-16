@@ -4,7 +4,6 @@
 //   3) 무채색 국가는 따로 가려낸다 — 'color' 합성으로는 색이 안 나온다.
 import { describe, expect, it } from 'vitest';
 import {
-  assignNationGlyphs,
   bannerColor,
   isAchromaticNationColor,
   nationGlyph,
@@ -69,6 +68,10 @@ describe('isAchromaticNationColor', () => {
 });
 
 describe('nationGlyph', () => {
+  // 2026-09-15 프로덕션(pep) 【역사모드2】 반동탁연합의 국가 이름 그대로.
+  const LIVE = ['동탁', '원소', '유표', '조조', '유언', '원술', '손견', '도겸', '공손찬', '한복', '유우',
+    '유대', '장로', '유비', '공융', '장연', '공손도', '㉿주우', '㉿금선', '㉿강단', '㉿한수', '㉿장순', '㉿소유', '㉿김상'];
+
   it('국가 이름 첫 글자 — 앞에 붙은 기호는 건너뛴다', () => {
     expect(nationGlyph('조조')).toBe('조');
     expect(nationGlyph('㉿김상')).toBe('김');
@@ -76,54 +79,20 @@ describe('nationGlyph', () => {
     expect(nationGlyph(undefined)).toBeNull();
     expect(nationGlyph('㉿')).toBeNull();
   });
-});
 
-describe('assignNationGlyphs', () => {
-  // 2026-09-15 프로덕션(pep) 【역사모드2】 반동탁연합의 국가 이름 그대로.
-  const LIVE = ['동탁', '원소', '유표', '조조', '유언', '원술', '손견', '도겸', '공손찬', '한복', '유우',
-    '유대', '장로', '유비', '공융', '장연', '공손도', '㉿주우', '㉿금선', '㉿강단', '㉿한수', '㉿장순', '㉿소유', '㉿김상'];
-
-  it('실제 24국에서 글자가 하나도 겹치지 않는다', () => {
-    const glyphs = assignNationGlyphs(LIVE);
-    expect(glyphs.size).toBe(24);
-    expect(new Set(glyphs.values()).size).toBe(24);
+  it('성씨가 겹쳐도 밀지 않는다 — 유씨 다섯은 다 「유」다', () => {
+    for (const name of ['유표', '유언', '유우', '유대', '유비']) {
+      expect(nationGlyph(name)).toBe('유');
+    }
+    expect(nationGlyph('공손찬')).toBe('공');
+    expect(nationGlyph('공융')).toBe('공');
   });
 
-  it('성씨가 혼자면 성씨, 겹치면 이름 끝 글자로 넘어간다', () => {
-    const glyphs = assignNationGlyphs(LIVE);
-    expect(glyphs.get('조조')).toBe('조');
-    expect(glyphs.get('동탁')).toBe('동');
-    expect(glyphs.get('유비')).toBe('비');
-    expect(glyphs.get('공손찬')).toBe('찬');
-    expect(glyphs.get('㉿김상')).toBe('김');
-  });
-
-  it('끝 글자마저 겹치면 두 자로 쓴다', () => {
-    // 원소의 끝 글자 「소」는 소유의 성씨로 이미 쓰였다.
-    const glyphs = assignNationGlyphs(LIVE);
-    expect(glyphs.get('원소')).toBe('원소');
-    expect(glyphs.get('㉿소유')).toBe('소');
-    // 성씨가 겹친 나라끼리 끝 글자까지 겹쳐도 두 자로 간다 — 유상·장상은 둘 다 「상」이다.
-    const clash = assignNationGlyphs(['유상', '유비', '장상', '장연']);
-    expect(clash.get('유상')).toBe('유상');
-    expect(clash.get('장상')).toBe('장상');
-    expect(clash.get('유비')).toBe('비');
-    expect(clash.get('장연')).toBe('연');
-  });
-
-  it('두 자 후보까지 겹치면 다른 조합을 고른다 — 유상·유중상', () => {
-    const glyphs = assignNationGlyphs(['유상', '유중상']);
-    expect(new Set(glyphs.values()).size).toBe(2);
-    expect(glyphs.get('유상')).toBe('유상');
-    expect(glyphs.get('유중상')).toBe('유중');
-    // 기호만 다른 같은 글자 이름도 겹치지 않는다.
-    const same = assignNationGlyphs(['유', '㉿유']);
-    expect(new Set(same.values()).size).toBe(2);
-  });
-
-  it('이름 순서가 바뀌어도 결과가 같다', () => {
-    const forward = assignNationGlyphs(LIVE);
-    const backward = assignNationGlyphs([...LIVE].reverse());
-    for (const name of LIVE) expect(backward.get(name)).toBe(forward.get(name));
+  it('언제나 한 글자다 — 같은 나라는 어느 화면에서나 같은 글자를 단다', () => {
+    for (const name of LIVE) {
+      const glyph = nationGlyph(name);
+      expect(glyph).not.toBeNull();
+      expect([...(glyph as string)]).toHaveLength(1);
+    }
   });
 });
