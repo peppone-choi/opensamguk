@@ -629,6 +629,16 @@
       "sourceBook": "後漢書",
       "verbatim": "〖善无〗故属雁门。",
       "volume": 113
+    },
+    {
+      "sourceClaimId": "han-location-claim-v1-pingyin",
+      "corpusPath": "data/corpus/hhs-109.txt",
+      "lineEnd": 38,
+      "lineStart": 38,
+      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+      "sourceBook": "後漢書",
+      "verbatim": "〖平阴〗",
+      "volume": 109
     }
   ],
   "schemaVersion": 1

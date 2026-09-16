@@ -15,13 +15,13 @@
     "noAutomaticRepair": true
   },
   "counts": {
-    "province": 1520,
-    "jurisdiction": 1070,
+    "province": 1594,
+    "jurisdiction": 1144,
     "commandery": 172
   },
   "provinceTopology": {
     "minimumCellCount": 8,
-    "belowMinimumCount": 2,
+    "belowMinimumCount": 4,
     "belowMinimum": [
       {
         "id": "DIRECT-PARENT-0102-ce418dfe67e6",
@@ -32,6 +32,16 @@
         "id": "DIRECT-PARENT-0130-23501b7ffcdd",
         "displayName": "대방군",
         "cellCount": 7
+      },
+      {
+        "id": "ss-fancheng",
+        "displayName": "번성",
+        "cellCount": 7
+      },
+      {
+        "id": "ss-mengjin",
+        "displayName": "맹진",
+        "cellCount": 5
       }
     ],
     "disconnectedCount": 26,
@@ -128,12 +138,12 @@
         "id": "43057",
         "displayName": "합비현",
         "componentCellCounts": [
-          137,
+          105,
           1
         ],
         "components": [
           {
-            "cellCount": 137,
+            "cellCount": 105,
             "memberIds": [
               "43057"
             ]
@@ -150,12 +160,12 @@
         "id": "43423",
         "displayName": "악현",
         "componentCellCounts": [
-          130,
+          114,
           1
         ],
         "components": [
           {
-            "cellCount": 130,
+            "cellCount": 114,
             "memberIds": [
               "43423"
             ]
@@ -672,7 +682,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 23,
+    "fullyEnclosedCount": 37,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -926,6 +936,160 @@
         "surroundingDisplayNames": [
           "도하현"
         ]
+      },
+      {
+        "id": "ss-anpingkou",
+        "displayName": "안평구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "DIRECT-PARENT-0112-7d564e99bc91"
+        ],
+        "surroundingDisplayNames": [
+          "졸본"
+        ]
+      },
+      {
+        "id": "ss-dadu",
+        "displayName": "대도",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44428"
+        ],
+        "surroundingDisplayNames": [
+          "낙현"
+        ]
+      },
+      {
+        "id": "ss-lankou",
+        "displayName": "남구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "82207"
+        ],
+        "surroundingDisplayNames": [
+          "탕음현"
+        ]
+      },
+      {
+        "id": "ss-lieliucheng",
+        "displayName": "열류성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70920"
+        ],
+        "surroundingDisplayNames": [
+          "진창현"
+        ]
+      },
+      {
+        "id": "ss-mulansai",
+        "displayName": "목란새",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "200080"
+        ],
+        "surroundingDisplayNames": [
+          "석현"
+        ]
+      },
+      {
+        "id": "ss-qucheng",
+        "displayName": "국성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70033"
+        ],
+        "surroundingDisplayNames": [
+          "신흥현"
+        ]
+      },
+      {
+        "id": "ss-shiying",
+        "displayName": "석영",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70033"
+        ],
+        "surroundingDisplayNames": [
+          "신흥현"
+        ]
+      },
+      {
+        "id": "ss-wuguan",
+        "displayName": "무관",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "200092"
+        ],
+        "surroundingDisplayNames": [
+          "상현"
+        ]
+      },
+      {
+        "id": "ss-wuqiangkou",
+        "displayName": "무강구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "43134"
+        ],
+        "surroundingDisplayNames": [
+          "첨현"
+        ]
+      },
+      {
+        "id": "ss-xiakou",
+        "displayName": "협구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45796"
+        ],
+        "surroundingDisplayNames": [
+          "이릉현"
+        ]
+      },
+      {
+        "id": "ss-xingguocheng",
+        "displayName": "흥국성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70040"
+        ],
+        "surroundingDisplayNames": [
+          "기현"
+        ]
+      },
+      {
+        "id": "ss-yanganguan",
+        "displayName": "양안관",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "71101"
+        ],
+        "surroundingDisplayNames": [
+          "면양현"
+        ]
+      },
+      {
+        "id": "ss-zhanyinkou",
+        "displayName": "전음구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70156"
+        ],
+        "surroundingDisplayNames": [
+          "순음현"
+        ]
+      },
+      {
+        "id": "ss-zuocheng",
+        "displayName": "좌성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "DIRECT-PARENT-0074-844342d92663"
+        ],
+        "surroundingDisplayNames": [
+          "주천군"
+        ]
       }
     ]
   },
@@ -1094,12 +1258,12 @@
         "id": "43057",
         "displayName": "합비현",
         "componentCellCounts": [
-          137,
+          105,
           1
         ],
         "components": [
           {
-            "cellCount": 137,
+            "cellCount": 105,
             "memberIds": [
               "43057"
             ]
@@ -1116,12 +1280,12 @@
         "id": "43423",
         "displayName": "악현",
         "componentCellCounts": [
-          130,
+          114,
           1
         ],
         "components": [
           {
-            "cellCount": 130,
+            "cellCount": 114,
             "memberIds": [
               "43423"
             ]
@@ -1688,7 +1852,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 22,
+    "fullyEnclosedCount": 38,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -1997,6 +2161,230 @@
         "commanderyId": "PARENT-0097",
         "surroundingCommanderyId": "PARENT-0097",
         "sameCommandery": true
+      },
+      {
+        "id": "ss-anpingkou",
+        "displayName": "안평구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "X029"
+        ],
+        "surroundingDisplayNames": [
+          "졸본"
+        ],
+        "commanderyId": "PARENT-0112",
+        "surroundingCommanderyId": "PARENT-0112",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-dadu",
+        "displayName": "대도",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44428"
+        ],
+        "surroundingDisplayNames": [
+          "낙현"
+        ],
+        "commanderyId": "PARENT-0056",
+        "surroundingCommanderyId": "PARENT-0056",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-fancheng-liaoxi",
+        "displayName": "범성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "87473"
+        ],
+        "surroundingDisplayNames": [
+          "영지현"
+        ],
+        "commanderyId": "PARENT-0093",
+        "surroundingCommanderyId": "PARENT-0093",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-jiange",
+        "displayName": "검각",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44587"
+        ],
+        "surroundingDisplayNames": [
+          "한수현"
+        ],
+        "commanderyId": "PARENT-0055",
+        "surroundingCommanderyId": "PARENT-0055",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-lankou",
+        "displayName": "남구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "82207"
+        ],
+        "surroundingDisplayNames": [
+          "탕음현"
+        ],
+        "commanderyId": "PARENT-0001",
+        "surroundingCommanderyId": "PARENT-0001",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-lieliucheng",
+        "displayName": "열류성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70920"
+        ],
+        "surroundingDisplayNames": [
+          "진창현"
+        ],
+        "commanderyId": "PARENT-0006",
+        "surroundingCommanderyId": "PARENT-0006",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-mulansai",
+        "displayName": "목란새",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "200080"
+        ],
+        "surroundingDisplayNames": [
+          "석현"
+        ],
+        "commanderyId": "PARENT-0054",
+        "surroundingCommanderyId": "PARENT-0054",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-qucheng",
+        "displayName": "국성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70033"
+        ],
+        "surroundingDisplayNames": [
+          "신흥현"
+        ],
+        "commanderyId": "PARENT-0066",
+        "surroundingCommanderyId": "PARENT-0066",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-shiying",
+        "displayName": "석영",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70033"
+        ],
+        "surroundingDisplayNames": [
+          "신흥현"
+        ],
+        "commanderyId": "PARENT-0066",
+        "surroundingCommanderyId": "PARENT-0066",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-wuguan",
+        "displayName": "무관",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "200092"
+        ],
+        "surroundingDisplayNames": [
+          "상현"
+        ],
+        "commanderyId": "PARENT-0004",
+        "surroundingCommanderyId": "PARENT-0004",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-wuqiangkou",
+        "displayName": "무강구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "43134"
+        ],
+        "surroundingDisplayNames": [
+          "첨현"
+        ],
+        "commanderyId": "PARENT-0050",
+        "surroundingCommanderyId": "PARENT-0050",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-xiakou",
+        "displayName": "협구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45796"
+        ],
+        "surroundingDisplayNames": [
+          "이릉현"
+        ],
+        "commanderyId": "PARENT-0126",
+        "surroundingCommanderyId": "PARENT-0126",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-xingguocheng",
+        "displayName": "흥국성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70040"
+        ],
+        "surroundingDisplayNames": [
+          "기현"
+        ],
+        "commanderyId": "PARENT-0067",
+        "surroundingCommanderyId": "PARENT-0067",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-yanganguan",
+        "displayName": "양안관",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "71101"
+        ],
+        "surroundingDisplayNames": [
+          "면양현"
+        ],
+        "commanderyId": "PARENT-0054",
+        "surroundingCommanderyId": "PARENT-0054",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-zhanyinkou",
+        "displayName": "전음구",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70156"
+        ],
+        "surroundingDisplayNames": [
+          "순음현"
+        ],
+        "commanderyId": "PARENT-0069",
+        "surroundingCommanderyId": "PARENT-0069",
+        "sameCommandery": true
+      },
+      {
+        "id": "ss-zuocheng",
+        "displayName": "좌성",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70459"
+        ],
+        "surroundingDisplayNames": [
+          "연수현"
+        ],
+        "commanderyId": "PARENT-0074",
+        "surroundingCommanderyId": "PARENT-0074",
+        "sameCommandery": true
       }
     ]
   },
@@ -2025,7 +2413,8 @@
               "82523",
               "82525",
               "82531",
-              "82852"
+              "82852",
+              "ss-guandu"
             ]
           },
           {
@@ -2035,7 +2424,10 @@
               "82830",
               "82843",
               "82846",
-              "82880"
+              "82879",
+              "ss-hanguguan",
+              "ss-mengjin",
+              "ss-xiaopingjin"
             ]
           }
         ]
@@ -2128,7 +2520,8 @@
               "87166",
               "87310",
               "87505",
-              "95304"
+              "95304",
+              "ss-maocheng"
             ]
           },
           {
@@ -2255,7 +2648,8 @@
               "45318",
               "45323",
               "45326",
-              "85692"
+              "85692",
+              "ss-cangtingjin"
             ]
           },
           {
@@ -2265,7 +2659,8 @@
               "82289",
               "82304",
               "82320",
-              "85093"
+              "85093",
+              "ss-yanjin"
             ]
           }
         ]
@@ -2354,7 +2749,8 @@
               "42714",
               "42737",
               "42739",
-              "42917"
+              "42917",
+              "ss-jingcheng"
             ]
           },
           {
@@ -2393,7 +2789,8 @@
               "42760",
               "42847",
               "42852",
-              "42878"
+              "42878",
+              "ss-sikou"
             ]
           },
           {
@@ -2553,7 +2950,11 @@
               "45783",
               "45809",
               "45820",
-              "45956"
+              "45956",
+              "ss-jingcheng-dangyang",
+              "ss-maicheng",
+              "ss-qikou",
+              "ss-xunkou"
             ]
           },
           {
@@ -2562,7 +2963,8 @@
               "43421",
               "43497",
               "43676",
-              "43711"
+              "43711",
+              "ss-lukou"
             ]
           },
           {
@@ -2598,7 +3000,11 @@
               "82563",
               "82570",
               "83158",
-              "83164"
+              "83164",
+              "ss-fankou",
+              "ss-hanjin",
+              "ss-jukou",
+              "ss-shangchangcheng"
             ]
           },
           {
@@ -2656,7 +3062,13 @@
               "43130",
               "43153",
               "43181",
-              "43187"
+              "43187",
+              "ss-danglikou",
+              "ss-dongpu",
+              "ss-guokou",
+              "ss-hengjiangjin",
+              "ss-shukou",
+              "ss-xiaoyaojin"
             ]
           },
           {
@@ -2686,7 +3098,10 @@
               "43379",
               "82575",
               "82581",
-              "82606"
+              "82606",
+              "ss-ancheng",
+              "ss-anfengjin",
+              "ss-wuqiangkou"
             ]
           },
           {
@@ -2830,7 +3245,8 @@
               "41217",
               "41220",
               "41224",
-              "41244"
+              "41244",
+              "ss-jiaoqiucheng"
             ]
           },
           {
@@ -2882,7 +3298,9 @@
               "44671",
               "44679",
               "96145",
-              "96259"
+              "96259",
+              "ss-jiange",
+              "ss-wakou"
             ]
           },
           {
@@ -2947,7 +3365,8 @@
               "95521",
               "95699",
               "95709",
-              "95729"
+              "95729",
+              "ss-hukouguan"
             ]
           },
           {
@@ -2962,12 +3381,12 @@
         "id": "PARENT-0079",
         "displayName": "태원군",
         "componentCellCounts": [
-          763,
+          784,
           104
         ],
         "components": [
           {
-            "cellCount": 763,
+            "cellCount": 784,
             "memberIds": [
               "95145",
               "95152",
@@ -3165,7 +3584,8 @@
               "fc-lelang-011",
               "fc-lelang-012",
               "fc-lelang-014",
-              "fc-lelang-016"
+              "fc-lelang-016",
+              "ss-qiliying"
             ]
           },
           {
@@ -3491,7 +3911,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 10,
+    "fullyEnclosedCount": 11,
     "fullyEnclosed": [
       {
         "id": "PARENT-0045",
@@ -3513,6 +3933,17 @@
         ],
         "surroundingDisplayNames": [
           "구강군"
+        ]
+      },
+      {
+        "id": "PARENT-0082",
+        "displayName": "오원군",
+        "componentCellCount": 120,
+        "surroundingIds": [
+          "PARENT-0114"
+        ],
+        "surroundingDisplayNames": [
+          "흉노"
         ]
       },
       {
@@ -3605,7 +4036,7 @@
       }
     ]
   },
-  "singleJurisdictionCommanderyCount": 64,
+  "singleJurisdictionCommanderyCount": 60,
   "singleJurisdictionCommanderies": [
     {
       "id": "PARENT-0063",
@@ -4091,118 +4522,6 @@
       "requiresMissingCountyReview": true
     },
     {
-      "id": "PARENT-0082",
-      "displayName": "오원군",
-      "nameCh": "五原郡",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "95698",
-      "sourceGroupMatch": true,
-      "sourceVolume": 113,
-      "sourceCitation": {
-        "corpusPath": "data/corpus/hhs-113.txt",
-        "line": 613,
-        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
-        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
-      },
-      "traditionalTextCitation": {
-        "source": "Chinese Text Project",
-        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
-        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
-        "locator": "n79437-n79450"
-      },
-      "sourceEnumeratedUnitCount": 10,
-      "sourceUnitNames": [
-        "九原",
-        "五原",
-        "临沃",
-        "文国",
-        "河阴",
-        "武都",
-        "宜梁",
-        "曼柏",
-        "成宜",
-        "西安阳"
-      ],
-      "sourceUnits": [
-        {
-          "sourceName": "九原",
-          "ordinal": 1,
-          "joinStatus": "RESOLVED_POINT",
-          "physicalPlaceId": "chgis:v6:cnty:95698",
-          "currentJurisdictionId": "95698",
-          "currentCommanderyId": "PARENT-0082"
-        },
-        {
-          "sourceName": "五原",
-          "ordinal": 2,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "临沃",
-          "ordinal": 3,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "文国",
-          "ordinal": 4,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "河阴",
-          "ordinal": 5,
-          "joinStatus": "RESOLVED_POINT",
-          "physicalPlaceId": "chgis:v6:cnty:82880",
-          "currentJurisdictionId": "82880",
-          "currentCommanderyId": "PARENT-0000"
-        },
-        {
-          "sourceName": "武都",
-          "ordinal": 6,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "宜梁",
-          "ordinal": 7,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "曼柏",
-          "ordinal": 8,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "成宜",
-          "ordinal": 9,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        },
-        {
-          "sourceName": "西安阳",
-          "ordinal": 10,
-          "joinStatus": "NO_COORDINATE_CANDIDATE"
-        }
-      ],
-      "sourceBindingStatusCounts": {
-        "NO_COORDINATE_CANDIDATE": 8,
-        "RESOLVED_POINT": 2
-      },
-      "sourceResolvedPhysicalPlaceIds": [
-        "chgis:v6:cnty:82880",
-        "chgis:v6:cnty:95698"
-      ],
-      "sourceUnitsWithoutCoordinateCandidate": [
-        "五原",
-        "临沃",
-        "文国",
-        "武都",
-        "宜梁",
-        "曼柏",
-        "成宜",
-        "西安阳"
-      ],
-      "requiresMissingCountyReview": true
-    },
-    {
       "id": "PARENT-0084",
       "displayName": "정양군",
       "nameCh": "定襄郡",
@@ -4567,14 +4886,6 @@
       "sourceGroupMatch": false
     },
     {
-      "id": "PARENT-0112",
-      "displayName": "졸본",
-      "nameCh": "卒本",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X029",
-      "sourceGroupMatch": false
-    },
-    {
       "id": "PARENT-0113",
       "displayName": "남향군",
       "nameCh": "南鄉郡",
@@ -4676,14 +4987,6 @@
       "nameCh": "宕渠郡",
       "kind": "COMMANDERY",
       "jurisdictionId": "200197",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0126",
-      "displayName": "의도군",
-      "nameCh": "宜都郡",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "45796",
       "sourceGroupMatch": false
     },
     {
@@ -4879,14 +5182,6 @@
       "sourceGroupMatch": false
     },
     {
-      "id": "PARENT-0159",
-      "displayName": "기춘군",
-      "nameCh": "蘄春郡",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "43542",
-      "sourceGroupMatch": false
-    },
-    {
       "id": "PARENT-0161",
       "displayName": "서성군",
       "nameCh": "西城郡",
@@ -4957,8 +5252,8 @@
       "SOURCE_PLACEHOLDER": 3
     },
     "resolvedCurrentJurisdictionCount": 741,
-    "sourceParentMatchCount": 698,
-    "sourceParentMismatchCount": 43,
+    "sourceParentMatchCount": 699,
+    "sourceParentMismatchCount": 42,
     "noCoordinateCandidateCount": 381,
     "resolvedPlaceAbsentCount": 0,
     "sourceGroups": [
@@ -5937,11 +6232,10 @@
           "RESOLVED_POINT": 2
         },
         "resolvedCurrentJurisdictionCount": 2,
-        "sourceParentMatchCount": 1,
-        "sourceParentMismatchCount": 1,
+        "sourceParentMatchCount": 2,
+        "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0000",
           "PARENT-0082"
         ]
       },
@@ -6981,18 +7275,6 @@
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       },
       {
-        "sourceName": "河阴",
-        "sourceCommanderyNameCh": "五原郡",
-        "sourceVolume": 113,
-        "ordinal": 5,
-        "currentJurisdictionId": "82880",
-        "currentJurisdictionDisplayName": "하음현",
-        "currentCommanderyId": "PARENT-0000",
-        "currentCommanderyDisplayName": "하남윤",
-        "currentCommanderyNameCh": "河南尹",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
         "sourceName": "桑乾",
         "sourceCommanderyNameCh": "代郡",
         "sourceVolume": 113,
@@ -7194,7 +7476,7 @@
         "currentCommanderyDisplayName": "하남윤",
         "currentCommanderyNameCh": "河南尹",
         "kind": "METROPOLITAN",
-        "currentJurisdictionCount": 17,
+        "currentJurisdictionCount": 21,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 21,
@@ -7206,7 +7488,7 @@
         "currentCommanderyDisplayName": "하내군",
         "currentCommanderyNameCh": "河內郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 18,
+        "currentJurisdictionCount": 20,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 18,
@@ -7218,7 +7500,7 @@
         "currentCommanderyDisplayName": "하동군",
         "currentCommanderyNameCh": "河東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 19,
+        "currentJurisdictionCount": 20,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 20,
@@ -7230,7 +7512,7 @@
         "currentCommanderyDisplayName": "홍농군",
         "currentCommanderyNameCh": "弘農郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 9,
@@ -7242,7 +7524,7 @@
         "currentCommanderyDisplayName": "경조윤",
         "currentCommanderyNameCh": "京兆尹",
         "kind": "METROPOLITAN",
-        "currentJurisdictionCount": 11,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 10,
@@ -7254,7 +7536,7 @@
         "currentCommanderyDisplayName": "좌풍익",
         "currentCommanderyNameCh": "左馮翊",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 11,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 13,
@@ -7266,7 +7548,7 @@
         "currentCommanderyDisplayName": "우부풍",
         "currentCommanderyNameCh": "右扶風",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 9,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 15,
@@ -7278,7 +7560,7 @@
         "currentCommanderyDisplayName": "영천군",
         "currentCommanderyNameCh": "潁川郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 17,
+        "currentJurisdictionCount": 18,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 110,
         "sourceEnumeratedUnitCount": 17,
@@ -7350,7 +7632,7 @@
         "currentCommanderyDisplayName": "위군",
         "currentCommanderyNameCh": "魏郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 16,
+        "currentJurisdictionCount": 17,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 110,
         "sourceEnumeratedUnitCount": 15,
@@ -7398,7 +7680,7 @@
         "currentCommanderyDisplayName": "안평국",
         "currentCommanderyNameCh": "安平國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 13,
+        "currentJurisdictionCount": 14,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 110,
         "sourceEnumeratedUnitCount": 12,
@@ -7470,7 +7752,7 @@
         "currentCommanderyDisplayName": "동군",
         "currentCommanderyNameCh": "東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 12,
+        "currentJurisdictionCount": 14,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 15,
@@ -7590,7 +7872,7 @@
         "currentCommanderyDisplayName": "광릉군",
         "currentCommanderyNameCh": "廣陵郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 11,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 11,
@@ -7602,7 +7884,7 @@
         "currentCommanderyDisplayName": "하비국",
         "currentCommanderyNameCh": "下邳國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 13,
+        "currentJurisdictionCount": 14,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 17,
@@ -7698,7 +7980,7 @@
         "currentCommanderyDisplayName": "남군",
         "currentCommanderyNameCh": "南郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 18,
+        "currentJurisdictionCount": 23,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 17,
@@ -7710,7 +7992,7 @@
         "currentCommanderyDisplayName": "강하군",
         "currentCommanderyNameCh": "江夏郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 15,
+        "currentJurisdictionCount": 19,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 14,
@@ -7758,7 +8040,7 @@
         "currentCommanderyDisplayName": "장사군",
         "currentCommanderyNameCh": "長沙郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 15,
+        "currentJurisdictionCount": 16,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 13,
@@ -7770,7 +8052,7 @@
         "currentCommanderyDisplayName": "구강군",
         "currentCommanderyNameCh": "九江郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 6,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 14,
@@ -7782,7 +8064,7 @@
         "currentCommanderyDisplayName": "단양군",
         "currentCommanderyNameCh": "丹陽郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 27,
+        "currentJurisdictionCount": 31,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 16,
@@ -7794,7 +8076,7 @@
         "currentCommanderyDisplayName": "여강군",
         "currentCommanderyNameCh": "廬江郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 14,
@@ -7830,7 +8112,7 @@
         "currentCommanderyDisplayName": "예장군",
         "currentCommanderyNameCh": "豫章郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 31,
+        "currentJurisdictionCount": 32,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 21,
@@ -7842,7 +8124,7 @@
         "currentCommanderyDisplayName": "한중군",
         "currentCommanderyNameCh": "漢中郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 9,
@@ -7854,7 +8136,7 @@
         "currentCommanderyDisplayName": "파군",
         "currentCommanderyNameCh": "巴郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 14,
+        "currentJurisdictionCount": 16,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 14,
@@ -7866,7 +8148,7 @@
         "currentCommanderyDisplayName": "광한군",
         "currentCommanderyNameCh": "廣漢郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 5,
+        "currentJurisdictionCount": 6,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -7890,7 +8172,7 @@
         "currentCommanderyDisplayName": "건위군",
         "currentCommanderyNameCh": "犍為郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 9,
+        "currentJurisdictionCount": 10,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 9,
@@ -7986,7 +8268,7 @@
         "currentCommanderyDisplayName": "농서군",
         "currentCommanderyNameCh": "隴西郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 8,
+        "currentJurisdictionCount": 10,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -7998,7 +8280,7 @@
         "currentCommanderyDisplayName": "한양군",
         "currentCommanderyNameCh": "漢陽郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 2,
+        "currentJurisdictionCount": 5,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 13,
@@ -8022,7 +8304,7 @@
         "currentCommanderyDisplayName": "금성군",
         "currentCommanderyNameCh": "金城郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 6,
+        "currentJurisdictionCount": 7,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 10,
@@ -8082,7 +8364,7 @@
         "currentCommanderyDisplayName": "주천군",
         "currentCommanderyNameCh": "酒泉郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 3,
+        "currentJurisdictionCount": 4,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 9,
@@ -8130,7 +8412,7 @@
         "currentCommanderyDisplayName": "상당군",
         "currentCommanderyNameCh": "上黨郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 12,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 13,
@@ -8178,12 +8460,12 @@
         "currentCommanderyDisplayName": "오원군",
         "currentCommanderyNameCh": "五原郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 10,
         "sourceResolvedCurrentJurisdictionCount": 2,
-        "sourceParentMismatchCount": 1
+        "sourceParentMismatchCount": 0
       },
       {
         "currentCommanderyId": "PARENT-0083",
@@ -8298,7 +8580,7 @@
         "currentCommanderyDisplayName": "우북평군",
         "currentCommanderyNameCh": "右北平郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 3,
+        "currentJurisdictionCount": 4,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 4,
@@ -8310,7 +8592,7 @@
         "currentCommanderyDisplayName": "요서군",
         "currentCommanderyNameCh": "遼西郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 4,
+        "currentJurisdictionCount": 5,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 5,
@@ -8322,7 +8604,7 @@
         "currentCommanderyDisplayName": "요동군",
         "currentCommanderyNameCh": "遼東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -8510,7 +8792,7 @@
         "currentCommanderyDisplayName": "졸본",
         "currentCommanderyNameCh": "卒本",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 3,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8622,7 +8904,7 @@
         "currentCommanderyDisplayName": "의도군",
         "currentCommanderyNameCh": "宜都郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8654,7 +8936,7 @@
         "currentCommanderyDisplayName": "대방군",
         "currentCommanderyNameCh": "帶方郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 7,
+        "currentJurisdictionCount": 8,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8886,7 +9168,7 @@
         "currentCommanderyDisplayName": "기춘군",
         "currentCommanderyNameCh": "蘄春郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8894,7 +9176,7 @@
         "currentCommanderyDisplayName": "양양군",
         "currentCommanderyNameCh": "襄陽郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 3,
+        "currentJurisdictionCount": 5,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -9346,7 +9628,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f"
+      "sha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

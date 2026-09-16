@@ -1107,6 +1107,7 @@ object HanWorldV3GateIndex {
         1095 to setOf("司隸"),
         1096 to setOf("涼州", "胡"),
         1097 to setOf("涼州"),
+        1098 to setOf("司隸", "雒陽"),
     )
 
     fun keys(cityId: Int): Set<String> = keysByCityId[cityId].orEmpty()

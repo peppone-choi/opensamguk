@@ -151,7 +151,7 @@ def _load_verified_v3_world() -> dict:
         (row["routeNodeKey"], row["id"], row["physicalPlaceRef"])
         for row in world["cities"]
     }
-    if manifest_nodes != world_nodes or len(world_nodes) != 1097:
+    if manifest_nodes != world_nodes or len(world_nodes) != 1098:
         raise ValueError("han-world-v3 manifest route-node set mismatch")
     return world
 

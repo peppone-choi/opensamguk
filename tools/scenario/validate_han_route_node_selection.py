@@ -48,12 +48,15 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 836..846 간체표 폴딩 결합 11곳 + 847 吳縣·848 毘陵 이체자 폴딩 결합 2곳 (w1-script-variant-county-join).
 # + 849..1024 城 없던 han-tiles 縣 관할 176곳 (w2-cityless-jurisdiction-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1025..1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1097}
+# + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1098}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 JURISDICTION_CLAIM_BATCH = "w2-cityless-jurisdiction-route-claim"
 STRATEGIC_SITE_CLAIM_BATCH = "w3-strategic-site-route-claim"
+VACATED_LOCATION_BATCH = "w4-vacated-county-location"
+VACATED_LOCATION_UNITS = frozenset({"hhs:109:河南尹:011"})
 # source claim batch: (provenance 입력 이름, subjectKey 접두사, subjectType, 허용 nodeClass, 허용 seatRole, world 판별 수)
 SOURCE_CLAIM_BATCHES = {
     JURISDICTION_CLAIM_BATCH: {
@@ -73,7 +76,7 @@ FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 # 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, VACATED_LOCATION_BATCH: 1},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -94,7 +97,7 @@ REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
     {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH,
-     JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH}
+     JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH, VACATED_LOCATION_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
 FORBIDDEN_FIELDS = frozenset(
@@ -131,11 +134,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "eedf62ce4648e22f41650a3503f018d69e0fbe475ea428376695fad167f2dadd"
-PINNED_SOURCE_WITNESS_SHA256 = "fd0019d96389e74ed8dc79bae89d23b3b30a8db25d096f9162259a2b87bf7789"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
+PINNED_SOURCE_WITNESS_SHA256 = "86f82f4deb4394667ef0c3d298ac0b743192515e6328c0bb2ca6ef670de80fa8"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "cae8128650b22325519e333b4a0d1386b5528b1f2c03515805dd4f090684a0e5"
-PINNED_REVIEW_POLICY_SHA256 = "e0e0b88f1bc9cc6d14926d81c4a192908948cf1a8142d75494f7b1c66e3dd2ce"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
+PINNED_REVIEW_POLICY_SHA256 = "1d5bfe89f5feb67413162df389ede8bd063d3b3f5d5f7d2920b73ce0c6693e55"
 PINNED_VALIDATION_CONTRACT_SHA256 = "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -939,7 +942,9 @@ def adjudications_or_empty(adjudications: dict[str, JsonObject] | None) -> dict[
     return {} if adjudications is None else adjudications
 
 
-def _location_claim_batch(point_ref: str) -> str:
+def _location_claim_batch(point_ref: str, subject_key: str | None = None) -> str:
+    if subject_key in VACATED_LOCATION_UNITS:
+        return VACATED_LOCATION_BATCH
     return FRONTIER_COUNTY_BATCH if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
 
 
@@ -1002,7 +1007,7 @@ def _claims_index(
         point_ref = _text(resolution, "physicalPlaceId")
         if POINT_REFERENCE.fullmatch(point_ref) is None:
             _fail(f"external claim physicalPlaceRef is not a point reference: {point_ref}")
-        batch_counts[_location_claim_batch(point_ref)] += 1
+        batch_counts[_location_claim_batch(point_ref, subject_key)] += 1
         dataset_ref = _mapping(resolution.get("coordinateDatasetRef"), "coordinateDatasetRef")
         if set(dataset_ref) != COORDINATE_DATASET_FIELDS:
             _fail(f"LOCATION_ONLY coordinateDatasetRef fields must be exact: {claim_id}")
@@ -1053,7 +1058,7 @@ def _claims_index(
             _fail(f"identity-only external claim rationale cannot assert lifecycle: {claim_id}")
         indexed[claim_id] = {
             **claim,
-            "reviewBatchId": _location_claim_batch(point_ref),
+            "reviewBatchId": _location_claim_batch(point_ref, subject_key),
             "claimRole": "LOCATION",
             "subjectType": "AdministrativePlace",
             "subjectKey": subject_key,

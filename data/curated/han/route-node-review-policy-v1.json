@@ -2,15 +2,16 @@
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
     "externalLocationClaimCount": 11,
-    "hhsAdministrativeBindingCount": 848,
+    "hhsAdministrativeBindingCount": 849,
     "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 1097,
+    "routeNodeCount": 1098,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51,
-    "reviewedSourceClaimBindingCount": 249
+    "reviewedSourceClaimBindingCount": 249,
+    "vacatedCountyLocationClaimCount": 1
   },
   "forbiddenSelections": {
     "canonicalNames": [
@@ -70,7 +71,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "cae8128650b22325519e333b4a0d1386b5528b1f2c03515805dd4f090684a0e5"
+      "sha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -79,11 +80,11 @@
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
+      "sha256": "ce02fe1abf2e48e9baec8ec83459a9df9a86bba84d5944a618e7b5af3b565e84"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "eedf62ce4648e22f41650a3503f018d69e0fbe475ea428376695fad167f2dadd"
+      "sha256": "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
@@ -391,6 +392,16 @@
       "reviewState": "APPROVED",
       "selectionRationale": "ADR-LITE-052 비현 거점(關·津·鎭)을 기존 城 등급 체계(수 1·진 2·관 3) 아래 경로 노드로 올린다. 正史 근거는 거점 원장에, 省 기하는 縣 省에서 떼어 낸 분할 원장에 있다(2026-09-15 사용자 결정).",
       "claimLedger": "data/curated/han/route-node-strategic-site-claims-v1.json"
+    },
+    {
+      "batchId": "w4-vacated-county-location",
+      "criteria": "HHS NO_COORDINATE_CANDIDATE identity whose place was vacated by a misbinding correction, with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
+      "expectedCount": 1,
+      "reviewState": "APPROVED",
+      "memberAdministrativeUnitIds": [
+        "hhs:109:河南尹:011"
+      ],
+      "selectionRationale": "續漢書 郡國志 河南尹 二十一城 〖平陰〗(hhs-109 38행). 城 56 五原郡 河陰이 같은 자리의 220년 개명 기록을 동명으로 차지해 좌표 후보를 잃었다. 56 을 사료 자리로 옮기면서(county-misbinding-rebindings-v1) 비운 발자국을 CHGIS 82879 平陰縣에 넘기고 경로 노드 1098 로 세운다(2026-09-16 사용자 결정). claim 배치 뒤에 번호를 받아 앞 판 번호를 밀지 않는다."
     }
   ],
   "status": "APPROVED",

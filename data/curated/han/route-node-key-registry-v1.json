@@ -5816,6 +5816,12 @@
       "initialAdministrativeUnitId": "strategic-site:ss-zuocheng",
       "issuanceReason": "STRATEGIC_SITE_ROUTE_CLAIM_V1_APPEND",
       "numericCityId": 1097
+    },
+    {
+      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2",
+      "initialAdministrativeUnitId": "hhs:109:河南尹:011",
+      "issuanceReason": "VACATED_COUNTY_LOCATION_V1_APPEND",
+      "numericCityId": 1098
     }
   ]
 }

@@ -21,8 +21,15 @@ FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
-#: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch 둘. append 행은 여기만 쓴다.
-LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH})
+# 오결속 城이 비운 발자국에 제 이름의 郡國志 縣을 세우는 batch(2026-09-16). 五原郡 河陰(56)이 河南尹
+# 平陰縣의 220 년 개명 기록(CHGIS 82880)을 차지해 平陰이 NO_COORDINATE_CANDIDATE 로 남아 있었다.
+# 河陰을 제자리로 옮기면서 옛 발자국을 平陰(CHGIS 82879)에 넘겼다(county-misbinding-rebindings-v1 leaveBehind).
+# claim 배치(w2·w3) **뒤에** 번호를 받는다 — 앞 판의 번호를 한 칸도 밀지 않기 위해서다.
+VACATED_LOCATION_BATCH = "w4-vacated-county-location"
+VACATED_LOCATION_ISSUANCE = "VACATED_COUNTY_LOCATION_V1_APPEND"
+VACATED_LOCATION_UNITS = frozenset({"hhs:109:河南尹:011"})
+#: 좌표가 없는 HHS 단위를 승인된 점 claim 으로 붙이는 batch. append 행은 여기만 쓴다.
+LOCATION_ONLY_BATCHES = frozenset({FRONTIER_COUNTY_BATCH, EXTERNAL_LOCATION_BATCH, VACATED_LOCATION_BATCH})
 @dataclass(frozen=True, slots=True)
 class ClaimBatch:
     """郡國志 식별자 없이 source claim 으로 경로 노드를 세우는 batch 한 줄.
@@ -59,16 +66,17 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
 )
 JURISDICTION_CLAIM_BATCH = CLAIM_BATCHES[0].batch_id
 CLAIM_BATCH_BY_ID = {batch.batch_id: batch for batch in CLAIM_BATCHES}
-APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND"} | {batch.issuance_reason for batch in CLAIM_BATCHES}
+APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND", VACATED_LOCATION_ISSUANCE} | {batch.issuance_reason for batch in CLAIM_BATCHES}
 # 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
 # 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
-EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, SCRIPT_VARIANT_BATCH: 13}
+EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
 EXPECTED_JURISDICTION_CLAIM_COUNT = sum(batch.expected_count for batch in CLAIM_BATCHES)
 EXPECTED_BATCH_COUNTS = {**EXPECTED_HHS_BATCH_COUNTS, **{batch.batch_id: batch.expected_count for batch in CLAIM_BATCHES}}
-EXPECTED_LOCATION_CLAIM_COUNT = EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
+EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
+                                 + EXPECTED_BATCH_COUNTS[VACATED_LOCATION_BATCH])
 HHS_SELECTION_COUNT = sum(EXPECTED_HHS_BATCH_COUNTS.values())
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
-EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -292,7 +300,12 @@ def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObjec
         if unit_id in selected or unit_id in claim_index or any(row.get("sourceClaimId") == claim_id for row in claim_index.values()):
             raise MaterializationContractError("location claim duplicates a selected binding")
         place_id = text(resolution, "physicalPlaceId")
-        batch_id = FRONTIER_COUNTY_BATCH if place_id.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+        if unit_id in VACATED_LOCATION_UNITS:
+            batch_id = VACATED_LOCATION_BATCH
+        elif place_id.startswith(FRONTIER_COUNTY_PLACE_PREFIX):
+            batch_id = FRONTIER_COUNTY_BATCH
+        else:
+            batch_id = EXTERNAL_LOCATION_BATCH
         selected[unit_id] = (place_id, batch_id)
         claim_index[unit_id] = claim
     if len(selected) != HHS_SELECTION_COUNT or len({value[0] for value in selected.values()}) != HHS_SELECTION_COUNT:
@@ -445,6 +458,10 @@ def _uuid_keys(registry: JsonObject, selected_ids: set[str]) -> dict[str, str]:
 
 
 def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[str, int]:
+    """append 번호. 앞선 HHS append 는 781 부터 끊김 없이, claim 배치는 그 뒤, 비운 자리 縣은 맨 뒤다.
+
+    끊김 없음은 **전체 append 합집합**으로 본다 — 비운 자리 縣(w4)이 claim 배치 뒤에 붙어도
+    어떤 번호도 건너뛰거나 겹치지 않는다."""
     appended: dict[str, int] = {}
     for row in rows(registry, "keys"):
         if "numericCityId" not in row:
@@ -463,6 +480,11 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
     expected = list(range(LEGACY_SELECTION_COUNT + 1, LEGACY_SELECTION_COUNT + len(appended) + 1))
     if sorted(appended.values()) != expected:
         raise MaterializationContractError("append-only numeric IDs must be next never-issued sequence")
+    late = {unit_id for unit_id in appended if unit_id in VACATED_LOCATION_UNITS}
+    if late and min(appended[unit_id] for unit_id in late) <= max(
+        (value for unit_id, value in appended.items() if unit_id not in late), default=0
+    ):
+        raise MaterializationContractError("vacated-county append IDs must follow every earlier append")
     return appended
 
 
@@ -531,7 +553,7 @@ def build_outputs(
         raise MaterializationContractError("same-node corrections reuse a legacy slot")
     appended_ids = _appended_numeric_ids(registry, set(selected) | claim_subjects)
     claim_numeric_ids = {subject: appended_ids.pop(subject) for subject in claim_subjects}
-    floor = max(appended_ids.values())
+    floor = max(value for unit_id, value in appended_ids.items() if unit_id not in VACATED_LOCATION_UNITS)
     for batch in CLAIM_BATCHES:
         batch_ids = [claim_numeric_ids[text(claim, "subjectKey")] for owner, claim in route_claims if owner is batch]
         if min(batch_ids) <= floor:
@@ -647,6 +669,7 @@ def build_outputs(
             location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
             location_claim_id = None
         elif batch_id in LOCATION_ONLY_BATCHES and unit_id in claim_index:
+            # 비운 자리 縣(w4)도 CHGIS 점이 220 년 단면에 없어 같은 LOCATION_ONLY 규약으로 붙는다.
             # 변경 縣 51곳과 城 없던 郡治 3곳은 둘 다 CHGIS 점이 없어 승인된 LOCATION_ONLY claim 으로
             # 결합한다. 이름공간만 다르고(curated:frontier-county-v1 / external:v1) 규약은 같다.
             location_claim_id = text(claim_index[unit_id], "sourceClaimId")

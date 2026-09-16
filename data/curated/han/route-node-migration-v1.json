@@ -477,6 +477,13 @@
       "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8"
     },
     {
+      "administrativeUnitId": "hhs:109:河南尹:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1098,
+      "physicalPlaceRef": "chgis:v6:cnty:82879",
+      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2"
+    },
+    {
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 849,
       "physicalPlaceRef": "chgis:v6:cnty:44385",
@@ -7742,11 +7749,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "cae8128650b22325519e333b4a0d1386b5528b1f2c03515805dd4f090684a0e5",
+  "sourceCandidateSha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "9d888b93b677d71ba9853c6b6ca230746d15c12f12356ff8681936c07a467063",
+  "sourceSelectionSha256": "d47454d0863dad94d470b579d8fdabd710419bd17e181d5f463ef76b42469631",
   "summary": {
-    "appendedIdentityCount": 317,
+    "appendedIdentityCount": 318,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

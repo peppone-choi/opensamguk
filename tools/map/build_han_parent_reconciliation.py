@@ -44,9 +44,10 @@ REFERENCE_YEAR = 220
 # + 836–846 간체표 폴딩 결합 11곳 (w1-script-variant-county-join, route-node-review-policy-v1; 귀속 충돌 5곳 제외).
 # + 849–1024 城 없던 han-tiles 縣 관할 176곳 (w2-cityless-jurisdiction-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1025–1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
+# + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS).
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
 JURISDICTION_ROUTE_CLAIM_COUNT = 176 + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
-HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13
+HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
@@ -548,7 +549,7 @@ def _validate_review_chain(
         {
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 11,
-            "frontierCountyClaimCount": 51,
+            "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": 1,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT - JURISDICTION_ROUTE_CLAIM_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
@@ -563,7 +564,7 @@ def _validate_review_chain(
     batches = policy.get("selectionBatches")
     if (
         not isinstance(batches, list)
-        or len(batches) != 7
+        or len(batches) != 8
         or not all(isinstance(row, dict) for row in batches)
         or {
         (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
@@ -577,6 +578,7 @@ def _validate_review_chain(
             ("w1-script-variant-county-join", 13, "APPROVED"),
             ("w2-cityless-jurisdiction-route-claim", JURISDICTION_ROUTE_CLAIM_COUNT - STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
+            ("w4-vacated-county-location", 1, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")
@@ -631,7 +633,7 @@ def _validate_review_chain(
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "batchId",
-        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim"},
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim", "w4-vacated-county-location"},
         "approved route-node selection rationale",
     )
     _require_closed_enum(
@@ -1691,8 +1693,13 @@ def _rebinding_stage_projection(
     being an unsourced direct territory because a sourced 縣 came home to it. Every other row
     is byte-identical to the prior review, whose own stage contracts assert recursively."""
     prior_tiles, _ = frontier.peel_rebinding(documents["data/map/han-tiles.json"])
+    # 재바인딩이 떠난 자리에 넘겨준 縣(leaveBehind — 河南尹 平陰)은 앞 단계 문서에 아직 없다.
+    left_behind = frozenset(
+        str(row["leaveBehind"]["runtimePlaceKey"])
+        for row in rebound.get("rebindings", []) if isinstance(row.get("leaveBehind"), dict)
+    )
     prior = build_ledger({**documents, "data/map/han-tiles.json": prior_tiles}, input_records,
-                         expected_absent_terminal_ids=expected_absent_terminal_ids)
+                         expected_absent_terminal_ids=expected_absent_terminal_ids | left_behind)
     prior_rows = {row["cityId"]: row for row in prior["rows"]}
     if len(prior_rows) != len(prior["rows"]):
         raise ValueError("prior reconciliation rows are not keyed by unique city id")
@@ -1720,11 +1727,23 @@ def _rebinding_stage_projection(
         for index, jun in enumerate(tiles["juns"])
         if tiles["parentRegions"][index]["id"] in affected
     }
+    external_land_moves = {
+        (row["hostParentRegionId"], row["destinationParentRegionId"])
+        for row in rebound.get("rebindings", []) if row.get("hostParentRegionId")
+    }
     variant_rows = 0
     for row in rows:
         city_id = row["cityId"]
         prior_row = prior_rows.get(city_id)
         if prior_row is None:
+            # 떠난 자리를 넘겨받은 縣만 새 행을 가진다 — 제 郡 안에서, 승인된 결속으로만.
+            if (
+                city_id in left_behind
+                and current_parent.get(city_id) in affected
+                and row["decision"] == "EXACT_APPROVED"
+            ):
+                variant_rows += 1
+                continue
             raise ValueError(f"city {city_id} has no prior reconciliation row")
         if row == prior_row:
             continue
@@ -1745,12 +1764,22 @@ def _rebinding_stage_projection(
             # 南鄉郡 처럼 제 이름의 縣이 돌아와 「사료에 근거한 縣이 없는 直屬 땅」을
             # 벗어난 郡이다. 프론티어 단계가 帶方郡에 대해 이미 허용한 그 전이다.
             allowed |= FRONTIER_STAGE_SOURCED_KEYS
+        prior_jun = (prior_row.get("seatJunDiagnostic") or {}).get("junArrayIndex")
+        current_jun = (row.get("seatJunDiagnostic") or {}).get("junArrayIndex")
+        if (
+            prior_row["decision"] == "BLOCKED_EXTERNAL_POLITY_REVIEW"
+            and isinstance(prior_jun, int) and isinstance(current_jun, int)
+            and (tiles["parentRegions"][prior_jun]["id"], tiles["parentRegions"][current_jun]["id"]) in external_land_moves
+        ):
+            # 五原郡 표시점(X010)처럼, 외부 세력 땅이던 칸이 사료 자리로 돌아온 郡의 발자국 안에 들면
+            # 외부 세력 심사를 벗고 그 郡의 기하 제안이 된다.
+            allowed |= {"decision", "externalReview", "reviewState"}
         if not changed <= allowed:
             raise ValueError(
                 f"county rebinding changed a non-geometry field for {city_id}: {sorted(changed - allowed)}"
             )
         variant_rows += 1
-    if len(rows) != len(prior["rows"]):
+    if len(rows) != len(prior["rows"]) + len(left_behind):
         raise ValueError("county rebinding added or removed a reconciliation row")
     prior_reviews = {row["junArrayIndex"]: row for row in prior["directTerritoryJunReviews"]}
     current_reviews = {row["junArrayIndex"]: row for row in direct_jun_reviews}

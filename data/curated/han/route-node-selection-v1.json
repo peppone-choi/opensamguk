@@ -10,10 +10,10 @@
         "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
       "candidate": {
-        "sha256": "cae8128650b22325519e333b4a0d1386b5528b1f2c03515805dd4f090684a0e5"
+        "sha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
       },
       "externalClaims": {
-        "sha256": "7293977a5cfa0abd1c8c03558f790f9be5e90ed1da97a760c2eae1bf3c2e0988"
+        "sha256": "ce02fe1abf2e48e9baec8ec83459a9df9a86bba84d5944a618e7b5af3b565e84"
       },
       "jurisdictionRouteClaims": {
         "sha256": "22734281a19a5f40cfadd9d5c9e40973749d0f7eacbfb663b308b6f202d435c4"
@@ -28,10 +28,10 @@
         "sha256": "88e88f4fecee05b3cf59e2024e46716689f5e447589127a152b58a5854a3b4ea"
       },
       "reviewPolicy": {
-        "sha256": "e0e0b88f1bc9cc6d14926d81c4a192908948cf1a8142d75494f7b1c66e3dd2ce"
+        "sha256": "1d5bfe89f5feb67413162df389ede8bd063d3b3f5d5f7d2920b73ce0c6693e55"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "eedf62ce4648e22f41650a3503f018d69e0fbe475ea428376695fad167f2dadd"
+        "sha256": "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
       },
       "strategicSiteRouteClaims": {
         "sha256": "58759310ca6cfdebb58c1f75b03de716f599e31a9de70ec1315dc513d805ff99"
@@ -26899,6 +26899,35 @@
       }
     },
     {
+      "administrativeUnitId": "hhs:109:河南尹:011",
+      "canonicalName": "平阴",
+      "displayName": "平阴",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-location-claim-v1-pingyin"
+      },
+      "locationClaimId": "han-location-claim-v1-pingyin",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 1098,
+      "parentName": "河南尹",
+      "parentRef": "hhs-group:109:河南尹",
+      "physicalPlaceRef": "chgis:v6:cnty:82879",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w4-vacated-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w4-vacated-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
       "canonicalName": "滎陽",
       "displayName": "滎陽",
       "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
@@ -33984,21 +34013,21 @@
         "resourceName": "scenario_1010.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
         "scenarioId": "1010",
-        "sha256": "292a54a8322034a2b97653d4b3ea5498876083d0a9e17650f200a52684713e74",
+        "sha256": "3eb6991edb6f493d4dda3fb645ef80b47d95e601b675f9b02bc09f39fd57e7c4",
         "startYear": 181
       },
       {
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "877ee25bb0a229fca9ba3244894698fecf1e81d6ecbcd6f28fc1e166a67c9811",
+        "sha256": "1a26905798c22385ccaa8735f3827839ac13ac3a8946869e8cd38dcb8298b5f9",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "84b54242610d3879497ea9198d4b8dc5cf766439aee8741a485f5dda4348017f",
+        "sha256": "5af2fc7a37ba30b0e310fb7a82b011b142f116d2147e31e44c9f3c327c66e96c",
         "startYear": 187
       },
       {
@@ -34019,70 +34048,70 @@
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "b2140b8f5a438f396ae33a180a64db85f9a339fc571f9e9f45fe675faf93f18d",
+        "sha256": "1198922b029ad7e80621e4243c7e37eb80a9d32cc27dd47c671c95aee7ca5c0b",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "16a7214a15049a9325e2bca9b058e919ec46e8cfd8537ab46b5e0c98f071972b",
+        "sha256": "81130387f8c11b18e365bc00bba074f18bf84a842ebb925ae1f71d33b4887391",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "77e72042622525cca7333768bb7a322df876848342bd02e3a872386eb63c9c7e",
+        "sha256": "dcacb74b2fe310b74cf8780a26760849c00cea285b9a5122376df16fee81b84d",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "57bf006a1dcc9a15b7773a0c00d303b872cc80b7cb3025308c6225f17c254ce6",
+        "sha256": "ef020d5612c26fd7c4092a35f854bd251540a88a8fe4d43ebb8c7aeeae107f65",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "e1715dc81560eeceb0fa18cb58dd9bd7f921348530471d1eafd7ddb610d79e07",
+        "sha256": "2393cfa2e425c0a2c494f071ccc9ab5435d37938190b851639afa4a3d3ed1ab6",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "56a7cb79b1531757f7468c63b626ea2d19380239f3ef206a929780fbe184ec6d",
+        "sha256": "644ef8971dfd0dc6eea7792af42de32fadf817add7c70a7cfcc9a8e08b794185",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "7417db432e4fcdc6118d9d4a1c05301132c1f8dd6d348dc67160b60b99492b7b",
+        "sha256": "fbd55ac4d2b91891d7765b21281d6c48d4410668df4bc312fdfb7d9a1fdc6edf",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "b879dc689842e5940a1450b641e3d10cb1341ffa4f0d37a5f420ddf1abbfe10a",
+        "sha256": "40ad3d0d3eb3610d17f24625c5c07da9c4c5b86a6fe5f4b68a9b36678261f3fd",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "31d2ffe84b49d6831077651f36294b807b221b2d99af73e1a5fbda99a8c6a67f",
+        "sha256": "4cb9ed19665cacab37e72b3731cfb28b1a65ebac7de2c17ba4303e6f477fd72f",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "18f2681e07dd921b6ebf98d981b4e5c682d9cd5b449e51d9093991a08deb6500",
+        "sha256": "d46eb8200511a58febfa5c17acfbfcd721151404c51ac04a2d06daec5a82337b",
         "startYear": 188
       },
       {
@@ -34097,9 +34126,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 1097,
+    "approvedCount": 1098,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 848,
+      "HHS_ADMINISTRATIVE_UNIT": 849,
       "REVIEWED_SOURCE_CLAIM": 249
     }
   },
