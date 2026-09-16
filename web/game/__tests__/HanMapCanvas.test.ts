@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    buildIsoScene, buildProvinceVisualAnchors, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    buildIsoScene, buildProvinceVisualAnchors, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerAssetScale, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialFocusedView, initialView, labelledRegions,
     labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint, provinceLayerRuntimeCities,
     completeJurisdictionOverlays,
@@ -25,6 +25,12 @@ describe('비플레이 지형', () => {
 });
 
 describe('지도 아이콘 배율과 앵커', () => {
+    it.each([
+        [1, 1], [1.49, 1], [1.5, 2], [2, 2], [3, 2],
+    ] as const)('DPR %s에서는 %sx 도시 아이콘을 선택한다', (dpr, expected) => {
+        expect(cityMarkerAssetScale(dpr)).toBe(expected);
+    });
+
     it('미리 계산한 여유 거리로 화면 box 포함 여부를 상수 시간에 판정한다', () => {
         const view = { scale: 0.5, ox: 100, oy: 80 };
         const [x, y] = cellToScreen(20, 30, view);

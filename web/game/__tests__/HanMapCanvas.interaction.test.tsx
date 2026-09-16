@@ -557,18 +557,22 @@ describe('shared HanMapCanvas viewport interaction', () => {
         .filter((source): source is LoadedImage => source instanceof LoadedImage)
         .map((source) => source.src);
       expect(sources).toEqual(expect.arrayContaining([
-        '/city/cast_11.png',
-        '/city/cast_5.png',
-        '/city/cast_9.png',
+        '/city/2x/cast_11.png',
+        '/city/2x/cast_5.png',
+        '/city/2x/cast_9.png',
       ]));
       const markerWidths = recordFor(canvas).drawImageCalls
         .filter(([source]) => source instanceof LoadedImage)
         .map(([source, , , width]) => [(source as LoadedImage).src, width]);
       expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/city/cast_11.png', 96],
-        ['/city/cast_5.png', 96],
-        ['/city/cast_9.png', 96],
+        ['/city/2x/cast_11.png', 96],
+        ['/city/2x/cast_5.png', 96],
+        ['/city/2x/cast_9.png', 96],
       ]));
+      const record = recordFor(canvas);
+      record.drawImageCalls.forEach(([source], index) => {
+        if (source instanceof LoadedImage) expect(record.drawSmoothing[index]).toBe(false);
+      });
     });
   });
 

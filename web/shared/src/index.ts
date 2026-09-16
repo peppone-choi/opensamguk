@@ -52,6 +52,7 @@ export {
   cityFallbackHitBox,
   cityLabelMetrics,
   cityMarkerDrawBox,
+  cityMarkerAssetScale,
   cityMarkerHitBox,
   cityMarkerRadius,
   cityMarkerZoomStep,
