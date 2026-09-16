@@ -87,7 +87,7 @@ prepare_stubs() {
     '          paused) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":999,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          paused_clock_down) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
-    '          stalled) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"lastTickError\":\"secret-sentinel\"}" ;;' \
+    '          stalled) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"consecutiveFailures\":7,\"failedTicks\":9,\"successfulTicks\":3,\"loopUptimeSeconds\":4242,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          *) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '        esac' \
     '        ;;' \
@@ -174,6 +174,8 @@ assert_healthy() {
   [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail "healthy daemon dispatched an alert for $CURRENT_CASE"
   assert_contains "$LAST_OUTPUT" 'state=UP'
   assert_contains "$LAST_OUTPUT" 'lastTurnTime=2026-08-05T16:15:45Z'
+  # 상태 JSON 에 카운터가 없으면 0 으로 꾸미지 않고 -1(미보고)로 적는다.
+  assert_contains "$LAST_OUTPUT" 'consecutiveFailures=-1'
   assert_not_contains "$LAST_OUTPUT" '::warning'
   assert_safe_output
 }
@@ -435,6 +437,21 @@ assert_alert DOWN recovery_gated
 run_alert stalled
 assert_alert DOWN turn_stalled
 assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" allowedSeconds 51
+# 「멈췄다」만으로는 던지는 중(예외 재시도)인지 노는 중(nextRunTime 이 미래)인지 못 가른다.
+# 그 둘을 가르는 정수들이 실제로 로그 줄과 웹훅 본문에 닿는지 본다 — 하나라도 안 실리면 사고 때 또 장님이 된다.
+assert_contains "$LAST_OUTPUT" 'consecutiveFailures=7'
+assert_contains "$LAST_OUTPUT" 'failedTicks=9'
+assert_contains "$LAST_OUTPUT" 'successfulTicks=3'
+assert_contains "$LAST_OUTPUT" 'loopUptimeSeconds=4242'
+assert_contains "$LAST_OUTPUT" 'staleSeconds=52'
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" consecutiveFailures 7
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" failedTicks 9
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" successfulTicks 3
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" loopUptimeSeconds 4242
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" staleSeconds 52
+# 예외 **메시지**(lastTickError)는 계속 안 나간다. 정수만 실어야 유출 계약이 유지된다.
+assert_not_contains "$LAST_OUTPUT" 'lastTickError'
+assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" 'lastTickError'
 
 run_alert health_unreadable
 assert_alert DOWN health_unreadable
