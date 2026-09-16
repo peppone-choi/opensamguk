@@ -87,6 +87,8 @@ prepare_stubs() {
     '          paused) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":999,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          paused_clock_down) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
+    '          untyped_error) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"consecutiveFailures\":7,\"failedTicks\":9,\"successfulTicks\":3,\"loopUptimeSeconds\":4242,\"lastTickError\":\"secret-sentinel: 원소가 城 12 를 잃었습니다\"}" ;;' \
+    '          typed_error) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"consecutiveFailures\":7,\"failedTicks\":9,\"successfulTicks\":3,\"loopUptimeSeconds\":4242,\"lastTickError\":\"java.lang.IllegalStateException: secret-sentinel\"}" ;;' \
     '          stalled) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"consecutiveFailures\":7,\"failedTicks\":9,\"successfulTicks\":3,\"loopUptimeSeconds\":4242,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          *) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '        esac' \
@@ -95,7 +97,7 @@ prepare_stubs() {
     '        case "$DAEMON_ALERT_TEST_MODE" in' \
     '          health_unreadable) printf "%s\\n" "not-json" ;;' \
     '          paused) printf "%s\\n" "{\"status\":\"OUT_OF_SERVICE\"}" ;;' \
-    '          paused_clock_down|recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running|stalled) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
+    '          paused_clock_down|recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running|stalled|typed_error|untyped_error) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
     '          *) printf "%s\\n" "{\"status\":\"UP\"}" ;;' \
     '        esac' \
     '        ;;' \
@@ -449,9 +451,26 @@ assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" failedTicks 9
 assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" successfulTicks 3
 assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" loopUptimeSeconds 4242
 assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" staleSeconds 52
-# 예외 **메시지**(lastTickError)는 계속 안 나간다. 정수만 실어야 유출 계약이 유지된다.
-assert_not_contains "$LAST_OUTPUT" 'lastTickError'
-assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" 'lastTickError'
+# 예외는 **타입만** 나간다. 이 픽스처의 lastTickError 는 "secret-sentinel" — FQCN 모양도 아니고
+# ": " 구분자도 없으니 타입으로 넘겨짚지 않고 unavailable 이어야 한다(assert_safe_output 이 센티널
+# 자체의 유출을 따로 막는다).
+assert_contains "$LAST_OUTPUT" 'lastTickErrorClass=unavailable'
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" lastTickErrorClass unavailable
+
+# 진짜 예외 모양("<FQCN>: <message>")이면 타입은 살아 나오고 메시지 절반은 죽는다.
+run_alert typed_error
+assert_alert DOWN turn_stalled
+assert_contains "$LAST_OUTPUT" 'lastTickErrorClass=java.lang.IllegalStateException'
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" lastTickErrorClass java.lang.IllegalStateException
+assert_safe_output
+
+# ": " 는 있는데 앞머리가 FQCN 모양이 아니면 타입으로 넘겨짚지 않는다. 이 케이스가 없으면
+# 모양 검사를 통째로 지워도 아무 검사가 안 걸린다(2026-09-16 적색 프로브 A 에서 실제로 통과했다).
+run_alert untyped_error
+assert_alert DOWN turn_stalled
+assert_contains "$LAST_OUTPUT" 'lastTickErrorClass=unavailable'
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" lastTickErrorClass unavailable
+assert_safe_output
 
 run_alert health_unreadable
 assert_alert DOWN health_unreadable

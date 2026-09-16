@@ -78,6 +78,22 @@ def bounded_int(raw):
     return raw if type(raw) is int and 0 <= raw <= 2_147_483_647 else -1
 
 
+# 예외 **타입만** 싣는다. TurnDaemonRunner 는 lastTickError 를
+# "<FQCN>: <message>" 로 만든다(`"${e::class.qualifiedName}: ${e.message}"`) — 그 앞머리는
+# 클래스 이름이라 월드 데이터가 섞일 수 없다. 메시지 쪽은 절대 안 내보낸다.
+# 엄격한 FQCN 모양 + ": " 구분자를 둘 다 만족할 때만 채택하고, 아니면 unavailable 이다 —
+# 모양이 안 맞는 값을 「타입일 것」이라고 넘겨짚으면 그게 곧 유출 경로가 된다.
+def error_class(raw):
+    if not isinstance(raw, str):
+        return "unavailable"
+    head, separator, _ = raw.partition(": ")
+    if not separator:
+        return "unavailable"
+    return head if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.$]{0,200}", head) else "unavailable"
+
+
+last_tick_error_class = error_class(value.get("lastTickError"))
+
 consecutive_failures = bounded_int(value.get("consecutiveFailures"))
 failed_ticks = bounded_int(value.get("failedTicks"))
 successful_ticks = bounded_int(value.get("successfulTicks"))
@@ -86,7 +102,7 @@ loop_uptime_seconds = bounded_int(value.get("loopUptimeSeconds"))
 print("|".join((
     str(paused).lower(), str(recovery_ready).lower(), mode, str(tick_seconds), str(age_seconds),
     last_turn_time, str(consecutive_failures), str(failed_ticks), str(successful_ticks),
-    str(loop_uptime_seconds),
+    str(loop_uptime_seconds), last_tick_error_class,
 )))
 '
 }
@@ -150,7 +166,7 @@ diagnostics = {
 # counters 는 "키=정수" 공백 구분 문자열이다. 값은 parse_status 가 이미 정수로 조였다.
 for pair in counters.split():
     key, _, raw = pair.partition("=")
-    diagnostics[key] = int(raw)
+    diagnostics[key] = int(raw) if raw.lstrip("-").isdigit() else raw
 color = {"DOWN": 0xE74C3C, "OUT_OF_SERVICE": 0xF1C40F}.get(state, 0x2ECC71)
 print(json.dumps({
     "username": diagnostics["source"],
@@ -194,16 +210,17 @@ status_json="$(docker exec "$engine_container" curl --silent --show-error --max-
   http://localhost:8082/admin/turn-daemon/status 2>/dev/null)" || status_json=''
 if ! summary="$(printf '%s' "$status_json" | parse_status 2>/dev/null)"; then
   dispatch_alert "$server" DOWN status_unreadable UNKNOWN 0 0 unavailable \
-    'consecutiveFailures=-1 failedTicks=-1 successfulTicks=-1 loopUptimeSeconds=-1' || exit 1
+    'consecutiveFailures=-1 failedTicks=-1 successfulTicks=-1 loopUptimeSeconds=-1 lastTickErrorClass=unavailable' || exit 1
   exit 1
 fi
 
 IFS='|' read -r paused recovery_ready recovery_mode tick_seconds age_seconds last_turn_time \
-  consecutive_failures failed_ticks successful_ticks loop_uptime_seconds <<< "$summary"
+  consecutive_failures failed_ticks successful_ticks loop_uptime_seconds last_tick_error_class <<< "$summary"
 # 판정에는 안 쓰인다 — 어느 고장인지 사람이 읽는 진단 꼬리표다. 전부 정수라 유출 위험이 없다.
 counters="consecutiveFailures=${consecutive_failures} failedTicks=${failed_ticks}"
 counters+=" successfulTicks=${successful_ticks} loopUptimeSeconds=${loop_uptime_seconds}"
 counters+=" staleSeconds=${age_seconds}"
+counters+=" lastTickErrorClass=${last_tick_error_class}"
 allowed_seconds=$((tick_seconds * STALE_TICK_MULTIPLIER))
 health_json="$(docker exec "$engine_container" curl --silent --show-error --max-time 5 \
   http://localhost:8082/actuator/health 2>/dev/null)" || health_json=''
