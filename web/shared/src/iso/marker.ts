@@ -25,8 +25,8 @@ export interface CityFlagOptions {
   /** markerScale 의 결과. */
   k: number;
   /**
-   * 깃발에 쓰는 국가 글자(nationGlyph). 색이 같거나 가까운 나라(동탁·금선·한수 무채색 셋,
-   * 조조 #2424E9·김상 #0000FF)는 색만으로 못 가른다 — 글자가 가른다.
+   * 깃발에 쓰는 국가 글자(nationGlyph) — 국가명 첫 글자 한 자. 색이 같거나 가까운 나라
+   * (동탁·금선·한수 무채색 셋, 조조 #2424E9·김상 #0000FF)를 글자가 거들어 가른다.
    */
   glyph?: string | null;
 }
@@ -36,71 +36,15 @@ function glyphLetters(name: string | null | undefined): string[] {
 }
 
 /**
- * 국가 이름 → 깃발 글자 하나. 앞에 붙은 기호(NPC 국가의 ㉿ 등)는 건너뛰고 첫 글자를 쓴다.
- * 여러 나라가 한 화면에 있으면 assignNationGlyphs 를 써라 — 성씨가 겹친다.
+ * 국가 이름 → 깃발 글자 하나. 앞에 붙은 기호(NPC 국가의 ㉿ 등)는 건너뛰고 **첫 글자**를 쓴다.
+ *
+ * 성씨가 겹쳐도 그대로 둔다 — 유표·유언·유우·유대·유비는 다섯 다 「유」다. 가르는 것은
+ * 색이다. 예전에는 겹치면 끝 글자나 두 자로 밀어 고유하게 만들었는데(2026-09-15),
+ * 그러면 한 나라가 화면마다 다른 글자를 달게 되어 오히려 못 알아본다. 글자는 세력을
+ * 가리키는 표식이지 식별자가 아니다.
  */
 export function nationGlyph(name: string | null | undefined): string | null {
   return glyphLetters(name)[0] ?? null;
-}
-
-/**
- * 한 지도에 선 나라들의 깃발 글자를 **서로 겹치지 않게** 정한다.
- *
- * 첫 글자(성씨)만 쓰면 반동탁연합 시나리오에서 「유」가 다섯(유표·유언·유우·유대·유비),
- * 「공」·「장」이 셋씩 겹쳤다(2026-09-15 실화면). 규칙:
- *   1) 첫 글자가 혼자면 첫 글자.
- *   2) 겹치면 끝 글자(이름) — 1) 에서 쓰인 글자나 다른 겹친 나라의 끝 글자와 안 겹칠 때.
- *   3) 그래도 겹치면 첫 글자 + 끝 글자 두 자. 그 두 자도 이미 쓰였으면 다른 조합.
- * 이름 순서와 무관하게 같은 결과가 나온다.
- */
-export function assignNationGlyphs(names: Iterable<string | null | undefined>): Map<string, string> {
-  const unique = [...new Set([...names].filter((name): name is string => glyphLetters(name).length > 0))];
-  const byFirst = new Map<string, string[]>();
-  for (const name of unique) {
-    const first = glyphLetters(name)[0];
-    byFirst.set(first, [...(byFirst.get(first) ?? []), name]);
-  }
-  const result = new Map<string, string>();
-  const taken = new Set<string>();
-  const collided: string[] = [];
-  for (const [first, group] of byFirst) {
-    if (group.length === 1) {
-      result.set(group[0], first);
-      taken.add(first);
-    } else collided.push(...group);
-  }
-  const lastCount = new Map<string, number>();
-  const lastOf = (name: string) => {
-    const letters = glyphLetters(name);
-    return letters.length > 1 ? letters[letters.length - 1] : null;
-  };
-  for (const name of collided) {
-    const last = lastOf(name);
-    if (last) lastCount.set(last, (lastCount.get(last) ?? 0) + 1);
-  }
-  const fallback: string[] = [];
-  for (const name of collided) {
-    const last = lastOf(name);
-    if (last && !taken.has(last) && lastCount.get(last) === 1) {
-      result.set(name, last);
-      taken.add(last);
-    } else fallback.push(name);
-  }
-  // 두 자 후보끼리도 겹칠 수 있다(유상·유중상 → 둘 다 「유상」). 이름순으로 돌며 안 쓰인
-  // 조합을 고른다 — 첫 글자 + 끝 글자, 첫 글자 + 가운데 글자들, 이름 전체, 번호.
-  for (const name of fallback.sort()) {
-    const letters = glyphLetters(name);
-    const candidates = letters.length > 1
-      ? [...letters.slice(1).reverse().map((letter) => `${letters[0]}${letter}`), letters.join('')]
-      : [letters[0]];
-    let glyph = candidates.find((candidate) => !taken.has(candidate));
-    for (let n = 2; !glyph; n += 1) {
-      if (!taken.has(`${letters[0]}${n}`)) glyph = `${letters[0]}${n}`;
-    }
-    result.set(name, glyph);
-    taken.add(glyph);
-  }
-  return result;
 }
 
 /** 깃발 바탕 위 글자색. 밝은 깃발엔 잉크, 어두운 깃발엔 --text. */
@@ -128,7 +72,7 @@ export function drawCityFlag(
   const pole = size * 2;
   const top = y - pole;
   // 글자가 들어가면 천을 넓힌다. 깃대 길이(= 반환값)는 그대로라 집기 상자가 안 흔들린다.
-  const w = size * (glyph ? 1.95 : 1.5);
+  const w = size * (glyph ? 1.7 : 1.5);
   const h = size * (glyph ? 1.4 : 1.05);
 
   context.save();
@@ -159,7 +103,7 @@ export function drawCityFlag(
 
   if (glyph) {
     const fill = color ?? NEUTRAL;
-    // 두 자면 제비꼬리 홈 앞 몸통에 들어가게 줄인다.
+    // 제비꼬리 홈 앞 몸통에 들어가게 줄인다.
     const room = (w - size * 0.42) / [...glyph].length;
     context.font = `700 ${Math.round(Math.min(h * 0.78, room * 0.92))}px "Pretendard Variable", Pretendard, sans-serif`;
     context.textAlign = 'center';

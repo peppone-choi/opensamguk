@@ -248,7 +248,6 @@ export {
   drawCityName,
   drawCityRing,
   nationGlyph,
-  assignNationGlyphs,
   cityLabelBox,
   dropOverlappingLabels,
   markerScale,
