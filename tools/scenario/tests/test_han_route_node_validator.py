@@ -436,11 +436,11 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         # (w1-script-variant-county-join; 귀속 충돌 5곳은 defer)
         # + 849–1024 城 없던 縣 관할 176 곳(w2-cityless-jurisdiction-route-claim)
         # + 1025–1097 수·진·관 거점 73 곳(w3-strategic-site-route-claim). 전부 append-only 다.
-        self.assertEqual(1097, report.approved_count)
+        self.assertEqual(1098, report.approved_count)
         append = documents.migration["appendedRows"]
-        self.assertEqual(317, len(append))
+        self.assertEqual(318, len(append))  # + 2026-09-16 河南尹 平陰(1098), w4-vacated-county-location
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(1097, append[-1]["newCityId"])
+        self.assertEqual(1098, append[-1]["newCityId"])
         self.assertEqual(249, sum(1 for row in append if "sourceClaimId" in row))
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
@@ -1225,7 +1225,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         extra["locationResolution"]["physicalPlaceId"] = "external:v1:X999"
         documents.external_claims["claims"].append(extra)
 
-        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 62|unused"):
+        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 63|unused"):
             MODULE.validate_documents(documents)
 
     def test_location_claim_source_snapshot_hash_is_verified(self) -> None:

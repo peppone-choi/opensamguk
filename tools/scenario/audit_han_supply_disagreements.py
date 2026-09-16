@@ -143,6 +143,7 @@ def audit_documents(
     ledger: dict[str, Any],
     source_ledger: dict[str, Any],
     include_unsupplied: bool = False,
+    commandery_links: list[dict[str, Any]] | None = None,
 ) -> AuditResult:
     errors: list[str] = []
     rows: list[dict[str, Any]] = []
@@ -259,10 +260,10 @@ def audit_documents(
             if len(active) > 1:
                 errors.append(f"city {city_id} scenario {scenario_code} has overlapping active decision rows")
 
-    commandery_links_path = ROOT / "data/map/han-commandery-supply-links-v1.json"
-    commandery_links = (
-        _load_json(commandery_links_path)["links"] if commandery_links_path.is_file() else []
-    )
+    # 郡 내부 보급선은 호출자가 넘긴다. 예전에는 여기서 저장소 파일을 직접 읽어, 문서 인자만 바꾼
+    # fixture 감사에도 실제 보급선이 섞였다 — 2026-09-16 보급선이 바뀌자 우연히 fixture 省 인덱스와
+    # 겹쳐 차수 0 가드 테스트 셋이 빨개졌다. 저장소 감사는 audit_repository 가 읽어 넘긴다.
+    commandery_links = list(commandery_links or [])
     ownership_by_scenario = {
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
@@ -453,6 +454,9 @@ def audit_documents(
     )
 
 
+COMMANDERY_LINKS_PATH = ROOT / "data/map/han-commandery-supply-links-v1.json"
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -472,6 +476,7 @@ def audit_repository(map_name: str = "han-world-v3", include_unsupplied: bool = 
         _load_json(ledger_path),
         _load_json(SOURCE_LEDGER_PATH),
         include_unsupplied=include_unsupplied,
+        commandery_links=_load_json(COMMANDERY_LINKS_PATH)["links"],
     )
 
 

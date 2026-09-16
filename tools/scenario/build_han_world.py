@@ -78,6 +78,7 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # + 847 吳縣(吳郡 군치)·848 毘陵(이체자 폴딩 결합 2).
 # + 849..1024 城 없던 han-tiles 縣 관할 176곳(REVIEWED_SOURCE_CLAIM, route-node-jurisdiction-claims-v1).
 # + 1025..1097 수·진·관 거점 73곳(REVIEWED_SOURCE_CLAIM, route-node-strategic-site-claims-v1).
+# + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
 V3_ROUTE_NODE_COUNT = 1098
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}

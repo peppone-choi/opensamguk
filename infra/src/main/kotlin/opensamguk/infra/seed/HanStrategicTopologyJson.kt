@@ -45,7 +45,7 @@ object HanStrategicTopologyJson {
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
     fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
-        loadVersion(mapName, 1097, readArtifact)
+        loadVersion(mapName, 1098, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
 
@@ -53,7 +53,7 @@ object HanStrategicTopologyJson {
      * 판마다의 省 수. 848 판까지는 1,520 省이다. 뒤 판은 수·진·관 거점 省을 縣 省에서 떼어
      * 배열 끝에 붙였다(tools/map/carve_strategic_site_provinces.py) — 앞 인덱스는 그대로다.
      */
-    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1097 to 1593)
+    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594)
 
     /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
     private const val FIRST_STAND_IN_SEAT_ROSTER = 849
@@ -88,7 +88,7 @@ object HanStrategicTopologyJson {
             val provinces = tiles.array("provinceRecords")
             val landIds = provinces.map { it.text("id") }
             // 省 1,520 — 변경경계 51 縣을 세우며 直領을 다시 나눠 1,524 에서 줄었다(han-tiles 실측).
-            // 1097 판은 수·진·관 거점 省 73 을 배열 끝에 붙여 1,593 이다(strategic-site-province-carves-v1).
+            // 1098 판은 平陰 省 1(오결속 재바인딩 leaveBehind)과 수·진·관 거점 省 73 을 배열 끝에 붙여 1,594 다.
             require(landIds.size == expectedLandCount && landIds.toSet().size == landIds.size) { "Canonical land identity set changed" }
             val terrain = tiles.array("terrain").map { it.stringValue() }
             require(terrain.size == rows && terrain.all { it.length == cols }) { "Malformed terrain rows" }

@@ -3,10 +3,10 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "d47454d0863dad94d470b579d8fdabd710419bd17e181d5f463ef76b42469631",
-    "migrationSha256": "0e39f2dc3a04ca39d08e7840f89c542326f41d9d497851511eb9549185272d9d",
+    "selectionSha256": "60227256a34227426bdd451aa5bfffbe1f84bc2470c0d54e25c4113df4721806",
+    "migrationSha256": "19fbf4e5929f966570e1c55abaef7fa754b14fc3b27fcbf60543a0b7a2edfb1a",
     "hanTilesSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "provinceCityAttributionSha256": "62fd3736178ccb4c728c91725ccbad593b9308dfb377f349f23201384931da37",
+    "provinceCityAttributionSha256": "1a2861917f8b86f4591a3cecfc15e6366fe1f42a24d7c25b82313091fba9b4a2",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {

@@ -51,12 +51,12 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `canonical Han topology exposes 1593 provinces and 4274 symmetric edges`() {
+    fun `canonical Han topology exposes 1594 provinces and 4274 symmetric edges`() {
         val network = provider().network(1020, emptyList())
 
         // 2026-09-15: 수·진·관 거점 省 73 을 縣 省에서 떼어 배열 끝에 붙여 1,520 → 1,593 이다.
-        assertEquals(1_593, network.provinceOwners.size)
-        assertEquals(1_593, network.provinceAdjacency.size)
+        assertEquals(1_594, network.provinceOwners.size)
+        assertEquals(1_594, network.provinceAdjacency.size)
         // 동명이지에 잘못 묶인 縣 4곳을 CHGIS 제자리로 되돌리면서 省 인접이 2간선 늘었다
         // (4,118 → 4,120). 거점 省이 이웃과 새 경계를 내어 4,274 다. han-tiles.json adjacency.county 실측값이다.
         assertEquals(4_274, network.provinceAdjacency.sumOf(IntArray::size) / 2)

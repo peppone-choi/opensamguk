@@ -730,7 +730,7 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
-        self.assertEqual(1_593, len(binding["landProvinceIds"]))
+        self.assertEqual(1_594, len(binding["landProvinceIds"]))
 
 
 if __name__ == "__main__":

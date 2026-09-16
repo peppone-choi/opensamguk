@@ -615,7 +615,7 @@ describe('province identity map', () => {
     expect(canonical.scenarios).toHaveLength(15);
     for (const scenario of canonical.scenarios) {
       // 1,520 省 + 수·진·관 거점 省 73(배열 끝).
-      expect(scenario.assignments).toHaveLength(1_593);
+      expect(scenario.assignments).toHaveLength(1_594);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;

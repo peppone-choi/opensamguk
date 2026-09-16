@@ -60,10 +60,10 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # OWN 1125 → 1346. 제 縣 城이 생긴 省이 郡治(T2 148 → 5)·같은 郡 최근접(T3 48 → 4)·
         # 이웃 郡 폴백(T5 177 → 143)에서 빠져나왔다. 城이 하나도 없는 섬 성분(22)은 그대로다.
         # 같은 날 거점 省 73곳이 縣 省에서 떨어져 나와 제 거점 城을 가져 OWN 1346 → 1419 이다(나머지 불변 —
-        # 거점 城은 남의 省 귀속 대상이 되지 않는다).
+        # 거점 城은 남의 省 귀속 대상이 되지 않는다). 2026-09-16 河南尹 平陰(1098) 이 떠난 자리 省을 제 城으로 가져 1419 → 1420.
         self.assertEqual(
             {
-                "OWN_COUNTY_SEAT": 1419,
+                "OWN_COUNTY_SEAT": 1420,
                 "SAME_COMMANDERY_SEAT": 5,
                 "SAME_COMMANDERY_NEAREST": 4,
                 "ADJACENT_COMMANDERY_NEAREST": 143,

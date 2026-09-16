@@ -477,13 +477,6 @@
       "routeNodeKey": "6c2b4d57-3a24-4e4b-80be-28fe39769ea8"
     },
     {
-      "administrativeUnitId": "hhs:109:河南尹:011",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1098,
-      "physicalPlaceRef": "chgis:v6:cnty:82879",
-      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2"
-    },
-    {
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 849,
       "physicalPlaceRef": "chgis:v6:cnty:44385",
@@ -2225,6 +2218,13 @@
       "physicalPlaceRef": "curated:strategic-site-v1:ss-zuocheng",
       "routeNodeKey": "2d881059-00f1-440f-92dc-c1b90b6f256c",
       "sourceClaimId": "han-strategic-site-route-claim-v1-zuocheng"
+    },
+    {
+      "administrativeUnitId": "hhs:109:河南尹:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1098,
+      "physicalPlaceRef": "chgis:v6:cnty:82879",
+      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -7751,7 +7751,7 @@
   "schemaVersion": 1,
   "sourceCandidateSha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "d47454d0863dad94d470b579d8fdabd710419bd17e181d5f463ef76b42469631",
+  "sourceSelectionSha256": "60227256a34227426bdd451aa5bfffbe1f84bc2470c0d54e25c4113df4721806",
   "summary": {
     "appendedIdentityCount": 318,
     "displayNameChangeCount": 778,

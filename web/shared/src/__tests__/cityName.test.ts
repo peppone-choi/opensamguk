@@ -228,7 +228,7 @@ describe('han-world-v3 의 meta.displayName', () => {
       '1039 와구(九江郡): 와구(渦口)',
       '1080 와구(巴郡): 와구(瓦口)',
     ]);
-    expect(world.cities.length).toBe(1097);
+    expect(world.cities.length).toBe(1098);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {

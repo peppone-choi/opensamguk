@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 1097 도시).
+"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 1098 도시).
 
 바꾸는 것은 네 가지뿐이다.
   1. `map.mapName` → legacy "han-world-v2" / --map 지정 시 "han-world-v3"

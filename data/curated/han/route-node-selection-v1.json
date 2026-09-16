@@ -26899,35 +26899,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:109:河南尹:011",
-      "canonicalName": "平阴",
-      "displayName": "平阴",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-location-claim-v1-pingyin"
-      },
-      "locationClaimId": "han-location-claim-v1-pingyin",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1098,
-      "parentName": "河南尹",
-      "parentRef": "hhs-group:109:河南尹",
-      "physicalPlaceRef": "chgis:v6:cnty:82879",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w4-vacated-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w4-vacated-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "canonicalName": "滎陽",
       "displayName": "滎陽",
       "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
@@ -33898,6 +33869,35 @@
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       },
       "sourceClaimId": "han-strategic-site-route-claim-v1-zuocheng"
+    },
+    {
+      "administrativeUnitId": "hhs:109:河南尹:011",
+      "canonicalName": "平阴",
+      "displayName": "平阴",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-location-claim-v1-pingyin"
+      },
+      "locationClaimId": "han-location-claim-v1-pingyin",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 1098,
+      "parentName": "河南尹",
+      "parentRef": "hhs-group:109:河南尹",
+      "physicalPlaceRef": "chgis:v6:cnty:82879",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w4-vacated-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w4-vacated-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",

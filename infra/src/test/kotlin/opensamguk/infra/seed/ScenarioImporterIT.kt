@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1097, `general`=230,
+ * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1098, `general`=230,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -160,7 +160,7 @@ class ScenarioImporterIT {
         // 833–835: 城 없던 郡 3곳의 治所가 neutral 로 +3. 836–846: w1 11곳이 郡 귀속 세력에 +4,
         // 나머지는 공백지로 +7. 847 吳縣·848 毘陵: 1010 지배표에 없어 공백지로 +2.
         // 849–1024 城 없던 縣 관할 176곳 · 1025–1097 수·진·관 거점 73곳: 郡 귀속대로 후한 160 · 황건적 139 · 공백지 798.)
-        assertEquals(1097, counts.city)
+        assertEquals(1098, counts.city)
         assertEquals(230, counts.general)
         assertEquals(230 * 30, counts.generalTurn)
         assertEquals(230 * 37, counts.rankData)
@@ -209,8 +209,8 @@ class ScenarioImporterIT {
             ),
         )
         assertEquals(2, count("nation"))
-        assertEquals(1097, count("city"))
-        assertEquals((1..1097).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
+        assertEquals(1098, count("city"))
+        assertEquals((1..1098).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
         // name 컬럼은 **표기**다("제남국 역성현"). 식별자 "역성"(ScenarioCity.name)은 시나리오
         // 소유 목록을 푸는 데만 쓰고 DB 에는 남지 않는다 — 로그·목록·지도가 한 이름을 쓰게 한
         // 지점이 ScenarioImporter.insertCities 다(2026-09-11). 郡을 앞에 세우는 것은
@@ -1611,14 +1611,14 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(1097, counts.city)            // Versioned Han V3 catalog, owned and neutral cities.
+        assertEquals(1098, counts.city)            // Versioned Han V3 catalog, owned and neutral cities.
         assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
 
         assertEquals(21, count("nation"))
-        assertEquals(1097, count("city"))
+        assertEquals(1098, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
 
         // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──

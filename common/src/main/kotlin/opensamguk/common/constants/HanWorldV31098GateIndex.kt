@@ -1,4 +1,4 @@
-// Frozen 1097-identity release snapshot. Future generators must not overwrite.
+// Frozen 1098-identity release snapshot. Future generators must not overwrite.
 package opensamguk.common.constants
 
 /**
@@ -9,7 +9,7 @@ package opensamguk.common.constants
  * han 병종의 ReqRegions(보유 판정) / ForbidRegions(주둔지 판정) 해석에 쓴다.
  * che 는 이 표를 쓰지 않으며(빈 집합), 기존 regionIdByName 경로 그대로 돈다.
  */
-object HanWorldV31097GateIndex {
+object HanWorldV31098GateIndex {
     val keysByCityId: Map<Int, Set<String>> = mapOf(
         1 to setOf("司隸"),
         2 to setOf("司隸", "河東"),
@@ -1108,6 +1108,7 @@ object HanWorldV31097GateIndex {
         1095 to setOf("司隸"),
         1096 to setOf("涼州", "胡"),
         1097 to setOf("涼州"),
+        1098 to setOf("司隸", "雒陽"),
     )
 
     fun keys(cityId: Int): Set<String> = keysByCityId[cityId].orEmpty()

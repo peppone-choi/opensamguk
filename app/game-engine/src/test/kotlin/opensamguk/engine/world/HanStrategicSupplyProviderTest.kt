@@ -52,7 +52,7 @@ class HanStrategicSupplyProviderTest {
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
-        assertEquals(1593, network.provinceOwners.size)
+        assertEquals(1594, network.provinceOwners.size)
         // 省 1,593(수·진·관 거점 省 73 포함) · 郡縣 인접 4,274(han-tiles adjacency.county 실측) 중 물을 건너는
         // 60 간선이 v3 에서 빠져 4,214 다. v2 는 그 걸러내기가 없어 아래에서 4,274 그대로다.
         assertEquals(4214, network.provinceAdjacency.sumOf(IntArray::size) / 2)

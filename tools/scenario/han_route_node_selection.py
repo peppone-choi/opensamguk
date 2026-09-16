@@ -781,6 +781,9 @@ def build_outputs(
         "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim",
     }:
         raise MaterializationContractError("numeric assignment policy drift")
+    # HHS append 가 claim 배치 뒤에 번호를 받을 수 있으므로(w4) 출력은 번호 순으로 고정한다.
+    route_nodes.sort(key=lambda node: number(node, "numericCityId"))
+    appended_rows.sort(key=lambda row: number(row, "newCityId"))
     selection: JsonObject = {"schemaVersion": 1, "selectionId": "han-route-node-selection-v1", "worldVersion": "han-world-v3", "reviewState": "APPROVED", "baselineYear": 220,
                              "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT", "scenarioCatalog": {"resourceCount": len(scenarios), "resources": list[JsonValue](scenarios)},
                              "reviewPolicy": {"policyId": text(policy, "policyId"), "forbiddenSelections": forbidden,

@@ -46,12 +46,12 @@ class HanStrategicTopologyJsonTest {
         val topology = loaded.topology
 
         // 1,520 省 + 수·진·관 거점 省 73(배열 끝) — 앞 인덱스는 그대로다.
-        assertEquals(1593, topology.landProvinceIds.size)
+        assertEquals(1594, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(1097, loaded.bindingsByCityId.size)
+        assertEquals(1098, loaded.bindingsByCityId.size)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         assertEquals("DIRECT-PARENT-0086-6fbdf223343a", loaded.bindingsByCityId.getValue(833).landProvinceId)
         assertEquals("ss-jiange", loaded.bindingsByCityId.getValue(1047).landProvinceId)
