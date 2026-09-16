@@ -77,11 +77,14 @@ class GeukRelocationTest(unittest.TestCase):
         # 121603/95396/26207 은 아래 priorSummary 가 그대로 들고 있다 —
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
         # 2026-09-14: w1 11곳 편입. EXACT 95026→95902, unresolved 26612→25736.
-        self.assertEqual(121638, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(96096, result['summary']['exactApprovedCellCount'])
-        self.assertEqual(25542, result['summary']['unresolvedCellCount'])
+        # 2026-09-16 南安(651)·定陽(773)을 讀史方輿紀要가 지목한 자리로 옮긴 뒤의 실측이다. 옛 발자국 367칸이 이웃에
+        # 흡수됐다 — 城 연결 −13(直領으로), EXACT −104, unresolved +91, 재바인딩 이동 칸 2035→2522.
+        # 앞 단계 priorSummary 는 한 칸도 안 바뀌었다(아래 단언 그대로).
+        self.assertEqual(121625, result['summary']['cityLinkedCellCount'])
+        self.assertEqual(95992, result['summary']['exactApprovedCellCount'])
+        self.assertEqual(25633, result['summary']['unresolvedCellCount'])
         rebinding = result['countyRebindingProjection']
-        self.assertEqual(2035, rebinding['changedCellCount'])
+        self.assertEqual(2522, rebinding['changedCellCount'])
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
         self.assertEqual(96466, rebinding['priorSummary']['exactApprovedCellCount'])
         self.assertEqual(25137, rebinding['priorSummary']['unresolvedCellCount'])

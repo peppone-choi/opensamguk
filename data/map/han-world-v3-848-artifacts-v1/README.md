@@ -23,4 +23,16 @@ This is a defect repair on a fixed identity, not a new release: no city was adde
 moved. The release `contentHash` does change, because the world JSON bytes are part of it — worlds already
 pinned to the previous 848 bytes must be reset or re-pinned before they will load.
 
+## 2026-09-16 misbound county re-pin (second, same day)
+
+Re-pinned in place again. Two counties that had carried the coordinates of a same-named county elsewhere
+now stand where the sources place them: 651 南安 (犍為郡) moves from 豫章郡 南安縣 in Jiangxi to the 樂山
+anchor (CHGIS 96062 龍遊縣; 讀史方輿紀要 卷72 「龍遊廢縣，今州治。漢南安縣地，屬犍爲郡」), and 773 定陽
+(上郡) moves from the 孫吳 定陽縣 in Zhejiang to the 洛川縣 seat (CHGIS 70227; 讀史方輿紀要 卷57
+「定陽城，在縣北。漢爲定陽縣，屬上郡」). The rule and quotes live in
+`data/curated/han/county-misbinding-rebindings-v1.json`. The 848 identities and names are unchanged;
+the two cities' coordinates, provinces and route edges change, and so do `han-tiles.json`, the water
+overlay base, the strategic topology manifest and scenario province ownership. The release
+`contentHash` changes again, so worlds pinned to the earlier bytes must be reset or re-pinned.
+
 Runtime loading verifies the pinned catalog hash, complete expected path set and every raw/compressed hash and length before the existing strategic loader validates cross-file identity and topology. World selection must use the complete city roster plus all persisted spatial pins, never only the city count.

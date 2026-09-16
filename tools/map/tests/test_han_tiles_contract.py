@@ -725,7 +725,7 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
         binding = contract_validator.water_overlay_base_binding(base, base_bytes)
 
         self.assertEqual(
-            "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
+            "64290905a5167cbabfd84290b45081b09a2bc44d045009191112473dd859cd3f",
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
