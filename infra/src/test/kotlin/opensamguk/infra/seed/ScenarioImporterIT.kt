@@ -159,7 +159,7 @@ class ScenarioImporterIT {
         // (781 → 832: 交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 屬縣 51 곳이 게임 城 으로 섰다, 전부 공백지.
         // 833–835: 城 없던 郡 3곳의 治所가 neutral 로 +3. 836–846: w1 11곳이 郡 귀속 세력에 +4,
         // 나머지는 공백지로 +7. 847 吳縣·848 毘陵: 1010 지배표에 없어 공백지로 +2.
-        // 849–1024 城 없던 縣 관할 176곳 · 1025–1097 수·진·관 거점 73곳: 郡 귀속대로 후한 160 · 황건적 139 · 공백지 798.)
+        // 849–1024 城 없던 縣 관할 176곳 · 1025–1097 수·진·관 거점 73곳 · 1098 河南尹 平陰: 郡 귀속대로 후한 161 · 황건적 139 · 공백지 798.)
         assertEquals(1098, counts.city)
         assertEquals(230, counts.general)
         assertEquals(230 * 30, counts.generalTurn)
@@ -223,7 +223,7 @@ class ScenarioImporterIT {
         // 606 → 608 은 847 吳縣·848 毘陵이 공백지로 들어오면서다(1010 지배표에 없다).
         // 608 → 798 · 123 → 160 · 117 → 139 는 w2 176곳과 거점 73곳이 郡 귀속대로 들어오면서다(2026-09-15).
         assertEquals(798, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals(160, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(161, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))  // + 1098 平陰(河南尹, 후한)
         assertEquals(139, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
         // 서성(id 75, 西城县) 은 1010 지배표에 없어 공백지다: pop 20000·wall 1000·trust 50.

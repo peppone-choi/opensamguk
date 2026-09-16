@@ -534,7 +534,8 @@ class CoordinateAxisTolerance(unittest.TestCase):
         # (陝西 鎮巴)에 묶여 있다가 제자리(河南 淅川)로 돌아오면서 南鄉郡 治所와 0.0km 로
         # 겹쳤다. data/curated/han/county-misbinding-rebindings-v1.json 참조.
         self.assertEqual(
-            {1.0: 9, 2.0: 11, 5.0: 11}, counts,
+            # 2026-09-16: `신흥군` 이 빠졌다(9/11/11 → 8/10/10) — 겹치던 九原县(95698, 僑置)이 五原郡 본토로 옮겨 갔다.
+            {1.0: 8, 2.0: 10, 5.0: 10}, counts,
             f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
         )
 

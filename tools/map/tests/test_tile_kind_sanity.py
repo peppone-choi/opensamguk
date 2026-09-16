@@ -46,7 +46,8 @@ class TileKindSanityTest(unittest.TestCase):
         kinds = Counter(c["kind"] for c in cities)
         # 2026-09-15: 수·진·관 거점 73 곳이 STRATEGIC_SITE 로 들어왔다(다른 등급은 불변).
         self.assertEqual(
-            {"COUNTY": 1012, "COMMANDERY": 120, "KINGDOM": 17,
+            # 2026-09-16 1098: 河南尹 平陰縣(82879) 점이 더해졌다.
+            {"COUNTY": 1013, "COMMANDERY": 120, "KINGDOM": 17,
              "EXTERNAL_PLACE": 37, "PROVINCE": 3, "STRATEGIC_SITE": 73},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",

@@ -726,7 +726,7 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
 
         self.assertEqual(
             # 2026-09-15 수·진·관 거점 省 분할 단계(carve_strategic_site_provinces) 뒤의 han-tiles.
-            "4c98cd68f8e95933cf5137263e99f8c12c0375897929e507c0b13c12074de68c",
+            "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))

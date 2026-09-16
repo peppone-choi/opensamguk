@@ -28,7 +28,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
         // 2026-09-15 수·진·관 거점 省 분할 뒤의 han-tiles(지형 행은 그대로다).
-        assertEquals("4c98cd68f8e95933cf5137263e99f8c12c0375897929e507c0b13c12074de68c",
+        assertEquals("09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),

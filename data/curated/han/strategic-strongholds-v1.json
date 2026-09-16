@@ -2690,25 +2690,25 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 633,
+        "provinceIndex": 1520,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "82880",
-        "jurisdictionId": "82880",
-        "jurisdictionName": "河阴县",
-        "jurisdictionNameKo": "하음현",
+        "provinceId": "82879",
+        "jurisdictionId": "82879",
+        "jurisdictionName": "平阴县",
+        "jurisdictionNameKo": "평음현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0000",
         "commanderyName": "河南尹",
         "nearestSeat": {
-          "cityIndex": 687,
-          "cityId": "82880",
-          "name": "하음현",
-          "nameCh": "河阴县",
+          "cityIndex": 1189,
+          "cityId": "82879",
+          "name": "평음현",
+          "nameCh": "平阴县",
           "col": 377,
           "row": 231,
           "cellDistance": 2.71
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키는 富平津을 孟津의 다른 이름으로 묶었다. 晉書 杜預傳은 「孟津渡險…請建河橋于富平津」이라 둘을 가까운 별개 나루로 읽을 여지가 있으나, 좌표는 한 점뿐이라 한 행으로 두고 alias 로 남긴다. 中平 元年 八關(孟津·小平津 포함) 都尉 설치(後漢書 皇甫嵩傳)는 關 원장(strategic-passes-v1) 범위가 아니라 여기서 津으로 세운다."

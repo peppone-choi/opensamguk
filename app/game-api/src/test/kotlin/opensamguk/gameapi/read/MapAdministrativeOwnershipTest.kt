@@ -204,7 +204,8 @@ class MapAdministrativeOwnershipTest {
 
         scenarioCodes.forEach { scenarioCode ->
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
-            assertEquals(1_520, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
+            // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
+            assertEquals(1_594, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
             // 1,071 에서 1,070 으로 — 南鄉郡(PARENT-0113)의 합성 치소 관할
             // JURISDICTION-PARENT-0113-SEAT 하나가 접혔다. 동명이지(漢中 南鄉縣)에 잘못
             // 묶여 있던 진짜 南鄉縣(71022)이 제자리로 돌아와 그 임시 관할과 같은 칸에
@@ -212,7 +213,8 @@ class MapAdministrativeOwnershipTest {
             // 실물 縣이 그 省들을 받고 郡의 치소 관할이 된다.
             // data/curated/han/county-misbinding-rebindings-v1.json 의
             // supersedesJurisdictionSeatRecovery 참조.
-            assertEquals(1_070, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            // 2026-09-16 1098: + 平陰 관할 1 + 거점 관할 73 = 1,144.
+            assertEquals(1_144, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             assertEquals(172, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(
                 snapshot.provinceOccupancy.size,

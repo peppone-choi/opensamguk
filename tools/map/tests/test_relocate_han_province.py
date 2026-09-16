@@ -78,11 +78,12 @@ class GeukRelocationTest(unittest.TestCase):
         # data/curated/han/county-misbinding-rebindings-v1.json 참조.
         # 2026-09-14: w1 11곳 편입. EXACT 95026→95902, unresolved 26612→25736.
         # 2026-09-15: w2 176곳 편입. EXACT 96096→115195, unresolved 25542→6443(합은 그대로).
-        self.assertEqual(121638, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(115195, result['summary']['exactApprovedCellCount'])
+        # 2026-09-16 1098: 五原郡 본토 이동(南匈奴 직할 → 城 연결 120칸)·忻州 飛地 흡수·平陰 省 뒤 실측. 앞 단계 priorSummary 는 불변.
+        self.assertEqual(121742, result['summary']['cityLinkedCellCount'])
+        self.assertEqual(115299, result['summary']['exactApprovedCellCount'])
         self.assertEqual(6443, result['summary']['unresolvedCellCount'])
         rebinding = result['countyRebindingProjection']
-        self.assertEqual(2522, rebinding['changedCellCount'])
+        self.assertEqual(2699, rebinding['changedCellCount'])  # + 2026-09-16 1098 五原郡 九原·河陰
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
         self.assertEqual(115160, rebinding['priorSummary']['exactApprovedCellCount'])
         self.assertEqual(6443, rebinding['priorSummary']['unresolvedCellCount'])

@@ -408,7 +408,8 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
-        self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
+        # 2026-09-16 1098: 五原郡이 바오터우 본토로 돌아가 南匈奴 땅에 완전히 둘러싸였다(10 → 11).
+        self.assertEqual(11, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         # 65 → 62: 관할 하나뿐이던 郡 3 곳에 거점 관할이 더해졌다.
         self.assertEqual(62, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])

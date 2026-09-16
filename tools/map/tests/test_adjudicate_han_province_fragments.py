@@ -692,7 +692,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
         # 2026-09-15: 수·진·관 거점 73 곳이 제 省·관할을 받아 배열 끝에 붙었다(1,593 · 1,143).
-        self.assertEqual((1594, 1143, 172), (
+        # 2026-09-16 1098: 平陰 省·관할이 더해져 1,594 · 1,144.
+        self.assertEqual((1594, 1144, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
