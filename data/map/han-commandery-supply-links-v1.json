@@ -10,13 +10,10 @@
   "沛國:건평",
   "犍為郡:남안"
  ],
- "excludedByReviewedProtection": [
-  305,
-  548
- ],
+ "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 68,
-  "medianKm": 44.4,
+  "linkCount": 70,
+  "medianKm": 41.3,
   "p90Km": 161.0,
   "maxKm": 397.3
  },
@@ -40,10 +37,18 @@
   {
    "canonicalGroup": "下邳國",
    "fromProvinceIndex": 255,
-   "toProvinceIndex": 259,
+   "toProvinceIndex": 258,
    "fromCityName": "하구(下邳國)",
+   "toCityName": "서(下邳國)",
+   "distanceKm": 39.3
+  },
+  {
+   "canonicalGroup": "下邳國",
+   "fromProvinceIndex": 258,
+   "toProvinceIndex": 259,
+   "fromCityName": "서(下邳國)",
    "toCityName": "회릉",
-   "distanceKm": 58.1
+   "distanceKm": 32.0
   },
   {
    "canonicalGroup": "中山國",
@@ -292,6 +297,14 @@
    "fromCityName": "태말",
    "toCityName": "오상",
    "distanceKm": 92.0
+  },
+  {
+   "canonicalGroup": "會稽郡",
+   "fromProvinceIndex": 69,
+   "toProvinceIndex": 70,
+   "fromCityName": "구장",
+   "toCityName": "무(會稽郡)",
+   "distanceKm": 20.9
   },
   {
    "canonicalGroup": "東萊郡",

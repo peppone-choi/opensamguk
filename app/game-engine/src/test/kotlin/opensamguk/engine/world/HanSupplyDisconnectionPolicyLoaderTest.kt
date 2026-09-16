@@ -191,17 +191,36 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         assertEquals(emptyMap(), loader.load(1020, emptyMap()))
     }
 
+    /** 은퇴한 305 徐縣 보호 행을 그대로 되살린 v3 원장 — 신원 결속 검사가 살아 있는지 보는 미끼다. */
+    private fun retired305Ledger(): String {
+        val retired = mapper.readTree(
+            java.nio.file.Path.of("../../data/curated/han/supply-disconnection-adjudications-v3.json").toFile(),
+        ).path("resolvedDecisions").first { it.path("runtimeCityId").asInt() == 305 } as
+            com.fasterxml.jackson.databind.node.ObjectNode
+        retired.remove("resolution")
+        val dir = createTempDirectory("han-supply-v3-ledger")
+        val path = dir.resolve("ledger.json")
+        path.writeText(
+            """{"schemaVersion":2,"ledgerId":"han-supply-disconnection-adjudications-v3",""" +
+                """"worldVersion":"han-world-v3","decisions":[$retired]}""",
+        )
+        return path.toString()
+    }
+
+    private fun v3Loader(v3Ledger: String) = HanSupplyDisconnectionPolicyLoader(
+        objectMapper = mapper,
+        ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
+        mapPath = "../../data/map/han-tiles.json",
+        runtimeMapPath = "../../infra/src/main/resources/map/han.json",
+        sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json",
+        v3LedgerPath = v3Ledger,
+        v3RuntimeMapPath = "../../infra/src/main/resources/map/han-world-v3.json",
+    )
+
     @Test
     fun `world v3 policies bind runtime physical and route identities while v2 stays legacy`() {
-        val loader = HanSupplyDisconnectionPolicyLoader(
-            objectMapper = mapper,
-            ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
-            mapPath = "../../data/map/han-tiles.json",
-            runtimeMapPath = "../../infra/src/main/resources/map/han.json",
-            sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json",
-            v3LedgerPath = "../../data/curated/han/supply-disconnection-adjudications-v3.json",
-            v3RuntimeMapPath = "../../infra/src/main/resources/map/han-world-v3.json",
-        )
+        val committed = v3Loader("../../data/curated/han/supply-disconnection-adjudications-v3.json")
+        val loader = v3Loader(retired305Ledger())
         val liveCities = MapJson.loadFromClasspath("han-world-v3").cities.mapNotNull { city ->
             city.provinceId?.let {
                 SpatialSupplyCity(
@@ -214,9 +233,12 @@ class HanSupplyDisconnectionPolicyLoaderTest {
             }
         }
 
+        // 커밋된 원장은 2026-09-16 지도 수리로 보호 행이 전부 은퇴해 활성 정책이 없다.
+        assertEquals(emptyMap(), committed.load("han-world-v3", 1030, liveCities))
+
         val policies = loader.load("han-world-v3", 1030, liveCities)
 
-        assertEquals(listOf(305, 548), policies.keys.toList())
+        assertEquals(listOf(305), policies.keys.toList())
         assertEquals(
             SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
             policies.getValue(305).decision,
@@ -224,10 +246,6 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         assertEquals(
             SupplyReachabilityExpectation.BOTH_UNSUPPLIED,
             policies.getValue(305).expectedCurrentReachability,
-        )
-        assertEquals(
-            SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
-            policies.getValue(548).decision,
         )
         assertEquals(null, policies[364], "Zhu-a has no supply policy")
 

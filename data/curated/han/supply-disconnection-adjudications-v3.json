@@ -1,31 +1,34 @@
 {
-  "schemaVersion": 2,
-  "ledgerId": "han-supply-disconnection-adjudications-v3",
-  "worldVersion": "han-world-v3",
-  "decisions": [
-    {
-      "runtimeCityId": 305,
-      "physicalPlaceRef": "chgis:v6:cnty:43252",
-      "routeNodeKey": "7fd6fa9f-3589-4e83-8a9d-49cd7d206fc9",
-      "jurisdictionId": "43252",
-      "decision": "PROTECT_GEOMETRY_DEFECT",
-      "sourceLedgerRow": "PARENT-0034@480:266",
-      "rationale": "The reviewed source classifies the degree-zero 徐縣 spatial province as a modern-lake geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
-      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
-      "effectiveScenarioFrom": 1020,
-      "effectiveScenarioTo": 1110
-    },
-    {
-      "runtimeCityId": 548,
-      "physicalPlaceRef": "chgis:v6:cnty:40740",
-      "routeNodeKey": "8cdeb3ac-8959-4240-8526-706543a8a57b",
-      "jurisdictionId": "40740",
-      "decision": "PROTECT_GEOMETRY_DEFECT",
-      "sourceLedgerRow": "PARENT-0051@549:331",
-      "rationale": "The reviewed source classifies the degree-zero 鄮縣 spatial province as a displaced-island geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
-      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
-      "effectiveScenarioFrom": 1030,
-      "effectiveScenarioTo": 1110
-    }
-  ]
+ "schemaVersion": 2,
+ "ledgerId": "han-supply-disconnection-adjudications-v3",
+ "worldVersion": "han-world-v3",
+ "decisions": [],
+ "resolvedDecisions": [
+  {
+   "runtimeCityId": 305,
+   "physicalPlaceRef": "chgis:v6:cnty:43252",
+   "routeNodeKey": "7fd6fa9f-3589-4e83-8a9d-49cd7d206fc9",
+   "jurisdictionId": "43252",
+   "decision": "PROTECT_GEOMETRY_DEFECT",
+   "sourceLedgerRow": "PARENT-0034@480:266",
+   "rationale": "The reviewed source classifies the degree-zero 徐縣 spatial province as a modern-lake geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
+   "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+   "effectiveScenarioFrom": 1020,
+   "effectiveScenarioTo": 1110,
+   "resolution": "RESOLVED_BY_GENERATOR_REPAIR (2026-09-16). The reviewed verdict — a geometry defect, not a real island — still stands, and this row was the protection that verdict bought while the defect was live. The defect is now repaired at its source: tools/scenario/build_han_world.py links a water-locked county to its own commandery seat, so 305 and 548 carry route edges and are no longer degree-zero in the city graph; dropping them from the protected set also lets tools/map/build_commandery_supply_links.py bake the 郡-internal supply edge it had been excluding (ADR-LITE-051). Both cities now read BOTH_SUPPLIED, so an active PROTECT row here would be stale. Kept verbatim as provenance — do not re-activate without re-establishing degree zero."
+  },
+  {
+   "runtimeCityId": 548,
+   "physicalPlaceRef": "chgis:v6:cnty:40740",
+   "routeNodeKey": "8cdeb3ac-8959-4240-8526-706543a8a57b",
+   "jurisdictionId": "40740",
+   "decision": "PROTECT_GEOMETRY_DEFECT",
+   "sourceLedgerRow": "PARENT-0051@549:331",
+   "rationale": "The reviewed source classifies the degree-zero 鄮縣 spatial province as a displaced-island geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
+   "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+   "effectiveScenarioFrom": 1030,
+   "effectiveScenarioTo": 1110,
+   "resolution": "RESOLVED_BY_GENERATOR_REPAIR (2026-09-16). The reviewed verdict — a geometry defect, not a real island — still stands, and this row was the protection that verdict bought while the defect was live. The defect is now repaired at its source: tools/scenario/build_han_world.py links a water-locked county to its own commandery seat, so 305 and 548 carry route edges and are no longer degree-zero in the city graph; dropping them from the protected set also lets tools/map/build_commandery_supply_links.py bake the 郡-internal supply edge it had been excluding (ADR-LITE-051). Both cities now read BOTH_SUPPLIED, so an active PROTECT row here would be stale. Kept verbatim as provenance — do not re-activate without re-establishing degree zero."
+  }
+ ]
 }

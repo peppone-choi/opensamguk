@@ -1039,6 +1039,39 @@ def project_county_adjacency(
     return [(a, b, projected[(a, b)]) for a, b in sorted(projected)]
 
 
+def water_locked_province_indices(tiles: dict) -> set[int]:
+    """래스터에서 제 발자국이 통째로 물(-1)에 둘러싸인 省 인덱스.
+
+    ``adjacency.county`` 와는 **다른 축**이다. 저쪽은 격자에서 맞닿은 省 쌍을 미리 뽑아 둔
+    목록이고, 이쪽은 owner 격자를 직접 훑는다. 같은 출처를 공유하면 통과가 아무것도
+    증명하지 않으므로, 「간선이 0개인 이유가 정말 물 때문인가」는 격자로만 답한다.
+
+    실측(2026-09-16, han-tiles.json): 省 1520 중 11 곳이 여기 걸린다 — 실제 섬 6 곳
+    (于山國·州胡·對馬國·末盧國·邪馬壹國·流求) + 래스터에서 본토와 끊긴 해안·호중 5 곳
+    (東部侯官縣·鄮縣·徐縣·交趾郡·帶方郡). 뒤 5 곳 중 제 城의 유일한 省인 것만 고립이 된다.
+    """
+    cols, rows = tiles["_meta"]["cols"], tiles["_meta"]["rows"]
+    grid: list[int] = []
+    for value, count in tiles["owner"]:
+        grid.extend([value] * count)
+    if len(grid) != cols * rows:
+        raise AssertionError("owner 런렝스가 격자 크기와 맞지 않는다")
+    touching: set[int] = set()
+    for cell, owner in enumerate(grid):
+        if owner < 0:
+            continue
+        row, col = divmod(cell, cols)
+        for drow, dcol in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nrow, ncol = row + drow, col + dcol
+            if not (0 <= nrow < rows and 0 <= ncol < cols):
+                continue
+            other = grid[nrow * cols + ncol]
+            if other >= 0 and other != owner:
+                touching.add(owner)
+                break
+    return {index for index in range(len(tiles["provinceRecords"])) if index not in touching}
+
+
 def _sha256_bytes(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
@@ -1129,6 +1162,57 @@ def build_v3() -> tuple[str, str, str, str]:
     for a, b, _ in edges:
         connections[a].add(b)
         connections[b].add(a)
+
+    # --- 물에 갇힌 縣 보정 ---------------------------------------------------
+    #
+    # adjacency.county 는 래스터 격자에서 **맞닿은** 省 쌍만 낸다. 해안·호중 縣 가운데 제
+    # 발자국이 통째로 물에 둘러싸여 격자에서 본토와 끊긴 곳이 있다. 그 縣이 제 城의 유일한
+    # 省이면 城의 연결이 0개가 되어 고립된다.
+    #
+    # 실측(2026-09-16, 고치기 전): 305 徐縣(下邳國)·548 鄮縣(會稽郡) 두 곳. 徐縣은 9칸이
+    # 전부 호수(terrain 4) 안에, 鄮縣은 37칸이 전부 바다(terrain 0) 안에 떠 있다. 나머지
+    # 846 城은 한 덩어리다. 이 둘은 2026-09-16 프로덕션(pep) 14시간 정지의 지도 쪽 원인이다
+    # (도겸이 {305, 547} 만 가진 채 547 을 잃자 findNextCapital 의 링이 305 에 못 닿았다).
+    #
+    # 지어낸 길로 메우지 않는다. 續漢書 郡國志가 그 縣을 어느 郡에 실었는지는 사료 사실이고
+    # 郡治는 그 縣을 다스리는 곳이다. v2 생성기가 이미 같은 규칙을 쓴다(build() 규칙 2:
+    # 「포함된 縣마다 자기 郡 治所와 직결선을 하나 놓는다」 — 縣 인접만으로 治所에 못 닿는
+    # 縣이 224곳이라 필수였다). v3 는 그 규칙을 **물에 갇힌 城에만** 좁혀 쓴다.
+    #
+    # 「간선이 0개」를 보고 바로 잇지 않는다. 그건 증상이고, 귀속 원장 버그도 같은 증상을
+    # 낸다. 원인이 정말 물인지는 owner 격자로 따로 확인한다(water_locked_province_indices —
+    # adjacency.county 와 다른 축이다). 물이 아닌 이유로 끊긴 城이 나오면 던진다.
+    seat_id_by_parent_ch: dict[str, int] = {}
+    for node in nodes:
+        if node["seatRole"] != "COMMANDERY_SEAT":
+            continue
+        parent_ch = world_parent_ch(node)
+        if seat_id_by_parent_ch.setdefault(parent_ch, node["numericCityId"]) != node["numericCityId"]:
+            raise AssertionError(f"郡 {parent_ch} 에 郡治 노드가 둘이다")
+    provinces_by_city: dict[int, list[int]] = defaultdict(list)
+    for province_index, city_id in attribution.items():
+        provinces_by_city[city_id].append(province_index)
+    water_locked = water_locked_province_indices(tiles)
+    seat_patched: list[tuple[int, int]] = []
+    for node in sorted(nodes, key=lambda n: n["numericCityId"]):
+        cid = node["numericCityId"]
+        if connections[cid]:
+            continue
+        owned = provinces_by_city.get(cid, [])
+        if not owned or not all(index in water_locked for index in owned):
+            raise AssertionError(
+                f"城 {cid} 의 연결이 0개인데 물 때문이 아니다 — 省 {owned}. "
+                "귀속 원장이나 省 인접을 먼저 봐라, 여기서 길을 지어내지 마라"
+            )
+        seat = seat_id_by_parent_ch.get(world_parent_ch(node))
+        if seat is None or seat == cid:
+            raise AssertionError(f"물에 갇힌 城 {cid} 의 郡治를 찾지 못했다")
+        connections[cid].add(seat)
+        connections[seat].add(cid)
+        seat_patched.append((cid, seat))
+    if seat_patched:
+        print("물에 갇혀 郡治와 직결한 城: "
+              + ", ".join(f"{cid}→{seat}" for cid, seat in seat_patched), file=sys.stderr)
 
     # --- 등급·능력치 ---------------------------------------------------------
     #
@@ -1284,6 +1368,28 @@ def build_v3() -> tuple[str, str, str, str]:
             row["meta"]["displayName"] = f'{row["meta"]["displayName"]}({stem})'
     if len({row["meta"]["displayName"] for row in out_cities}) != len(out_cities):
         raise AssertionError("han-world-v3 화면 이름은 城마다 하나여야 한다")
+
+    # 연결성 게이트 — 고립 城이 한 곳이라도 남으면 내지 않는다.
+    #
+    # 이동·보급·전선·findNextCapital 이 전부 인접 기반이라, path 가 빈 城은 게임에서 닿을
+    # 수 없다. 2026-09-16 프로덕션(pep)이 그것으로 14시간 멈췄다. 코드 쪽 폴백(PR #765)은
+    # 월드가 멈추지 않게 막을 뿐, 고립 자체를 정상으로 만들지 않는다.
+    #
+    # 「고립 0곳」만 세지 않는다 — 두 덩어리로 갈라져도 각 城의 path 는 비어 있지 않다.
+    # 1번에서 전수 도달을 본다.
+    adjacency_by_id = {row["id"]: row["connections"] for row in out_cities}
+    reached, queue = {1}, deque([1])
+    while queue:
+        for neighbour in adjacency_by_id[queue.popleft()]:
+            if neighbour not in reached:
+                reached.add(neighbour)
+                queue.append(neighbour)
+    if len(reached) != len(out_cities):
+        stranded = sorted(set(adjacency_by_id) - reached)
+        raise AssertionError(
+            f"han-world-v3 그래프가 끊겼다 — id 1 에서 {len(reached)}/{len(out_cities)} 만 닿는다. "
+            f"못 닿는 城: {stranded}"
+        )
 
     # Resolve path names only after every stable numeric identity exists.
     out_cities_by_id = {row["id"]: row for row in out_cities}

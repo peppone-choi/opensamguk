@@ -408,13 +408,22 @@ def audit_documents(
         for city_id, nation_id in _scenario_runtime(scenario)[0].items():
             if nation_id != 0:
                 owned_scenarios_by_city.setdefault(city_id, []).append(scenario_code)
+    # 격자에서 이웃이 없는 省이라도 郡 내부 보급선(ADR-LITE-051)이 붙으면 보급망에서는
+    # 차수 0 이 아니다 — 심사된 보호를 요구할 자리가 아니다. 래스터 인접만 보고 판정하면
+    # 이미 이어 둔 城에 낡은 보호를 강요하게 된다(2026-09-16 실측: 305·548).
+    supply_degree: dict[int, int] = {
+        index: len(neighbours) for index, neighbours in province_adjacency.items()
+    }
+    for link in commandery_links:
+        for index in (link["fromProvinceIndex"], link["toProvinceIndex"]):
+            supply_degree[index] = supply_degree.get(index, 0) + 1
     for city_id, city in runtime_by_id.items():
         province_index = city.get("provinceId")
         if (
             city_id in owned_scenarios_by_city
             and isinstance(province_index, int)
             and province_index in province_adjacency
-            and not province_adjacency[province_index]
+            and not supply_degree.get(province_index)
         ):
             for scenario_code in sorted(owned_scenarios_by_city[city_id]):
                 active_protection = [
