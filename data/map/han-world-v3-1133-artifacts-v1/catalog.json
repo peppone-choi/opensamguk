@@ -38,11 +38,11 @@
       "sha256": "da990c88c3ce1876cef473f2f649da46baa0f9138b78b7ad983b7ec4ac10aa8a"
     },
     {
-      "blob": "blobs/c4a94464668724d0bfc350400e9e3d04b35f7aa523cf2d5d3692c167c33a8b2c.json.gz",
+      "blob": "blobs/fcf4c8ffa603901db7d1304d1574f03e73b85c17308482c2612e45ea3b2cf3fb.json.gz",
       "bytes": 406147,
-      "compressedSha256": "a8dad5fb392fc6b520af457a541f128d36017989e15c18ffbe8512616ac63ff5",
+      "compressedSha256": "17a13e02af714e64511e2c570fbf5824254739620d1ed4bedd702db6fd8a7eac",
       "path": "data/map/han-world-v3-manifest-v1.json",
-      "sha256": "c4a94464668724d0bfc350400e9e3d04b35f7aa523cf2d5d3692c167c33a8b2c"
+      "sha256": "fcf4c8ffa603901db7d1304d1574f03e73b85c17308482c2612e45ea3b2cf3fb"
     },
     {
       "blob": "blobs/0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6.json.gz",
