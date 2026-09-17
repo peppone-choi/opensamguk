@@ -144,6 +144,12 @@ jobs:
       - name: Verify Han route-node selection validator
         if: '!cancelled()'
         run: python3 tools/scenario/validate_han_route_node_selection.py
+      - name: Verify Han lowland terrain reclassification stage
+        # 저지 지형 재분류 단계(han-tiles 최상단)를 벗겼다 다시 얹어, 검토 원장(이름 붙은 저지·표고 기준)과
+        # 커밋된 ETOPO1 표고에서 커밋된 han-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
+        # 결정 원장·표고 PNG 해시가 바뀌어도 잡는다. 아래 접기·분할 검사는 이 단계를 먼저 벗기고 돈다.
+        if: '!cancelled()'
+        run: python3 tools/map/reclassify_han_lowland_terrain.py --check
       - name: Verify Han cityless-jurisdiction fold stage
         # 城 없는 관할 접기·省 이관 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 행·출력 digest 가 커밋된
         # han-tiles.json 과 바이트 단위로 같은지 본다. 결정 원장 해시 변경도 잡는다.

@@ -13,7 +13,7 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
+    "tilesSha256": "ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0",
     "selectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6"
   },
   "summary": {

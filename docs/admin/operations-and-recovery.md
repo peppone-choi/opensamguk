@@ -113,6 +113,14 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 경로만 사용합니다. `ng_games.map`, city/gameplay id를 수동으로 바꾸거나 V45·validator 조건을 약화하지
 않습니다.
 
+### 1133 릴리스 제자리 재핀(ADR-LITE-058, 2026-09-17)
+
+`han-world-v3-1133` 번들은 저지 지형 재분류로 제자리에서 재핀됐습니다. 도시·省·관할·인접은 그대로지만 blob 해시가
+`StrategicTopology.contentHash` 입력이라 contentHash 가 바뀝니다. **재핀 전 1133 으로 pin 이 박힌 월드는
+`province_control`·`general_spatial_position`·`water_zone_control` 의 topology_hash 가 어긋나 로드에 실패합니다.**
+이 변경이 든 이미지를 승격하기 전에 해당 서버의 월드 초기화를 같은 작업으로 잡으십시오. 1098 이하 판으로 pin 된
+월드는 영향이 없습니다.
+
 ## 대표 장애 대응
 
 ### Han V3 신규 세계와 V2 저장 세계 구분

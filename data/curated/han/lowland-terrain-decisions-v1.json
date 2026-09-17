@@ -1,0 +1,445 @@
+{
+  "schemaVersion": 1,
+  "decisionsId": "lowland-terrain-decisions-v1",
+  "authority": {
+    "status": "REVIEWED",
+    "reviewedOn": "2026-09-17",
+    "decision": "사용자 결정 2026-09-17: 전역 DEM 규칙이 아니라 이름 붙은 저지 원장으로 고친다. han-tiles 는 국소 수정하고 1133 릴리스는 제자리 재핀한다.",
+    "review": "단위의 실재·범위·바닥 고도는 2026-09-17 웹 검색으로 대조했다. 縣·도시 좌표 일부는 검색으로 확인하지 못해 상자는 근사다 — 칸을 실제로 가르는 것은 표고 기준이다."
+  },
+  "criterion": {
+    "sourceClasses": [
+      "MOUNTAIN",
+      "HILL"
+    ],
+    "maxReliefM": 89,
+    "reliefWindow": "3x3",
+    "maxReliefBasis": "실측 기준선: Natural Earth ne_10m_geography_regions_polys 의 Plain/Lowland 폴리곤 안 PLAIN 23,900칸의 3×3 기복 p50/75/90/95/99 = 9/30/89/155/379 m 가운데 p90. 같은 측정에서 Range/mtn∩MOUNTAIN 39,916칸은 p50 371 m. `--measure-baseline` 으로 다시 잰다(원본은 미커밋, ADR-LITE-039)."
+  },
+  "elevation": {
+    "path": "web/game/public/map/elevation/han-world-v3-metres.png",
+    "sha256": "811014f35830528e1db59f6ab3a84b12b0ba64bf89fb68cf97dca893595cb673"
+  },
+  "units": [
+    {
+      "id": "yiluo-basin",
+      "nameCh": "伊洛盆地(洛陽盆地)",
+      "targetClass": "BASIN",
+      "bbox": {
+        "west": 112.2,
+        "east": 113.0,
+        "south": 34.5,
+        "north": 34.8
+      },
+      "maxElevationM": 150,
+      "maxElevationBasis": "출처의 바닥 고도 「서쪽 약 150 m → 동쪽 110여 m」의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E6%B4%9B%E9%98%B3%E7%9B%86%E5%9C%B0/1344373",
+          "https://html.rhhz.net/DSJYJ/20200219.htm"
+        ],
+        "note": "출처 범위 34°30′–34°50′N·112°17′–112°55′E 가 상자와 같다. 北 邙山·南 萬安山 기슭은 구릉이라 상한 밖에 남는다. 雒陽·河南·偃師."
+      }
+    },
+    {
+      "id": "henei-plain",
+      "nameCh": "河內 黃沁河 沖積平原",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 112.5,
+        "east": 113.6,
+        "south": 34.85,
+        "north": 35.3
+      },
+      "maxElevationM": 200,
+      "maxElevationBasis": "출처의 「沁河 沖積平原 서부 약 200 m」(武陟 81–107 m)",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E6%AD%A6%E9%99%9F%E5%8E%BF/2547157",
+          "https://zh.wikipedia.org/zh-cn/%E6%B2%81%E6%B2%B3_(%E9%BB%84%E6%B2%B3%E4%B8%80%E7%BA%A7%E6%94%AF%E6%B5%81)"
+        ],
+        "note": "북변 35.3 은 太行 급애에 닿으므로 상한과 기복이 함께 가른다. 波·河陽·州·平皋."
+      }
+    },
+    {
+      "id": "taiyuan-basin",
+      "nameCh": "太原盆地(晉中盆地)",
+      "targetClass": "BASIN",
+      "bbox": {
+        "west": 111.7,
+        "east": 112.8,
+        "south": 37.0,
+        "north": 37.9
+      },
+      "maxElevationM": 900,
+      "maxElevationBasis": "출처의 바닥 고도 800–900 m 의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E5%A4%AA%E5%8E%9F%E7%9B%86%E5%9C%B0/5103242",
+          "https://www.dili360.com/cng/article/p5350c3d9ea19553.htm"
+        ],
+        "note": "길이 150 km·폭 30–40 km 의 동북–서남 대각 盆地다. 상자의 呂梁·太岳 모서리는 상한과 기복이 걸러 낸다. 京陵·中都·界休·楡次."
+      }
+    },
+    {
+      "id": "shangdang-basin",
+      "nameCh": "上黨盆地(長治盆地)",
+      "targetClass": "BASIN",
+      "bbox": {
+        "west": 112.7,
+        "east": 113.2,
+        "south": 35.9,
+        "north": 36.5
+      },
+      "maxElevationM": 1000,
+      "maxElevationBasis": "출처의 바닥 고도 900–1000 m 의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E9%95%BF%E6%B2%BB%E7%9B%86%E5%9C%B0/3606429"
+        ],
+        "note": "남북 80 km·동서 30–40 km. 壺關·長子."
+      }
+    },
+    {
+      "id": "linfen-basin",
+      "nameCh": "臨汾盆地",
+      "targetClass": "BASIN",
+      "bbox": {
+        "west": 111.2,
+        "east": 111.9,
+        "south": 35.6,
+        "north": 36.4
+      },
+      "maxElevationM": 500,
+      "maxElevationBasis": "출처의 바닥 고도 400–500 m 의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E4%B8%B4%E6%B1%BE%E7%9B%86%E5%9C%B0/2170629",
+          "http://dsfz.linfen.gov.cn/lfdq/dqgl/202307/t20230707_213071.html"
+        ],
+        "note": "길이 200 km·폭 20–25 km 의 핵심부. 서변은 呂梁 산전 경사지라 상한이 가른다. 平陽·絳邑·襄陵."
+      }
+    },
+    {
+      "id": "guanzhong-plain",
+      "nameCh": "關中平原(渭河平原) 西安 구간",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 107.9,
+        "east": 109.3,
+        "south": 34.0,
+        "north": 34.6
+      },
+      "maxElevationM": 800,
+      "maxElevationBasis": "출처의 고도 범위 325–800 m 의 윗값",
+      "evidence": {
+        "sources": [
+          "https://zh.wikipedia.org/zh-hans/%E6%B8%AD%E6%B2%B3%E5%B9%B3%E5%8E%9F"
+        ],
+        "note": "구조상 渭河 地塹 盆地이나 관용은 平原이다. 남변 34.0 이 秦嶺 기슭과 거의 일치한다. 鄠·槐里·長陵·陰盤."
+      }
+    },
+    {
+      "id": "taihang-east-piedmont",
+      "nameCh": "太行山東麓 山前平原(邯鄲·鄴·蕩陰)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 114.3,
+        "east": 114.9,
+        "south": 35.9,
+        "north": 37.4
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://www.dili360.com/cng/article/p54eee3cd7de8560.htm",
+          "https://html.rhhz.net/DSJYJ/20190221.htm"
+        ],
+        "note": "山前 沖洪積扇. 출처가 이 구간의 바닥 고도를 말하지 않아(UNKNOWN) 상한을 두지 않는다. 검토에서 114.0–114.3 은 武安·磁縣 구릉이라 서변을 114.3 으로 옮겼다."
+      }
+    },
+    {
+      "id": "ruying-plain-north",
+      "nameCh": "汝潁平原 西緣 북부(葉·昆陽·父城)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 113.3,
+        "east": 114.2,
+        "south": 33.3,
+        "north": 34.2
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://www.pds.gov.cn/contents/17/51169.html"
+        ],
+        "note": "출처가 바닥 고도를 말하지 않는다(UNKNOWN). 검토에서 伏牛·外方山(魯山·方城)을 빼려고 서변을 113.3 으로 좁혔다."
+      }
+    },
+    {
+      "id": "ruying-plain-south",
+      "nameCh": "汝潁平原 西緣 남부(吳房·朗陵)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 113.9,
+        "east": 114.2,
+        "south": 32.5,
+        "north": 33.3
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://www.pds.gov.cn/contents/17/51169.html"
+        ],
+        "note": "출처가 바닥 고도를 말하지 않는다(UNKNOWN). 검토에서 桐柏山 북록(泌陽)을 빼려고 서변을 113.9 로 좁혔다."
+      }
+    },
+    {
+      "id": "nanyang-basin",
+      "nameCh": "南陽盆地",
+      "targetClass": "BASIN",
+      "bbox": {
+        "west": 111.8,
+        "east": 113.0,
+        "south": 32.4,
+        "north": 33.3
+      },
+      "maxElevationM": 200,
+      "maxElevationBasis": "출처의 「중앙 80–120 m, 가장자리 崗地 140–200 m」의 윗값",
+      "evidence": {
+        "sources": [
+          "https://zh.wikipedia.org/wiki/%E5%8D%97%E9%98%B3%E7%9B%86%E5%9C%B0",
+          "https://www.nanyang.gov.cn/2023/10-28/368878.html"
+        ],
+        "note": "검토에서 서쪽 111.4–111.8(淅川·西峽)은 산지라 뺐고 동쪽 唐河·社旗, 남쪽 新野까지 넓혔다. 冠軍·涅陽·穰."
+      }
+    },
+    {
+      "id": "suizao-corridor",
+      "nameCh": "隨棗走廊·涢水 河谷平原",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 112.7,
+        "east": 114.2,
+        "south": 31.0,
+        "north": 32.5
+      },
+      "maxElevationM": 200,
+      "maxElevationBasis": "출처의 「走廊 양옆과 주변은 低山丘陵, 일반 고도 200–800 m」의 아랫값 — 회랑 바닥은 그 아래다",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E9%9A%8F%E6%9E%A3%E8%B5%B0%E5%BB%8A/62080518",
+          "https://www.lifeweek.com.cn/article/75130"
+        ],
+        "note": "大洪山과 桐柏山 사이 서북–동남 약 130 km 의 좁은 平原. 상자에 두 산지가 들므로 양옆 丘陵의 하한 200 m 를 상한으로 건다. 隨·安陸·朝陽."
+      }
+    },
+    {
+      "id": "huai-south-plain",
+      "nameCh": "淮河 上游 南岸 平原(大別山 北麓)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 113.5,
+        "east": 117.2,
+        "south": 31.7,
+        "north": 32.6
+      },
+      "maxElevationM": 100,
+      "maxElevationBasis": "출처의 「平原 30–59 m, 崗地 50–100 m」의 윗값",
+      "evidence": {
+        "sources": [
+          "http://www.xydsfz.com/index.php?s=book&c=son&id=49",
+          "https://zh.wikipedia.org/zh-cn/%E4%BF%A1%E9%98%B3%E5%B8%82"
+        ],
+        "note": "출처는 平原을 「明港–寨河–固始 연결선 이북」으로 적는다. 검토에서 大別山 본체(商城·金寨·霍山)를 빼려고 남변을 31.7 로 올렸다. 鄳·弋陽·蓼·安風·六安."
+      }
+    },
+    {
+      "id": "edong-riverine-plain",
+      "nameCh": "鄂東 沿江平原(西陵·西陽·邾)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 114.2,
+        "east": 115.5,
+        "south": 30.2,
+        "north": 31.0
+      },
+      "maxElevationM": 100,
+      "maxElevationBasis": "출처의 고도 범위 20–100 m 의 윗값",
+      "evidence": {
+        "sources": [
+          "https://www.fohb.gov.cn/info/2023-05/20230510085700_241.html",
+          "https://baike.baidu.com/item/%E6%96%B0%E6%B4%B2%E5%8C%BA/8745010"
+        ],
+        "note": "검토에서 31.0–31.5 는 大別 남록 구릉이라 상자를 30.2–31.0 으로 옮겼다."
+      }
+    },
+    {
+      "id": "jianghan-plain-west",
+      "nameCh": "江漢平原 西緣(當陽·旌陽)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 111.6,
+        "east": 112.0,
+        "south": 30.0,
+        "north": 31.0
+      },
+      "maxElevationM": 200,
+      "maxElevationBasis": "출처의 「평원 50 m 미만, 崗地 100–200 m」의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E6%9D%BE%E6%BB%8B%E5%B8%82/5863489",
+          "https://zh.wikipedia.org/zh-sg/%E6%9E%9D%E6%B1%9F%E5%B8%82"
+        ],
+        "note": "검토에서 111.3–111.6(宜昌·宜都)은 구릉이라 서변을 111.6 으로 옮겼다."
+      }
+    },
+    {
+      "id": "poyang-plain",
+      "nameCh": "鄱陽湖平原 東·南部",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 115.7,
+        "east": 117.6,
+        "south": 27.9,
+        "north": 29.1
+      },
+      "maxElevationM": 80,
+      "maxElevationBasis": "출처의 「대부분 50 m 미만 + 가장자리 紅土 坡地 상대고도 20–30 m」의 합",
+      "evidence": {
+        "sources": [
+          "https://zh.wikipedia.org/zh-cn/%E9%84%B1%E9%98%B3%E6%B9%96%E5%B9%B3%E5%8E%9F",
+          "https://baike.baidu.com/item/%E9%84%B1%E9%98%B3%E6%B9%96%E5%B9%B3%E5%8E%9F/4477849"
+        ],
+        "note": "출처 범위 115°01′–117°34′E·27°32′–30°06′N. 검토에서 鄱陽·餘干·樂平이 들도록 북변을 29.1 로 올리고 남쪽 산지(資溪)를 깎았다. 葛陽·鄡陽·餘汗."
+      }
+    },
+    {
+      "id": "wan-southwest-riverine-plain",
+      "nameCh": "皖西南 沿江 江湖平原(尋陽·皖·灊)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 115.7,
+        "east": 117.3,
+        "south": 29.6,
+        "north": 30.8
+      },
+      "maxElevationM": 150,
+      "maxElevationBasis": "출처의 「沿江 圩區 11–15 m, 台地 150 m 미만」의 윗값",
+      "evidence": {
+        "sources": [
+          "https://baike.baidu.com/item/%E5%AE%89%E5%BA%86%E5%B8%82/211620"
+        ],
+        "note": "검토에서 九江이 들도록 남변을 29.6 으로 내리고 大別山(岳西·霍山)인 30.8 이북을 뺐다."
+      }
+    },
+    {
+      "id": "red-river-delta",
+      "nameCh": "紅河 三角洲(交趾郡)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 105.2,
+        "east": 106.3,
+        "south": 20.4,
+        "north": 21.4
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://en.wikipedia.org/wiki/Red_River_Delta",
+          "https://openjicareport.jica.go.jp/pdf/11718400_10.pdf"
+        ],
+        "note": "하노이 강변 고지 +10–13 m, 대부분 수 m. 실제 델타는 海防·寧平까지라 상자는 보수적이다. 출처가 상한으로 쓸 바닥 고도 범위를 주지 않아 상한을 두지 않는다."
+      }
+    },
+    {
+      "id": "jiuzhen-coastal-plain",
+      "nameCh": "淸化·乂安 沿海平原(九眞郡)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 105.4,
+        "east": 106.0,
+        "south": 18.2,
+        "north": 20.1
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://vi.wikipedia.org/wiki/%C4%90%E1%BB%93ng_b%E1%BA%B1ng_Thanh_H%C3%B3a"
+        ],
+        "note": "淸化 평원 1–7 m·약 2,600–3,000 km². 乂安 쪽 고도는 UNKNOWN 이라 상한을 두지 않는다. 검토에서 105.0–105.4 는 구릉·산지라 서변을 105.4 로 옮겼다."
+      }
+    },
+    {
+      "id": "binh-tri-thien-coastal-plain",
+      "nameCh": "廣平·廣治·承天 沿海平原(日南郡)",
+      "targetClass": "PLAIN",
+      "bbox": {
+        "west": 106.3,
+        "east": 107.8,
+        "south": 16.3,
+        "north": 17.9
+      },
+      "maxElevationM": null,
+      "maxElevationBasis": null,
+      "evidence": {
+        "sources": [
+          "https://www.fao.org/4/ae080e/ae080e03.htm",
+          "https://en.wikipedia.org/wiki/Qu%E1%BA%A3ng_B%C3%ACnh_province"
+        ],
+        "note": "좁은 해안 사구대(사구 5–30 m)이고 평원 바닥 고도는 UNKNOWN 이다. 해안선이 대각이라 상자 서남은 산지·동북은 바다이며 가르는 것은 기복 기준뿐이다 — 잔여 위험으로 적는다."
+      }
+    }
+  ],
+  "reviewedAndExcluded": [
+    {
+      "id": "hutuo-fan",
+      "where": "114.3–114.9E 38.0–38.6N",
+      "reason": "滹沱河 沖洪積扇(山麓平原 90→45 m)은 실재하지만 출처 상한 90 m 안에서 MOUNTAIN 칸이 1칸뿐이다. 114.0–114.3 의 평탄 칸(중앙값 137 m)은 平山·井陘 구릉이라 넣지 않는다.",
+      "sources": [
+        "https://zh.wikipedia.org/zh-cn/%E7%9F%B3%E5%AE%B6%E5%BA%84%E5%B8%82"
+      ]
+    },
+    {
+      "id": "ganfu-valley",
+      "where": "116.4–117.0E 26.9–27.6N",
+      "reason": "「贛撫平原」의 통상 범위(南昌·豐城·臨川)가 아니라 盱江 河谷이다. 南城縣은 구릉 77%·河谷平原 5% 라 이름 붙은 저지로 볼 근거가 약하다."
+    },
+    {
+      "id": "guizhong-east-piedmont",
+      "where": "109.7–110.0E 24.1–24.5N",
+      "reason": "浔江平原(桂平–平南, 약 23.4N)이 아니라 象州 동북 大瑤山 西麓 山前平原이다. 해당 漢縣이 UNKNOWN 이다."
+    },
+    {
+      "id": "jiuquan-east-basin",
+      "where": "98.7–99.8E 39.3–39.7N · 약 1400 m",
+      "reason": "張掖이 아니라 酒泉 東盆地–高臺 구간이다. 오아시스 평원이나 DESERT 와의 경계 판정이 이 단계의 기복 기준으로 되지 않는다."
+    },
+    {
+      "id": "bashang-plateau",
+      "where": "113.5–114.9E 41.1–41.7N · 약 1350 m",
+      "reason": "壩上高原(內蒙古高原 남연, 1200–1500 m). 평탄하지만 고원면이다.",
+      "sources": [
+        "https://zh.wikipedia.org/zh-cn/%E5%A3%A9%E4%B8%8A%E9%AB%98%E5%8E%9F"
+      ]
+    },
+    {
+      "id": "lenghu-qaidam",
+      "where": "92.9–93.9E 38.4–39.0N · 약 2740 m",
+      "reason": "柴達木盆地 서북(冷湖). 2700 m 대 고지 사막이라 저지 보정 대상이 아니다.",
+      "sources": [
+        "https://zh.wikipedia.org/zh-cn/%E5%86%B7%E6%B9%96%E9%95%87"
+      ]
+    },
+    {
+      "id": "guilin-karst-basin",
+      "where": "109.9–110.4E 24.9–25.4N",
+      "reason": "실재하는 岩溶 谷地(약 150 m)이나 峰林 때문에 칸 단위 기복이 들쭉날쭉하다. 이번 범위에서 미룬다."
+    }
+  ]
+}

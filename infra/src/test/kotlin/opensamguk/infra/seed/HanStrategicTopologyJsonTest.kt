@@ -27,8 +27,8 @@ class HanStrategicTopologyJsonTest {
         val presentation = json.path("presentation")
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
-        // 2026-09-15 수·진·관 거점 省 분할 뒤의 han-tiles(지형 행은 그대로다).
-        assertEquals("f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
+        // 2026-09-17 저지 지형 재분류 뒤의 han-tiles(마른 땅 클래스만 바뀌고 물 기하는 그대로다).
+        assertEquals("ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
