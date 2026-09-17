@@ -82,7 +82,7 @@ class Graph:
         return math.hypot((x2 - x1) * self.dlon * 111.32 * math.cos(math.radians(lat)), (y2 - y1) * self.dlat * 110.57)
 
     def shortest(self, src: int, dst: int, rough_factor: float):
-        """(비용 km, 실제 km, 경유 省 수). 비용 = km × (1 + (계수-1) × 두 省 험지 비율 평균)."""
+        """(비용 km, 실제 km, 간선 수 — 경유 省 수는 +1). 비용 = km × (1 + (계수-1) × 두 省 험지 비율 평균)."""
         best = {src: (0.0, 0.0, 0)}
         heap = [(0.0, src)]
         while heap:
@@ -148,7 +148,7 @@ def main(argv=None) -> int:
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=1))
         return 0
-    print("| 구간 | 험지 계수 | 직선 km(경위도) | 경로 km(격자 근사) | 경유 省 | " + " | ".join(f"{s} km/순" for s in SPEEDS_KM_PER_TURN) + " |")
+    print("| 구간 | 험지 계수 | 직선 km(경위도) | 경로 km(격자 근사) | 간선 수 | " + " | ".join(f"{s} km/순" for s in SPEEDS_KM_PER_TURN) + " |")
     print("|---|---|---|---|---|" + "---|" * len(SPEEDS_KM_PER_TURN))
     for r in rows:
         if not r["reachable"]:
