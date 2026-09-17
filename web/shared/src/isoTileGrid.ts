@@ -10,6 +10,8 @@
 //
 // React 도, three 도, DOM 도 쓰지 않는다. 순수 함수만 둔다.
 
+import { connectRivers, inlandWaterSystems } from './riverContinuity';
+
 export const TERRAIN = {
   SEA: 0,
   PLAIN: 1,
@@ -129,8 +131,8 @@ export interface SeatCells {
 *
 * 격자가 4×4 였을 때는 같은 수가 131 곳이었다 — 블록이 넓을수록 뭍 셀이 물에 묻힌다.
 *
-* 그래서 「城 이 서는 칸은 뭍이다」를 규칙으로 둔다. 물줄기는 城 자리에서 한 칸 끊기는데,
-* 강안 도시가 실제로 그렇게 보인다. 바뀌는 것은 128,256 타일 중 70 장 남짓이다.
+* 그래서 「城 이 서는 칸은 뭍이다」를 규칙으로 둔다. 그 자리에서 끊긴 물줄기는
+* connectRivers(riverContinuity.ts)가 城 칸을 돌아서 다시 잇는다. 바뀌는 것은 128,256 타일 중 70 장 남짓이다.
 *
 * 네 셀이 전부 물이면 손대지 않는다. 그건 다운샘플 탓이 아니라 城 좌표 자체가
 * 물에 있다는 뜻이고, 여기서 뭍으로 만들면 데이터의 결함을 화면이 덮어 버린다.
@@ -496,13 +498,33 @@ export function buildIsoTileGrid(
   group: number = RASTER_GROUP,
   /** 縣 治所의 원본 셀. 주면 그 칸이 물로 칠해진 것을 뭍으로 되돌린다. */
   seats?: SeatCells,
+  /** 治所 말고도 아이콘이 서는 원본 셀(郡國 밖 세력·거점). 물길이 이 칸을 피해 간다. */
+  landmarks?: SeatCells,
 ): IsoTileGrid {
   const terrain = downsampleTerrain(sourceRows, group);
   // 바다에 뚫린 구멍부터 메운다. 이걸 먼저 해야 표고 유추가 바다 한가운데
   // 가짜 섬을 만들지 않는다(레벨 1 이면 평지가 돼 버린다).
   fillSeaEnclosedGaps(terrain.code, terrain.cols, terrain.rows);
+  // 城 이 물줄기를 자르기 전의 수계를 떠 둔다 — 아래 connectRivers 가 「원래 한 강」을 이걸로 안다.
+  const system = inlandWaterSystems(terrain.code, terrain.cols, terrain.rows);
   // 城 이 선 칸은 뭍이다. 구멍 메우기 뒤라야 방금 메운 바다를 다시 뚫지 않는다.
   if (seats) landUnderSeats(terrain.code, terrain.cols, terrain.rows, sourceRows, seats, group);
+  // 끊긴 물줄기를 잇는다(riverContinuity.ts). 지도 밖을 지형으로 채우기 **전**이어야
+  // 「지도 밖에 닿은 끝점」을 알아본다. 표고는 바다를 누르기 전의 날 값을 쓴다.
+  const rawLevel = levelsFromImageData(demRgba, demCols, demRows);
+  if (rawLevel.length !== terrain.code.length) {
+    throw new Error(`격자 불일치: DEM ${demCols}×${demRows} vs 지형 ${terrain.cols}×${terrain.rows}`);
+  }
+  const dry = new Uint8Array(terrain.code.length);
+  for (const cells of [seats, landmarks]) {
+    if (!cells) continue;
+    for (let n = 0; n < cells.col.length; n += 1) {
+      if (cells.col[n] < 0 || cells.row[n] < 0) continue;
+      const [c, r] = sourceCellToTile(cells.col[n], cells.row[n], group);
+      if (c >= 0 && c < terrain.cols && r >= 0 && r < terrain.rows) dry[r * terrain.cols + c] = 1;
+    }
+  }
+  connectRivers({ code: terrain.code, cols: terrain.cols, rows: terrain.rows, level: rawLevel, dry, system });
   // 지도 안팎은 지형을 채우기 **전에** 기록해 둔다. 채우고 나면 구분할 방법이 없다.
   const playable = new Uint8Array(terrain.code.length);
   for (let i = 0; i < playable.length; i += 1) {
@@ -510,7 +532,7 @@ export function buildIsoTileGrid(
   }
   // 지형으로 누르기 전의 날 표고에서 지도 밖 타일의 지형 등급을 뽑는다.
   // 이 줄 뒤로 code 에 OUT_OF_SCOPE 는 없다.
-  terrainFromElevation(terrain.code, levelsFromImageData(demRgba, demCols, demRows));
+  terrainFromElevation(terrain.code, rawLevel);
   const level = levelsFromImageData(demRgba, demCols, demRows, terrain);
   // 물 타일은 완전히 평평해야 한다 — 스프라이트가 마스크 0 한 장뿐이다.
   const flat = new Uint8Array(terrain.code.length);
