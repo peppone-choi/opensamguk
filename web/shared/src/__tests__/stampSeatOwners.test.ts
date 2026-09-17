@@ -35,7 +35,7 @@ function displaced(owner: Int32Array): string[] {
 }
 
 describe('stampSeatOwners', () => {
-  it('다수결만 쓰면 게임 城 225 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
+  it('다수결만 쓰면 게임 城 226 곳이 남의 縣 색 위에 선다 — 이것이 고치는 대상이다', () => {
     // 이 수가 0 이 되면 downsampleOwner 쪽이 이미 고쳐졌다는 뜻이니 이 게이트를 다시 봐라.
     // 실측: 781 城 시절 162 → 변경 縣 51 곳이 城 782–832 로 서면서 189 → 2026-09-11
     // rasterGroup 을 4 에서 2 로 내리면서 35. 블록이 좁아지니 治所가 제 縣 땅을
@@ -47,10 +47,13 @@ describe('stampSeatOwners', () => {
     // 가서 빠졌다. 하음(56)은 바오터우의 60 칸 省이 九原과 블록을 나누며 새로 들었다.
     // → 2026-09-17 城 1133 에서 225. 城 아이콘이 씨앗 칸이 아니라 경위도 투영점(제 省 밖이면 안으로 민 칸)에
     // 서게 되면서(buildProvinceSeatCells) 省 가장자리에 선 治所가 늘었다 — 도장 찍기가 고치는 몫이다.
-    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(225);
+    // → 2026-09-17 巴郡 漢昌(579)이 閬中 쪽 省 341 에서 巴中 省 343 으로 옮기며(38cf118a, 讀史方輿紀要 卷68) 226.
+    // 治所 칸(269,295)은 제 省 343 땅이지만 서쪽 가장자리라 2×2 블록이 341 과 2:2 로 갈려 다수결에서 진다
+    // (#704 때처럼 데이터 커밋이 이 핀을 같이 안 옮겼다). 도장 찍기 뒤에는 제 색을 되찾아 아래 13 은 그대로다.
+    expect(displaced(downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP))).toHaveLength(226);
   });
 
-  it('治所 칸을 되돌리면 225 → 13 으로 줄고, 남는 13 은 전부 칸을 나눠 쓰는 城 이다', () => {
+  it('治所 칸을 되돌리면 226 → 13 으로 줄고, 남는 13 은 전부 칸을 나눠 쓰는 城 이다', () => {
     const owner = stampSeatOwners(
       downsampleOwner(source, srcCols, cols, rows, RASTER_GROUP),
       source, srcCols, cols, rows, seat, RASTER_GROUP,
