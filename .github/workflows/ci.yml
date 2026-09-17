@@ -51,6 +51,29 @@ jobs:
       - name: Resource-site ledger is current
         if: '!cancelled()'
         run: python3 tools/map/build_resource_sites.py --check
+      # GH #542 — external-places.json 은 입력이 **Wikidata SPARQL(네트워크)** 하나뿐이라 두 축으로 나눈다.
+      #   1) --check-offline (fail closed): 생성기의 PLACES 표가 네트워크 없이 정하는 필드(kind·level·
+      #      jun·prov·basis·presLoc·conf·hub·id)와 행 집합·_meta·직렬화를 커밋된 산출물과 대조한다.
+      #      #542 가 실측한 「魯國 kind=COMMANDERY 인 채로 커밋」이 바로 이 축이다(적색 프로브로 확인).
+      #   2) --check (경고): Wikidata 로 재생성해 바이트 대조. 좌표·QID 의 낡음은 여기서만 보인다.
+      #      공개 엔드포인트의 502/504 나 제3자의 Wikidata 편집이 무관한 PR 을 죽이면 안 되므로 job 을
+      #      죽이지 않는다 — 대신 「드리프트(1)」와 「조회 실패라 판정 불가(2)」를 갈라서 경고한다.
+      - name: Verify external places table vs artifact (offline, fail closed)
+        if: '!cancelled()'
+        run: python3 tools/map/build_external_places.py --check-offline
+      - name: Warn on external places Wikidata drift (network, never fails the job)
+        if: '!cancelled()'
+        timeout-minutes: 12
+        run: |
+          set +e
+          python3 tools/map/build_external_places.py --check
+          rc=$?
+          case "$rc" in
+            0) ;;
+            1) echo "::warning::data/map/external-places.json drifted from a live Wikidata regeneration (coordinates/QIDs). Regenerate with tools/map/build_external_places.py and review the diff. Not failing this job -- GH #542." ;;
+            *) echo "::warning::Wikidata SPARQL unreachable (exit $rc) -- external-places.json coordinate drift was NOT verified in this run (GH #542). The offline table gate above still ran." ;;
+          esac
+          exit 0
       - name: Verify reviewed Han route candidate regeneration
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
