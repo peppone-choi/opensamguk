@@ -498,10 +498,14 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
                 if record["commanderyId"] == commandery["id"]
             )
             self.assertEqual(expected, commandery["jurisdictionIds"])
+        # 2026-09-17: 관할을 모두 접은 郡 4곳(新平·毗陵典農校尉·汶山·章武)은 관할 없이 seat 가 null 이다.
+        emptied = [record["id"] for record in commanderies if not record["jurisdictionIds"]]
+        self.assertEqual(["PARENT-0140", "PARENT-0145", "PARENT-0148", "PARENT-0157"], emptied)
         self.assertTrue(all(
             record["seatJurisdictionId"] in record["jurisdictionIds"]
-            for record in commanderies
+            for record in commanderies if record["jurisdictionIds"]
         ))
+        self.assertTrue(all(record["seatJurisdictionId"] is None for record in commanderies if not record["jurisdictionIds"]))
 
     def test_commandery_kind_follows_the_historical_parent_unit(self) -> None:
         self.assertEqual("KINGDOM", _commandery_kind({"nameCh": "趙國"}, {"kind": "COMMANDERY"}))
