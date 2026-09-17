@@ -1,8 +1,7 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.GameConst
-import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -13,6 +12,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.GeneralBuilder
 
 /**
  * che_의병모집 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_의병모집.php`.
@@ -55,13 +55,17 @@ class CheUibyeongMojip(private val pipeline: GeneralActionPipeline) : NationComm
     override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = emptyMap()  // zero-arg
 
     /**
-     * che_의병모집.php:run() 충실 포팅 — actor 로그 + exp/ded += 5*(preReqTurn+1)=15 + NPC 생성 draw 스트림.
+     * che_의병모집.php:run() 충실 포팅 — actor 로그 + exp/ded += 5*(preReqTurn+1)=15 + NPC 생성 + gennum.
      *
      * 생성 NPC 수 `createGenCnt` 와 avg(dex_t)/avg(dex5)/avg(exp)/avg(ded)는 PHP에서 DB 집계 쿼리
      *   (`SELECT 3+round(avg(gennum)/8)`, `SELECT avg(...) FROM general WHERE nation=me`) 결과 — 메모리
-     *   드래프트엔 없는 월드 집계라 컨텍스트 args(documented fixture input)로 주입한다. 미주입 시 NPC 생성/
-     *   draw 없음(actor 로그·exp/ded만). createdGenerals 영속화 carrier는 파운데이션 확장 포인트로 아직
-     *   드래프트에 없어 생성 NPC는 로컬로만 만들고 draw/로그/상태만 게이트 대상(골든도 created 미검증).
+     *   드래프트엔 없는 월드 집계라 컨텍스트 args로 받는다. 라이브 경로는 ProcessNationCommand.stageWorldInputs가
+     *   world에서 집계해 주입하고, 골든은 draw_stream에서 역산한 값을 fixture input으로 준다.
+     *   미주입(createGenCnt 부재) 시 NPC 생성/draw 없음 — 라이브에서 이 분기를 타면 결함이다
+     *   (UibyeongMojipLiveDispatchTest가 막는다).
+     * 생성된 NPC는 [opensamguk.logic.actions.GeneralActionDraft.createdGenerals]로 실려 나가고 엔진이
+     *   recorder.recordGeneralCreate로 영속화한다. PHP `game_env.npccount`는 의병장 일련번호 카운터일 뿐
+     *   (run()에서 읽기만 하고 이름·id에 쓰지 않음) 코틀린 월드엔 대응 키가 없어 포팅하지 않는다.
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft
@@ -77,82 +81,77 @@ class CheUibyeongMojip(private val pipeline: GeneralActionPipeline) : NationComm
         expRes.plainLog?.let { context.addPlainLog(it) }
         dedRes.plainLog?.let { context.addPlainLog(it) }
 
-        // 3. NPC 장수 생성 — createGenCnt 명. 월드 집계 입력은 args(documented fixture input)로 주입.
+        // 3. NPC 장수 생성 — createGenCnt 명. 월드 집계 입력은 args로 주입(라이브=stageWorldInputs, 골든=fixture).
         val createGenCnt = (context.args["createGenCnt"] as? Number)?.toInt() ?: return
         if (createGenCnt <= 0) return
-        // avgGen['dex_t'] — '무' pickType의 dex 후보 가중치(choice 인자값). 다른 avg 컬럼(dex5/exp/ded)은
-        // draw를 유발하지 않음(setExpDed로 선설정). 월드 집계라 args(documented fixture input)로 주입.
+        // avgGen(`SELECT avg(...) FROM general WHERE nation=me`). dex_t만 draw 인자('무' dex 후보 choice)이고
+        // 나머지(dex5/exp/ded)는 생성 장수의 값만 정한다. PHP ?int 인자라 소수부는 버린다.
         val avgDexTotal = (context.args["avgDexTotal"] as? Number)?.toDouble() ?: 0.0
-        // env.turnterm은 메모리 env엔 없어 args로 주입(getRandTurn의 nextRangeInt(0,60*term-1)). 기본 120(=7199).
+        val avgDex5 = (context.args["avgDex5"] as? Number)?.toInt() ?: 0
+        val avgExp = (context.args["avgExp"] as? Number)?.toInt()
+        val avgDed = (context.args["avgDed"] as? Number)?.toInt()
+        // env.turnterm(getRandTurn의 nextRangeInt(0,60*term-1)). 골든 fixture는 args로 120(=7199)을 준다.
         val turnTerm = (context.args["turnterm"] as? Number)?.toInt() ?: 120
+        val isFiction = ((context.args["fiction"] as? Number)?.toInt() ?: 0) != 0
+        // checkDuplicatedCnt(AbsGeneralPool.php:79)의 DB 조회 대용 — 월드 전체 장수명.
+        val existingNames = (context.args["existingGeneralNames"] as? List<*>)?.mapNotNull { it as? String }
+            ?: emptyList()
 
         // pickGeneralFromPool: 전 NPC분 이름 picking을 일괄 선행(루프 밖) — PHP \sammo\pickGeneralFromPool.
-        repeat(createGenCnt) { pickGeneral1Name(context.rng) }
-
-        // build 루프: NPC 1명씩 setKillturn → fillRemainSpecAsRandom → build/getRandTurn.
+        // PHP는 배치 안 중복을 보지 않지만(INSERT 전 일괄 pick) 같은 이름 둘은 버그라 앞서 뽑은 이름도 센다
+        // (ⓖ 접두를 붙여 startsWith 매칭에 걸리게). 중복이 없으면 draw 수는 PHP와 같다.
+        val pickedNames = ArrayList<String>(createGenCnt)
         repeat(createGenCnt) {
-            context.rng.nextRangeInt(64, 70)                 // setKillturn(che_의병모집.php:148)
-            fillRemainSpecAsRandom(context.rng, avgDexTotal)
-            // build/getRandTurn(func.php:2211-2212): nextRangeInt(0,60*term-1) + nextRangeInt(0,999999).
-            context.rng.nextRangeInt(0, 60 * turnTerm - 1)
-            context.rng.nextRangeInt(0, 999999)
+            pickedNames += CheInjaeTamsaek.pickRandomGeneralName(
+                context.rng,
+                existingNames + pickedNames.map { UIBYEONG_PREFIX + it },
+            )
         }
 
-        // 4. game_env npccount += createGenCnt, nation.gennum += createGenCnt(che_의병모집.php:166-170).
-        //    golden snapshot 미캡처(npccount/gennum dump 없음) → 동결 회귀 대상 외(draw/로그/actor·city로 게이트).
-    }
-
-    /**
-     * RandomNameGeneral::pickGeneral1FromPool(GeneralPool/RandomNameGeneral.php:30-63) draw 부분.
-     * 이름 중복 카운트(checkDuplicatedCnt)는 DB 조회로 항상 0(새 의병장명) — 루프 1회 종료. choice 3회만 소비.
-     */
-    private fun pickGeneral1Name(rng: RandUtil): String {
-        val first = rng.choice(GameConst.randGenFirstName)
-        val middle = rng.choice(GameConst.randGenMiddleName)
-        val last = rng.choice(GameConst.randGenLastName)
-        return "$first$middle$last"
-    }
-
-    /**
-     * GeneralBuilder::fillRemainSpecAsRandom(Scenario/GeneralBuilder.php:400-500) draw 부분.
-     * run()이 setLifeSpan/setExpDed를 선호출하므로 birth/death/exp/ded 분기는 draw 없음. specialWar/Domestic은
-     * setSpecial('None','None')로 선설정 → null 아님 → draw 없음. stat은 미설정 → fillRandomStat draw.
-     */
-    private fun fillRemainSpecAsRandom(rng: RandUtil, avgDexTotal: Double) {
-        // affinity null → nextRangeInt(1,150) (GeneralBuilder.php:413).
-        rng.nextRangeInt(1, 150)
-        // specAge/specAge2: birth 설정됨 → Util::round 계산만(draw 없음).
-        // stat 미설정 → fillRandomStat (GeneralBuilder.php:435 → 313-345).
-        val pickType = fillRandomStat(rng)
-        // dex 블록: dex1=0 && dex_t present(avg 쿼리 결과 — 항상 present) → pickType별.
-        // '무'만 choice(3-array) draw; '지'/else(무지)는 직접 배열이라 draw 없음(GeneralBuilder.php:472-486).
-        if (pickType == "무") {
-            rng.choice(dexCandidates(avgDexTotal))
+        // build 루프(che_의병모집.php:139-155): setKillturn → fillRemainSpecAsRandom → build/getRandTurn.
+        // draw 순서는 GeneralBuilder가 PHP와 draw-for-draw로 갖는다(GeneralBuilderGoldenTest).
+        val year = context.env.year
+        val pickTypeList = linkedMapOf("무" to 5.0, "지" to 5.0)
+        for (npcName in pickedNames) {
+            val built = GeneralBuilder(context.rng, npcName, d.general.nationId)
+                .setCityID(d.general.cityId)
+                .setSpecial("None", "None")
+                .setLifeSpan(year - 20, year + 10)
+                .setKillturn(context.rng.nextRangeInt(64, 70))
+                .setNPCType(4)
+                .setMoney(1000, 1000)
+                .setSpecYear(19, 19)
+                .setExpDed(avgExp, avgDed)
+                .fillRemainSpecAsRandom(
+                    pickTypeList, avgDexTotal, avgDex5, hasDexAvg = true,
+                    year = year, startYear = context.env.startYear, isFiction = isFiction,
+                )
+                .build(year, context.month, turnTerm, emptyList(), isFictionMode = isFiction)
+                ?: continue
+            d.createdGenerals += built
         }
-        // ego null → choice(availablePersonality) (GeneralBuilder.php:489).
-        rng.choice(GameConst.availablePersonality)
-        // experience/dedication: setExpDed로 설정됨 → null 아님 → draw 없음.
+
+        // 4. nation.gennum += createGenCnt, strategic_cmd_limit = onCalcStrategic(name,'globalDelay',9)
+        //    (che_의병모집.php:166-169). gennum은 typed/meta 양쪽에 실린다. 재사용 대기가 없으면 3턴마다
+        //    의병장을 무한히 찍는다. 국가 성향(종횡가 등)이 globalDelay를 줄이므로 pipeline을 거친다.
+        d.nation?.let { n ->
+            // meta에 gennum 키가 없는 국가는 typed gennum이 0이다 — 라이브가 센 실제 장수 수를 기준으로 삼는다.
+            val baseGennum = (context.args["nationGennum"] as? Number)?.toInt() ?: n.gennum
+            val gennum = baseGennum + createGenCnt
+            val nextLimit = phpRound(pipeline.onCalcStrategic(d.general, name, "globalDelay", 9.0))
+            d.nation = n.copy(
+                gennum = gennum,
+                meta = LinkedHashMap(n.meta).apply {
+                    this["gennum"] = gennum
+                    this["strategic_cmd_limit"] = nextLimit
+                },
+            )
+        }
     }
 
-    /**
-     * GeneralBuilder::fillRandomStat(Scenario/GeneralBuilder.php:313-345) draw 부분.
-     * choiceUsingWeight(['무'=>5,'지'=>5]) → 내부 nextFloat1 + 래퍼 entry, mainStat=75-nextRangeInt(0,10),
-     * otherStat=10+nextRangeInt(0, toInt(10/2)=5). 반환 pickType이 dex 분기를 결정.
-     */
-    private fun fillRandomStat(rng: RandUtil): String {
-        // GameConst.php: defaultStatNPCTotal=150, defaultStatNPCMax=75, defaultStatNPCMin=10
-        // (코프링 GameConst엔 미정의 — common 파운데이션 범위 밖이라 draw 인자만 인라인).
-        val statNpcMin = 10
-        val pickType = rng.choiceUsingWeight(linkedMapOf("무" to 5.0, "지" to 5.0))
-        rng.nextRangeInt(0, statNpcMin)                                       // mainStat = 75 - draw
-        rng.nextRangeInt(0, statNpcMin / 2)                                   // otherStat = 10 + draw (toInt(min/2)=5)
-        return pickType
+    private companion object {
+        /** GeneralBuilder prefixList[4] — 의병장 이름 접두. */
+        const val UIBYEONG_PREFIX = "ⓖ"
     }
 
-    /** '무' pickType의 dex 후보 3-array(GeneralBuilder.php:475-479). avg dex_t로 가중 — choice 대상. */
-    private fun dexCandidates(dexTotal: Double): List<List<Double>> = listOf(
-        listOf(dexTotal * 5 / 8, dexTotal / 8, dexTotal / 8, dexTotal / 8),
-        listOf(dexTotal / 8, dexTotal * 5 / 8, dexTotal / 8, dexTotal / 8),
-        listOf(dexTotal / 8, dexTotal / 8, dexTotal * 5 / 8, dexTotal / 8),
-    )
 }
