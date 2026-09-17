@@ -2,7 +2,7 @@
 
 > 작성일: 2026-09-17
 > 상태: **초안(제안).** 교차 비평·사용자 승인 전. 이슈 #779 / OPENSAM-259.
-> 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17)
+> 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17, **PR #799 — 아직 main 에 없다. 이 문서는 #799 머지를 전제로 한다**)
 > 범위: 계약만 정한다. 구현·수치는 이 문서에 없다.
 
 ## 1. 왜 필요한가 — 현행 실측
@@ -10,7 +10,7 @@
 | 현행 | 근거 | 새 게임에서의 문제 |
 |---|---|---|
 | 모르는 명령 코드는 휴식으로 떨어진다 | `CommandRegistry.resolve` 마지막 분기 `else -> RestAction` (`logic/.../actions/CommandRegistry.kt`) | 로드맵 「registry에 없는 입력은 휴식이나 성공으로 떨어지지 않고 명시적으로 실패」와 반대다 |
-| 명령은 문자열 코드 → 클래스의 `when` 표 | 같은 파일, `che_*` 약 90분기 | 입력 종류(행동·배치·방침·공사·계책·조정 결정)를 구분하는 축이 없다 |
+| 명령은 문자열 코드 → 클래스의 `when` 표 | 같은 파일, 문자열 분기 92개(`che_` 80 + 그 밖 12) + `else` | 입력 종류(행동·배치·방침·공사·계책·조정 결정)를 구분하는 축이 없다 |
 | 새 결과 타입을 직렬화기 집합에 안 넣으면 턴 루프 전체가 멈춘다 | `TurnDaemonCommandResultSerializer` `else -> throw` 전례(2026-09-06 boardRead) | 입력이 늘수록 같은 사고가 난다 — 등록을 한 곳에서 강제해야 한다 |
 | 제품 범위 정본이 알파 카탈로그 124행(기존 별칭 70) | `data/commands/public-alpha-command-catalog.json`, `PublicCommandCatalogIndex` | ADR-LITE-057 이 정본 지위를 거뒀다. 새 원장이 필요하다 |
 
@@ -46,14 +46,15 @@ tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
 |---|---|---|---|
 | GENERAL_ACTION | 명령 목록 12순 슬롯 | 그 장수의 턴 시각, 한 순 1개 | 재설계 §4·§5.1 |
 | PLACEMENT · POLICY | 언제든 수정 | 해당 카드의 **다음 턴**부터. 12순 목록에 효력 시작 표식 | §4, ADR-049 개정 |
-| WORK | 언제든 착수·중단 | 다음 **순 경계**부터 진척 | §5.2 |
+| WORK | 언제든 착수(중단은 이 문서의 새 제안) | 다음 **순 경계**부터 진척 | §4·§5.2 |
 | STRATAGEM | 손패에서 선택 | 즉시 = 자기 턴 3단계 / 설치 = 비공개 저장 후 상대 턴에 발동 / 대응 = 방어 칸에 저장 후 피격 시 공개 | §5.1, §6.4 |
 | COURT_DECISION | 결정권자의 턴 | 발령은 대상 장수에 보류 상태로 도착, 응답은 행동 소모 없음, 기한 뒤 수락 | §2.4 |
 
 ## 5. 실패 계약
 
 - 모든 입력은 (a) 접수 시 사전검사, (b) 실행 직전 재검사를 거친다. 둘은 **같은 failureReasons 집합**을 쓴다(화면 사유 = API 사전검사 = 엔진 거절).
-- 실행 시점에 조건이 안 맞으면 **비용 없이 무효 + 사유 기록**(재설계 §4). 이미 수행한 이동·전투 비용은 환불하지 않는다.
+- 실행 시점에 조건이 안 맞으면 **비용 없이 무효 + 사유 기록**(재설계 §4).
+- (이 문서의 새 제안 — 상위 설계에 없음) 무효 판정 전에 이미 수행된 이동·전투의 비용은 환불하지 않는다.
 - registry 에 없는 inputId, 다른 ruleProfile 의 입력, 스키마 위반은 `ok=false` 결과로 끝난다. **어떤 경로도 휴식·성공으로 떨어지지 않는다.**
 - 인테이크 202 는 성공이 아니다 — 기존 result-poll 규약(OPENSAM-13/135)을 그대로 쓴다.
 
@@ -66,7 +67,7 @@ tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
 
 - 같은 시각의 장수 턴은 안정 ID 순, 시드는 (월드, 장수, 순)(재설계 §5.2).
 - 설치 계책·대응 카드·보류 발령은 **비공개 상태**다. 읽기 API 는 시야·소유자 기준으로 투영하고(이슈 #785), 저장은 기존 `ChangeRecorder → JdbcFlushExecutor` 단일 경로만 쓴다.
-- 새 읽기·쓰기 표는 `HotColdCatalog` 등록과 컨텍스트 IT 를 함께 넣는다(2026-09-06 회귀 전례).
+- 새 읽기·쓰기 표는 `HotColdCatalog` 등록과 컨텍스트 IT 를 함께 넣는다(`HotColdWorldCatalogGuardTest` 가 등록 누락을 막는다).
 
 ## 8. 게이트(적색 프로브 필수)
 
@@ -84,6 +85,8 @@ tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
 ## 10. 미결
 
 - ruleProfile 을 `world_state.meta` 와 `config` 중 어느 쪽에 적을지(지도는 둘 다 쓴다).
+- 원장 `actor` 열거(GENERAL|LORD|RULER|OFFICE_HOLDER)는 상위 설계에 없는 새 어휘다 — 재설계 용어(장수·주공·군주·관직)와 맞출지.
+- WORK 중단, 무효 전 비용 비환불 — 위에 「새 제안」으로 표시한 두 규칙의 승인.
 - `effects[]` 의 표준 어휘(자원 증감·카드 이동·상태 변화).
 - 12순 목록의 효력 시작 표식이 담을 정보량.
 - 기존 작전(V56)·출병 계획(V57)·휘하(V55) 인테이크를 새 봉투로 옮길 시점.
