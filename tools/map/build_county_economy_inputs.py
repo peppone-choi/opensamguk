@@ -135,12 +135,11 @@ def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
         "limitations": [
             "보존 단위는 永和五年(140) 郡이다. 타일의 郡이 그 뒤 분할돼 縣이 줄었으면(南陽郡 37城→29縣, 떨어져 나간 "
             "襄陽·章陵·南鄉郡 縣은 NO_SOURCE_HOUSEHOLDS) 郡 戶數 전부가 남은 縣에 몰린다 — "
-            "counts.commanderiesWithFewerCountiesThanSource 가 그런 郡의 수다.",
+            "타일에 縣이 빠져서 적은 郡(汝南郡 37→26 등)도 같은 쏠림을 겪는다. counts.commanderiesWithFewerCountiesThanSource 는 원인을 가리지 않고 타일 縣 수 < 郡國志 城數 인 郡을 센 값이다.",
         ],
         "fieldNotes": {
             "landCells": "WATER 가 아닌 칸. RIVER 칸을 포함한다.",
-            "wetAdjacentCells": "칸 수가 아니라 맞닿은 변의 수다 — 뭍 칸마다 상하좌우의 물기 있는(WET) 이웃을 센다(한 칸이 최대 4). "
-            "RIVER 칸도 뭍 칸이라 이웃 RIVER 와의 변이 집계된다.",
+            "wetAdjacentCells": "상하좌우에 물기 있는(WET = RIVER·LAKE·SEA) 이웃이 하나 이상인 뭍 칸의 수. RIVER 칸도 뭍 칸으로 센다.",
         },
         "jurisdictions": ordered,
     }
