@@ -124,6 +124,11 @@ jobs:
           else
             echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout -- HanCityConst.kt/han.json drift is NOT verified here (GH #536). Verify manually (regenerate junguozhi.json locally via tools/map/build_junguozhi.py, then run build_han_world.py --check) before merging changes to build_han_world.py or its inputs."
           fi
+      - name: Verify county economy inputs (data/curated/han/county-economy-inputs-v1.json drift)
+        # 입력은 전부 커밋본(han-tiles.json · han-world-v3.json · administrative-units.json · params).
+        # 적색 프로브: tools/map/tests/test_build_county_economy_inputs.py CheckGateRedProbeTest.
+        if: '!cancelled()'
+        run: python3 tools/map/build_county_economy_inputs.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --
