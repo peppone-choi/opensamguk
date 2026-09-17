@@ -107,11 +107,14 @@ def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
             "households": None,
             "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
         }
+    fewer = 0
     for cid, com in commanderies.items():
         stat = households.get(com["nameCh"])
         members = [rows[j] for j in com.get("jurisdictionIds", []) if j in rows]
         if not stat or not stat.get("households") or not members:
             continue
+        if len(members) < int(stat.get("counties") or 0):
+            fewer += 1
         weights = [
             prior.get(str(r["cityLevel"]), 1.0) * max(r["terrainScore"], floor) for r in members
         ]
@@ -127,6 +130,17 @@ def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
             "jurisdictions": len(ordered),
             "withHouseholds": sum(1 for r in ordered if r["households"] is not None),
             "zeroArable": sum(1 for r in ordered if r["arableCells"] == 0),
+            "commanderiesWithFewerCountiesThanSource": fewer,
+        },
+        "limitations": [
+            "보존 단위는 永和五年(140) 郡이다. 타일의 郡이 그 뒤 분할돼 縣이 줄었으면(南陽郡 37城→29縣, 떨어져 나간 "
+            "襄陽·章陵·南鄉郡 縣은 NO_SOURCE_HOUSEHOLDS) 郡 戶數 전부가 남은 縣에 몰린다 — "
+            "counts.commanderiesWithFewerCountiesThanSource 가 그런 郡의 수다.",
+        ],
+        "fieldNotes": {
+            "landCells": "WATER 가 아닌 칸. RIVER 칸을 포함한다.",
+            "wetAdjacentCells": "칸 수가 아니라 맞닿은 변의 수다 — 뭍 칸마다 상하좌우의 물기 있는(WET) 이웃을 센다(한 칸이 최대 4). "
+            "RIVER 칸도 뭍 칸이라 이웃 RIVER 와의 변이 집계된다.",
         },
         "jurisdictions": ordered,
     }
