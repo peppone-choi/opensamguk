@@ -3,15 +3,15 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "52fef8452f0e0f885c8e7277ecb28ae982a4bccd27951db6d83be7513dc67d5a",
-    "migrationSha256": "1e29eaf3d9e515f598aae1b012f6ca20f2b43fae4303591c5b95831a3698e4ba",
-    "hanTilesSha256": "e4a29798a07689435d343f2cb18b7db915055790ca6ce6194db2e034c0773c01",
-    "provinceCityAttributionSha256": "f4c3ab35240db6dae183005fe682dd6a0b558999bc9983c84b01a422a81f379e",
+    "selectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6",
+    "migrationSha256": "2d4aad8395f44a2676b21973d8d3b913cedd1c9979a76c165fb5e3e34387cacc",
+    "hanTilesSha256": "f6e0da0eeabf77764b8f2ea598742ccfd8e0ad4d09d33f9f3a00a8982501339b",
+    "provinceCityAttributionSha256": "befb1ed1e48f28d500d72a9d7e12e66ccf1728ebb67237cd8ef3fe35c73969b6",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "1f0725aaf372b697ea6b9853ae48f7dcb34e1fdeae9b8b71072bc008b47f085b",
-    "cityConstSha256": "8d2b31842c14c0a3fd03aeb988d5d648da5e5352a82b69a2634f2095d9299a23",
+    "worldJsonSha256": "da990c88c3ce1876cef473f2f649da46baa0f9138b78b7ad983b7ec4ac10aa8a",
+    "cityConstSha256": "015c27305a92fa99faf1335f97b5f4723f613e189139aaa118ba68e7348f116b",
     "gateIndexSha256": "307e50ad40121c06fb062a7a400018d1f69dd40f389629904582a7f5f84951a6"
   },
   "routeNodes": [
@@ -2908,7 +2908,7 @@
     {
       "routeNodeKey": "6943bbb8-d81f-43e3-87ab-40fe0bef645a",
       "numericCityId": 579,
-      "physicalPlaceRef": "chgis:v6:cnty:44580"
+      "physicalPlaceRef": "chgis:v6:cnty:44621"
     },
     {
       "routeNodeKey": "fe79d462-5ec3-4af7-be6f-6cf1d80869d5",

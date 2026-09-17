@@ -5,7 +5,7 @@
   "inputs": {
     "decisions": {
       "path": "data/curated/han/cityless-jurisdiction-fold-decisions-v1.json",
-      "sha256": "41ee04dc3e34dd48893ae9ef13ec884d485bb33ad54c1249686211328157b577"
+      "sha256": "b896cfb348ab51d086f6c6a7a47736e08f31ee6c8a253e4da3da27d1702acc18"
     }
   },
   "decisions": [
@@ -82,11 +82,11 @@
       "commanderySeatJurisdictionId": null
     },
     {
-      "sourceJurisdictionId": "44621",
-      "targetJurisdictionId": "44580",
+      "sourceJurisdictionId": "44580",
+      "targetJurisdictionId": "44621",
       "targetRouteNodeCityId": 579,
       "reason": "DUPLICATE_ROUTE_NODE",
-      "basis": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 郡國志 결속 城 579 가 44580 에 서 있고 w2 가 44621 에 城 977 을 또 세워 같은 縣이 두 번 섰다. 郡國志 결속 쪽(579)을 남기고 44621 省을 맞닿은 579 관할에 접는다. UNKNOWN: 讀史方輿紀要 卷068 은 蒼溪의 漢昌을 蕭齊 개치로 적어 治所 점 자체는 巴中 쪽이 맞을 수 있다 — 治所 점 이동은 후속이다.",
+      "basis": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 讀史方輿紀要 卷68 巴州 「漢昌城，今州治…後漢永元中分宕渠北界置漢昌縣」이 後漢 자리를 巴中으로, 蒼溪의 漢昌을 「蕭齊改置」로 가른다. 郡國志 결속 城 579 를 巴中(44621)으로 바로잡고(route-node-location-adjudications-v1), w2 가 44621 에 세웠던 城 977 은 거두며, 蒼溪 관할(44580) 省은 맞닿은 579 관할에 접는다.",
       "commanderySeatJurisdictionId": null
     },
     {
@@ -121,7 +121,7 @@
     "stages": [
       {
         "inputDocumentSha256": "cc12b3d08a15846c719755278b3f902ff21cf15b2e121dec3e1d32e7e71f52a7",
-        "outputDocumentSha256": "638654317cc0034b57feebceeef84b444f5592e38b0a14670b2e90a276fbf1ac",
+        "outputDocumentSha256": "f783d2dc2895976039bd32fef54b67f611dd72892b74776b3ebc0190b2c9b48b",
         "inputCounts": {
           "cities": 1263,
           "seats": 172,
@@ -4560,16 +4560,16 @@
             }
           },
           {
-            "index": 343,
+            "index": 341,
             "record": {
-              "id": "44621",
+              "id": "44580",
               "displayName": "한창현",
               "nameCh": "汉昌县",
               "kind": "COUNTY",
               "commanderyId": "PARENT-0055",
-              "seatPlaceId": "44621",
+              "seatPlaceId": "44580",
               "provinceIds": [
-                "44621"
+                "44580"
               ]
             }
           },
@@ -4851,8 +4851,8 @@
           "87405": [
             "87405"
           ],
-          "44580": [
-            "44580"
+          "44621": [
+            "44621"
           ],
           "70524": [
             "70524",
@@ -4907,8 +4907,8 @@
             "sharedEdges": 7
           },
           {
-            "sourceJurisdictionId": "44621",
-            "targetJurisdictionId": "44580",
+            "sourceJurisdictionId": "44580",
+            "targetJurisdictionId": "44621",
             "sharedEdges": 15
           },
           {

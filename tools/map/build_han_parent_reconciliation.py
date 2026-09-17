@@ -1360,10 +1360,11 @@ def _assert_locked_contract(
         # 2026-09-17: w5 郡國 밖 취락 관할 37곳이 경로 노드로 서면서 郡國 밖 세력 검토 대기 38행 중 35행
         # (5_841칸)이 승인으로 옮겨 973 → 1008, unresolved 165 → 130 · 6_443 → 602 셀로 보존된다.
         "exactApprovedRowCount": 1_008,
-        "exactApprovedCellCount": 106_554,
+        # 巴郡 漢昌(579)을 巴中(44621)으로 바로잡아 그 縣 칸 70 이 승인으로 옮겼다(106_554 → 106_624, 미결 602 → 532).
+        "exactApprovedCellCount": 106_624,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
         "unresolvedRowCount": 130,
-        "unresolvedCellCount": 602,
+        "unresolvedCellCount": 532,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1380,8 +1381,8 @@ def _assert_locked_contract(
         # 2026-09-15: w2 176곳이 미결 행에서 승인 행으로 옮겨가며 진단 대상이 줄었다(판정 규칙 불변).
         # 2026-09-17: 郡國 밖 세력 대기 3행이 기하 제안으로 옮겨 진단에 들어왔다(판정 규칙 불변).
         "singleGroupJun": {"rowCount": 54, "cellCount": 43},
-        "multiGroupJun": {"rowCount": 71, "cellCount": 559},
-        "uniqueNearest": {"rowCount": 123, "cellCount": 602},
+        "multiGroupJun": {"rowCount": 71, "cellCount": 489},
+        "uniqueNearest": {"rowCount": 123, "cellCount": 532},
         "distanceTies": {"rowCount": 2, "cellCount": 0},
     }:
         raise ValueError("locked geometry reconciliation counts changed")

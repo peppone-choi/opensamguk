@@ -415,7 +415,8 @@ def _policy_corrections(policy: JsonObject, current: dict[int, JsonObject], sele
                 raise MaterializationContractError("binding correction policy is malformed")
             corrected[unit_id] = (old_id, "CORRECTED_BINDING_SAME_NODE")
             binding_ids.add(old_id)
-    if len(rows(policy, "legacyLocationCorrections")) != 1:
+    # 2026-09-17: + 579 巴郡 漢昌 蒼溪(蕭齊 개치) → 巴中(讀史方輿紀要 卷68 「漢昌城，今州治」) = 2.
+    if len(rows(policy, "legacyLocationCorrections")) != 2:
         raise MaterializationContractError("location correction policy count drift")
     for correction in rows(policy, "legacyLocationCorrections"):
         old_id, unit_id = number(correction, "oldCityId"), text(correction, "administrativeUnitId")

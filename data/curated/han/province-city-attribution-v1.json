@@ -13,8 +13,8 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "e4a29798a07689435d343f2cb18b7db915055790ca6ce6194db2e034c0773c01",
-    "selectionSha256": "52fef8452f0e0f885c8e7277ecb28ae982a4bccd27951db6d83be7513dc67d5a"
+    "tilesSha256": "f6e0da0eeabf77764b8f2ea598742ccfd8e0ad4d09d33f9f3a00a8982501339b",
+    "selectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6"
   },
   "summary": {
     "provinceCount": 1594,
@@ -4125,13 +4125,13 @@
     {
       "provinceId": "44580",
       "provinceIndex": 341,
-      "jurisdictionId": "44580",
+      "jurisdictionId": "44621",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 579,
       "routeNodeKey": null,
-      "cityPlaceId": "44580",
+      "cityPlaceId": "44621",
       "adjacencyHops": null
     },
     {
@@ -4149,13 +4149,13 @@
     {
       "provinceId": "44621",
       "provinceIndex": 343,
-      "jurisdictionId": "44580",
+      "jurisdictionId": "44621",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 579,
       "routeNodeKey": null,
-      "cityPlaceId": "44580",
+      "cityPlaceId": "44621",
       "adjacencyHops": null
     },
     {

@@ -4994,7 +4994,7 @@
       "commanderyNameCh": "巴郡",
       "reason": "DUPLICATE_ROUTE_NODE",
       "routeNodeCityId": 579,
-      "detail": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 郡國志 결속 城 579 가 44580 에 서 있고 w2 가 44621 에 城 977 을 또 세워 같은 縣이 두 번 섰다. 郡國志 결속 쪽(579)을 남기고 44621 省을 맞닿은 579 관할에 접는다. UNKNOWN: 讀史方輿紀要 卷068 은 蒼溪의 漢昌을 蕭齊 개치로 적어 治所 점 자체는 巴中 쪽이 맞을 수 있다 — 治所 점 이동은 후속이다.",
+      "detail": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 讀史方輿紀要 卷68 巴州 「漢昌城，今州治…後漢永元中分宕渠北界置漢昌縣」이 後漢 자리를 巴中으로, 蒼溪의 漢昌을 「蕭齊改置」로 가른다. 郡國志 결속 城 579 를 巴中(44621)으로 바로잡고(route-node-location-adjudications-v1), w2 가 44621 에 세웠던 城 977 은 거두며, 蒼溪 관할(44580) 省은 맞닿은 579 관할에 접는다.",
       "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
       "withdrawnSourceClaimId": "han-jurisdiction-route-claim-v1-44621",
       "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"

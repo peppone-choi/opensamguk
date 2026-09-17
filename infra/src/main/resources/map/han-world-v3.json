@@ -27079,8 +27079,8 @@
     {
       "id": 579,
       "name": "한창",
-      "x": 231,
-      "y": 271,
+      "x": 246,
+      "y": 267,
       "level": 10,
       "region": 9,
       "max": {
@@ -27118,11 +27118,11 @@
         "isSeat": false,
         "displayName": "파군 한창현"
       },
-      "provinceId": 341,
-      "spatialProvinceId": "44580",
-      "spatialProvinceIndex": 341,
+      "provinceId": 343,
+      "spatialProvinceId": "44621",
+      "spatialProvinceIndex": 343,
       "routeNodeKey": "6943bbb8-d81f-43e3-87ab-40fe0bef645a",
-      "physicalPlaceRef": "chgis:v6:cnty:44580",
+      "physicalPlaceRef": "chgis:v6:cnty:44621",
       "administrativeUnitId": "hhs:113:巴郡:014"
     },
     {

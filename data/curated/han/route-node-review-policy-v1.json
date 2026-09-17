@@ -33,7 +33,7 @@
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "88e88f4fecee05b3cf59e2024e46716689f5e447589127a152b58a5854a3b4ea"
+      "sha256": "e8e1bd5c2881973ff38241a34c565e8a1a01c285454485d91a3b1af3d8657896"
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
@@ -45,7 +45,7 @@
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
-      "sha256": "6dddbdb9f474160977f2f9f88e95ca49328a60e3ecc7678b68d3d3c0dc3a6e82"
+      "sha256": "950f9bf315de9532ba4f32e650b00dd0979ed135adfb49ded7bbe66dae60478b"
     },
     "strategicSiteRouteClaims": {
       "path": "data/curated/han/route-node-strategic-site-claims-v1.json",
@@ -167,6 +167,13 @@
       "oldCityId": 627,
       "oldPhysicalPlaceId": "chgis:v6:cnty:70523",
       "selectedPhysicalPlaceId": "chgis:v6:cnty:70524"
+    },
+    {
+      "administrativeUnitId": "hhs:113:巴郡:014",
+      "disposition": "CORRECTED_LOCATION_SAME_NODE",
+      "oldCityId": 579,
+      "oldPhysicalPlaceId": "chgis:v6:cnty:44580",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44621"
     }
   ],
   "legacySameNodeCorrections": [

@@ -1,7 +1,7 @@
 {
  "schemaVersion": 1,
  "artifactId": "han-commandery-supply-links-v1",
- "note": "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, **보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051.",
+ "note": "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, **보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051. canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다.",
  "generator": "tools/map/build_commandery_supply_links.py",
  "excludedByMisbinding": [
   "上郡:정양(上郡)",
@@ -12,12 +12,129 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 62,
-  "medianKm": 39.4,
-  "p90Km": 130.8,
-  "maxKm": 283.0
+  "linkCount": 74,
+  "medianKm": 47.6,
+  "p90Km": 256.6,
+  "maxKm": 1049.3
  },
  "links": [
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 38,
+   "toProvinceIndex": 186,
+   "fromCityName": "동부후관",
+   "toCityName": "번옹",
+   "distanceKm": 693.7,
+   "source": "後漢書 卷33 鄭弘傳 「舊交阯七郡貢獻轉運，皆從東冶汎海而至」 — 東冶(東部侯官) ↔ 番禺"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 44,
+   "toProvinceIndex": 1506,
+   "fromCityName": "오(吳郡)",
+   "toCityName": "답씨",
+   "distanceKm": 914.2,
+   "source": "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 44,
+   "toProvinceIndex": 1523,
+   "fromCityName": "오(吳郡)",
+   "toCityName": "안평구",
+   "distanceKm": 1049.3,
+   "source": "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 72,
+   "toProvinceIndex": 1460,
+   "fromCityName": "산음",
+   "toCityName": "이주",
+   "distanceKm": 779.6,
+   "source": "讀史方輿紀要 卷94 인용 後漢書 東夷傳 「會稽海外有夷洲、亶洲」 + 三國志 吳書 孫權傳 黃龍二年 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 72,
+   "toProvinceIndex": 1461,
+   "fromCityName": "산음",
+   "toCityName": "유구",
+   "distanceKm": 812.7,
+   "source": "隋書 卷81 東夷 流求國 「流求國，居海島之中，當建安郡東，水行五日而至」 — 建安郡은 260년 會稽에서 분치됐으므로 220년 시점의 관할은 會稽郡이다"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 197,
+   "toProvinceIndex": 198,
+   "fromCityName": "서문",
+   "toCityName": "주애",
+   "distanceKm": 50.5,
+   "source": "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 715,
+   "toProvinceIndex": 1506,
+   "fromCityName": "황",
+   "toCityName": "답씨",
+   "distanceKm": 228.5,
+   "source": "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1428,
+   "toProvinceIndex": 1449,
+   "fromCityName": "대방",
+   "toCityName": "구야국",
+   "distanceKm": 456.6,
+   "source": "三國志 卷30 倭人 「從郡至倭，循海岸水行，歷韓國…到其北岸狗邪韓國」 — 帶方 ↔ 狗邪韓國"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1436,
+   "toProvinceIndex": 1439,
+   "fromCityName": "실직국",
+   "toCityName": "우산국",
+   "distanceKm": 152.4,
+   "source": "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1445,
+   "toProvinceIndex": 1447,
+   "fromCityName": "벽비리국",
+   "toCityName": "주호",
+   "distanceKm": 256.6,
+   "source": "三國志 魏書30 韓 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」 — 지도에 馬韓 자체는 없고 馬韓 소국만 있어 그중 최근접(257km)인 辟卑離國에 붙인다"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1449,
+   "toProvinceIndex": 1454,
+   "fromCityName": "구야국",
+   "toCityName": "대마국",
+   "distanceKm": 120.3,
+   "source": "三國志 卷30 倭人 「始渡一海，千餘里至對馬國」"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1454,
+   "toProvinceIndex": 1455,
+   "fromCityName": "대마국",
+   "toCityName": "일대국",
+   "distanceKm": 62.5,
+   "source": "三國志 卷30 倭人 「又南渡一海千餘里，名曰瀚海，至一大國」"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 1455,
+   "toProvinceIndex": 1456,
+   "fromCityName": "일대국",
+   "toCityName": "말로국",
+   "distanceKm": 42.0,
+   "source": "三國志 卷30 倭人 「又渡一海，千餘里至末盧國」"
+  },
   {
    "canonicalGroup": "上郡",
    "fromProvinceIndex": 475,
@@ -161,6 +278,14 @@
    "fromCityName": "경양",
    "toCityName": "음반",
    "distanceKm": 283.0
+  },
+  {
+   "canonicalGroup": "巴郡",
+   "fromProvinceIndex": 338,
+   "toProvinceIndex": 342,
+   "fromCityName": "낭중",
+   "toCityName": "한수(巴郡)",
+   "distanceKm": 62.4
   },
   {
    "canonicalGroup": "平原郡",
@@ -355,14 +480,6 @@
    "distanceKm": 78.0
   },
   {
-   "canonicalGroup": "狗邪國",
-   "fromProvinceIndex": 1449,
-   "toProvinceIndex": 1454,
-   "fromCityName": "구야국",
-   "toCityName": "대마국",
-   "distanceKm": 120.3
-  },
-  {
    "canonicalGroup": "益州郡",
    "fromProvinceIndex": 414,
    "toProvinceIndex": 425,
@@ -401,14 +518,6 @@
    "fromCityName": "서안평",
    "toCityName": "안평구",
    "distanceKm": 5.8
-  },
-  {
-   "canonicalGroup": "邪馬壹國",
-   "fromProvinceIndex": 1455,
-   "toProvinceIndex": 1456,
-   "fromCityName": "일대국",
-   "toCityName": "말로국",
-   "distanceKm": 42.0
   },
   {
    "canonicalGroup": "邪馬壹國",

@@ -112,6 +112,28 @@ def build() -> dict[str, Any]:
 
     adjacency = _grid_adjacency(tiles)
     links: list[dict[str, Any]] = []
+    # 뱃길(ADR-LITE-056) — 사료로 확인한 바닷길은 **보급**도 싣는다(2026-09-17 「해로도 보급망이야」).
+    # 두 城의 省을 잇고, 郡 내부 보급선보다 먼저 격자 인접에 얹어 郡 간선이 이미 이어진 조각을 또 잇지 않게 한다.
+    province_by_city = {city["id"]: city.get("provinceId") for city in runtime["cities"]}
+    name_by_city = {city["id"]: city["name"] for city in runtime["cities"]}
+    for route in runtime.get("seaRoutes", []):
+        a, b = province_by_city.get(route["from"]), province_by_city.get(route["to"])
+        if not isinstance(a, int) or not isinstance(b, int) or a == b:
+            raise ValueError(f"sea route {route['from']}↔{route['to']} has no distinct provinces")
+        adjacency[a].add(b)
+        adjacency[b].add(a)
+        tile_a = tile_by_id[next(c for c in runtime["cities"] if c["id"] == route["from"])["physicalPlaceRef"].split(":")[-1]]
+        tile_b = tile_by_id[next(c for c in runtime["cities"] if c["id"] == route["to"])["physicalPlaceRef"].split(":")[-1]]
+        low, high = (a, b) if a < b else (b, a)
+        links.append({
+            "canonicalGroup": "SEA_ROUTE",
+            "fromProvinceIndex": low,
+            "toProvinceIndex": high,
+            "fromCityName": name_by_city[route["from"] if low == a else route["to"]],
+            "toCityName": name_by_city[route["to"] if low == a else route["from"]],
+            "distanceKm": round(_distance_km((tile_a["lon"], tile_a["lat"]), (tile_b["lon"], tile_b["lat"])), 1),
+            "source": route["source"],
+        })
     for jun, provinces in sorted(members.items()):
         scope = set(provinces)
         while True:
@@ -160,7 +182,8 @@ def build() -> dict[str, Any]:
         "artifactId": "han-commandery-supply-links-v1",
         "note": (
             "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, "
-            "**보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051."
+            "**보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051. "
+            "canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다."
         ),
         "generator": "tools/map/build_commandery_supply_links.py",
         "excludedByMisbinding": sorted(f"{group}:{name}" for group, name in excluded_names),

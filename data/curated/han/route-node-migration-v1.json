@@ -6579,7 +6579,7 @@
       "routeNodeKey": "83167b9e-6089-41b7-b43a-02782d23a982"
     },
     {
-      "disposition": "RETAINED_SAME_NODE",
+      "disposition": "CORRECTED_LOCATION_SAME_NODE",
       "newCityId": 579,
       "oldCityId": 579,
       "oldNodeFingerprint": "sha256:21d62792f0bd43f5516870bd357f8e6a6fb03f441a285179facf02d564b3f506",
@@ -7996,14 +7996,14 @@
   "schemaVersion": 1,
   "sourceCandidateSha256": "81411b35e0fe36096522ddd5b05cb50bbd2e5e9e43a875e6674b91508e6f3447",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "52fef8452f0e0f885c8e7277ecb28ae982a4bccd27951db6d83be7513dc67d5a",
+  "sourceSelectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6",
   "summary": {
     "appendedIdentityCount": 353,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,
     "parentChangeCount": 114,
-    "physicalPlaceCorrectionCount": 1,
+    "physicalPlaceCorrectionCount": 2,
     "routeNodeReplacementCount": 101,
     "rowCount": 780,
     "seatRoleChangeCount": 102
