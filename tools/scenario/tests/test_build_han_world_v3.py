@@ -256,8 +256,10 @@ class HanWorldV3Test(unittest.TestCase):
                 node["seatRole"] == "COMMANDERY_SEAT",
                 city["meta"]["isSeat"],
             )
+        # 2026-09-17(ADR-LITE-056): 安平口 거점 관할을 거점 원장의 anchorCounty(遼東郡 西安平縣)로 옮겼다.
+        expected_reassigned.add(("curated:strategic-site-v1:ss-anpingkou", "卒本", "遼東郡"))
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(1098, len(actual))
+        self.assertEqual(1133, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -397,10 +399,15 @@ class HanWorldV3Test(unittest.TestCase):
         county_grades = {"영현", "장현"}
         # 縣이 아닌 거점은 기존 사다리 수 1·진 2·관 3 에 선다(ADR-LITE-052).
         site_grades = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
-        seats = counties = sites = 0
+        seats = counties = sites = settlements = 0
         for city in world["cities"]:
             name = levels[city["level"] - 1]
-            if node_class[city["id"]] in site_grades:
+            if node_class[city["id"]] == "SETTLEMENT_NODE":
+                # 郡國 밖 취락(w5): 치소는 戶數 사다리 또는 이민족 '이', 치소 아닌 취락은 縣이 아니므로 '소'.
+                expected = (commandery_grades | {"이"}) if seat_role[city["id"]] == "COMMANDERY_SEAT" else {"소"}
+                self.assertIn(name, expected, city["name"])
+                settlements += 1
+            elif node_class[city["id"]] in site_grades:
                 self.assertEqual(site_grades[node_class[city["id"]]], name, city["name"])
                 sites += 1
             elif seat_role[city["id"]] == "COMMANDERY_SEAT":
@@ -416,11 +423,17 @@ class HanWorldV3Test(unittest.TestCase):
             )
         # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
         self.assertEqual(99, seats)
+        self.assertEqual(37, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
-        self.assertEqual(926, counties)  # + 2026-09-16 河南尹 平陰(1098) 縣
+        # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
+        self.assertEqual(924, counties)
         self.assertEqual(73, sites)
-        # '이'(이민족)는 v3 에 남지 않는다 — 選定 원장이 郡國 밖 세력을 통째로 뺐다.
-        self.assertNotIn(4, {city["level"] for city in world["cities"]})
+        # '이'(이민족)는 郡國 밖 이민족 거점 7곳만 단다(2026-09-17 w5) — 漢 縣에는 한 곳도 없다.
+        self.assertEqual(
+            {"external:v1:X058", "external:v1:X059", "external:v1:X060", "external:v1:X061",
+             "external:v1:X062", "external:v1:X063", "external:v1:X064"},
+            {city["physicalPlaceRef"] for city in world["cities"] if city["level"] == 4},
+        )
 
     def test_22_commanderies_still_have_no_seat_in_the_world(self) -> None:
         """아직 못 고친 결함을 숫자로 못박아 둔다.
@@ -446,8 +459,9 @@ class HanWorldV3Test(unittest.TestCase):
             if "COMMANDERY_SEAT" not in roles
         )
         # 2026-09-15 거점 편입으로 郡 3 곳(卒本·宜都·蘄春)이 거점 城만 갖고 더해져 126 / 27 이다.
-        self.assertEqual(126, len(by_parent))
-        self.assertEqual(27, len(seatless))
+        # 2026-09-17: 郡國 밖 취락 37곳(w5)이 제 세력 이름 29개를 郡으로 더하고, 卒本·鮮卑가 치소 城을 받아 155 / 25 다.
+        self.assertEqual(155, len(by_parent))
+        self.assertEqual(25, len(seatless))
         self.assertIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
 
@@ -532,8 +546,6 @@ class DisplayNameTest(unittest.TestCase):
                 (736, "교지군", "교지군 용편현"),
                 (745, "일남군", "일남군 서권현"),
                 # 같은 郡 같은 글자 두 縣 — CHGIS 가 자리를 둘 적었다. 앞선 城은 표기를 지키고 새 城만 가른다.
-                (977, "한창(巴郡)", "파군 한창현(汉昌)"),
-                (989, "부평(北地郡)", "북지군 부평현(富平)"),
                 # 같은 한글 독음의 두 거점(渦口·瓦口) — 거점은 郡을 앞에 세우지 않아 漢字 어간으로만 갈린다.
                 (1039, "와구(九江郡)", "와구(渦口)"),
                 (1080, "와구(巴郡)", "와구(瓦口)"),
@@ -545,8 +557,9 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(1098, len(world["cities"]))
-        self.assertEqual(1029, len(changed))  # + 2026-09-16 河南尹 平陰(1098)
+        self.assertEqual(1133, len(world["cities"]))
+        # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
+        self.assertEqual(1028, len(changed))
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""
