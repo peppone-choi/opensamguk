@@ -323,7 +323,9 @@ def main():
         'mapCode': args.map_code,
         'generator': 'tools/map/build_elevation_grid.py',
         'note': ('표고는 지형 분류와 독립된 두 번째 축이다. 지형 클래스는 Natural Earth '
-                 '지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 서로를 보정하지 않는다.'),
+                 '지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 표고는 지형에서 보정받지 않는다. '
+                 '지형은 검토 원장(lowland-terrain-decisions-v1)이 이름을 적은 저지에 한해 '
+                 '이 표고로 고친다(ADR-LITE-058).'),
         # --from-metres 면 받아 온 적이 없다. 기존 매니페스트의 출처 블록을 그대로
         # 옮긴다 — 오늘 날짜를 적으면 하지 않은 취득을 기록하는 것이 된다.
         'source': source_meta if source_meta is not None else {

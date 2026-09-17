@@ -1149,3 +1149,50 @@
   Amendment(2026-09-17), `CLAUDE.md` 5스탯 문장, ADR-LITE-056 정정 노트, `docs/superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md`(삭제),
   대체 배너 7건(plans 08-27 포트폴리오·명령 기반·08-22 마스터, specs 08-27 rebaseline·contract-freeze·07-12 v2 product·09-06 province-front),
   `docs/design/README.md`·`roadmap.md` 의 계획 링크. 코드 변경이 없으므로 되돌릴 구현은 없다.
+
+## ADR-LITE-058 — 산으로 칠해진 이름 있는 저지를 표고로 되돌리고, 1133 릴리스를 제자리에서 재핀한다 (2026-09-17)
+
+- Context: `han-tiles.json` 의 지형 클래스는 표고가 아니라 Natural Earth 지리구역 폴리곤에서 온다
+  (`build_terrain_grid.REGION_TERRAIN`). 폴리곤은 거칠고 `Range/mtn` 이 `Plain` 위에 덮이므로 산맥 폴리곤 안의
+  분지·산전 평원이 통째로 MOUNTAIN 이 됐다. 실측(origin/main `b23e7e14`): 雒陽縣 22칸이 전부 MOUNTAIN,
+  PLAIN+BASIN 0칸인 관할 195/1,133(우세 MOUNTAIN 140·PLATEAU 45·DESERT 8·RIVER 2), 그 가운데 郡治 31곳.
+  縣 경제 입력(#777)이 이 클래스를 읽으면 洛陽 분지가 산악 縣으로 계산된다.
+- Decision: han-tiles 를 재생성하지 않는다(판정이 얹힌 정본이다). 마지막 단계
+  `tools/map/reclassify_han_lowland_terrain.py` 가 검토 원장 `data/curated/han/lowland-terrain-decisions-v1.json`
+  이 **이름을 적은 저지 19곳**(伊洛·太原·上黨·臨汾·南陽 盆地, 河內·關中·太行東麓·汝潁·隨棗·淮南·鄂東·江漢西緣·
+  鄱陽·皖西南 平原, 紅河·淸化乂安·廣平廣治 해안평원)의 경위도 상자 안에서만 MOUNTAIN·HILL 칸을 PLAIN/BASIN 으로
+  바꾼다. 전역 DEM 규칙은 쓰지 않는다(사용자 결정) — Range 폴리곤 오탐을 검토 없이 받아들이게 된다.
+- Decision: 칸을 가르는 축은 지형 클래스와 독립인 커밋된 ETOPO1 표고(`han-world-v3-metres.png`)다. 기준은
+  3×3 기복 ≤ 89 m 이고, 89 는 지은 임계값이 아니라 실측 기준선이다(NE Plain/Lowland 폴리곤 안 PLAIN 23,900칸의
+  p90; 같은 측정에서 Range∩MOUNTAIN 의 p50 은 371 m; `--measure-baseline` 이 다시 잰다). 단위별 표고 상한은
+  출처가 적은 바닥 고도의 윗값만 옮기고, 출처가 말하지 않은 단위(6곳)에는 두지 않는다.
+- Decision: DESERT·PLATEAU·물은 건드리지 않는다. 사막은 원래 평평해 기복으로 평지와 못 가르고, 고원은 정당한
+  클래스다. owner·seatOwner·parentOwner·모든 행 표는 그대로다. 런타임(`HanStrategicTopologyJson`)은 지형을
+  마른 땅/물로만 읽으므로 省 인접·수계·`han-world-v3.json`·Kotlin 상수는 바이트 단위로 그대로다(실측).
+- Result: 1,332칸. 雒陽縣은 22칸 중 8칸이 BASIN 이 되고 14칸(邙山·萬安山 기슭)은 MOUNTAIN 으로 남는다. 0칸 관할 195 → 169, 郡治 31 → 25(雒陽·界休·長子·弋陽·陽安·西卷이 풀렸다).
+- Decision: `han-world-v3-1133` 을 **제자리에서 재핀**한다(사용자 결정). 城·省·관할·인접·좌표가 그대로라 새
+  릴리스가 아니고, 리졸버가 city id 집합으로 variant 를 고르므로 병행 식별자는 불가능하다(ADR-LITE-054 와 같은
+  이유). 바뀐 blob 6개(han-tiles·수계 위상·수계 원장·전략 매니페스트·월드 매니페스트·시나리오 省 소유)와
+  `Han1133Artifacts.CATALOG_SHA256` 가 함께 움직인다.
+- Consequences: blob 해시가 `StrategicTopology.contentHash` 입력이라 1133 의 contentHash 가 바뀐다. **1133 으로
+  pin 이 박힌 월드는 topology_hash 가 어긋나 로드에 실패한다 — 배포 전에 월드 리셋이 필요하다.**
+- Not done (같은 증상, 다른 원인): 鄴·安邑·始平·元氏처럼 여전히 0칸인 평지 郡治는 지형 오분류가 아니라 **省
+  기하가 제자리에서 10–17칸(약 50–90 km) 밀려** 실제 산지 위에 서 있는 것이다(省 중심 vs 城 경위도 투영 실측:
+  p50 4.9칸·p90 17.4칸). 표고로는 못 고치고 owner 를 옮겨야 하므로 이 결정의 범위 밖이다. 沮·西城·魚復·邛都·
+  金城·居延 등은 정말 산지·고원·사막이다. 검토에서 뺀 후보 7곳은 결정 원장 `reviewedAndExcluded` 에 사유와 함께 있다.
+- Not done (교차 비평 지적): `adjacency.commandery` 의 `cross`/`ford` 는 `LAND_COST` A* 로 옛 지형에서 구운 값이고
+  이 단계는 그것을 다시 굽지 않는다. 새 지형으로 다시 재면 7개 간선이 달라진다(河南尹–潁川·河南尹–陳留 RIVER→LAND,
+  5개는 ford 위치 이동). 런타임은 이 필드를 읽지 않는다(소비자는 `build_tile_grid` 스키마 검증뿐). 앞 단계 검사가
+  이 단계를 벗기고 돌기 때문에 어느 게이트도 이 낡음을 보지 못한다 — 후속 이슈로 남긴다. `_meta.note` 의
+  「지형·소유는 렌더러 산출물 그대로다」도 이제 지형에 대해 거짓이지만 생성기 소유 필드라 건드리지 않았다.
+- Residual risk: 汝潁平原 두 단위·太行東麓·紅河·淸化乂安·廣平廣治 해안은 출처에 바닥 고도가 없어 상자 안을 가르는 것이
+  기복 기준뿐이다(재분류된 칸 최고 176 m). 현대 지형(ETOPO1)이라 후한대 하도·해안선 변화는 반영하지 않는다.
+- Chain note: 이 단계의 핀은 접기 단계 출력에 묶여 있다. `fold_cityless_jurisdictions.py --prepare` 가 이 원장도 같이
+  다시 쓴다. 핀이 안 맞는 문서에 이 도구를 돌리면 조용히 넘어가지 않고 실패한다(`--source-is-upstream` 로만 우회).
+  카탈로그 `sourceBaseCommit` 은 이 작업이 출발한 main 커밋이다 — squash 머지로 사라질 브랜치 커밋을 적지 않는다.
+  릴리스의 정체성은 blob 해시다.
+- Gate: CI `python3 tools/map/reclassify_han_lowland_terrain.py --check`(벗겼다 다시 얹어 terrain 재현, owner 이동·
+  결정 원장·표고 PNG 해시 변경 검출; 변조 입력으로 적색 확인). 앞 단계 검사는 `folding.peel()`/`stage_for()` 가
+  이 단계를 먼저 벗긴다.
+- Reversal: `--source` 로 벗긴 문서를 되쓰고(`peel`), 두 원장·도구·CI 단계를 지운 뒤 같은 절차로 사슬과 1133 을
+  다시 재핀한다.

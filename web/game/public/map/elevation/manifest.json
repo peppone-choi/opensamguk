@@ -3,7 +3,7 @@
  "artifactId": "han-elevation-v1",
  "mapCode": "han-world-v3",
  "generator": "tools/map/build_elevation_grid.py",
- "note": "표고는 지형 분류와 독립된 두 번째 축이다. 지형 클래스는 Natural Earth 지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 서로를 보정하지 않는다.",
+ "note": "표고는 지형 분류와 독립된 두 번째 축이다. 지형 클래스는 Natural Earth 지리구역 폴리곤에서, 표고는 ETOPO1 에서 온다. 표고는 지형에서 보정받지 않는다. 지형은 검토 원장(lowland-terrain-decisions-v1)이 이름을 적은 저지에 한해 이 표고로 고친다(ADR-LITE-058).",
  "source": {
   "dataset": "etopo180",
   "title": "NOAA NCEI ETOPO1 Ice Surface, 1 arc-minute",

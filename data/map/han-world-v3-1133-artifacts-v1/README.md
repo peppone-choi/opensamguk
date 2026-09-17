@@ -15,3 +15,13 @@ What changed from 1098 — no province is left without a city-bearing jurisdicti
 Provinces stay 1,594 and province indices are unchanged; jurisdictions 1,144 → 1,133; every province resolves to its own jurisdiction's city (`province-city-attribution-v1`: 1,594 `OWN_COUNTY_SEAT`).
 
 Runtime loading verifies the pinned catalog hash, complete expected path set and every raw/compressed hash and length before the strategic loader validates cross-file identity and topology. World selection must use the complete city roster plus all persisted spatial pins, never only the city count.
+
+## 2026-09-17 lowland terrain re-pin (ADR-LITE-058)
+
+Re-pinned in place by user decision. City, province and jurisdiction identities, owner grids, adjacency, coordinates, `han-world-v3.json` and the Kotlin constant snapshots are byte-identical; only dry-land terrain classes changed (1,332 MOUNTAIN/HILL cells inside 19 named lowlands became PLAIN/BASIN, `data/curated/han/lowland-terrain-decisions-v1.json`). A parallel identifier is impossible because the resolver selects a variant by its city-id set.
+
+Six blobs moved together with `catalog.json` and `Han1133Artifacts.CATALOG_SHA256`: `han-tiles.json`, `han-water-topology-v1.json`, `water-topology-adjudications-v1.json`, `han-strategic-topology-manifest-v1.json`, `han-world-v3-manifest-v1.json` (each only re-pins the han-tiles hash) and `han-scenario-province-ownership-v1.json` (`mapSha256`). Blobs are gzip level 9, mtime 0; the eight untouched blobs were reproduced byte-for-byte with the same method before the six were written.
+
+`sourceBaseCommit` is the main commit this work started from, not a branch commit that a squash merge would orphan; blob hashes are the identity. The commandery `cross`/`ford` annotations inside han-tiles were not re-derived for the new terrain (ADR-LITE-058, Not done).
+
+Cost: blob hashes feed `StrategicTopology.contentHash`, so a world already pinned to 1133 fails to load until it is reset.
