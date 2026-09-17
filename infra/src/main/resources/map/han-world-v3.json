@@ -48,13 +48,8 @@
       },
       "connections": [
         4,
-        5,
-        6,
         23,
-        49,
-        600,
         769,
-        858,
         859,
         860,
         861
@@ -196,6 +191,7 @@
       },
       "connections": [
         1,
+        5,
         7,
         23,
         858,
@@ -241,11 +237,14 @@
         "wall": 1000
       },
       "connections": [
-        1,
+        4,
+        6,
         13,
         49,
         75,
         600,
+        858,
+        859,
         862,
         973
       ],
@@ -289,7 +288,7 @@
         "wall": 1000
       },
       "connections": [
-        1,
+        5,
         49
       ],
       "meta": {
@@ -481,8 +480,8 @@
         17,
         19,
         80,
-        631,
-        989
+        627,
+        631
       ],
       "meta": {
         "jun": "우부풍",
@@ -626,10 +625,10 @@
         11,
         49,
         76,
+        627,
         769,
         860,
-        862,
-        989
+        862
       ],
       "meta": {
         "jun": "우부풍",
@@ -817,7 +816,7 @@
       "connections": [
         10,
         19,
-        989
+        627
       ],
       "meta": {
         "jun": "좌풍익",
@@ -910,8 +909,8 @@
         17,
         20,
         70,
+        627,
         860,
-        989,
         1044
       ],
       "meta": {
@@ -958,9 +957,9 @@
         21,
         70,
         71,
+        627,
         772,
-        773,
-        989
+        773
       ],
       "meta": {
         "jun": "좌풍익",
@@ -2334,7 +2333,6 @@
         "wall": 1000
       },
       "connections": [
-        1,
         5,
         6,
         13,
@@ -2661,10 +2659,7 @@
       },
       "connections": [
         680,
-        704,
-        833,
-        834,
-        835
+        1133
       ],
       "meta": {
         "jun": "오원군",
@@ -3776,7 +3771,8 @@
         "wall": 1000
       },
       "connections": [
-        10
+        10,
+        627
       ],
       "meta": {
         "jun": "우부풍",
@@ -7664,7 +7660,6 @@
         191,
         194,
         195,
-        196,
         201
       ],
       "meta": {
@@ -8980,6 +8975,7 @@
       },
       "connections": [
         163,
+        194,
         195,
         196,
         198,
@@ -9122,6 +9118,7 @@
         161,
         163,
         190,
+        191,
         196,
         894
       ],
@@ -9210,7 +9207,6 @@
         "wall": 1000
       },
       "connections": [
-        163,
         190,
         191,
         194,
@@ -10994,7 +10990,6 @@
         236,
         253,
         260,
-        277,
         285,
         839
       ],
@@ -11880,8 +11875,8 @@
         234,
         260,
         261,
-        277,
-        281
+        281,
+        285
       ],
       "meta": {
         "jun": "동군",
@@ -13007,13 +13002,10 @@
         "wall": 4000
       },
       "connections": [
-        234,
-        253,
         278,
         279,
         281,
         284,
-        285,
         872,
         903
       ],
@@ -13201,6 +13193,7 @@
         261,
         277,
         279,
+        285,
         293,
         903
       ],
@@ -13385,8 +13378,9 @@
       },
       "connections": [
         234,
+        253,
         254,
-        277,
+        281,
         282,
         839,
         903
@@ -15058,6 +15052,7 @@
         355,
         378,
         379,
+        382,
         392
       ],
       "meta": {
@@ -16267,7 +16262,6 @@
         269,
         352,
         353,
-        378,
         382,
         393,
         394,
@@ -16636,7 +16630,7 @@
       },
       "connections": [
         321,
-        378,
+        382,
         392,
         919
       ],
@@ -16727,9 +16721,9 @@
         350,
         351,
         359,
-        368,
         371,
         372,
+        917,
         918
       ],
       "meta": {
@@ -17236,12 +17230,11 @@
       },
       "connections": [
         356,
-        357,
         358,
         371,
         374,
-        917,
-        918
+        790,
+        917
       ],
       "meta": {
         "jun": "동래군",
@@ -17376,7 +17369,8 @@
         350,
         356,
         357,
-        368
+        368,
+        917
       ],
       "meta": {
         "jun": "동래군",
@@ -17688,14 +17682,9 @@
         165,
         321,
         334,
-        347,
-        355,
         365,
         379,
-        380,
-        381,
-        382,
-        919
+        380
       ],
       "meta": {
         "jun": "낙안국",
@@ -17740,7 +17729,8 @@
         321,
         378,
         380,
-        381
+        381,
+        382
       ],
       "meta": {
         "jun": "낙안국",
@@ -17829,7 +17819,6 @@
       },
       "connections": [
         340,
-        378,
         379,
         380,
         382,
@@ -17875,11 +17864,14 @@
         "wall": 1000
       },
       "connections": [
+        321,
         340,
         347,
         353,
-        378,
-        381
+        355,
+        379,
+        381,
+        919
       ],
       "meta": {
         "jun": "낙안국",
@@ -19228,12 +19220,14 @@
         "wall": 1500
       },
       "connections": [
-        412,
         413,
         417,
+        423,
         427,
         436,
-        438
+        438,
+        469,
+        1008
       ],
       "meta": {
         "jun": "남양군",
@@ -19275,19 +19269,14 @@
         "wall": 5000
       },
       "connections": [
-        411,
         413,
         414,
-        423,
         427,
         430,
         431,
         433,
         437,
-        438,
-        469,
-        920,
-        1008
+        920
       ],
       "meta": {
         "jun": "남양군",
@@ -19797,7 +19786,7 @@
       },
       "connections": [
         3,
-        412,
+        411,
         469,
         1008
       ],
@@ -20502,7 +20491,6 @@
       },
       "connections": [
         411,
-        412,
         417,
         597,
         1008
@@ -21964,7 +21952,7 @@
       },
       "connections": [
         3,
-        412,
+        411,
         413,
         421,
         423
@@ -23506,12 +23494,12 @@
         "wall": 1000
       },
       "connections": [
-        506,
         937,
         939,
         941,
         1009,
-        1010
+        1010,
+        1130
       ],
       "meta": {
         "jun": "단양군",
@@ -23694,12 +23682,12 @@
       },
       "connections": [
         499,
-        502,
         503,
         511,
         936,
         937,
-        939
+        939,
+        1130
       ],
       "meta": {
         "jun": "단양군",
@@ -25109,7 +25097,9 @@
         944,
         949,
         951,
-        952
+        952,
+        1125,
+        1126
       ],
       "meta": {
         "jun": "회계군",
@@ -26691,7 +26681,6 @@
         579,
         604,
         618,
-        977,
         1000,
         1080
       ],
@@ -26926,10 +26915,10 @@
         570,
         573,
         577,
+        579,
         970,
         971,
         974,
-        977,
         1080
       ],
       "meta": {
@@ -27090,8 +27079,8 @@
     {
       "id": 579,
       "name": "한창",
-      "x": 231,
-      "y": 271,
+      "x": 246,
+      "y": 267,
       "level": 10,
       "region": 9,
       "max": {
@@ -27112,10 +27101,12 @@
       },
       "connections": [
         570,
+        575,
         580,
         585,
+        593,
+        970,
         976,
-        977,
         1000
       ],
       "meta": {
@@ -27127,11 +27118,11 @@
         "isSeat": false,
         "displayName": "파군 한창현"
       },
-      "provinceId": 341,
-      "spatialProvinceId": "44580",
-      "spatialProvinceIndex": 341,
+      "provinceId": 343,
+      "spatialProvinceId": "44621",
+      "spatialProvinceIndex": 343,
       "routeNodeKey": "6943bbb8-d81f-43e3-87ab-40fe0bef645a",
-      "physicalPlaceRef": "chgis:v6:cnty:44580",
+      "physicalPlaceRef": "chgis:v6:cnty:44621",
       "administrativeUnitId": "hhs:113:巴郡:014"
     },
     {
@@ -27533,12 +27524,12 @@
         "wall": 5000
       },
       "connections": [
-        589,
         612,
         764,
         766,
         767,
-        984
+        984,
+        1129
       ],
       "meta": {
         "jun": "영창군",
@@ -27580,12 +27571,11 @@
         "wall": 1500
       },
       "connections": [
-        588,
         624,
         764,
         765,
         766,
-        984
+        1129
       ],
       "meta": {
         "jun": "영창군",
@@ -27767,13 +27757,13 @@
         "wall": 2000
       },
       "connections": [
+        579,
         596,
         598,
         648,
         768,
         970,
         976,
-        977,
         1093
       ],
       "meta": {
@@ -28012,7 +28002,8 @@
         976,
         985,
         1092,
-        1093
+        1093,
+        1128
       ],
       "meta": {
         "jun": "한중군",
@@ -28101,7 +28092,6 @@
         "wall": 1000
       },
       "connections": [
-        1,
         5,
         75,
         594,
@@ -29366,12 +29356,20 @@
         "wall": 2000
       },
       "connections": [
+        10,
+        13,
+        17,
+        19,
+        20,
+        80,
         628,
         629,
         630,
         704,
         772,
-        833
+        833,
+        860,
+        1044
       ],
       "meta": {
         "jun": "북지군",
@@ -29508,8 +29506,7 @@
         627,
         629,
         631,
-        772,
-        989
+        772
       ],
       "meta": {
         "jun": "북지군",
@@ -30026,10 +30023,9 @@
         637,
         638,
         647,
-        657,
         659,
         770,
-        1016
+        1127
       ],
       "meta": {
         "jun": "장액군",
@@ -30305,7 +30301,8 @@
         657,
         770,
         833,
-        987
+        987,
+        1127
       ],
       "meta": {
         "jun": "무위군",
@@ -30353,7 +30350,8 @@
         768,
         985,
         1055,
-        1057
+        1057,
+        1128
       ],
       "meta": {
         "jun": "무도군",
@@ -30763,7 +30761,6 @@
         "wall": 1000
       },
       "connections": [
-        641,
         647,
         655,
         656,
@@ -30771,7 +30768,8 @@
         661,
         663,
         987,
-        1016
+        1016,
+        1127
       ],
       "meta": {
         "jun": "금성군",
@@ -30861,7 +30859,8 @@
         641,
         656,
         657,
-        1016
+        1016,
+        1127
       ],
       "meta": {
         "jun": "금성군",
@@ -31837,7 +31836,8 @@
         "wall": 2000
       },
       "connections": [
-        56
+        56,
+        1133
       ],
       "meta": {
         "jun": "오원군",
@@ -32819,7 +32819,8 @@
         834,
         835,
         992,
-        1007
+        1007,
+        1133
       ],
       "meta": {
         "jun": "안문군",
@@ -32864,7 +32865,7 @@
         700,
         710,
         835,
-        1024
+        1132
       ],
       "meta": {
         "jun": "안문군",
@@ -32954,11 +32955,11 @@
         "wall": 1000
       },
       "connections": [
-        56,
         627,
         772,
         833,
-        834
+        834,
+        1133
       ],
       "meta": {
         "jun": "상군",
@@ -33237,7 +33238,7 @@
         702,
         712,
         713,
-        1024
+        1132
       ],
       "meta": {
         "jun": "대군",
@@ -33331,7 +33332,8 @@
         711,
         713,
         995,
-        1024
+        1024,
+        1132
       ],
       "meta": {
         "jun": "대군",
@@ -33514,8 +33516,8 @@
         717,
         726,
         776,
-        811,
-        1059
+        1059,
+        1131
       ],
       "meta": {
         "jun": "우북평군",
@@ -33985,9 +33987,9 @@
         717,
         719,
         723,
-        811,
         993,
-        1024
+        1024,
+        1131
       ],
       "meta": {
         "jun": "어양군",
@@ -34476,6 +34478,7 @@
         739,
         752,
         777,
+        956,
         1022
       ],
       "meta": {
@@ -35725,7 +35728,8 @@
       "connections": [
         588,
         589,
-        766
+        766,
+        1129
       ],
       "meta": {
         "jun": "영창군",
@@ -36102,8 +36106,7 @@
         704,
         773,
         834,
-        856,
-        989
+        856
       ],
       "meta": {
         "jun": "상군",
@@ -36289,7 +36292,8 @@
         732,
         733,
         811,
-        1036
+        1036,
+        1131
       ],
       "meta": {
         "jun": "요서군",
@@ -36792,13 +36796,11 @@
         730,
         782,
         789,
-        791,
         792,
-        796,
         800,
         801,
-        1027,
-        1053
+        989,
+        1027
       ],
       "meta": {
         "jun": "요동군",
@@ -36925,7 +36927,9 @@
         "wall": 1000
       },
       "connections": [
+        368,
         785,
+        847,
         1079
       ],
       "meta": {
@@ -36968,9 +36972,8 @@
         "wall": 1000
       },
       "connections": [
-        787,
         792,
-        796,
+        989,
         1053
       ],
       "meta": {
@@ -37022,7 +37025,9 @@
         794,
         795,
         812,
-        813
+        813,
+        989,
+        1105
       ],
       "meta": {
         "jun": "현도군",
@@ -37197,11 +37202,11 @@
         "wall": 1000
       },
       "connections": [
-        787,
-        791,
         800,
         805,
-        809
+        809,
+        977,
+        1106
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37250,7 +37255,8 @@
         806,
         808,
         1002,
-        1070
+        1070,
+        1111
       ],
       "meta": {
         "jun": "대방군",
@@ -37384,7 +37390,9 @@
         787,
         796,
         801,
-        809
+        809,
+        977,
+        989
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37607,7 +37615,10 @@
         797,
         798,
         807,
-        809
+        809,
+        1106,
+        1107,
+        1111
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37653,7 +37664,8 @@
         802,
         803,
         804,
-        1070
+        1070,
+        1111
       ],
       "meta": {
         "jun": "대방군",
@@ -37867,13 +37879,12 @@
         "wall": 1000
       },
       "connections": [
-        716,
-        726,
         729,
         732,
         776,
         810,
-        813
+        813,
+        1131
       ],
       "meta": {
         "jun": "요동속국",
@@ -37968,7 +37979,8 @@
         785,
         792,
         811,
-        812
+        812,
+        1105
       ],
       "meta": {
         "jun": "요동속국",
@@ -38864,13 +38876,13 @@
         "wall": 2000
       },
       "connections": [
-        56,
         627,
         628,
         633,
         636,
         647,
-        704
+        704,
+        1133
       ],
       "meta": {
         "jun": "삭방군",
@@ -38912,7 +38924,6 @@
         "wall": 2000
       },
       "connections": [
-        56,
         65,
         682,
         685,
@@ -38920,7 +38931,7 @@
         701,
         704,
         772,
-        835
+        1133
       ],
       "meta": {
         "jun": "서하군",
@@ -38962,12 +38973,11 @@
         "wall": 2000
       },
       "connections": [
-        56,
         700,
         701,
         702,
-        834,
-        992
+        992,
+        1133
       ],
       "meta": {
         "jun": "정양군",
@@ -39521,7 +39531,9 @@
       "connections": [
         515,
         516,
-        522
+        522,
+        790,
+        1027
       ],
       "meta": {
         "jun": "오군",
@@ -40031,9 +40043,9 @@
         "wall": 1000
       },
       "connections": [
-        1,
         3,
         4,
+        5,
         7,
         600,
         1008
@@ -40080,6 +40092,7 @@
       "connections": [
         1,
         4,
+        5,
         49,
         769
       ],
@@ -40127,9 +40140,9 @@
         13,
         19,
         70,
+        627,
         769,
         861,
-        989,
         1044
       ],
       "meta": {
@@ -42784,8 +42797,10 @@
         "wall": 1000
       },
       "connections": [
+        357,
         358,
         368,
+        371,
         918
       ],
       "meta": {
@@ -42829,7 +42844,6 @@
       },
       "connections": [
         357,
-        368,
         372,
         917
       ],
@@ -42875,7 +42889,7 @@
       "connections": [
         347,
         355,
-        378,
+        382,
         392,
         394,
         395
@@ -43722,7 +43736,8 @@
         506,
         938,
         942,
-        1009
+        1009,
+        1130
       ],
       "meta": {
         "jun": "단양군",
@@ -43816,7 +43831,8 @@
         511,
         512,
         941,
-        1018
+        1018,
+        1130
       ],
       "meta": {
         "jun": "단양군",
@@ -44602,7 +44618,8 @@
         "wall": 1500
       },
       "connections": [
-        551
+        551,
+        737
       ],
       "meta": {
         "jun": "예장군",
@@ -45258,12 +45275,12 @@
       },
       "connections": [
         575,
+        579,
         593,
         595,
         596,
         971,
-        973,
-        977
+        973
       ],
       "meta": {
         "jun": "한중군",
@@ -45540,7 +45557,6 @@
         593,
         598,
         616,
-        977,
         985,
         1047
       ],
@@ -45562,50 +45578,50 @@
     },
     {
       "id": 977,
-      "name": "한창(巴郡)",
-      "x": 246,
-      "y": 267,
-      "level": 10,
-      "region": 9,
+      "name": "국내성",
+      "x": 571,
+      "y": 88,
+      "level": 5,
+      "region": 14,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 50000,
+        "population": 100000,
         "agriculture": 1000,
         "commerce": 1000,
         "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
-        570,
-        575,
-        579,
-        593,
-        970,
-        976
+        796,
+        800,
+        989,
+        1099,
+        1105,
+        1106
       ],
       "meta": {
-        "jun": "파군",
-        "junCh": "巴郡",
-        "ju": "익주",
-        "seat": "강주현",
-        "nameCh": "汉昌县",
-        "isSeat": false,
-        "displayName": "파군 한창현(汉昌)"
+        "jun": "국내성",
+        "junCh": "國內城",
+        "ju": "동이",
+        "seat": "국내성",
+        "nameCh": "國內城",
+        "isSeat": true,
+        "displayName": "국내성"
       },
-      "provinceId": 343,
-      "spatialProvinceId": "44621",
-      "spatialProvinceIndex": 343,
+      "provinceId": 1432,
+      "spatialProvinceId": "X028",
+      "spatialProvinceIndex": 1432,
       "routeNodeKey": "7953cd44-539d-4ae3-9054-e7cb9ab46865",
-      "physicalPlaceRef": "chgis:v6:cnty:44621",
-      "sourceClaimId": "han-jurisdiction-route-claim-v1-44621"
+      "physicalPlaceRef": "external:v1:X028",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X028"
     },
     {
       "id": 978,
@@ -45914,8 +45930,8 @@
       },
       "connections": [
         588,
-        589,
-        767
+        767,
+        1129
       ],
       "meta": {
         "jun": "영창군",
@@ -45968,7 +45984,8 @@
         664,
         976,
         978,
-        986
+        986,
+        1128
       ],
       "meta": {
         "jun": "광한속국",
@@ -46135,53 +46152,51 @@
     },
     {
       "id": 989,
-      "name": "부평(北地郡)",
-      "x": 279,
-      "y": 214,
-      "level": 11,
-      "region": 10,
+      "name": "졸본",
+      "x": 558,
+      "y": 86,
+      "level": 5,
+      "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
-        10,
-        13,
-        17,
-        19,
-        20,
-        630,
-        772,
-        860,
-        1044
+        787,
+        791,
+        792,
+        800,
+        977,
+        1053,
+        1105
       ],
       "meta": {
-        "jun": "북지군",
-        "junCh": "北地郡",
-        "ju": "량주",
-        "seat": "부평현",
-        "nameCh": "富平县",
-        "isSeat": false,
-        "displayName": "북지군 부평현(富平)"
+        "jun": "졸본",
+        "junCh": "卒本",
+        "ju": "동이",
+        "seat": "졸본",
+        "nameCh": "卒本",
+        "isSeat": true,
+        "displayName": "졸본"
       },
-      "provinceId": 479,
-      "spatialProvinceId": "70523",
-      "spatialProvinceIndex": 479,
+      "provinceId": 1433,
+      "spatialProvinceId": "X029",
+      "spatialProvinceIndex": 1433,
       "routeNodeKey": "2ef68286-3c16-4076-945e-04ff3037bb5d",
-      "physicalPlaceRef": "chgis:v6:cnty:70523",
-      "sourceClaimId": "han-jurisdiction-route-claim-v1-70523"
+      "physicalPlaceRef": "external:v1:X029",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X029"
     },
     {
       "id": 990,
@@ -46757,7 +46772,8 @@
         "wall": 2000
       },
       "connections": [
-        797
+        797,
+        1114
       ],
       "meta": {
         "jun": "대방군",
@@ -47027,7 +47043,7 @@
       },
       "connections": [
         3,
-        412,
+        411,
         423,
         438,
         594,
@@ -47403,9 +47419,9 @@
         "wall": 2000
       },
       "connections": [
-        641,
         657,
-        659
+        659,
+        1127
       ],
       "meta": {
         "jun": "서평군",
@@ -47772,13 +47788,12 @@
         "wall": 1000
       },
       "connections": [
-        702,
         705,
-        710,
         712,
         726,
         995,
-        996
+        996,
+        1132
       ],
       "meta": {
         "jun": "선비",
@@ -47889,7 +47904,7 @@
       "x": 544,
       "y": 106,
       "level": 1,
-      "region": 14,
+      "region": 12,
       "max": {
         "population": 107700,
         "agriculture": 2100,
@@ -47907,13 +47922,14 @@
         "wall": 500
       },
       "connections": [
-        787
+        787,
+        847
       ],
       "meta": {
-        "jun": "졸본",
-        "junCh": "卒本",
-        "ju": "동이",
-        "seat": "졸본",
+        "jun": "요동군",
+        "junCh": "遼東郡",
+        "ju": "유주",
+        "seat": "양평현",
         "nameCh": "安平口",
         "isSeat": false,
         "displayName": "안평구"
@@ -48653,8 +48669,8 @@
       },
       "connections": [
         19,
-        860,
-        989
+        627,
+        860
       ],
       "meta": {
         "jun": "좌풍익",
@@ -49044,8 +49060,8 @@
         "wall": 500
       },
       "connections": [
-        787,
-        791
+        791,
+        989
       ],
       "meta": {
         "jun": "졸본",
@@ -51006,6 +51022,1632 @@
       "routeNodeKey": "dac8e804-c55a-4f24-83e5-aa5576dad0b2",
       "physicalPlaceRef": "chgis:v6:cnty:82879",
       "administrativeUnitId": "hhs:109:河南尹:011"
+    },
+    {
+      "id": 1099,
+      "name": "북옥저",
+      "x": 632,
+      "y": 63,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        977,
+        1105,
+        1108
+      ],
+      "meta": {
+        "jun": "북옥저",
+        "junCh": "北沃沮",
+        "ju": "동이",
+        "seat": "북옥저",
+        "nameCh": "北沃沮",
+        "isSeat": true,
+        "displayName": "북옥저"
+      },
+      "provinceId": 1434,
+      "spatialProvinceId": "X030",
+      "spatialProvinceIndex": 1434,
+      "routeNodeKey": "bf8b38b6-2fce-42e9-9e33-bbd87f9c00e4",
+      "physicalPlaceRef": "external:v1:X030",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X030"
+    },
+    {
+      "id": 1100,
+      "name": "안야국",
+      "x": 609,
+      "y": 202,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1102,
+        1110,
+        1114,
+        1115,
+        1116
+      ],
+      "meta": {
+        "jun": "안야국",
+        "junCh": "安邪國",
+        "ju": "동이",
+        "seat": "안야국",
+        "nameCh": "安邪國",
+        "isSeat": true,
+        "displayName": "안야국"
+      },
+      "provinceId": 1435,
+      "spatialProvinceId": "X031",
+      "spatialProvinceIndex": 1435,
+      "routeNodeKey": "db2ee405-0bec-4a0d-a78c-e063dadc85f0",
+      "physicalPlaceRef": "external:v1:X031",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X031"
+    },
+    {
+      "id": 1101,
+      "name": "실직국",
+      "x": 622,
+      "y": 160,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1103,
+        1104,
+        1107,
+        1118
+      ],
+      "meta": {
+        "jun": "실직국",
+        "junCh": "悉直國",
+        "ju": "동이",
+        "seat": "실직국",
+        "nameCh": "悉直國",
+        "isSeat": true,
+        "displayName": "실직국"
+      },
+      "provinceId": 1436,
+      "spatialProvinceId": "X032",
+      "spatialProvinceIndex": 1436,
+      "routeNodeKey": "454a5c60-169f-4e51-9a31-c998be180cc9",
+      "physicalPlaceRef": "external:v1:X032",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X032"
+    },
+    {
+      "id": 1102,
+      "name": "압독국",
+      "x": 614,
+      "y": 191,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1103,
+        1113,
+        1114,
+        1116,
+        1117
+      ],
+      "meta": {
+        "jun": "압독국",
+        "junCh": "押督國",
+        "ju": "동이",
+        "seat": "압독국",
+        "nameCh": "押督國",
+        "isSeat": true,
+        "displayName": "압독국"
+      },
+      "provinceId": 1437,
+      "spatialProvinceId": "X033",
+      "spatialProvinceIndex": 1437,
+      "routeNodeKey": "d4f48f51-79d1-464a-8519-106818c0ac49",
+      "physicalPlaceRef": "external:v1:X033",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X033"
+    },
+    {
+      "id": 1103,
+      "name": "소문국",
+      "x": 613,
+      "y": 181,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1101,
+        1102,
+        1113,
+        1117,
+        1118
+      ],
+      "meta": {
+        "jun": "소문국",
+        "junCh": "召文國",
+        "ju": "동이",
+        "seat": "소문국",
+        "nameCh": "召文國",
+        "isSeat": true,
+        "displayName": "소문국"
+      },
+      "provinceId": 1438,
+      "spatialProvinceId": "X034",
+      "spatialProvinceIndex": 1438,
+      "routeNodeKey": "31b7e704-f011-416d-b1ed-90e6b7250062",
+      "physicalPlaceRef": "external:v1:X034",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X034"
+    },
+    {
+      "id": 1104,
+      "name": "우산국",
+      "x": 689,
+      "y": 183,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1101
+      ],
+      "meta": {
+        "jun": "우산국",
+        "junCh": "于山國",
+        "ju": "동이",
+        "seat": "우산국",
+        "nameCh": "于山國",
+        "isSeat": true,
+        "displayName": "우산국"
+      },
+      "provinceId": 1439,
+      "spatialProvinceId": "X035",
+      "spatialProvinceIndex": 1439,
+      "routeNodeKey": "b06b7b8a-95fb-4ecb-a564-778c77fec7e3",
+      "physicalPlaceRef": "external:v1:X035",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X035"
+    },
+    {
+      "id": 1105,
+      "name": "부여",
+      "x": 554,
+      "y": 24,
+      "level": 6,
+      "region": 14,
+      "max": {
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
+        "security": 6000,
+        "defence": 8100,
+        "wall": 8000
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 3000,
+        "wall": 3000
+      },
+      "connections": [
+        792,
+        813,
+        977,
+        989,
+        1099
+      ],
+      "meta": {
+        "jun": "부여",
+        "junCh": "夫餘",
+        "ju": "동이",
+        "seat": "부여",
+        "nameCh": "夫餘",
+        "isSeat": true,
+        "displayName": "부여"
+      },
+      "provinceId": 1440,
+      "spatialProvinceId": "X036",
+      "spatialProvinceIndex": 1440,
+      "routeNodeKey": "f5061889-bf91-4794-9033-d299dbc946d1",
+      "physicalPlaceRef": "external:v1:X036",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X036"
+    },
+    {
+      "id": 1106,
+      "name": "동옥저",
+      "x": 593,
+      "y": 111,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        796,
+        805,
+        977
+      ],
+      "meta": {
+        "jun": "동옥저",
+        "junCh": "東沃沮",
+        "ju": "동이",
+        "seat": "동옥저",
+        "nameCh": "東沃沮",
+        "isSeat": true,
+        "displayName": "동옥저"
+      },
+      "provinceId": 1441,
+      "spatialProvinceId": "X037",
+      "spatialProvinceIndex": 1441,
+      "routeNodeKey": "088f238c-fc0a-4c0f-bbdf-1c998d443fab",
+      "physicalPlaceRef": "external:v1:X037",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X037"
+    },
+    {
+      "id": 1107,
+      "name": "예",
+      "x": 617,
+      "y": 154,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        805,
+        1101,
+        1111,
+        1118
+      ],
+      "meta": {
+        "jun": "예",
+        "junCh": "濊",
+        "ju": "동이",
+        "seat": "예",
+        "nameCh": "濊",
+        "isSeat": true,
+        "displayName": "예"
+      },
+      "provinceId": 1442,
+      "spatialProvinceId": "X038",
+      "spatialProvinceIndex": 1442,
+      "routeNodeKey": "45ebb005-8f6c-43d1-8283-9e4730c74696",
+      "physicalPlaceRef": "external:v1:X038",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X038"
+    },
+    {
+      "id": 1108,
+      "name": "읍루",
+      "x": 668,
+      "y": 36,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1099
+      ],
+      "meta": {
+        "jun": "북옥저",
+        "junCh": "北沃沮",
+        "ju": "동이",
+        "seat": "북옥저",
+        "nameCh": "挹婁",
+        "isSeat": false,
+        "displayName": "읍루"
+      },
+      "provinceId": 1443,
+      "spatialProvinceId": "X039",
+      "spatialProvinceIndex": 1443,
+      "routeNodeKey": "38f5805e-1357-4d47-9806-5e7e3d83fbc0",
+      "physicalPlaceRef": "external:v1:X039",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X039"
+    },
+    {
+      "id": 1109,
+      "name": "목지국",
+      "x": 584,
+      "y": 189,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1110,
+        1111,
+        1116,
+        1117,
+        1118
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "目支國",
+        "isSeat": true,
+        "displayName": "목지국"
+      },
+      "provinceId": 1444,
+      "spatialProvinceId": "X040",
+      "spatialProvinceIndex": 1444,
+      "routeNodeKey": "a0e92f2a-34ef-499b-aaee-c715ea33bd53",
+      "physicalPlaceRef": "external:v1:X040",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X040"
+    },
+    {
+      "id": 1110,
+      "name": "벽비리국",
+      "x": 583,
+      "y": 191,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1109,
+        1112,
+        1115,
+        1116
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "辟卑離國",
+        "isSeat": true,
+        "displayName": "벽비리국"
+      },
+      "provinceId": 1445,
+      "spatialProvinceId": "X041",
+      "spatialProvinceIndex": 1445,
+      "routeNodeKey": "e6a13666-3a1d-48df-a671-8ad50855e7f8",
+      "physicalPlaceRef": "external:v1:X041",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X041"
+    },
+    {
+      "id": 1111,
+      "name": "백제국",
+      "x": 585,
+      "y": 158,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        797,
+        805,
+        806,
+        1107,
+        1109,
+        1118
+      ],
+      "meta": {
+        "jun": "백제국",
+        "junCh": "伯濟國",
+        "ju": "동이",
+        "seat": "백제국",
+        "nameCh": "伯濟國",
+        "isSeat": true,
+        "displayName": "백제국"
+      },
+      "provinceId": 1446,
+      "spatialProvinceId": "X042",
+      "spatialProvinceIndex": 1446,
+      "routeNodeKey": "8f3bd599-b539-4c17-9fa9-3fff871da896",
+      "physicalPlaceRef": "external:v1:X042",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X042"
+    },
+    {
+      "id": 1112,
+      "name": "주호",
+      "x": 577,
+      "y": 236,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1110
+      ],
+      "meta": {
+        "jun": "주호",
+        "junCh": "州胡",
+        "ju": "동이",
+        "seat": "주호",
+        "nameCh": "州胡",
+        "isSeat": true,
+        "displayName": "주호"
+      },
+      "provinceId": 1447,
+      "spatialProvinceId": "X043",
+      "spatialProvinceIndex": 1447,
+      "routeNodeKey": "263164f7-6607-4bd1-b081-da0f1501beed",
+      "physicalPlaceRef": "external:v1:X043",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X043"
+    },
+    {
+      "id": 1113,
+      "name": "사로국",
+      "x": 623,
+      "y": 191,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1102,
+        1103,
+        1114
+      ],
+      "meta": {
+        "jun": "사로국",
+        "junCh": "斯盧國",
+        "ju": "동이",
+        "seat": "사로국",
+        "nameCh": "斯盧國",
+        "isSeat": true,
+        "displayName": "사로국"
+      },
+      "provinceId": 1448,
+      "spatialProvinceId": "X044",
+      "spatialProvinceIndex": 1448,
+      "routeNodeKey": "affa7367-741f-4067-b194-058937af822e",
+      "physicalPlaceRef": "external:v1:X044",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X044"
+    },
+    {
+      "id": 1114,
+      "name": "구야국",
+      "x": 617,
+      "y": 202,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1002,
+        1100,
+        1102,
+        1113,
+        1119
+      ],
+      "meta": {
+        "jun": "구야국",
+        "junCh": "狗邪國",
+        "ju": "동이",
+        "seat": "구야국",
+        "nameCh": "狗邪國",
+        "isSeat": true,
+        "displayName": "구야국"
+      },
+      "provinceId": 1449,
+      "spatialProvinceId": "X045",
+      "spatialProvinceIndex": 1449,
+      "routeNodeKey": "6f68bd1f-f8e1-48c4-aaa5-cd20c049d35c",
+      "physicalPlaceRef": "external:v1:X045",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X045"
+    },
+    {
+      "id": 1115,
+      "name": "고자미동국",
+      "x": 607,
+      "y": 207,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1110
+      ],
+      "meta": {
+        "jun": "고자미동국",
+        "junCh": "古資彌凍國",
+        "ju": "동이",
+        "seat": "고자미동국",
+        "nameCh": "古資彌凍國",
+        "isSeat": true,
+        "displayName": "고자미동국"
+      },
+      "provinceId": 1450,
+      "spatialProvinceId": "X046",
+      "spatialProvinceIndex": 1450,
+      "routeNodeKey": "21a82e97-0e56-40d2-8613-f1065c433527",
+      "physicalPlaceRef": "external:v1:X046",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X046"
+    },
+    {
+      "id": 1116,
+      "name": "대가야",
+      "x": 606,
+      "y": 193,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1102,
+        1109,
+        1110,
+        1117
+      ],
+      "meta": {
+        "jun": "대가야",
+        "junCh": "大伽耶",
+        "ju": "동이",
+        "seat": "대가야",
+        "nameCh": "大伽耶",
+        "isSeat": true,
+        "displayName": "대가야"
+      },
+      "provinceId": 1451,
+      "spatialProvinceId": "X047",
+      "spatialProvinceIndex": 1451,
+      "routeNodeKey": "ad4a2fec-abc5-4fbf-b25c-639bc393a688",
+      "physicalPlaceRef": "external:v1:X047",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X047"
+    },
+    {
+      "id": 1117,
+      "name": "성산가야",
+      "x": 607,
+      "y": 190,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1102,
+        1103,
+        1109,
+        1116,
+        1118
+      ],
+      "meta": {
+        "jun": "성산가야",
+        "junCh": "星山伽耶",
+        "ju": "동이",
+        "seat": "성산가야",
+        "nameCh": "星山伽耶",
+        "isSeat": true,
+        "displayName": "성산가야"
+      },
+      "provinceId": 1452,
+      "spatialProvinceId": "X048",
+      "spatialProvinceIndex": 1452,
+      "routeNodeKey": "841a448f-880a-48ac-86ca-47f6ae861677",
+      "physicalPlaceRef": "external:v1:X048",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X048"
+    },
+    {
+      "id": 1118,
+      "name": "고령가야",
+      "x": 605,
+      "y": 177,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1101,
+        1103,
+        1107,
+        1109,
+        1111,
+        1117
+      ],
+      "meta": {
+        "jun": "고령가야",
+        "junCh": "古寧伽耶",
+        "ju": "동이",
+        "seat": "고령가야",
+        "nameCh": "古寧伽耶",
+        "isSeat": true,
+        "displayName": "고령가야"
+      },
+      "provinceId": 1453,
+      "spatialProvinceId": "X049",
+      "spatialProvinceIndex": 1453,
+      "routeNodeKey": "630041a9-ec7e-4ae2-8a9d-c460622010db",
+      "physicalPlaceRef": "external:v1:X049",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X049"
+    },
+    {
+      "id": 1119,
+      "name": "대마국",
+      "x": 623,
+      "y": 222,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1114,
+        1120
+      ],
+      "meta": {
+        "jun": "구야국",
+        "junCh": "狗邪國",
+        "ju": "동이",
+        "seat": "구야국",
+        "nameCh": "對馬國",
+        "isSeat": false,
+        "displayName": "대마국"
+      },
+      "provinceId": 1454,
+      "spatialProvinceId": "X050",
+      "spatialProvinceIndex": 1454,
+      "routeNodeKey": "f11db36c-518f-450f-a7d1-2a8851a0f4a6",
+      "physicalPlaceRef": "external:v1:X050",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X050"
+    },
+    {
+      "id": 1120,
+      "name": "일대국",
+      "x": 673,
+      "y": 238,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1119,
+        1121,
+        1122
+      ],
+      "meta": {
+        "jun": "야마일국",
+        "junCh": "邪馬壹國",
+        "ju": "동이",
+        "seat": "야마일국",
+        "nameCh": "一大國",
+        "isSeat": false,
+        "displayName": "일대국"
+      },
+      "provinceId": 1455,
+      "spatialProvinceId": "X051",
+      "spatialProvinceIndex": 1455,
+      "routeNodeKey": "e750fdbe-3a8f-4f8d-9b90-1ef7a44e9913",
+      "physicalPlaceRef": "external:v1:X051",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X051"
+    },
+    {
+      "id": 1121,
+      "name": "말로국",
+      "x": 616,
+      "y": 251,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1120,
+        1124
+      ],
+      "meta": {
+        "jun": "야마일국",
+        "junCh": "邪馬壹國",
+        "ju": "동이",
+        "seat": "야마일국",
+        "nameCh": "末盧國",
+        "isSeat": false,
+        "displayName": "말로국"
+      },
+      "provinceId": 1456,
+      "spatialProvinceId": "X052",
+      "spatialProvinceIndex": 1456,
+      "routeNodeKey": "42e95487-1d7d-4501-8ad7-81edbfc2b5cf",
+      "physicalPlaceRef": "external:v1:X052",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X052"
+    },
+    {
+      "id": 1122,
+      "name": "이도국",
+      "x": 651,
+      "y": 227,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1120
+      ],
+      "meta": {
+        "jun": "야마일국",
+        "junCh": "邪馬壹國",
+        "ju": "동이",
+        "seat": "야마일국",
+        "nameCh": "伊都國",
+        "isSeat": false,
+        "displayName": "이도국"
+      },
+      "provinceId": 1457,
+      "spatialProvinceId": "X053",
+      "spatialProvinceIndex": 1457,
+      "routeNodeKey": "cecffca9-67be-4f6e-ba8e-ad1685d946ff",
+      "physicalPlaceRef": "external:v1:X053",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X053"
+    },
+    {
+      "id": 1123,
+      "name": "노국",
+      "x": 647,
+      "y": 234,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1124
+      ],
+      "meta": {
+        "jun": "야마일국",
+        "junCh": "邪馬壹國",
+        "ju": "동이",
+        "seat": "야마일국",
+        "nameCh": "奴國",
+        "isSeat": false,
+        "displayName": "노국"
+      },
+      "provinceId": 1458,
+      "spatialProvinceId": "X054",
+      "spatialProvinceIndex": 1458,
+      "routeNodeKey": "5d4aea09-0fa7-402f-a6fd-122e37af28d6",
+      "physicalPlaceRef": "external:v1:X054",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X054"
+    },
+    {
+      "id": 1124,
+      "name": "야마일국",
+      "x": 644,
+      "y": 295,
+      "level": 6,
+      "region": 14,
+      "max": {
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
+        "security": 6000,
+        "defence": 8100,
+        "wall": 8000
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 3000,
+        "wall": 3000
+      },
+      "connections": [
+        1121,
+        1123
+      ],
+      "meta": {
+        "jun": "야마일국",
+        "junCh": "邪馬壹國",
+        "ju": "동이",
+        "seat": "야마일국",
+        "nameCh": "邪馬壹國",
+        "isSeat": true,
+        "displayName": "야마일국"
+      },
+      "provinceId": 1459,
+      "spatialProvinceId": "X055",
+      "spatialProvinceIndex": 1459,
+      "routeNodeKey": "4f1dda9d-84ff-4079-94b2-c9fa13a59b9c",
+      "physicalPlaceRef": "external:v1:X055",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X055"
+    },
+    {
+      "id": 1125,
+      "name": "이주",
+      "x": 470,
+      "y": 440,
+      "level": 5,
+      "region": 8,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        536
+      ],
+      "meta": {
+        "jun": "이주",
+        "junCh": "夷洲",
+        "ju": "양주",
+        "seat": "이주",
+        "nameCh": "夷洲",
+        "isSeat": true,
+        "displayName": "이주"
+      },
+      "provinceId": 1460,
+      "spatialProvinceId": "X056",
+      "spatialProvinceIndex": 1460,
+      "routeNodeKey": "965b9aa5-875f-4acc-bc18-9c2e584f9144",
+      "physicalPlaceRef": "external:v1:X056",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X056"
+    },
+    {
+      "id": 1126,
+      "name": "유구",
+      "x": 597,
+      "y": 378,
+      "level": 5,
+      "region": 8,
+      "max": {
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        536
+      ],
+      "meta": {
+        "jun": "유구",
+        "junCh": "流求",
+        "ju": "양주",
+        "seat": "유구",
+        "nameCh": "流求",
+        "isSeat": true,
+        "displayName": "유구"
+      },
+      "provinceId": 1461,
+      "spatialProvinceId": "X057",
+      "spatialProvinceIndex": 1461,
+      "routeNodeKey": "469a57eb-cdc4-4b88-9c28-c29124d30332",
+      "physicalPlaceRef": "external:v1:X057",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X057"
+    },
+    {
+      "id": 1127,
+      "name": "서강",
+      "x": 160,
+      "y": 175,
+      "level": 4,
+      "region": 10,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        641,
+        647,
+        657,
+        659,
+        1016
+      ],
+      "meta": {
+        "jun": "강",
+        "junCh": "西羌",
+        "ju": "량주",
+        "seat": "강",
+        "nameCh": "西羌",
+        "isSeat": true,
+        "displayName": "서강"
+      },
+      "provinceId": 1462,
+      "spatialProvinceId": "X058",
+      "spatialProvinceIndex": 1462,
+      "routeNodeKey": "ec73fefb-c78f-478b-84e3-d7ce189b2354",
+      "physicalPlaceRef": "external:v1:X058",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X058"
+    },
+    {
+      "id": 1128,
+      "name": "백마저",
+      "x": 221,
+      "y": 236,
+      "level": 4,
+      "region": 10,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        598,
+        648,
+        985
+      ],
+      "meta": {
+        "jun": "저",
+        "junCh": "白馬氐",
+        "ju": "량주",
+        "seat": "저",
+        "nameCh": "白馬氐",
+        "isSeat": true,
+        "displayName": "백마저"
+      },
+      "provinceId": 1463,
+      "spatialProvinceId": "X059",
+      "spatialProvinceIndex": 1463,
+      "routeNodeKey": "f7b01bb4-e965-4c98-90a0-e6393b7aba2d",
+      "physicalPlaceRef": "external:v1:X059",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X059"
+    },
+    {
+      "id": 1129,
+      "name": "애뢰(哀牢)",
+      "x": 106,
+      "y": 401,
+      "level": 4,
+      "region": 9,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        588,
+        589,
+        764,
+        984
+      ],
+      "meta": {
+        "jun": "남만",
+        "junCh": "哀牢",
+        "ju": "익주",
+        "seat": "남만",
+        "nameCh": "哀牢",
+        "isSeat": true,
+        "displayName": "애뢰"
+      },
+      "provinceId": 1464,
+      "spatialProvinceId": "X060",
+      "spatialProvinceIndex": 1464,
+      "routeNodeKey": "fa6886aa-33c6-4dc8-aaa5-842db8742e33",
+      "physicalPlaceRef": "external:v1:X060",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X060"
+    },
+    {
+      "id": 1130,
+      "name": "산월",
+      "x": 437,
+      "y": 302,
+      "level": 4,
+      "region": 8,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        502,
+        506,
+        937,
+        939
+      ],
+      "meta": {
+        "jun": "산월",
+        "junCh": "山越",
+        "ju": "양주",
+        "seat": "산월",
+        "nameCh": "山越",
+        "isSeat": true,
+        "displayName": "산월"
+      },
+      "provinceId": 1465,
+      "spatialProvinceId": "X061",
+      "spatialProvinceIndex": 1465,
+      "routeNodeKey": "8c24f913-8f6b-4abb-a191-ac8aca54e110",
+      "physicalPlaceRef": "external:v1:X061",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X061"
+    },
+    {
+      "id": 1131,
+      "name": "오환",
+      "x": 448,
+      "y": 67,
+      "level": 4,
+      "region": 12,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        716,
+        726,
+        776,
+        811
+      ],
+      "meta": {
+        "jun": "오환",
+        "junCh": "烏桓",
+        "ju": "유주",
+        "seat": "오환",
+        "nameCh": "烏桓",
+        "isSeat": true,
+        "displayName": "오환"
+      },
+      "provinceId": 1466,
+      "spatialProvinceId": "X062",
+      "spatialProvinceIndex": 1466,
+      "routeNodeKey": "16aea6bf-e3f1-4332-a05d-70ae2abd2e18",
+      "physicalPlaceRef": "external:v1:X062",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X062"
+    },
+    {
+      "id": 1132,
+      "name": "선비",
+      "x": 375,
+      "y": 91,
+      "level": 4,
+      "region": 12,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        702,
+        710,
+        712,
+        1024
+      ],
+      "meta": {
+        "jun": "선비",
+        "junCh": "鮮卑",
+        "ju": "유주",
+        "seat": "선비",
+        "nameCh": "鮮卑",
+        "isSeat": true,
+        "displayName": "선비"
+      },
+      "provinceId": 1467,
+      "spatialProvinceId": "X063",
+      "spatialProvinceIndex": 1467,
+      "routeNodeKey": "111f1817-f6dd-4d63-9c47-abb7de17f9d2",
+      "physicalPlaceRef": "external:v1:X063",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X063"
+    },
+    {
+      "id": 1133,
+      "name": "남흉노",
+      "x": 299,
+      "y": 114,
+      "level": 4,
+      "region": 11,
+      "max": {
+        "population": 209500,
+        "agriculture": 4000,
+        "commerce": 4100,
+        "security": 2000,
+        "defence": 4300,
+        "wall": 4000
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        56,
+        680,
+        701,
+        704,
+        833,
+        834,
+        835
+      ],
+      "meta": {
+        "jun": "흉노",
+        "junCh": "南匈奴",
+        "ju": "병주",
+        "seat": "흉노",
+        "nameCh": "南匈奴",
+        "isSeat": true,
+        "displayName": "남흉노"
+      },
+      "provinceId": 1468,
+      "spatialProvinceId": "X064",
+      "spatialProvinceIndex": 1468,
+      "routeNodeKey": "edafa4c3-52a0-427d-87eb-9ab7622ac5d1",
+      "physicalPlaceRef": "external:v1:X064",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X064"
+    }
+  ],
+  "seaRoutes": [
+    {
+      "from": 368,
+      "to": 790,
+      "source": "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"
+    },
+    {
+      "from": 536,
+      "to": 1125,
+      "source": "讀史方輿紀要 卷94 인용 後漢書 東夷傳 「會稽海外有夷洲、亶洲」 + 三國志 吳書 孫權傳 黃龍二年 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」"
+    },
+    {
+      "from": 536,
+      "to": 1126,
+      "source": "隋書 卷81 東夷 流求國 「流求國，居海島之中，當建安郡東，水行五日而至」 — 建安郡은 260년 會稽에서 분치됐으므로 220년 시점의 관할은 會稽郡이다"
+    },
+    {
+      "from": 737,
+      "to": 956,
+      "source": "後漢書 卷33 鄭弘傳 「舊交阯七郡貢獻轉運，皆從東冶汎海而至」 — 東冶(東部侯官) ↔ 番禺"
+    },
+    {
+      "from": 743,
+      "to": 744,
+      "source": "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"
+    },
+    {
+      "from": 790,
+      "to": 847,
+      "source": "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"
+    },
+    {
+      "from": 847,
+      "to": 1027,
+      "source": "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"
+    },
+    {
+      "from": 1002,
+      "to": 1114,
+      "source": "三國志 卷30 倭人 「從郡至倭，循海岸水行，歷韓國…到其北岸狗邪韓國」 — 帶方 ↔ 狗邪韓國"
+    },
+    {
+      "from": 1101,
+      "to": 1104,
+      "source": "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"
+    },
+    {
+      "from": 1110,
+      "to": 1112,
+      "source": "三國志 魏書30 韓 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」 — 지도에 馬韓 자체는 없고 馬韓 소국만 있어 그중 최근접(257km)인 辟卑離國에 붙인다"
+    },
+    {
+      "from": 1114,
+      "to": 1119,
+      "source": "三國志 卷30 倭人 「始渡一海，千餘里至對馬國」"
+    },
+    {
+      "from": 1119,
+      "to": 1120,
+      "source": "三國志 卷30 倭人 「又南渡一海千餘里，名曰瀚海，至一大國」"
+    },
+    {
+      "from": 1120,
+      "to": 1121,
+      "source": "三國志 卷30 倭人 「又渡一海，千餘里至末盧國」"
     }
   ]
 }

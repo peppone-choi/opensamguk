@@ -403,16 +403,19 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(37, snapshot["provinceTopology"]["fullyEnclosedCount"])
         self.assertEqual(4, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
-        self.assertEqual(38, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        # 2026-09-17: 安平口 관할이 遼東郡 西安平 땅에 합쳐 38 → 37(ADR-LITE-056).
+        self.assertEqual(37, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         # 2026-09-16 1098: 五原郡이 바오터우 본토로 돌아가 南匈奴 땅에 완전히 둘러싸였다(10 → 11).
-        self.assertEqual(11, snapshot["commanderyTopology"]["fullyEnclosedCount"])
+        # 2026-09-17: 관할을 접은 郡 4곳이 省을 잃어 포위 판정에서 빠지며 11 → 10.
+        self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         # 64 → 61: 관할 하나뿐이던 郡 3 곳(宜都·卒本·蘄春)에 거점 관할이 더해졌다.
         # 2026-09-16 1098: 五原郡에 河陰·九原 두 관할이 돌아와 61 → 60.
-        self.assertEqual(60, snapshot["singleJurisdictionCommanderyCount"])
+        # 2026-09-17: 관할 하나뿐이던 新平·毗陵典農校尉·汶山·章武가 이웃 城 관할에 접혀 60 → 56.
+        self.assertEqual(56, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])
         self.assertEqual(38, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])

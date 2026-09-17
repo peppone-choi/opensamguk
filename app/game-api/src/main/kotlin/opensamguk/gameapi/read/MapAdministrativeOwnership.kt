@@ -126,11 +126,14 @@ class MapAdministrativeOwnership(
             )
         }
         val commanderyControl = canonical.commanderies.map { commandery ->
+            // 관할을 모두 이웃 城 관할에 접은 郡(新平·毗陵典農校尉·汶山·章武 — 郡國志 뒤의 郡)은 다스릴 縣이 없다.
+            val seatJurisdictionId = commandery.seatJurisdictionId
+                ?: return@map CommanderyControlProjection(commandery.id, 0)
             val ownerCounts = commandery.jurisdictionIds
                 .map(jurisdictionOwners::getValue)
                 .groupingBy { it }
                 .eachCount()
-            val seatOwner = jurisdictionOwners.getValue(commandery.seatJurisdictionId)
+            val seatOwner = jurisdictionOwners.getValue(seatJurisdictionId)
             val controller = resolveCommanderyController(ownerCounts, seatOwner)
             CommanderyControlProjection(commandery.id, controller)
         }
@@ -229,14 +232,19 @@ class MapAdministrativeOwnership(
         val commanderies = mapRoot.requiredArray("commanderyRecords").map { node ->
             CanonicalCommandery(
                 id = node.requiredText("id"),
-                seatJurisdictionId = node.requiredText("seatJurisdictionId"),
+                // 빈 郡(tools/map/fold_cityless_jurisdictions.py)만 null 이고, 그때 관할 목록도 비어야 한다.
+                seatJurisdictionId = node.get("seatJurisdictionId")?.takeUnless(JsonNode::isNull)
+                    ?.let { node.requiredText("seatJurisdictionId") },
                 jurisdictionIds = node.requiredArray("jurisdictionIds").map(JsonNode::asText),
             )
         }
         requireUnique(commanderies.map { it.id }, "commandery")
         val commanderyById = commanderies.associateBy { it.id }
         commanderies.forEach { commandery ->
-            check(commandery.seatJurisdictionId in commandery.jurisdictionIds) {
+            check(
+                if (commandery.seatJurisdictionId == null) commandery.jurisdictionIds.isEmpty()
+                else commandery.seatJurisdictionId in commandery.jurisdictionIds,
+            ) {
                 "Commandery ${commandery.id} seat ${commandery.seatJurisdictionId} is not a member jurisdiction"
             }
             commandery.jurisdictionIds.forEach { jurisdictionId ->
@@ -390,7 +398,7 @@ class MapAdministrativeOwnership(
 
     private data class CanonicalCommandery(
         val id: String,
-        val seatJurisdictionId: String,
+        val seatJurisdictionId: String?,
         val jurisdictionIds: List<String>,
     )
 

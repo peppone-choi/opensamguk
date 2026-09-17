@@ -5,8 +5,8 @@
   "generatorPolicyVersion": 1,
   "sources": {
     "claimsSha256": "b9d92d142fc744cdc4dd2f6b2e444e06709e5f532fcabf4702a70424fd02b12c",
-    "mapSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "scenarioCatalogSha256": "7f9efaa4b2f16968fbcc60465d8b76c144eecf0a34572c612ee1e4305da9a46c"
+    "mapSha256": "f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
+    "scenarioCatalogSha256": "6ac77b558d9994a07969f983c3ab9792ad69ba95bb8537fbc61aaff3d72e8480"
   },
   "scenarios": [
     {
@@ -23375,19 +23375,19 @@
         {
           "scenarioCode": 1010,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1010-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1010-BASELINE",
+          "winningClaimId": "S1010-N001-ADMIN",
           "claimTrace": [
-            "S1010-BASELINE"
+            "S1010-N001-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1010-BASELINE-EVIDENCE"
+            "S1010-N001-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
         },
         {
           "scenarioCode": 1010,
@@ -49290,19 +49290,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1020-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N019-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1020,
@@ -50480,19 +50480,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1020-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N001-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N001-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N001-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷06 위서 동탁전 「卓自為太尉…遷相國」·「卓遂遷天子都長安」 / 後漢書 卷072 동탁전 「使東中郎將董越屯黽池，中郎將段煨屯華陰，中郎將牛輔屯安邑」(하동·홍농 주둔)"
         },
         {
           "scenarioCode": 1020,
@@ -51007,19 +51007,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1020-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N011-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "scenarioCode": 1020,
@@ -53013,19 +53013,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1020-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N019-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1020,
@@ -76395,19 +76395,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1021-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N011-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1021,
@@ -77585,19 +77585,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1021-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N001-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N001-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N001-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷06 위서 동탁전 「卓自為太尉…遷相國」·「卓遂遷天子都長安」 / 後漢書 卷072 동탁전 「使東中郎將董越屯黽池，中郎將段煨屯華陰，中郎將牛輔屯安邑」(하동·홍농 주둔)"
         },
         {
           "scenarioCode": 1021,
@@ -78112,19 +78112,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1021-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N012-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N012-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N012-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "scenarioCode": 1021,
@@ -80118,19 +80118,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1021-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N011-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1021,
@@ -103500,19 +103500,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 17,
+          "ownerNationKey": "S1030-N017",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N017-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N017-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N017-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1030,
@@ -104690,19 +104690,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 7,
+          "ownerNationKey": "S1030-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N007-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N007-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N007-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1030,
@@ -104741,19 +104741,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 20,
+          "ownerNationKey": "S1030-N020",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N020-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N020-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N020-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷062 한기54 건안원년 「孫策將取會稽，吳人嚴白虎等眾各萬餘人，處處屯聚」 / 三國志 卷46 오서 손파로토역전 동문 — 吳郡 일대의 宗帥이며 正式 太守가 아니고, 「處處屯聚」라 고정 治所가 없다"
         },
         {
           "scenarioCode": 1030,
@@ -104778,16 +104778,16 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-003",
+          "winningClaimId": "S1030-N004-ADMIN",
           "claimTrace": [
-            "S1030-CONTINUITY-003"
+            "S1030-N004-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-003-EVIDENCE"
+            "S1030-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
         },
         {
           "scenarioCode": 1030,
@@ -105217,19 +105217,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1030-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N010-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷073 공손찬전 「是歲，瓚破禽劉虞，盡有幽州之地，猛志益盛…遂徙鎮焉(易)」 / 資治通鑑 卷061 「公孫瓚既殺劉虞，盡有幽州之地」 — 「盡有幽州」 명시이므로 州 단위 배정(요동군은 공손도)"
         },
         {
           "scenarioCode": 1030,
@@ -107223,19 +107223,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 17,
+          "ownerNationKey": "S1030-N017",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N017-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N017-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N017-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1030,
@@ -130605,19 +130605,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1031-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N011-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1031,
@@ -131795,19 +131795,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1031-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N010-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1031,
@@ -131846,19 +131846,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1031-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N012-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N012-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N012-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷062 한기54 건안원년 「孫策將取會稽，吳人嚴白虎等眾各萬餘人，處處屯聚」 / 三國志 卷46 오서 손파로토역전 동문 — 吳郡 일대의 宗帥이며 正式 太守가 아니고, 「處處屯聚」라 고정 治所가 없다"
         },
         {
           "scenarioCode": 1031,
@@ -131883,16 +131883,16 @@
           "ownerNationId": 6,
           "ownerNationKey": "S1031-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1031-CONTINUITY-002",
+          "winningClaimId": "S1031-N006-ADMIN",
           "claimTrace": [
-            "S1031-CONTINUITY-002"
+            "S1031-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-CONTINUITY-002-EVIDENCE"
+            "S1031-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1031,
@@ -132322,19 +132322,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1031-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N004-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷073 공손찬전 「是歲，瓚破禽劉虞，盡有幽州之地，猛志益盛…遂徙鎮焉(易)」 / 資治通鑑 卷061 「公孫瓚既殺劉虞，盡有幽州之地」 — 「盡有幽州」 명시이므로 州 단위 배정(요동군은 공손도)"
         },
         {
           "scenarioCode": 1031,
@@ -134328,19 +134328,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1031-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N011-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1031,
@@ -157710,19 +157710,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 13,
+          "ownerNationKey": "S1040-N013",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N013-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N013-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N013-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1040,
@@ -158900,19 +158900,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 8,
+          "ownerNationKey": "S1040-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N008-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N008-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N008-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1040,
@@ -158951,19 +158951,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 3,
+          "ownerNationKey": "S1040-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N003-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N003-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N003-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062"
         },
         {
           "scenarioCode": 1040,
@@ -158988,16 +158988,16 @@
           "ownerNationId": 5,
           "ownerNationKey": "S1040-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1040-CONTINUITY-002",
+          "winningClaimId": "S1040-N005-ADMIN",
           "claimTrace": [
-            "S1040-CONTINUITY-002"
+            "S1040-N005-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-CONTINUITY-002-EVIDENCE"
+            "S1040-N005-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1040,
@@ -159427,19 +159427,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 11,
+          "ownerNationKey": "S1040-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N011-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N011-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N011-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷073 공손찬전 「是歲，瓚破禽劉虞，盡有幽州之地，猛志益盛…遂徙鎮焉(易)」 / 資治通鑑 卷061 「公孫瓚既殺劉虞，盡有幽州之地」 — 「盡有幽州」 명시이므로 州 단위 배정(요동군은 공손도)"
         },
         {
           "scenarioCode": 1040,
@@ -161433,19 +161433,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 13,
+          "ownerNationKey": "S1040-N013",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N013-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N013-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N013-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1040,
@@ -184815,19 +184815,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1041-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N010-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1041,
@@ -186005,19 +186005,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 9,
+          "ownerNationKey": "S1041-N009",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N009-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N009-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N009-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1041,
@@ -186056,19 +186056,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1041-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N019-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062"
         },
         {
           "scenarioCode": 1041,
@@ -186093,16 +186093,16 @@
           "ownerNationId": 6,
           "ownerNationKey": "S1041-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1041-CONTINUITY-002",
+          "winningClaimId": "S1041-N006-ADMIN",
           "claimTrace": [
-            "S1041-CONTINUITY-002"
+            "S1041-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-CONTINUITY-002-EVIDENCE"
+            "S1041-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1041,
@@ -186532,19 +186532,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1041-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N004-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷073 공손찬전 「是歲，瓚破禽劉虞，盡有幽州之地，猛志益盛…遂徙鎮焉(易)」 / 資治通鑑 卷061 「公孫瓚既殺劉虞，盡有幽州之地」 — 「盡有幽州」 명시이므로 州 단위 배정(요동군은 공손도)"
         },
         {
           "scenarioCode": 1041,
@@ -188538,19 +188538,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1041-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N010-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1041,
@@ -211920,19 +211920,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 9,
+          "ownerNationKey": "S1050-N009",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-N009-ADMIN",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-N009-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-N009-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1050,
@@ -213110,19 +213110,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 6,
+          "ownerNationKey": "S1050-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-N006-ADMIN",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-N006-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-N006-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1050,
@@ -213161,19 +213161,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-N002-ADMIN",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷009 헌제기 注 引 吳志 「孫策旣破繇，遂度兵據會稽，策自領會稽太守」 / 資治通鑑 卷062 / 三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
         },
         {
           "scenarioCode": 1050,
@@ -213198,16 +213198,16 @@
           "ownerNationId": 5,
           "ownerNationKey": "S1050-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-002",
+          "winningClaimId": "S1050-N005-ADMIN",
           "claimTrace": [
-            "S1050-CONTINUITY-002"
+            "S1050-N005-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-002-EVIDENCE"
+            "S1050-N005-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다"
         },
         {
           "scenarioCode": 1050,
@@ -213640,16 +213640,16 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-008",
+          "winningClaimId": "S1050-N003-ADMIN",
           "claimTrace": [
-            "S1050-CONTINUITY-008"
+            "S1050-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-008-EVIDENCE"
+            "S1050-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
+          "rationale": "三國志 卷10 위서 순유전 「袁氏據四州之地，帶甲十萬」 / 資治通鑑 卷064 동문 — 四州 = 冀·靑·幽·幷 / 三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷06 원소전 건안4년 — 공손찬을 멸하고 幽州 병합"
         },
         {
           "scenarioCode": 1050,
@@ -215643,19 +215643,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 9,
+          "ownerNationKey": "S1050-N009",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-N009-ADMIN",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-N009-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-N009-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1050,
@@ -239026,19 +239026,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1060-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-N010-ADMIN",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1060,
@@ -240216,19 +240216,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1060-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-N005-ADMIN",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1060,
@@ -240267,19 +240267,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-N002-ADMIN",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
         },
         {
           "scenarioCode": 1060,
@@ -240304,16 +240304,16 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1060-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-002",
+          "winningClaimId": "S1060-N004-ADMIN",
           "claimTrace": [
-            "S1060-CONTINUITY-002"
+            "S1060-N004-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-002-EVIDENCE"
+            "S1060-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1060,
@@ -240746,16 +240746,16 @@
           "ownerNationId": 7,
           "ownerNationKey": "S1060-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-008",
+          "winningClaimId": "S1060-N007-ADMIN",
           "claimTrace": [
-            "S1060-CONTINUITY-008"
+            "S1060-N007-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-008-EVIDENCE"
+            "S1060-N007-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
+          "rationale": "三國志 卷06 위서 원소전 「出譚為青州，熙幽州，高幹并州」 / 三國志 卷10 위서 순유전 「袁氏據四州之地，帶甲十萬」 / 資治通鑑 卷064 동문 — 四州 = 冀·靑·幽·幷"
         },
         {
           "scenarioCode": 1060,
@@ -242749,19 +242749,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1060-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-N010-ADMIN",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
         },
         {
           "scenarioCode": 1060,
@@ -266131,19 +266131,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1070-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-N010-ADMIN",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1070,
@@ -267321,19 +267321,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1070-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-N005-ADMIN",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷36 촉서 마초전 「父騰，靈帝末與邊章、韓遂等俱起事於西州。初平三年，遂、騰率眾詣長安。漢朝以遂為鎮西將軍，遣還金城，騰為征西將軍，遣屯郿」 / 資治通鑑 卷060 동문 / 三國志 卷31 「時征西將軍馬騰屯郿而反」 — 郿는 右扶風. 「騰遣超隨繇討郭援、高幹於平陽」(202)까지 關中 주둔이 이어진다"
         },
         {
           "scenarioCode": 1070,
@@ -267372,19 +267372,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-N002-ADMIN",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복"
         },
         {
           "scenarioCode": 1070,
@@ -267409,16 +267409,16 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1070-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-002",
+          "winningClaimId": "S1070-N003-ADMIN",
           "claimTrace": [
-            "S1070-CONTINUITY-002"
+            "S1070-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-002-EVIDENCE"
+            "S1070-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1070,
@@ -267851,16 +267851,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-005",
+          "winningClaimId": "S1070-N001-ADMIN",
           "claimTrace": [
-            "S1070-CONTINUITY-005"
+            "S1070-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-005-EVIDENCE"
+            "S1070-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷16 위서 두기전(杜畿) — 건안 연간 河東太守 재임(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷01 무제기 건안13년 — 유종의 항복으로 荊州 북부(남양·양양·남군) 확보"
         },
         {
           "scenarioCode": 1070,
@@ -269854,19 +269854,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1070-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-N010-ADMIN",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1070,
@@ -293236,19 +293236,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 7,
+          "ownerNationKey": "S1080-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1080-BASELINE",
+          "winningClaimId": "S1080-N007-ADMIN",
           "claimTrace": [
-            "S1080-BASELINE"
+            "S1080-N007-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-BASELINE-EVIDENCE"
+            "S1080-N007-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1080,
@@ -294426,19 +294426,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "DIRECT-PARENT-0140-4962138710c0",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1080-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1080-BASELINE",
+          "winningClaimId": "S1080-N001-ADMIN",
           "claimTrace": [
-            "S1080-BASELINE"
+            "S1080-N001-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-BASELINE-EVIDENCE"
+            "S1080-N001-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 무제기 건안16~17년 — 潼關에서 마초·한수를 격파하고 關中 평정"
         },
         {
           "scenarioCode": 1080,
@@ -294477,19 +294477,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1080-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1080-BASELINE",
+          "winningClaimId": "S1080-N002-ADMIN",
           "claimTrace": [
-            "S1080-BASELINE"
+            "S1080-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-BASELINE-EVIDENCE"
+            "S1080-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷46 오서 손토역전 — 건안4년 廬江(劉勳)·豫章(華歆) 병합 / 資治通鑑 卷062 「豫章太守華歆」 항복 / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
         },
         {
           "scenarioCode": 1080,
@@ -294514,16 +294514,16 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1080-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1080-CONTINUITY-002",
+          "winningClaimId": "S1080-N004-ADMIN",
           "claimTrace": [
-            "S1080-CONTINUITY-002"
+            "S1080-N004-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-CONTINUITY-002-EVIDENCE"
+            "S1080-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+          "rationale": "三國志 卷31 촉서 유이목전(유장) — 유언 사후 「(璋)…領益州牧」 승계 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 晉書 卷014 지리지 상 「建安六年，劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」(注 引 譙周 巴記 「建安六年劉璋分巴郡墊江以上爲巴西郡」) / 三國志 卷31 촉서 유이목전 「魯部曲多在巴西，故以羲為巴西太守，領兵禦魯」 — 파서군은 201년 창설, 龐羲가 巴西太守"
         },
         {
           "scenarioCode": 1080,
@@ -294956,16 +294956,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1080-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1080-CONTINUITY-004",
+          "winningClaimId": "S1080-N001-ADMIN",
           "claimTrace": [
-            "S1080-CONTINUITY-004"
+            "S1080-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-CONTINUITY-004-EVIDENCE"
+            "S1080-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 211년 조조 통제 현역을 배정한다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 무제기 건안16~17년 — 潼關에서 마초·한수를 격파하고 關中 평정"
         },
         {
           "scenarioCode": 1080,
@@ -296959,19 +296959,19 @@
         {
           "scenarioCode": 1080,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 7,
+          "ownerNationKey": "S1080-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1080-BASELINE",
+          "winningClaimId": "S1080-N007-ADMIN",
           "claimTrace": [
-            "S1080-BASELINE"
+            "S1080-N007-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-BASELINE-EVIDENCE"
+            "S1080-N007-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1080,
@@ -320341,19 +320341,19 @@
         {
           "scenarioCode": 1090,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1090-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1090-BASELINE",
+          "winningClaimId": "S1090-N004-ADMIN",
           "claimTrace": [
-            "S1090-BASELINE"
+            "S1090-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-BASELINE-EVIDENCE"
+            "S1090-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1090,
@@ -321534,16 +321534,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1090-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1090-CONTINUITY-003",
+          "winningClaimId": "S1090-N001-ADMIN",
           "claimTrace": [
-            "S1090-CONTINUITY-003"
+            "S1090-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-CONTINUITY-003-EVIDENCE"
+            "S1090-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 조위 본기·열전과 晉書 卷14·15의 위 설치군·계승 목록을 대조해 223년 위 조정 통제 현역으로 배정한다. 시나리오 실행 세력명은 조조이지만 연도 판정은 위 승계권을 따른다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 위서 무제기 건안20년 「復漢寧郡爲漢中；分漢中之安陽、西城爲西城郡，置太守；分錫、上庸郡，置都尉」 — 서성군 창설(215) / 三國志 卷09 위서 하후연전 — 건안19년 隴右 평정"
         },
         {
           "scenarioCode": 1090,
@@ -321582,19 +321582,19 @@
         {
           "scenarioCode": 1090,
           "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1090-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1090-BASELINE",
+          "winningClaimId": "S1090-N002-ADMIN",
           "claimTrace": [
-            "S1090-BASELINE"
+            "S1090-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-BASELINE-EVIDENCE"
+            "S1090-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷47 오서 오주전 건안20년 「遂分荊州、長沙、江夏、桂陽以東屬權，南郡、零陵、武陵以西屬備」 / 資治通鑑 卷067 「以湘水為界」 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」 / 三國志 卷60 오서 여대전 「(岱)…遷廬陵太守」(219년경) / 資治通鑑 卷066 건안15년 「孫權以番陽太守臨淮步騭為交州刺史」 — 210년 시점 鄱陽郡 존재"
         },
         {
           "scenarioCode": 1090,
@@ -321619,16 +321619,16 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1090-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1090-CONTINUITY-001",
+          "winningClaimId": "S1090-N003-ADMIN",
           "claimTrace": [
-            "S1090-CONTINUITY-001"
+            "S1090-N003-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-CONTINUITY-001-EVIDENCE"
+            "S1090-N003-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷32의 유비 익주 평정·군현 승계와 晉書 卷14의 촉 설치군 목록을 대조한다."
+          "rationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷41 촉서 곽준전 「先主定蜀…乃分廣漢為梓潼郡，以峻為梓潼太守」(214) — 재동군 창설 근거 / 資治通鑑 卷068 건안24년 「漢中王備所置宜都太守樊友委郡走」 — 219년 시점 유비 소유 / 三國志 卷39 촉서 여예전 「遷巴西太守」 등 촉한기 巴西太守 다수 — 촉한 치하 巴西郡 존재 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다 / 三國志 卷01 위서 무제기 건안20년 「復漢寧郡爲漢中；分漢中之安陽、西城爲西城郡，置太守；分錫、上庸郡，置都尉」 — 서성군 창설(215) — 219년 劉封·孟達이 上庸·西城 방면을 취했다"
         },
         {
           "scenarioCode": 1090,
@@ -322061,16 +322061,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1090-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1090-CONTINUITY-003",
+          "winningClaimId": "S1090-N001-ADMIN",
           "claimTrace": [
-            "S1090-CONTINUITY-003"
+            "S1090-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-CONTINUITY-003-EVIDENCE"
+            "S1090-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 조위 본기·열전과 晉書 卷14·15의 위 설치군·계승 목록을 대조해 223년 위 조정 통제 현역으로 배정한다. 시나리오 실행 세력명은 조조이지만 연도 판정은 위 승계권을 따른다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 위서 무제기 건안20년 「復漢寧郡爲漢中；分漢中之安陽、西城爲西城郡，置太守；分錫、上庸郡，置都尉」 — 서성군 창설(215) / 三國志 卷09 위서 하후연전 — 건안19년 隴右 평정"
         },
         {
           "scenarioCode": 1090,
@@ -324064,19 +324064,19 @@
         {
           "scenarioCode": 1090,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1090-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1090-BASELINE",
+          "winningClaimId": "S1090-N004-ADMIN",
           "claimTrace": [
-            "S1090-BASELINE"
+            "S1090-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-BASELINE-EVIDENCE"
+            "S1090-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1090,
@@ -347448,19 +347448,19 @@
         {
           "scenarioCode": 1100,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1100-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1100-BASELINE",
+          "winningClaimId": "S1100-N005-ADMIN",
           "claimTrace": [
-            "S1100-BASELINE"
+            "S1100-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1100-BASELINE-EVIDENCE"
+            "S1100-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1100,
@@ -351171,19 +351171,19 @@
         {
           "scenarioCode": 1100,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1100-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1100-BASELINE",
+          "winningClaimId": "S1100-N005-ADMIN",
           "claimTrace": [
-            "S1100-BASELINE"
+            "S1100-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1100-BASELINE-EVIDENCE"
+            "S1100-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1100,
@@ -374555,19 +374555,19 @@
         {
           "scenarioCode": 1110,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1110-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1110-BASELINE",
+          "winningClaimId": "S1110-N004-ADMIN",
           "claimTrace": [
-            "S1110-BASELINE"
+            "S1110-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1110-BASELINE-EVIDENCE"
+            "S1110-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1110,
@@ -378278,19 +378278,19 @@
         {
           "scenarioCode": 1110,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1110-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1110-BASELINE",
+          "winningClaimId": "S1110-N004-ADMIN",
           "claimTrace": [
-            "S1110-BASELINE"
+            "S1110-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1110-BASELINE-EVIDENCE"
+            "S1110-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
         },
         {
           "scenarioCode": 1110,
@@ -401661,19 +401661,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1120-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N010-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치: 공손도"
         },
         {
           "scenarioCode": 1120,
@@ -402939,16 +402939,16 @@
           "ownerNationId": 5,
           "ownerNationKey": "S1120-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1120-CONTINUITY-004",
+          "winningClaimId": "S1120-N005-ADMIN",
           "claimTrace": [
-            "S1120-CONTINUITY-004"
+            "S1120-N005-ADMIN"
           ],
           "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-CONTINUITY-004-EVIDENCE"
+            "S1120-N005-PLACEMENT-EVIDENCE"
           ],
           "confidence": "IF",
-          "rationale": "IF_SCENARIO 배치: 유언의 익주 통제를 후대 문산 현역에도 일관되게 적용한다."
+          "rationale": "IF 시나리오 원본 배치: 유언"
         },
         {
           "scenarioCode": 1120,
@@ -403381,16 +403381,16 @@
           "ownerNationId": 2,
           "ownerNationKey": "S1120-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1120-CONTINUITY-005",
+          "winningClaimId": "S1120-N002-ADMIN",
           "claimTrace": [
-            "S1120-CONTINUITY-005"
+            "S1120-N002-ADMIN"
           ],
           "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-CONTINUITY-005-EVIDENCE"
+            "S1120-N002-PLACEMENT-EVIDENCE"
           ],
           "confidence": "IF",
-          "rationale": "IF_SCENARIO 배치: 공손찬의 하북 확장 분기를 후대 장무 현역에도 적용해 내부 공백을 막는다."
+          "rationale": "IF 시나리오 원본 배치: 공손찬"
         },
         {
           "scenarioCode": 1120,
@@ -405384,19 +405384,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "ss-anpingkou",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 10,
+          "ownerNationKey": "S1120-N010",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N010-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N010-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N010-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치: 공손도"
         },
         {
           "scenarioCode": 1120,

@@ -1,7 +1,5 @@
-// 전장은 아이소 지도(정본) 위에 얹힌다. 여기서 지키는 것은 세 가지다.
-//   1) 진행 중 전장이 지도까지 내려간다(주둔 중인 곳은 표시가 다르다).
-//   2) 전장에 있으면 城 강조를 끈다 — 두 군데가 동시에 빛나면 어디 있는지 못 읽는다.
-//   3) 앞 서버의 응답이 뒤늦게 도착해도 지도에 올리지 않는다.
+// 2026-09-17 사용자 결정: 「메인에서 전장이라 되어있는 장판, 관도 표시를 삭제해」.
+// 메인 지도는 전장 목록을 받지도, 표식·선택 줄로 그리지도 않는다. 城 강조는 전장과 무관하게 그대로다.
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { beforeEach, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
@@ -26,19 +24,10 @@ beforeEach(()=>{
  vi.mocked(api.worldMap).mockRejectedValue(new Error('no live overlay'));
  vi.mocked(api.battlefields).mockResolvedValue(fields);
 });
-it('shows current field separately and suppresses compatibility city highlight',async()=>{
+it('does not request or draw battlefields on the main map',async()=>{
  render(<MapViewer live currentCityId={405}/>);
- await waitFor(()=>expect(state.props?.battlefields?.[0].id).toBe('changban'));
- expect(state.props?.currentCityId).toBeNull();
- expect(state.props?.battlefields?.[0]).toMatchObject({current:true,latitude:30.98367,longitude:112.199583});
- fireEvent.click(screen.getByText('select field'));
- expect(screen.getByText('현재 주둔 중')).toBeTruthy();
-});
-it('does not publish a battlefield response from a previous server',async()=>{
- let resolve!:(value:typeof fields)=>void;
- vi.mocked(api.battlefields).mockReturnValue(new Promise(done=>{resolve=done;}));
- render(<MapViewer live/>);
- await waitFor(()=>expect(api.battlefields).toHaveBeenCalled());
- document.cookie='sam_server=changed; path=/';await act(async()=>{resolve(fields);});
- await waitFor(()=>expect(state.props?.battlefields).toBeUndefined());
+ await waitFor(()=>expect(state.props).not.toBeNull());
+ expect(api.battlefields).not.toHaveBeenCalled();
+ expect(state.props?.battlefields).toBeUndefined();
+ expect(state.props?.currentCityId).toBe(405);
 });

@@ -7,4 +7,5 @@ enum class HanWorldVariant(val artifactId: String, val cityCount: Int) {
     V3_846("han-world-v3-846", 846),
     V3_848("han-world-v3-848", 848),
     V3_1098("han-world-v3-1098", 1098),
+    V3_1133("han-world-v3-1133", 1133),
 }

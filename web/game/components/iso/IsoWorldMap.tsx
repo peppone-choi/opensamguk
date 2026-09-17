@@ -83,6 +83,8 @@ export interface IsoWorldMapProps {
    */
   battlefields?: readonly IsoWorldMapBattlefield[];
   onBattlefieldActivate?: (target: IsoWorldMapBattlefield) => void;
+  /** 사료로 확인한 뱃길(MapPreviewResponse.seaRoutes). 두 城 사이에 곡선으로 긋는다. */
+  seaRoutes?: readonly { fromCityId: number; toCityId: number }[];
   /** 조작 줄과 타일 판독 줄을 감춘다. 로비·기록처럼 보기만 하는 자리용. */
   compact?: boolean;
 }
@@ -101,6 +103,7 @@ export default function IsoWorldMap({
   onCityActivate,
   battlefields,
   onBattlefieldActivate,
+  seaRoutes,
   compact = false,
 }: IsoWorldMapProps) {
   const state = useIsoTileGrid(terrainUrl);
@@ -211,6 +214,7 @@ export default function IsoWorldMap({
     onHoverCity,
     battlefields: fields,
     onPickBattlefield: onBattlefieldActivate ? onPickBattlefield : undefined,
+    seaRoutes,
   };
 
   return (

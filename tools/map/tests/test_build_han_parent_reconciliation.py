@@ -77,7 +77,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         # 2026-09-16 1098: 五原郡 九原·河陰이 南匈奴 직할 省에서 120칸을 떼어 城 연결로 옮기고 忻州 飛地가 이웃에 흡수됐다.
         self.assertEqual(105_607, ledger["summary"]["directTerritoryCellCount"])
         # 2026-09-15: w2 城 없던 縣 관할 176곳(849–1024) 편입 — 경로 노드 전부가 제 城 행에 정확 승인된다.
-        self.assertEqual(1025, ledger["summary"]["exactApprovedRowCount"])  # + 2026-09-16 1098 平陰
+        self.assertEqual(1060, ledger["summary"]["exactApprovedRowCount"])  # 2026-09-17: + 郡國 밖 취락 城 35행 승인(w5), 巴郡 漢昌 巴中 보정
         self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_duplicate_stable_province_id_fails_closed(self):
@@ -432,7 +432,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(1025, len(expected))  # + 2026-09-16 1098 平陰
+        self.assertEqual(1060, len(expected))  # 2026-09-17: + 郡國 밖 취락 城 35행 승인(w5), 巴郡 漢昌 巴中 보정
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -585,10 +585,10 @@ class HanParentReconciliationTest(unittest.TestCase):
                 # 直轄 심사 7·外部 세력 심사 1 행이 기하 제안으로 옮겼다.
                 # 남은 直轄 4 는 治所가 기존 城과 같은 자리라 새 城을 세우지 않은 郡(新平·毗陵典農校尉·汶山·章武)이다.
                 # 2026-09-16 1098: 平陰 승인 +1, 五原郡 표시점 X010 이 外部 세력 심사 → 기하 제안.
-                "EXACT_APPROVED": 1025,
-                "PROPOSED_GEOMETRIC": 124,
+                # 2026-09-17: 郡國 밖 취락 37곳이 城으로 서서 外部 세력 심사 37행 중 35행 승인·2행 기하 제안(ADR-LITE-056).
+                "EXACT_APPROVED": 1060,
+                "PROPOSED_GEOMETRIC": 126,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 4,
-                "BLOCKED_EXTERNAL_POLITY_REVIEW": 37,
             },
             dict(decisions),
         )
@@ -596,21 +596,21 @@ class HanParentReconciliationTest(unittest.TestCase):
         # 빠지고(13칸은 直領으로), 91칸이 심사 전(PROPOSED_GEOMETRIC) 이웃 4곳으로 갔다.
         self.assertEqual(
             {
-                "EXACT_APPROVED": 115_299,
-                "PROPOSED_GEOMETRIC": 567,
+                # 2026-09-17: 外部 세력 칸 5_876 이 승인·제안으로 옮기고 漢昌 巴中 보정으로 70칸이 승인으로 왔다.
+                "EXACT_APPROVED": 121_210,
+                "PROPOSED_GEOMETRIC": 532,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 0,
-                "BLOCKED_EXTERNAL_POLITY_REVIEW": 5_876,
             },
             dict(decision_cells),
         )
-        self.assertEqual(165, summary["unresolvedRowCount"])
-        self.assertEqual(6_443, summary["unresolvedCellCount"])
+        self.assertEqual(130, summary["unresolvedRowCount"])  # 2026-09-17 w5·漢昌
+        self.assertEqual(532, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 53, "cellCount": 229},  # + 2026-09-16 1098 X010(0칸)
+            {"rowCount": 55, "cellCount": 43},  # 2026-09-17 w5·漢昌
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 71, "cellCount": 338},
+            {"rowCount": 71, "cellCount": 489},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -643,7 +643,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         # 심사 전(PROPOSED_GEOMETRIC)인 이웃 4곳(40610 +36·40616 +8·41198 +40·41202 +7)으로
         # 흡수돼 17_225 → 17_316. 행 수는 그대로다.
         self.assertEqual(
-            {"rowCount": 122, "cellCount": 567},  # + 2026-09-16 1098 X010(0칸)
+            {"rowCount": 124, "cellCount": 532},  # 2026-09-17 外部 세력 제안 2행 + 漢昌 巴中 보정 −70칸
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
@@ -730,9 +730,10 @@ class HanParentReconciliationTest(unittest.TestCase):
 
         # 2026-09-15: 鮮卑 땅의 廣寧縣(87125)이 w2 城으로 승인돼 빠졌다 — 남은 행은 전부 외부 실체 후보를 가진다.
         # 2026-09-16 1098: 五原郡 표시점 X010 이 南匈奴 땅에서 五原郡 발자국 안으로 들어와 外部 세력 심사에서 빠졌다.
-        self.assertEqual(37, len(rows))
+        # 2026-09-17(ADR-LITE-056): 郡國 밖 취락이 모두 城이 되어 外部 세력 심사 대기가 0 이다.
+        self.assertEqual(0, len(rows))
         self.assertEqual(set(), without_exact_external_candidate)
-        self.assertTrue(disputed)
+        self.assertFalse(disputed)
         self.assertTrue(
             all(row["externalReview"]["reviewState"] == "PENDING_EXTERNAL_POLITY_REVIEW" for row in rows)
         )

@@ -873,6 +873,13 @@ def materialize_document(document: dict, ledger: dict) -> dict:
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
 
+    from tools.map import fold_cityless_jurisdictions as folding
+    fold_peeled, folded = folding.peel(document)
+    if folded is not None:
+        reviewed = materialize_document(fold_peeled, ledger)
+        if reviewed != fold_peeled:
+            raise ValueError("cityless-jurisdiction fold input is not the canonical prior stage output")
+        return folding.reapply(reviewed, folded)
     carve_peeled, carved = carving.peel(document)
     if carved is not None:
         reviewed = materialize_document(carve_peeled, ledger)

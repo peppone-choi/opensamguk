@@ -28,7 +28,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
         // 2026-09-15 수·진·관 거점 省 분할 뒤의 han-tiles(지형 행은 그대로다).
-        assertEquals("09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
+        assertEquals("f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
@@ -51,7 +51,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(1098, loaded.bindingsByCityId.size)
+        assertEquals(1133, loaded.bindingsByCityId.size)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         assertEquals("DIRECT-PARENT-0086-6fbdf223343a", loaded.bindingsByCityId.getValue(833).landProvinceId)
         assertEquals("ss-jiange", loaded.bindingsByCityId.getValue(1047).landProvinceId)

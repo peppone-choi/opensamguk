@@ -80,13 +80,14 @@ class GeukRelocationTest(unittest.TestCase):
         # 2026-09-15: w2 176곳 편입. EXACT 96096→115195, unresolved 25542→6443(합은 그대로).
         # 2026-09-16 1098: 五原郡 본토 이동(南匈奴 직할 → 城 연결 120칸)·忻州 飛地 흡수·平陰 省 뒤 실측. 앞 단계 priorSummary 는 불변.
         self.assertEqual(121742, result['summary']['cityLinkedCellCount'])
-        self.assertEqual(115299, result['summary']['exactApprovedCellCount'])
-        self.assertEqual(6443, result['summary']['unresolvedCellCount'])
+        # 2026-09-17: 郡國 밖 취락 城(w5)과 漢昌 巴中 보정으로 승인 칸이 늘었다.
+        self.assertEqual(121210, result['summary']['exactApprovedCellCount'])
+        self.assertEqual(532, result['summary']['unresolvedCellCount'])
         rebinding = result['countyRebindingProjection']
         self.assertEqual(2699, rebinding['changedCellCount'])  # + 2026-09-16 1098 五原郡 九原·河陰
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
-        self.assertEqual(115160, rebinding['priorSummary']['exactApprovedCellCount'])
-        self.assertEqual(6443, rebinding['priorSummary']['unresolvedCellCount'])
+        self.assertEqual(121071, rebinding['priorSummary']['exactApprovedCellCount'])
+        self.assertEqual(532, rebinding['priorSummary']['unresolvedCellCount'])
         # 縣 51곳을 세운 뒤로 재배치 투영은 그 縣 단계가 재귀로 증명하는 **앞 단계 원장**
         # 안에 실려 온다 — 재바인딩이 그 위에 한 겹 더 얹혔을 뿐 같은 61칸이다.
         self.assertEqual(

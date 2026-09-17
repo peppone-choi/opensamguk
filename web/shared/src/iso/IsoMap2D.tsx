@@ -38,6 +38,8 @@ import type { IsoMapData } from './useIsoTileGrid';
 import {
   cityLabelBox,
   drawBattlefieldMark,
+  drawSeaRoute,
+  type IsoSeaRoute,
   drawCityFlag,
   drawCityName,
   drawCityRing,
@@ -103,6 +105,7 @@ const OBJECT_ANCHOR_Y = 240;
 const OBJECT_SCALE = 0.85;
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
+const EMPTY_SEA_ROUTES: readonly IsoSeaRoute[] = [];
 
 export interface IsoMap2DProps {
   data: IsoMapData;
@@ -131,6 +134,8 @@ export interface IsoMap2DProps {
   /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
   battlefields?: readonly IsoBattlefieldMarker[];
   onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
+  /** 사료로 확인한 뱃길(城 id 쌍). 城 깃발 밑에 곡선으로 긋는다. */
+  seaRoutes?: readonly IsoSeaRoute[];
   className?: string;
   ariaLabel?: string;
 }
@@ -178,6 +183,7 @@ export function IsoMap2D({
   cities = EMPTY_CITIES,
   battlefields = EMPTY_BATTLEFIELDS,
   onPickBattlefield,
+  seaRoutes = EMPTY_SEA_ROUTES,
   hideCityNames = false,
   currentCityId = null,
   selectedCityId = null,
@@ -581,6 +587,19 @@ export function IsoMap2D({
       // 깃발·이름·전장은 배율을 따라가지 않는다. 세계 좌표로 그리면 전체 보기에서 1px 로
       // 사라지고 당기면 화면을 덮는다 — 배포본이 그래서 전장 두 곳만 도드라져 보였다.
       const k = markerScale(view.scale);
+      // 뱃길 — 깃발·이름보다 먼저(밑에) 긋는다. 끝점은 건물이 선 자리다.
+      if (seaRoutes.length > 0) {
+        const byId = new Map(cities.map((city) => [city.id, city]));
+        for (const route of seaRoutes) {
+          const a = byId.get(route.fromCityId);
+          const b = byId.get(route.toCityId);
+          if (!a || !b) continue;
+          const [ax, ay] = tileScreen(a.drawCol, a.drawRow, a.tileCol, a.tileRow);
+          const [bx, by] = tileScreen(b.drawCol, b.drawRow, b.tileCol, b.tileRow);
+          drawSeaRoute(context, view.panX + ax * view.scale, view.panY + ay * view.scale,
+            view.panX + bx * view.scale, view.panY + by * view.scale, { k });
+        }
+      }
       hits.length = 0;
       for (const { city, sx, sy, roofLift } of placedOnScreen) {
         if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
@@ -786,7 +805,7 @@ export function IsoMap2D({
     };
   }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
     currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
-    battlefields, onPickBattlefield]);
+    battlefields, onPickBattlefield, seaRoutes]);
 
   if (error) {
     return (

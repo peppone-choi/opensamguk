@@ -261,6 +261,15 @@ def build_ledger() -> dict:
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
     selection = json.loads(SELECTION.read_text(encoding="utf-8"))
     rows, basis_counts, gaps = build_rows(tiles, selection)
+    # 2026-09-17 사용자 결정 「절대 소속 없는 프로빈스가 있어선 안돼」. 모든 省은 제 관할의 治所가 게임 城이어야
+    # 한다(OWN_COUNTY_SEAT) — 그래야 그 城을 차지한 세력이 省을 칠한다(MapAdministrativeOwnership). 기하 폴백
+    # (T3·T5)이나 T6 로 떨어진 省은 주인이 영원히 바뀌지 않는 땅이라 원장을 쓰지 않고 멈춘다.
+    orphans = [row for row in rows if row["basis"] != "OWN_COUNTY_SEAT"]
+    if orphans:
+        raise ValueError(
+            f"소속 없는 省 {len(orphans)}곳 — 관할 治所에 城이 없다: "
+            + ", ".join(f"{row['provinceId']}({row['jurisdictionId']}·{row['basis']})" for row in orphans[:20])
+        )
     return {
         "schemaVersion": 1,
         "attributionId": "province-city-attribution-v1",

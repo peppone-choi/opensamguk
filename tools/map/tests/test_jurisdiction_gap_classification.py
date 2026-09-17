@@ -83,7 +83,8 @@ class JurisdictionGapClassificationTest(unittest.TestCase):
         total = (self.report["STATIC_NEUTRAL"] + self.report["STATIC_OWNED"] +
                  self.report["STATIC_SPLIT_ALLOWLIST"] + len(self.report["UNKNOWN"]))
         mapped = self.report["HAS_CITY"]
-        self.assertGreater(total, 0, "unmapped jurisdictions must exist in current data")
+        # 2026-09-17(ADR-LITE-056): 城 없는 관할이 0 이다 — 접기와 郡國 밖 취락 城으로 모두 城을 가진다.
+        self.assertEqual(0, total, "every jurisdiction must now carry a city")
         self.assertGreater(mapped, 0, "mapped jurisdictions must exist in current data")
 
     def test_cities_without_tile_province_are_only_known_externals(self):

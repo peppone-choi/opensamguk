@@ -79,7 +79,9 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # + 849..1024 城 없던 han-tiles 縣 관할 176곳(REVIEWED_SOURCE_CLAIM, route-node-jurisdiction-claims-v1).
 # + 1025..1097 수·진·관 거점 73곳(REVIEWED_SOURCE_CLAIM, route-node-strategic-site-claims-v1).
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
-V3_ROUTE_NODE_COUNT = 1098
+# 2026-09-17: 같은 縣이 두 번 선 977·989 를 거두고 그 번호와 1099..1133 에 城 없던 郡國 밖 취락 관할 37 곳
+# (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
+V3_ROUTE_NODE_COUNT = 1133
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
 # 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.
@@ -257,6 +259,30 @@ SEA_LINKS: list[tuple[str, str, str]] = [
      "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 "
      "于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"),
 ]
+
+
+# han-world-v3 뱃길 — 城과 城을 잇는 바닷길(2026-09-17 사용자 결정 「고증에 맞춘 해로 연결」).
+# 끝점은 경로 노드의 physicalPlaceRef 다. 사료 색인(shiliao)에서 원문을 직접 확인한 노선만 싣는다.
+# v2 섬 郡 뱃길(SEA_LINKS) 가운데 夷洲·流求·州胡·于山國은 郡治끼리 그대로 잇고, 邪馬壹國↔狗邪國은
+# 倭人傳 도해 사슬(帶方→狗邪韓國→對馬→一大→末盧)로 바꾼다.
+V3_SEA_ROUTES: list[tuple[str, str, str]] = [
+    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:85371",
+     "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"),
+    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:40404",
+     "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"),
+    ("chgis:v6:cnty:40404", "curated:strategic-site-v1:ss-anpingkou",
+     "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"),
+    ("external:v1:X004", "external:v1:X045",
+     "三國志 卷30 倭人 「從郡至倭，循海岸水行，歷韓國…到其北岸狗邪韓國」 — 帶方 ↔ 狗邪韓國"),
+    ("external:v1:X045", "external:v1:X050", "三國志 卷30 倭人 「始渡一海，千餘里至對馬國」"),
+    ("external:v1:X050", "external:v1:X051", "三國志 卷30 倭人 「又南渡一海千餘里，名曰瀚海，至一大國」"),
+    ("external:v1:X051", "external:v1:X052", "三國志 卷30 倭人 「又渡一海，千餘里至末盧國」"),
+    ("chgis:v6:cnty:40165", "chgis:v6:cnty:42193",
+     "後漢書 卷33 鄭弘傳 「舊交阯七郡貢獻轉運，皆從東冶汎海而至」 — 東冶(東部侯官) ↔ 番禺"),
+    ("chgis:v6:cnty:42424", "chgis:v6:cnty:42444",
+     "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"),
+]
+V3_ISLAND_SEA_LINKS = [row for row in SEA_LINKS if (row[0], row[1]) != ("邪馬壹國", "狗邪國")]
 
 
 def canon_ju() -> dict[str, str]:
@@ -1254,10 +1280,16 @@ def build_v3() -> tuple[str, str, str, str]:
     for province_index, city_id in attribution.items():
         provinces_by_city[city_id].append(province_index)
     water_locked = water_locked_province_indices(tiles)
+    # 섬 郡(夷洲·流求·州胡·邪馬壹國·于山國)은 郡治 자신이 물에 갇혀 있다. 2026-09-17 郡國 밖 취락(w5)이
+    # 城으로 서면서 v3 에도 들어왔다. 지어낸 길로 잇지 않고 v2 와 같은 사료 표(SEA_LINKS)의 뱃길만 놓는다.
+    sea_link_islands = {island_ch for island_ch, _, _ in V3_ISLAND_SEA_LINKS}
     seat_patched: list[tuple[int, int]] = []
     for node in sorted(nodes, key=lambda n: n["numericCityId"]):
         cid = node["numericCityId"]
         if connections[cid]:
+            continue
+        # 섬 郡의 郡治(夷洲 臺灣 6省처럼 제 省끼리만 맞닿는 곳)는 아래 SEA_LINKS 뱃길이 잇는다.
+        if node["seatRole"] == "COMMANDERY_SEAT" and world_parent_ch(node) in sea_link_islands:
             continue
         owned = provinces_by_city.get(cid, [])
         if not owned or not all(index in water_locked for index in owned):
@@ -1274,6 +1306,81 @@ def build_v3() -> tuple[str, str, str, str]:
     if seat_patched:
         print("물에 갇혀 郡治와 직결한 城: "
               + ", ".join(f"{cid}→{seat}" for cid, seat in seat_patched), file=sys.stderr)
+    sea_linked: list[tuple[int, int]] = []
+    # 화면이 뱃길을 곡선으로 그리도록 城 쌍과 근거를 세계 JSON 에 싣는다(seaRoutes).
+    sea_routes: list[dict] = []
+    route_by_place_ref = {node["physicalPlaceRef"]: node["numericCityId"] for node in nodes}
+    for a_ref, b_ref, why in V3_SEA_ROUTES:
+        a, b = route_by_place_ref.get(a_ref), route_by_place_ref.get(b_ref)
+        if a is None or b is None:
+            raise AssertionError(f"뱃길 끝점이 경로 노드가 아니다: {a_ref} ↔ {b_ref}")
+        connections[a].add(b)
+        connections[b].add(a)
+        sea_linked.append((a, b))
+        sea_routes.append({"from": min(a, b), "to": max(a, b), "source": why})
+    for island_ch, shore_ch, why in V3_ISLAND_SEA_LINKS:
+        island, shore = seat_id_by_parent_ch.get(island_ch), seat_id_by_parent_ch.get(shore_ch)
+        if island is None or shore is None:
+            raise AssertionError(f"뱃길 {island_ch}↔{shore_ch} 의 郡治 노드가 v3 에 없다")
+        connections[island].add(shore)
+        connections[shore].add(island)
+        sea_linked.append((island, shore))
+        sea_routes.append({"from": min(island, shore), "to": max(island, shore), "source": why})
+    # 뱃길까지 놓은 뒤 城 그래프는 한 덩어리여야 한다 — 섬 郡(邪馬壹國 규슈 4국)처럼 城끼리는 이어져도
+    # 본토와 끊긴 덩어리가 남으면 보급·수도 탐색이 막힌다(2026-09-16 pep 정지와 같은 모양).
+    #
+    # 城 하나가 아니라 **여러 城 덩어리**가 물로 끊기는 곳도 있다 — 一大國(壹岐)과 伊都國은 격자에서 서로만
+    # 맞닿고 규슈 본체(末盧·奴國·邪馬壹國)와는 물로 갈린다. 덩어리의 省이 덩어리 밖 省과 격자에서 한 칸도
+    # 맞닿지 않을 때만(물 때문임을 owner 격자로 확인) 덩어리 城마다 제 郡治와 직결한다. 그 밖의 끊김은 던진다.
+    province_touch: dict[int, set[int]] = defaultdict(set)
+    cols, rows = tiles["_meta"]["cols"], tiles["_meta"]["rows"]
+    owner_grid: list[int] = []
+    for value, count in tiles["owner"]:
+        owner_grid.extend([value] * count)
+    for cell, owner in enumerate(owner_grid):
+        if owner < 0:
+            continue
+        row, col = divmod(cell, cols)
+        if col + 1 < cols and owner_grid[cell + 1] >= 0 and owner_grid[cell + 1] != owner:
+            province_touch[owner].add(owner_grid[cell + 1])
+            province_touch[owner_grid[cell + 1]].add(owner)
+        if row + 1 < rows and owner_grid[cell + cols] >= 0 and owner_grid[cell + cols] != owner:
+            province_touch[owner].add(owner_grid[cell + cols])
+            province_touch[owner_grid[cell + cols]].add(owner)
+    node_by_id = {node["numericCityId"]: node for node in nodes}
+    component_patched: list[tuple[int, int]] = []
+    while True:
+        seen, stack = {nodes[0]["numericCityId"]}, [nodes[0]["numericCityId"]]
+        while stack:
+            for other in connections[stack.pop()]:
+                if other not in seen:
+                    seen.add(other)
+                    stack.append(other)
+        stranded = sorted(set(node_by_id) - seen)
+        if not stranded:
+            break
+        component, stack = {stranded[0]}, [stranded[0]]
+        while stack:
+            for other in connections[stack.pop()]:
+                if other not in component:
+                    component.add(other)
+                    stack.append(other)
+        owned = {index for cid in component for index in provinces_by_city.get(cid, [])}
+        if not owned or any(province_touch[index] - owned for index in owned):
+            raise AssertionError(f"본토와 끊긴 城 덩어리가 물 때문이 아니다: {sorted(component)} 省 {sorted(owned)}")
+        linked = False
+        for cid in sorted(component):
+            seat = seat_id_by_parent_ch.get(world_parent_ch(node_by_id[cid]))
+            if seat is not None and seat not in component:
+                connections[cid].add(seat)
+                connections[seat].add(cid)
+                component_patched.append((cid, seat))
+                linked = True
+        if not linked:
+            raise AssertionError(f"물로 끊긴 城 덩어리 {sorted(component)} 의 郡治가 덩어리 밖에 없다")
+    if sea_linked or component_patched:
+        print("뱃길: " + ", ".join(f"{a}↔{b}" for a, b in sea_linked)
+              + " · 물로 끊긴 덩어리→郡治: " + ", ".join(f"{a}→{b}" for a, b in component_patched), file=sys.stderr)
 
     # --- 등급·능력치 ---------------------------------------------------------
     #
@@ -1340,7 +1447,11 @@ def build_v3() -> tuple[str, str, str, str]:
             stand_in = stand_in_seat_by_place.get(place)
             out.update({
                 "id": cid,
-                "name": runtime_place_name(stand_in or physical, cid if cid > V3_STABLE_NAME_MAX_ID else None),
+                # 郡國 밖 취락(w5)은 관할 이름을 쓴다 — 지형 점 이름은 che 맵 관례(「남만」·「흉노」)라
+                # 사료 이름(哀牢 애뢰 · 南匈奴 남흉노)과 다르다. 「(후대 명칭)」 같은 설명 꼬리는 뗀다.
+                "name": (re.sub(r"\s*\(.*\)$", "", jurisdiction["displayName"])
+                         if node["nodeClass"] == "SETTLEMENT_NODE"
+                         else runtime_place_name(stand_in or physical, cid if cid > V3_STABLE_NAME_MAX_ID else None)),
                 "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
                 "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
                 "meta": {
@@ -1373,6 +1484,13 @@ def build_v3() -> tuple[str, str, str, str]:
         level_name = STRATEGIC_SITE_LEVEL_BY_NODE_CLASS.get(node["nodeClass"]) or v3_level(
             parent_ch, node["seatRole"] == "COMMANDERY_SEAT"
         )
+        # 郡國 밖 취락(w5) — 東夷傳 권역(FRONTIER)은 v2 와 같이 戶數·縣 규칙, 그 밖 이민족 거점은 '이'(v2 level_of).
+        if node["nodeClass"] == "SETTLEMENT_NODE" and parent_ch not in FRONTIER:
+            level_name = "이"
+        elif node["nodeClass"] == "SETTLEMENT_NODE" and node["seatRole"] != "COMMANDERY_SEAT":
+            # 치소가 아닌 취락(挹婁·對馬·一大·末盧·伊都·奴)은 縣이 아니다 — 縣 등급(영현·장현)을 주면
+            # 화면이 「읍루현」을 만든다. 戶數 근거도 없어 가장 낮은 郡國 등급 '소'로 둔다.
+            level_name = "소"
         out["level"] = LEVEL_ID[level_name]
         out["max"] = dict(v3_maxes[level_name])
         out["initial"] = dict(zip(STAT_KEYS, BUILD_INIT[level_name]))
@@ -1499,6 +1617,7 @@ def build_v3() -> tuple[str, str, str, str]:
             "regions": legacy["_meta"]["regions"],
         },
         "width": legacy["width"], "height": legacy["height"], "cities": out_cities,
+        "seaRoutes": sorted(sea_routes, key=lambda row: (row["from"], row["to"])),
     }
     blob = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
     kt = kotlin(raw_rows, "HanWorldV3CityConst", "han-world-v3")

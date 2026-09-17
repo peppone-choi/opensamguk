@@ -8,7 +8,16 @@ object MapJson {
     fun resourceCode(mapCode: String): String =
         if (mapCode == "han-world-v2") "han" else mapCode
 
-    data class MapData(val width: Int, val height: Int, val cities: List<MapCityCoord>)
+    data class MapData(
+        val width: Int,
+        val height: Int,
+        val cities: List<MapCityCoord>,
+        /** 城과 城을 잇는 바닷길(han-world-v3 `seaRoutes`). 화면이 곡선으로 그린다. 없는 맵은 비어 있다. */
+        val seaRoutes: List<MapSeaRoute> = emptyList(),
+    )
+
+    /** 사료로 확인한 뱃길 한 줄. 城 연결(connections)에도 이미 들어 있다 — 여기는 그리기용 표식이다. */
+    data class MapSeaRoute(val fromCityId: Int, val toCityId: Int, val source: String)
 
     data class MapCityCoord(
         val id: Int,
@@ -116,7 +125,15 @@ object MapJson {
                 displayName = (meta?.get("displayName") as? String)?.takeIf { it.isNotBlank() },
             )
         }
-        return MapData(width = width, height = height, cities = cities)
+        val seaRoutes = (root["seaRoutes"] as? List<*> ?: emptyList<Any?>()).mapNotNull { raw ->
+            val row = raw as? Map<*, *> ?: return@mapNotNull null
+            MapSeaRoute(
+                fromCityId = (row["from"] as? Number)?.toInt() ?: return@mapNotNull null,
+                toCityId = (row["to"] as? Number)?.toInt() ?: return@mapNotNull null,
+                source = row["source"] as? String ?: "",
+            )
+        }
+        return MapData(width = width, height = height, cities = cities, seaRoutes = seaRoutes)
     }
 
     fun loadCityDetailsFromClasspath(mapCode: String): List<MapCityDetail> {

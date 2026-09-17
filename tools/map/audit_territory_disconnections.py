@@ -517,6 +517,31 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
+    from tools.map import fold_cityless_jurisdictions as folding
+    before, folded = folding.peel(document)
+    if folded is not None:
+        # 城 없는 관할 접기는 거점 분할보다도 나중이다. 기하는 그대로고 관할 소속만 바뀐다. 앞 단계 심사 행이
+        # 그대로 성립해야 하고, 접기로 모양이 바뀐 조각(北地郡 富平)만 결정 원장의 territoryAdjudications 가
+        # 새 행으로 대신한다. 접기에 걸린 단위의 행이 사라진 조각을 가리키면 버리고, 그 밖의 차이는 드리프트다.
+        prior = check(before, ledger)
+        if prior["errors"]:
+            raise ValueError("prior territory review fails before the cityless-jurisdiction fold: "
+                             + repr(prior["errors"]))
+        rows, projection = _reviewed_rows(before, ledger, rows)
+        stage = folding.stage_for(document, folded)
+        decisions = json.loads(folding.DECISIONS.read_text(encoding="utf-8"))
+        stage_rows = validate_ledger({**ledger, "adjudications": decisions["territoryAdjudications"]})
+        replaced = {row["componentKey"] for row in stage_rows}
+        commandery_of = {row["id"]: row["commanderyId"] for row in before["jurisdictionRecords"]}
+        affected = set()
+        for decision in folded["decisions"]:
+            for jid in (decision["sourceJurisdictionId"], decision["targetJurisdictionId"]):
+                affected |= {jid, commandery_of[jid]}
+        current = {row["componentKey"] for row in inventory(document)}
+        kept = [row for row in rows if row["componentKey"] not in replaced
+                and not (row["unitId"] in affected and row["componentKey"] not in current)]
+        return kept + stage_rows, {"cityJurisdictionFoldStage": stage["outputDocumentSha256"],
+                                   "priorProjection": projection}
     before, carved = carving.peel(document)
     if carved is not None:
         # 거점 省은 기증 縣 省에서 조각 수를 늘리지 않게 떼어 냈다(carve 규칙). 앞 단계 심사 행이 그대로

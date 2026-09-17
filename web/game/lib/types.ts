@@ -361,6 +361,8 @@ export interface MapPreviewResponse {
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
+  /** 사료로 확인한 뱃길(城 id 쌍 + 근거). 없는 맵이면 생략된다(MapPreviewDto.seaRoutes). */
+  seaRoutes?: { fromCityId: number; toCityId: number; source: string }[];
 }
 
 // ── in-game world map (game-api WorldMapResponse / WorldMapDto.kt — GET /api/map) ─

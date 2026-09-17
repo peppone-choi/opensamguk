@@ -436,12 +436,13 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         # (w1-script-variant-county-join; 귀속 충돌 5곳은 defer)
         # + 849–1024 城 없던 縣 관할 176 곳(w2-cityless-jurisdiction-route-claim)
         # + 1025–1097 수·진·관 거점 73 곳(w3-strategic-site-route-claim). 전부 append-only 다.
-        self.assertEqual(1098, report.approved_count)
+        # + 1098 河南尹 平陰(w4) + 2026-09-17 郡國 밖 취락 37곳(w5: 977·989 재결속 + 1099–1133), 同縣 중복 977·989 는 거두었다.
+        self.assertEqual(1133, report.approved_count)
         append = documents.migration["appendedRows"]
-        self.assertEqual(318, len(append))  # + 2026-09-16 河南尹 平陰(1098), w4-vacated-county-location
+        self.assertEqual(353, len(append))
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(1098, append[-1]["newCityId"])
-        self.assertEqual(249, sum(1 for row in append if "sourceClaimId" in row))
+        self.assertEqual(1133, append[-1]["newCityId"])
+        self.assertEqual(284, sum(1 for row in append if "sourceClaimId" in row))
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
         for mutate, pattern in (
@@ -1185,25 +1186,29 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.SelectionContractError, "forbidden"):
             MODULE.validate_documents(documents)
 
-    def test_forbidden_physical_x060_is_rejected(self) -> None:
+    def test_forbidden_physical_place_is_rejected(self) -> None:
+        # 2026-09-17(ADR-LITE-056): X060 은 이제 城이다 — 경로 노드가 아닌 표시점 X010 을 금지해 같은 기구를 건다.
         documents = real_documents()
         node = documents.selection["routeNodes"][0]
         legacy_id = node["legacyCityId"]
         unit_id = node["administrativeUnitId"]
-        node["physicalPlaceRef"] = "external:v1:X060"
+        node["physicalPlaceRef"] = "external:v1:X010"
         candidate = next(
             row for row in documents.candidate["candidates"]
             if row.get("origin") == "CURRENT_780" and row.get("legacyCityId") == legacy_id
         )
-        candidate["physicalPlaceRef"] = "external:v1:X060"
+        candidate["physicalPlaceRef"] = "external:v1:X010"
         overlay = next(
             row for row in documents.overlay["administrativeUnits"]
             if row["administrativeUnitId"] == unit_id
         )
-        overlay["selectedCandidate"]["physicalPlaceId"] = "external:v1:X060"
-        documents.selection["reviewPolicy"]["forbiddenSelections"] = forbidden_selections()
+        overlay["selectedCandidate"]["physicalPlaceId"] = "external:v1:X010"
+        forbidden = {**forbidden_selections(), "physicalPlaceIds": ["external:v1:X010"]}
+        documents.selection["reviewPolicy"]["forbiddenSelections"] = forbidden
 
-        with self.assertRaisesRegex(MODULE.SelectionContractError, "forbidden"):
+        from unittest import mock
+        with mock.patch.object(MODULE, "EXPECTED_FORBIDDEN_SELECTIONS", forbidden), \
+                self.assertRaisesRegex(MODULE.SelectionContractError, "forbidden"):
             MODULE.validate_documents(documents)
 
     def test_hhs_ailao_administrative_unit_is_not_name_blacklisted(self) -> None:
@@ -1908,7 +1913,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
 
     def test_validation_contract_is_independently_hash_pinned(self) -> None:
         self.assertEqual(
-            "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3",
+            "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05",
             hashlib.sha256(MODULE.VALIDATION_CONTRACT_PATH.read_bytes()).hexdigest(),
         )
 

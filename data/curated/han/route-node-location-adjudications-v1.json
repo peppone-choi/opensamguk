@@ -689,13 +689,13 @@
       "administrativeUnitId": "hhs:113:巴郡:014",
       "sourceName": "汉昌",
       "reviewState": "APPROVED_FOR_SELECTION",
-      "selectedPhysicalPlaceId": "chgis:v6:cnty:44580",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44621",
       "rejectedPhysicalPlaceIds": [
         "chgis:v6:cnty:42093",
-        "chgis:v6:cnty:44621"
+        "chgis:v6:cnty:44580"
       ],
-      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
-      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "rationaleCode": "HISTORICAL_LOCATION_CORRECTION",
+      "rationale": "讀史方輿紀要 卷68 保寧府 巴州 「漢昌城，今州治。漢宕渠縣地，後漢永元中分宕渠北界置漢昌縣，仍屬巴郡」 — 後漢 漢昌은 巴州 治所(巴中)다. 蒼溪 자리의 漢昌은 같은 卷의 「蕭齊改置漢昌縣，仍屬巴西郡」로 뒤 왕조의 개치이므로 기각한다. 長沙郡 漢昌(42093)은 孫吳 析置라 다른 郡이다.",
       "evidenceRefs": [
         "data/curated/han/administrative-place-bindings-v1.json",
         "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"

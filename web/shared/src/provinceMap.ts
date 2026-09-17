@@ -118,7 +118,8 @@ export interface CommanderyRecordDto {
   displayName: string;
   nameCh: string;
   kind: string;
-  seatJurisdictionId: string;
+  /** 관할을 모두 이웃 城 관할에 접은 郡은 null 이다(tools/map/fold_cityless_jurisdictions.py). */
+  seatJurisdictionId: string | null;
   jurisdictionIds: readonly string[];
 }
 

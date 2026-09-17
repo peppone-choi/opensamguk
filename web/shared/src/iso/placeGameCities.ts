@@ -154,6 +154,10 @@ export function placeGameCities(
       cell = gameXyToSourceCell(
         city.x, city.y, options.sourceSize, { cols: sourceCols, rows: sourceRows },
       );
+      // 縣 구획 없이 郡 직할 省에 선 城(龜茲屬國·대리 治所)도 좌표가 제 省 밖이면 안으로 민다.
+      if (province != null && province >= 0) {
+        cell = provinceSeatCell.insideProvince?.(province, cell.col, cell.row) ?? cell;
+      }
     }
 
     const col = cell.col / RASTER_GROUP;

@@ -19,7 +19,7 @@ import {
   sourceCellToTile,
   type IsoTileGrid,
 } from '../isoTileGrid';
-import type { BattlefieldMapProjection, HanTiles } from '../HanMapCanvas';
+import { projectBattlefieldTarget, type BattlefieldMapProjection, type HanTiles } from '../HanMapCanvas';
 import { applyCitySeedReseats } from './citySeedReseat';
 
 export const LEVEL_PNG_URL = '/map/elevation/han-world-v3-levels.png';
@@ -48,6 +48,11 @@ export interface ProvinceSeatCells {
   col: Int32Array;
   row: Int32Array;
   cityIndex: Int32Array;
+  /**
+   * 원본 셀 (col,row) 를 그 縣(province) 안으로 민다. 이미 안이면 그대로, 밖이면 그 縣 칸 중 가장
+   * 가까운 칸. 소유 래스터가 없는 입력(시험 고정물)이면 없다.
+   */
+  insideProvince?: (province: number, col: number, row: number) => { col: number; row: number } | null;
 }
 
 export interface ElevationManifest {
@@ -113,21 +118,71 @@ async function decodeLevelPng(url: string, signal: AbortSignal): Promise<ImageDa
  * cityIndex 자체도 같이 편다. 게임 城 이 지형 cities[] 의 **어느 항목**인지 아는 유일한
  * 길이라, 같은 곳을 두 번 그리는 것을 막는 데 쓴다(placeGameCities 참조).
  */
+/**
+ * 縣별 칸 목록(연결 리스트). 城 아이콘을 제 縣 안으로 밀어 넣을 때만 쓴다.
+ *
+ * 「좌표 대로 따라가되, 해당 프로빈스 밖에 있으면 안으로 밀어넣어야지」(2026-09-17). 지형 응답
+ * cities[].col/row 는 경위도 투영점이 아니라 영역에 맞춰 옮겨 심은 씨앗이고, 郡 직할 땅에 선 城 은
+ * x/y 선형 폴백을 쓴다 — 둘 다 제 縣 칸 밖에 떨어질 수 있었다.
+ */
+function provinceCellIndex(tiles: HanTiles, provinceCount: number) {
+  const cols = tiles._meta?.cols;
+  const rows = tiles._meta?.rows;
+  if (!tiles.owner || !cols || !rows) return null;
+  const owner = expandRunLength(tiles.owner, cols * rows);
+  const head = new Int32Array(provinceCount).fill(-1);
+  const next = new Int32Array(owner.length).fill(-1);
+  for (let cell = owner.length - 1; cell >= 0; cell -= 1) {
+    const province = owner[cell];
+    if (province < 0 || province >= provinceCount) continue;
+    next[cell] = head[province];
+    head[province] = cell;
+  }
+  return (province: number, col: number, row: number) => {
+    if (province < 0 || province >= provinceCount || head[province] < 0) return null;
+    const sampleCol = Math.floor(col);
+    const sampleRow = Math.floor(row);
+    if (sampleCol >= 0 && sampleRow >= 0 && sampleCol < cols && sampleRow < rows
+      && owner[sampleRow * cols + sampleCol] === province) {
+      return { col: sampleCol, row: sampleRow };
+    }
+    let best = -1;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let cell = head[province]; cell >= 0; cell = next[cell]) {
+      const dc = (cell % cols) + 0.5 - col;
+      const dr = Math.floor(cell / cols) + 0.5 - row;
+      const distance = dc * dc + dr * dr;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = cell;
+      }
+    }
+    return best < 0 ? null : { col: best % cols, row: Math.floor(best / cols) };
+  };
+}
+
 export function buildProvinceSeatCells(tiles: HanTiles): ProvinceSeatCells {
   const records = tiles.provinceRecords ?? [];
   const col = new Int32Array(records.length).fill(-1);
   const row = new Int32Array(records.length).fill(-1);
   const cityIndex = new Int32Array(records.length).fill(-1);
+  const insideProvince = provinceCellIndex(tiles, records.length) ?? undefined;
   for (let i = 0; i < records.length; i += 1) {
     const index = records[i].cityIndex;
     if (index == null || !Number.isInteger(index)) continue;
     const city = tiles.cities[index];
     if (!city) continue;
-    col[i] = city.col;
-    row[i] = city.row;
     cityIndex[i] = index;
+    // 경위도가 있으면 그 투영점을 따른다. 없으면 씨앗 칸이다. 어느 쪽이든 제 縣 밖이면 안으로 민다.
+    const projected = Number.isFinite(city.lat) && Number.isFinite(city.lon) && tiles._meta
+      ? projectBattlefieldTarget(city.lat, city.lon, tiles._meta.projection, tiles._meta.cols, tiles._meta.rows)
+      : null;
+    const wanted = projected ?? { col: city.col, row: city.row };
+    const inside = insideProvince?.(i, wanted.col, wanted.row) ?? null;
+    col[i] = inside ? inside.col : city.col;
+    row[i] = inside ? inside.row : city.row;
   }
-  return { col, row, cityIndex };
+  return { col, row, cityIndex, insideProvince };
 }
 
 export function useIsoTileGrid(terrainUrl: string): State {

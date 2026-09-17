@@ -54,7 +54,7 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
         "w2-cityless-jurisdiction-route-claim", "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND",
         "han-tiles-jurisdiction:", "ADMINISTRATIVE_PLACE", frozenset({"COUNTY_NODE"}),
         frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
-        176, "jurisdictionRouteClaims", "data/curated/han/route-node-jurisdiction-claims-v1.json",
+        174, "jurisdictionRouteClaims", "data/curated/han/route-node-jurisdiction-claims-v1.json",
     ),
     # 縣이 아닌 수·진·관 거점(ADR-LITE-052, tools/scenario/append_strategic_site_route_claims.py).
     ClaimBatch(
@@ -63,7 +63,28 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
         frozenset({"NON_SEAT"}), frozenset({"STRATEGIC_SITE_LEDGER"}),
         73, "strategicSiteRouteClaims", "data/curated/han/route-node-strategic-site-claims-v1.json",
     ),
+    # 城 없던 郡國 밖 취락 관할(tools/scenario/append_external_settlement_route_claims.py, 2026-09-17).
+    ClaimBatch(
+        "w5-external-settlement-route-claim", "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+        "han-tiles-external-settlement:", "EXTERNAL_SETTLEMENT", frozenset({"SETTLEMENT_NODE"}),
+        frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"EXTERNAL_PLACE_RECORD"}),
+        37, "externalSettlementRouteClaims", "data/curated/han/route-node-external-settlement-claims-v1.json",
+    ),
 )
+#: 같은 縣이 두 번 선 城의 번호를 다른 claim 이 이어받는 키 재결속 사유(registry row 의 rebinding).
+REBINDING_REASONS = frozenset({"DUPLICATE_ROUTE_NODE_SLOT_REUSE"})
+
+
+def registry_unit_id(row: JsonObject) -> str:
+    """키 원장 행이 지금 가리키는 결합 — 재결속이 있으면 그 결합, 없으면 최초 결합."""
+    rebinding = row.get("rebinding")
+    if rebinding is None:
+        return text(row, "initialAdministrativeUnitId")
+    if not isinstance(rebinding, dict) or rebinding.get("reason") not in REBINDING_REASONS or (
+        rebinding.get("withdrawnAdministrativeUnitId") != row.get("initialAdministrativeUnitId")
+    ):
+        raise MaterializationContractError("registry rebinding must name its reason and withdrawn identity")
+    return text(rebinding, "administrativeUnitId")
 JURISDICTION_CLAIM_BATCH = CLAIM_BATCHES[0].batch_id
 CLAIM_BATCH_BY_ID = {batch.batch_id: batch for batch in CLAIM_BATCHES}
 APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND", VACATED_LOCATION_ISSUANCE} | {batch.issuance_reason for batch in CLAIM_BATCHES}
@@ -110,21 +131,11 @@ EXPECTED_REWRITE_SURFACES: JsonObject = {
         "surfaces": ["command_result.result_payload", "command_outbox.payload", "history", "replay"],
     },
 }
+# 2026-09-17: 郡國 밖 취락 치소 31 곳과 그 이름 11 개의 금지를 w5(external-settlement route claim)가 풀었다 —
+# 「절대 소속 없는 프로빈스가 있어선 안돼」(사용자 결정). 남는 금지는 龜茲屬國 이름과 비행정 노드 종류뿐이다.
 EXPECTED_FORBIDDEN_SELECTIONS: JsonObject = {
-    "physicalPlaceIds": [
-        "external:v1:X028", "external:v1:X029", "external:v1:X030",
-        "external:v1:X031", "external:v1:X032", "external:v1:X033", "external:v1:X034",
-        "external:v1:X035", "external:v1:X036", "external:v1:X037", "external:v1:X038",
-        "external:v1:X040", "external:v1:X041", "external:v1:X042", "external:v1:X043",
-        "external:v1:X044", "external:v1:X045", "external:v1:X046", "external:v1:X047",
-        "external:v1:X048", "external:v1:X049", "external:v1:X055", "external:v1:X056",
-        "external:v1:X057", "external:v1:X058", "external:v1:X059", "external:v1:X060",
-        "external:v1:X061", "external:v1:X062", "external:v1:X063", "external:v1:X064",
-    ],
-    "canonicalNames": [
-        "流求", "夷洲", "古寧伽耶", "大伽耶", "星山伽耶", "山越", "白馬氐", "西羌",
-        "南匈奴", "烏桓", "鮮卑", "龜茲屬國",
-    ],
+    "physicalPlaceIds": [],
+    "canonicalNames": ["龜茲屬國"],
     "nodeClasses": ["POLITY_PRESENCE", "REMOTE_GATE", "ALIAS_ONLY"],
 }
 
@@ -404,7 +415,8 @@ def _policy_corrections(policy: JsonObject, current: dict[int, JsonObject], sele
                 raise MaterializationContractError("binding correction policy is malformed")
             corrected[unit_id] = (old_id, "CORRECTED_BINDING_SAME_NODE")
             binding_ids.add(old_id)
-    if len(rows(policy, "legacyLocationCorrections")) != 1:
+    # 2026-09-17: + 579 巴郡 漢昌 蒼溪(蕭齊 개치) → 巴中(讀史方輿紀要 卷68 「漢昌城，今州治」) = 2.
+    if len(rows(policy, "legacyLocationCorrections")) != 2:
         raise MaterializationContractError("location correction policy count drift")
     for correction in rows(policy, "legacyLocationCorrections"):
         old_id, unit_id = number(correction, "oldCityId"), text(correction, "administrativeUnitId")
@@ -443,7 +455,7 @@ def _uuid_keys(registry: JsonObject, selected_ids: set[str]) -> dict[str, str]:
     indexed: dict[str, str] = {}
     seen: set[str] = set()
     for row in rows(registry, "keys"):
-        unit_id, key = text(row, "initialAdministrativeUnitId"), text(row, "routeNodeKey")
+        unit_id, key = registry_unit_id(row), text(row, "routeNodeKey")
         try:
             parsed = UUID(key)
         except ValueError as error:
@@ -463,26 +475,32 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
     끊김 없음은 **전체 append 합집합**으로 본다 — 비운 자리 縣(w4)이 claim 배치 뒤에 붙어도
     어떤 번호도 건너뛰거나 겹치지 않는다."""
     appended: dict[str, int] = {}
+    issued_order: list[str] = []
     for row in rows(registry, "keys"):
         if "numericCityId" not in row:
             continue
-        unit_id = text(row, "initialAdministrativeUnitId")
+        unit_id = registry_unit_id(row)
         numeric_id = number(row, "numericCityId")
+        # 재결속 행은 발급 사유(최초 결합의 batch)와 지금 결합의 batch 가 다르다 — 최초 결합으로 사유를 대조한다.
+        issued_unit = text(row, "initialAdministrativeUnitId")
         if (
             unit_id not in selected_ids
             or row.get("issuanceReason") not in APPEND_ISSUANCE_REASONS
             or any((row.get("issuanceReason") == batch.issuance_reason)
-                   != unit_id.startswith(batch.subject_prefix) for batch in CLAIM_BATCHES)
+                   != issued_unit.startswith(batch.subject_prefix) for batch in CLAIM_BATCHES)
+            or ("rebinding" in row and not any(unit_id.startswith(batch.subject_prefix) for batch in CLAIM_BATCHES))
             or unit_id in appended
         ):
             raise MaterializationContractError("append-only numeric registry row is malformed")
         appended[unit_id] = numeric_id
+        issued_order.append(unit_id)
     expected = list(range(LEGACY_SELECTION_COUNT + 1, LEGACY_SELECTION_COUNT + len(appended) + 1))
     if sorted(appended.values()) != expected:
         raise MaterializationContractError("append-only numeric IDs must be next never-issued sequence")
     late = {unit_id for unit_id in appended if unit_id in VACATED_LOCATION_UNITS}
+    first_late = min((issued_order.index(unit_id) for unit_id in late), default=len(issued_order))
     if late and min(appended[unit_id] for unit_id in late) <= max(
-        (value for unit_id, value in appended.items() if unit_id not in late), default=0
+        (appended[unit_id] for unit_id in issued_order[:first_late]), default=0
     ):
         raise MaterializationContractError("vacated-county append IDs must follow every earlier append")
     return appended
@@ -554,8 +572,11 @@ def build_outputs(
     appended_ids = _appended_numeric_ids(registry, set(selected) | claim_subjects)
     claim_numeric_ids = {subject: appended_ids.pop(subject) for subject in claim_subjects}
     floor = max(value for unit_id, value in appended_ids.items() if unit_id not in VACATED_LOCATION_UNITS)
+    rebound = {registry_unit_id(row) for row in rows(registry, "keys") if "rebinding" in row}
     for batch in CLAIM_BATCHES:
-        batch_ids = [claim_numeric_ids[text(claim, "subjectKey")] for owner, claim in route_claims if owner is batch]
+        # 재결속으로 앞 번호를 이어받은 claim 은 번호 순서 대조에서 뺀다(그 번호는 앞 batch 가 발급했다).
+        batch_ids = [claim_numeric_ids[text(claim, "subjectKey")] for owner, claim in route_claims
+                     if owner is batch and text(claim, "subjectKey") not in rebound]
         if min(batch_ids) <= floor:
             raise MaterializationContractError(f"{batch.batch_id} numeric IDs must follow every earlier append")
         floor = max(batch_ids)

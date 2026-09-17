@@ -54,6 +54,27 @@ class MapAdministrativeOwnershipTest {
     }
 
     @Test
+    fun `no province is left without a city that can paint it`() {
+        // 2026-09-17 사용자 결정 「절대 소속 없는 프로빈스가 있어선 안돼」. 한 세력이 모든 城을 가지면 모든 省이
+        // 그 세력 색이어야 한다 — 城 없는 관할의 省은 초기 배정 색에 영원히 묶인다. 1133 판은 城 없는 관할을
+        // 같은 실체 城 관할에 접고(fold_cityless_jurisdictions) 郡國 밖 취락에 城을 세웠다(w5).
+        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
+        fun unpainted(variant: opensamguk.logic.world.HanWorldVariant): List<String> {
+            val artifacts = resolver.artifacts(variant)
+            val map = opensamguk.infra.seed.MapJson.loadMap(
+                artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8),
+            )
+            val everything = map.cities.map { LiveCityOwnership(it.id, requireNotNull(it.provinceId), 7) }
+            return projection.project("scenario_1020", everything, artifacts)
+                .provinceOccupancy.filter { it.nationId != 7 }.map { it.provinceRecordId }
+        }
+        assertEquals(emptyList<String>(), unpainted(opensamguk.logic.world.HanWorldVariant.V3_1133))
+        // 앞 판은 城 없는 관할 46곳의 省 174 가 남는다 — 이 검사가 살아 있음을 같은 축으로 보인다.
+        assertEquals(174, unpainted(opensamguk.logic.world.HanWorldVariant.V3_1098).size)
+    }
+
+    @Test
     fun `commandery tie fallback prefers the lowest positive owner over neutral`() {
         assertEquals(1, resolveCommanderyController(mapOf(0 to 2, 1 to 2, 2 to 1), seatOwner = 2))
         assertEquals(0, resolveCommanderyController(mapOf(0 to 2), seatOwner = 0))
@@ -214,7 +235,8 @@ class MapAdministrativeOwnershipTest {
             // data/curated/han/county-misbinding-rebindings-v1.json 의
             // supersedesJurisdictionSeatRecovery 참조.
             // 2026-09-16 1098: + 平陰 관할 1 + 거점 관할 73 = 1,144.
-            assertEquals(1_144, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            // 2026-09-17: 城 없던 관할 11곳 접기 → 1,133.
+            assertEquals(1_133, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             assertEquals(172, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(
                 snapshot.provinceOccupancy.size,

@@ -39,8 +39,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         self.assertEqual("han-world-v3", result.selection["worldVersion"])
         # 849–1024 는 城 없던 縣 관할 176곳 source claim append 다.
         # 1025–1097 은 수·진·관 거점 73곳 source claim append 다.
-        self.assertEqual(1098, len(nodes))
-        self.assertEqual(list(range(1, 1099)), sorted(row["numericCityId"] for row in nodes))  # 1098 = 2026-09-16 河南尹 平陰(1098)
+        self.assertEqual(1133, len(nodes))
+        # 1098 = 2026-09-16 河南尹 平陰, 977·989·1099–1133 = 2026-09-17 郡國 밖 취락(w5).
+        self.assertEqual(list(range(1, 1134)), sorted(row["numericCityId"] for row in nodes))
         legacy_triples = [
             [
                 row["numericCityId"],
@@ -51,8 +52,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             for row in nodes
             if row["numericCityId"] <= 780
         ]
+        # 2026-09-17: 바뀐 legacy 행은 579 하나다 — 巴郡 漢昌 physicalPlaceRef 44580(蒼溪) → 44621(巴中).
         self.assertEqual(
-            "ac92503a8de9a53c684944495bc471e77c2557e8914d8fbed54cf520f7c6096a",
+            "f1ef7178e2cd9ff03b7028bd57b68fb3308fab6be1fe66fd3f9fe64786ccfd57",
             hashlib.sha256(
                 json.dumps(legacy_triples, ensure_ascii=False, separators=(",", ":")).encode()
             ).hexdigest(),
@@ -78,9 +80,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             },
             migration["appendedRows"][0],
         )
-        self.assertEqual(318, len(migration["appendedRows"]))  # + 1098 河南尹 平陰(w4)
+        self.assertEqual(353, len(migration["appendedRows"]))  # + 1098 河南尹 平陰(w4) + 1099–1133 취락(w5)
         self.assertEqual(780, len(migration["rows"]))
-        self.assertEqual(318, migration["summary"]["appendedIdentityCount"])
+        self.assertEqual(353, migration["summary"]["appendedIdentityCount"])
         self.assertEqual(
             "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
             MODULE._digest(inputs.han),
@@ -117,12 +119,13 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
     def test_real_approved_ledgers_materialize_exact_contract(self) -> None:
         result = MODULE.materialize(MODULE.default_inputs())
 
-        self.assertEqual(1098, len(result.selection["routeNodes"]))
+        self.assertEqual(1133, len(result.selection["routeNodes"]))
         self.assertEqual(780, len(result.migration["rows"]))
         self.assertEqual(31, result.selection["scenarioCatalog"]["resourceCount"])
         self.assertEqual(101, result.migration["summary"]["routeNodeReplacementCount"])
         self.assertEqual(25, result.migration["summary"]["historicalBindingCorrectionCount"])
-        self.assertEqual(1, result.migration["summary"]["physicalPlaceCorrectionCount"])
+        # + 2026-09-17 579 巴郡 漢昌 蒼溪 → 巴中(讀史方輿紀要 卷68).
+        self.assertEqual(2, result.migration["summary"]["physicalPlaceCorrectionCount"])
         self.assertEqual(0, result.migration["summary"]["numericCityIdChangeCount"])
 
     def test_route_keys_are_copied_verbatim_from_registry(self) -> None:
@@ -284,7 +287,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             with self.assertRaisesRegex(MODULE.MaterializationContractError, "authority subjectKey does not match"):
                 MODULE.materialize(inputs)
 
-    def test_forbidden_x060_cannot_be_selected_even_when_inputs_are_rehashed(self) -> None:
+    def test_forbidden_physical_place_cannot_be_selected_even_when_inputs_are_rehashed(self) -> None:
+        # 2026-09-17(ADR-LITE-056): 郡國 밖 취락 금지가 풀려 X060(哀牢)은 이제 城이다. 금지 기구는 그대로라
+        # 경로 노드가 아닌 郡 표시점 X010 을 금지 목록에 올려 같은 공격을 재현한다.
         with tempfile.TemporaryDirectory() as raw_directory:
             inputs = MODULE.copy_default_inputs(Path(raw_directory))
             selection = MODULE.materialize(inputs).selection
@@ -294,14 +299,14 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             overlay_row = next(
                 row for row in overlay["administrativeUnits"] if row["administrativeUnitId"] == unit_id
             )
-            overlay_row["selectedCandidate"]["physicalPlaceId"] = "external:v1:X060"
+            overlay_row["selectedCandidate"]["physicalPlaceId"] = "external:v1:X010"
             inputs.overlay.write_text(json.dumps(overlay, ensure_ascii=False), encoding="utf-8")
             candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
             current = next(
                 row for row in candidate["candidates"]
                 if row.get("origin") == "CURRENT_780" and row.get("legacyCityId") == legacy_id
             )
-            current["physicalPlaceRef"] = "external:v1:X060"
+            current["physicalPlaceRef"] = "external:v1:X010"
             candidate["provenance"]["inputs"]["administrativePlaceOverlay"]["sha256"] = MODULE._digest(inputs.overlay)
             inputs.candidate.write_text(json.dumps(candidate, ensure_ascii=False), encoding="utf-8")
             policy = json.loads(inputs.review_policy.read_text(encoding="utf-8"))
@@ -309,7 +314,14 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             policy["inputs"]["candidateManifest"]["sha256"] = MODULE._digest(inputs.candidate)
             inputs.review_policy.write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
 
-            with self.assertRaisesRegex(MODULE.MaterializationContractError, "forbidden physicalPlaceRef"):
+            from unittest import mock
+            from tools.scenario import han_route_node_selection as selection_module
+            forbidden = {**selection_module.EXPECTED_FORBIDDEN_SELECTIONS, "physicalPlaceIds": ["external:v1:X010"]}
+            policy = json.loads(inputs.review_policy.read_text(encoding="utf-8"))
+            policy["forbiddenSelections"] = forbidden
+            inputs.review_policy.write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+            with mock.patch.object(selection_module, "EXPECTED_FORBIDDEN_SELECTIONS", forbidden), \
+                    self.assertRaisesRegex(MODULE.MaterializationContractError, "forbidden physicalPlaceRef"):
                 MODULE.materialize(inputs)
 
     def test_location_claim_source_integrity_is_verified_during_materialization(self) -> None:

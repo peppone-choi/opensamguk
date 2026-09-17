@@ -171,6 +171,9 @@ def validate_materialized_hierarchy(
         inverse_jurisdictions[commandery_id].append(jurisdiction_id)
     for commandery_id, commandery in commanderies.items():
         expected = sorted(inverse_jurisdictions[commandery_id])
+        # 관할을 모두 이웃 城 관할에 접은 郡(fold_cityless_jurisdictions, ADR-LITE-056)은 관할 없이 seat 가 null 이다.
+        if not expected and commandery.get("jurisdictionIds") == [] and commandery.get("seatJurisdictionId") is None:
+            continue
         if not expected or commandery.get("jurisdictionIds") != expected:
             raise ValueError(f"commandery jurisdiction inverse membership mismatch: {commandery_id}")
         if commandery.get("seatJurisdictionId") not in expected:

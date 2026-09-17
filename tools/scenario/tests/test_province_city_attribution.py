@@ -61,16 +61,9 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 이웃 郡 폴백(T5 177 → 143)에서 빠져나왔다. 城이 하나도 없는 섬 성분(22)은 그대로다.
         # 같은 날 거점 省 73곳이 縣 省에서 떨어져 나와 제 거점 城을 가져 OWN 1346 → 1419 이다(나머지 불변 —
         # 거점 城은 남의 省 귀속 대상이 되지 않는다). 2026-09-16 河南尹 平陰(1098) 이 떠난 자리 省을 제 城으로 가져 1419 → 1420.
-        self.assertEqual(
-            {
-                "OWN_COUNTY_SEAT": 1420,
-                "SAME_COMMANDERY_SEAT": 5,
-                "SAME_COMMANDERY_NEAREST": 4,
-                "ADJACENT_COMMANDERY_NEAREST": 143,
-                "COMMANDERY_HAS_NO_CITY": 22,
-            },
-            dict(self.basis),
-        )
+        # 2026-09-17(ADR-LITE-056): 城 없던 관할 11곳을 같은 실체 城 관할에 접고 郡國 밖 취락 37곳이 城으로 서서
+        # 모든 省이 제 관할 治所 城을 본다 — 1594 전부 OWN. 이제 빌더가 OWN 아닌 省을 원장으로 쓰지 않고 멈춘다.
+        self.assertEqual({"OWN_COUNTY_SEAT": 1594}, dict(self.basis))
 
     def test_attribution_never_crosses_a_commandery_boundary(self) -> None:
         jurisdictions = {
@@ -127,12 +120,14 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 甘陵·西平·長樂·鮮卑)에 城을 세운 것이다.
         # 남은 34 중 30 은 郡國 밖 세력이고, 新平·毗陵典農校尉·汶山·章武 4곳은 治所가 기존 城과
         # 같은 자리라 새 城을 세우지 않았다(route-node-jurisdiction-claims-v1 excluded).
-        self.assertEqual(34, len(self.gaps))
+        # 2026-09-17: 남은 34 중 郡國 밖 세력 30은 城을 받고(w5), 新平·毗陵典農校尉·汶山·章武 4곳은 관할이 이웃 城 관할에
+        # 접혀 省이 없다(fold_cityless_jurisdictions) — 0.
+        self.assertEqual(0, len(self.gaps))
         for gap in self.gaps:
             self.assertIsNotNone(gap["seatPlaceId"], gap)
             self.assertGreater(gap["provinceCount"], 0, gap)
         self.assertEqual(
-            165, sum(gap["provinceCount"] for gap in self.gaps)
+            0, sum(gap["provinceCount"] for gap in self.gaps)
         )
 
     def test_cityless_land_is_walked_out_to_the_nearest_city(self) -> None:
@@ -142,7 +137,8 @@ class ProvinceCityAttributionTest(unittest.TestCase):
             row for row in self.rows
             if row["basis"] == attribution.CROSSES_COMMANDERY_BOUNDARY
         ]
-        self.assertEqual(143, len(walked))
+        # 2026-09-17: 城 없는 郡의 땅이 남지 않아 T5 로 걸어 나갈 省이 없다(143 → 0).
+        self.assertEqual(0, len(walked))
         jurisdictions = {
             str(row["id"]): row for row in self.tiles["jurisdictionRecords"]
         }
@@ -165,10 +161,8 @@ class ProvinceCityAttributionTest(unittest.TestCase):
             row["commanderyNameCh"] for row in self.rows
             if row["basis"] == "COMMANDERY_HAS_NO_CITY"
         )
-        self.assertEqual(
-            {"邪馬壹國": 12, "夷洲": 6, "于山國": 1, "州胡": 1, "狗邪國": 1, "流求": 1},
-            dict(stranded),
-        )
+        # 2026-09-17: 바다 건너 22 省도 제 취락 城(邪馬壹國·夷洲·于山國·州胡·對馬·流求)을 받아 남지 않는다.
+        self.assertEqual({}, dict(stranded))
 
     def test_no_coordinates_leak_into_the_ledger(self) -> None:
         # 원장은 좌표를 적지 않는다(build_external_places 규칙과 같다).

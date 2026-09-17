@@ -62,7 +62,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_144, len(tiles["jurisdictionRecords"]))  # 2026-09-16 1098: 平陰 관할 +1
+        self.assertEqual(1_133, len(tiles["jurisdictionRecords"]))  # 2026-09-17: 城 없던 관할 11곳 접기
         self.assertEqual(172, len(tiles["commanderyRecords"]))
         # Preserve the original Licheng geometry proof before the separate Geuk stage.
         from tools.map import materialize_frontier_counties as frontier
@@ -135,7 +135,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_144, len(document["jurisdictionRecords"]))  # 2026-09-16 1098: 平陰 관할 +1
+        self.assertEqual(1_133, len(document["jurisdictionRecords"]))  # 2026-09-17: 城 없던 관할 11곳 접기
         self.assertEqual(172, len(document["commanderyRecords"]))
 
     def test_ningyang_row_reparents_a_pristine_in_memory_source_parent_fixture(self) -> None:
@@ -478,7 +478,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1144, len(jurisdictions))  # 2026-09-16 1098: 平陰 관할 +1
+        self.assertEqual(1133, len(jurisdictions))  # 2026-09-17: 城 없던 관할 11곳 접기 → 1133
         self.assertEqual(172, len(commanderies))
         self.assertEqual({"SPATIAL_PROVINCE"}, {record["kind"] for record in provinces})
         self.assertEqual(len(provinces), len({record["id"] for record in provinces}))
@@ -498,10 +498,14 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
                 if record["commanderyId"] == commandery["id"]
             )
             self.assertEqual(expected, commandery["jurisdictionIds"])
+        # 2026-09-17: 관할을 모두 접은 郡 4곳(新平·毗陵典農校尉·汶山·章武)은 관할 없이 seat 가 null 이다.
+        emptied = [record["id"] for record in commanderies if not record["jurisdictionIds"]]
+        self.assertEqual(["PARENT-0140", "PARENT-0145", "PARENT-0148", "PARENT-0157"], emptied)
         self.assertTrue(all(
             record["seatJurisdictionId"] in record["jurisdictionIds"]
-            for record in commanderies
+            for record in commanderies if record["jurisdictionIds"]
         ))
+        self.assertTrue(all(record["seatJurisdictionId"] is None for record in commanderies if not record["jurisdictionIds"]))
 
     def test_commandery_kind_follows_the_historical_parent_unit(self) -> None:
         self.assertEqual("KINGDOM", _commandery_kind({"nameCh": "趙國"}, {"kind": "COMMANDERY"}))

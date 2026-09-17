@@ -53,6 +53,7 @@ class MaterializerInputs:
     source_witness: Path
     jurisdiction_claims: Path
     strategic_site_claims: Path
+    external_settlement_claims: Path
 
 
 def default_inputs() -> MaterializerInputs:
@@ -70,6 +71,7 @@ def default_inputs() -> MaterializerInputs:
         source_witness=SOURCE_WITNESS,
         jurisdiction_claims=CURATED / "route-node-jurisdiction-claims-v1.json",
         strategic_site_claims=CURATED / "route-node-strategic-site-claims-v1.json",
+        external_settlement_claims=CURATED / "route-node-external-settlement-claims-v1.json",
     )
 
 
@@ -217,6 +219,7 @@ def _verify_policy(inputs: MaterializerInputs, policy: JsonObject, candidate: Js
         "routeNodeKeyRegistry": _verify_hash("route-node registry", obj(approved, "routeNodeKeyRegistry"), inputs.key_registry),
         "jurisdictionRouteClaims": _verify_hash("jurisdiction route claims", obj(approved, "jurisdictionRouteClaims"), inputs.jurisdiction_claims),
         "strategicSiteRouteClaims": _verify_hash("strategic site route claims", obj(approved, "strategicSiteRouteClaims"), inputs.strategic_site_claims),
+        "externalSettlementRouteClaims": _verify_hash("external settlement route claims", obj(approved, "externalSettlementRouteClaims"), inputs.external_settlement_claims),
     }
     candidate_inputs = obj(obj(candidate, "provenance"), "inputs")
     for label, path in (("administrativeCatalog", inputs.catalog), ("administrativePlaceOverlay", inputs.overlay),
@@ -240,7 +243,8 @@ def materialize(inputs: MaterializerInputs) -> BuildResult:
     result = build_outputs(candidate, catalog, overlay, policy, adjudications, claims, registry,
                            _scenario_resources(candidate, inputs.scenario_dir), provenance,
                            {CLAIM_BATCHES[0].batch_id: _load(inputs.jurisdiction_claims),
-                            CLAIM_BATCHES[1].batch_id: _load(inputs.strategic_site_claims)})
+                            CLAIM_BATCHES[1].batch_id: _load(inputs.strategic_site_claims),
+                            CLAIM_BATCHES[2].batch_id: _load(inputs.external_settlement_claims)})
     selection_hash = hashlib.sha256(serialize(result.selection).encode()).hexdigest()
     migration = dict(result.migration)
     migration["sourceSelectionSha256"] = selection_hash
@@ -255,7 +259,8 @@ def copy_default_inputs(destination: Path) -> MaterializerInputs:
     scenario_dir.mkdir()
     copied: dict[str, Path] = {}
     for field in ("candidate", "catalog", "overlay", "review_policy", "adjudications",
-                  "source_claims", "source_witness", "key_registry", "han", "tiles", "jurisdiction_claims", "strategic_site_claims"):
+                  "source_claims", "source_witness", "key_registry", "han", "tiles", "jurisdiction_claims", "strategic_site_claims",
+                  "external_settlement_claims"):
         source_path = getattr(source, field)
         copied[field] = Path(shutil.copy2(source_path, destination / source_path.name))
     candidate = _load(source.candidate)
@@ -273,6 +278,7 @@ def _parser() -> argparse.ArgumentParser:
                           ("source-claims", "source_claims"), ("source-witness", "source_witness"),
                           ("key-registry", "key_registry"), ("jurisdiction-claims", "jurisdiction_claims"),
                           ("strategic-site-claims", "strategic_site_claims"),
+                          ("external-settlement-claims", "external_settlement_claims"),
                           ("han", "han"), ("tiles", "tiles"), ("scenario-dir", "scenario_dir")):
         parser.add_argument(f"--{option}", type=Path, default=getattr(defaults, field))
     parser.add_argument("--selection-output", type=Path, default=CURATED / "route-node-selection-v1.json")

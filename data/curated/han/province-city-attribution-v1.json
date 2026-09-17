@@ -13,226 +13,21 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "selectionSha256": "60227256a34227426bdd451aa5bfffbe1f84bc2470c0d54e25c4113df4721806"
+    "tilesSha256": "f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
+    "selectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6"
   },
   "summary": {
     "provinceCount": 1594,
     "basisCounts": {
-      "OWN_COUNTY_SEAT": 1420,
-      "SAME_COMMANDERY_SEAT": 5,
-      "SAME_COMMANDERY_NEAREST": 4,
-      "ADJACENT_COMMANDERY_NEAREST": 143,
-      "COMMANDERY_HAS_NO_CITY": 22
+      "OWN_COUNTY_SEAT": 1594,
+      "SAME_COMMANDERY_SEAT": 0,
+      "SAME_COMMANDERY_NEAREST": 0,
+      "ADJACENT_COMMANDERY_NEAREST": 0,
+      "COMMANDERY_HAS_NO_CITY": 0
     },
-    "attributedProvinceCount": 1572,
-    "distinctRouteNodeCount": 1098,
-    "commanderiesWithoutCity": [
-      {
-        "commanderyId": "PARENT-0111",
-        "commanderyNameCh": "北沃沮",
-        "provinceCount": 26,
-        "seatPlaceId": "X030"
-      },
-      {
-        "commanderyId": "PARENT-0122",
-        "commanderyNameCh": "夫餘",
-        "provinceCount": 24,
-        "seatPlaceId": "X036"
-      },
-      {
-        "commanderyId": "PARENT-0152",
-        "commanderyNameCh": "烏桓",
-        "provinceCount": 17,
-        "seatPlaceId": "X062"
-      },
-      {
-        "commanderyId": "PARENT-0114",
-        "commanderyNameCh": "南匈奴",
-        "provinceCount": 16,
-        "seatPlaceId": "X064"
-      },
-      {
-        "commanderyId": "PARENT-0120",
-        "commanderyNameCh": "國內城",
-        "provinceCount": 14,
-        "seatPlaceId": "X028"
-      },
-      {
-        "commanderyId": "PARENT-0165",
-        "commanderyNameCh": "邪馬壹國",
-        "provinceCount": 12,
-        "seatPlaceId": "X055"
-      },
-      {
-        "commanderyId": "PARENT-0112",
-        "commanderyNameCh": "卒本",
-        "provinceCount": 6,
-        "seatPlaceId": "X029"
-      },
-      {
-        "commanderyId": "PARENT-0123",
-        "commanderyNameCh": "夷洲",
-        "provinceCount": 6,
-        "seatPlaceId": "X056"
-      },
-      {
-        "commanderyId": "PARENT-0118",
-        "commanderyNameCh": "哀牢",
-        "provinceCount": 5,
-        "seatPlaceId": "X060"
-      },
-      {
-        "commanderyId": "PARENT-0109",
-        "commanderyNameCh": "伯濟國",
-        "provinceCount": 4,
-        "seatPlaceId": "X042"
-      },
-      {
-        "commanderyId": "PARENT-0143",
-        "commanderyNameCh": "東沃沮",
-        "provinceCount": 3,
-        "seatPlaceId": "X037"
-      },
-      {
-        "commanderyId": "PARENT-0151",
-        "commanderyNameCh": "濊",
-        "provinceCount": 3,
-        "seatPlaceId": "X038"
-      },
-      {
-        "commanderyId": "PARENT-0164",
-        "commanderyNameCh": "辟卑離國",
-        "provinceCount": 3,
-        "seatPlaceId": "X041"
-      },
-      {
-        "commanderyId": "PARENT-0115",
-        "commanderyNameCh": "古寧伽耶",
-        "provinceCount": 2,
-        "seatPlaceId": "X049"
-      },
-      {
-        "commanderyId": "PARENT-0116",
-        "commanderyNameCh": "古資彌凍國",
-        "provinceCount": 2,
-        "seatPlaceId": "X046"
-      },
-      {
-        "commanderyId": "PARENT-0117",
-        "commanderyNameCh": "召文國",
-        "provinceCount": 2,
-        "seatPlaceId": "X034"
-      },
-      {
-        "commanderyId": "PARENT-0153",
-        "commanderyNameCh": "狗邪國",
-        "provinceCount": 2,
-        "seatPlaceId": "X045"
-      },
-      {
-        "commanderyId": "PARENT-0156",
-        "commanderyNameCh": "目支國",
-        "provinceCount": 2,
-        "seatPlaceId": "X040"
-      },
-      {
-        "commanderyId": "PARENT-0108",
-        "commanderyNameCh": "于山國",
-        "provinceCount": 1,
-        "seatPlaceId": "X035"
-      },
-      {
-        "commanderyId": "PARENT-0121",
-        "commanderyNameCh": "大伽耶",
-        "provinceCount": 1,
-        "seatPlaceId": "X047"
-      },
-      {
-        "commanderyId": "PARENT-0124",
-        "commanderyNameCh": "安邪國",
-        "provinceCount": 1,
-        "seatPlaceId": "X031"
-      },
-      {
-        "commanderyId": "PARENT-0127",
-        "commanderyNameCh": "山越",
-        "provinceCount": 1,
-        "seatPlaceId": "X061"
-      },
-      {
-        "commanderyId": "PARENT-0128",
-        "commanderyNameCh": "州胡",
-        "provinceCount": 1,
-        "seatPlaceId": "X043"
-      },
-      {
-        "commanderyId": "PARENT-0135",
-        "commanderyNameCh": "悉直國",
-        "provinceCount": 1,
-        "seatPlaceId": "X032"
-      },
-      {
-        "commanderyId": "PARENT-0136",
-        "commanderyNameCh": "押督國",
-        "provinceCount": 1,
-        "seatPlaceId": "X033"
-      },
-      {
-        "commanderyId": "PARENT-0137",
-        "commanderyNameCh": "斯盧國",
-        "provinceCount": 1,
-        "seatPlaceId": "X044"
-      },
-      {
-        "commanderyId": "PARENT-0140",
-        "commanderyNameCh": "新平郡",
-        "provinceCount": 1,
-        "seatPlaceId": "211738"
-      },
-      {
-        "commanderyId": "PARENT-0142",
-        "commanderyNameCh": "星山伽耶",
-        "provinceCount": 1,
-        "seatPlaceId": "X048"
-      },
-      {
-        "commanderyId": "PARENT-0145",
-        "commanderyNameCh": "毗陵典農校尉",
-        "provinceCount": 1,
-        "seatPlaceId": "32365"
-      },
-      {
-        "commanderyId": "PARENT-0148",
-        "commanderyNameCh": "汶山郡",
-        "provinceCount": 1,
-        "seatPlaceId": "211064"
-      },
-      {
-        "commanderyId": "PARENT-0149",
-        "commanderyNameCh": "流求",
-        "provinceCount": 1,
-        "seatPlaceId": "X057"
-      },
-      {
-        "commanderyId": "PARENT-0155",
-        "commanderyNameCh": "白馬氐",
-        "provinceCount": 1,
-        "seatPlaceId": "X059"
-      },
-      {
-        "commanderyId": "PARENT-0157",
-        "commanderyNameCh": "章武郡",
-        "provinceCount": 1,
-        "seatPlaceId": "87628"
-      },
-      {
-        "commanderyId": "PARENT-0163",
-        "commanderyNameCh": "西羌",
-        "provinceCount": 1,
-        "seatPlaceId": "X058"
-      }
-    ]
+    "attributedProvinceCount": 1594,
+    "distinctRouteNodeCount": 1133,
+    "commanderiesWithoutCity": []
   },
   "rows": [
     {
@@ -4330,13 +4125,13 @@
     {
       "provinceId": "44580",
       "provinceIndex": 341,
-      "jurisdictionId": "44580",
+      "jurisdictionId": "44621",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 579,
       "routeNodeKey": null,
-      "cityPlaceId": "44580",
+      "cityPlaceId": "44621",
       "adjacencyHops": null
     },
     {
@@ -4358,7 +4153,7 @@
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
       "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 977,
+      "routeNodeId": 579,
       "routeNodeKey": null,
       "cityPlaceId": "44621",
       "adjacencyHops": null
@@ -5482,13 +5277,13 @@
     {
       "provinceId": "45748",
       "provinceIndex": 437,
-      "jurisdictionId": "45748",
+      "jurisdictionId": "45751",
       "commanderyId": "PARENT-0041",
       "commanderyNameCh": "南陽郡",
-      "basis": "SAME_COMMANDERY_SEAT",
-      "routeNodeId": 412,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 411,
       "routeNodeKey": null,
-      "cityPlaceId": "82612",
+      "cityPlaceId": "45751",
       "adjacencyHops": null
     },
     {
@@ -5986,13 +5781,13 @@
     {
       "provinceId": "70523",
       "provinceIndex": 479,
-      "jurisdictionId": "70523",
+      "jurisdictionId": "70524",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
       "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 989,
+      "routeNodeId": 627,
       "routeNodeKey": null,
-      "cityPlaceId": "70523",
+      "cityPlaceId": "70524",
       "adjacencyHops": null
     },
     {
@@ -6310,13 +6105,13 @@
     {
       "provinceId": "70634",
       "provinceIndex": 506,
-      "jurisdictionId": "70634",
+      "jurisdictionId": "70633",
       "commanderyId": "PARENT-0004",
       "commanderyNameCh": "京兆尹",
-      "basis": "SAME_COMMANDERY_SEAT",
-      "routeNodeId": 1,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 5,
       "routeNodeKey": null,
-      "cityPlaceId": "70623",
+      "cityPlaceId": "70633",
       "adjacencyHops": null
     },
     {
@@ -8314,13 +8109,13 @@
     {
       "provinceId": "85064",
       "provinceIndex": 673,
-      "jurisdictionId": "85064",
+      "jurisdictionId": "85065",
       "commanderyId": "PARENT-0029",
       "commanderyNameCh": "濟陰郡",
-      "basis": "SAME_COMMANDERY_SEAT",
-      "routeNodeId": 277,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 285,
       "routeNodeKey": null,
-      "cityPlaceId": "85058",
+      "cityPlaceId": "85065",
       "adjacencyHops": null
     },
     {
@@ -8698,13 +8493,13 @@
     {
       "provinceId": "85281",
       "provinceIndex": 705,
-      "jurisdictionId": "85281",
+      "jurisdictionId": "85280",
       "commanderyId": "PARENT-0037",
       "commanderyNameCh": "樂安國",
-      "basis": "SAME_COMMANDERY_SEAT",
-      "routeNodeId": 378,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 382,
       "routeNodeKey": null,
-      "cityPlaceId": "85254",
+      "cityPlaceId": "85280",
       "adjacencyHops": null
     },
     {
@@ -8842,13 +8637,13 @@
     {
       "provinceId": "85377",
       "provinceIndex": 717,
-      "jurisdictionId": "85377",
+      "jurisdictionId": "85376",
       "commanderyId": "PARENT-0039",
       "commanderyNameCh": "東萊郡",
-      "basis": "SAME_COMMANDERY_SEAT",
-      "routeNodeId": 368,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 917,
       "routeNodeKey": null,
-      "cityPlaceId": "85371",
+      "cityPlaceId": "85376",
       "adjacencyHops": null
     },
     {
@@ -13354,13 +13149,13 @@
     {
       "provinceId": "DIRECT-PARENT-0071-b74003c1e28f",
       "provinceIndex": 1093,
-      "jurisdictionId": "70523",
+      "jurisdictionId": "70524",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
       "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 989,
+      "routeNodeId": 627,
       "routeNodeKey": null,
-      "cityPlaceId": "70523",
+      "cityPlaceId": "70524",
       "adjacencyHops": null
     },
     {
@@ -15541,11 +15336,11 @@
       "jurisdictionId": "X042",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1111,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 2
+      "cityPlaceId": "X042",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0109-8ee3f88787d1",
@@ -15553,11 +15348,11 @@
       "jurisdictionId": "X042",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1111,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 1
+      "cityPlaceId": "X042",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0109-dc52621c88c6",
@@ -15565,11 +15360,11 @@
       "jurisdictionId": "X042",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1111,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 1
+      "cityPlaceId": "X042",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-024aa01d87a6",
@@ -15577,11 +15372,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 9
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-07d2992e3a40",
@@ -15589,11 +15384,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 9
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-094a5ce1fdf6",
@@ -15601,11 +15396,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 8
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-0ac149f74d66",
@@ -15613,11 +15408,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 4
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-0c37d4c0a0a6",
@@ -15625,11 +15420,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 7
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-1be851006e78",
@@ -15637,11 +15432,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 8
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-27f3889381b6",
@@ -15649,11 +15444,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 8
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-2efe11c1ef8c",
@@ -15661,11 +15456,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 6
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-38339e0aa71d",
@@ -15673,11 +15468,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 6
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-76602487ae8a",
@@ -15685,11 +15480,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 9
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-8642ef69a429",
@@ -15697,11 +15492,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 6
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-adda7a316ae8",
@@ -15709,11 +15504,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 7
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-b185e8463d5b",
@@ -15721,11 +15516,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 5
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-b2862a0ff74c",
@@ -15733,11 +15528,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 9
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-b7bd17941ab3",
@@ -15745,11 +15540,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 7
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-dc28076bceca",
@@ -15757,11 +15552,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 6
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-dd089ec9e957",
@@ -15769,11 +15564,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 6
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-e073204f59ea",
@@ -15781,11 +15576,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 10
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-e410d2b538c3",
@@ -15793,11 +15588,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 7
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-e431ee79d0fd",
@@ -15805,11 +15600,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 5
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-e9ddebb3101d",
@@ -15817,11 +15612,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 8
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-ea52c22b1bb4",
@@ -15829,11 +15624,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 5
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-f71799ef6720",
@@ -15841,11 +15636,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 8
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0111-fbc98a0d209d",
@@ -15853,11 +15648,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 4
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0112-2e303004dfcf",
@@ -15865,11 +15660,11 @@
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 787,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 989,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-008",
-      "adjacencyHops": 1
+      "cityPlaceId": "X029",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0112-7088a81e7b78",
@@ -15877,23 +15672,23 @@
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 989,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 1
+      "cityPlaceId": "X029",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
       "provinceIndex": 1304,
-      "jurisdictionId": "X029",
-      "commanderyId": "PARENT-0112",
-      "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
+      "jurisdictionId": "fc-liaodong-008",
+      "commanderyId": "PARENT-0094",
+      "commanderyNameCh": "遼東郡",
+      "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 787,
       "routeNodeKey": null,
       "cityPlaceId": "fc-liaodong-008",
-      "adjacencyHops": 1
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0112-89796ae90028",
@@ -15901,11 +15696,11 @@
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 989,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 1
+      "cityPlaceId": "X029",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0112-f75f6a0d5eb0",
@@ -15913,11 +15708,11 @@
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 800,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 989,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-007",
-      "adjacencyHops": 1
+      "cityPlaceId": "X029",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0113-9a25366ea685",
@@ -15937,11 +15732,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 704,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X026",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-3ee51442c0a8",
@@ -15949,11 +15744,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 701,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "95126",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-4381ed3eb8b0",
@@ -15961,11 +15756,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-4c8b60010121",
@@ -15973,11 +15768,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-4d5e6105610a",
@@ -15985,11 +15780,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 835,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X024",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-52af72cc7020",
@@ -15997,11 +15792,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-53c08dcc1e4c",
@@ -16009,11 +15804,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-6319e70fd710",
@@ -16021,11 +15816,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 3
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-65d19d12896a",
@@ -16033,11 +15828,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 835,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X024",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-713794908eea",
@@ -16045,11 +15840,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 833,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X011",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-8ac9e550204c",
@@ -16057,11 +15852,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 834,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X023",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-9e2c9ad82b0d",
@@ -16069,11 +15864,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-b64308c07a24",
@@ -16081,11 +15876,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 835,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X024",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-c1f278851de9",
@@ -16093,11 +15888,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 835,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X024",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0114-eabebef9a0ea",
@@ -16105,11 +15900,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 704,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "X026",
-      "adjacencyHops": 1
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0115-d93abcb1bab4",
@@ -16117,11 +15912,11 @@
       "jurisdictionId": "X049",
       "commanderyId": "PARENT-0115",
       "commanderyNameCh": "古寧伽耶",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1118,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 3
+      "cityPlaceId": "X049",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0116-8a985f732c47",
@@ -16129,11 +15924,11 @@
       "jurisdictionId": "X046",
       "commanderyId": "PARENT-0116",
       "commanderyNameCh": "古資彌凍國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1115,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 7
+      "cityPlaceId": "X046",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0117-eac2d391dbb0",
@@ -16141,11 +15936,11 @@
       "jurisdictionId": "X034",
       "commanderyId": "PARENT-0117",
       "commanderyNameCh": "召文國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1103,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 4
+      "cityPlaceId": "X034",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0118-1b85dd25662c",
@@ -16153,11 +15948,11 @@
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 984,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1129,
       "routeNodeKey": null,
-      "cityPlaceId": "45381",
-      "adjacencyHops": 1
+      "cityPlaceId": "X060",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0118-639f1baf5678",
@@ -16165,11 +15960,11 @@
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 984,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1129,
       "routeNodeKey": null,
-      "cityPlaceId": "45381",
-      "adjacencyHops": 1
+      "cityPlaceId": "X060",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0118-64eac9b17ce9",
@@ -16177,11 +15972,11 @@
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 588,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1129,
       "routeNodeKey": null,
-      "cityPlaceId": "45445",
-      "adjacencyHops": 1
+      "cityPlaceId": "X060",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0118-e0fffb2e48a7",
@@ -16189,11 +15984,11 @@
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 589,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1129,
       "routeNodeKey": null,
-      "cityPlaceId": "45437",
-      "adjacencyHops": 1
+      "cityPlaceId": "X060",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-05ed1948c39f",
@@ -16201,11 +15996,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-5058a46ca772",
@@ -16213,11 +16008,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-52245489d9cf",
@@ -16225,11 +16020,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 3
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-5e0d10910b1c",
@@ -16237,11 +16032,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 3
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-669a2b2629f0",
@@ -16249,11 +16044,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-6e661d545229",
@@ -16261,11 +16056,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-7251476d0036",
@@ -16273,11 +16068,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 2
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-8940e262c4ce",
@@ -16285,11 +16080,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 2
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-9460a7a8c37d",
@@ -16297,11 +16092,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 4
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-afeeb044db0a",
@@ -16309,11 +16104,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 3
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-dc87df2f53bc",
@@ -16321,11 +16116,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-e727cade4868",
@@ -16333,11 +16128,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0120-fc39cc36b5cf",
@@ -16345,11 +16140,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 4
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-08374007202a",
@@ -16357,11 +16152,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-1f0c6e1e916d",
@@ -16369,11 +16164,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-20ba6fcab7f9",
@@ -16381,11 +16176,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-2b79764dbc36",
@@ -16393,11 +16188,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-2fdc2ee14cc5",
@@ -16405,11 +16200,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-3f9724e33d39",
@@ -16417,11 +16212,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-55dbe5f22c6b",
@@ -16429,11 +16224,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-56759a4db296",
@@ -16441,11 +16236,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 4
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-574b570e3998",
@@ -16453,11 +16248,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-6397543cb04f",
@@ -16465,11 +16260,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-652ce62925e8",
@@ -16477,11 +16272,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-696afffde6e2",
@@ -16489,11 +16284,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-9001818857b7",
@@ -16501,11 +16296,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-9509bf9320c7",
@@ -16513,11 +16308,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 4
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-9fbf1bcc3099",
@@ -16525,11 +16320,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-a8ec0a427659",
@@ -16537,11 +16332,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 4
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-af3475562c01",
@@ -16549,11 +16344,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 5
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-b3faad060e2c",
@@ -16561,11 +16356,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 4
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-bbc956bb63c3",
@@ -16573,11 +16368,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-cf7d10af61b7",
@@ -16585,11 +16380,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-f19979ef7b98",
@@ -16597,11 +16392,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-f5c303bfea96",
@@ -16609,11 +16404,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0122-f6d3efd5208f",
@@ -16621,11 +16416,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 4
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0123-0beede232fa9",
@@ -16633,10 +16428,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -16645,10 +16440,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -16657,10 +16452,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -16669,10 +16464,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -16681,10 +16476,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -16726,14 +16521,14 @@
     {
       "provinceId": "DIRECT-PARENT-0140-4962138710c0",
       "provinceIndex": 1374,
-      "jurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
-      "commanderyId": "PARENT-0140",
-      "commanderyNameCh": "新平郡",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 10,
+      "jurisdictionId": "70203",
+      "commanderyId": "PARENT-0006",
+      "commanderyNameCh": "右扶風",
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 80,
       "routeNodeKey": null,
-      "cityPlaceId": "70415",
-      "adjacencyHops": 1
+      "cityPlaceId": "70203",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0143-402f12a2891d",
@@ -16741,11 +16536,11 @@
       "jurisdictionId": "X037",
       "commanderyId": "PARENT-0143",
       "commanderyNameCh": "東沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1106,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X037",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0143-86e6d3111617",
@@ -16753,23 +16548,23 @@
       "jurisdictionId": "X037",
       "commanderyId": "PARENT-0143",
       "commanderyNameCh": "東沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1106,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X037",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
       "provinceIndex": 1377,
-      "jurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
-      "commanderyId": "PARENT-0145",
-      "commanderyNameCh": "毗陵典農校尉",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 316,
+      "jurisdictionId": "40451",
+      "commanderyId": "PARENT-0052",
+      "commanderyNameCh": "吳郡",
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 848,
       "routeNodeKey": null,
-      "cityPlaceId": "42681",
-      "adjacencyHops": 1
+      "cityPlaceId": "40451",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0147-aad1e310313a",
@@ -16786,14 +16581,14 @@
     {
       "provinceId": "DIRECT-PARENT-0148-9cee1dedcd80",
       "provinceIndex": 1379,
-      "jurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
-      "commanderyId": "PARENT-0148",
-      "commanderyNameCh": "汶山郡",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
+      "jurisdictionId": "44401",
+      "commanderyId": "PARENT-0057",
+      "commanderyNameCh": "蜀郡",
+      "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 632,
       "routeNodeKey": null,
       "cityPlaceId": "44401",
-      "adjacencyHops": 1
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0150-2232eac7d10d",
@@ -16861,11 +16656,11 @@
       "jurisdictionId": "X038",
       "commanderyId": "PARENT-0151",
       "commanderyNameCh": "濊",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 805,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1107,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-013",
-      "adjacencyHops": 1
+      "cityPlaceId": "X038",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0151-999871130cac",
@@ -16873,11 +16668,11 @@
       "jurisdictionId": "X038",
       "commanderyId": "PARENT-0151",
       "commanderyNameCh": "濊",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1107,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 2
+      "cityPlaceId": "X038",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-10f17fb54e70",
@@ -16885,11 +16680,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-404b0992659b",
@@ -16897,11 +16692,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-478f80f42bca",
@@ -16909,11 +16704,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 776,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87473",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-66ec4a14a788",
@@ -16921,11 +16716,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 3
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-80e2662e7699",
@@ -16933,11 +16728,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-825bd7a3bc54",
@@ -16945,11 +16740,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-85eb1647dbef",
@@ -16957,11 +16752,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 726,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87436",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-98b10c7f160c",
@@ -16969,11 +16764,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 716,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87453",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-b35ef18ffc15",
@@ -16981,11 +16776,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 776,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87473",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-b9d869784bfe",
@@ -16993,11 +16788,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 726,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87436",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-bc4a714f6e67",
@@ -17005,11 +16800,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 716,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87453",
-      "adjacencyHops": 3
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-c4121c701e6e",
@@ -17017,11 +16812,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 811,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-shuguo-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-dbe8e72afde7",
@@ -17029,11 +16824,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 726,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87436",
-      "adjacencyHops": 3
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-ed01d700d6be",
@@ -17041,11 +16836,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 726,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87436",
-      "adjacencyHops": 3
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-f05170a144d9",
@@ -17053,11 +16848,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 726,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87436",
-      "adjacencyHops": 1
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0152-fe93d25b4d75",
@@ -17065,11 +16860,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 716,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87453",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0154-e9169b78c3af",
@@ -17089,23 +16884,23 @@
       "jurisdictionId": "X040",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1109,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 3
+      "cityPlaceId": "X040",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0157-c2cb0084e22e",
       "provinceIndex": 1405,
-      "jurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
-      "commanderyId": "PARENT-0157",
-      "commanderyNameCh": "章武郡",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 163,
+      "jurisdictionId": "87405",
+      "commanderyId": "PARENT-0018",
+      "commanderyNameCh": "河閒國",
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 191,
       "routeNodeKey": null,
-      "cityPlaceId": "87382",
-      "adjacencyHops": 1
+      "cityPlaceId": "87405",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0164-22953cab254f",
@@ -17113,11 +16908,11 @@
       "jurisdictionId": "X041",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1110,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 6
+      "cityPlaceId": "X041",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0164-3b5b11446871",
@@ -17125,11 +16920,11 @@
       "jurisdictionId": "X041",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1110,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 6
+      "cityPlaceId": "X041",
+      "adjacencyHops": null
     },
     {
       "provinceId": "DIRECT-PARENT-0165-40276a394699",
@@ -17137,10 +16932,10 @@
       "jurisdictionId": "X054",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1123,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X054",
       "adjacencyHops": null
     },
     {
@@ -17149,10 +16944,10 @@
       "jurisdictionId": "X055",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1124,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X055",
       "adjacencyHops": null
     },
     {
@@ -17161,10 +16956,10 @@
       "jurisdictionId": "X054",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1123,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X054",
       "adjacencyHops": null
     },
     {
@@ -17173,10 +16968,10 @@
       "jurisdictionId": "X051",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1120,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X051",
       "adjacencyHops": null
     },
     {
@@ -17185,10 +16980,10 @@
       "jurisdictionId": "X054",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1123,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X054",
       "adjacencyHops": null
     },
     {
@@ -17197,10 +16992,10 @@
       "jurisdictionId": "X053",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1122,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X053",
       "adjacencyHops": null
     },
     {
@@ -17209,10 +17004,10 @@
       "jurisdictionId": "X051",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1120,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X051",
       "adjacencyHops": null
     },
     {
@@ -17233,10 +17028,10 @@
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 1024,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1132,
       "routeNodeKey": null,
-      "cityPlaceId": "87125",
+      "cityPlaceId": "X063",
       "adjacencyHops": null
     },
     {
@@ -17245,10 +17040,10 @@
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 1024,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1132,
       "routeNodeKey": null,
-      "cityPlaceId": "87125",
+      "cityPlaceId": "X063",
       "adjacencyHops": null
     },
     {
@@ -17269,10 +17064,10 @@
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 1024,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1132,
       "routeNodeKey": null,
-      "cityPlaceId": "87125",
+      "cityPlaceId": "X063",
       "adjacencyHops": null
     },
     {
@@ -17425,11 +17220,11 @@
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 791,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 977,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-002",
-      "adjacencyHops": 2
+      "cityPlaceId": "X028",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X029",
@@ -17437,11 +17232,11 @@
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 787,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 989,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-liaodong-008",
-      "adjacencyHops": 2
+      "cityPlaceId": "X029",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X030",
@@ -17449,11 +17244,11 @@
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1099,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 5
+      "cityPlaceId": "X030",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X031",
@@ -17461,11 +17256,11 @@
       "jurisdictionId": "X031",
       "commanderyId": "PARENT-0124",
       "commanderyNameCh": "安邪國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1100,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 6
+      "cityPlaceId": "X031",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X032",
@@ -17473,11 +17268,11 @@
       "jurisdictionId": "X032",
       "commanderyId": "PARENT-0135",
       "commanderyNameCh": "悉直國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1101,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 4
+      "cityPlaceId": "X032",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X033",
@@ -17485,11 +17280,11 @@
       "jurisdictionId": "X033",
       "commanderyId": "PARENT-0136",
       "commanderyNameCh": "押督國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1102,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 6
+      "cityPlaceId": "X033",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X034",
@@ -17497,11 +17292,11 @@
       "jurisdictionId": "X034",
       "commanderyId": "PARENT-0117",
       "commanderyNameCh": "召文國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1103,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 5
+      "cityPlaceId": "X034",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X035",
@@ -17509,10 +17304,10 @@
       "jurisdictionId": "X035",
       "commanderyId": "PARENT-0108",
       "commanderyNameCh": "于山國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1104,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X035",
       "adjacencyHops": null
     },
     {
@@ -17521,11 +17316,11 @@
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 792,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1105,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-xuantu-003",
-      "adjacencyHops": 2
+      "cityPlaceId": "X036",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X037",
@@ -17533,11 +17328,11 @@
       "jurisdictionId": "X037",
       "commanderyId": "PARENT-0143",
       "commanderyNameCh": "東沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1106,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 1
+      "cityPlaceId": "X037",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X038",
@@ -17545,11 +17340,11 @@
       "jurisdictionId": "X038",
       "commanderyId": "PARENT-0151",
       "commanderyNameCh": "濊",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1107,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 3
+      "cityPlaceId": "X038",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X039",
@@ -17557,11 +17352,11 @@
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 796,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1108,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-003",
-      "adjacencyHops": 7
+      "cityPlaceId": "X039",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X040",
@@ -17569,11 +17364,11 @@
       "jurisdictionId": "X040",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1109,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 4
+      "cityPlaceId": "X040",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X041",
@@ -17581,11 +17376,11 @@
       "jurisdictionId": "X041",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1110,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 5
+      "cityPlaceId": "X041",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X042",
@@ -17593,11 +17388,11 @@
       "jurisdictionId": "X042",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1111,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 2
+      "cityPlaceId": "X042",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X043",
@@ -17605,10 +17400,10 @@
       "jurisdictionId": "X043",
       "commanderyId": "PARENT-0128",
       "commanderyNameCh": "州胡",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1112,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X043",
       "adjacencyHops": null
     },
     {
@@ -17617,11 +17412,11 @@
       "jurisdictionId": "X044",
       "commanderyId": "PARENT-0137",
       "commanderyNameCh": "斯盧國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1113,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 5
+      "cityPlaceId": "X044",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X045",
@@ -17629,11 +17424,11 @@
       "jurisdictionId": "X045",
       "commanderyId": "PARENT-0153",
       "commanderyNameCh": "狗邪國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1114,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 6
+      "cityPlaceId": "X045",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X046",
@@ -17641,11 +17436,11 @@
       "jurisdictionId": "X046",
       "commanderyId": "PARENT-0116",
       "commanderyNameCh": "古資彌凍國",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1115,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 7
+      "cityPlaceId": "X046",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X047",
@@ -17653,11 +17448,11 @@
       "jurisdictionId": "X047",
       "commanderyId": "PARENT-0121",
       "commanderyNameCh": "大伽耶",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1116,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 5
+      "cityPlaceId": "X047",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X048",
@@ -17665,11 +17460,11 @@
       "jurisdictionId": "X048",
       "commanderyId": "PARENT-0142",
       "commanderyNameCh": "星山伽耶",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1117,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 5
+      "cityPlaceId": "X048",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X049",
@@ -17677,11 +17472,11 @@
       "jurisdictionId": "X049",
       "commanderyId": "PARENT-0115",
       "commanderyNameCh": "古寧伽耶",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 797,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1118,
       "routeNodeKey": null,
-      "cityPlaceId": "fc-lelang-004",
-      "adjacencyHops": 4
+      "cityPlaceId": "X049",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X050",
@@ -17689,10 +17484,10 @@
       "jurisdictionId": "X050",
       "commanderyId": "PARENT-0153",
       "commanderyNameCh": "狗邪國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1119,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X050",
       "adjacencyHops": null
     },
     {
@@ -17701,10 +17496,10 @@
       "jurisdictionId": "X051",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1120,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X051",
       "adjacencyHops": null
     },
     {
@@ -17713,10 +17508,10 @@
       "jurisdictionId": "X052",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1121,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X052",
       "adjacencyHops": null
     },
     {
@@ -17725,10 +17520,10 @@
       "jurisdictionId": "X053",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1122,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X053",
       "adjacencyHops": null
     },
     {
@@ -17737,10 +17532,10 @@
       "jurisdictionId": "X054",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1123,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X054",
       "adjacencyHops": null
     },
     {
@@ -17749,10 +17544,10 @@
       "jurisdictionId": "X055",
       "commanderyId": "PARENT-0165",
       "commanderyNameCh": "邪馬壹國",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1124,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X055",
       "adjacencyHops": null
     },
     {
@@ -17761,10 +17556,10 @@
       "jurisdictionId": "X056",
       "commanderyId": "PARENT-0123",
       "commanderyNameCh": "夷洲",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1125,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X056",
       "adjacencyHops": null
     },
     {
@@ -17773,10 +17568,10 @@
       "jurisdictionId": "X057",
       "commanderyId": "PARENT-0149",
       "commanderyNameCh": "流求",
-      "basis": "COMMANDERY_HAS_NO_CITY",
-      "routeNodeId": null,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1126,
       "routeNodeKey": null,
-      "cityPlaceId": null,
+      "cityPlaceId": "X057",
       "adjacencyHops": null
     },
     {
@@ -17785,11 +17580,11 @@
       "jurisdictionId": "X058",
       "commanderyId": "PARENT-0163",
       "commanderyNameCh": "西羌",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 641,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1127,
       "routeNodeKey": null,
-      "cityPlaceId": "70608",
-      "adjacencyHops": 1
+      "cityPlaceId": "X058",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X059",
@@ -17797,11 +17592,11 @@
       "jurisdictionId": "X059",
       "commanderyId": "PARENT-0155",
       "commanderyNameCh": "白馬氐",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 598,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1128,
       "routeNodeKey": null,
-      "cityPlaceId": "71101",
-      "adjacencyHops": 1
+      "cityPlaceId": "X059",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X060",
@@ -17809,11 +17604,11 @@
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 589,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1129,
       "routeNodeKey": null,
-      "cityPlaceId": "45437",
-      "adjacencyHops": 1
+      "cityPlaceId": "X060",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X061",
@@ -17821,11 +17616,11 @@
       "jurisdictionId": "X061",
       "commanderyId": "PARENT-0127",
       "commanderyNameCh": "山越",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 502,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1130,
       "routeNodeKey": null,
-      "cityPlaceId": "40100",
-      "adjacencyHops": 1
+      "cityPlaceId": "X061",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X062",
@@ -17833,11 +17628,11 @@
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 716,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1131,
       "routeNodeKey": null,
-      "cityPlaceId": "87453",
-      "adjacencyHops": 2
+      "cityPlaceId": "X062",
+      "adjacencyHops": null
     },
     {
       "provinceId": "X063",
@@ -17845,10 +17640,10 @@
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
-      "basis": "SAME_COMMANDERY_NEAREST",
-      "routeNodeId": 1024,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1132,
       "routeNodeKey": null,
-      "cityPlaceId": "87125",
+      "cityPlaceId": "X063",
       "adjacencyHops": null
     },
     {
@@ -17857,11 +17652,11 @@
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
-      "basis": "ADJACENT_COMMANDERY_NEAREST",
-      "routeNodeId": 56,
+      "basis": "OWN_COUNTY_SEAT",
+      "routeNodeId": 1133,
       "routeNodeKey": null,
-      "cityPlaceId": "82880",
-      "adjacencyHops": 2
+      "cityPlaceId": "X064",
+      "adjacencyHops": null
     },
     {
       "provinceId": "fc-jiaozhi-002",
@@ -18515,8 +18310,8 @@
       "provinceId": "ss-anpingkou",
       "provinceIndex": 1523,
       "jurisdictionId": "ss-anpingkou",
-      "commanderyId": "PARENT-0112",
-      "commanderyNameCh": "卒本",
+      "commanderyId": "PARENT-0094",
+      "commanderyNameCh": "遼東郡",
       "basis": "OWN_COUNTY_SEAT",
       "routeNodeId": 1027,
       "routeNodeKey": null,

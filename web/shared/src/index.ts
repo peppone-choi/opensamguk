@@ -238,6 +238,8 @@ export {
   type CitySeedReseat,
 } from './iso/citySeedReseat';
 export {
+  drawSeaRoute,
+  type IsoSeaRoute,
   drawBattlefieldMark,
   drawCityFlag,
   drawCityName,

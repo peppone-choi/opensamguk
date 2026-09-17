@@ -39,6 +39,7 @@ PROVENANCE_DEPENDENCIES = {
     "routeNodeKeyRegistry": Path("data/curated/han/route-node-key-registry-v1.json"),
     "jurisdictionRouteClaims": Path("data/curated/han/route-node-jurisdiction-claims-v1.json"),
     "strategicSiteRouteClaims": Path("data/curated/han/route-node-strategic-site-claims-v1.json"),
+    "externalSettlementRouteClaims": Path("data/curated/han/route-node-external-settlement-claims-v1.json"),
 }
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
@@ -47,14 +48,19 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 833..835 城 없던 郡治 3곳 朔方·西河·定襄 (w0c-hhs-external-location)
 # + 836..846 간체표 폴딩 결합 11곳 + 847 吳縣·848 毘陵 이체자 폴딩 결합 2곳 (w1-script-variant-county-join).
 # + 849..1024 城 없던 han-tiles 縣 관할 176곳 (w2-cityless-jurisdiction-route-claim, REVIEWED_SOURCE_CLAIM).
+#   2026-09-17: 그중 같은 縣이 두 번 선 977(巴郡 漢昌)·989(北地郡 富平)를 거두어 174곳이다 — 두 번호는 w5 가 이어받는다.
 # + 1025..1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1098}
+# + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1133}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 JURISDICTION_CLAIM_BATCH = "w2-cityless-jurisdiction-route-claim"
 STRATEGIC_SITE_CLAIM_BATCH = "w3-strategic-site-route-claim"
+EXTERNAL_SETTLEMENT_CLAIM_BATCH = "w5-external-settlement-route-claim"
+#: 같은 縣이 두 번 선 城의 번호를 다른 claim 이 이어받는 키 재결속 사유(registry row 의 rebinding).
+REGISTRY_REBINDING_REASONS = frozenset({"DUPLICATE_ROUTE_NODE_SLOT_REUSE"})
 VACATED_LOCATION_BATCH = "w4-vacated-county-location"
 VACATED_LOCATION_UNITS = frozenset({"hhs:109:河南尹:011"})
 # source claim batch: (provenance 입력 이름, subjectKey 접두사, subjectType, 허용 nodeClass, 허용 seatRole, world 판별 수)
@@ -62,12 +68,17 @@ SOURCE_CLAIM_BATCHES = {
     JURISDICTION_CLAIM_BATCH: {
         "input": "jurisdictionRouteClaims", "subjectPrefix": "han-tiles-jurisdiction:",
         "subjectType": "ADMINISTRATIVE_PLACE", "nodeClasses": frozenset({"COUNTY_NODE"}),
-        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 176},
+        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 174},
     },
     STRATEGIC_SITE_CLAIM_BATCH: {
         "input": "strategicSiteRouteClaims", "subjectPrefix": "strategic-site:",
         "subjectType": "STRATEGIC_SITE", "nodeClasses": frozenset({"FERRY_NODE", "FORT_NODE", "PASS_NODE"}),
         "seatRoles": frozenset({"NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 73},
+    },
+    EXTERNAL_SETTLEMENT_CLAIM_BATCH: {
+        "input": "externalSettlementRouteClaims", "subjectPrefix": "han-tiles-external-settlement:",
+        "subjectType": "EXTERNAL_SETTLEMENT", "nodeClasses": frozenset({"SETTLEMENT_NODE"}),
+        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 37},
     },
 }
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
@@ -97,7 +108,7 @@ REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
     {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH,
-     JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH, VACATED_LOCATION_BATCH}
+     JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH, VACATED_LOCATION_BATCH, EXTERNAL_SETTLEMENT_CLAIM_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
 FORBIDDEN_FIELDS = frozenset(
@@ -134,12 +145,12 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "87770ff0afb87ccae43dff55743de2eb0521bf9d7b9779cd7022c060d3075da9"
 PINNED_SOURCE_WITNESS_SHA256 = "86f82f4deb4394667ef0c3d298ac0b743192515e6328c0bb2ca6ef670de80fa8"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
-PINNED_REVIEW_POLICY_SHA256 = "1d5bfe89f5feb67413162df389ede8bd063d3b3f5d5f7d2920b73ce0c6693e55"
-PINNED_VALIDATION_CONTRACT_SHA256 = "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "81411b35e0fe36096522ddd5b05cb50bbd2e5e9e43a875e6674b91508e6f3447"
+PINNED_REVIEW_POLICY_SHA256 = "9f53a29172a3041dea763ea0b807f0edae574f5a478475dbaed94268c9ff5951"
+PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
@@ -289,7 +300,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     selection_provenance = _mapping(documents.selection.get("provenance"), "selection provenance")
     _allowed_keys(selection_provenance, frozenset({"generator", "inputs"}), "selection provenance")
     selection_inputs = _mapping(selection_provenance.get("inputs"), "selection provenance inputs")
-    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "jurisdictionRouteClaims", "strategicSiteRouteClaims", "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
+    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "jurisdictionRouteClaims", "strategicSiteRouteClaims", "externalSettlementRouteClaims", "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
     for value in selection_inputs.values():
         _allowed_keys(_mapping(value, "selection provenance input"), frozenset({"sha256"}), "selection provenance input")
     selection_summary = _mapping(documents.selection.get("summary"), "selection summary")
@@ -324,7 +335,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     _allowed_keys(documents.route_key_registry, frozenset({"issuanceAuthority", "issuedAt", "issuedBy", "keyPolicy", "keys", "registryId", "schemaVersion", "status"}), "route-node key registry")
     _allowed_keys(_mapping(documents.route_key_registry.get("keyPolicy"), "route-node key policy"), frozenset({"derivedFromAdministrativeIdentity", "derivedFromNumericCityId", "derivedFromPhysicalPlace", "derivedFromSourceClaim", "format", "note", "rebindingChangesKey"}), "route-node key policy")
     for row in _rows(documents.route_key_registry, "keys"):
-        _allowed_keys(_mapping(row, "route-node key registry row"), frozenset({"initialAdministrativeUnitId", "issuanceReason", "numericCityId", "routeNodeKey"}), "route-node key registry row")
+        _allowed_keys(_mapping(row, "route-node key registry row"), frozenset({"initialAdministrativeUnitId", "issuanceReason", "numericCityId", "rebinding", "routeNodeKey"}), "route-node key registry row")
 POINT_REFERENCE = re.compile(
     r"^(?:chgis:v6:(?:cnty|pref):[^:\s]+|external:v1:[^:\s]+|wikidata:Q[1-9][0-9]*|curated:[a-z0-9][a-z0-9:_-]*)$"
 )
@@ -639,6 +650,16 @@ def _route_key_registry_index(
     keys: set[str] = set()
     for row in rows:
         administrative_id = _text(row, "initialAdministrativeUnitId")
+        if "rebinding" in row:
+            # 재결속 — 키·번호는 그대로, 가리키는 결합만 바뀐다. 거둔 결합은 최초 결합과 같아야 한다.
+            rebinding = _mapping(row.get("rebinding"), "route-node key registry rebinding")
+            _require_exact_keys(rebinding, {"administrativeUnitId", "reason", "withdrawnAdministrativeUnitId",
+                                            "decisionRef"}, "route-node key registry rebinding")
+            if (rebinding.get("reason") not in REGISTRY_REBINDING_REASONS
+                    or rebinding.get("withdrawnAdministrativeUnitId") != administrative_id
+                    or row.get("numericCityId") is None):
+                _fail("route-node key registry rebinding must withdraw its own appended identity")
+            administrative_id = _text(rebinding, "administrativeUnitId")
         route_key = _text(row, "routeNodeKey")
         if administrative_id in indexed or route_key in keys:
             _fail("route-node key registry identities and keys must be unique")
@@ -1079,10 +1100,12 @@ JURISDICTION_CLAIM_EVIDENCE_FIELDS = {
                                         "beginYear", "endYear"}),
     "JURISDICTION_SEAT_RECOVERY": frozenset({"kind", "datasetPath", "datasetSha256", "jurisdictionId"}),
     "STRATEGIC_SITE_LEDGER": frozenset({"kind", "datasetPath", "datasetSha256", "siteId", "role"}),
+    "EXTERNAL_PLACE_RECORD": frozenset({"kind", "datasetPath", "datasetSha256", "recordId", "wikidataId", "confidence"}),
 }
 EVIDENCE_KINDS_BY_BATCH = {
     JURISDICTION_CLAIM_BATCH: frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
     STRATEGIC_SITE_CLAIM_BATCH: frozenset({"STRATEGIC_SITE_LEDGER"}),
+    EXTERNAL_SETTLEMENT_CLAIM_BATCH: frozenset({"EXTERNAL_PLACE_RECORD"}),
 }
 STRATEGIC_SITE_NODE_CLASS_BY_ROLE = {"FERRY": "FERRY_NODE", "FORT": "FORT_NODE", "PASS": "PASS_NODE"}
 
@@ -1158,6 +1181,12 @@ def _jurisdiction_claims_index(source_root: Path, expected_count: int,
             or STRATEGIC_SITE_NODE_CLASS_BY_ROLE.get(_text(evidence, "role")) != claim.get("nodeClass")
         ):
             _fail(f"strategic-site evidence must name its own carved place and role: {claim_id}")
+        if evidence["kind"] == "EXTERNAL_PLACE_RECORD" and (
+            place != f"external:v1:{_text(binding, 'seatPlaceId')}"
+            or _text(evidence, "recordId") != _text(binding, "seatPlaceId")
+            or _text(evidence, "datasetPath") != "data/map/external-places.json"
+        ):
+            _fail(f"external place evidence must be the seat point record: {claim_id}")
         if evidence["kind"] == "JURISDICTION_SEAT_RECOVERY" and (
             _text(evidence, "jurisdictionId") != _text(binding, "jurisdictionId")
         ):
@@ -1402,7 +1431,7 @@ def _validate_review_policy_inputs(
         frozenset({
             "administrativeCatalogSha256", "candidateManifest", "coordinateOverlaySha256",
             "jurisdictionRouteClaims", "locationAdjudications", "locationClaims", "routeNodeKeyRegistry",
-            "strategicSiteRouteClaims",
+            "strategicSiteRouteClaims", "externalSettlementRouteClaims",
         }),
         "review policy inputs",
     )

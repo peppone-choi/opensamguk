@@ -3596,34 +3596,6 @@
       }
     },
     {
-      "sourceClaimId": "han-jurisdiction-route-claim-v1-44621",
-      "claimRole": "ROUTE_NODE",
-      "reviewState": "APPROVED",
-      "subjectType": "ADMINISTRATIVE_PLACE",
-      "subjectKey": "han-tiles-jurisdiction:44621",
-      "canonicalName": "漢昌",
-      "nodeClass": "COUNTY_NODE",
-      "seatRole": "NON_SEAT",
-      "parentName": "巴郡",
-      "parentRef": "han-tiles-commandery:PARENT-0055",
-      "physicalPlaceRef": "chgis:v6:cnty:44621",
-      "tileBinding": {
-        "jurisdictionId": "44621",
-        "commanderyId": "PARENT-0055",
-        "seatPlaceId": "44621"
-      },
-      "evidence": {
-        "kind": "CHGIS_V6_COUNTY_POINT",
-        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
-        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
-        "sysId": "44621",
-        "nameCh": "汉昌县",
-        "nameFt": "漢昌縣",
-        "beginYear": 96,
-        "endYear": 524
-      }
-    },
-    {
       "sourceClaimId": "han-jurisdiction-route-claim-v1-96436",
       "claimRole": "ROUTE_NODE",
       "reviewState": "APPROVED",
@@ -3929,34 +3901,6 @@
         "nameFt": "涇陽縣",
         "beginYear": 161,
         "endYear": 534
-      }
-    },
-    {
-      "sourceClaimId": "han-jurisdiction-route-claim-v1-70523",
-      "claimRole": "ROUTE_NODE",
-      "reviewState": "APPROVED",
-      "subjectType": "ADMINISTRATIVE_PLACE",
-      "subjectKey": "han-tiles-jurisdiction:70523",
-      "canonicalName": "富平",
-      "nodeClass": "COUNTY_NODE",
-      "seatRole": "NON_SEAT",
-      "parentName": "北地郡",
-      "parentRef": "han-tiles-commandery:PARENT-0071",
-      "physicalPlaceRef": "chgis:v6:cnty:70523",
-      "tileBinding": {
-        "jurisdictionId": "70523",
-        "commanderyId": "PARENT-0071",
-        "seatPlaceId": "70523"
-      },
-      "evidence": {
-        "kind": "CHGIS_V6_COUNTY_POINT",
-        "datasetPath": "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
-        "datasetSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
-        "sysId": "70523",
-        "nameCh": "富平县",
-        "nameFt": "富平縣",
-        "beginYear": 111,
-        "endYear": 220
       }
     },
     {
@@ -4925,7 +4869,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 5,
       "detail": "杜(220–264)는 杜陵(23–264)과 같은 자리 杜城이다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "85064",
@@ -4935,7 +4880,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 285,
       "detail": "鄄良縣(14–220)은 鄄城縣(23–434)과 같은 자리다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "85281",
@@ -4945,7 +4891,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 382,
       "detail": "益都縣(220–555)은 益侯國(75–220)의 개명이다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "85377",
@@ -4955,7 +4902,8 @@
       "reason": "SAME_PLACE_AS_CANDIDATE",
       "keptJurisdictionId": "85376",
       "detail": "㡉縣(220–555)은 㡉侯國(30–220)의 개명이다 — 㡉侯國을 세운다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "45748",
@@ -4965,7 +4913,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 411,
       "detail": "贊縣(220–222)과 陰縣은 CHGIS 좌표가 같다(乾德故城).",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
@@ -5002,7 +4951,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 80,
       "detail": "新平郡 治所 漆縣은 右扶風에서 이속된 漆縣(0.02 km)이다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
@@ -5012,7 +4962,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 848,
       "detail": "毗陵典農校尉 治所는 毘陵縣(848)과 경위도가 같다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
@@ -5022,7 +4973,8 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 846,
       "detail": "汶山郡 治所 汶山縣은 綿虒道(846)와 같은 자리다(0.02 km).",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     },
     {
       "jurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
@@ -5032,7 +4984,32 @@
       "reason": "SAME_PLACE_AS_ROUTE_NODE",
       "routeNodeCityId": 191,
       "detail": "章武郡 治所 東平舒縣은 河閒國 東平舒縣(191)과 1.04 km 다.",
-      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION"
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
+    },
+    {
+      "jurisdictionId": "44621",
+      "seatPlaceId": "44621",
+      "nameCh": "汉昌县",
+      "commanderyNameCh": "巴郡",
+      "reason": "DUPLICATE_ROUTE_NODE",
+      "routeNodeCityId": 579,
+      "detail": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 讀史方輿紀要 卷68 巴州 「漢昌城，今州治…後漢永元中分宕渠北界置漢昌縣」이 後漢 자리를 巴中으로, 蒼溪의 漢昌을 「蕭齊改置」로 가른다. 郡國志 결속 城 579 를 巴中(44621)으로 바로잡고(route-node-location-adjudications-v1), w2 가 44621 에 세웠던 城 977 은 거두며, 蒼溪 관할(44580) 省은 맞닿은 579 관할에 접는다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "withdrawnSourceClaimId": "han-jurisdiction-route-claim-v1-44621",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
+    },
+    {
+      "jurisdictionId": "70523",
+      "seatPlaceId": "70523",
+      "nameCh": "富平县",
+      "commanderyNameCh": "北地郡",
+      "reason": "DUPLICATE_ROUTE_NODE",
+      "routeNodeCityId": 627,
+      "detail": "後漢書 卷113 郡國志 北地郡 「〖富平〗」 — 北地郡 富平은 한 縣이다. CHGIS V6 는 永初 內徙의 寄治 富平(70523, 涇陽 西北 111–220)과 還治 富平(70524, 靈武 西南 126–220)을 따로 적었다. 郡國志(永和 140 년 기준) 결속 城 627 이 70524 에 서 있고 w2 가 70523 에 城 989 를 또 세워 같은 縣이 두 번 섰다. 627 을 남기고 寄治 땅(70523 의 두 省)도 같은 縣 富平 관할(70524)에 접는다 — 떨어져 있어도 한 縣의 寄治 땅이다(宋書 卷48 「漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣」). 北地郡 治所 관할은 70524(富平, 城 627)로 옮긴다.",
+      "followUp": "FOLD_PROVINCES_INTO_ROUTE_NODE_JURISDICTION",
+      "withdrawnSourceClaimId": "han-jurisdiction-route-claim-v1-70523",
+      "followUpResolvedBy": "data/curated/han/cityless-jurisdiction-folds-v1.json"
     }
   ]
 }

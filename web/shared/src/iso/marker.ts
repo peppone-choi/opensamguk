@@ -146,6 +146,47 @@ export function drawCityRing(
   context.restore();
 }
 
+/** 城 id 두 개로 된 뱃길 한 줄(MapPreviewResponse.seaRoutes). */
+export interface IsoSeaRoute {
+  fromCityId: number;
+  toCityId: number;
+}
+
+/**
+ * 뱃길 — 두 城 사이를 **한 줄의 곡선**(2차 베지에)으로 긋는다. 「뱃길은 하나의 포물선이나 곡선으로
+ * 나타내」(2026-09-17). 곡률은 선분 길이의 18% 만큼 한쪽으로 휜다 — id 가 작은 城 에서 큰 城 으로
+ * 보는 방향의 왼쪽이라 같은 노선은 늘 같은 모양이다. 화면 좌표로 그려 배율을 따라가지 않는다.
+ */
+export function drawSeaRoute(
+  context: CanvasRenderingContext2D,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  { k }: { k: number },
+): void {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const length = Math.hypot(dx, dy);
+  if (length < 1) return;
+  const bend = length * 0.18;
+  const cx = (ax + bx) / 2 + (dy / length) * bend;
+  const cy = (ay + by) / 2 - (dx / length) * bend;
+  context.save();
+  context.lineCap = 'round';
+  context.strokeStyle = 'rgba(12, 15, 14, 0.55)'; // --bg 밑줄: 바다색 위에서도 읽히게
+  context.lineWidth = Math.max(3, 3.2 * k);
+  context.beginPath();
+  context.moveTo(ax, ay);
+  context.quadraticCurveTo(cx, cy, bx, by);
+  context.stroke();
+  context.strokeStyle = 'rgba(142, 206, 236, 0.95)';
+  context.lineWidth = Math.max(1.5, 1.6 * k);
+  context.setLineDash([7 * k, 5 * k]);
+  context.stroke();
+  context.restore();
+}
+
 /** 전장 마름모. 반환값은 집기 반지름이다. */
 export function drawBattlefieldMark(
   context: CanvasRenderingContext2D,

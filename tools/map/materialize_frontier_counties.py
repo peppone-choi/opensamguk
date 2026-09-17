@@ -143,7 +143,10 @@ def peel_rebinding(document: dict) -> tuple[dict, dict | None]:
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import rebind_misbound_counties as rebinding
     from tools.map import relocate_han_province as relocation
+    from tools.map import fold_cityless_jurisdictions as folding
     # 거점 省 분할은 재바인딩보다도 나중 단계다. 먼저 벗겨야 재바인딩 지문이 맞는다.
+    # 城 없는 관할 접기는 그보다 더 나중이라 가장 먼저 벗긴다.
+    document, _ = folding.peel(document)
     document, _ = carving.peel(document)
     if not rebinding.LEDGER.is_file():
         return document, None
@@ -643,7 +646,9 @@ def main() -> int:
     # 프론티어 배치 원장이 제 입력 지문 그대로 남는다(재바인딩은 그 郡들을 건드리지 않는다).
     # 거점 省 분할(carve_strategic_site_provinces)은 그보다 더 나중이라 가장 먼저 벗기고 가장 늦게 얹는다.
     from tools.map import carve_strategic_site_provinces as carving
+    from tools.map import fold_cityless_jurisdictions as folding
     from tools.map import rebind_misbound_counties as rebinding
+    document, folded = folding.peel(document)
     document, carved = carving.peel(document)
     document, rebound = peel_rebinding(document)
     if has_frontier_counties(document):
@@ -666,6 +671,8 @@ def main() -> int:
         updated, _, _ = rebinding.apply_rebindings(updated, rebound)
     if carved is not None:
         updated = carving.reapply(updated, carved)
+    if folded is not None:
+        updated = folding.reapply(updated, folded)
     tiles_blob = _dump(updated)
     placement_blob = json.dumps(placement_document, ensure_ascii=False, indent=2) + "\n"
     if args.check:

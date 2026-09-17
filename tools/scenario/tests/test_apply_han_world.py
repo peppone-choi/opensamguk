@@ -98,13 +98,14 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
     def test_world_v3_loader_verifies_manifest_and_has_all_832_nodes(self) -> None:
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
         # 849–1024 는 城 없던 han-tiles 縣 관할 176곳(w2), 1025–1097 은 수·진·관 거점 73곳(w3)이다.
-        self.assertEqual(1098, len({city for group in by_jun.values() for city in group}))
+        # 2026-09-17: 同縣 중복 977·989 를 거두고 그 번호와 1099–1133 에 郡國 밖 취락 37곳(w5)이 섰다.
+        self.assertEqual(1133, len({city for group in by_jun.values() for city in group}))
         self.assertIn(781, by_jun["제남국"])
 
     def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
         self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        known = set(range(1, 1099))
+        known = set(range(1, 1134))
         ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
         che2jun = {
             key: value["jun"]
@@ -140,7 +141,8 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         # 847 吳縣·848 毘陵은 이체자 폴딩 결합 2곳, 849–1024 는 城 없던 縣 관할 176곳(source claim)이
         # 같은 append-only 규약으로 붙은 행이다 — 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고,
         # 1025–1097 거점 73곳까지 총 317행, 2026-09-16 河南尹 平陰(1098) 을 더해 318행이어야 한다(귀속 충돌 5곳은 defer).
-        self.assertEqual(318, len(migration_doc["appendedRows"]))
+        # 2026-09-17: 郡國 밖 취락 37곳 중 새 번호 35곳(1099–1133)이 더해져 353행이다 — 977·989 는 기존 행을 재결속한다.
+        self.assertEqual(353, len(migration_doc["appendedRows"]))
         self.assertEqual(
             {
                 "administrativeUnitId": "hhs:112:濟南國:010",
@@ -152,7 +154,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             migration_doc["appendedRows"][0],
         )
         self.assertEqual(
-            list(range(781, 1099)),  # 1098 = 河南尹 平陰(w4)
+            list(range(781, 1134)),  # 1098 = 河南尹 平陰(w4), 1099–1133 = 郡國 밖 취락(w5)
             [row["newCityId"] for row in migration_doc["appendedRows"]],
         )
         self.assertEqual(
@@ -457,10 +459,13 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         self.assertIn("남중 반란군", nations)
         self.assertNotIn("유비", nations)
         self.assertNotIn("맹획", nations)
-        # The forbidden X060 polity placeholder is absent from the reviewed V3 domain.
+        # 2026-09-17(ADR-LITE-056): 哀牢(X060)는 점령 가능한 城 「애뢰」로 선다. 남중 반란군도 유선도 개시 시점에
+        # 그 城을 갖지 않는다 — 哀牢는 여전히 주인 없는 땅으로 시작한다.
         self.assertNotIn("남만", id_of)
         world = apply_han_world._load_verified_v3_world()
-        self.assertFalse(any(city["physicalPlaceRef"] == "external:v1:X060" for city in world["cities"]))
+        ailao = [city["id"] for city in world["cities"] if city["physicalPlaceRef"] == "external:v1:X060"]
+        self.assertEqual(1, len(ailao))
+        self.assertFalse(any(ailao[0] in row[8] for row in rewritten["nation"]))
         self.assertFalse(any("감릉군" in warning for warning in warnings))
 
 
