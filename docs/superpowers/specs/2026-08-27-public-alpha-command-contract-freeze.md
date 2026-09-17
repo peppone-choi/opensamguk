@@ -1,5 +1,7 @@
 # Public Alpha Command Contract Freeze — P-1 through P-15
 
+> **Partially superseded (2026-09-17, ADR-LITE-057).** P-3 resolution order, P-7, P-13 and P-15 are replaced by the [general-and-retinue campaign redesign](./2026-09-17-general-and-retinue-campaign-redesign.md). Read the "sealed WEGO rounds" wording in P-4 and P-10 as "attacker's sealed plan + defender's reaction" (redesign §5.1).
+
 **Date:** 2026-08-27
 
 **Status:** Stage 0 contract authority

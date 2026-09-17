@@ -1,7 +1,7 @@
 # CHE 이후의 오픈삼국 세계·지도·게임 루프 실행 계획
 
 - 작성일: 2026-08-22
-- 상태: **EXECUTION-READY MASTER PLAN**
+- 상태: **부분 대체됨 (2026-09-17, ADR-LITE-057)** — 명령·게임 루프 부분은 [장수·휘하 캠페인 재설계](../specs/2026-09-17-general-and-retinue-campaign-redesign.md)와 [2026-09-17 포트폴리오 계획](./2026-09-17-general-retinue-portfolio-plan.md)으로 대체됐다. 세계·지도·경로망 부분의 결과는 ADR-LITE-055·056 의 `han-world-v3` 판으로 이어졌다. (원래 상태: EXECUTION-READY MASTER PLAN)
 - 제품 정본: ADR-LITE-042·044·045, `2026-07-12-opensamguk-v2-product-spec.md`
 - 도메인 정본: `2026-08-22-han-route-network-and-command-design.md`
 - 데이터 감사: `2026-08-22-han-administrative-unit-detection-audit.md`,

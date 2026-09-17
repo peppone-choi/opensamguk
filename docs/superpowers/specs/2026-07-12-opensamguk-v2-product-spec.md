@@ -2,6 +2,7 @@
 
 > 작성일: 2026-07-12
 > 상태: reviewed-source-of-truth, current-round-review-cleared-2026-07-15
+> **부분 대체 (2026-09-17, ADR-LITE-057):** §6 소절 「개인턴·사령턴·전술 명령의 경계」와 §9 소절 「v1 커맨드 카탈로그의 진화 규칙」은 [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md)로 대체됐다. 나머지 v2 설계의 재배치는 재설계 §13.2 를 따른다.
 > 선행 자료: `docs/superpowers/research/2026-07-12-v2-source-reconciliation.md`, `docs/wiki/pages/game/opensamguk-v2-direction.md`, `docs/wiki/raw/opensamguk-v2-downloads/PRD.md`
 
 ## 1. 제품 정의

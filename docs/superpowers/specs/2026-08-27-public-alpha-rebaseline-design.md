@@ -1,5 +1,7 @@
 # Public Alpha Rebaseline Design
 
+> **Partially superseded (2026-09-17, ADR-LITE-057).** §1, §2, §6, §7, §10 and the first item of §11 are replaced by the [general-and-retinue campaign redesign](./2026-09-17-general-and-retinue-campaign-redesign.md). §3 (delivery-state pipeline) and the public-alpha operating policy remain in force.
+
 **Date:** 2026-08-27
 
 **Status:** user-approved design

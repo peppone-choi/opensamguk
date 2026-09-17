@@ -1,5 +1,7 @@
 # Public Alpha Command Foundation Implementation Plan
 
+> **대체됨 (2026-09-17, ADR-LITE-057).** 기존 개인턴 46·사령턴 24 명령 어댑터 동결과 124 카탈로그 Stage 0 닫기 게이트는 새 입력 6종 체계(재설계 §4·§12)로 대체됐다. 후속은 [2026-09-17 포트폴리오 계획](./2026-09-17-general-retinue-portfolio-plan.md)의 3단계 「입력 6종 registry」다. 이 문서는 기록으로 남긴다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Freeze one machine-readable public-alpha command contract, inventory the legacy and planned command families without false implementation claims, and make Stage 0 closure mechanically verifiable.

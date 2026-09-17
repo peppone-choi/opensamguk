@@ -41,6 +41,7 @@ PHP와 draw-for-draw, byte-for-byte로 일치해야 한다는 의무와 PHP UI�
 | [ui-redesign-2026-09/](./ui-redesign-2026-09/README.md) | 화면은 어떻게 생겨야 하는가 — 야전 사령부(Concept A) 시안 19장 소스, 팔레트·초상·부서 메뉴·세 게시 공간 규칙 (ADR-LITE-049) |
 | [장수·휘하 캠페인 재설계](../superpowers/specs/2026-09-17-general-and-retinue-campaign-redesign.md) | 삼모 명령 체계를 무엇으로 바꾸는가 — 장수·휘하 카드·결속, 입력 6종, 장수 턴과 순 경계 처리 순서, 자원 5종 (ADR-LITE-057, 2026-09-17 방향 승인). 카드 목록은 [계책 카드 카탈로그 초안](../superpowers/specs/2026-09-17-stratagem-card-catalog-draft.md) |
 | [현재 로드맵](./roadmap.md) | 무엇이 승인·구현·진행·제안 상태인가? |
+| [2026-09-17 포트폴리오 계획](../superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md) | 로드맵 단계마다 어떤 이슈가 있고, 무엇부터 착수하는가? |
 | [기존 코어와 현재 설계의 경계](./architecture-boundary.md) | 동결 기준선과 신규 세계관·시스템을 어떻게 나누는가? |
 | [문서 전면 개편 계획](../superpowers/plans/2026-08-20-documentation-overhaul-plan.md) | 이번 문서 개편은 어떤 증거와 검증을 따르는가? |
 | [core2026 문서 감사](../reference/core2026-docs-audit-2026-08-20.md) | 외부 Gitea 문서에서 무엇을 채택하거나 제외했는가? |
