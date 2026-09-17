@@ -186,10 +186,19 @@ def _load_inputs(decisions: dict, meta: dict) -> np.ndarray:
     return load_elevation(path, meta["rows"], meta["cols"])
 
 
+def terrain_digest(document: dict) -> str:
+    return hashlib.sha256("\n".join(document["terrain"]).encode()).hexdigest()
+
+
 def stage_for(document: dict, ledger: dict) -> dict | None:
-    fingerprint = digest(document)
+    """이 단계는 terrain 만 바꾸므로 terrain 지문으로 알아본다.
+
+    문서 전체 digest 로 알아보면 cities[] 같은 배열 순서만 바뀐 문서(앞 단계들이 정규화해서 받는다)에서 이 단계를
+    못 벗기고, 그러면 앞 단계의 peel 이 조용히 빗나간다. 문서 전체 digest 는 check() 가 따로 엄격하게 본다.
+    """
+    fingerprint = terrain_digest(document)
     for stage in ledger.get("geometry", {}).get("stages", []):
-        if stage["outputDocumentSha256"] == fingerprint:
+        if stage["outputTerrainSha256"] == fingerprint:
             return stage
     return None
 
@@ -209,8 +218,8 @@ def restore_document(document: dict, ledger: dict) -> dict:
             terrain[row, start:end + 1] = old
     restored = copy.deepcopy(document)
     restored["terrain"] = ["".join(str(code) for code in row) for row in terrain.tolist()]
-    if digest(restored) != stage["inputDocumentSha256"]:
-        raise ValueError("restored document differs from the pinned lowland-terrain input")
+    if terrain_digest(restored) != stage["inputTerrainSha256"]:
+        raise ValueError("restored terrain differs from the pinned lowland-terrain input")
     return restored
 
 
@@ -232,7 +241,8 @@ def reapply(document: dict, ledger: dict) -> dict:
 
 def build_stage(source: dict, decisions: dict) -> tuple[dict, dict]:
     document, result = apply_reclassification(source, decisions, _load_inputs(decisions, source["_meta"]))
-    stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document), **result}
+    stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
+             "inputTerrainSha256": terrain_digest(source), "outputTerrainSha256": terrain_digest(document), **result}
     ledger = {
         "schemaVersion": 1,
         "ledgerId": "lowland-terrain-reclassifications-v1",
@@ -248,7 +258,7 @@ def build_stage(source: dict, decisions: dict) -> tuple[dict, dict]:
 
 def check(document: dict, ledger: dict) -> list[str]:
     stage = stage_for(document, ledger)
-    if stage is None:
+    if stage is None or digest(document) != stage["outputDocumentSha256"]:
         return ["han-tiles.json is not the reviewed lowland-terrain reclassification output"]
     problems = []
     if ledger["inputs"]["decisions"]["sha256"] != _sha256(DECISIONS):
@@ -258,6 +268,8 @@ def check(document: dict, ledger: dict) -> list[str]:
         if reviewed[key] != ledger[key]:
             problems.append(f"lowland ledger {key} differs from the reviewed decision file")
     restored = restore_document(document, ledger)
+    if digest(restored) != stage["inputDocumentSha256"]:
+        problems.append("restored document differs from the pinned lowland-terrain input")
     for key in ("owner", "seatOwner", "parentOwner"):
         if restored[key] != document[key]:
             problems.append(f"lowland stage must not move {key}")

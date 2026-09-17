@@ -92,7 +92,9 @@ class LowlandRuleTest(unittest.TestCase):
         document, result = lowland.apply_reclassification(
             self.source, decisions([unit("west", 0, 8, 4, 10)]), self.elevation)
         ledger = {"geometry": {"stages": [{"inputDocumentSha256": lowland.digest(self.source),
-                                           "outputDocumentSha256": lowland.digest(document), **result}]}}
+                                           "outputDocumentSha256": lowland.digest(document),
+                                           "inputTerrainSha256": lowland.terrain_digest(self.source),
+                                           "outputTerrainSha256": lowland.terrain_digest(document), **result}]}}
         self.assertEqual(self.source, lowland.restore_document(document, ledger))
         tampered = copy.deepcopy(document)
         tampered["terrain"][0] = "1" + tampered["terrain"][0][1:]
@@ -132,6 +134,15 @@ class CommittedLowlandStageTest(unittest.TestCase):
         self.assertIn("雒阳县", {row["seat"] for row in before["zeroLowlandSeats"]})
         self.assertNotIn("雒阳县", {row["seat"] for row in after["zeroLowlandSeats"]})
         self.assertLess(after["zeroLowland"], before["zeroLowland"])
+
+    def test_a_reordered_cities_array_still_peels(self):
+        """PR #804 CI 적색의 회귀 — 앞 단계 도구는 cities[] 순서만 바뀐 문서도 받는다."""
+        shuffled = copy.deepcopy(self.document)
+        shuffled["cities"] = list(reversed(shuffled["cities"]))
+        peeled, ledger = lowland.peel(shuffled)
+        self.assertIsNotNone(ledger)
+        self.assertEqual(self.before["terrain"], peeled["terrain"])
+        self.assertNotEqual([], lowland.check(shuffled, self.ledger))
 
     def test_earlier_stage_checks_see_through_this_stage(self):
         fold_ledger = json.loads(folding.LEDGER.read_text(encoding="utf-8"))

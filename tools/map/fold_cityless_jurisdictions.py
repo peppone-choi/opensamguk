@@ -278,15 +278,15 @@ def peel(document: dict) -> tuple[dict, dict | None]:
     거치므로 여기서 그 단계를 먼저 벗기고, 벗긴 원장을 돌려주는 원장에 실어 reapply() 가 다시 얹게 한다.
     """
     from tools.map import reclassify_han_lowland_terrain as lowland
+    original = document
     document, lowland_ledger = lowland.peel(document)
     if not LEDGER.is_file():
         return document, None
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     if stage_for(document, ledger) is None:
-        if lowland_ledger is not None:
-            # 저지 단계만 벗겨진 채 (문서, None) 을 돌려주면 호출자가 그 단계를 잃은 han-tiles 를 쓰게 된다.
-            raise ValueError("lowland-terrain stage sits on a document that is not the pinned fold output")
-        return document, None
+        # 접기 단계가 안 맞으면 받은 문서를 그대로 돌려준다. 저지 단계만 벗겨서 주면 호출자가 그 단계를 잃은
+        # han-tiles 를 쓰게 되고, 앞 단계들의 「핀이 안 맞는다」 오류 문구도 달라진다.
+        return original, None
     if lowland_ledger is not None:
         ledger[LOWLAND_KEY] = lowland_ledger
     return restore_document(document, ledger), ledger

@@ -407,6 +407,8 @@
       {
         "inputDocumentSha256": "8209333ce5fef0107af35e90bd5c0434b404be0546312b7f10d1f5430c2cd92f",
         "outputDocumentSha256": "dc886f74d59c64233a6d6e84742057019cec69b038f0844f6347fd521632b659",
+        "inputTerrainSha256": "2fe011211926b909cb1cfcdf4c77562b89b2bbfab023945661ea25633cf2246c",
+        "outputTerrainSha256": "e4a8f68f21f411ab6c80cb0cc42ba3bd877cadcbfa6058697bafb5f7280d7a83",
         "units": [
           {
             "id": "yiluo-basin",
