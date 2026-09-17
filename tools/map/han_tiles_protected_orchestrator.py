@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Protected local executor for an already-approved Han tile build contract.
 
+RETIRED (ADR-LITE-059, 2026-09-17): no lock was ever issued and none can be derived truthfully — the
+wheelhouse/versions of the original build are unrecorded and the committed han-tiles.json is a post-curation
+artifact that the v1 `expectedOutputs == BUILD_HAN_TILES output` equation cannot bind. Do not build new work
+on this flow; per-stage deterministic `--check` gates in CI protect the canonical file instead.
+
 The public contract intentionally contains no paths or coordinates.  This module is
 the protected boundary that binds its fixed roles to repository-relative files,
 checks their exact bytes before execution, and emits only coordinate-free manifests.

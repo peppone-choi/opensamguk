@@ -1196,3 +1196,19 @@
   이 단계를 먼저 벗긴다.
 - Reversal: `--source` 로 벗긴 문서를 되쓰고(`peel`), 두 원장·도구·CI 단계를 지운 뒤 같은 절차로 사슬과 1133 을
   다시 재핀한다.
+
+## ADR-LITE-059 — han-tiles 빌드 계약 v1 의 lock·증명 흐름을 폐기 표시한다 (2026-09-17)
+
+- Status: accepted (사용자 결정, GH #536 / OPENSAM-235)
+- Context: v1 계약(`tools/map/han_tiles_contract.py`)과 보호 실행기(`tools/map/han_tiles_protected_orchestrator.py`)는 wheel 4종
+  (numpy·Pillow·PyYAML·hanja)의 파일 sha256 을 박은 lock 과, `BUILD_HAN_TILES` 단계 출력 = 정본이라는 등식을 요구한다. 2026-09-17 실측:
+  (1) 당시 빌드의 wheelhouse 와 wheel 버전 기록이 어디에도 없다(UNKNOWN). (2) 커밋된 `data/map/han-tiles.json` 은 생성기 출력 위에
+  frontier 縣 물질화·城 없는 관할 접기·국소 고증 수정이 얹힌 산출물이라 v1 의 등식이 구조적으로 성립하지 않는다. (3) 제한 입력 12종은
+  미커밋(ADR-LITE-039)이고 `MODERN_ADMIN_ADM2` 는 로컬에도 없다.
+- Decision: lock 을 만들지 않는다. 없는 환경을 오늘 머신 값으로 핀하면 지어낸 lock 이다. v1 의 lock·attestation 흐름은 **폐기 표시**하고
+  새 작업의 근거로 쓰지 않는다. 정본 보호는 CI 의 단계별 결정론 `--check`(frontier 물질화·관할 접기·省→城 귀속·carve 등)가 맡는다.
+  `han_tiles_contract.loads_json_strict` 같은 범용 헬퍼는 다른 도구가 쓰므로 파일은 지우지 않는다.
+- Consequences: 「han-tiles 를 원본에서 통째로 재현」하는 보증은 없다 — 이미 [han-tiles 는 판정이 얹힌 정본]이라 전체 재생성이 금지된 상태와
+  일치한다. 보증 범위는 「커밋된 정본에서 각 후속 단계가 결정론으로 재생성된다」다.
+- Reversal: owner 가 승인한 wheelhouse 로 기반 5단계 출력(`5d888dc6…`)의 바이트 재현을 보인 뒤, v1 을 「기반 단계 재현성」 전용으로 한정해 되살린다.
+
