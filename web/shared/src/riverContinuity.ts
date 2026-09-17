@@ -108,13 +108,15 @@ export interface RiverContinuityInput {
   level: Uint8Array;
   /** 1 = 城 이 선 칸. 물길이 지나지 못한다. */
   dry: Uint8Array;
-  /** 城 복원 전의 수계 라벨(inlandWaterSystems). */
+  /** 城 복원 전의 수계 라벨(inlandWaterSystems). 새로 놓은 칸에 수계를 적어 넣으므로 제자리에서 바뀐다. */
   system: Int32Array;
 }
 
 export interface RiverContinuityResult {
   /** A — 대각 메우기로 놓은 칸. */
   diagonal: number;
+  /** 마지막에 걷어 낸, 아무것도 잇지 않던 새 칸. */
+  pruned: number;
   /** B — 城 우회로 이은 줄 수와 칸 수. */
   bypassJoins: number;
   bypassTiles: number;
@@ -123,7 +125,7 @@ export interface RiverContinuityResult {
   gapTiles: number;
 }
 
-function bridgeDiagonals({ code, cols, rows, level, dry }: RiverContinuityInput): number {
+function bridgeDiagonals({ code, cols, rows, level, dry, system }: RiverContinuityInput): number {
   let placed = 0;
   for (let r = 0; r + 1 < rows; r += 1) {
     for (let c = 0; c + 1 < cols; c += 1) {
@@ -141,6 +143,7 @@ function bridgeDiagonals({ code, cols, rows, level, dry }: RiverContinuityInput)
         }
         if (pick < 0) continue;
         code[pick] = RIVER;
+        if (system[pick] === 0) system[pick] = system[p] !== 0 ? system[p] : system[q];
         placed += 1;
       }
     }
@@ -307,7 +310,7 @@ function findJoin(
 }
 
 function joinComponents(input: RiverContinuityInput, scratch: Scratch, strict: boolean): { joins: number; tiles: number } {
-  const { code, cols, rows } = input;
+  const { code, cols, rows, system } = input;
   // 라벨은 단계마다 한 번만 뜬다. 이은 뒤에는 작은 덩어리의 칸을 큰 쪽으로 옮겨 적는다 —
   // 바퀴마다 바다 4만 칸을 다시 칠하는 값이 탐색보다 비쌌다(실측 10 ms × 13 바퀴).
   const { label, count } = labelComponents(code, cols, rows, isWet, false);
@@ -353,6 +356,9 @@ function joinComponents(input: RiverContinuityInput, scratch: Scratch, strict: b
       let merged = merge(a, b);
       for (const k of join.path) {
         code[k] = RIVER;
+        // 새 물길도 그 수계다. 0 으로 두면 바로 옆 조각이 이 물길에 붙지 못하고 제 길을
+        // 따로 내서, 潼關 굽이처럼 城 이 촘촘한 곳에서 물길이 두세 겹으로 나란히 깔렸다.
+        if (system[k] === 0) system[k] = system[join.start];
         label[k] = merged;
         cells[merged].push(k);
       }
@@ -381,16 +387,67 @@ function joinComponents(input: RiverContinuityInput, scratch: Scratch, strict: b
   return { joins, tiles };
 }
 
+// 고리 순서의 8 이웃. 이웃한 두 자리는 서로 변으로 닿는다. 짝수 자리가 변 이웃이다.
+const RING: readonly (readonly [number, number])[] = [
+  [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1],
+];
+
+/**
+ * 새로 놓은 칸 가운데 없어도 되는 것을 걷어 낸다. 걷어 낸 수를 돌려준다.
+ *
+ * 세 단계가 따로따로 길을 내다 보니 城 이 촘촘한 곳(潼關 굽이·弘農)에서는 물길이 두세
+ * 겹으로 뭉쳤다. 칸 하나를 빼도 그 둘레의 물이 여전히 서로 변으로 이어지면 그 칸은
+ * 아무것도 잇고 있지 않다 — 세선화의 단순점 판정이다. 원본 강 칸은 건드리지 않는다.
+ */
+function pruneRedundant(input: RiverContinuityInput, original: Uint8Array): number {
+  const { code, cols, rows } = input;
+  let removed = 0;
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let k = 0; k < code.length; k += 1) {
+      if (code[k] !== RIVER || original[k] === RIVER) continue;
+      const kc = k % cols;
+      const kr = (k - kc) / cols;
+      const wet: boolean[] = RING.map(([dr, dc]) => {
+        const nr = kr + dr;
+        const nc = kc + dc;
+        return nr >= 0 && nc >= 0 && nr < rows && nc < cols && isWet(code[nr * cols + nc]);
+      });
+      // 변 이웃 물이 고리 위에서 몇 도막으로 나뉘는가. 한 도막이면 이 칸 없이도 이어져 있다.
+      let runs = 0;
+      for (let i = 0; i < 8; i += 2) {
+        if (!wet[i]) continue;
+        // 이 변 이웃에서 고리를 거꾸로 걸어 앞선 변 이웃에 닿으면 같은 도막이다.
+        let joinsEarlier = false;
+        for (let j = (i + 7) % 8; wet[j]; j = (j + 7) % 8) {
+          if (j % 2 === 0) { joinsEarlier = true; break; }
+          if (j === i) break;
+        }
+        if (!joinsEarlier) runs += 1;
+      }
+      const all = wet.every(Boolean);
+      if (runs > 1 && !all) continue;
+      code[k] = original[k];
+      removed += 1;
+      changed = true;
+    }
+  }
+  return removed;
+}
+
 /** 끊긴 물줄기를 잇는다. code 를 제자리에서 고치고 단계별로 놓은 수를 돌려준다. */
 export function connectRivers(input: RiverContinuityInput): RiverContinuityResult {
+  const original = Uint8Array.from(input.code);
   let diagonal = bridgeDiagonals(input);
   const scratch = new Scratch(input.code.length);
   const bypass = joinComponents(input, scratch, false);
   const gap = joinComponents(input, scratch, true);
   // 새로 놓은 물길이 옆 물과 꼭짓점으로 닿는 자리가 생길 수 있다.
   diagonal += bridgeDiagonals(input);
+  const pruned = pruneRedundant(input, original);
   return {
     diagonal,
+    pruned,
     bypassJoins: bypass.joins,
     bypassTiles: bypass.tiles,
     gapJoins: gap.joins,

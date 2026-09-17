@@ -111,6 +111,39 @@ describe('connectRivers — 규칙', () => {
     expect(inlandPieces(near.code, 6, 2)).toBe(1);
   });
 
+  it('한 수계의 조각들은 길을 따로 내지 않고 먼저 난 물길에 붙는다', () => {
+    // 城 세 장이 강을 네 토막 냈다. 토막마다 제 우회로를 내면 물길이 두 겹으로 깔린다.
+    const input = grid([
+      [P, P, P, P, P, P, P],
+      [R, P, R, P, R, P, R],
+      [P, P, P, P, P, P, P],
+    ], { cutBy: [[1, 1], [1, 3], [1, 5]] });
+    const result = connectRivers(input);
+    expect(inlandPieces(input.code, 7, 3)).toBe(1);
+    // 2×2 가 통째로 강인 자리가 없어야 한 줄이다.
+    for (let r = 0; r + 1 < 3; r += 1) {
+      for (let c = 0; c + 1 < 7; c += 1) {
+        const block = [input.code[r * 7 + c], input.code[r * 7 + c + 1], input.code[(r + 1) * 7 + c], input.code[(r + 1) * 7 + c + 1]];
+        expect(block.every((v) => v === R)).toBe(false);
+      }
+    }
+    expect(result.bypassJoins).toBe(3);
+  });
+
+  it('아무것도 잇지 않는 새 칸은 걷어 낸다 — 원본 강 칸은 그대로 둔다', () => {
+    // 대각 두 쌍이 한 칸씩 놓으면 가운데 2×2 가 통째로 강이 된다. 하나는 없어도 이어져 있다.
+    const input = grid([
+      [R, R, P],
+      [R, P, R],
+      [P, R, R],
+    ]);
+    const before = Uint8Array.from(input.code);
+    const result = connectRivers(input);
+    expect(inlandPieces(input.code, 3, 3)).toBe(1);
+    expect(result.diagonal - result.pruned).toBe(1);
+    for (let i = 0; i < before.length; i += 1) if (before[i] === R) expect(input.code[i]).toBe(R);
+  });
+
   it('城 칸과 지도 밖 칸에는 물길을 놓지 않는다', () => {
     const input = grid([
       [X, X, X, X, X],
@@ -247,6 +280,18 @@ describe('connectRivers — han-world-v3 실측', () => {
       }
     }
     expect(wet).toEqual([]);
+  });
+
+  it('새 물길이 두세 겹으로 뭉치지 않는다 — 潼關 굽이', () => {
+    // 2×2 가 통째로 강인 자리 수. 원본만으로 50, 잇기 직후 93 이었다.
+    // 수계 물려주기 + 걷어 내기 뒤 실측 71. 다시 90 을 넘으면 뭉침이 돌아온 것이다.
+    let blocks = 0;
+    for (let r = 0; r + 1 < rows; r += 1) {
+      for (let c = 0; c + 1 < cols; c += 1) {
+        if (code[at(r, c)] === R && code[at(r, c + 1)] === R && code[at(r + 1, c)] === R && code[at(r + 1, c + 1)] === R) blocks += 1;
+      }
+    }
+    expect(blocks).toBeLessThanOrEqual(80);
   });
 
   it('강이 지도를 덮지 않는다 — 비중 2% 아래', () => {
