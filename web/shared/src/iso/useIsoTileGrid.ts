@@ -213,8 +213,13 @@ export function useIsoTileGrid(terrainUrl: string): State {
       // 治所 좌표를 격자보다 먼저 편다 — buildIsoTileGrid 가 「城 이 선 칸은 뭍」을
       // 적용하는 데 이 값을 쓴다(landUnderSeats).
       const provinceSeatCell = buildProvinceSeatCells(tiles);
+      // 治所 아닌 아이콘(郡國 밖 세력·거점)은 씨앗 칸에 선다. 물길이 그 칸도 피해 가게 넘긴다.
+      const landmarks = {
+        col: Int32Array.from(tiles.cities, (city) => city.col),
+        row: Int32Array.from(tiles.cities, (city) => city.row),
+      };
       const grid = buildIsoTileGrid(
-        tiles.terrain, image.data, image.width, image.height, RASTER_GROUP, provinceSeatCell,
+        tiles.terrain, image.data, image.width, image.height, RASTER_GROUP, provinceSeatCell, landmarks,
       );
       const srcCols = tiles._meta.cols;
       const srcRows = tiles._meta.rows;
