@@ -46,6 +46,11 @@ jobs:
       - name: Verify commandery supply links
         if: '!cancelled()'
         run: python3 tools/map/build_commandery_supply_links.py --check
+      # 철·말·목재 산지 원장(GH #776). 커밋된 추출본을 han-tiles 에 다시 붙여 커밋본과 비교한다 —
+      # 縣이 생기거나 郡이 바뀌면 빨개진다. 사료 원문(data/corpus)은 gitignore 라 여기서 다시 뽑지 않는다.
+      - name: Resource-site ledger is current
+        if: '!cancelled()'
+        run: python3 tools/map/build_resource_sites.py --check
       - name: Verify reviewed Han route candidate regeneration
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check

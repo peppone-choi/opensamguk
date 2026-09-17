@@ -1,0 +1,2756 @@
+{
+ "schemaVersion": 1,
+ "catalogId": "resource-sites-v1",
+ "generator": "tools/map/build_resource_sites.py",
+ "issue": "GH #776 / OPENSAM-256",
+ "note": "철·말·목재 산지와 소금 특산의 문헌 근거 원장. 게임 수치가 아니다 — 어느 縣·郡에 사료가 산지를 적었는지만 담는다. FORMER_HAN 은 기원후 2년 단면(漢書 地理志)이라 後漢 시나리오에 쓸 때 시기 표시를 지우지 않는다. 못 붙인 항목과 UNKNOWN 을 지우지 않는다.",
+ "inputs": {
+  "extracts": "data/curated/han/resource-site-source-extracts-v1.json",
+  "tiles": "data/map/han-tiles.json",
+  "administrativeUnits": "data/curated/han/administrative-units.json",
+  "placeBindings": "data/curated/han/administrative-place-bindings-v1.json",
+  "simplification": "data/curated/han/han-name-simplification-v1.json"
+ },
+ "sources": {
+  "laterHanJunguozhi": {
+   "book": "後漢書 郡國志 卷109–113",
+   "corpus": "data/corpus/hhs-109..113.txt",
+   "noteHandling": "{{…}} 劉昭 註 제거, 「頁…行」 校勘記 줄 제외"
+  },
+  "formerHanDilizhi": {
+   "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d",
+   "revisionId": 2687363,
+   "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+   "rawUrl": "https://zh.wikisource.org/w/index.php?action=raw&title=漢書顏師古註/地理志/地理&oldid=2687363",
+   "coverage": "地理志 上편만: 亰兆尹~巴郡 51郡",
+   "commanderies": [
+    "亰兆尹",
+    "左馮翊",
+    "右扶風",
+    "弘農郡",
+    "河東郡",
+    "太原郡",
+    "上黨郡",
+    "河內郡",
+    "河南郡",
+    "東郡",
+    "陳留郡",
+    "潁川郡",
+    "汝南郡",
+    "南陽郡",
+    "南郡",
+    "江夏郡",
+    "廬江郡",
+    "九江郡",
+    "山陽郡",
+    "濟陰郡",
+    "沛郡",
+    "魏郡",
+    "鉅鹿郡",
+    "常山郡",
+    "清河郡",
+    "涿郡",
+    "勃海郡",
+    "平原郡",
+    "千乘郡",
+    "濟南郡",
+    "泰山郡",
+    "齊郡",
+    "北海郡",
+    "東萊郡",
+    "琅邪郡",
+    "東海郡",
+    "臨淮郡",
+    "會稽郡",
+    "丹揚郡",
+    "豫章郡",
+    "桂陽郡",
+    "武陵郡",
+    "零陵郡",
+    "漢中郡",
+    "廣漢郡",
+    "蜀郡",
+    "犍爲郡",
+    "越嶲郡",
+    "益州郡",
+    "牂柯郡",
+    "巴郡"
+   ],
+   "otherOfficesNotLedgered": {
+    "工官": 10,
+    "服官": 2,
+    "橘官": 2,
+    "銅官": 1,
+    "金官": 1
+   }
+  }
+ },
+ "collationNotes": [
+  {
+   "volume": 109,
+   "line": 313,
+   "text": "三三八七頁　六行　出鐵之山三千六百九　按：惠棟謂自「東西二萬八千里」至此，皆山…"
+  },
+  {
+   "volume": 113,
+   "line": 1323,
+   "text": "三五二八頁一０行　漁陽有鐵　按：前書作「有鐵官」。"
+  },
+  {
+   "volume": 113,
+   "line": 1327,
+   "text": "三五二八頁一０行　泉州有鐵　按：前志作「有鹽官」。"
+  }
+ ],
+ "crossWitness": {
+  "axis": "administrative-units.json 의 ctext 繁體 인용문(위키소스 코퍼스와 다른 출처)에서 郡별 有鐵/出鐵 개수",
+  "witnessTotal": 34,
+  "ledgerTotal": 34,
+  "disagreeingCommanderies": []
+ },
+ "counts": {
+  "entries": 106,
+  "byResourceEra": {
+   "HORSE/FORMER_HAN": 1,
+   "HORSE/LATER_HAN": 8,
+   "IRON/FORMER_HAN": 39,
+   "IRON/LATER_HAN": 34,
+   "SALT/FORMER_HAN": 22,
+   "WOOD/FORMER_HAN": 1,
+   "WOOD/LATER_HAN": 1
+  },
+  "byResourceEraMatchStatus": {
+   "HORSE/FORMER_HAN/MATCHED_COMMANDERY": 1,
+   "HORSE/LATER_HAN/MATCHED_COMMANDERY": 6,
+   "HORSE/LATER_HAN/REGION_ONLY": 1,
+   "HORSE/LATER_HAN/UNKNOWN_NO_SOURCE": 1,
+   "IRON/FORMER_HAN/MATCHED": 25,
+   "IRON/FORMER_HAN/MATCHED_COMMANDERY": 4,
+   "IRON/FORMER_HAN/MATCHED_COMMANDERY_SUCCESSION": 1,
+   "IRON/FORMER_HAN/MATCHED_REVIEWED_ALIAS": 1,
+   "IRON/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 4,
+   "IRON/FORMER_HAN/UNKNOWN_NO_SOURCE": 1,
+   "IRON/FORMER_HAN/UNMATCHED_NO_JURISDICTION": 3,
+   "IRON/LATER_HAN/MATCHED": 27,
+   "IRON/LATER_HAN/MATCHED_PARENT_DIFFERS": 1,
+   "IRON/LATER_HAN/MATCHED_REVIEWED_ALIAS": 1,
+   "IRON/LATER_HAN/UNMATCHED_NO_JURISDICTION": 5,
+   "SALT/FORMER_HAN/MATCHED": 12,
+   "SALT/FORMER_HAN/MATCHED_COMMANDERY_SUCCESSION": 1,
+   "SALT/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 4,
+   "SALT/FORMER_HAN/UNMATCHED_NO_JURISDICTION": 5,
+   "WOOD/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 1,
+   "WOOD/LATER_HAN/UNKNOWN_NO_SOURCE": 1
+  },
+  "byLevel": {
+   "COMMANDERY": 13,
+   "COUNTY": 90,
+   "REGION": 3
+  },
+  "distinctSites": 101
+ },
+ "entries": [
+  {
+   "id": "hhs:109:河內郡:018:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "林虑",
+   "sourceCommandery": "河內郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "82216",
+   "commanderyId": "PARENT-0001",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖林虑〗故隆虑，殇帝改。有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 98
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:109:河東郡:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "安邑",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "95291",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖安邑〗有铁，有盐池。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 104
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:109:河東郡:003:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "平阳",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "95415",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "같은 郡 안 이름 일치(CHGIS 결속 없음); 동명 縣 2곳을 郡으로 갈랐다",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖平阳〗侯国。有铁。尧都此。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 108
+    }
+   },
+   "homonymCandidates": [
+    {
+     "jurisdictionId": "85673",
+     "commandery": "泰山郡"
+    },
+    {
+     "jurisdictionId": "95415",
+     "commandery": "河東郡"
+    }
+   ],
+   "placeBindingStatus": "AMBIGUOUS_POINT"
+  },
+  {
+   "id": "hhs:109:河東郡:009:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "皮氏",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "95230",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖皮氏〗有耿乡。有铁。有冀亭。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 120
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:109:右扶風:011:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "雍",
+   "sourceCommandery": "右扶風",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0006",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「雍」 縣이 없다; place-bindings joinStatus=NO_COORDINATE_CANDIDATE",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖雍〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 244
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:109:右扶風:014:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "漆",
+   "sourceCommandery": "右扶風",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "70203",
+   "commanderyId": "PARENT-0006",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷109 郡國志",
+    "quote": "〖漆〗有漆水。有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-109.txt",
+     "line": 250
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:110:潁川郡:015:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "陽城",
+   "sourceCommandery": "潁川郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "82893",
+   "commanderyId": "PARENT-0007",
+   "matchStatus": "MATCHED",
+   "matchReason": "같은 郡 안 이름 일치(CHGIS 결속 없음); 동명 縣 2곳을 郡으로 갈랐다",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "陽城，有嵩高山，洧水、潁水出。有鐵。有負黍聚。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 44
+    }
+   },
+   "homonymCandidates": [
+    {
+     "jurisdictionId": "40899",
+     "commandery": "廬陵郡"
+    },
+    {
+     "jurisdictionId": "82893",
+     "commandery": "潁川郡"
+    }
+   ],
+   "placeBindingStatus": "AMBIGUOUS_POINT"
+  },
+  {
+   "id": "hhs:110:汝南郡:003:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "西平",
+   "sourceCommandery": "汝南郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "83167",
+   "commanderyId": "PARENT-0008",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "西平，有鐵。有柏亭，故柏國。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 58
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:110:魯國:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "魯國",
+   "sourceCommandery": "魯國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "45180",
+   "commanderyId": "PARENT-0012",
+   "matchStatus": "MATCHED_REVIEWED_ALIAS",
+   "matchReason": "郡國志 魯國 첫 縣이 「魯國」으로 적혀 있다(郡治 魯縣). 같은 郡 안에 鲁县 이 하나뿐이다.",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "魯國，古奄國。有大庭氏庫。有鐵。有闕里，孔子所居。有牛首亭。有五父衢。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 222
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:110:魏郡:013:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "武安",
+   "sourceCommandery": "魏郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "82228",
+   "commanderyId": "PARENT-0013",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "武安，有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 266
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:110:常山國:003:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "都鄉",
+   "sourceCommandery": "常山國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0015",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「都鄉」 縣이 없다; place-bindings joinStatus=NO_COORDINATE_CANDIDATE",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "都鄉，侯國。有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 314
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:110:中山國:002:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "北平",
+   "sourceCommandery": "中山國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "87253",
+   "commanderyId": "PARENT-0016",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "北平，有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-110.txt",
+     "line": 342
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:泰山郡:005:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "嬴",
+   "sourceCommandery": "泰山郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "85677",
+   "commanderyId": "PARENT-0026",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖嬴〗有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 125
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:東海郡:004:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "朐",
+   "sourceCommandery": "東海郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "42869",
+   "commanderyId": "PARENT-0030",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖朐〗有鐵。有伊盧鄕。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 219
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:琅邪國:007:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "莒",
+   "sourceCommandery": "琅邪國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "85619",
+   "commanderyId": "PARENT-0031",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖莒〗本國，故屬城陽。有鐵。有崢嶸谷。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 255
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:彭城國:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "彭城",
+   "sourceCommandery": "彭城國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "42777",
+   "commanderyId": "PARENT-0032",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖彭城〗有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 273
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:廣陵郡:010:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "堂邑",
+   "sourceCommandery": "廣陵郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "40556",
+   "commanderyId": "PARENT-0033",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖堂邑〗故屬臨淮。有鐵。春秋時曰堂。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 311
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:111:下邳國:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "下邳",
+   "sourceCommandery": "下邳國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "42821",
+   "commanderyId": "PARENT-0034",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖下邳〗本屬東海。有葛嶧山，本嶧陽山。有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-111.txt",
+     "line": 319
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:112:濟南國:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "東平陵",
+   "sourceCommandery": "濟南國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "45020",
+   "commanderyId": "PARENT-0035",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "東平陵，有鐵。有譚城。有天山。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-112.txt",
+     "line": 16
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:112:濟南國:010:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "歷城",
+   "sourceCommandery": "濟南國",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "45022",
+   "commanderyId": "PARENT-0035",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "歷城，有鐵。有巨裏聚。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-112.txt",
+     "line": 34
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:112:桂陽郡:003:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "耒陽",
+   "sourceCommandery": "桂陽郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "41850",
+   "commanderyId": "PARENT-0045",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "耒陽，有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-112.txt",
+     "line": 356
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:112:廬江郡:008:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "皖",
+   "sourceCommandery": "廬江郡",
+   "sourceMarker": "有鐵",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "43000",
+   "commanderyId": "PARENT-0050",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "皖，有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-112.txt",
+     "line": 522
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:漢中郡:005:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "沔阳",
+   "sourceCommandery": "漢中郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "71101",
+   "commanderyId": "PARENT-0054",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖沔阳〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 25
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:巴郡:002:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "宕渠",
+   "sourceCommandery": "巴郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "200197",
+   "commanderyId": "PARENT-0055",
+   "matchStatus": "MATCHED_PARENT_DIFFERS",
+   "matchReason": "CHGIS 결속으로 붙였다. 타일 원장은 이 縣을 宕渠郡 밑에 둔다(220년 단면의 郡 분할)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖宕渠〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 39
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:蜀郡:006:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "临邛",
+   "sourceCommandery": "蜀郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "44445",
+   "commanderyId": "PARENT-0057",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖临邛〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 101
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:越巂郡:004:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "台登",
+   "sourceCommandery": "越巂郡",
+   "sourceMarker": "出铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "200279",
+   "commanderyId": "PARENT-0060",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖台登〗出铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 175
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:越巂郡:008:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "会无",
+   "sourceCommandery": "越巂郡",
+   "sourceMarker": "出铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0060",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「会无」 縣이 없다; place-bindings joinStatus=NO_COORDINATE_CANDIDATE",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖会无〗出铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 183
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:113:益州郡:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "滇池",
+   "sourceCommandery": "益州郡",
+   "sourceMarker": "出铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "45514",
+   "commanderyId": "PARENT-0061",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖滇池〗出铁。有池泽。北有黑水祠。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 199
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:永昌郡:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "不韦",
+   "sourceCommandery": "永昌郡",
+   "sourceMarker": "出铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "45445",
+   "commanderyId": "PARENT-0062",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖不韦〗出铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 235
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:北地郡:003:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "弋居",
+   "sourceCommandery": "北地郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "70614",
+   "commanderyId": "PARENT-0071",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖弋居〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 392
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:太原郡:013:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "大陵",
+   "sourceCommandery": "太原郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "95604",
+   "commanderyId": "PARENT-0079",
+   "matchStatus": "MATCHED",
+   "matchReason": "이름+CHGIS 결속 두 축 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖大陵〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 555
+    }
+   },
+   "placeBindingStatus": "RESOLVED_POINT"
+  },
+  {
+   "id": "hhs:113:漁陽郡:001:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "渔阳",
+   "sourceCommandery": "漁陽郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0091",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「渔阳」 縣이 없다; place-bindings joinStatus=NO_COORDINATE_CANDIDATE",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖渔阳〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 790
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:113:漁陽郡:005:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "泉州",
+   "sourceCommandery": "漁陽郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0091",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「泉州」 縣이 없다; place-bindings joinStatus=NO_COORDINATE_CANDIDATE",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖泉州〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 798
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hhs:113:遼東郡:007:IRON",
+   "resource": "IRON",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": "平郭",
+   "sourceCommandery": "遼東郡",
+   "sourceMarker": "有铁",
+   "countyAttribution": "UNIT_LINE",
+   "jurisdictionId": "fc-liaodong-007",
+   "commanderyId": "PARENT-0094",
+   "matchStatus": "MATCHED",
+   "matchReason": "같은 郡 안 이름 일치(CHGIS 결속 없음)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "〖平郭〗有铁。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-113.txt",
+     "line": 844
+    }
+   },
+   "placeBindingStatus": "NO_COORDINATE_CANDIDATE"
+  },
+  {
+   "id": "hs:028A:亰兆尹:鄭:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "鄭",
+   "sourceCommandery": "亰兆尹",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "70427",
+   "commanderyId": "PARENT-0004",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "鄭：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:左馮翊:夏陽:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "夏陽",
+   "sourceCommandery": "左馮翊",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "70312",
+   "commanderyId": "PARENT-0005",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "夏陽：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:右扶風:雍:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "雍",
+   "sourceCommandery": "右扶風",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0006",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「雍」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "雍：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:右扶風:漆:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "漆",
+   "sourceCommandery": "右扶風",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "70203",
+   "commanderyId": "PARENT-0006",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "漆：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:弘農郡:黽池:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "黽池",
+   "sourceCommandery": "弘農郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_LOCATIVE",
+   "jurisdictionId": "82922",
+   "commanderyId": "PARENT-0003",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "黽池：有鐵官，在黽池",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:弘農郡:黽池:IRON:2",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "黽池",
+   "sourceCommandery": "弘農郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "CLAUSE_LOCATIVE",
+   "jurisdictionId": "82922",
+   "commanderyId": "PARENT-0003",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "黽池：在黽池有鐵官也",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "duplicateMentionOf": "hs:028A:弘農郡:黽池:IRON"
+  },
+  {
+   "id": "hs:028A:河東郡:安邑:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "安邑",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "95291",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "安邑：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:河東郡:安邑:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "安邑",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "95291",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "安邑：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:河東郡:皮氏:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "皮氏",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "95230",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "皮氏：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:河東郡:平陽:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "平陽",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "95415",
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "平陽：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "homonymCandidates": [
+    {
+     "jurisdictionId": "85673",
+     "commandery": "泰山郡"
+    },
+    {
+     "jurisdictionId": "95415",
+     "commandery": "河東郡"
+    }
+   ]
+  },
+  {
+   "id": "hs:028A:河東郡:絳:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "絳",
+   "sourceCommandery": "河東郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0002",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「絳」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "絳：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:太原郡:晉陽:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "晉陽",
+   "sourceCommandery": "太原郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "HEAD_LOCATIVE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0079",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「晉陽」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "晉陽：有鹽官，在晉陽",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:太原郡:太原郡:HORSE",
+   "resource": "HORSE",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "太原郡",
+   "sourceCommandery": "太原郡",
+   "sourceMarker": "馬官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0079",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치(前漢 郡名 → 後漢 同名 郡, 경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "太原郡：有家馬官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:太原郡:晉陽:SALT:2",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "晉陽",
+   "sourceCommandery": "太原郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0079",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「晉陽」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "晉陽：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "duplicateMentionOf": "hs:028A:太原郡:晉陽:SALT"
+  },
+  {
+   "id": "hs:028A:太原郡:大陵:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "大陵",
+   "sourceCommandery": "太原郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "95604",
+   "commanderyId": "PARENT-0079",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "大陵：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:河內郡:隆慮:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "隆慮",
+   "sourceCommandery": "河內郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "PATTERN",
+   "jurisdictionId": "82216",
+   "commanderyId": "PARENT-0001",
+   "matchStatus": "MATCHED_REVIEWED_ALIAS",
+   "matchReason": "郡國志 河內郡 林慮 주기 「故隆虑，殇帝改」(後漢書 卷109) — 殤帝 휘를 피해 고친 같은 縣이다.",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "隆慮：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:河南郡:河南郡:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "河南郡",
+   "sourceCommandery": "河南郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0000",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치(前漢 郡名 → 後漢 同名 郡, 경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "河南郡：有鐵官、工官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:潁川郡:陽城:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "陽城",
+   "sourceCommandery": "潁川郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "82893",
+   "commanderyId": "PARENT-0007",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "陽城：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "homonymCandidates": [
+    {
+     "jurisdictionId": "40899",
+     "commandery": "廬陵郡"
+    },
+    {
+     "jurisdictionId": "82893",
+     "commandery": "潁川郡"
+    }
+   ]
+  },
+  {
+   "id": "hs:028A:汝南郡:西平:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "西平",
+   "sourceCommandery": "汝南郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "83167",
+   "commanderyId": "PARENT-0008",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "西平：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:南陽郡:宛:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "宛",
+   "sourceCommandery": "南陽郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "82612",
+   "commanderyId": "PARENT-0041",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "宛：有工官、鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:南郡:巫:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "巫",
+   "sourceCommandery": "南郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "44493",
+   "commanderyId": "PARENT-0042",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "巫：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:廬江郡:睆:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "睆",
+   "sourceCommandery": "廬江郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "43000",
+   "commanderyId": "PARENT-0050",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "睆：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:山陽郡:山陽郡:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "山陽郡",
+   "sourceCommandery": "山陽郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0028",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치(前漢 郡名 → 後漢 同名 郡, 경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "山陽郡：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:沛郡:沛:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "沛",
+   "sourceCommandery": "沛郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "42807",
+   "commanderyId": "PARENT-0010",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "沛：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:魏郡:武安:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "武安",
+   "sourceCommandery": "魏郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "82228",
+   "commanderyId": "PARENT-0013",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "武安：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:鉅鹿郡:堂陽:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "堂陽",
+   "sourceCommandery": "鉅鹿郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "87188",
+   "commanderyId": "PARENT-0014",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「堂陽，故屬鉅鹿。」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "堂陽：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0017",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷110 郡國志",
+    "quote": "堂陽，故屬鉅鹿。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷110"
+   }
+  },
+  {
+   "id": "hs:028A:常山郡:都鄉:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "都鄉",
+   "sourceCommandery": "常山郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0015",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「都鄉」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "都鄉：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:涿郡:涿郡:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "涿郡",
+   "sourceCommandery": "涿郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0087",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치(前漢 郡名 → 後漢 同名 郡, 경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "涿郡：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:勃海郡:章武:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "章武",
+   "sourceCommandery": "勃海郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "87283",
+   "commanderyId": "PARENT-0021",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "章武：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:千乘郡:千乘郡:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "千乘郡",
+   "sourceCommandery": "千乘郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0037",
+   "matchStatus": "MATCHED_COMMANDERY_SUCCESSION",
+   "matchReason": "郡國志가 郡 승계를 직접 적었다: 「樂安國，高帝西平昌置，爲千乘，永元七年更名」(경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "千乘郡：有鐵官、鹽官、均輸官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "樂安國，高帝西平昌置，爲千乘，永元七年更名",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:千乘郡:千乘郡:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "千乘郡",
+   "sourceCommandery": "千乘郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0037",
+   "matchStatus": "MATCHED_COMMANDERY_SUCCESSION",
+   "matchReason": "郡國志가 郡 승계를 직접 적었다: 「樂安國，高帝西平昌置，爲千乘，永元七年更名」(경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "千乘郡：有鐵官、鹽官、均輸官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "樂安國，高帝西平昌置，爲千乘，永元七年更名",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:千乘郡:千乘:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "千乘",
+   "sourceCommandery": "千乘郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85256",
+   "commanderyId": null,
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「樂安國，高帝西平昌置，爲千乘，永元七年更名」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "千乘：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0037",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "樂安國，高帝西平昌置，爲千乘，永元七年更名",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:濟南郡:東平陵:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "東平陵",
+   "sourceCommandery": "濟南郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "45020",
+   "commanderyId": "PARENT-0035",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "東平陵：有工官、鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:濟南郡:歷城:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "歷城",
+   "sourceCommandery": "濟南郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "45022",
+   "commanderyId": "PARENT-0035",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "歷城：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:泰山郡:嬴:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "嬴",
+   "sourceCommandery": "泰山郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85677",
+   "commanderyId": "PARENT-0026",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "嬴：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:齊郡:臨淄:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "臨淄",
+   "sourceCommandery": "齊郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "PATTERN",
+   "jurisdictionId": "85234",
+   "commanderyId": "PARENT-0040",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "臨淄：有服官、鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:北海郡:都昌:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "都昌",
+   "sourceCommandery": "北海郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85478",
+   "commanderyId": "PARENT-0038",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "都昌：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:北海郡:壽光:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "壽光",
+   "sourceCommandery": "北海郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85268",
+   "commanderyId": "PARENT-0038",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「壽光，故屬北海。有灌亭。」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "壽光：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0037",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "壽光，故屬北海。有灌亭。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:曲成:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "曲成",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85448",
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "曲成：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:東牟:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "東牟",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85410",
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "東牟：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:東牟:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "東牟",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85410",
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "東牟：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:〈巾弦〉:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "〈巾弦〉",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "PATTERN",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「〈巾弦〉」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "〈巾弦〉：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:昌陽:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "昌陽",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85381",
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "昌陽：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:東萊郡:當利:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "當利",
+   "sourceCommandery": "東萊郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85441",
+   "commanderyId": "PARENT-0039",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "當利：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:琅邪郡:琅邪郡:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "琅邪郡",
+   "sourceCommandery": "琅邪郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "HEAD_NOTE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0031",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치(前漢 郡名 → 後漢 同名 郡, 경계 변동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "琅邪郡：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:琅邪郡:海曲:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "海曲",
+   "sourceCommandery": "琅邪郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "PATTERN",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0031",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「海曲」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "海曲：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:琅邪郡:計斤:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "計斤",
+   "sourceCommandery": "琅邪郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "PATTERN",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0031",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「計斤」 縣이 없다",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "計斤：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:琅邪郡:長廣:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "長廣",
+   "sourceCommandery": "琅邪郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "85388",
+   "commanderyId": "PARENT-0031",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「長廣，故屬琅邪。」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "長廣：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0039",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "長廣，故屬琅邪。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:東海郡:下邳:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "下邳",
+   "sourceCommandery": "東海郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "42821",
+   "commanderyId": "PARENT-0030",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「〖下邳〗本屬東海。有葛嶧山，本嶧陽山。有鐵。」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "下邳：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0034",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖下邳〗本屬東海。有葛嶧山，本嶧陽山。有鐵。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111"
+   }
+  },
+  {
+   "id": "hs:028A:東海郡:朐:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "朐",
+   "sourceCommandery": "東海郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "42869",
+   "commanderyId": "PARENT-0030",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "朐：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:臨淮郡:鹽瀆:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "鹽瀆",
+   "sourceCommandery": "臨淮郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "42739",
+   "commanderyId": null,
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「〖鹽瀆〗故屬臨淮」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "鹽瀆：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0033",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖鹽瀆〗故屬臨淮",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111"
+   }
+  },
+  {
+   "id": "hs:028A:臨淮郡:堂邑:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "堂邑",
+   "sourceCommandery": "臨淮郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "40556",
+   "commanderyId": null,
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「〖堂邑〗故屬臨淮。有鐵。春秋時曰堂。」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "堂邑：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0033",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷111 郡國志",
+    "quote": "〖堂邑〗故屬臨淮。有鐵。春秋時曰堂。",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷111"
+   }
+  },
+  {
+   "id": "hs:028A:會稽郡:海鹽:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "海鹽",
+   "sourceCommandery": "會稽郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "40070",
+   "commanderyId": "PARENT-0051",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「呉郡順帝分會稽置」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "海鹽：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0052",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷112 郡國志",
+    "quote": "呉郡順帝分會稽置",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷112"
+   }
+  },
+  {
+   "id": "hs:028A:漢中郡:沔陽:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "沔陽",
+   "sourceCommandery": "漢中郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "71101",
+   "commanderyId": "PARENT-0054",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "沔陽：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:蜀郡:臨邛:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "臨邛",
+   "sourceCommandery": "蜀郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "44445",
+   "commanderyId": "PARENT-0057",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "臨邛：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:蜀郡:臨邛:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "臨邛",
+   "sourceCommandery": "蜀郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "44445",
+   "commanderyId": "PARENT-0057",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "臨邛：有鐵官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:蜀郡:嚴道:WOOD",
+   "resource": "WOOD",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "嚴道",
+   "sourceCommandery": "蜀郡",
+   "sourceMarker": "木官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "96358",
+   "commanderyId": "PARENT-0057",
+   "matchStatus": "MATCHED_TRANSFER_ATTESTED",
+   "matchReason": "郡國志가 郡 이동을 직접 적었다: 「蜀郡属国故属西部都尉，延光元年以为属国都尉，别领四城」",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "嚴道：有木官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   },
+   "laterHanCommanderyId": "PARENT-0064",
+   "transferEvidence": {
+    "book": "後漢書",
+    "volume": "卷113 郡國志",
+    "quote": "蜀郡属国故属西部都尉，延光元年以为属国都尉，别领四城",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷113"
+   }
+  },
+  {
+   "id": "hs:028A:犍爲郡:武陽:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "武陽",
+   "sourceCommandery": "犍爲郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "96181",
+   "commanderyId": "PARENT-0058",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "武陽：有鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:犍爲郡:南安:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "南安",
+   "sourceCommandery": "犍爲郡",
+   "sourceMarker": "鐵官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "40871",
+   "commanderyId": "PARENT-0058",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "南安：有鹽官、鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:犍爲郡:南安:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "南安",
+   "sourceCommandery": "犍爲郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "40871",
+   "commanderyId": "PARENT-0058",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "南安：有鹽官、鐵官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:益州郡:連然:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "連然",
+   "sourceCommandery": "益州郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "45519",
+   "commanderyId": "PARENT-0061",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "連然：有鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hs:028A:巴郡:朐忍:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "level": "COUNTY",
+   "sourceName": "朐忍",
+   "sourceCommandery": "巴郡",
+   "sourceMarker": "鹽官",
+   "countyAttribution": "LEXICON",
+   "jurisdictionId": "44496",
+   "commanderyId": "PARENT-0055",
+   "matchStatus": "MATCHED",
+   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "漢書",
+    "volume": "卷028上 地理志上(顏師古註본 班固 自注)",
+    "quote": "朐忍：有橘官、鹽官",
+    "url": "https://zh.wikisource.org/w/index.php?title=漢書顏師古註/地理志/地理&oldid=2687363",
+    "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d"
+   }
+  },
+  {
+   "id": "hhs:004:HORSE:liangzhou-parks",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "REGION",
+   "sourceName": "涼州",
+   "sourceCommandery": null,
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "REGION_ONLY",
+   "matchReason": "州 단위 구절이다. 郡·縣 id 를 붙이지 않는다.",
+   "confidence": "MEDIUM",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷004 和帝紀",
+    "quote": "詔有司省減內外廄及涼州諸苑馬",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷4",
+    "snapshotSha256": "493d57b6581e823c0908c7a57506f0203a21be1d3980cc165254a945aa103c9b"
+   },
+   "claim": "涼州에 관영 마원(苑)이 여럿 있었다. 苑의 縣 위치는 이 구절에 없다."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:漢陽",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "漢陽",
+   "sourceCommandery": "漢陽郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0067",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:隴西",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "隴西",
+   "sourceCommandery": "隴西郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0066",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:安定",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "安定",
+   "sourceCommandery": "安定郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0070",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:北地",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "北地",
+   "sourceCommandery": "北地郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0071",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:上郡",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "上郡",
+   "sourceCommandery": "上郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0080",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "hhs:115:HORSE:six-commanderies:西河",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "西河",
+   "sourceCommandery": "西河郡",
+   "sourceMarker": null,
+   "countyAttribution": "CURATED_PASSAGE",
+   "jurisdictionId": null,
+   "commanderyId": "PARENT-0081",
+   "matchStatus": "MATCHED_COMMANDERY",
+   "matchReason": "郡 이름 일치",
+   "confidence": "HIGH",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷115 百官志二 羽林郎",
+    "quote": "常選漢陽、隴西、安定、北地、上郡、西河凡六郡良家補",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷115",
+    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+   },
+   "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
+  },
+  {
+   "id": "UNKNOWN:WOOD:LATER_HAN",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "REGION",
+   "sourceName": null,
+   "sourceCommandery": null,
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "confidence": "UNKNOWN",
+   "evidence": null,
+   "missing": "後漢 목재 산지를 縣·郡 단위로 적은 사료를 아직 못 찾았다. 郡國志 본문에 산림·木 주기가 없고, han-tiles terrainLegend 10종(SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)이 유일한 문헌 근거다. 현대 식생을 2~3세기 경관으로 단정하지 않는다(스펙 §9.3)."
+  },
+  {
+   "id": "UNKNOWN:HORSE:PASTURE_SITES",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "level": "COUNTY",
+   "sourceName": null,
+   "sourceCommandery": null,
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "confidence": "UNKNOWN",
+   "evidence": null,
+   "missing": "목장(苑·牧師苑)의 縣 단위 위치. 後漢書 색인에서 「牧師苑」·「馬苑」 0건. 涼州諸苑·六郡은 州·郡 단위 근거뿐이다."
+  },
+  {
+   "id": "UNKNOWN:FORMER_HAN:DILIZHI_LOWER",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "level": "REGION",
+   "sourceName": null,
+   "sourceCommandery": null,
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "confidence": "UNKNOWN",
+   "evidence": null,
+   "missing": "漢書 地理志 下편(武都~長沙國)의 班固 自注. 위키소스 顏師古註본은 上편(京兆尹~巴郡)뿐이고, ctext 는 자동 수집을 막으며, wayback 의 ctext 下편 캡처는 自注가 빠진 판이다. 下편 鐵官·鹽官·馬官(隴西·北地·遼東 등)은 이 원장에 없다 — 없음이 아니라 미수집이다."
+  }
+ ]
+}
