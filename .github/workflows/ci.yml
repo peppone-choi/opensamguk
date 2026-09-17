@@ -169,6 +169,10 @@ jobs:
         # 적색 프로브: tools/map/tests/test_build_county_economy_inputs.py CheckGateRedProbeTest.
         if: '!cancelled()'
         run: python3 tools/map/build_county_economy_inputs.py --check
+      - name: Verify Junguozhi county gap ledger (name match vs han-tiles jurisdictions)
+        # 입력은 전부 커밋본. 적색 프로브: tools/map/tests/test_build_junguozhi_county_gaps.py.
+        if: '!cancelled()'
+        run: python3 tools/map/build_junguozhi_county_gaps.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --

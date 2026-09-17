@@ -1,0 +1,9309 @@
+{
+ "schemaVersion": 1,
+ "review": "UNREVIEWED_NAME_MATCH",
+ "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다.",
+ "totals": {
+  "counties": 1180,
+  "ABSENT": 317,
+  "IN_OTHER_COMMANDERY": 22,
+  "IN_OWN_COMMANDERY": 841,
+  "absentWithNearMatch": 53,
+  "commanderiesWithAbsentFirstCounty": 23
+ },
+ "commanderies": [
+  {
+   "sourceVolume": 109,
+   "commandery": "河南尹",
+   "inTiles": true,
+   "declaredCounties": 21,
+   "absent": 8,
+   "firstListedCounty": {
+    "sourceName": "雒阳",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "雒阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82828"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "河南",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82830"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "梁",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "荧阳",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "荥阳"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "卷",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82523"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "原武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82531"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "阳武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82525"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "中牟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44356"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "开封",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44320"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "菀陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "苑陵"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "平阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82879"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "穀城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82843"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "缑氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82852"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "巩",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "成睾",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "京",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44384"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "密",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82458"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "新城",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "匽师",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "偃师"
+     ]
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "新郑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82461"
+    },
+    {
+     "ordinal": 21,
+     "sourceName": "平",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "河內郡",
+   "inTiles": true,
+   "declaredCounties": 18,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "怀",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "怀",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82506"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "河阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82512"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "轵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82494"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "波",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82493"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "沁水",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82501"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "野王",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82487"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "温",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 41,
+     "tileCommanderies": [
+      "河南尹"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "州",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82489"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "平睾",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "平皋"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "山阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82502"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "武德",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82503"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "获嘉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82260"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "脩武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82265"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "共",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82275"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "汲",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82254"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "朝歌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82269"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "荡阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82207"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "林虑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82216"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "河東郡",
+   "inTiles": true,
+   "declaredCounties": 20,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "安邑",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "安邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95291"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "杨",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "平阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95415"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "临汾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95427"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "汾阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95470"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "蒲板",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "蒲坂"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "大阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95280"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "解",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95482"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "皮氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95230"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "闻喜",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95249"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "绛",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "绛邑"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "永安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95218"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "河北",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95285"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "猗氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95478"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "垣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95255"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "襄陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95443"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "北屈",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95401"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "蒲子",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "蒲坂"
+     ]
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "濩泽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95724"
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "端氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95716"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "弘農郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "弘农",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "弘农",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83053"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "陕",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83046"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "黾池",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82922"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "新安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40645"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "宜阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82871"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "陆浑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82936"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "卢氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83180"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "湖",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70628"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "华阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70324"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "京兆尹",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 3,
+   "firstListedCounty": {
+    "sourceName": "长安",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "长安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70623"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "霸陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "霸城"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "杜陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70633"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "郑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70427"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "新丰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70726"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "蓝田",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70749"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "长陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70674"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "商",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200092"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "上雒",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "上洛"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "阳陵",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "左馮翊",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "高陵",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "高陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "高陆"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "池阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70671"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "云阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70764"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "祋祤",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "频阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "万年",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70643"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "莲勺",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "重泉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70333"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "临晋",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70296"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "郃阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70307"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "夏阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70312"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "衙",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "粟邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70340"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "右扶風",
+   "inTiles": true,
+   "declaredCounties": 15,
+   "absent": 8,
+   "firstListedCounty": {
+    "sourceName": "槐里",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "槐里",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70707"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "安陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "平陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "茂陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "鄠",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70747"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "郿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70930"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "武功",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70249"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "陈仓",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70920"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "汧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "渝麋",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "隃麋"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "雍",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "栒邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70415"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "美阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "漆",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70203"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "杜阳",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "潁川郡",
+   "inTiles": true,
+   "declaredCounties": 17,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "陽翟",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "陽翟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82455"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "襄",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "襄城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83031"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "昆陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82807"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "定陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82803"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "舞陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82792"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "郾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83036"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "臨潁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83024"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "潁陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83017"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "潁陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83009"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "許",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83011"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "新汲",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82061"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "焉陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "長社",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83039"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "陽城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82893"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "父城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82994"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "輪氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82901"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "汝南郡",
+   "inTiles": true,
+   "declaredCounties": 37,
+   "absent": 15,
+   "firstListedCounty": {
+    "sourceName": "平輿",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "平輿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83172"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "新陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "慎阳"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "西平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83167"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "上蔡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83175"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "南頓",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82040"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "汝陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43318"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "汝陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82015"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "新息",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82588"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "北宜春",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "㶏強",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "灌陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "慎阳"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "期思",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82578"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "陽安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 145,
+     "tileCommanderies": [
+      "陽安郡"
+     ]
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "項",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82047"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "西華",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82026"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "細陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "慎阳"
+     ]
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "安城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83099"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "吳房",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83171"
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "鮦陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "慎阳"
+     ]
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "愼陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "慎阳"
+     ]
+    },
+    {
+     "ordinal": 21,
+     "sourceName": "愼",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 22,
+     "sourceName": "新蔡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83173"
+    },
+    {
+     "ordinal": 23,
+     "sourceName": "安陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83169"
+    },
+    {
+     "ordinal": 24,
+     "sourceName": "富波",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43324"
+    },
+    {
+     "ordinal": 25,
+     "sourceName": "宜祿",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 26,
+     "sourceName": "郎陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "朗陵"
+     ]
+    },
+    {
+     "ordinal": 27,
+     "sourceName": "弋陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 77,
+     "tileCommanderies": [
+      "弋陽郡"
+     ]
+    },
+    {
+     "ordinal": 28,
+     "sourceName": "召陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "朗陵"
+     ]
+    },
+    {
+     "ordinal": 29,
+     "sourceName": "征羌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83034"
+    },
+    {
+     "ordinal": 30,
+     "sourceName": "思善",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 31,
+     "sourceName": "宋",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43366"
+    },
+    {
+     "ordinal": 32,
+     "sourceName": "襃信",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "褒信"
+     ]
+    },
+    {
+     "ordinal": 33,
+     "sourceName": "原鹿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43325"
+    },
+    {
+     "ordinal": 34,
+     "sourceName": "定潁",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 35,
+     "sourceName": "固始",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 36,
+     "sourceName": "山桑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43375"
+    },
+    {
+     "ordinal": 37,
+     "sourceName": "城父",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43348"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "梁國",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "下邑",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "下邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42856"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "睢陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82072"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "虞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82150"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "碭山",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "砀"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "蒙",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82082"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "穀熟",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "焉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "寧陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82085"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "薄",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "沛國",
+   "inTiles": true,
+   "declaredCounties": 21,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "相",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "相",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43224"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "蕭",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42782"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "沛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42807"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "豐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42805"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "酇",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82128"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "谷陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43226"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "譙",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 97,
+     "tileCommanderies": [
+      "汝南郡"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "洨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43232"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "蘄",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43210"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "銍",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43221"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鄲",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "建平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40236"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "臨睢",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "竹邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43196"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "公丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45294"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "龍亢",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43182"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "向",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "符離",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43203"
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "虹",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43243"
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "太丘",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 21,
+     "sourceName": "杼秋",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42791"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "陳國",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "陳",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "陳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 137,
+     "tileCommanderies": [
+      "汝南郡"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "陽夏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82053"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "寧平",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "苦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82091"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "柘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82167"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "新平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82008"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "扶樂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82063"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "武平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82102"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "長平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82032"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "魯國",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "魯國",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "魯國",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "鲁"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "騶",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "蕃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45203"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "薛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45210"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "卞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45199"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "汶陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45290"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "魏郡",
+   "inTiles": true,
+   "declaredCounties": 15,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "鄴",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "鄴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82196"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "繁陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82247"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "內黃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82244"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "魏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87157"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "元城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87158"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "黎陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82316"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "陰安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87166"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "館陶",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45350"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "清淵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85165"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "平恩",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 226,
+     "tileCommanderies": [
+      "鉅鹿郡"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "沙",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "斥丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87154"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "武安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82228"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "曲梁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87505"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "梁期",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87310"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "鉅鹿郡",
+   "inTiles": true,
+   "declaredCounties": 15,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "陶",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "陶",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "廮陶"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "鉅鹿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87051"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "楊氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87173"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "鄡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87183"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "下曲陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87178"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "任",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87177"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "南和",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87491"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "廣平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 188,
+     "tileCommanderies": [
+      "廣平郡"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "斥章",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87495"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "廣宗",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87200"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "曲周",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87499"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "列人",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87494"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "廣年",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87513"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "平鄉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87510"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "南〈糸言糸〉",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "常山國",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "元氏",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "元氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87217"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "高邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87024"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "都鄉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "南行唐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87244"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "房子",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87220"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "平棘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87233"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "欒城",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "九門",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87236"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "靈壽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87240"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "蒲吾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87241"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "井陘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87093"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "眞定",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "88410"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "上艾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95374"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "中山國",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "盧奴",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "盧奴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87211"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "北平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87253"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "毋極",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 146,
+     "tileCommanderies": [
+      "常山國"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "新市",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87542"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "望都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87247"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "唐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87250"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "安國",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87226"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "安憙",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "安喜",
+      "安平"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "漢昌",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "巴郡",
+      "漢昌郡"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "蠡吾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87322"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "上曲陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87096"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "蒲陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87100"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "廣昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87428"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "安平國",
+   "inTiles": true,
+   "declaredCounties": 12,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "信都",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "信都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87566"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "阜城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87591"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "南宮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87209"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "扶柳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87569"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "下博",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87203"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "武邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87206"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "觀津",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87575"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "堂陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87188"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "武遂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87616"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "饒陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87355"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "安平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 185,
+     "tileCommanderies": [
+      "中山國"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "南深",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "南䜌"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "河閒國",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "樂成",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "樂成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87279"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "弓高",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87619"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "易",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "武垣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87073"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "中水",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87356"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "鄚",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87326"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "高陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87286"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "文安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200012"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "束州",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87410"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "成平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87400"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "東平舒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87405"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "清河國",
+   "inTiles": true,
+   "declaredCounties": 7,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "甘陵",
+    "status": "IN_OTHER_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "甘陵",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "甘陵郡"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "貝丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45337"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "東武城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85168"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "鄃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45153"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "靈",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85202"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "繹幕",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45157"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "廣川",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 200,
+     "tileCommanderies": [
+      "安平國"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "趙國",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "邯鄲",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "邯鄲",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87010"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "易陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87036"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "襄國",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87012"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "柏人",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87015"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "中丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87223"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "勃海郡",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "南皮",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "南皮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87076"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "高城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87393"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "重合",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85536"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "浮陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87382"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "東光",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87384"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "章武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87283"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "陽信",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 165,
+     "tileCommanderies": [
+      "平原郡"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "脩",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "陳留郡",
+   "inTiles": true,
+   "declaredCounties": 17,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "陳留",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "陳留",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44324"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "浚儀",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44392"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "尉氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44332"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "雍丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44326"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "襄邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82160"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "外黃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44335"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "小黃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44337"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "東昬",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "濟陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44379"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "平丘",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "封丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82323"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "酸棗",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82282"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "長垣",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "己吾",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "已吾"
+     ]
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "考城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82331"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "圉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44342"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "扶溝",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82058"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "東郡",
+   "inTiles": true,
+   "declaredCounties": 15,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "濮陽",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "濮陽",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "燕",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82289"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "白馬",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82320"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "頓丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82304"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "東阿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45303"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "東武陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85093"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "范",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 205,
+     "tileCommanderies": [
+      "東平國"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "臨邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45123"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "博平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45326"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "聊城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45295"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "發干",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45323"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "樂平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45318"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "陽平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45339"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "衞",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "穀城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85692"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "東平國",
+   "inTiles": true,
+   "declaredCounties": 7,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "無鹽",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "無鹽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85681"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "東平陸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45243"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "富成",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "章",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85691"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "壽張",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45258"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "須昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85685"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "寧陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45277"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "任城國",
+   "inTiles": true,
+   "declaredCounties": 3,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "任城",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "任城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85155"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "亢父",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85131"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "樊",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45178"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "泰山郡",
+   "inTiles": true,
+   "declaredCounties": 12,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "奉髙",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "奉髙",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "奉高"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "博",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85653"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "梁甫",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85666"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "鉅平",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "魯國"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "嬴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85677"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "山茌",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "萊蕪",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45053"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "蓋",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85642"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "南武陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85610"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "南城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85596"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "費",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85602"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "牟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85676"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "濟北國",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "盧",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "盧",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45098"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "蛇丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85671"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45291"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "茌平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45332"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "剛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45285"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "山陽郡",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "昌邑",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "昌邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85133"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "東緡",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "鉅野",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "濟陰郡"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "髙平",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "湖陸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85146"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "南平陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45188"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "方與",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85147"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "瑕丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45269"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "金鄕",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "金乡"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "防東",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "濟陰郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "定陶",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "定陶",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85058"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "冤句",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85013"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "成陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85067"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "乘氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85002"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "句陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85017"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "鄄城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85065"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "離狐",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "廩丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85075"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "單父",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 280,
+     "tileCommanderies": [
+      "山陽郡"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "成武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85115"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "己氏",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "東海郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "郯",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "郯",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "郯城"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "蘭陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45219"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "戚",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45216"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "朐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42869"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "襄賁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85588"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "昌慮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45213"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "承",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45224"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "陰平",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "利城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 246,
+     "tileCommanderies": [
+      "利城郡"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "合鄕",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "合城"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "祝其",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42896"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "厚丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42913"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "贛楡",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "赣榆"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "琅邪國",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "開陽",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "開陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85594"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "東武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85337"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "琅邪",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85344"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "東莞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 335,
+     "tileCommanderies": [
+      "東莞郡"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "西海",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "諸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85350"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "莒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85619"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "東安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85637"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "陽都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85640"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "臨沂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85589"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "卽丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85577"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "繒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45234"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "姑幕",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85353"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "彭城國",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "彭城",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "彭城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42777"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "武原",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42832"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "傅陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45239"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "呂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42778"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "留",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42818"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "梧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "菑丘",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "廣戚",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42817"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "廣陵郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 3,
+   "firstListedCounty": {
+    "sourceName": "廣陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "廣陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42687"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "江都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42681"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "髙郵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "高邮"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "平安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42695"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "淩",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42844"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "東陽",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "射陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42737"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "鹽瀆",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42739"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "輿",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "舆国"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "堂邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40556"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "海西",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42917"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "下邳國",
+   "inTiles": true,
+   "declaredCounties": 17,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "下邳",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "下邳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42821"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "徐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43252"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "僮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43249"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "睢陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42860"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "下相",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42847"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "淮陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42746"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "淮浦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42760"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "盱臺",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "髙山",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "潘旌",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "淮陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43284"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "取慮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42862"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "東成",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "曲陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42878"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "司吾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42852"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "良成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42829"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "夏丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43235"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "濟南國",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "東平陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "東平陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45020"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "著",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45076"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "於陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45118"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "臺",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45113"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "菅",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45028"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "土鼓",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45049"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "梁鄒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45038"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "鄒平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45036"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "東朝陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200026"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "歷城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45022"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "平原郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "平原",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "平原",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45100"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "高唐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45087"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "般",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45146"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "鬲",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45124"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "祝阿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45121"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "樂陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85553"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "濕陰",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "安德",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85706"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "厭次",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85525"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "樂安國",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "臨濟",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "臨濟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85254"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "千乘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85256"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "高菀",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "樂安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85249"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "博昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85241"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "蓼城",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "利",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85240"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "益",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85280"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "壽光",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85268"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "北海國",
+   "inTiles": true,
+   "declaredCounties": 18,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "劇",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "劇",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85272"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "營陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85292"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "平壽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85466"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "都昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85478"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "安丘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85325"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "淳於",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85333"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "平昌",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "朱虛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85300"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "東安平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85217"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "高密",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85496"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "昌安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85312"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "夷安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85491"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "膠東",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85454"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "即墨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85459"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "壯武",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "下密",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85468"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "挺",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85385"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "觀陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85393"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "東萊郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "黃",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "黃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85371"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "牟平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85401"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "惤",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "曲成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85448"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "掖",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200036"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "當利",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85441"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "東牟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85410"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "昌陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85381"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "盧鄉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85386"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "長廣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85388"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "黔陬",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85481"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "葛盧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "不其",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85505"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "齊國",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "臨菑",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "臨菑",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "临淄"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "西安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85222"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "昌國",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45058"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "臨朐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45064"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "廣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "85216"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "般陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45117"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "南陽郡",
+   "inTiles": true,
+   "declaredCounties": 37,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "宛",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "宛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82612"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "冠軍",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82708"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "叶",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82811"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "新野",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82749"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "章陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 470,
+     "tileCommanderies": [
+      "章陵郡"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "西鄂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82633"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "雉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82635"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "魯陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82971"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "犨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82975"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "堵陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82783"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "博望",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82632"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "舞陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82657"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "比陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82650"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "復陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82680"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "平氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82683"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "棘陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82755"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "湖陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82644"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "隨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43618"
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "育陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82620"
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "涅陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "湼阳"
+     ]
+    },
+    {
+     "ordinal": 21,
+     "sourceName": "陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45751"
+    },
+    {
+     "ordinal": 22,
+     "sourceName": "酇",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "沛國"
+     ]
+    },
+    {
+     "ordinal": 23,
+     "sourceName": "鄧",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 435,
+     "tileCommanderies": [
+      "襄陽郡"
+     ]
+    },
+    {
+     "ordinal": 24,
+     "sourceName": "山都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45663"
+    },
+    {
+     "ordinal": 25,
+     "sourceName": "酈",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82774"
+    },
+    {
+     "ordinal": 26,
+     "sourceName": "穰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82696"
+    },
+    {
+     "ordinal": 27,
+     "sourceName": "朝陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82700"
+    },
+    {
+     "ordinal": 28,
+     "sourceName": "蔡陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45707"
+    },
+    {
+     "ordinal": 29,
+     "sourceName": "安眾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82687"
+    },
+    {
+     "ordinal": 30,
+     "sourceName": "築陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45727"
+    },
+    {
+     "ordinal": 31,
+     "sourceName": "武當",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45755"
+    },
+    {
+     "ordinal": 32,
+     "sourceName": "順陽",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "湼阳"
+     ]
+    },
+    {
+     "ordinal": 33,
+     "sourceName": "成都",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "蜀郡"
+     ]
+    },
+    {
+     "ordinal": 34,
+     "sourceName": "襄鄉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 35,
+     "sourceName": "南鄉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 469,
+     "tileCommanderies": [
+      "南鄉郡"
+     ]
+    },
+    {
+     "ordinal": 36,
+     "sourceName": "丹水",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 37,
+     "sourceName": "析",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82763"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "南郡",
+   "inTiles": true,
+   "declaredCounties": 17,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "江陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "江陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43676"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "巫",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44493"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "秭歸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45809"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "中盧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "編",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45764"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "當陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45776"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "華容",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43711"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "襄陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 472,
+     "tileCommanderies": [
+      "襄陽郡"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "邔",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45671"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "宜城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45676"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鄀",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45685"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "臨沮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45783"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "枝江",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43720"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "夷道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43730"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "夷陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 401,
+     "tileCommanderies": [
+      "宜都郡"
+     ]
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "州陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43497"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "很山",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "佷山"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "江夏郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "西陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "西陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43503"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "西陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82563"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "軑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82570"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "鄳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83164"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "竟陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43595"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "雲杜",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43483"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "沙羨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 473,
+     "tileCommanderies": [
+      "南郡"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "邾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43506"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "下雉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43446"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "蘄春",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 471,
+     "tileCommanderies": [
+      "蘄春郡"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鄂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43423"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "平春",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "83158"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "南新市",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43584"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "安陸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43602"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "零陵郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "泉陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "泉陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41958"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "零陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43769"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "營道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41996"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "營浦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41980"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "泠道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41955"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "洮陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43770"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "都梁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42017"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "夫夷",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42008"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "始安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43738"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "重安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41841"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "湘鄉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41740"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "昭陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42019"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "烝陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41882"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "桂陽郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "郴",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "郴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41682"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "便",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41689"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "耒陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41850"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "陰山",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41838"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "南平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41821"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "臨武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41829"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "桂陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42604"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "含洭",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42264"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "湞陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42256"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "曲江",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42238"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "漢寧",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41691"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "武陵郡",
+   "inTiles": true,
+   "declaredCounties": 12,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "臨沅",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "臨沅",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41906"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "漢壽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41901"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "孱陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43696"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "零陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41935"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "充",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42073"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "沅陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41795"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "辰陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41804"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "酉陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42049"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "遷陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42047"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "鐔成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41886"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "沅南",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41907"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "作唐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41950"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "長沙郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "臨湘",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "臨湘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41716"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "攸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41761"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "荼陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "茶陵"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "安城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40934"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "酃",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41877"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "湘南",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41779"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "連道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41776"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "昭陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42013"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "益陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41755"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "下雋",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43441"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "羅",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41775"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "醴陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41725"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "容陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41781"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "九江郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 7,
+   "firstListedCounty": {
+    "sourceName": "陰陵",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "陰陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "壽春",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43153"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "浚遒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "成德",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43121"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "西曲陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43130"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "合肥",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43057"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "歷陽",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "當塗",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "全椒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "鍾離",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "阜陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "下蔡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43187"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "平阿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43181"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "義成",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 109,
+     "tileCommanderies": [
+      "沛國"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "丹陽郡",
+   "inTiles": true,
+   "declaredCounties": 16,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "宛陵",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "宛陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41302"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "溧陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40581"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "丹陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41377"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "故鄣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40161"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "於潛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40100"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "涇",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41313"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "歙",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41319"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "黝",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41323"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "陵陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41347"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "蕪湖",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41366"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "秣陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "湖熟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40512"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "句容",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40533"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "江乘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40528"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "春穀",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "春榖"
+     ]
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "石城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41341"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "廬江郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "舒",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "舒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "雩婁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82606"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "尋陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41256"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "潛",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "臨湖",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "龍舒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "襄安",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "皖",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43000"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "居巢",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43032"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "六安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43138"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "蓼",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82581"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "安豐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82575"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "陽泉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43337"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "安風",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43379"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "會稽郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "山陰",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "山陰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40758"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "鄮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40740"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "烏傷",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40719"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "諸暨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40791"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "餘暨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40781"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "太末",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40638"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "上虞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40772"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "剡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40767"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "餘姚",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40785"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "句章",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40736"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鄞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40755"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "章安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40655"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "永寧",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40697"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "東部",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "吳郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "呉",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "呉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40404"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "海鹽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40070"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "烏程",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40126"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "餘杭",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40085"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "毘陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40451"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "丹徒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40565"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "曲阿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40573"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "由拳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40052"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "安",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "永安"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "富春",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40088"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "陽羨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40463"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "無錫",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40444"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "婁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40426"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "豫章郡",
+   "inTiles": true,
+   "declaredCounties": 21,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "南昌",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "南昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41092"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "建城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41217"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "新淦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40944"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "宜春",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40965"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "廬陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "贛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40830"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "雩都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40835"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "南野",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40878"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "南城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40980"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "鄱陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 568,
+     "tileCommanderies": [
+      "鄱陽郡"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "歷陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41244"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "餘汗",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "鄱陽郡"
+     ]
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "鄡陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41194"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "彭澤",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41154"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "柴桑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41145"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "艾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41130"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "海昬",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "海昏"
+     ]
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "平都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40906"
+    },
+    {
+     "ordinal": 19,
+     "sourceName": "石陽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40886"
+    },
+    {
+     "ordinal": 20,
+     "sourceName": "臨汝",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40996"
+    },
+    {
+     "ordinal": 21,
+     "sourceName": "建昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41127"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "漢中郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "南郑",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "南郑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70983"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "成固",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200050"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "西城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 75,
+     "tileCommanderies": [
+      "西城郡"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "襃中",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "褒中"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "沔阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "71101"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "安阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200433"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "锡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200080"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "上庸",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45934"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "房陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 597,
+     "tileCommanderies": [
+      "新城郡"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "巴郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "江州",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "江州",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44662"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "宕渠",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 570,
+     "tileCommanderies": [
+      "宕渠郡"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "朐忍",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44496"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "阆中",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 580,
+     "tileCommanderies": [
+      "巴西郡"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "鱼复",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 599,
+     "tileCommanderies": [
+      "固陵郡"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "临江",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44537"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "枳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44671"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "涪陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "垫江",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44679"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "安汉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44553"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "平都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44539"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "充国",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "宣汉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96259"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "汉昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44621"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "廣漢郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 3,
+   "firstListedCounty": {
+    "sourceName": "雒",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "雒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44428"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "新都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44416"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "绵竹",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96137"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "什邡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44422"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "涪",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96113"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "梓潼",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 587,
+     "tileCommanderies": [
+      "梓潼郡"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "白水",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "葭萌",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "郪",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 586,
+     "tileCommanderies": [
+      "犍為郡"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "广汉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "德阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 618,
+     "tileCommanderies": [
+      "巴郡"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "蜀郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "成都",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "成都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44394"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "郫",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44398"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "江原",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44409"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "繁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44448"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "广都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44401"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "临邛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44445"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "湔氐道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "汶江道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200253"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "八陵",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "蚕陵"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "广柔",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96055"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "绵虒道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200261"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "犍為郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "武阳",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "武阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96181"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "资中",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96423"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "牛鞞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44468"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "南安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40871"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "僰道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200326"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "江阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 590,
+     "tileCommanderies": [
+      "江陽郡"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "符节",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 652,
+     "tileCommanderies": [
+      "江陽郡"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "南广",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200169"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "汉安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96424"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "牂牁郡",
+   "inTiles": true,
+   "declaredCounties": 16,
+   "absent": 6,
+   "firstListedCounty": {
+    "sourceName": "故且兰",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "故且兰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "99034"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "平夷",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "鄨",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "99350"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "毋敛",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "99041"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "谈指",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "99336"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "夜郎",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "99004"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "同并",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "谈稾",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "谈稿"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "漏江",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "毋单",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 667,
+     "tileCommanderies": [
+      "益州郡"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "宛温",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 681,
+     "tileCommanderies": [
+      "益州郡"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "镡封",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 694,
+     "tileCommanderies": [
+      "益州郡"
+     ]
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "漏卧",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "80284"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "句町",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200170"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "进乘",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "西随",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "越巂郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 9,
+   "firstListedCounty": {
+    "sourceName": "邛都",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "邛都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200269"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "遂久",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45412"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "灵关道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "台登",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200279"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "青蛉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "80467"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "卑水",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "三缝",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "会无",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "定莋",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "定笮"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "阐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200289"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "苏示",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "大莋",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "莋秦",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "笮秦"
+     ]
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "姑复",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "益州郡",
+   "inTiles": true,
+   "declaredCounties": 17,
+   "absent": 6,
+   "firstListedCounty": {
+    "sourceName": "滇池",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "滇池",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45514"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "胜休",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "俞元",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "律高",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "贲古",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45603"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "毋棳",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "毋单"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "建伶",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45529"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "穀昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45525"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "牧靡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45522"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "味",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45526"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "昆泽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45527"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "同濑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "80573"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "同劳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "80574"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "双柏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45572"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "连然",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45519"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "梇栋",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "秦臧",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "永昌郡",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "不韦",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "不韦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45445"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "巂唐",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "嶲唐"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "比苏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45380"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "楪榆",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45629"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "邪龙",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "云南",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45372"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "哀牢",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "80004"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "博南",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45437"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "廣漢屬國",
+   "inTiles": true,
+   "declaredCounties": 3,
+   "absent": 3,
+   "firstListedCounty": {
+    "sourceName": "阴平道",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "阴平道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "甸氐道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "刚氐道",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "蜀郡屬國",
+   "inTiles": true,
+   "declaredCounties": 4,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "汉嘉",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "汉嘉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96382"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "严道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96358"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "徙",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "96383"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "旄牛",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "犍為屬國",
+   "inTiles": true,
+   "declaredCounties": 2,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "朱提",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "朱提",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45453"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "汉阳",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "隴西郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "狄道",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "狄道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70110"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "安故",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "氐道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "首阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70117"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "大夏",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "襄武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70005"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "临洮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70079"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "枹罕",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70126"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "白石",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70131"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "鄣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70032"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "河关",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "漢陽郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 11,
+   "firstListedCounty": {
+    "sourceName": "冀",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "冀",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70040"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "望恒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "阿阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "略阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "勇士",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "成纪",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "陇",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "豲道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "兰干",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "平襄",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "显亲",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "上邽",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "西",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70060"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "武都郡",
+   "inTiles": true,
+   "declaredCounties": 7,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "下辨",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "下辨",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "武都道",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "上禄",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "故道",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "71057"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "河池",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "沮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "200064"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "羌道",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "金城郡",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "允吾",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "允吾",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "浩亹",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "令居",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "枝阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "金城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70098"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "榆中",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70104"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "临羌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70617"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "破羌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70618"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "安夷",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70619"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "允街",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "安定郡",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "临泾",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "临泾",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "高平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "45198"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "朝那",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70178"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "乌枝",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "三水",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "阴盘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 769,
+     "tileCommanderies": [
+      "京兆尹"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "彭阳",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "泾阳"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "鹑觚",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "北地郡",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "富平",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "富平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70524"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "泥阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70613"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "弋居",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70614"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "廉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70610"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "参[�]",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "灵州",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "武威郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 13,
+   "firstListedCounty": {
+    "sourceName": "姑臧",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "姑臧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "张掖",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "武威",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "休屠",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "揟次",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "鸾鸟",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "朴[B459]",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "媪围",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "宣威",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "仓松",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鹯阴",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "租厉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "显美",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70609"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "左骑",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "張掖郡",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "觻得",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "觻得",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70600"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "昭武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70601"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "删丹",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70605"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "氐池",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70606"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "屋兰",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70603"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "日勒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70604"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "骊靬",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70607"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "番和",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70608"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "酒泉郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 7,
+   "firstListedCounty": {
+    "sourceName": "福禄",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "福禄",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "表氏",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "乐涫",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "玉门",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70599"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "会水",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "沙头",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "安弥",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "乾齐",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "延寿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70459"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "敦煌郡",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "敦煌",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "敦煌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70594"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "冥安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70597"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "效穀",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70595"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "拼泉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "广至",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "龙勒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70596"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "張掖屬國",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "候官",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "候官",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0076-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "左骑",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "千人",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "司马官",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "千人官",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "張掖居延屬國",
+   "inTiles": true,
+   "declaredCounties": 1,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "居延",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "居延",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70500"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "上黨郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "长子",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "长子",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95323"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "屯留",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95341"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "铜鞮",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95502"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "沾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95369"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "涅",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95521"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "襄垣",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95349"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "壶关",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95318"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "泫氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95709"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "高都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95699"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "潞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95335"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "猗氏",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "河東郡"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "阳阿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95729"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "穀远",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95509"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "太原郡",
+   "inTiles": true,
+   "declaredCounties": 16,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "晋阳",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "晋阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "界休",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95152"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "榆次",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95646"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "中都",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95168"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "于离",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "兹氏",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "狼孟",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95641"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "邬",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95145"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "盂",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95627"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "平陶",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "京陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95172"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "阳曲",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95629"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "大陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95604"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "祁",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95585"
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "虑虒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95134"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "阳邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95591"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "上郡",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 6,
+   "firstListedCounty": {
+    "sourceName": "肤施",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "肤施",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "白土",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "漆垣",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "奢延",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "雕阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "70418"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "桢林",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "定阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "40624"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "高奴",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "龟兹属国",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 704,
+     "tileCommanderies": [
+      "龜茲屬國"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "候官",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "張掖屬國"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "西河郡",
+   "inTiles": true,
+   "declaredCounties": 13,
+   "absent": 12,
+   "firstListedCounty": {
+    "sourceName": "离石",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "离石",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "平定",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "美稷",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "乐街",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "中阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "皋狼",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "平周",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "平陆",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "益兰",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "圜阴",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "蔺",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "圜阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "广衍",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "五原郡",
+   "inTiles": true,
+   "declaredCounties": 10,
+   "absent": 8,
+   "firstListedCounty": {
+    "sourceName": "九原",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "九原",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95698"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "五原",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "临沃",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "文国",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "河阴",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "82880"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "武都",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "宜梁",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "曼柏",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "成宜",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "西安阳",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "雲中郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 9,
+   "firstListedCounty": {
+    "sourceName": "云中",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "云中",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95125"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "咸阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "箕陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "沙陵",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "沙南",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "北舆",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "武泉",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "原阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "定襄",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95676"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "成乐",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "武进",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "定襄郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "善无",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "善无",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "桐过",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "武成",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "骆",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "中陵",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "鴈門郡",
+   "inTiles": true,
+   "declaredCounties": 14,
+   "absent": 9,
+   "firstListedCounty": {
+    "sourceName": "阴馆",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "阴馆",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "繁畤",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "楼烦",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "武州",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "汪陶",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "浧陶"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "剧阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95093"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "崞",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "平城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95016"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "埒",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "马邑",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "卤城",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "漢陽郡"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "广武",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95096"
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "原平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95126"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "彊阴",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "朔方郡",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "临戎",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "临戎",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "三封",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "朔方",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "沃野",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "广牧",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "大城",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "涿郡",
+   "inTiles": true,
+   "declaredCounties": 7,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "涿",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "涿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87307"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "逎",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87316"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "故安",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87318"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "范阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87295"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "良乡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87336"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "北新城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87538"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "方城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87308"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "廣陽郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "蓟",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "蓟",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "广阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "昌平",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "军都",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "安次",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87407"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "代郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "高柳",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "高柳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "桑乾",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "上谷郡"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "道人",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "当城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87425"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "马城",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "班氏",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "狋氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95070"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "北平邑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95010"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "东安阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "平舒",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "95031"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "代",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87421"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "上谷郡",
+   "inTiles": true,
+   "declaredCounties": 8,
+   "absent": 4,
+   "firstListedCounty": {
+    "sourceName": "沮阳",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "沮阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87111"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "潘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87118"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "甯",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "广甯",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "鮮卑"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "居庸",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "雊瞀",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "涿鹿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87128"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "下落",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "下洛"
+     ]
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "漁陽郡",
+   "inTiles": true,
+   "declaredCounties": 9,
+   "absent": 8,
+   "firstListedCounty": {
+    "sourceName": "渔阳",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "渔阳",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "狐奴",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "潞",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87436"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "雍奴",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "泉州",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "平谷",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "安乐",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "傂奚",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "犷平",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "右北平郡",
+   "inTiles": true,
+   "declaredCounties": 4,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "土垠",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "土垠",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87458"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "徐无",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87456"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "俊靡",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87453"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "无终",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "遼西郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "阳乐",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "阳乐",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "海阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87468"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "令支",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87473"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "肥如",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87476"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "临渝",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "87469"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "遼東郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "襄平",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "襄平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0094-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "新昌",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-002"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "无虑",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "望平",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "玄菟郡"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "候城",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "玄菟郡"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "安市",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-006"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "平郭",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-007"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "西安平",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-008"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "汶",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-009"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "番汗",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-010"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "沓氏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-011"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "玄菟郡",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "高句骊",
+    "status": "ABSENT"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "高句骊",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "高句驪"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "西盖马",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-xuantu-002"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "上殷台",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-xuantu-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "高显",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-xuantu-004"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "候城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-xuantu-005"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "辽阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-xuantu-006"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "樂浪郡",
+   "inTiles": true,
+   "declaredCounties": 18,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "朝鲜",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "朝鲜",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0096-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "𧦦邯",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "浿水",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "含资",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "占蝉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-005"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "遂城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-006"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "增地",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-007"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "带方",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "驷望",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-009"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "海冥",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "列口",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "长岑",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 13,
+     "sourceName": "屯有",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-013"
+    },
+    {
+     "ordinal": 14,
+     "sourceName": "昭明",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 15,
+     "sourceName": "镂方",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-015"
+    },
+    {
+     "ordinal": 16,
+     "sourceName": "提奚",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "帶方郡"
+     ]
+    },
+    {
+     "ordinal": 17,
+     "sourceName": "浑弥",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-lelang-017"
+    },
+    {
+     "ordinal": 18,
+     "sourceName": "乐都",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "遼東屬國",
+   "inTiles": true,
+   "declaredCounties": 6,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "昌辽",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "昌辽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "宾徒",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "賓徒"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "徒河",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-shuguo-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "无虑",
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "遼東郡"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "险渎",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "房",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-liaodong-shuguo-006"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "南海郡",
+   "inTiles": true,
+   "declaredCounties": 7,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "番禺",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "番禺",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42193"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "博罗",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42171"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "中宿",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "龙川",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42184"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "四会",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42269"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "揭阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42147"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "增城",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42212"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "蒼梧郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 2,
+   "firstListedCounty": {
+    "sourceName": "广信",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "广信",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44147"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "谢沐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41960"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "高要",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42266"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "封阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43930"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "临贺",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43923"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "端谿",
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "端溪"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "冯乘",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "41975"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "富川",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43916"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "荔浦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43932"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "猛陵",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44151"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "鄣平",
+     "status": "ABSENT"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "鬱林郡",
+   "inTiles": true,
+   "declaredCounties": 11,
+   "absent": 5,
+   "firstListedCounty": {
+    "sourceName": "布山",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "布山",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44234"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "安广",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43860"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "阿林",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44214"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "广郁",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "中溜",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44244"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "桂林",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "潭中",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "43783"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "临尘",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "定周",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "增食",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "领方",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "44055"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "合浦郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "合浦",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "合浦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42524"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "徐闻",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42424"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "高凉",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "CITY_SOURCE_JUN",
+     "cityId": 753,
+     "tileCommanderies": [
+      "高涼郡"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "临元",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "朱崖",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "42444"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "交趾郡",
+   "inTiles": true,
+   "declaredCounties": 12,
+   "absent": 1,
+   "firstListedCounty": {
+    "sourceName": "龙编",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "龙编",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0102-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "羸𨻻",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-002"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "安定",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "苟漏",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-004"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "麋泠",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-005"
+    },
+    {
+     "ordinal": 6,
+     "sourceName": "曲阳",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-006"
+    },
+    {
+     "ordinal": 7,
+     "sourceName": "北带",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-007"
+    },
+    {
+     "ordinal": 8,
+     "sourceName": "稽徐",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-008"
+    },
+    {
+     "ordinal": 9,
+     "sourceName": "西于",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-009"
+    },
+    {
+     "ordinal": 10,
+     "sourceName": "朱[B42B]",
+     "status": "ABSENT"
+    },
+    {
+     "ordinal": 11,
+     "sourceName": "封谿",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-011"
+    },
+    {
+     "ordinal": 12,
+     "sourceName": "望海",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiaozhi-012"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "九真郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "胥浦",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "胥浦",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0103-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "居风",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiuzhen-002"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "咸懽",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiuzhen-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "无功",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiuzhen-004"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "无编",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-jiuzhen-005"
+    }
+   ]
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "日南郡",
+   "inTiles": true,
+   "declaredCounties": 5,
+   "absent": 0,
+   "firstListedCounty": {
+    "sourceName": "西卷",
+    "status": "IN_OWN_COMMANDERY"
+   },
+   "counties": [
+    {
+     "ordinal": 1,
+     "sourceName": "西卷",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "JURISDICTION-PARENT-0104-SEAT"
+    },
+    {
+     "ordinal": 2,
+     "sourceName": "朱吾",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-rinan-002"
+    },
+    {
+     "ordinal": 3,
+     "sourceName": "卢容",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-rinan-003"
+    },
+    {
+     "ordinal": 4,
+     "sourceName": "象林",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-rinan-004"
+    },
+    {
+     "ordinal": 5,
+     "sourceName": "比景",
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "fc-rinan-005"
+    }
+   ]
+  }
+ ]
+}
