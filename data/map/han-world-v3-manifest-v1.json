@@ -10,8 +10,8 @@
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "2a9ee0a289ca467205e40562ba0b743fda19dfa3cdbe729274a9ffabb250318e",
-    "cityConstSha256": "12e4059eeaf2ec166fc7e93dcd7fc6c63fe47c62a1b238bf73fb9c219738cafa",
+    "worldJsonSha256": "1f0725aaf372b697ea6b9853ae48f7dcb34e1fdeae9b8b71072bc008b47f085b",
+    "cityConstSha256": "8d2b31842c14c0a3fd03aeb988d5d648da5e5352a82b69a2634f2095d9299a23",
     "gateIndexSha256": "307e50ad40121c06fb062a7a400018d1f69dd40f389629904582a7f5f84951a6"
   },
   "routeNodes": [

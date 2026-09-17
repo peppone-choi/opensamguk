@@ -1447,7 +1447,11 @@ def build_v3() -> tuple[str, str, str, str]:
             stand_in = stand_in_seat_by_place.get(place)
             out.update({
                 "id": cid,
-                "name": runtime_place_name(stand_in or physical, cid if cid > V3_STABLE_NAME_MAX_ID else None),
+                # 郡國 밖 취락(w5)은 관할 이름을 쓴다 — 지형 점 이름은 che 맵 관례(「남만」·「흉노」)라
+                # 사료 이름(哀牢 애뢰 · 南匈奴 남흉노)과 다르다. 「(후대 명칭)」 같은 설명 꼬리는 뗀다.
+                "name": (re.sub(r"\s*\(.*\)$", "", jurisdiction["displayName"])
+                         if node["nodeClass"] == "SETTLEMENT_NODE"
+                         else runtime_place_name(stand_in or physical, cid if cid > V3_STABLE_NAME_MAX_ID else None)),
                 "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
                 "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
                 "meta": {
@@ -1483,6 +1487,10 @@ def build_v3() -> tuple[str, str, str, str]:
         # 郡國 밖 취락(w5) — 東夷傳 권역(FRONTIER)은 v2 와 같이 戶數·縣 규칙, 그 밖 이민족 거점은 '이'(v2 level_of).
         if node["nodeClass"] == "SETTLEMENT_NODE" and parent_ch not in FRONTIER:
             level_name = "이"
+        elif node["nodeClass"] == "SETTLEMENT_NODE" and node["seatRole"] != "COMMANDERY_SEAT":
+            # 치소가 아닌 취락(挹婁·對馬·一大·末盧·伊都·奴)은 縣이 아니다 — 縣 등급(영현·장현)을 주면
+            # 화면이 「읍루현」을 만든다. 戶數 근거도 없어 가장 낮은 郡國 등급 '소'로 둔다.
+            level_name = "소"
         out["level"] = LEVEL_ID[level_name]
         out["max"] = dict(v3_maxes[level_name])
         out["initial"] = dict(zip(STAT_KEYS, BUILD_INIT[level_name]))

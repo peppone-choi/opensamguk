@@ -434,8 +434,9 @@ describe('지도 아이콘 배율과 앵커', () => {
         // (data/curated/han/county-misbinding-rebindings-v1.json · supersedesJurisdictionSeatRecovery).
         // 2026-09-15: 수·진·관 거점 73 곳이 제 관할(STRATEGIC_SITE)을 받아 1,143 이다.
         // 2026-09-16: 河南尹 平陰縣(82879) 관할이 더해져 1,144 다.
-        expect(jurisdictions).toHaveLength(1_144);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_144);
+        // 2026-09-17: 城 없던 관할 11 곳을 같은 실체 城 관할에 접어(fold_cityless_jurisdictions) 1,133 — 城 수와 같다.
+        expect(jurisdictions).toHaveLength(1_133);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_133);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',
@@ -452,8 +453,10 @@ describe('지도 아이콘 배율과 앵커', () => {
             null,
             provinceMap,
         );
-        expect(commanderies).toHaveLength(172);
-        expect(new Set(commanderies.map((city) => city.name)).size).toBe(172);
+        // 2026-09-17: 관할을 모두 이웃 城 관할에 접은 郡國志 뒤의 郡 4 곳(新平·毗陵典農校尉·汶山·章武)은 省이 없어
+        // 표식을 세우지 않는다 — 172 − 4 = 168.
+        expect(commanderies).toHaveLength(168);
+        expect(new Set(commanderies.map((city) => city.name)).size).toBe(168);
     });
 
     it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {

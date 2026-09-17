@@ -51433,23 +51433,23 @@
       "name": "읍루",
       "x": 668,
       "y": 36,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1099
@@ -51461,7 +51461,7 @@
         "seat": "북옥저",
         "nameCh": "挹婁",
         "isSeat": false,
-        "displayName": "북옥저 읍루현"
+        "displayName": "읍루"
       },
       "provinceId": 1443,
       "spatialProvinceId": "X039",
@@ -51928,23 +51928,23 @@
       "name": "대마국",
       "x": 623,
       "y": 222,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1114,
@@ -51971,23 +51971,23 @@
       "name": "일대국",
       "x": 673,
       "y": 238,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1119,
@@ -52015,23 +52015,23 @@
       "name": "말로국",
       "x": 616,
       "y": 251,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1120,
@@ -52058,23 +52058,23 @@
       "name": "이도국",
       "x": 651,
       "y": 227,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1120
@@ -52100,23 +52100,23 @@
       "name": "노국",
       "x": 647,
       "y": 234,
-      "level": 11,
+      "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
       },
       "connections": [
         1124
@@ -52266,7 +52266,7 @@
     },
     {
       "id": 1127,
-      "name": "강(西羌)",
+      "name": "서강",
       "x": 160,
       "y": 175,
       "level": 4,
@@ -52301,7 +52301,7 @@
         "seat": "강",
         "nameCh": "西羌",
         "isSeat": true,
-        "displayName": "강"
+        "displayName": "서강"
       },
       "provinceId": 1462,
       "spatialProvinceId": "X058",
@@ -52312,7 +52312,7 @@
     },
     {
       "id": 1128,
-      "name": "저(白馬氐)",
+      "name": "백마저",
       "x": 221,
       "y": 236,
       "level": 4,
@@ -52345,7 +52345,7 @@
         "seat": "저",
         "nameCh": "白馬氐",
         "isSeat": true,
-        "displayName": "저"
+        "displayName": "백마저"
       },
       "provinceId": 1463,
       "spatialProvinceId": "X059",
@@ -52356,7 +52356,7 @@
     },
     {
       "id": 1129,
-      "name": "남만",
+      "name": "애뢰(哀牢)",
       "x": 106,
       "y": 401,
       "level": 4,
@@ -52390,7 +52390,7 @@
         "seat": "남만",
         "nameCh": "哀牢",
         "isSeat": true,
-        "displayName": "남만"
+        "displayName": "애뢰"
       },
       "provinceId": 1464,
       "spatialProvinceId": "X060",
@@ -52536,7 +52536,7 @@
     },
     {
       "id": 1133,
-      "name": "흉노",
+      "name": "남흉노",
       "x": 299,
       "y": 114,
       "level": 4,
@@ -52573,7 +52573,7 @@
         "seat": "흉노",
         "nameCh": "南匈奴",
         "isSeat": true,
-        "displayName": "흉노"
+        "displayName": "남흉노"
       },
       "provinceId": 1468,
       "spatialProvinceId": "X064",
