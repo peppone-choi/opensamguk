@@ -1,5 +1,7 @@
 # Public Alpha Roadmap and Issue Portfolio Implementation Plan
 
+> **대체됨 (2026-09-17, ADR-LITE-057).** 이 포트폴리오 계획의 전제(모든 정규 명령 VERIFIED 뒤 알파, 동시 봉인 WEGO, 5계층 명령)는 [장수·휘하 캠페인 재설계](../specs/2026-09-17-general-and-retinue-campaign-redesign.md)로 대체됐다. 현행 포트폴리오는 [2026-09-17 포트폴리오 계획](./2026-09-17-general-retinue-portfolio-plan.md)이다. 이 문서는 기록으로 남긴다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Rebaseline OpenSamguk around complete pre-alpha commands, province strategy, WEGO combat, continuous onboarding, and an issue model that selects the next implementation slice by gate, dependencies, urgency, and importance.
