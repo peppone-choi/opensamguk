@@ -16,7 +16,7 @@
 **소국은 적게 찍는다.** 三國志 魏書 東夷傳이 이름을 남긴 것 중 위치 비정이 굳은 것만
 넣는다. 邑落 단위까지 찍으면 지도가 이름으로 덮이고, 대부분은 비정이 갈린다.
 
-usage:  python3 tools/map/build_external_places.py [--check]
+usage:  python3 tools/map/build_external_places.py [--check | --check-offline]
 """
 from __future__ import annotations
 
@@ -343,32 +343,129 @@ SELECT ?label ?item WHERE {{
     return out, unresolved
 
 
+def build_meta(resolved: int, unresolved: int) -> dict:
+    return {
+        "source": "비정 = 三國志 魏書 東夷傳·後漢書 郡國志 · 좌표 = Wikidata P625 (CC0)",
+        "generator": "tools/map/build_external_places.py",
+        "note": "CHGIS V6 커버리지(현대 중국 국경) 밖 지점. 좌표는 손으로 적지 않는다.",
+        "resolved": resolved, "unresolved": unresolved,
+    }
+
+
 def build():
     places, unresolved = resolve()
     return {
-        "_meta": {
-            "source": "비정 = 三國志 魏書 東夷傳·後漢書 郡國志 · 좌표 = Wikidata P625 (CC0)",
-            "generator": "tools/map/build_external_places.py",
-            "note": "CHGIS V6 커버리지(현대 중국 국경) 밖 지점. 좌표는 손으로 적지 않는다.",
-            "resolved": len(places), "unresolved": len(unresolved),
-        },
+        "_meta": build_meta(len(places), len(unresolved)),
         "places": places,
         "unresolved": unresolved,
     }
 
 
+def authored_rows():
+    """PLACES 표가 **네트워크 없이** 정하는 필드. 좌표·QID 만 Wikidata 가 정한다."""
+    rows = {}
+    for i, row in enumerate(PLACES):
+        p = dict(zip(FIELDS, row))
+        rows[f"X{i:03d}"] = {
+            "id": f"X{i:03d}", "nameFt": p["nameFt"], "nameCh": p["nameFt"], "namePy": "",
+            "typeCh": "", "kind": p["kind"], "level": p["level"], "jun": p["jun"],
+            "prov": p["prov"], "basis": p["basis"], "presLoc": p["modern"],
+            "begYr": -9999, "endYr": 9999,
+            "conf": "DISPUTED" if p["nameFt"] in DISPUTED else "IDENTIFIED",
+            "hub": p["nameFt"] in HUB,
+        }
+    return rows
+
+
+def check_offline(text: str) -> list[str]:
+    """커밋된 산출물을 Wikidata 없이 PLACES 표와 대조한다. 위반 목록을 돌려준다(빈 목록 = 통과).
+
+    잡는 것: 표를 고치고 재생성을 안 한 경우(#542 의 魯國 kind 드리프트), 손으로 고친 산출물,
+    행 누락·추가, _meta 수치 불일치, 직렬화 형식 이탈.
+    못 잡는 것: lon/lat/wikidata 값 자체의 낡음 — 그건 네트워크가 있는 --check 의 몫이다.
+    """
+    errs: list[str] = []
+    try:
+        doc = json.loads(text)
+    except ValueError as e:
+        return [f"JSON 파싱 실패: {e}"]
+    if json.dumps(doc, ensure_ascii=False, indent=1, sort_keys=True) + "\n" != text:
+        errs.append("직렬화가 생성기 형식(indent=1, sort_keys)과 다르다 — 손으로 고친 흔적")
+    want = authored_rows()
+    places = doc.get("places")
+    unresolved = doc.get("unresolved")
+    if not isinstance(places, list) or not isinstance(unresolved, list):
+        return errs + ["places/unresolved 가 배열이 아니다"]
+    seen = set()
+    for p in places:
+        pid = p.get("id") if isinstance(p, dict) else None
+        if pid not in want:
+            errs.append(f"PLACES 표에 없는 행: {pid!r}")
+            continue
+        if pid in seen:
+            errs.append(f"중복 id: {pid}")
+        seen.add(pid)
+        w = want[pid]
+        if set(p) != set(w) | {"lon", "lat", "wikidata"}:
+            errs.append(f"{pid}: 필드 집합 불일치 {sorted(set(p) ^ (set(w) | {'lon', 'lat', 'wikidata'}))}")
+        for k, v in w.items():
+            if p.get(k) != v or type(p.get(k)) is not type(v):
+                errs.append(f"{pid} {w['nameFt']}: {k} 산출물={p.get(k)!r} 표={v!r}")
+        lon, lat, qid = p.get("lon"), p.get("lat"), p.get("wikidata")
+        if not (isinstance(lon, float) and isinstance(lat, float)
+                and -180 <= lon <= 180 and -90 <= lat <= 90):
+            errs.append(f"{pid}: lon/lat 이 유효한 좌표가 아니다 ({lon!r}, {lat!r})")
+        if not (isinstance(qid, str) and qid[:1] == "Q" and qid[1:].isdigit()):
+            errs.append(f"{pid}: wikidata QID 형식이 아니다 ({qid!r})")
+    if [p.get("id") for p in places if isinstance(p, dict)] != sorted(seen):
+        errs.append("places 가 id 순서가 아니다")
+    # 표의 모든 행은 places 아니면 unresolved 에 있어야 한다 — 조용히 사라지면 안 된다.
+    for pid in sorted(set(want) - seen):
+        w = want[pid]
+        head = f'{w["nameFt"]} ({w["presLoc"]}):'
+        if not any(isinstance(u, str) and u.startswith(head) for u in unresolved):
+            errs.append(f"{pid} {w['nameFt']}: places 에도 unresolved 에도 없다")
+    if len(unresolved) != len(want) - len(seen):
+        errs.append(f"unresolved {len(unresolved)}건 ≠ 표 {len(want)} − places {len(seen)}")
+    meta = doc.get("_meta") or {}
+    expect_meta = dict(build_meta(len(places), len(unresolved)))
+    if meta != expect_meta:
+        errs.append(f"_meta 불일치: 산출물={meta!r} 기대={expect_meta!r}")
+    return errs
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--check", action="store_true")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--check", action="store_true",
+                   help="Wikidata 로 재생성해 바이트 대조. 0=같음 1=드리프트 2=조회 실패(판정 불가)")
+    g.add_argument("--check-offline", action="store_true",
+                   help="네트워크 없이 PLACES 표와 커밋된 산출물을 대조. 0=통과 1=위반")
     a = ap.parse_args()
-    doc = build()
+    if a.check_offline:
+        if not OUT.exists():
+            print(f"없음: {OUT}")
+            return 1
+        errs = check_offline(OUT.read_text(encoding="utf-8"))
+        for e in errs:
+            print(f"  위반  {e}")
+        print(f"오프라인 대조 실패: {len(errs)}건" if errs
+              else f"오프라인 대조 통과: 표 {len(PLACES)}행 ↔ {OUT.relative_to(ROOT)}")
+        return 1 if errs else 0
+    try:
+        doc = build()
+    except OSError as e:           # urllib 의 HTTPError/URLError/timeout 은 전부 OSError 다
+        if not a.check:
+            raise
+        print(f"조회 실패 — 드리프트 판정 불가: {e!r}")
+        return 2
     blob = json.dumps(doc, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
     if a.check:
-        same = OUT.exists() and OUT.read_text() == blob
+        same = OUT.exists() and OUT.read_text(encoding="utf-8") == blob
         print("드리프트 없음." if same else f"드리프트: {OUT}")
         return 0 if same else 1
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(blob)
+    OUT.write_text(blob, encoding="utf-8")
     m = doc["_meta"]
     print(f'{OUT.relative_to(ROOT)}: 해결 {m["resolved"]} · 미해결 {m["unresolved"]}')
     for u in doc["unresolved"]:
