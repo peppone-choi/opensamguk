@@ -22,7 +22,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data/map/han-tiles.json"
-WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 ROUGH = {"MOUNTAIN", "PLATEAU", "HILL", "DESERT"}
 WATER = {"SEA", "LAKE", "OUT_OF_SCOPE"}
 
@@ -120,7 +119,7 @@ def haversine(a, b) -> float:
     return 2 * 6371.0 * math.asin(math.sqrt(h))
 
 
-def table(tiles: dict, world: dict) -> list[dict]:
+def table(tiles: dict) -> list[dict]:
     g = Graph(tiles)
     out = []
     for a, b in ROUTES:
@@ -145,7 +144,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
-    rows = table(json.loads(TILES.read_text(encoding="utf-8")), json.loads(WORLD.read_text(encoding="utf-8")))
+    rows = table(json.loads(TILES.read_text(encoding="utf-8")))
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=1))
         return 0
