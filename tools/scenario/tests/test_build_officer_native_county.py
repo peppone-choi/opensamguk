@@ -39,6 +39,7 @@ TILES = {
         {"id": "P4", "nameCh": "南陽郡", "jurisdictionIds": []},
         {"id": "P5", "nameCh": "南郡", "jurisdictionIds": []},
         {"id": "P6", "nameCh": "右扶風", "jurisdictionIds": []},
+        {"id": "P7", "nameCh": "潁陰郡", "jurisdictionIds": []},  # 縣과 이름이 같은 郡(宕渠縣/宕渠郡 꼴)
     ],
 }
 
@@ -160,6 +161,13 @@ class LedgerRuleTest(unittest.TestCase):
         entry = ledger["officers"][0]
         self.assertEqual(entry["jurisdictionId"], "J1")
         self.assertEqual(entry["otherBookDisagreement"][0]["book"], "後漢書")
+
+    def test_county_only_statement_sharing_a_commandery_name_is_not_a_contradiction(self):
+        # 王平: 三國志 「巴西宕渠人也」 + 華陽國志 「宕渠人也」. 縣 이름이 後代 郡 이름과 같아도 어긋난 게 아니다.
+        ledger = _ledger(["王某"], [_hit("王某", "潁川潁陰"), _hit("王某", "潁陰", book="華陽國志")])
+        entry = ledger["officers"][0]
+        self.assertNotIn("otherBookDisagreement", entry)
+        self.assertEqual(entry["corroboration"][0]["book"], "華陽國志")
 
     def test_less_specific_statement_is_not_a_contradiction(self):
         ledger = _ledger(["潘某"], [_hit("潘某", "河東"), _hit("潘某", "河東解", volume="卷02")])

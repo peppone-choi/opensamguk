@@ -426,6 +426,10 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
             entry["courtesyName"] = hit["courtesyName"]
             entry["evidence"] = {"book": hit["book"], "volume": hit["volume"], "quote": hit["quote"]}
             def _same(other, other_text):
+                county_only = resolution["nativeCounty"] is not None and \
+                    gazetteer.county_key(other_text) == gazetteer.county_key(resolution["nativeCounty"])
+                if county_only:  # 縣 이름이 後代 郡 이름과 같아(宕渠·涪陵·梓潼) 郡으로 읽혔어도 같은 縣을 말한 것이다
+                    return True
                 if other["commanderyId"] is None:  # 華陽國志 는 郡 절 안에서 「涪人」처럼 縣만 말한다
                     return resolution["nativeCounty"] is not None and gazetteer.county_key(other_text) == gazetteer.county_key(resolution["nativeCounty"])
                 return other["commanderyId"] == resolution["commanderyId"] and (
