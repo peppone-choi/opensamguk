@@ -27,6 +27,9 @@ jobs:
       - name: Verify Han map data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+      - name: Test march tempo simulator (tools/sim)
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/sim/tests -p 'test_*.py'
       # Every disconnected commandery/county piece in han-tiles.json must have a
       # reviewed row (exclave / island / grid defect / misassignment) with the
       # evidence its verdict needs. The ledger never moves cells; it only records
