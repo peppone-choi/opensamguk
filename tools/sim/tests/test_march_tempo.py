@@ -39,6 +39,18 @@ class MarchTempoTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "matched 2"):
             M.county(self.tiles, "安阳县")  # 같은 nameCh 관할이 둘이다 — 첫 번째를 조용히 고르면 안 된다
 
+    def test_research_note_tables_match_tool_output(self):
+        # 타일이 바뀌면(#804 전례) 노트가 조용히 낡는다. 비교 표 24행과 승인 기준선 8행을 도구 출력과 맞춘다.
+        note = (M.ROOT / "docs/superpowers/research/2026-09-17-march-tempo-baseline.md").read_text(encoding="utf-8")
+        lines = [l for l in note.splitlines() if l.startswith("| ") and "→" in l]
+        full = [l for l in lines if l.count("|") == 10]
+        expected = [f"| {r['from']}→{r['to']} | {r['roughFactor']} | {r['straightKm']} | {r['km']} | {r['provinces']} | "
+                    + " | ".join(str(r["turns"][str(s)]) for s in M.SPEEDS_KM_PER_TURN) + " |" for r in self.rows]
+        self.assertEqual(full, expected)
+        approved = [l for l in lines if l.count("|") == 7]
+        want = [f"| {r['from']}→{r['to']} | {r['straightKm']} | {r['km']} | {r['provinces']} | {r['turns']['30']} | {r['turns']['45']} |"
+                for r in self.rows if r["roughFactor"] == 1.5]
+        self.assertEqual(approved, want)
 
 if __name__ == "__main__":
     unittest.main()

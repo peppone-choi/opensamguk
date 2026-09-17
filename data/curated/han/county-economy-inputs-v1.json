@@ -5,7 +5,7 @@
  "counts": {
   "jurisdictions": 1133,
   "withHouseholds": 1013,
-  "zeroArable": 195,
+  "zeroArable": 169,
   "commanderiesWithFewerCountiesThanSource": 56
  },
  "limitations": [
@@ -209,7 +209,7 @@
    "terrainScore": 7.2,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 774,
+   "households": 736,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -228,7 +228,7 @@
    "terrainScore": 7.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 774,
+   "households": 736,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -780,7 +780,7 @@
    "terrainScore": 9.0,
    "wetAdjacentCells": 8,
    "connections": 2,
-   "households": 645,
+   "households": 644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -799,7 +799,7 @@
    "terrainScore": 234.0,
    "wetAdjacentCells": 22,
    "connections": 4,
-   "households": 16777,
+   "households": 16734,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -856,7 +856,7 @@
    "terrainScore": 395.0,
    "wetAdjacentCells": 36,
    "connections": 3,
-   "households": 28320,
+   "households": 28248,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1605,7 +1605,7 @@
    "terrainScore": 24.6,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1764,
+   "households": 1759,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1625,7 +1625,7 @@
    "terrainScore": 436.1,
    "wetAdjacentCells": 31,
    "connections": 4,
-   "households": 31267,
+   "households": 31188,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1645,7 +1645,7 @@
    "terrainScore": 157.6,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 11299,
+   "households": 11271,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1684,7 +1684,7 @@
    "terrainScore": 182.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 13099,
+   "households": 13066,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1705,7 +1705,7 @@
    "terrainScore": 207.5,
    "wetAdjacentCells": 55,
    "connections": 5,
-   "households": 14877,
+   "households": 14839,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1725,7 +1725,7 @@
    "terrainScore": 101.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 7241,
+   "households": 7223,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1745,7 +1745,7 @@
    "terrainScore": 210.5,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 15092,
+   "households": 15054,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1784,7 +1784,7 @@
    "terrainScore": 298.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 21366,
+   "households": 21311,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1805,7 +1805,7 @@
    "terrainScore": 171.8,
    "wetAdjacentCells": 16,
    "connections": 5,
-   "households": 12317,
+   "households": 12286,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1882,7 +1882,7 @@
    "terrainScore": 21.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1506,
+   "households": 1502,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1922,7 +1922,7 @@
    "terrainScore": 193.0,
    "wetAdjacentCells": 14,
    "connections": 8,
-   "households": 13837,
+   "households": 13802,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1942,7 +1942,7 @@
    "terrainScore": 203.0,
    "wetAdjacentCells": 50,
    "connections": 6,
-   "households": 14554,
+   "households": 14517,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1961,7 +1961,7 @@
    "terrainScore": 323.0,
    "wetAdjacentCells": 27,
    "connections": 4,
-   "households": 23158,
+   "households": 23099,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1981,7 +1981,7 @@
    "terrainScore": 234.1,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 16784,
+   "households": 16742,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2001,7 +2001,7 @@
    "terrainScore": 95.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 27245,
+   "households": 27176,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2021,7 +2021,7 @@
    "terrainScore": 31.5,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2258,
+   "households": 2253,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2042,7 +2042,7 @@
    "terrainScore": 166.7,
    "wetAdjacentCells": 26,
    "connections": 8,
-   "households": 11952,
+   "households": 11921,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2061,7 +2061,7 @@
    "terrainScore": 139.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 6142,
+   "households": 5317,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2080,7 +2080,7 @@
    "terrainScore": 22.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1585,
+   "households": 1580,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2100,7 +2100,7 @@
    "terrainScore": 192.0,
    "wetAdjacentCells": 27,
    "connections": 7,
-   "households": 13766,
+   "households": 13731,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2120,7 +2120,7 @@
    "terrainScore": 192.0,
    "wetAdjacentCells": 52,
    "connections": 6,
-   "households": 13766,
+   "households": 13731,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2141,7 +2141,7 @@
    "terrainScore": 195.1,
    "wetAdjacentCells": 47,
    "connections": 6,
-   "households": 13988,
+   "households": 13953,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2161,7 +2161,7 @@
    "terrainScore": 69.5,
    "wetAdjacentCells": 31,
    "connections": 3,
-   "households": 4983,
+   "households": 4970,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2180,7 +2180,7 @@
    "terrainScore": 22.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1577,
+   "households": 1573,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2212,11 +2212,11 @@
    "isCommanderySeat": false,
    "landCells": 196,
    "terrainCells": {
-    "MOUNTAIN": 12,
-    "PLAIN": 184
+    "MOUNTAIN": 1,
+    "PLAIN": 195
    },
-   "arableCells": 184,
-   "terrainScore": 185.2,
+   "arableCells": 195,
+   "terrainScore": 195.1,
    "wetAdjacentCells": 7,
    "connections": 3,
    "households": null,
@@ -2251,14 +2251,14 @@
    "isCommanderySeat": false,
    "landCells": 216,
    "terrainCells": {
-    "MOUNTAIN": 30,
-    "PLAIN": 186
+    "MOUNTAIN": 14,
+    "PLAIN": 202
    },
-   "arableCells": 186,
-   "terrainScore": 189.0,
+   "arableCells": 202,
+   "terrainScore": 203.4,
    "wetAdjacentCells": 11,
    "connections": 6,
-   "households": 13551,
+   "households": 14546,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2311,11 +2311,11 @@
    "isCommanderySeat": false,
    "landCells": 204,
    "terrainCells": {
-    "MOUNTAIN": 160,
-    "PLAIN": 44
+    "MOUNTAIN": 118,
+    "PLAIN": 86
    },
-   "arableCells": 44,
-   "terrainScore": 60.0,
+   "arableCells": 86,
+   "terrainScore": 97.8,
    "wetAdjacentCells": 0,
    "connections": 7,
    "households": null,
@@ -2337,7 +2337,7 @@
    "terrainScore": 180.0,
    "wetAdjacentCells": 4,
    "connections": 5,
-   "households": 12905,
+   "households": 12873,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2356,7 +2356,7 @@
    "terrainScore": 197.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 14124,
+   "households": 14088,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2375,7 +2375,7 @@
    "terrainScore": 206.0,
    "wetAdjacentCells": 0,
    "connections": 10,
-   "households": 14769,
+   "households": 14732,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2396,7 +2396,7 @@
    "terrainScore": 223.5,
    "wetAdjacentCells": 38,
    "connections": 6,
-   "households": 16024,
+   "households": 15984,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2409,15 +2409,15 @@
    "isCommanderySeat": false,
    "landCells": 157,
    "terrainCells": {
-    "MOUNTAIN": 76,
-    "PLAIN": 74,
+    "MOUNTAIN": 63,
+    "PLAIN": 87,
     "RIVER": 7
    },
-   "arableCells": 74,
-   "terrainScore": 85.1,
+   "arableCells": 87,
+   "terrainScore": 96.8,
    "wetAdjacentCells": 43,
    "connections": 7,
-   "households": 9954,
+   "households": 10424,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3018,7 +3018,7 @@
    "terrainScore": 225.0,
    "wetAdjacentCells": 64,
    "connections": 5,
-   "households": 2387,
+   "households": 2384,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3038,7 +3038,7 @@
    "terrainScore": 236.5,
    "wetAdjacentCells": 21,
    "connections": 5,
-   "households": 2509,
+   "households": 2506,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3211,7 +3211,7 @@
    "terrainScore": 714.0,
    "wetAdjacentCells": 92,
    "connections": 8,
-   "households": 7576,
+   "households": 7565,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3231,7 +3231,7 @@
    "terrainScore": 220.5,
    "wetAdjacentCells": 57,
    "connections": 5,
-   "households": 2340,
+   "households": 2336,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3252,7 +3252,7 @@
    "terrainScore": 455.0,
    "wetAdjacentCells": 57,
    "connections": 9,
-   "households": 9656,
+   "households": 9642,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3271,7 +3271,7 @@
    "terrainScore": 230.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2440,
+   "households": 2437,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3291,7 +3291,7 @@
    "terrainScore": 277.1,
    "wetAdjacentCells": 0,
    "connections": 10,
-   "households": 2940,
+   "households": 2936,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3311,7 +3311,7 @@
    "terrainScore": 227.2,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 2411,
+   "households": 2407,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3524,7 +3524,7 @@
    "terrainScore": 241.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2557,
+   "households": 2554,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3543,7 +3543,7 @@
    "terrainScore": 479.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 5083,
+   "households": 5075,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3562,7 +3562,7 @@
    "terrainScore": 236.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2504,
+   "households": 2501,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4620,15 +4620,15 @@
    "isCommanderySeat": false,
    "landCells": 161,
    "terrainCells": {
-    "MOUNTAIN": 55,
-    "PLAIN": 102,
+    "MOUNTAIN": 46,
+    "PLAIN": 111,
     "RIVER": 4
    },
-   "arableCells": 102,
-   "terrainScore": 109.5,
+   "arableCells": 111,
+   "terrainScore": 117.6,
    "wetAdjacentCells": 23,
    "connections": 6,
-   "households": 12809,
+   "households": 12663,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4648,7 +4648,7 @@
    "terrainScore": 153.0,
    "wetAdjacentCells": 37,
    "connections": 7,
-   "households": 17897,
+   "households": 16475,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4719,14 +4719,14 @@
    "isCommanderySeat": false,
    "landCells": 150,
    "terrainCells": {
-    "MOUNTAIN": 71,
-    "PLAIN": 79
+    "MOUNTAIN": 70,
+    "PLAIN": 80
    },
-   "arableCells": 79,
-   "terrainScore": 86.1,
+   "arableCells": 80,
+   "terrainScore": 87.0,
    "wetAdjacentCells": 2,
    "connections": 7,
-   "households": 10071,
+   "households": 9368,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4746,7 +4746,7 @@
    "terrainScore": 130.9,
    "wetAdjacentCells": 12,
    "connections": 8,
-   "households": 15312,
+   "households": 14095,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5088,7 +5088,7 @@
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 15640,
+   "households": 14995,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5107,7 +5107,7 @@
    "terrainScore": 68.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 16617,
+   "households": 15933,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5126,7 +5126,7 @@
    "terrainScore": 59.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14418,
+   "households": 13824,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5145,7 +5145,7 @@
    "terrainScore": 67.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 16373,
+   "households": 15698,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5164,7 +5164,7 @@
    "terrainScore": 38.0,
    "wetAdjacentCells": 0,
    "connections": 3,
-   "households": 4445,
+   "households": 4092,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5183,7 +5183,7 @@
    "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 9938,
+   "households": 9528,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5202,7 +5202,7 @@
    "terrainScore": 72.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 17595,
+   "households": 16870,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5221,7 +5221,7 @@
    "terrainScore": 69.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 16861,
+   "households": 16167,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5240,7 +5240,7 @@
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 15640,
+   "households": 14995,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5253,14 +5253,14 @@
    "isCommanderySeat": false,
    "landCells": 152,
    "terrainCells": {
-    "MOUNTAIN": 32,
-    "PLAIN": 120
+    "MOUNTAIN": 13,
+    "PLAIN": 139
    },
-   "arableCells": 120,
-   "terrainScore": 123.2,
+   "arableCells": 139,
+   "terrainScore": 140.3,
    "wetAdjacentCells": 0,
    "connections": 9,
-   "households": 14411,
+   "households": 15108,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5281,7 +5281,7 @@
    "terrainScore": 85.6,
    "wetAdjacentCells": 30,
    "connections": 9,
-   "households": 11165,
+   "households": 10723,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5301,7 +5301,7 @@
    "terrainScore": 112.0,
    "wetAdjacentCells": 33,
    "connections": 9,
-   "households": 4949,
+   "households": 4284,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5341,7 +5341,7 @@
    "terrainScore": 121.0,
    "wetAdjacentCells": 22,
    "connections": 6,
-   "households": 5347,
+   "households": 4629,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5360,7 +5360,7 @@
    "terrainScore": 140.0,
    "wetAdjacentCells": 4,
    "connections": 6,
-   "households": 6186,
+   "households": 5355,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5380,7 +5380,7 @@
    "terrainScore": 132.0,
    "wetAdjacentCells": 37,
    "connections": 5,
-   "households": 5833,
+   "households": 5049,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5400,7 +5400,7 @@
    "terrainScore": 76.5,
    "wetAdjacentCells": 57,
    "connections": 3,
-   "households": 9978,
+   "households": 9583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5413,14 +5413,14 @@
    "isCommanderySeat": true,
    "landCells": 148,
    "terrainCells": {
-    "MOUNTAIN": 88,
-    "PLAIN": 60
+    "MOUNTAIN": 87,
+    "PLAIN": 61
    },
-   "arableCells": 60,
-   "terrainScore": 68.8,
+   "arableCells": 61,
+   "terrainScore": 69.7,
    "wetAdjacentCells": 6,
    "connections": 4,
-   "households": 6080,
+   "households": 5332,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5433,14 +5433,14 @@
    "isCommanderySeat": false,
    "landCells": 142,
    "terrainCells": {
-    "MOUNTAIN": 109,
-    "PLAIN": 33
+    "MOUNTAIN": 102,
+    "PLAIN": 40
    },
-   "arableCells": 33,
-   "terrainScore": 43.9,
+   "arableCells": 40,
+   "terrainScore": 50.2,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1940,
+   "households": 1920,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5474,14 +5474,14 @@
    "isCommanderySeat": false,
    "landCells": 138,
    "terrainCells": {
-    "MOUNTAIN": 66,
-    "PLAIN": 72
+    "MOUNTAIN": 51,
+    "PLAIN": 87
    },
-   "arableCells": 72,
-   "terrainScore": 78.6,
+   "arableCells": 87,
+   "terrainScore": 92.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3473,
+   "households": 3523,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5501,7 +5501,7 @@
    "terrainScore": 124.5,
    "wetAdjacentCells": 32,
    "connections": 8,
-   "households": 5501,
+   "households": 4763,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5514,14 +5514,14 @@
    "isCommanderySeat": false,
    "landCells": 131,
    "terrainCells": {
-    "MOUNTAIN": 85,
-    "PLAIN": 46
+    "MOUNTAIN": 25,
+    "PLAIN": 106
    },
-   "arableCells": 46,
-   "terrainScore": 54.5,
+   "arableCells": 106,
+   "terrainScore": 108.5,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 2408,
+   "households": 4150,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5541,7 +5541,7 @@
    "terrainScore": 125.0,
    "wetAdjacentCells": 19,
    "connections": 7,
-   "households": 5523,
+   "households": 4782,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5554,13 +5554,14 @@
    "isCommanderySeat": false,
    "landCells": 69,
    "terrainCells": {
-    "MOUNTAIN": 69
+    "MOUNTAIN": 23,
+    "PLAIN": 46
    },
-   "arableCells": 0,
-   "terrainScore": 6.9,
+   "arableCells": 46,
+   "terrainScore": 48.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 3241,
+   "households": 20125,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5580,7 +5581,7 @@
    "terrainScore": 46.5,
    "wetAdjacentCells": 17,
    "connections": 6,
-   "households": 24259,
+   "households": 23301,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5593,15 +5594,15 @@
    "isCommanderySeat": false,
    "landCells": 453,
    "terrainCells": {
-    "MOUNTAIN": 43,
-    "PLAIN": 386,
+    "MOUNTAIN": 36,
+    "PLAIN": 393,
     "RIVER": 24
    },
-   "arableCells": 386,
-   "terrainScore": 402.3,
+   "arableCells": 393,
+   "terrainScore": 408.6,
    "wetAdjacentCells": 61,
    "connections": 10,
-   "households": 4269,
+   "households": 4329,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5621,7 +5622,7 @@
    "terrainScore": 92.0,
    "wetAdjacentCells": 30,
    "connections": 6,
-   "households": 11999,
+   "households": 11525,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5641,7 +5642,7 @@
    "terrainScore": 157.5,
    "wetAdjacentCells": 13,
    "connections": 7,
-   "households": 20542,
+   "households": 19730,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5654,14 +5655,15 @@
    "isCommanderySeat": false,
    "landCells": 110,
    "terrainCells": {
-    "MOUNTAIN": 96,
+    "MOUNTAIN": 59,
+    "PLAIN": 37,
     "RIVER": 14
    },
-   "arableCells": 0,
-   "terrainScore": 16.6,
+   "arableCells": 37,
+   "terrainScore": 49.9,
    "wetAdjacentCells": 33,
    "connections": 8,
-   "households": 2165,
+   "households": 6251,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5680,7 +5682,7 @@
    "terrainScore": 11.2,
    "wetAdjacentCells": 1,
    "connections": 5,
-   "households": 1461,
+   "households": 1403,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5998,7 +6000,7 @@
    "terrainScore": 25.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 15366,
+   "households": 13205,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -6152,7 +6154,7 @@
    "terrainScore": 25.0,
    "wetAdjacentCells": 1,
    "connections": 8,
-   "households": 15366,
+   "households": 13205,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -6191,7 +6193,7 @@
    "terrainScore": 26.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 15981,
+   "households": 13734,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -6211,7 +6213,7 @@
    "terrainScore": 23.0,
    "wetAdjacentCells": 16,
    "connections": 5,
-   "households": 14137,
+   "households": 12149,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -6472,7 +6474,7 @@
    "terrainScore": 15.0,
    "wetAdjacentCells": 21,
    "connections": 5,
-   "households": 1956,
+   "households": 1879,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -6533,7 +6535,7 @@
    "terrainScore": 11.4,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1487,
+   "households": 1428,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -7907,7 +7909,7 @@
    "terrainScore": 40.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 14052,
+   "households": 13555,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8397,7 +8399,7 @@
    "terrainScore": 66.0,
    "wetAdjacentCells": 5,
    "connections": 5,
-   "households": 30997,
+   "households": 27501,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8418,7 +8420,7 @@
    "terrainScore": 90.5,
    "wetAdjacentCells": 20,
    "connections": 10,
-   "households": 11804,
+   "households": 11337,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8439,7 +8441,7 @@
    "terrainScore": 92.7,
    "wetAdjacentCells": 27,
    "connections": 6,
-   "households": 12091,
+   "households": 11613,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8459,7 +8461,7 @@
    "terrainScore": 87.5,
    "wetAdjacentCells": 19,
    "connections": 9,
-   "households": 11412,
+   "households": 10961,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8498,7 +8500,7 @@
    "terrainScore": 54.0,
    "wetAdjacentCells": 22,
    "connections": 6,
-   "households": 25361,
+   "households": 22500,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8511,11 +8513,10 @@
    "isCommanderySeat": true,
    "landCells": 20,
    "terrainCells": {
-    "MOUNTAIN": 4,
-    "PLAIN": 16
+    "PLAIN": 20
    },
-   "arableCells": 16,
-   "terrainScore": 16.4,
+   "arableCells": 20,
+   "terrainScore": 20.0,
    "wetAdjacentCells": 0,
    "connections": 3,
    "households": null,
@@ -8538,7 +8539,7 @@
    "terrainScore": 68.5,
    "wetAdjacentCells": 6,
    "connections": 4,
-   "households": 32171,
+   "households": 28542,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8559,7 +8560,7 @@
    "terrainScore": 78.1,
    "wetAdjacentCells": 46,
    "connections": 8,
-   "households": 36680,
+   "households": 32542,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8580,7 +8581,7 @@
    "terrainScore": 8.4,
    "wetAdjacentCells": 9,
    "connections": 4,
-   "households": 3945,
+   "households": 3500,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8600,7 +8601,7 @@
    "terrainScore": 46.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 6000,
+   "households": 5763,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8613,14 +8614,14 @@
    "isCommanderySeat": false,
    "landCells": 102,
    "terrainCells": {
-    "MOUNTAIN": 38,
-    "PLAIN": 64
+    "MOUNTAIN": 22,
+    "PLAIN": 80
    },
-   "arableCells": 64,
-   "terrainScore": 67.8,
+   "arableCells": 80,
+   "terrainScore": 82.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 8843,
+   "households": 10297,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8633,15 +8634,14 @@
    "isCommanderySeat": false,
    "landCells": 105,
    "terrainCells": {
-    "MOUNTAIN": 3,
-    "PLAIN": 87,
+    "PLAIN": 90,
     "RIVER": 15
    },
-   "arableCells": 87,
-   "terrainScore": 94.8,
+   "arableCells": 90,
+   "terrainScore": 97.5,
    "wetAdjacentCells": 40,
    "connections": 4,
-   "households": 12364,
+   "households": 12214,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8681,7 +8681,7 @@
    "terrainScore": 15.0,
    "wetAdjacentCells": 20,
    "connections": 5,
-   "households": 1956,
+   "households": 1879,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8701,7 +8701,7 @@
    "terrainScore": 13.9,
    "wetAdjacentCells": 28,
    "connections": 5,
-   "households": 1813,
+   "households": 1741,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8800,7 +8800,7 @@
    "terrainScore": 76.7,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 10004,
+   "households": 9608,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9123,7 +9123,7 @@
    "terrainScore": 4.8,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 248,
+   "households": 219,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9136,15 +9136,15 @@
    "isCommanderySeat": false,
    "landCells": 108,
    "terrainCells": {
-    "MOUNTAIN": 23,
-    "PLAIN": 59,
+    "MOUNTAIN": 19,
+    "PLAIN": 63,
     "PLATEAU": 26
    },
-   "arableCells": 59,
-   "terrainScore": 69.1,
+   "arableCells": 63,
+   "terrainScore": 72.7,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 3429,
+   "households": 3189,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9282,7 +9282,7 @@
    "terrainScore": 72.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 3573,
+   "households": 3158,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9323,7 +9323,7 @@
    "terrainScore": 7.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 774,
+   "households": 736,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9861,7 +9861,7 @@
    "terrainScore": 33.5,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 43215,
+   "households": 41086,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9900,7 +9900,7 @@
    "terrainScore": 21.2,
    "wetAdjacentCells": 0,
    "connections": 10,
-   "households": 2279,
+   "households": 2167,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9939,7 +9939,7 @@
    "terrainScore": 7.6,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 817,
+   "households": 777,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9971,13 +9971,14 @@
    "isCommanderySeat": false,
    "landCells": 71,
    "terrainCells": {
-    "MOUNTAIN": 71
+    "MOUNTAIN": 58,
+    "PLAIN": 13
    },
-   "arableCells": 0,
-   "terrainScore": 7.1,
+   "arableCells": 13,
+   "terrainScore": 18.8,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 763,
+   "households": 1921,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9990,13 +9991,14 @@
    "isCommanderySeat": false,
    "landCells": 114,
    "terrainCells": {
-    "MOUNTAIN": 114
+    "MOUNTAIN": 110,
+    "PLAIN": 4
    },
-   "arableCells": 0,
-   "terrainScore": 11.4,
+   "arableCells": 4,
+   "terrainScore": 15.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1131,
+   "households": 1316,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10015,7 +10017,7 @@
    "terrainScore": 13.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 650,
+   "households": 574,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10034,7 +10036,7 @@
    "terrainScore": 8.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 871,
+   "households": 828,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10047,15 +10049,15 @@
    "isCommanderySeat": false,
    "landCells": 58,
    "terrainCells": {
-    "HILL": 6,
-    "MOUNTAIN": 37,
-    "PLAIN": 15
+    "HILL": 5,
+    "MOUNTAIN": 22,
+    "PLAIN": 31
    },
-   "arableCells": 15,
-   "terrainScore": 21.7,
+   "arableCells": 31,
+   "terrainScore": 35.7,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2333,
+   "households": 3648,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10088,15 +10090,15 @@
    "isCommanderySeat": false,
    "landCells": 115,
    "terrainCells": {
-    "MOUNTAIN": 75,
-    "PLAIN": 34,
+    "MOUNTAIN": 36,
+    "PLAIN": 73,
     "PLATEAU": 6
    },
-   "arableCells": 34,
-   "terrainScore": 43.3,
+   "arableCells": 73,
+   "terrainScore": 78.4,
    "wetAdjacentCells": 0,
    "connections": 9,
-   "households": 2149,
+   "households": 3439,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10115,7 +10117,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 538,
+   "households": 511,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10176,7 +10178,7 @@
    "terrainScore": 102.3,
    "wetAdjacentCells": 0,
    "connections": 10,
-   "households": 5076,
+   "households": 4487,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10195,7 +10197,7 @@
    "terrainScore": 8.1,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 402,
+   "households": 355,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10214,7 +10216,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 397,
+   "households": 351,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10455,7 +10457,7 @@
    "terrainScore": 54.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 26392,
+   "households": 25305,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10493,7 +10495,7 @@
    "terrainScore": 55.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 13440,
+   "households": 12887,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10512,7 +10514,7 @@
    "terrainScore": 70.0,
    "wetAdjacentCells": 0,
    "connections": 12,
-   "households": 17106,
+   "households": 16401,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10550,7 +10552,7 @@
    "terrainScore": 59.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14418,
+   "households": 13824,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10569,7 +10571,7 @@
    "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14906,
+   "households": 14293,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10626,7 +10628,7 @@
    "terrainScore": 27.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 21772,
+   "households": 19678,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10873,7 +10875,7 @@
    "terrainScore": 4.2,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 5269,
+   "households": 5083,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10892,7 +10894,7 @@
    "terrainScore": 3.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 2124,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10911,7 +10913,7 @@
    "terrainScore": 4.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2124,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10930,7 +10932,7 @@
    "terrainScore": 4.2,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1757,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10943,14 +10945,14 @@
    "isCommanderySeat": false,
    "landCells": 40,
    "terrainCells": {
-    "MOUNTAIN": 34,
-    "PLAIN": 6
+    "MOUNTAIN": 21,
+    "PLAIN": 19
    },
-   "arableCells": 6,
-   "terrainScore": 9.4,
+   "arableCells": 19,
+   "terrainScore": 21.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 3302,
+   "households": 7150,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10969,7 +10971,7 @@
    "terrainScore": 14.0,
    "wetAdjacentCells": 0,
    "connections": 3,
-   "households": 4918,
+   "households": 4744,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10989,7 +10991,7 @@
    "terrainScore": 25.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 10874,
+   "households": 10291,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11009,7 +11011,7 @@
    "terrainScore": 20.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 8537,
+   "households": 8080,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11028,7 +11030,7 @@
    "terrainScore": 39.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 16565,
+   "households": 15677,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11041,14 +11043,14 @@
    "isCommanderySeat": false,
    "landCells": 43,
    "terrainCells": {
-    "MOUNTAIN": 17,
-    "PLAIN": 26
+    "MOUNTAIN": 14,
+    "PLAIN": 29
    },
-   "arableCells": 26,
-   "terrainScore": 27.7,
+   "arableCells": 29,
+   "terrainScore": 30.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 11766,
+   "households": 12220,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11067,7 +11069,7 @@
    "terrainScore": 4.2,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2124,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11138,14 +11140,13 @@
    "isCommanderySeat": false,
    "landCells": 62,
    "terrainCells": {
-    "MOUNTAIN": 2,
-    "PLAIN": 60
+    "PLAIN": 62
    },
-   "arableCells": 60,
-   "terrainScore": 60.2,
+   "arableCells": 62,
+   "terrainScore": 62.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 21148,
+   "households": 21010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11222,7 +11223,7 @@
    "terrainScore": 31.0,
    "wetAdjacentCells": 12,
    "connections": 8,
-   "households": 13167,
+   "households": 12462,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11242,7 +11243,7 @@
    "terrainScore": 11.9,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 38383,
+   "households": 34692,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11262,7 +11263,7 @@
    "terrainScore": 18.5,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 11371,
+   "households": 9772,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11281,7 +11282,7 @@
    "terrainScore": 22.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 13522,
+   "households": 11621,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11300,7 +11301,7 @@
    "terrainScore": 26.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 15981,
+   "households": 13734,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11320,7 +11321,7 @@
    "terrainScore": 21.8,
    "wetAdjacentCells": 1,
    "connections": 8,
-   "households": 9259,
+   "households": 8763,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11333,15 +11334,14 @@
    "isCommanderySeat": false,
    "landCells": 37,
    "terrainCells": {
-    "HILL": 1,
-    "MOUNTAIN": 7,
-    "PLAIN": 29
+    "MOUNTAIN": 4,
+    "PLAIN": 33
    },
-   "arableCells": 29,
-   "terrainScore": 30.2,
+   "arableCells": 33,
+   "terrainScore": 33.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 12827,
+   "households": 13426,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11354,13 +11354,14 @@
    "isCommanderySeat": false,
    "landCells": 37,
    "terrainCells": {
-    "MOUNTAIN": 37
+    "MOUNTAIN": 28,
+    "PLAIN": 9
    },
-   "arableCells": 0,
-   "terrainScore": 3.7,
+   "arableCells": 9,
+   "terrainScore": 11.8,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 2124,
+   "households": 4743,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11380,7 +11381,7 @@
    "terrainScore": 4.0,
    "wetAdjacentCells": 2,
    "connections": 5,
-   "households": 2124,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11400,7 +11401,7 @@
    "terrainScore": 6.3,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2676,
+   "households": 2533,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11419,7 +11420,7 @@
    "terrainScore": 4.2,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 2124,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11438,7 +11439,7 @@
    "terrainScore": 39.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 16565,
+   "households": 15677,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11458,7 +11459,7 @@
    "terrainScore": 17.3,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 29393,
+   "households": 27818,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11471,14 +11472,15 @@
    "isCommanderySeat": false,
    "landCells": 31,
    "terrainCells": {
-    "MOUNTAIN": 26,
+    "MOUNTAIN": 19,
+    "PLAIN": 7,
     "RIVER": 5
    },
-   "arableCells": 0,
-   "terrainScore": 5.1,
+   "arableCells": 7,
+   "terrainScore": 11.4,
    "wetAdjacentCells": 14,
    "connections": 7,
-   "households": 2166,
+   "households": 4583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11491,16 +11493,14 @@
    "isCommanderySeat": false,
    "landCells": 31,
    "terrainCells": {
-    "HILL": 1,
-    "MOUNTAIN": 2,
-    "PLAIN": 26,
+    "PLAIN": 29,
     "RIVER": 2
    },
-   "arableCells": 26,
-   "terrainScore": 27.7,
+   "arableCells": 29,
+   "terrainScore": 30.0,
    "wetAdjacentCells": 9,
    "connections": 6,
-   "households": 11766,
+   "households": 12060,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11519,7 +11519,7 @@
    "terrainScore": 16.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 9834,
+   "households": 8451,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11539,7 +11539,7 @@
    "terrainScore": 22.0,
    "wetAdjacentCells": 10,
    "connections": 6,
-   "households": 13522,
+   "households": 11621,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11559,7 +11559,7 @@
    "terrainScore": 19.5,
    "wetAdjacentCells": 11,
    "connections": 4,
-   "households": 11986,
+   "households": 10300,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11578,7 +11578,7 @@
    "terrainScore": 15.0,
    "wetAdjacentCells": 5,
    "connections": 6,
-   "households": 9220,
+   "households": 7923,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11591,10 +11591,11 @@
    "isCommanderySeat": true,
    "landCells": 52,
    "terrainCells": {
-    "MOUNTAIN": 52
+    "MOUNTAIN": 24,
+    "PLAIN": 28
    },
-   "arableCells": 0,
-   "terrainScore": 5.2,
+   "arableCells": 28,
+   "terrainScore": 30.4,
    "wetAdjacentCells": 0,
    "connections": 5,
    "households": null,
@@ -11616,7 +11617,7 @@
    "terrainScore": 14.4,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 636,
+   "households": 551,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11629,14 +11630,14 @@
    "isCommanderySeat": false,
    "landCells": 137,
    "terrainCells": {
-    "MOUNTAIN": 136,
-    "PLAIN": 1
+    "MOUNTAIN": 104,
+    "PLAIN": 33
    },
-   "arableCells": 1,
-   "terrainScore": 14.6,
+   "arableCells": 33,
+   "terrainScore": 43.4,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 645,
+   "households": 1660,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11649,13 +11650,14 @@
    "isCommanderySeat": false,
    "landCells": 161,
    "terrainCells": {
-    "MOUNTAIN": 161
+    "MOUNTAIN": 155,
+    "PLAIN": 6
    },
-   "arableCells": 0,
-   "terrainScore": 16.1,
+   "arableCells": 6,
+   "terrainScore": 21.5,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1883,
+   "households": 2315,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11668,14 +11670,14 @@
    "isCommanderySeat": false,
    "landCells": 62,
    "terrainCells": {
-    "MOUNTAIN": 57,
-    "PLAIN": 5
+    "MOUNTAIN": 37,
+    "PLAIN": 25
    },
-   "arableCells": 5,
-   "terrainScore": 10.7,
+   "arableCells": 25,
+   "terrainScore": 28.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2615,
+   "households": 6724,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11688,15 +11690,14 @@
    "isCommanderySeat": false,
    "landCells": 140,
    "terrainCells": {
-    "HILL": 2,
-    "MOUNTAIN": 40,
-    "PLAIN": 98
+    "MOUNTAIN": 6,
+    "PLAIN": 134
    },
-   "arableCells": 98,
-   "terrainScore": 103.0,
+   "arableCells": 134,
+   "terrainScore": 134.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 12048,
+   "households": 14494,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11709,14 +11710,13 @@
    "isCommanderySeat": false,
    "landCells": 58,
    "terrainCells": {
-    "MOUNTAIN": 8,
-    "PLAIN": 50
+    "PLAIN": 58
    },
-   "arableCells": 50,
-   "terrainScore": 50.8,
+   "arableCells": 58,
+   "terrainScore": 58.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 12414,
+   "households": 13590,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11729,14 +11729,13 @@
    "isCommanderySeat": false,
    "landCells": 68,
    "terrainCells": {
-    "MOUNTAIN": 15,
-    "PLAIN": 53
+    "PLAIN": 68
    },
-   "arableCells": 53,
-   "terrainScore": 54.5,
+   "arableCells": 68,
+   "terrainScore": 68.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 13318,
+   "households": 15933,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11755,7 +11754,7 @@
    "terrainScore": 15.6,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1825,
+   "households": 1680,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11775,7 +11774,7 @@
    "terrainScore": 35.1,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 65940,
+   "households": 58501,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11788,14 +11787,14 @@
    "isCommanderySeat": false,
    "landCells": 68,
    "terrainCells": {
-    "MOUNTAIN": 33,
-    "PLAIN": 35
+    "MOUNTAIN": 32,
+    "PLAIN": 36
    },
-   "arableCells": 35,
-   "terrainScore": 38.3,
+   "arableCells": 36,
+   "terrainScore": 39.2,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 17988,
+   "households": 16334,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11808,14 +11807,15 @@
    "isCommanderySeat": false,
    "landCells": 61,
    "terrainCells": {
-    "MOUNTAIN": 19,
+    "BASIN": 1,
+    "MOUNTAIN": 18,
     "PLAIN": 42
    },
-   "arableCells": 42,
-   "terrainScore": 43.9,
+   "arableCells": 43,
+   "terrainScore": 44.8,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 20618,
+   "households": 18667,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11835,7 +11835,7 @@
    "terrainScore": 63.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 29729,
+   "households": 26376,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11855,7 +11855,7 @@
    "terrainScore": 17.3,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 8125,
+   "households": 7209,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11868,14 +11868,14 @@
    "isCommanderySeat": false,
    "landCells": 73,
    "terrainCells": {
-    "MOUNTAIN": 27,
-    "PLAIN": 46
+    "MOUNTAIN": 9,
+    "PLAIN": 64
    },
-   "arableCells": 46,
-   "terrainScore": 48.7,
+   "arableCells": 64,
+   "terrainScore": 64.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 22872,
+   "households": 27042,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11888,14 +11888,14 @@
    "isCommanderySeat": false,
    "landCells": 69,
    "terrainCells": {
-    "MOUNTAIN": 67,
-    "PLAIN": 2
+    "MOUNTAIN": 59,
+    "PLAIN": 10
    },
-   "arableCells": 2,
-   "terrainScore": 8.7,
+   "arableCells": 10,
+   "terrainScore": 15.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 4086,
+   "households": 6625,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11915,7 +11915,7 @@
    "terrainScore": 55.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 25925,
+   "households": 23000,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11928,13 +11928,14 @@
    "isCommanderySeat": false,
    "landCells": 68,
    "terrainCells": {
-    "MOUNTAIN": 68
+    "MOUNTAIN": 40,
+    "PLAIN": 28
    },
-   "arableCells": 0,
-   "terrainScore": 6.8,
+   "arableCells": 28,
+   "terrainScore": 32.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 3194,
+   "households": 13334,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11954,7 +11955,7 @@
    "terrainScore": 44.5,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 20900,
+   "households": 18542,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11973,7 +11974,7 @@
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 30058,
+   "households": 26667,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11986,14 +11987,15 @@
    "isCommanderySeat": false,
    "landCells": 68,
    "terrainCells": {
-    "MOUNTAIN": 67,
+    "BASIN": 1,
+    "MOUNTAIN": 66,
     "PLAIN": 1
    },
-   "arableCells": 1,
-   "terrainScore": 7.7,
+   "arableCells": 2,
+   "terrainScore": 8.6,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 3616,
+   "households": 3583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12013,7 +12015,7 @@
    "terrainScore": 63.2,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 29682,
+   "households": 26334,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12026,14 +12028,14 @@
    "isCommanderySeat": false,
    "landCells": 77,
    "terrainCells": {
-    "MOUNTAIN": 69,
-    "PLAIN": 8
+    "MOUNTAIN": 26,
+    "PLAIN": 51
    },
-   "arableCells": 8,
-   "terrainScore": 14.9,
+   "arableCells": 51,
+   "terrainScore": 53.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 6998,
+   "households": 22334,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12046,14 +12048,15 @@
    "isCommanderySeat": false,
    "landCells": 63,
    "terrainCells": {
-    "MOUNTAIN": 58,
+    "BASIN": 8,
+    "MOUNTAIN": 50,
     "PLAIN": 5
    },
-   "arableCells": 5,
-   "terrainScore": 10.8,
+   "arableCells": 13,
+   "terrainScore": 18.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 5072,
+   "households": 7500,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12072,7 +12075,7 @@
    "terrainScore": 70.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 32876,
+   "households": 29167,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12085,14 +12088,14 @@
    "isCommanderySeat": false,
    "landCells": 65,
    "terrainCells": {
-    "MOUNTAIN": 3,
-    "PLAIN": 62
+    "MOUNTAIN": 1,
+    "PLAIN": 64
    },
-   "arableCells": 62,
-   "terrainScore": 62.3,
+   "arableCells": 64,
+   "terrainScore": 64.1,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 29260,
+   "households": 26709,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12111,7 +12114,7 @@
    "terrainScore": 8.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 4039,
+   "households": 3583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12130,7 +12133,7 @@
    "terrainScore": 7.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3382,
+   "households": 3000,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12150,7 +12153,7 @@
    "terrainScore": 48.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 22590,
+   "households": 20042,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12163,13 +12166,14 @@
    "isCommanderySeat": false,
    "landCells": 31,
    "terrainCells": {
-    "MOUNTAIN": 31
+    "MOUNTAIN": 17,
+    "PLAIN": 14
    },
-   "arableCells": 0,
-   "terrainScore": 3.1,
+   "arableCells": 14,
+   "terrainScore": 15.7,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 4032,
+   "households": 11443,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12182,14 +12186,13 @@
    "isCommanderySeat": false,
    "landCells": 26,
    "terrainCells": {
-    "MOUNTAIN": 10,
-    "PLAIN": 16
+    "PLAIN": 26
    },
-   "arableCells": 16,
-   "terrainScore": 17.0,
+   "arableCells": 26,
+   "terrainScore": 26.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 13708,
+   "households": 18949,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12202,14 +12205,14 @@
    "isCommanderySeat": false,
    "landCells": 29,
    "terrainCells": {
-    "MOUNTAIN": 27,
-    "PLAIN": 2
+    "MOUNTAIN": 17,
+    "PLAIN": 12
    },
-   "arableCells": 2,
-   "terrainScore": 4.7,
+   "arableCells": 12,
+   "terrainScore": 13.7,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 4032,
+   "households": 9985,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12222,13 +12225,14 @@
    "isCommanderySeat": false,
    "landCells": 66,
    "terrainCells": {
-    "MOUNTAIN": 66
+    "MOUNTAIN": 63,
+    "PLAIN": 3
    },
-   "arableCells": 0,
-   "terrainScore": 6.6,
+   "arableCells": 3,
+   "terrainScore": 9.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 3100,
+   "households": 3875,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12241,13 +12245,14 @@
    "isCommanderySeat": true,
    "landCells": 22,
    "terrainCells": {
-    "MOUNTAIN": 22
+    "BASIN": 8,
+    "MOUNTAIN": 14
    },
-   "arableCells": 0,
-   "terrainScore": 2.2,
+   "arableCells": 8,
+   "terrainScore": 9.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 36878,
+   "households": 59583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12260,13 +12265,14 @@
    "isCommanderySeat": false,
    "landCells": 21,
    "terrainCells": {
-    "MOUNTAIN": 21
+    "BASIN": 2,
+    "MOUNTAIN": 19
    },
-   "arableCells": 0,
-   "terrainScore": 2.1,
+   "arableCells": 2,
+   "terrainScore": 3.9,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 3073,
+   "households": 2641,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12307,7 +12313,7 @@
    "terrainScore": 3.9,
    "wetAdjacentCells": 7,
    "connections": 8,
-   "households": 3073,
+   "households": 2641,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12320,15 +12326,16 @@
    "isCommanderySeat": false,
    "landCells": 32,
    "terrainCells": {
-    "MOUNTAIN": 28,
+    "BASIN": 3,
+    "MOUNTAIN": 25,
     "PLAIN": 3,
     "RIVER": 1
    },
-   "arableCells": 3,
-   "terrainScore": 6.3,
+   "arableCells": 6,
+   "terrainScore": 9.0,
    "wetAdjacentCells": 4,
    "connections": 7,
-   "households": 3872,
+   "households": 4754,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12347,7 +12354,7 @@
    "terrainScore": 13.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 7990,
+   "households": 6867,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12380,14 +12387,15 @@
    "isCommanderySeat": false,
    "landCells": 15,
    "terrainCells": {
-    "MOUNTAIN": 14,
+    "MOUNTAIN": 13,
+    "PLAIN": 1,
     "RIVER": 1
    },
-   "arableCells": 0,
-   "terrainScore": 1.9,
+   "arableCells": 1,
+   "terrainScore": 2.8,
    "wetAdjacentCells": 7,
    "connections": 6,
-   "households": 3073,
+   "households": 2641,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12427,7 +12435,7 @@
    "terrainScore": 2.9,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 4032,
+   "households": 3644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12446,7 +12454,7 @@
    "terrainScore": 3.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 4032,
+   "households": 3644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12503,7 +12511,7 @@
    "terrainScore": 7.3,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 3429,
+   "households": 3042,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12522,7 +12530,7 @@
    "terrainScore": 5.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2677,
+   "households": 2375,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12541,7 +12549,7 @@
    "terrainScore": 3.2,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 4032,
+   "households": 3644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12560,7 +12568,7 @@
    "terrainScore": 3.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 4032,
+   "households": 3644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12579,7 +12587,7 @@
    "terrainScore": 31.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 24997,
+   "households": 22593,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12598,7 +12606,7 @@
    "terrainScore": 29.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 23385,
+   "households": 21136,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12611,14 +12619,14 @@
    "isCommanderySeat": false,
    "landCells": 29,
    "terrainCells": {
-    "MOUNTAIN": 19,
-    "PLAIN": 10
+    "MOUNTAIN": 12,
+    "PLAIN": 17
    },
-   "arableCells": 10,
-   "terrainScore": 11.9,
+   "arableCells": 17,
+   "terrainScore": 18.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 9596,
+   "households": 13265,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12637,7 +12645,7 @@
    "terrainScore": 27.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 21772,
+   "households": 19678,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12656,7 +12664,7 @@
    "terrainScore": 29.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 23384,
+   "households": 21136,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12676,7 +12684,7 @@
    "terrainScore": 19.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 15482,
+   "households": 13993,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12695,7 +12703,7 @@
    "terrainScore": 63.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 15395,
+   "households": 14761,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12714,7 +12722,7 @@
    "terrainScore": 30.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 24191,
+   "households": 21865,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12733,7 +12741,7 @@
    "terrainScore": 27.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 21772,
+   "households": 19678,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12793,7 +12801,7 @@
    "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14906,
+   "households": 14293,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12806,14 +12814,14 @@
    "isCommanderySeat": false,
    "landCells": 136,
    "terrainCells": {
-    "MOUNTAIN": 104,
-    "PLAIN": 32
+    "MOUNTAIN": 62,
+    "PLAIN": 74
    },
-   "arableCells": 32,
-   "terrainScore": 42.4,
+   "arableCells": 74,
+   "terrainScore": 80.2,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1874,
+   "households": 3068,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12826,14 +12834,14 @@
    "isCommanderySeat": false,
    "landCells": 129,
    "terrainCells": {
-    "MOUNTAIN": 105,
-    "PLAIN": 24
+    "MOUNTAIN": 35,
+    "PLAIN": 94
    },
-   "arableCells": 24,
-   "terrainScore": 34.5,
+   "arableCells": 94,
+   "terrainScore": 97.5,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1525,
+   "households": 3730,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12846,10 +12854,11 @@
    "isCommanderySeat": true,
    "landCells": 16,
    "terrainCells": {
-    "MOUNTAIN": 16
+    "MOUNTAIN": 9,
+    "PLAIN": 7
    },
-   "arableCells": 0,
-   "terrainScore": 1.6,
+   "arableCells": 7,
+   "terrainScore": 7.9,
    "wetAdjacentCells": 0,
    "connections": 3,
    "households": null,
@@ -12865,14 +12874,14 @@
    "isCommanderySeat": false,
    "landCells": 58,
    "terrainCells": {
-    "MOUNTAIN": 23,
-    "PLAIN": 35
+    "MOUNTAIN": 19,
+    "PLAIN": 39
    },
-   "arableCells": 35,
-   "terrainScore": 37.3,
+   "arableCells": 39,
+   "terrainScore": 40.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 9115,
+   "households": 9583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12891,7 +12900,7 @@
    "terrainScore": 59.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 14418,
+   "households": 13824,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12904,14 +12913,13 @@
    "isCommanderySeat": false,
    "landCells": 61,
    "terrainCells": {
-    "MOUNTAIN": 3,
-    "PLAIN": 58
+    "PLAIN": 61
    },
-   "arableCells": 58,
-   "terrainScore": 58.3,
+   "arableCells": 61,
+   "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14247,
+   "households": 14293,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12924,14 +12932,14 @@
    "isCommanderySeat": false,
    "landCells": 60,
    "terrainCells": {
-    "MOUNTAIN": 33,
-    "PLAIN": 27
+    "MOUNTAIN": 21,
+    "PLAIN": 39
    },
-   "arableCells": 27,
-   "terrainScore": 30.3,
+   "arableCells": 39,
+   "terrainScore": 41.1,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 7404,
+   "households": 9630,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12944,14 +12952,14 @@
    "isCommanderySeat": false,
    "landCells": 60,
    "terrainCells": {
-    "MOUNTAIN": 54,
-    "PLAIN": 6
+    "MOUNTAIN": 37,
+    "PLAIN": 23
    },
-   "arableCells": 6,
-   "terrainScore": 11.4,
+   "arableCells": 23,
+   "terrainScore": 26.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2786,
+   "households": 6256,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12970,7 +12978,7 @@
    "terrainScore": 62.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 60604,
+   "households": 58107,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12989,7 +12997,7 @@
    "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 14906,
+   "households": 14293,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13009,7 +13017,7 @@
    "terrainScore": 53.1,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 12976,
+   "households": 12441,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13240,7 +13248,7 @@
    "terrainScore": 45.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 15808,
+   "households": 15249,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13451,7 +13459,7 @@
    "terrainScore": 33.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 11593,
+   "households": 11183,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14934,14 +14942,14 @@
    "isCommanderySeat": true,
    "landCells": 47,
    "terrainCells": {
-    "MOUNTAIN": 45,
-    "PLAIN": 2
+    "MOUNTAIN": 38,
+    "PLAIN": 9
    },
-   "arableCells": 2,
-   "terrainScore": 6.5,
+   "arableCells": 9,
+   "terrainScore": 12.8,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 4349,
+   "households": 6911,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14954,14 +14962,14 @@
    "isCommanderySeat": false,
    "landCells": 44,
    "terrainCells": {
-    "MOUNTAIN": 30,
-    "PLAIN": 14
+    "MOUNTAIN": 23,
+    "PLAIN": 21
    },
-   "arableCells": 14,
-   "terrainScore": 17.0,
+   "arableCells": 21,
+   "terrainScore": 23.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 5687,
+   "households": 6290,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14974,14 +14982,14 @@
    "isCommanderySeat": false,
    "landCells": 40,
    "terrainCells": {
-    "MOUNTAIN": 9,
-    "PLAIN": 31
+    "MOUNTAIN": 7,
+    "PLAIN": 33
    },
-   "arableCells": 31,
-   "terrainScore": 31.9,
+   "arableCells": 33,
+   "terrainScore": 33.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 10672,
+   "households": 9097,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15014,14 +15022,14 @@
    "isCommanderySeat": false,
    "landCells": 39,
    "terrainCells": {
-    "MOUNTAIN": 9,
-    "PLAIN": 30
+    "MOUNTAIN": 6,
+    "PLAIN": 33
    },
-   "arableCells": 30,
-   "terrainScore": 30.9,
+   "arableCells": 33,
+   "terrainScore": 33.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 10338,
+   "households": 9071,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15308,7 +15316,7 @@
    "terrainScore": 4.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1757,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15327,7 +15335,7 @@
    "terrainScore": 4.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1756,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15346,7 +15354,7 @@
    "terrainScore": 41.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 14403,
+   "households": 13894,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15365,7 +15373,7 @@
    "terrainScore": 42.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 14754,
+   "households": 14232,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15403,7 +15411,7 @@
    "terrainScore": 37.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 12998,
+   "households": 12538,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15669,7 +15677,7 @@
    "terrainScore": 4.5,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1673,
+   "households": 1350,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16034,7 +16042,7 @@
    "terrainScore": 4.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1756,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16702,7 +16710,7 @@
    "terrainScore": 4.5,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1756,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17282,7 +17290,7 @@
    "terrainScore": 10.4,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2754,
+   "households": 1589,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17295,13 +17303,14 @@
    "isCommanderySeat": false,
    "landCells": 71,
    "terrainCells": {
-    "MOUNTAIN": 71
+    "BASIN": 3,
+    "MOUNTAIN": 68
    },
-   "arableCells": 0,
-   "terrainScore": 7.1,
+   "arableCells": 3,
+   "terrainScore": 9.8,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1880,
+   "households": 1498,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17314,13 +17323,14 @@
    "isCommanderySeat": true,
    "landCells": 75,
    "terrainCells": {
-    "MOUNTAIN": 75
+    "BASIN": 14,
+    "MOUNTAIN": 61
    },
-   "arableCells": 0,
-   "terrainScore": 7.5,
+   "arableCells": 14,
+   "terrainScore": 20.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1986,
+   "households": 3072,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17333,13 +17343,14 @@
    "isCommanderySeat": false,
    "landCells": 63,
    "terrainCells": {
-    "MOUNTAIN": 63
+    "BASIN": 17,
+    "MOUNTAIN": 46
    },
-   "arableCells": 0,
-   "terrainScore": 6.3,
+   "arableCells": 17,
+   "terrainScore": 21.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1668,
+   "households": 3301,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17352,13 +17363,14 @@
    "isCommanderySeat": false,
    "landCells": 65,
    "terrainCells": {
-    "MOUNTAIN": 65
+    "BASIN": 37,
+    "MOUNTAIN": 28
    },
-   "arableCells": 0,
-   "terrainScore": 6.5,
+   "arableCells": 37,
+   "terrainScore": 39.8,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1721,
+   "households": 6083,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17378,7 +17390,7 @@
    "terrainScore": 50.3,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 9295,
+   "households": 8991,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17398,7 +17410,7 @@
    "terrainScore": 3.2,
    "wetAdjacentCells": 8,
    "connections": 2,
-   "households": 924,
+   "households": 894,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17411,15 +17423,16 @@
    "isCommanderySeat": false,
    "landCells": 85,
    "terrainCells": {
-    "MOUNTAIN": 48,
+    "BASIN": 8,
+    "MOUNTAIN": 40,
     "PLAIN": 9,
     "PLATEAU": 28
    },
-   "arableCells": 9,
-   "terrainScore": 22.2,
+   "arableCells": 17,
+   "terrainScore": 29.4,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 4102,
+   "households": 5255,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17439,7 +17452,7 @@
    "terrainScore": 13.2,
    "wetAdjacentCells": 24,
    "connections": 7,
-   "households": 2439,
+   "households": 2360,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17462,7 +17475,7 @@
    "terrainScore": 45.4,
    "wetAdjacentCells": 17,
    "connections": 6,
-   "households": 8390,
+   "households": 8115,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17484,7 +17497,7 @@
    "terrainScore": 38.0,
    "wetAdjacentCells": 11,
    "connections": 7,
-   "households": 7022,
+   "households": 6793,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17503,7 +17516,7 @@
    "terrainScore": 8.6,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 4768,
+   "households": 4612,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17522,7 +17535,7 @@
    "terrainScore": 4.9,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1756,
+   "households": 1694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17535,14 +17548,15 @@
    "isCommanderySeat": false,
    "landCells": 64,
    "terrainCells": {
-    "MOUNTAIN": 54,
+    "BASIN": 25,
+    "MOUNTAIN": 29,
     "PLAIN": 10
    },
-   "arableCells": 10,
-   "terrainScore": 15.4,
+   "arableCells": 35,
+   "terrainScore": 37.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3385,
+   "households": 6670,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17555,13 +17569,14 @@
    "isCommanderySeat": true,
    "landCells": 72,
    "terrainCells": {
-    "MOUNTAIN": 72
+    "BASIN": 4,
+    "MOUNTAIN": 68
    },
-   "arableCells": 0,
-   "terrainScore": 7.2,
+   "arableCells": 4,
+   "terrainScore": 10.8,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 3165,
+   "households": 3801,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17580,7 +17595,7 @@
    "terrainScore": 6.8,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1495,
+   "households": 1197,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17600,7 +17615,7 @@
    "terrainScore": 9.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1978,
+   "households": 1584,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17620,7 +17635,7 @@
    "terrainScore": 16.1,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 3539,
+   "households": 2834,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17639,7 +17654,7 @@
    "terrainScore": 6.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1473,
+   "households": 1179,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17698,7 +17713,7 @@
    "terrainScore": 51.3,
    "wetAdjacentCells": 18,
    "connections": 5,
-   "households": 9480,
+   "households": 9170,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17711,14 +17726,15 @@
    "isCommanderySeat": false,
    "landCells": 86,
    "terrainCells": {
-    "MOUNTAIN": 78,
+    "BASIN": 6,
+    "MOUNTAIN": 72,
     "PLAIN": 8
    },
-   "arableCells": 8,
-   "terrainScore": 15.8,
+   "arableCells": 14,
+   "terrainScore": 21.2,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2920,
+   "households": 3790,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17731,13 +17747,14 @@
    "isCommanderySeat": false,
    "landCells": 88,
    "terrainCells": {
-    "MOUNTAIN": 88
+    "BASIN": 4,
+    "MOUNTAIN": 84
    },
-   "arableCells": 0,
-   "terrainScore": 8.8,
+   "arableCells": 4,
+   "terrainScore": 12.4,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1626,
+   "households": 2217,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17757,7 +17774,7 @@
    "terrainScore": 37.6,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 6948,
+   "households": 6721,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17770,13 +17787,14 @@
    "isCommanderySeat": false,
    "landCells": 89,
    "terrainCells": {
-    "MOUNTAIN": 89
+    "BASIN": 1,
+    "MOUNTAIN": 88
    },
-   "arableCells": 0,
-   "terrainScore": 8.9,
+   "arableCells": 1,
+   "terrainScore": 9.8,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1645,
+   "households": 1752,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17796,7 +17814,7 @@
    "terrainScore": 51.1,
    "wetAdjacentCells": 36,
    "connections": 10,
-   "households": 9443,
+   "households": 9134,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17816,7 +17834,7 @@
    "terrainScore": 24.3,
    "wetAdjacentCells": 9,
    "connections": 6,
-   "households": 4490,
+   "households": 4344,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17837,7 +17855,7 @@
    "terrainScore": 27.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 5008,
+   "households": 4844,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17859,7 +17877,7 @@
    "terrainScore": 30.4,
    "wetAdjacentCells": 31,
    "connections": 5,
-   "households": 5618,
+   "households": 5434,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17878,7 +17896,7 @@
    "terrainScore": 6.7,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1473,
+   "households": 1179,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17897,7 +17915,7 @@
    "terrainScore": 8.3,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1824,
+   "households": 1461,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17916,7 +17934,7 @@
    "terrainScore": 6.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1516,
+   "households": 1214,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17929,14 +17947,15 @@
    "isCommanderySeat": false,
    "landCells": 69,
    "terrainCells": {
-    "MOUNTAIN": 68,
+    "BASIN": 4,
+    "MOUNTAIN": 64,
     "PLAIN": 1
    },
-   "arableCells": 1,
-   "terrainScore": 7.8,
+   "arableCells": 5,
+   "terrainScore": 11.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2065,
+   "households": 1742,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17949,14 +17968,15 @@
    "isCommanderySeat": false,
    "landCells": 74,
    "terrainCells": {
-    "MOUNTAIN": 57,
+    "BASIN": 7,
+    "MOUNTAIN": 50,
     "PLAIN": 17
    },
-   "arableCells": 17,
-   "terrainScore": 22.7,
+   "arableCells": 24,
+   "terrainScore": 29.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 6011,
+   "households": 4432,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17969,13 +17989,14 @@
    "isCommanderySeat": false,
    "landCells": 81,
    "terrainCells": {
-    "MOUNTAIN": 81
+    "BASIN": 3,
+    "MOUNTAIN": 78
    },
-   "arableCells": 0,
-   "terrainScore": 8.1,
+   "arableCells": 3,
+   "terrainScore": 10.8,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2145,
+   "households": 1651,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17995,7 +18016,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 2118,
+   "households": 1223,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18014,7 +18035,7 @@
    "terrainScore": 7.2,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 1907,
+   "households": 1100,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18034,7 +18055,7 @@
    "terrainScore": 14.3,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3787,
+   "households": 2185,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18047,14 +18068,15 @@
    "isCommanderySeat": false,
    "landCells": 72,
    "terrainCells": {
-    "MOUNTAIN": 68,
+    "BASIN": 10,
+    "MOUNTAIN": 58,
     "PLAIN": 4
    },
-   "arableCells": 4,
-   "terrainScore": 10.8,
+   "arableCells": 14,
+   "terrainScore": 19.8,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 2860,
+   "households": 3026,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18075,7 +18097,7 @@
    "terrainScore": 32.5,
    "wetAdjacentCells": 14,
    "connections": 3,
-   "households": 6006,
+   "households": 5810,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18136,7 +18158,7 @@
    "terrainScore": 8.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1846,
+   "households": 1478,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18156,7 +18178,7 @@
    "terrainScore": 13.9,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3055,
+   "households": 2446,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18175,7 +18197,7 @@
    "terrainScore": 9.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1682,
+   "households": 1627,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18194,7 +18216,7 @@
    "terrainScore": 7.9,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 1460,
+   "households": 1412,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18213,7 +18235,7 @@
    "terrainScore": 5.2,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1143,
+   "households": 915,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18884,7 +18906,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 1456,
+   "households": 1286,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18897,13 +18919,14 @@
    "isCommanderySeat": true,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 8
+    "MOUNTAIN": 5,
+    "PLAIN": 3
    },
-   "arableCells": 0,
-   "terrainScore": 0.8,
+   "arableCells": 3,
+   "terrainScore": 3.5,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 417,
+   "households": 353,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19751,12 +19774,11 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 3,
-    "PLAIN": 2,
+    "PLAIN": 5,
     "RIVER": 3
    },
-   "arableCells": 2,
-   "terrainScore": 3.8,
+   "arableCells": 5,
+   "terrainScore": 6.5,
    "wetAdjacentCells": 5,
    "connections": 2,
    "households": null,
@@ -19772,12 +19794,12 @@
    "isCommanderySeat": false,
    "landCells": 141,
    "terrainCells": {
-    "MOUNTAIN": 46,
-    "PLAIN": 81,
+    "MOUNTAIN": 6,
+    "PLAIN": 121,
     "RIVER": 14
    },
-   "arableCells": 81,
-   "terrainScore": 92.6,
+   "arableCells": 121,
+   "terrainScore": 128.6,
    "wetAdjacentCells": 45,
    "connections": 5,
    "households": null,
@@ -19793,12 +19815,12 @@
    "isCommanderySeat": false,
    "landCells": 757,
    "terrainCells": {
-    "MOUNTAIN": 442,
-    "PLAIN": 295,
+    "MOUNTAIN": 422,
+    "PLAIN": 315,
     "RIVER": 20
    },
-   "arableCells": 295,
-   "terrainScore": 349.2,
+   "arableCells": 315,
+   "terrainScore": 367.2,
    "wetAdjacentCells": 51,
    "connections": 11,
    "households": null,
@@ -19814,12 +19836,11 @@
    "isCommanderySeat": false,
    "landCells": 9,
    "terrainCells": {
-    "MOUNTAIN": 4,
-    "PLAIN": 2,
+    "PLAIN": 6,
     "RIVER": 3
    },
-   "arableCells": 2,
-   "terrainScore": 3.9,
+   "arableCells": 6,
+   "terrainScore": 7.5,
    "wetAdjacentCells": 7,
    "connections": 4,
    "households": null,
@@ -19854,12 +19875,11 @@
    "isCommanderySeat": false,
    "landCells": 28,
    "terrainCells": {
-    "MOUNTAIN": 19,
-    "PLAIN": 7,
+    "PLAIN": 26,
     "RIVER": 2
    },
-   "arableCells": 7,
-   "terrainScore": 9.9,
+   "arableCells": 26,
+   "terrainScore": 27.0,
    "wetAdjacentCells": 7,
    "connections": 9,
    "households": null,
@@ -19875,11 +19895,10 @@
    "isCommanderySeat": false,
    "landCells": 276,
    "terrainCells": {
-    "MOUNTAIN": 6,
-    "PLAIN": 270
+    "PLAIN": 276
    },
-   "arableCells": 270,
-   "terrainScore": 270.6,
+   "arableCells": 276,
+   "terrainScore": 276.0,
    "wetAdjacentCells": 32,
    "connections": 6,
    "households": null,
@@ -19895,12 +19914,11 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 2,
-    "PLAIN": 5,
+    "PLAIN": 7,
     "RIVER": 1
    },
-   "arableCells": 5,
-   "terrainScore": 5.7,
+   "arableCells": 7,
+   "terrainScore": 7.5,
    "wetAdjacentCells": 4,
    "connections": 6,
    "households": null,
@@ -19916,11 +19934,11 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 5,
+    "PLAIN": 5,
     "RIVER": 3
    },
-   "arableCells": 0,
-   "terrainScore": 2.0,
+   "arableCells": 5,
+   "terrainScore": 6.5,
    "wetAdjacentCells": 6,
    "connections": 3,
    "households": null,
@@ -19974,14 +19992,14 @@
    "isCommanderySeat": false,
    "landCells": 387,
    "terrainCells": {
-    "MOUNTAIN": 342,
-    "PLAIN": 45
+    "MOUNTAIN": 335,
+    "PLAIN": 52
    },
-   "arableCells": 45,
-   "terrainScore": 79.2,
+   "arableCells": 52,
+   "terrainScore": 85.5,
    "wetAdjacentCells": 3,
    "connections": 4,
-   "households": 7205,
+   "households": 6871,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19994,14 +20012,13 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 1,
-    "PLAIN": 7
+    "PLAIN": 8
    },
-   "arableCells": 7,
-   "terrainScore": 7.1,
+   "arableCells": 8,
+   "terrainScore": 8.0,
    "wetAdjacentCells": 1,
    "connections": 1,
-   "households": 646,
+   "households": 643,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20014,15 +20031,15 @@
    "isCommanderySeat": false,
    "landCells": 378,
    "terrainCells": {
-    "MOUNTAIN": 256,
-    "PLAIN": 116,
+    "MOUNTAIN": 244,
+    "PLAIN": 128,
     "RIVER": 6
    },
-   "arableCells": 116,
-   "terrainScore": 144.6,
+   "arableCells": 128,
+   "terrainScore": 155.4,
    "wetAdjacentCells": 27,
    "connections": 3,
-   "households": 13154,
+   "households": 12488,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20035,14 +20052,14 @@
    "isCommanderySeat": false,
    "landCells": 1204,
    "terrainCells": {
-    "MOUNTAIN": 1044,
-    "PLAIN": 160
+    "MOUNTAIN": 989,
+    "PLAIN": 215
    },
-   "arableCells": 160,
-   "terrainScore": 264.4,
+   "arableCells": 215,
+   "terrainScore": 313.9,
    "wetAdjacentCells": 38,
    "connections": 3,
-   "households": 24052,
+   "households": 25225,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20575,14 +20592,14 @@
    "isCommanderySeat": false,
    "landCells": 1331,
    "terrainCells": {
-    "MOUNTAIN": 1305,
-    "PLAIN": 26
+    "MOUNTAIN": 1241,
+    "PLAIN": 90
    },
-   "arableCells": 26,
-   "terrainScore": 156.5,
+   "arableCells": 90,
+   "terrainScore": 214.1,
    "wetAdjacentCells": 21,
    "connections": 5,
-   "households": 6530,
+   "households": 7547,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20595,14 +20612,14 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 5,
-    "PLAIN": 3
+    "MOUNTAIN": 1,
+    "PLAIN": 7
    },
-   "arableCells": 3,
-   "terrainScore": 3.5,
+   "arableCells": 7,
+   "terrainScore": 7.1,
    "wetAdjacentCells": 1,
    "connections": 2,
-   "households": 209,
+   "households": 250,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20615,14 +20632,14 @@
    "isCommanderySeat": false,
    "landCells": 1126,
    "terrainCells": {
-    "MOUNTAIN": 967,
-    "PLAIN": 159
+    "MOUNTAIN": 966,
+    "PLAIN": 160
    },
-   "arableCells": 159,
-   "terrainScore": 255.7,
+   "arableCells": 160,
+   "terrainScore": 256.6,
    "wetAdjacentCells": 54,
    "connections": 2,
-   "households": 10669,
+   "households": 9045,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20635,14 +20652,14 @@
    "isCommanderySeat": false,
    "landCells": 60,
    "terrainCells": {
-    "MOUNTAIN": 55,
-    "PLAIN": 5
+    "MOUNTAIN": 33,
+    "PLAIN": 27
    },
-   "arableCells": 5,
-   "terrainScore": 10.5,
+   "arableCells": 27,
+   "terrainScore": 30.3,
    "wetAdjacentCells": 9,
    "connections": 1,
-   "households": 438,
+   "households": 1068,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20757,7 +20774,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 281,
+   "households": 258,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20776,7 +20793,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 3,
-   "households": 281,
+   "households": 258,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20991,7 +21008,7 @@
    "terrainScore": 6.0,
    "wetAdjacentCells": 8,
    "connections": 1,
-   "households": 80,
+   "households": 69,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21010,7 +21027,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 1475,
+   "households": 1268,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21048,7 +21065,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 75,
+   "households": 66,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21068,7 +21085,7 @@
    "terrainScore": 1.7,
    "wetAdjacentCells": 0,
    "connections": 3,
-   "households": 922,
+   "households": 792,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21088,7 +21105,7 @@
    "terrainScore": 7.0,
    "wetAdjacentCells": 6,
    "connections": 3,
-   "households": 93,
+   "households": 80,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21147,7 +21164,7 @@
    "terrainScore": 4.4,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 330,
+   "households": 264,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21167,7 +21184,7 @@
    "terrainScore": 6.5,
    "wetAdjacentCells": 6,
    "connections": 5,
-   "households": 828,
+   "households": 784,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21246,7 +21263,7 @@
    "terrainScore": 6.5,
    "wetAdjacentCells": 6,
    "connections": 3,
-   "households": 254,
+   "households": 244,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21266,7 +21283,7 @@
    "terrainScore": 7.0,
    "wetAdjacentCells": 5,
    "connections": 4,
-   "households": 93,
+   "households": 80,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21285,7 +21302,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 637,
+   "households": 603,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21361,7 +21378,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 74,
+   "households": 66,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21400,7 +21417,7 @@
    "terrainScore": 6.5,
    "wetAdjacentCells": 7,
    "connections": 2,
-   "households": 254,
+   "households": 244,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21432,14 +21449,13 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 6,
-    "PLAIN": 2
+    "PLAIN": 8
    },
-   "arableCells": 2,
-   "terrainScore": 2.6,
+   "arableCells": 8,
+   "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 196,
+   "households": 301,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21458,7 +21474,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 527,
+   "households": 508,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21471,14 +21487,14 @@
    "isCommanderySeat": false,
    "landCells": 5,
    "terrainCells": {
-    "MOUNTAIN": 2,
+    "PLAIN": 2,
     "RIVER": 3
    },
-   "arableCells": 0,
-   "terrainScore": 1.7,
+   "arableCells": 2,
+   "terrainScore": 3.5,
    "wetAdjacentCells": 5,
    "connections": 4,
-   "households": 922,
+   "households": 792,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21491,14 +21507,14 @@
    "isCommanderySeat": false,
    "landCells": 8,
    "terrainCells": {
-    "MOUNTAIN": 5,
-    "PLAIN": 3
+    "MOUNTAIN": 3,
+    "PLAIN": 5
    },
-   "arableCells": 3,
-   "terrainScore": 3.5,
+   "arableCells": 5,
+   "terrainScore": 5.3,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 806,
+   "households": 773,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21597,7 +21613,7 @@
    "terrainScore": 3.2,
    "wetAdjacentCells": 8,
    "connections": 3,
-   "households": 277,
+   "households": 268,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21616,7 +21632,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 313,
+   "households": 301,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21693,7 +21709,7 @@
    "terrainScore": 8.0,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 106,
+   "households": 92,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21869,7 +21885,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 74,
+   "households": 66,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21888,7 +21904,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 161,
+   "households": 153,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21907,7 +21923,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 1,
-   "households": 175,
+   "households": 162,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21947,7 +21963,7 @@
    "terrainScore": 4.2,
    "wetAdjacentCells": 7,
    "connections": 5,
-   "households": 922,
+   "households": 792,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21985,7 +22001,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 74,
+   "households": 66,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22044,7 +22060,7 @@
    "terrainScore": 6.5,
    "wetAdjacentCells": 6,
    "connections": 2,
-   "households": 254,
+   "households": 244,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
