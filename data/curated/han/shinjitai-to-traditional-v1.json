@@ -1,0 +1,867 @@
+{
+ "schemaVersion": 1,
+ "tableId": "shinjitai-to-traditional-v1",
+ "note": "officer-id-registry.tsv 의 name_kanji 는 RTK14 일본어 표기라 신자체가 섞여 있다. 사료(繁體)와 대조하려면 정체로 돌려야 한다. 등록부 이름에 실제로 쓰인 글자만 싣는다. 정체와 같은 글자(範·隆·真·強·衛 등)는 싣지 않는다.",
+ "scope": "tools/scenario/officer-id-registry.tsv name_kanji 에 실제로 나오는 글자만",
+ "review": "각 쌍은 三國志 색인 본문 글자 빈도로 확인했다 — from 은 0회이거나 to 보다 드물고, to 는 본문에 선다(2026-09-17 실측, issue #775).",
+ "shinjitaiToTraditional": [
+  {
+   "from": "壱",
+   "to": "壹",
+   "registryNameCount": 3,
+   "examples": [
+    "呂壱",
+    "士壱",
+    "孫壱"
+   ]
+  },
+  {
+   "from": "隠",
+   "to": "隱",
+   "registryNameCount": 2,
+   "examples": [
+    "柳隠",
+    "隠蕃"
+   ]
+  },
+  {
+   "from": "栄",
+   "to": "榮",
+   "registryNameCount": 4,
+   "examples": [
+    "夏侯栄",
+    "審栄",
+    "徐栄"
+   ]
+  },
+  {
+   "from": "悦",
+   "to": "悅",
+   "registryNameCount": 1,
+   "examples": [
+    "方悦"
+   ]
+  },
+  {
+   "from": "応",
+   "to": "應",
+   "registryNameCount": 2,
+   "examples": [
+    "応劭",
+    "陳応"
+   ]
+  },
+  {
+   "from": "横",
+   "to": "橫",
+   "registryNameCount": 2,
+   "examples": [
+    "張横",
+    "陳横"
+   ]
+  },
+  {
+   "from": "黄",
+   "to": "黃",
+   "registryNameCount": 10,
+   "examples": [
+    "黄乱",
+    "黄射",
+    "黄崇"
+   ]
+  },
+  {
+   "from": "温",
+   "to": "溫",
+   "registryNameCount": 3,
+   "examples": [
+    "張温",
+    "温恢",
+    "閻温"
+   ]
+  },
+  {
+   "from": "会",
+   "to": "會",
+   "registryNameCount": 3,
+   "examples": [
+    "鍾会",
+    "阿会喃",
+    "龐会"
+   ]
+  },
+  {
+   "from": "懐",
+   "to": "懷",
+   "registryNameCount": 1,
+   "examples": [
+    "楊懐"
+   ]
+  },
+  {
+   "from": "楽",
+   "to": "樂",
+   "registryNameCount": 4,
+   "examples": [
+    "李楽",
+    "楽就",
+    "楽綝"
+   ]
+  },
+  {
+   "from": "観",
+   "to": "觀",
+   "registryNameCount": 4,
+   "examples": [
+    "孫観",
+    "殷観",
+    "王観"
+   ]
+  },
+  {
+   "from": "関",
+   "to": "關",
+   "registryNameCount": 9,
+   "examples": [
+    "関平",
+    "関彝",
+    "関純"
+   ]
+  },
+  {
+   "from": "顔",
+   "to": "顏",
+   "registryNameCount": 2,
+   "examples": [
+    "厳顔",
+    "顔良"
+   ]
+  },
+  {
+   "from": "帰",
+   "to": "歸",
+   "registryNameCount": 1,
+   "examples": [
+    "泄帰泥"
+   ]
+  },
+  {
+   "from": "戯",
+   "to": "戲",
+   "registryNameCount": 2,
+   "examples": [
+    "戯志才",
+    "楊戯"
+   ]
+  },
+  {
+   "from": "拠",
+   "to": "據",
+   "registryNameCount": 2,
+   "examples": [
+    "呂拠",
+    "朱拠"
+   ]
+  },
+  {
+   "from": "挙",
+   "to": "舉",
+   "registryNameCount": 1,
+   "examples": [
+    "張挙"
+   ]
+  },
+  {
+   "from": "区",
+   "to": "區",
+   "registryNameCount": 1,
+   "examples": [
+    "区星"
+   ]
+  },
+  {
+   "from": "恵",
+   "to": "惠",
+   "registryNameCount": 2,
+   "examples": [
+    "夏侯恵",
+    "恵衢"
+   ]
+  },
+  {
+   "from": "経",
+   "to": "經",
+   "registryNameCount": 2,
+   "examples": [
+    "単経",
+    "王経"
+   ]
+  },
+  {
+   "from": "倹",
+   "to": "儉",
+   "registryNameCount": 1,
+   "examples": [
+    "毌丘倹"
+   ]
+  },
+  {
+   "from": "権",
+   "to": "權",
+   "registryNameCount": 2,
+   "examples": [
+    "孫権",
+    "黄権"
+   ]
+  },
+  {
+   "from": "献",
+   "to": "獻",
+   "registryNameCount": 1,
+   "examples": [
+    "夏侯献"
+   ]
+  },
+  {
+   "from": "顕",
+   "to": "顯",
+   "registryNameCount": 1,
+   "examples": [
+    "蒋顕"
+   ]
+  },
+  {
+   "from": "厳",
+   "to": "嚴",
+   "registryNameCount": 8,
+   "examples": [
+    "厳政",
+    "厳氏",
+    "厳畯"
+   ]
+  },
+  {
+   "from": "広",
+   "to": "廣",
+   "registryNameCount": 1,
+   "examples": [
+    "趙広"
+   ]
+  },
+  {
+   "from": "国",
+   "to": "國",
+   "registryNameCount": 3,
+   "examples": [
+    "呉国太",
+    "国淵",
+    "武安国"
+   ]
+  },
+  {
+   "from": "済",
+   "to": "濟",
+   "registryNameCount": 4,
+   "examples": [
+    "張済",
+    "楊済",
+    "胡済"
+   ]
+  },
+  {
+   "from": "桟",
+   "to": "棧",
+   "registryNameCount": 1,
+   "examples": [
+    "費桟"
+   ]
+  },
+  {
+   "from": "賛",
+   "to": "贊",
+   "registryNameCount": 1,
+   "examples": [
+    "留賛"
+   ]
+  },
+  {
+   "from": "児",
+   "to": "兒",
+   "registryNameCount": 1,
+   "examples": [
+    "胡車児"
+   ]
+  },
+  {
+   "from": "寿",
+   "to": "壽",
+   "registryNameCount": 1,
+   "examples": [
+    "陳寿"
+   ]
+  },
+  {
+   "from": "粛",
+   "to": "肅",
+   "registryNameCount": 4,
+   "examples": [
+    "張粛",
+    "李粛",
+    "王粛"
+   ]
+  },
+  {
+   "from": "渉",
+   "to": "涉",
+   "registryNameCount": 1,
+   "examples": [
+    "兪渉"
+   ]
+  },
+  {
+   "from": "焼",
+   "to": "燒",
+   "registryNameCount": 1,
+   "examples": [
+    "俄何焼戈"
+   ]
+  },
+  {
+   "from": "触",
+   "to": "觸",
+   "registryNameCount": 1,
+   "examples": [
+    "焦触"
+   ]
+  },
+  {
+   "from": "図",
+   "to": "圖",
+   "registryNameCount": 1,
+   "examples": [
+    "郭図"
+   ]
+  },
+  {
+   "from": "随",
+   "to": "隨",
+   "registryNameCount": 1,
+   "examples": [
+    "甯随"
+   ]
+  },
+  {
+   "from": "斉",
+   "to": "齊",
+   "registryNameCount": 1,
+   "examples": [
+    "賀斉"
+   ]
+  },
+  {
+   "from": "静",
+   "to": "靜",
+   "registryNameCount": 1,
+   "examples": [
+    "孫静"
+   ]
+  },
+  {
+   "from": "潜",
+   "to": "潛",
+   "registryNameCount": 1,
+   "examples": [
+    "裴潜"
+   ]
+  },
+  {
+   "from": "禅",
+   "to": "禪",
+   "registryNameCount": 1,
+   "examples": [
+    "劉禅"
+   ]
+  },
+  {
+   "from": "双",
+   "to": "雙",
+   "registryNameCount": 1,
+   "examples": [
+    "王双"
+   ]
+  },
+  {
+   "from": "続",
+   "to": "續",
+   "registryNameCount": 3,
+   "examples": [
+    "公孫続",
+    "田続",
+    "魏続"
+   ]
+  },
+  {
+   "from": "帯",
+   "to": "帶",
+   "registryNameCount": 1,
+   "examples": [
+    "帯来洞主"
+   ]
+  },
+  {
+   "from": "沢",
+   "to": "澤",
+   "registryNameCount": 1,
+   "examples": [
+    "闞沢"
+   ]
+  },
+  {
+   "from": "単",
+   "to": "單",
+   "registryNameCount": 1,
+   "examples": [
+    "単経"
+   ]
+  },
+  {
+   "from": "鉄",
+   "to": "鐵",
+   "registryNameCount": 1,
+   "examples": [
+    "馬鉄"
+   ]
+  },
+  {
+   "from": "当",
+   "to": "當",
+   "registryNameCount": 2,
+   "examples": [
+    "迷当大王",
+    "韓当"
+   ]
+  },
+  {
+   "from": "党",
+   "to": "黨",
+   "registryNameCount": 1,
+   "examples": [
+    "党均"
+   ]
+  },
+  {
+   "from": "徳",
+   "to": "德",
+   "registryNameCount": 3,
+   "examples": [
+    "夏侯徳",
+    "韓徳",
+    "龐徳"
+   ]
+  },
+  {
+   "from": "覇",
+   "to": "霸",
+   "registryNameCount": 3,
+   "examples": [
+    "夏侯覇",
+    "孫覇",
+    "臧覇"
+   ]
+  },
+  {
+   "from": "歩",
+   "to": "步",
+   "registryNameCount": 5,
+   "examples": [
+    "歩協",
+    "歩度根",
+    "歩練師"
+   ]
+  },
+  {
+   "from": "宝",
+   "to": "寶",
+   "registryNameCount": 1,
+   "examples": [
+    "張宝"
+   ]
+  },
+  {
+   "from": "豊",
+   "to": "豐",
+   "registryNameCount": 4,
+   "examples": [
+    "李豊",
+    "李豊",
+    "李豊"
+   ]
+  },
+  {
+   "from": "万",
+   "to": "萬",
+   "registryNameCount": 2,
+   "examples": [
+    "万彧",
+    "千万"
+   ]
+  },
+  {
+   "from": "満",
+   "to": "滿",
+   "registryNameCount": 2,
+   "examples": [
+    "典満",
+    "満寵"
+   ]
+  },
+  {
+   "from": "黙",
+   "to": "默",
+   "registryNameCount": 1,
+   "examples": [
+    "尹黙"
+   ]
+  },
+  {
+   "from": "来",
+   "to": "來",
+   "registryNameCount": 2,
+   "examples": [
+    "帯来洞主",
+    "来敏"
+   ]
+  },
+  {
+   "from": "頼",
+   "to": "賴",
+   "registryNameCount": 1,
+   "examples": [
+    "頼恭"
+   ]
+  },
+  {
+   "from": "乱",
+   "to": "亂",
+   "registryNameCount": 1,
+   "examples": [
+    "黄乱"
+   ]
+  },
+  {
+   "from": "覧",
+   "to": "覽",
+   "registryNameCount": 1,
+   "examples": [
+    "高覧"
+   ]
+  },
+  {
+   "from": "礼",
+   "to": "禮",
+   "registryNameCount": 4,
+   "examples": [
+    "孫礼",
+    "尹礼",
+    "殷礼"
+   ]
+  },
+  {
+   "from": "霊",
+   "to": "靈",
+   "registryNameCount": 3,
+   "examples": [
+    "左霊",
+    "朱霊",
+    "紀霊"
+   ]
+  },
+  {
+   "from": "楼",
+   "to": "樓",
+   "registryNameCount": 2,
+   "examples": [
+    "楼玄",
+    "楼班"
+   ]
+  },
+  {
+   "from": "呉",
+   "to": "吳",
+   "registryNameCount": 11,
+   "examples": [
+    "呉匡",
+    "呉国太",
+    "呉巨"
+   ]
+  },
+  {
+   "from": "蒋",
+   "to": "蔣",
+   "registryNameCount": 9,
+   "examples": [
+    "蒋幹",
+    "蒋斌",
+    "蒋欽"
+   ]
+  },
+  {
+   "from": "蝉",
+   "to": "蟬",
+   "registryNameCount": 1,
+   "examples": [
+    "貂蝉"
+   ]
+  },
+  {
+   "from": "繍",
+   "to": "繡",
+   "registryNameCount": 1,
+   "examples": [
+    "張繍"
+   ]
+  },
+  {
+   "from": "讃",
+   "to": "讚",
+   "registryNameCount": 1,
+   "examples": [
+    "朱讃"
+   ]
+  },
+  {
+   "from": "嵆",
+   "to": "嵇",
+   "registryNameCount": 1,
+   "examples": [
+    "嵆康"
+   ]
+  },
+  {
+   "from": "煕",
+   "to": "熙",
+   "registryNameCount": 1,
+   "examples": [
+    "袁煕"
+   ]
+  },
+  {
+   "from": "兪",
+   "to": "俞",
+   "registryNameCount": 1,
+   "examples": [
+    "兪渉"
+   ]
+  },
+  {
+   "from": "朶",
+   "to": "朵",
+   "registryNameCount": 1,
+   "examples": [
+    "朶思大王"
+   ]
+  },
+  {
+   "from": "姫",
+   "to": "姬",
+   "registryNameCount": 1,
+   "examples": [
+    "王元姫"
+   ]
+  },
+  {
+   "from": "彦",
+   "to": "彥",
+   "registryNameCount": 1,
+   "examples": [
+    "吾彦"
+   ]
+  },
+  {
+   "from": "禄",
+   "to": "祿",
+   "registryNameCount": 1,
+   "examples": [
+    "秦宜禄"
+   ]
+  },
+  {
+   "from": "叙",
+   "to": "敘",
+   "registryNameCount": 2,
+   "examples": [
+    "姜叙",
+    "雷叙"
+   ]
+  },
+  {
+   "from": "麹",
+   "to": "麴",
+   "registryNameCount": 2,
+   "examples": [
+    "麹演",
+    "麹義"
+   ]
+  }
+ ],
+ "matchVariantFoldNote": "대조 전용 이체자 접기. 사료 색인 본문이 吕/呂·眞/真·黄/黃 을 섞어 쓴다. 어느 쪽이 「옳은」 자형인지에 대한 주장이 아니며 nameKanjiTraditional 에는 적용하지 않는다.",
+ "matchVariantFold": [
+  {
+   "from": "吕",
+   "to": "呂"
+  },
+  {
+   "from": "眞",
+   "to": "真"
+  },
+  {
+   "from": "爲",
+   "to": "為"
+  },
+  {
+   "from": "髙",
+   "to": "高"
+  },
+  {
+   "from": "敍",
+   "to": "敘"
+  },
+  {
+   "from": "强",
+   "to": "強"
+  },
+  {
+   "from": "旣",
+   "to": "既"
+  },
+  {
+   "from": "凉",
+   "to": "涼"
+  },
+  {
+   "from": "羣",
+   "to": "群"
+  },
+  {
+   "from": "曁",
+   "to": "暨"
+  },
+  {
+   "from": "晧",
+   "to": "皓"
+  },
+  {
+   "from": "毘",
+   "to": "毗"
+  },
+  {
+   "from": "衞",
+   "to": "衛"
+  },
+  {
+   "from": "緖",
+   "to": "緒"
+  },
+  {
+   "from": "别",
+   "to": "別"
+  },
+  {
+   "from": "栢",
+   "to": "柏"
+  },
+  {
+   "from": "郄",
+   "to": "郤"
+  },
+  {
+   "from": "萠",
+   "to": "萌"
+  },
+  {
+   "from": "擧",
+   "to": "舉"
+  },
+  {
+   "from": "頴",
+   "to": "潁"
+  },
+  {
+   "from": "穎",
+   "to": "潁"
+  },
+  {
+   "from": "贾",
+   "to": "賈",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "苏",
+   "to": "蘇",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "则",
+   "to": "則",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "郑",
+   "to": "鄭",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "浑",
+   "to": "渾",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "仓",
+   "to": "倉",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "矫",
+   "to": "矯",
+   "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "鴈",
+   "to": "雁",
+   "reason": "異體字. 타일 郡 이름은 鴈門郡, 三國志 卷17 은 雁門 — 後漢書(鴈 29·雁 16)·三國志(鴈 7·雁 4) 모두 한 책 안에서 섞어 쓴다"
+  }
+ ],
+ "placeSimplificationAdditionsNote": "han-name-simplification-v1 은 정본·타일에 쓰인 글자만 싣는다. 열전 서두 본관 문구에는 나오는데 그 표에 없는 繁→簡 쌍을 여기 더한다. 각 쌍은 han-tiles jurisdictionRecords.nameCh 에 witness 가 실제로 서 있어야 한다(빌더가 검사한다).",
+ "placeSimplificationAdditions": [
+  {
+   "from": "錢",
+   "to": "钱",
+   "witness": "钱唐县"
+  },
+  {
+   "from": "聞",
+   "to": "闻",
+   "witness": "闻喜县"
+  },
+  {
+   "from": "師",
+   "to": "师",
+   "witness": "偃师县"
+  },
+  {
+   "from": "閬",
+   "to": "阆",
+   "witness": "阆中县"
+  },
+  {
+   "from": "韋",
+   "to": "韦",
+   "witness": "不韦县"
+  },
+  {
+   "from": "晉",
+   "to": "晋",
+   "witness": "临晋县"
+  }
+ ]
+}

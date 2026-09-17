@@ -61,6 +61,11 @@ jobs:
       - name: Verify province to city attribution ledger
         if: '!cancelled()'
         run: python3 tools/scenario/build_province_city_attribution.py --check
+      # OPENSAM-255 — 인물 본관 縣 원장. 입력은 전부 커밋된 파일이다(등록부·이름표·시나리오·글자표·
+      # 추출 원장·han-tiles). 사료 색인은 저장소 밖이라 --extract 는 CI 에서 돌지 않는다 — 추출 원장이 증거다.
+      - name: Verify officer native county ledger
+        if: '!cancelled()'
+        run: python3 tools/scenario/build_officer_native_county.py --check
       - name: Verify new-world Han V3 artifacts
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_world.py --target han-world-v3 --check
