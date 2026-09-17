@@ -31,18 +31,18 @@
       "sha256": "6f48e5b9a2da65b84c73c0eb9948e649c799f30c725e2555f83e9209a0f0a51d"
     },
     {
-      "blob": "blobs/a3e44fece6b7d80212a9e81db22874798f8fdaf712a41bf16c40dc18aa22ed1b.json.gz",
-      "bytes": 1233917,
-      "compressedSha256": "349949ff060bd04413432b47ab81d4bb1397b8aa92fc13ab0e01aee581138d39",
+      "blob": "blobs/2a9ee0a289ca467205e40562ba0b743fda19dfa3cdbe729274a9ffabb250318e.json.gz",
+      "bytes": 1236763,
+      "compressedSha256": "d7917adc150c05d64189652b7e3c1c254f89ab640e10b0c4dd75725e71ab23e3",
       "path": "infra/src/main/resources/map/han-world-v3.json",
-      "sha256": "a3e44fece6b7d80212a9e81db22874798f8fdaf712a41bf16c40dc18aa22ed1b"
+      "sha256": "2a9ee0a289ca467205e40562ba0b743fda19dfa3cdbe729274a9ffabb250318e"
     },
     {
-      "blob": "blobs/93d4e39c234e9c6f7ca1a227814593620102440ea524f96131ac76f5fe27562e.json.gz",
+      "blob": "blobs/c8bc753c082da5704021924dfa836d68161b4de05cfc34e5a53c8aa3cb976c5f.json.gz",
       "bytes": 406147,
-      "compressedSha256": "16f6d9cd19dbeebe20da56b989ecd9399424757e87913b74403d4aa3b673b791",
+      "compressedSha256": "73c42fc2e2939f7174aaf196f063c4230e475f44ba5272be0d7747c4587b3fbc",
       "path": "data/map/han-world-v3-manifest-v1.json",
-      "sha256": "93d4e39c234e9c6f7ca1a227814593620102440ea524f96131ac76f5fe27562e"
+      "sha256": "c8bc753c082da5704021924dfa836d68161b4de05cfc34e5a53c8aa3cb976c5f"
     },
     {
       "blob": "blobs/52fef8452f0e0f885c8e7277ecb28ae982a4bccd27951db6d83be7513dc67d5a.json.gz",
@@ -103,5 +103,5 @@
   ],
   "logicalMapName": "han-world-v3",
   "schemaVersion": 1,
-  "sourceBaseCommit": "ee7499242064ad08edba335767a9499713507154"
+  "sourceBaseCommit": "10d2403407e93dffc60668d61576ca8ab219f05e"
 }

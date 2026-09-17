@@ -3,9 +3,9 @@
   "files": [
     {
       "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
-      "sourceSha256": "c0f6d7d388a1cae091dd33dbd97a37b6be15b6d65e27088455c4a8952f9d67cf",
+      "sourceSha256": "12e4059eeaf2ec166fc7e93dcd7fc6c63fe47c62a1b238bf73fb9c219738cafa",
       "snapshot": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV31133CityConst.kt",
-      "snapshotSha256": "d7282e36caea9be17ae5f15b0a7945d8309a10649d5dbff229d18e9ccf59ccb9"
+      "snapshotSha256": "f280795c7ebf9e560a849021d4a4e90e9059f575176c2951f66e589a1f57f5a4"
     },
     {
       "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
