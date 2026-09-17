@@ -133,7 +133,7 @@ V59 의 부수 경로(전장 주둔이 다른 코드에 미치는 곳): 도시 �
 3. **테스트 현황.** 관련 테스트 파일의 존재만 확인했고 돌리지 않았다. §4.4 의 「닿지 않는다」는 호출 관계에서 추론한 것이다.
 4. **web/game 프런트의 의존.** `/api/battlefields`·작전·계획 화면이 城 키에 얼마나 묶였는지 보지 않았다(백엔드만 조사).
 5. **NPC AI 가 이 계층을 쓰지 않는 이유가 의도인지.** `LOGIC/ai/**` 에서 `Battlefield|generalPosition|operation|retainer|bugok|battlePlan`(대소문자 무시) 은 0건이다 — 사실은 확인했다. 결정성 때문에 일부러 뺀 것인지(핸들러 주석은 「결정성」을 든다, `RetainerRules.kt:65`, `BattlePlanRules.kt:45`) 단순 미구현인지는 구분하지 못했다.
-6. **`StrategicEdgeStateSnapshot`(간선 상태·용량)의 생산자.** 확인된 생산자는 하나다 — `LOGIC/v2/command/V2CityTransportRoutes.kt:16-20` 이 토폴로지 리비전·해시와 **빈 간선 상태 맵**으로 직접 만든다. 즉 차단·용량을 실제로 채우는 생산자는 아직 없다. 다른 호출자(보급망·game-api)가 무엇을 넘기는지는 추적하지 않았다.
+6. **`StrategicEdgeStateSnapshot`(간선 상태·용량)의 생산자.** main 의 생성 지점은 둘이다 — `LOGIC/v2/command/V2CityTransportRoutes.kt:16-20` 과 `LOGIC/world/StrategicSupplyNetwork.kt:47`. 둘 다 토폴로지 리비전·해시와 **빈 간선 상태 맵**으로 만들고, 엔진은 보급망에 `edgeStatesByNation` 을 넘기지 않는다(`ENG/world/HanSpatialSupplyProvider.kt:83`). 즉 차단·용량을 실제로 채우는 생산자는 아직 없다. game-api 읽기 쪽이 무엇을 넘기는지는 추적하지 않았다.
 7. **외부 거점 城(省 없는 城)의 런타임 규모.** 동봉 리소스 `infra/src/main/resources/map/han-world-v3.json` 은 城 1,133개 전부가 `spatialProvinceId` 를 가진다(이번에 세어 0건). 다만 엔진은 부팅 때 고른 `hanWorldVariant` 아카이브를 쓰므로(`WorldSnapshotLoader.kt:204-209`), 옛 판 월드에서도 0건인지는 확인하지 않았다. S3 은 최신 판 새 월드라 예외가 없을 것으로 보이나 추론이다.
 8. **V51·V53·V54.** 파일명만 보고 범위 밖으로 두었다. 내용은 읽지 않았다.
 9. **이슈 번호.** 포트폴리오 계획 69행은 이 판정을 #790 / OPENSAM-270 으로 적는다. PR 제목의 OPENSAM-231 과의 관계는 확인하지 못했다.
