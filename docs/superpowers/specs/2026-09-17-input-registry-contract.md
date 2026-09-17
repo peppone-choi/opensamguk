@@ -25,6 +25,7 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
+- **ruleProfile 의 자리(제안):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter` 가 `world_state` 에 적고, 런타임(엔진·game-api)은 `world_state` 만 읽는다. 지도가 이미 이 길을 쓴다 — 시나리오 `map.mapName` → `ScenarioImporter.kt` 가 `world_state.meta["map"]`·`config` 에 기록. 값이 없으면 `SAMMO` 다(기존 월드·시나리오 무변경). 월드가 살아 있는 동안 바뀌지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
 - 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `replacesLegacy[]` 로 역참조를 단다.
 
 ## 3. 원장 행
@@ -82,7 +83,7 @@ tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
 
 ## 10. 미결
 
-- ruleProfile 을 월드 메타에 둘지 시나리오에 둘지.
+- ruleProfile 을 `world_state.meta` 와 `config` 중 어느 쪽에 적을지(지도는 둘 다 쓴다).
 - `effects[]` 의 표준 어휘(자원 증감·카드 이동·상태 변화).
 - 12순 목록의 효력 시작 표식이 담을 정보량.
 - 기존 작전(V56)·출병 계획(V57)·휘하(V55) 인테이크를 새 봉투로 옮길 시점.
