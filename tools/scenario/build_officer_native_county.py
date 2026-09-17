@@ -165,15 +165,32 @@ def link_officers(registry, name_map, names_by_scenario):
 # ---------------------------------------------------------------- 사료 정리·추출
 
 
-def clean_wikitext(text: str) -> str:
-    """裴注·李賢注({{*|…}})와 머리말 틀을 지우고 위키 링크·변환 표식을 벗긴다."""
+# 위키문헌 틀 정책. 「모르는 틀 = 삭제」를 기본값으로 두면 본문 글자가 조용히 사라진다
+# (三國志 卷17 의 {{ProperNoun|張遼}} 전례) — 아는 틀만 규칙대로 다루고, 모르는 틀은 지우되 센다.
+TEMPLATE_KEEP_FIRST = {"YL", "ProperNoun", "ul", "PUA", "!", "！", "另", "別", "校", "參", "僻字", "-", "+", "quote", "red", "blue", "green",
+                       "楷體", "WavyBookMark"}
+TEMPLATE_KEEP_LAST = {"color"}
+TEMPLATE_DROP = {"*", "--", "", "header", "header2", "Header2", "footer", "gap", "?", "annotate", "anchor", "zth", "reflist", "Reflist",
+                 "Novel-f", "唐朝作品", "西晉作品", "南北朝作品", "Textquality", "textquality", "wikipedia", "PD-old"}
+
+
+def clean_wikitext(text: str, removed_unknown: dict | None = None) -> str:
+    """裴注·李賢注({{*|…}})와 머리말 틀을 지우고, 본문 글자를 감싼 틀·위키 링크·변환 표식은 벗긴다."""
     text = re.sub(r"-\{([^{}]*)\}-", r"\1", text)
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    text = re.sub(r"<ref[^>]*/>|<ref[^>]*>.*?</ref>", "", text, flags=re.S)  # 後漢書 일부 卷은 註를 <ref> 로 단다
+    text = re.sub(r"\{\{\*s\}\}.*?\{\{\*e\}\}", "", text, flags=re.S)  # 짝으로 다는 裴注(三國志 卷19)
     inner = re.compile(r"\{\{([^{}]*)\}\}")
 
     def _replace(match: re.Match) -> str:
         parts = match.group(1).split("|")
-        if parts[0].strip() == "YL" and len(parts) >= 2:
-            return parts[1]
+        name = parts[0].strip()
+        if name in TEMPLATE_KEEP_FIRST:
+            return parts[1] if len(parts) >= 2 else ""
+        if name in TEMPLATE_KEEP_LAST:
+            return parts[-1] if len(parts) >= 2 else ""
+        if name not in TEMPLATE_DROP and removed_unknown is not None:
+            removed_unknown[name] = removed_unknown.get(name, 0) + 1
         return ""
 
     previous = None
@@ -218,12 +235,13 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
     connection = sqlite3.connect(f"file:{corpus_db}?mode=ro", uri=True)
     hits = []
     volumes = 0
+    removed_unknown: dict = {}
     for book in BOOKS:
         rows = connection.execute("select vol, title, body from vol where book = ? order by vol", (book,)).fetchall()
         for volume, title, body in rows:
             volumes += 1
             raw = zlib.decompress(body).decode("utf-8")
-            cleaned = clean_wikitext(raw)
+            cleaned = clean_wikitext(raw, removed_unknown)
             folded = tables.fold(cleaned)
             digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
             for name, zi, place, form, quote in find_hits(cleaned, folded):
@@ -243,6 +261,7 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
         "forms": {"A": "X字Y，郡縣人也", "B": "X，郡縣人也", "D": "X字Y，郡縣人[，。]", "E": "姓X，諱Y(，字Z)，郡縣人",
                   "F": "郡縣人也，姓X，諱Y"},
         "volumesScanned": volumes,
+        "unknownTemplatesDropped": {k: removed_unknown[k] for k in sorted(removed_unknown)},
         "hits": hits,
     }
 
@@ -406,7 +425,7 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
             entry["method"] = "DIRECT"
             entry["courtesyName"] = hit["courtesyName"]
             entry["evidence"] = {"book": hit["book"], "volume": hit["volume"], "quote": hit["quote"]}
-            def _same(other):
+            def _same(other, other_text):
                 if other["commanderyId"] is None:  # 華陽國志 는 郡 절 안에서 「涪人」처럼 縣만 말한다
                     return resolution["nativeCounty"] is not None and gazetteer.county_key(other_text) == gazetteer.county_key(resolution["nativeCounty"])
                 return other["commanderyId"] == resolution["commanderyId"] and (
@@ -414,8 +433,7 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
                     or gazetteer.county_key(other["nativeCounty"]) == gazetteer.county_key(resolution["nativeCounty"]))
             agree, disagree = [], []
             for other_hit, other_resolution in resolved[1:] + other_books:
-                other_text = other_hit["placeText"]
-                (agree if _same(other_resolution) else disagree).append(other_hit)
+                (agree if _same(other_resolution, other_hit["placeText"]) else disagree).append(other_hit)
             if agree:
                 entry["corroboration"] = [{"book": h["book"], "volume": h["volume"]} for h in agree]
             if disagree:

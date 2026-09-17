@@ -824,6 +824,11 @@
    "from": "矫",
    "to": "矯",
    "reason": "색인 三國志 卷15·16·22 본문에 簡體가 섞여 있다"
+  },
+  {
+   "from": "鴈",
+   "to": "雁",
+   "reason": "異體字. 타일 郡 이름은 鴈門郡, 三國志 卷17 은 雁門 — 後漢書(鴈 29·雁 16)·三國志(鴈 7·雁 4) 모두 한 책 안에서 섞어 쓴다"
   }
  ],
  "placeSimplificationAdditionsNote": "han-name-simplification-v1 은 정본·타일에 쓰인 글자만 싣는다. 열전 서두 본관 문구에는 나오는데 그 표에 없는 繁→簡 쌍을 여기 더한다. 각 쌍은 han-tiles jurisdictionRecords.nameCh 에 witness 가 실제로 서 있어야 한다(빌더가 검사한다).",

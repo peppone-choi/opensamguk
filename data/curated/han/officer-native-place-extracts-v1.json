@@ -16,6 +16,7 @@
   "F": "郡縣人也，姓X，諱Y"
  },
  "volumesScanned": 369,
+ "unknownTemplatesDropped": {},
  "hits": [
   {
    "nameKanjiTraditional": "丁奉",
@@ -27,6 +28,17 @@
    "title": "吳書·十二虎臣傳 第十 (程普 黃蓋 韓當 蔣欽 周泰 陳武 董襲 甘寧 凌統 徐盛 潘璋 丁奉)",
    "quote": "丁奉字承淵，廬江安豐人也",
    "volumeSha256": "af14d36115960881146ec95d5fdf1087db58e28d3ea95541bb050a8d63778f2e"
+  },
+  {
+   "nameKanjiTraditional": "于禁",
+   "courtesyName": "文則",
+   "placeText": "泰山鉅平",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷17",
+   "title": "魏書·張樂-{于 (張遼 樂進 -{于)",
+   "quote": "于禁字文則，泰山鉅平人也",
+   "volumeSha256": "e9b58faf987e2d7c718796660e077f9953a829b2b844af949b4c465383ab6e2f"
   },
   {
    "nameKanjiTraditional": "伊籍",
@@ -502,6 +514,17 @@
    "volumeSha256": "7c11419140ebc31ea4149d95dd391d1485b7f0b713f4542b60131d488ac4135d"
   },
   {
+   "nameKanjiTraditional": "孫堅",
+   "courtesyName": "文臺",
+   "placeText": "呉郡富春",
+   "form": "D",
+   "book": "三國志",
+   "volume": "卷46",
+   "title": "呉書·孫破虜討逆傳 (孫堅 孫策)",
+   "quote": "孫堅字文臺，呉郡富春人，",
+   "volumeSha256": "cb108c2a67ba4ee039c84910a0aa06d88685f1d1490483141968924279785ab8"
+  },
+  {
    "nameKanjiTraditional": "孫登",
    "courtesyName": "公和",
    "placeText": "汲郡共",
@@ -711,6 +734,17 @@
    "volumeSha256": "64884c57592ed8c2233a780b201ed158e76458080c69f595e16cca4548ff4e81"
   },
   {
+   "nameKanjiTraditional": "張遼",
+   "courtesyName": "文遠",
+   "placeText": "雁門馬邑",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷17",
+   "title": "魏書·張樂-{于 (張遼 樂進 -{于)",
+   "quote": "張遼字文遠，雁門馬邑人也",
+   "volumeSha256": "e9b58faf987e2d7c718796660e077f9953a829b2b844af949b4c465383ab6e2f"
+  },
+  {
    "nameKanjiTraditional": "張邈",
    "courtesyName": "孟卓",
    "placeText": "東平壽張",
@@ -720,6 +754,17 @@
    "title": "魏書·呂布臧洪傳",
    "quote": "張邈字孟卓，東平壽張人也",
    "volumeSha256": "bc60a41e5c53c2feb82b9c8582c4b935d8d3325404e01c3571c7a480a6800773"
+  },
+  {
+   "nameKanjiTraditional": "張郃",
+   "courtesyName": "雋乂",
+   "placeText": "河間鄚",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷17",
+   "title": "魏書·張樂-{于 (張遼 樂進 -{于)",
+   "quote": "張郃字雋乂，河間鄚人也",
+   "volumeSha256": "e9b58faf987e2d7c718796660e077f9953a829b2b844af949b4c465383ab6e2f"
   },
   {
    "nameKanjiTraditional": "張闓",
@@ -753,6 +798,17 @@
    "title": "魏書·二公孫陶四張傳",
    "quote": "張魯字公祺，沛國豐人也",
    "volumeSha256": "f9785e614c9f805ec6aff77d672ffaf096b3745494f5663294ae5427c443ef2d"
+  },
+  {
+   "nameKanjiTraditional": "徐晃",
+   "courtesyName": "公明",
+   "placeText": "河東楊",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷17",
+   "title": "魏書·張樂-{于 (張遼 樂進 -{于)",
+   "quote": "徐晃字公明，河東楊人也",
+   "volumeSha256": "e9b58faf987e2d7c718796660e077f9953a829b2b844af949b4c465383ab6e2f"
   },
   {
    "nameKanjiTraditional": "徐璆",
@@ -1008,6 +1064,17 @@
    "volumeSha256": "273b1ab2bf04bf0ad717ba9a07f51006c6e506212596fbc9eb6981ed65444206"
   },
   {
+   "nameKanjiTraditional": "樂進",
+   "courtesyName": "文謙",
+   "placeText": "陽平衞國",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷17",
+   "title": "魏書·張樂-{于 (張遼 樂進 -{于)",
+   "quote": "樂進字文謙，陽平衞國人也",
+   "volumeSha256": "e9b58faf987e2d7c718796660e077f9953a829b2b844af949b4c465383ab6e2f"
+  },
+  {
    "nameKanjiTraditional": "樓玄",
    "courtesyName": "承先",
    "placeText": "沛郡蘄",
@@ -1204,6 +1271,17 @@
    "title": "蜀書十三 黃李呂馬王張傳",
    "quote": "王平字子均，巴西宕渠人也",
    "volumeSha256": "d6bb44f48b05a600de259632d49bc58a66ca8b3e7db797f50a124bfb512b2bf6"
+  },
+  {
+   "nameKanjiTraditional": "王平",
+   "courtesyName": "子均",
+   "placeText": "宕渠",
+   "form": "A",
+   "book": "華陽國志",
+   "volume": "卷十",
+   "title": "先賢志",
+   "quote": "王平，字子均，宕渠人也",
+   "volumeSha256": "c934f9d8aef87e5cf49b6ecdccf165ec7a52d17ec1b0bef2a54aa6001548b12a"
   },
   {
    "nameKanjiTraditional": "王戎",
@@ -2282,6 +2360,17 @@
    "title": "魏書·韓崔高孫王傳 (韓曁 崔林 高柔 孫禮 王觀)",
    "quote": "高柔字文惠，陳留圉人也",
    "volumeSha256": "f09f3f2c4c1059c26692513c187a057dc986c00eb2ee26c96b9fdc63f4a8564b"
+  },
+  {
+   "nameKanjiTraditional": "魏延",
+   "courtesyName": "文長",
+   "placeText": "義陽",
+   "form": "A",
+   "book": "三國志",
+   "volume": "卷40",
+   "title": "蜀書十 劉彭廖李劉魏楊傳",
+   "quote": "魏延字文長，義陽人也",
+   "volumeSha256": "fad89d76fad0c0a1571c60e4781e682dc122cfada755f759d9f74707adf63e7b"
   },
   {
    "nameKanjiTraditional": "魯肅",

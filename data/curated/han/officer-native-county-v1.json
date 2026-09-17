@@ -30,19 +30,19 @@
  "stats": {
   "officers": 750,
   "byMethod": {
-   "DIRECT": 158,
-   "MISSING": 592
+   "DIRECT": 165,
+   "MISSING": 585
   },
   "byMissingReason": {
    "AMBIGUOUS_PERSON": 11,
    "HOMONYM_UNVERIFIED": 38,
-   "NO_BIOGRAPHY_STATEMENT": 543
+   "NO_BIOGRAPHY_STATEMENT": 536
   },
   "byMatchStatus": {
-   "COUNTY_NOT_IN_COMMANDERY": 31,
-   "MATCHED": 94,
+   "COUNTY_NOT_IN_COMMANDERY": 34,
+   "MATCHED": 96,
    "NO_COUNTY": 19,
-   "UNSPLIT": 14
+   "UNSPLIT": 16
   },
   "byScenarioLink": {
    "EXACT": 670,
@@ -232,14 +232,22 @@
     "우금1",
     "우금2"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
-   "nativeCommandery": null,
-   "commanderyId": null,
-   "nativeCounty": null,
+   "method": "DIRECT",
+   "missingReason": null,
+   "nativeCommandery": "泰山郡",
+   "commanderyId": "PARENT-0026",
+   "nativeCounty": "鉅平",
    "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷17",
+    "quote": "于禁字文則，泰山鉅平人也"
+   },
+   "candidateJurisdictionIds": [
+    "85669"
+   ],
+   "courtesyName": "文則"
   },
   {
    "stableId": "10015",
@@ -3451,14 +3459,19 @@
    "scenarioNames": [
     "손견"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
-   "nativeCommandery": null,
-   "commanderyId": null,
-   "nativeCounty": null,
-   "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "method": "DIRECT",
+   "missingReason": null,
+   "nativeCommandery": "吳郡",
+   "commanderyId": "PARENT-0052",
+   "nativeCounty": "富春",
+   "jurisdictionId": "40088",
+   "matchStatus": "MATCHED",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷46",
+    "quote": "孫堅字文臺，呉郡富春人，"
+   },
+   "courtesyName": "文臺"
   },
   {
    "stableId": "10236",
@@ -5119,14 +5132,19 @@
    "scenarioNames": [
     "장료"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
-   "nativeCommandery": null,
-   "commanderyId": null,
-   "nativeCounty": null,
+   "method": "DIRECT",
+   "missingReason": null,
+   "nativeCommandery": "鴈門郡",
+   "commanderyId": "PARENT-0085",
+   "nativeCounty": "馬邑",
    "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷17",
+    "quote": "張遼字文遠，雁門馬邑人也"
+   },
+   "courtesyName": "文遠"
   },
   {
    "stableId": "10353",
@@ -5160,14 +5178,19 @@
    "scenarioNames": [
     "장합"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
-   "nativeCommandery": null,
-   "commanderyId": null,
-   "nativeCounty": null,
-   "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "method": "DIRECT",
+   "missingReason": null,
+   "nativeCommandery": "河閒國",
+   "commanderyId": "PARENT-0018",
+   "nativeCounty": "鄚",
+   "jurisdictionId": "87326",
+   "matchStatus": "MATCHED",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷17",
+    "quote": "張郃字雋乂，河間鄚人也"
+   },
+   "courtesyName": "雋乂"
   },
   {
    "stableId": "10355",
@@ -5304,14 +5327,19 @@
    "scenarioNames": [
     "서황"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
-   "nativeCommandery": null,
-   "commanderyId": null,
-   "nativeCounty": null,
+   "method": "DIRECT",
+   "missingReason": null,
+   "nativeCommandery": "河東郡",
+   "commanderyId": "PARENT-0002",
+   "nativeCounty": "楊",
    "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷17",
+    "quote": "徐晃字公明，河東楊人也"
+   },
+   "courtesyName": "公明"
   },
   {
    "stableId": "10365",
@@ -7322,14 +7350,19 @@
    "scenarioNames": [
     "악진"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "method": "DIRECT",
+   "missingReason": null,
    "nativeCommandery": null,
    "commanderyId": null,
    "nativeCounty": null,
    "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "matchStatus": "UNSPLIT",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷17",
+    "quote": "樂進字文謙，陽平衞國人也"
+   },
+   "courtesyName": "文謙"
   },
   {
    "stableId": "10506",
@@ -8270,7 +8303,14 @@
    "candidateJurisdictionIds": [
     "200197"
    ],
-   "courtesyName": "子均"
+   "courtesyName": "子均",
+   "otherBookDisagreement": [
+    {
+     "book": "華陽國志",
+     "volume": "卷十",
+     "quote": "王平，字子均，宕渠人也"
+    }
+   ]
   },
   {
    "stableId": "10564",
@@ -14322,14 +14362,19 @@
    "scenarioNames": [
     "위연"
    ],
-   "method": "MISSING",
-   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "method": "DIRECT",
+   "missingReason": null,
    "nativeCommandery": null,
    "commanderyId": null,
    "nativeCounty": null,
    "jurisdictionId": null,
-   "matchStatus": null,
-   "evidence": null
+   "matchStatus": "UNSPLIT",
+   "evidence": {
+    "book": "三國志",
+    "volume": "卷40",
+    "quote": "魏延字文長，義陽人也"
+   },
+   "courtesyName": "文長"
   },
   {
    "stableId": "10968",

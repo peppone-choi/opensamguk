@@ -72,6 +72,29 @@ class CleanAndExtractTest(unittest.TestCase):
         self.assertIn("荀彧字文若，潁川潁陰人也", cleaned)
         self.assertIn("右扶風郿人也", cleaned)
 
+    def test_inline_text_templates_are_unwrapped_not_deleted(self):
+        # 三國志 卷17 원문 꼴. 틀을 통째로 지우면 이름·地名이 사라져 張遼가 「열전 서두 없음」으로 실린다.
+        raw = ("{{ProperNoun|張遼}}字{{ProperNoun|文遠}}，{{ProperNoun|雁門}}{{ProperNoun|馬邑}}人也。"
+               "{{ul|倭人}}在{{另|郡|部}}{{quote|臣聞}}{{color|blue|論曰}}{{--|興子}}{{gap}}")
+        removed: dict = {}
+        cleaned = builder.clean_wikitext(raw, removed)
+        self.assertIn("張遼字文遠，雁門馬邑人也。", cleaned)
+        self.assertIn("倭人在郡臣聞論曰", cleaned)
+        self.assertNotIn("興子", cleaned)
+        self.assertEqual(removed, {})  # 아는 틀만 있었다
+
+    def test_paired_note_markers_and_ref_notes_are_removed(self):
+        # 三國志 卷19: 裴注가 {{*s}}…{{*e}} 짝으로 달려 있다. 새면 「楊脩字德祖…」가 열전 서두로 읽힌다.
+        raw = ("植益內不自安。{{*s}}《典略》曰：楊脩字德祖，弘農華陰人也。{{*e}}二十四年"
+               "，六十還之，<ref>《周禮》{{校|鄉|卿}}大夫職曰</ref>甲<ref name=\"a\" /><!--linked-->乙{{別|禦|御}}我")
+        cleaned = builder.clean_wikitext(raw, {})
+        self.assertEqual(cleaned, "植益內不自安。二十四年，六十還之，甲乙禦我")
+
+    def test_unknown_template_is_dropped_but_counted(self):
+        removed: dict = {}
+        self.assertEqual(builder.clean_wikitext("甲{{모르는틀|乙}}丙", removed), "甲丙")
+        self.assertEqual(removed, {"모르는틀": 1})
+
     def test_forms(self):
         text = ("關羽字雲長，本字長生，河東解人也。\n典韋，陳留己吾人也。\n夏侯惇字元讓，沛國譙人，夏侯嬰之後也。\n"
                 "先主姓劉，諱備，字玄德，涿郡涿縣人，\n太祖武皇帝，沛國譙人也，姓曹，諱操，字孟德\n羊祜，字叔子，泰山南城人也")
