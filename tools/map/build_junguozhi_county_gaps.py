@@ -7,7 +7,7 @@
 220년 단면 차이는 가리지 않으므로 모든 행은 `review: UNREVIEWED_NAME_MATCH` 다.
 
 입력(커밋본): data/curated/han/administrative-units.json, data/map/han-tiles.json,
-data/curated/han/hant-hans-placename-chars-v1.json
+data/curated/han/han-name-simplification-v1.json(audit_county_coverage 의 정규화 규칙을 그대로 쓴다)
 출력: data/curated/han/junguozhi-county-gaps-v1.json   (`--check` = 재생성 대조)
 """
 from __future__ import annotations
@@ -15,56 +15,74 @@ from __future__ import annotations
 import argparse
 import collections
 import json
-import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 UNITS = ROOT / "data/curated/han/administrative-units.json"
 TILES = ROOT / "data/map/han-tiles.json"
-CHARS = ROOT / "data/curated/han/hant-hans-placename-chars-v1.json"
+WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 OUTPUT = ROOT / "data/curated/han/junguozhi-county-gaps-v1.json"
-SUFFIX = re.compile(r"(县|道|侯国|国|邑)$")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import audit_county_coverage  # noqa: E402 — 접미사·글자표 규칙의 정본. 따로 만들면 邑·道·國을 잘라 먹는다(2026-09-17 교차 비평)
 
 
-def folder(chars: dict):
-    table = str.maketrans({**chars["icu"], **chars["manual"]})
-
-    def fold(name: str) -> str:
-        return SUFFIX.sub("", name.translate(table))
-
-    return fold
+def _near(a: str, b: str) -> bool:
+    if len(a) == len(b) and len(a) >= 2:
+        return sum(x != y for x, y in zip(a, b)) == 1
+    return abs(len(a) - len(b)) == 1 and (a in b or b in a)
 
 
-def build(units: dict, tiles: dict, chars: dict) -> dict:
-    fold = folder(chars)
+def build(units: dict, tiles: dict, world: dict) -> dict:
+    fold = audit_county_coverage.make_normalizer()
+    fold_group = audit_county_coverage.make_normalizer(group=True)
     commandery_name = {c["id"]: c["nameCh"] for c in tiles["commanderyRecords"]}
     by_commandery: dict[str, dict[str, str]] = collections.defaultdict(dict)
     anywhere: dict[str, list[str]] = collections.defaultdict(list)
     for j in tiles["jurisdictionRecords"]:
         com = commandery_name[j["commanderyId"]]
-        by_commandery[fold(com)][fold(j["nameCh"])] = j["id"]
+        by_commandery[fold_group(com)][fold(j["nameCh"])] = j["id"]
         anywhere[fold(j["nameCh"])].append(com)
+    # 城의 meta.junCh 는 郡國志 시점의 郡이다. 타일의 郡은 220년 단면이라 분할된 郡(襄陽·章陵…)의 縣이 남의 郡으로 보인다.
+    by_source_jun: dict[str, dict[str, int]] = collections.defaultdict(dict)
+    for city in world["cities"]:
+        meta = city.get("meta") or {}
+        if meta.get("junCh") and meta.get("nameCh"):
+            by_source_jun[fold_group(meta["junCh"])][fold(meta["nameCh"])] = city["id"]
     groups = []
     totals = collections.Counter()
     for g in units["groups"]:
-        own = by_commandery.get(fold(g["canonicalGroup"]), {})
+        own = by_commandery.get(fold_group(g["canonicalGroup"]), {})
         rows = []
         for u in g["units"]:
             key = fold(u["sourceName"])
+            source_own = by_source_jun.get(fold_group(g["canonicalGroup"]), {})
             if key in own:
-                status, extra = "IN_OWN_COMMANDERY", {"jurisdictionId": own[key]}
+                status, extra = "IN_OWN_COMMANDERY", {"basis": "TILE_COMMANDERY", "jurisdictionId": own[key]}
+            elif key in source_own:
+                status, extra = "IN_OWN_COMMANDERY", {"basis": "CITY_SOURCE_JUN", "cityId": source_own[key],
+                                                      "tileCommanderies": sorted(set(anywhere.get(key, [])))}
             elif key in anywhere:
                 status, extra = "IN_OTHER_COMMANDERY", {"foundIn": sorted(set(anywhere[key]))}
             else:
                 status, extra = "ABSENT", {}
-            totals[status] += 1
-            rows.append({"ordinal": u["ordinal"], "sourceName": u["sourceName"], "status": status, **extra})
+            rows.append({"ordinal": u["ordinal"], "sourceName": u["sourceName"], "status": status, **extra, "_key": key})
+        # 부재 후보에 같은 郡의 「아직 안 맞은」 타일 縣 중 한 글자 차이 이름을 단다(異體字·개명 후보). 승격하지 않는다.
+        taken = {r["_key"] for r in rows if r["status"] != "ABSENT"}
+        free = sorted(set(own) - taken)
+        for r in rows:
+            key = r.pop("_key")
+            if r["status"] == "ABSENT":
+                near = [f for f in free if _near(key, f)]
+                if near:
+                    r["nearMatchInOwnCommandery"] = near
+                    totals["absentWithNearMatch"] += 1
+            totals[r["status"]] += 1
         first = rows[0] if rows else None
         groups.append({
             "sourceVolume": g["sourceVolume"],
             "commandery": g["canonicalGroup"],
-            "inTiles": fold(g["canonicalGroup"]) in by_commandery,
+            "inTiles": fold_group(g["canonicalGroup"]) in by_commandery,
             "declaredCounties": len(rows),
             "absent": sum(1 for r in rows if r["status"] == "ABSENT"),
             "firstListedCounty": first and {"sourceName": first["sourceName"], "status": first["status"]},
@@ -74,7 +92,7 @@ def build(units: dict, tiles: dict, chars: dict) -> dict:
         "schemaVersion": 1,
         "review": "UNREVIEWED_NAME_MATCH",
         "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다.",
-        "totals": {"counties": sum(totals.values()), **{k: totals[k] for k in sorted(totals)},
+        "totals": {"counties": sum(g["declaredCounties"] for g in groups), **{k: totals[k] for k in sorted(totals)},
                    "commanderiesWithAbsentFirstCounty": sum(
                        1 for g in groups if g["firstListedCounty"] and g["firstListedCounty"]["status"] == "ABSENT")},
         "commanderies": groups,
@@ -96,7 +114,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args(argv)
-    doc = build(*(json.loads(p.read_text(encoding="utf-8")) for p in (UNITS, TILES, CHARS)))
+    doc = build(*(json.loads(p.read_text(encoding="utf-8")) for p in (UNITS, TILES, WORLD)))
     text = render(doc)
     if args.check:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != text:

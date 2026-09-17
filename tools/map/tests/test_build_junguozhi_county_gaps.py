@@ -26,11 +26,22 @@ class GapLedgerTest(unittest.TestCase):
         ying = {c["sourceName"]: c["status"] for c in self.by["潁川郡"]["counties"]}
         self.assertEqual(ying["潁陰"], "IN_OWN_COMMANDERY")  # 繁→簡 접기(潁→颍, 陰→阴)가 죽으면 빨개진다
 
-    def test_fold_table_is_needed(self):
-        # 글자표를 비우면 簡體 han-tiles 와 繁體 郡國志가 안 맞아 ABSENT 가 크게 는다.
-        chars = {"icu": {}, "manual": {}}
-        doc = B.build(*(json.loads(p.read_text(encoding="utf-8")) for p in (B.UNITS, B.TILES)), chars)
-        self.assertGreater(doc["totals"]["ABSENT"], self.doc["totals"]["ABSENT"] + 100)
+    def test_names_ending_in_yi_dao_guo_are_not_truncated(self):
+        # 邑·道·國은 郡國志에서 이름의 일부다(安邑·狄道·安國). 떼면 타일의 「狄道县」과 조용히 어긋난다.
+        for commandery, county in (("河東郡", "安邑"), ("隴西郡", "狄道"), ("山陽郡", "昌邑"), ("梁國", "下邑"), ("常山國", "高邑")):
+            status = {c["sourceName"]: c["status"] for c in self.by[commandery]["counties"]}
+            self.assertEqual(status[county], "IN_OWN_COMMANDERY", f"{commandery} {county}")
+
+    def test_agrees_with_audit_county_coverage(self):
+        # 독립 구현이었을 때 783 vs 841 로 58건 어긋났다. 같은 (郡,縣) 대조면 같은 수가 나와야 한다.
+        import audit_county_coverage
+        self.assertEqual(self.doc["totals"]["IN_OWN_COMMANDERY"], audit_county_coverage.audit()["totals"]["placed"])
+
+    def test_absent_rows_carry_one_glyph_near_matches_without_promotion(self):
+        tai = {c["sourceName"]: c for c in self.by["泰山郡"]["counties"]}
+        self.assertEqual(tai["奉髙"]["status"], "ABSENT")  # 異體字(髙/高) — 판정은 사람이 한다
+        self.assertEqual(tai["奉髙"]["nearMatchInOwnCommandery"], ["奉高"])
+        self.assertNotIn("nearMatchInOwnCommandery", {c["sourceName"]: c for c in self.by["東郡"]["counties"]}["濮陽"])
 
     def test_rows_stay_unreviewed(self):
         self.assertEqual(self.doc["review"], "UNREVIEWED_NAME_MATCH")
