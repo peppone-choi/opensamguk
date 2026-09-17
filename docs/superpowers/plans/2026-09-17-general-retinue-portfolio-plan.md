@@ -206,14 +206,14 @@
 | #157 | OPENSAM-15 | 완료 종료 | 하위 4건 모두 CLOSED/COMPLETED: #173(2026-08-13), #174(PR #400 머지, 리뷰 cleared), #175(60초 cadence·관측 D4-14~17 실측, 2026-08-06), #176(Predeploy Go C… |
 | #161 | OPENSAM-19 | 완료 종료 | 완료 조건 4개가 충족됐다. #187 CLOSED(결과 lifecycle·700ms 폴링 제거·전역 reload 제거, PR #430/#433/#432), #189 CLOSED(124 카탈로그 동결·ring-aware facade, PR #568/#5… |
 | #163 | OPENSAM-21 | 병합 종료 | B0 절반: spec 머리말 Supersedes(contract-freeze P-13 동시 봉인 WEGO 전술 엔진) + §5.1 5단계 + §10 |
-| #183 | OPENSAM-41 | 대체 종료 | §13.2 재배치 표 「PhysicalPlace 2,000 · LOD 예산 → 城 1,098 · 省 1,594 체계, 버림」 |
+| #183 | OPENSAM-41 | 대체 종료 | §13.2 재배치 표 「PhysicalPlace 2,000 · LOD 예산 → 城 1,133 · 省 1,594 체계, 버림」 |
 | #188 | OPENSAM-46 | 완료 종료 | PR #651(2026-09-07 머지) 코멘트 기준으로 D3-11~17 이 구현됐다 — 작전실 하단 조작 대상 바(도시·국가·장수), D3-17 휘하 슬롯, 작전 배지, 출병 슬롯 봉인 링크. 코드 확인: web/game/components/game… |
 | #191 | OPENSAM-49 | 대체 종료 | spec 머리말 Supersedes: contract-freeze P-13(동시 봉인 WEGO 전술 엔진) + §5.1 5단계(조우 전투 = 공격 봉인 계획·방어 대응 공개 → 결정론 전투) + §10(실시간 대형 전투 세션 없음, 대형은 진형 선택으… |
 | #197 | OPENSAM-55 | 대체 종료 | §17(게임 수치는 게이트 임계값이 아님) + §13.2(편제 5축 「첫 구성은 작게」, PhysicalPlace 2,000·LOD 예산 버림) + §6.1(CLASSIC/CHRONICLE 월드 분리 미적용). 확장 콘텐츠는 §15.1 3층 「편제 전… |
 | #204 | OPENSAM-62 | 병합 종료 | #203 로 병합 |
 | #239 | OPENSAM-96 | 대체 종료 | 사용자 결정 2026-09-17: RTK14 초상 유지(ADR-LITE-048, ADR-LITE-057 결정 16). 배포용 자체 초상 교체 에픽은 닫는다. |
 | #247 | OPENSAM-104 | 대체 종료 | spec §6.1 출처 원칙(정사·연의를 사료로, 인용마다 책·권) · §2.10(역사 시나리오 결속은 사료대로 선채움) + ADR-LITE-055(han-world-v3 최신 판 지도, RTK 도시 id 체계 없음) + #244 현행 정본(「RTK1… |
-| #248 | OPENSAM-105 | 대체 종료 | ADR-LITE-055(han-world-v3 최신 판, 城 1,098·省 1,594) + spec Preserves 헤더(han-world-v3 최신 판 지도·R1 보존) + ADR-LITE-039/040(CHGIS 기반 후한 군현 타일맵) — 제품… |
+| #248 | OPENSAM-105 | 대체 종료 | ADR-LITE-055(han-world-v3 최신 판, 城 1,133·省 1,594) + spec Preserves 헤더(han-world-v3 최신 판 지도·R1 보존) + ADR-LITE-039/040(CHGIS 기반 후한 군현 타일맵) — 제품… |
 | #250 | OPENSAM-107 | 완료 종료 | ADR-LITE-057 / spec 2026-09-17-general-and-retinue-campaign-redesign.md §0·§1(삼모 명령 체계 교체), §13(v2·기존 구현 재배치) — 「시스템 진화」의 채택 방향은 이제 새 정본 설계가… |
 | #255 | OPENSAM-112 | 완료 종료 | 본문 머리 「2026-09-06 전제 변경」: 「이 에픽은 AI 에셋 파이프라인(#257) 완료 뒤 닫는다」. #257 CLOSED 2026-09-07, #258 CLOSED, 신규 미러 UI-P1 #645·UI-P2 #646·UI-P3 #647·UI… |
 | #333 | OPENSAM-156 | 대체 종료 | spec 2026-09-17-general-and-retinue-campaign-redesign.md §10(실시간 대형 전투 세션은 만들지 않는다) · §13.2(실시간 전투 세션 → 버림) · §5.1 5단계(조우 전투는 턴 주인의 개인 턴 안에서… |
