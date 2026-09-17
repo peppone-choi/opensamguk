@@ -27,8 +27,9 @@ class SiegeSupplyTest(unittest.TestCase):
         self.assertEqual(self.result["status"], "EXPLORATORY")
 
     def test_march_turns_follow_the_approved_tempo_ledger(self):
-        # 도구가 템포 원장을 안 읽고 다른 속도를 쓰면 빨개진다. 기대값은 하드코딩하지 않고
-        # march_tempo 로 원장 값(속도·험지 계수)을 넣어 따로 계산한다 — han-tiles 가 바뀌어도(#804 로 30→29순) 같이 움직인다.
+        # 막는 것: 도구가 템포 원장을 안 읽거나 원장 값이 30/1.5 에서 바뀐 경우. 기대값은 같은 march_tempo 함수로 다시
+        # 계산하므로 **독립 검사가 아니다** — 거리 계산(Graph.km) 자체가 틀리면 같이 틀려 통과한다(교차 비평 확인).
+        # han-tiles 가 바뀌어도(#804 로 30→29순) 기대값이 같이 움직인다.
         import math
         g = S.M.Graph(self.tiles)
         speed, rough = self.tempo["baseSpeedKmPerTurn"], self.tempo["roughTerrainFactor"]
