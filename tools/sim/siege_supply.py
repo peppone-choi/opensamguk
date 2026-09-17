@@ -28,9 +28,10 @@ TEMPO = ROOT / "data/curated/han/march-tempo-targets-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
 STATUS = "EXPLORATORY"
 
-HAN_LI_KM = 0.4158          # 漢里 = 1800尺 × 23.1 cm (Dubs). SOURCES["hanLi"]
+HAN_LI_KM = 0.4158          # 漢里 = 300步 = 1800尺 × 23.1 cm. SOURCES["hanLi"]
 HU_LITRES = 19.968          # 漢 1斛. SOURCES["hu"]
-LUNAR_MONTH_DAYS = 29.5     # 사료의 「N월」을 일로 바꾸는 근사
+LUNAR_MONTH_DAYS = 29.5     # 사료의 「N월」(역월)을 일로 바꾸는 근사
+RATION_MONTH_DAYS = 30.0    # 인·월의 한 달. 李固 5升/日 × 30 = 1.5斛 에 맞춘 값 — 역월 29.5일과 일부러 다르다(차이 1.7%)
 
 # ── 후보값. 전부 EXPLORATORY ──────────────────────────────────────────────
 # 1순의 세계 안 길이(일). 미정(spec §3 은 1년 36순만 정했다).
@@ -49,19 +50,19 @@ RATION_TABLE_TROOPS = 30_000
 LOSS_PER_EDGE = (0.01, 0.02, 0.05, 0.10)   # 간선당 손실 후보. 사료 근거 없음 — 격자일 뿐이다.
 EXTRA_EDGES = (1, 2)
 SIEGE_TURN_CANDIDATES = (3, 6, 9, 18, 36)
-MEDIAN_EDGE_KM = 32         # 행군 노트 실측: 중원 간선 711개 중앙값
+CORE_BOX = (112.0, 118.0, 33.0, 37.0)  # 1차분 노트의 「중원」 정의: 양 끝 省 중심이 모두 이 lon·lat 상자 안인 간선
 
 SOURCES = {
     "liGu": {"grade": "PRIMARY", "book": "後漢書 卷86 南蠻西南夷列傳", "quote": "軍行三十里爲程，而去日南九千餘里，三百日乃到，計人稟五昇，用米六十萬斛",
-             "url": "https://zh.wikisource.org/zh-hant/後漢書/卷86", "note": "4만 명 × 300일 × 5升 = 60만 斛. 永和二年(137) 李固 의론"},
+             "url": "https://zh.wikisource.org/zh-hant/後漢書/卷86", "note": "4만 명 × 300일 × 5升 = 60만 斛. 永和三年(138) 李固 의론 — 반란은 永和二年, 원문 「明年，召公卿百官」"},
     "zhaoChongguo": {"grade": "PRIMARY", "book": "漢書 卷69 趙充國辛慶忌傳", "quote": "合凡萬二百八十一人，用穀月二萬七千三百六十三斛，鹽三百八斛",
                      "url": "https://zh.wikipedia.org/wiki/赵充国", "note": "前漢 神爵 원년(기원전 61) 屯田奏. 27363 ÷ 10281 = 2.66"},
     "juyan": {"grade": "SECONDARY_UNVERIFIED", "book": "居延漢簡(원문 미확인)", "quote": None,
-              "url": "https://military-history.fandom.com/wiki/Military_of_the_Han_dynasty", "note": "2차 문헌의 요약 수치. 簡 번호 UNKNOWN"},
-    "hu": {"grade": "SECONDARY", "quote": None, "url": "https://military-history.fandom.com/wiki/Military_of_the_Han_dynasty", "note": "1斛 = 19.968 L"},
-    "hanLi": {"grade": "SECONDARY", "quote": None, "url": "https://kongming.net/novel/chinese_units/", "note": "1里 = 300步 ≈ 415.8 m"},
+              "url": "https://en.wikipedia.org/wiki/Military_of_the_Han_dynasty", "note": "2차 문헌의 요약 수치. 簡 번호 UNKNOWN"},
+    "hu": {"grade": "SECONDARY", "quote": None, "url": "https://en.wikipedia.org/wiki/Military_of_the_Han_dynasty", "note": "1斛 = 19.968 L"},
+    "hanLi": {"grade": "SECONDARY", "quote": None, "url": "https://kongming.net/novel/chinese_units/", "note": "1尺 23.1 cm · 1里 약 415–416 m"},
     "woodenOx": {"grade": "PRIMARY", "book": "三國志 卷35 諸葛亮傳 注(亮集)", "quote": "載一歲糧，日行二十里，而人不大勞",
-                 "url": "https://zh.wikisource.org/zh-hant/三國志/卷35", "note": "木牛 1대 = 1인 1년치, 하루 20里"},
+                 "url": "https://zh.wikisource.org/zh-hant/三國志/卷35", "note": "사료가 주는 것은 적재량(一歲糧)과 속도(日行二十里)뿐이다. 수송자 1명 = 1대, 하루 1인분, 왕복분을 제 짐에서 먹는다는 것은 모델 가정"},
     "qin30zhong": {"grade": "PRIMARY", "book": "史記 卷112 平津侯主父列傳", "quote": "起於黃、腄、瑯邪負海之郡，轉輸北河，率三十鐘而致一石",
                    "url": "https://zh.wikisource.org/zh-hant/史記/卷112", "note": "1鍾 = 6斛4斗(https://zdic.net/hans/鍾) → 192 : 1. 秦代, 수사적 상한. 거리 UNKNOWN"},
     "xinan10zhong": {"grade": "PRIMARY", "book": "漢書 卷24 食貨志 (= 史記 卷30 平準書)", "quote": "千里負擔餽饟，率十餘鍾致一石",
@@ -75,7 +76,7 @@ SOURCES = {
 SIEGES = (
     {"name": "雍丘 195", "kind": "포위", "months": 4, "days": None, "lowerBound": False, "outcome": "함락",
      "book": "三國志 卷1 武帝紀", "quote": "秋八月，圍雍丘。…十二月，雍丘潰", "url": "https://zh.wikisource.org/zh-hant/三國志/卷01"},
-    {"name": "下邳 198", "kind": "포위(수공)", "months": 3, "days": None, "lowerBound": False, "outcome": "내부 항복",
+    {"name": "下邳 198", "kind": "포위(塹圍 3개월, 그중 수공은 武帝紀 「月餘」)", "months": 3, "days": None, "lowerBound": False, "outcome": "내부 항복",
      "book": "三國志 卷7 呂布傳", "quote": "太祖塹圍之三月，上下離心", "url": "https://en.wikipedia.org/wiki/Battle_of_Xiapi"},
     {"name": "官渡 200", "kind": "대치(포위 아님)", "months": 2, "days": None, "lowerBound": False, "outcome": "보급 기지 피습으로 붕괴",
      "book": "三國志 卷1 武帝紀", "quote": "八月，紹連營稍前…冬十月，紹遣車運穀", "url": "https://en.wikipedia.org/wiki/Battle_of_Guandu"},
@@ -83,22 +84,24 @@ SIEGES = (
      "book": "三國志 卷1 武帝紀", "quote": "二月…攻鄴，爲土山、地道…八月，審配兄子榮夜開所守城東門內兵", "url": "https://en.wikipedia.org/wiki/Battle_of_Ye"},
     {"name": "鄴 204(圍壍부터)", "kind": "포위(수공)", "months": 3, "days": None, "lowerBound": False, "outcome": "내응으로 함락",
      "book": "三國志 卷6 袁紹傳", "quote": "決漳水以灌之，自五月至八月，城中餓死者過半", "url": "https://en.wikipedia.org/wiki/Battle_of_Ye"},
-    {"name": "合肥 208", "kind": "포위", "months": None, "days": 100, "lowerBound": True, "outcome": "해제(공격 측 철수)",
+    {"name": "合肥 208(劉馥傳)", "kind": "포위", "months": None, "days": 100, "lowerBound": True, "outcome": "해제(공격 측 철수)",
      "book": "三國志 卷15 劉馥傳", "quote": "孫權率十萬衆攻圍合肥城百餘日", "url": "https://en.wikipedia.org/wiki/Battle_of_Hefei_(208)"},
+    {"name": "合肥 208(吳主傳 — 같은 포위, 기록 상충)", "kind": "포위", "months": 1, "days": None, "lowerBound": True, "outcome": "해제(공격 측 철수)",
+     "book": "三國志 卷47 吳主傳", "quote": "權攻城逾月不能下。曹公自荊州還，遣張喜將騎赴合肥。未至，權退", "url": "https://en.wikipedia.org/wiki/Battle_of_Hefei_(208)"},
     {"name": "江陵 208–209", "kind": "포위·대치", "months": 12, "days": None, "lowerBound": True, "outcome": "수비 측 철수",
      "book": "三國志 卷47 吳主傳", "quote": "十四年，瑜、仁相守歳餘，所殺傷甚眾。仁委城走", "url": "https://en.wikipedia.org/wiki/Battle_of_Jiangling_(208)"},
     {"name": "樊(襄陽) 219", "kind": "포위(홍수)", "months": 2, "days": None, "lowerBound": True, "outcome": "구원군이 해제",
      "book": "三國志 卷1 武帝紀", "quote": "八月，漢水溢，灌禁軍…遂圍仁…冬十月…晃攻羽，破之，羽走，仁圍解", "url": "https://en.wikipedia.org/wiki/Battle_of_Fancheng"},
     {"name": "陳倉 228–229", "kind": "강공", "months": None, "days": 20, "lowerBound": True, "outcome": "해제(공격 측 糧盡)",
      "book": "三國志 卷3 明帝紀 注(魏略)", "quote": "晝夜相攻拒二十餘日，亮無計，救至，引退", "url": "https://en.wikipedia.org/wiki/Siege_of_Chencang"},
-    {"name": "襄平 238", "kind": "포위", "months": 2, "days": None, "lowerBound": False, "outcome": "함락",
-     "book": "三國志 卷8 公孫淵傳", "quote": "六月，軍至遼東…爲圍塹。會霖雨三十餘日…八月…壬午，淵眾潰", "url": "https://zh.wikisource.org/zh-hant/三國志/卷08"},
-    {"name": "合肥新城 253", "kind": "포위", "months": None, "days": None, "lowerBound": False, "outcome": "해제(역병)",
+    {"name": "襄平 238", "kind": "포위", "months": 2, "days": None, "lowerBound": False, "outcome": "함락(성 안 糧盡)",
+     "book": "三國志 卷8 公孫淵傳", "quote": "六月，軍至遼東…爲圍塹。會霖雨三十餘日…淵窘急。糧盡，人相食，死者甚多…八月…壬午，淵眾潰", "url": "https://zh.wikisource.org/zh-hant/三國志/卷08"},
+    {"name": "合肥新城 253", "kind": "포위", "months": None, "days": None, "lowerBound": False, "unknownSpan": "UNKNOWN(「連月」)", "outcome": "해제(역병)",
      "book": "三國志 卷64 諸葛恪傳", "quote": "攻守連月，城不拔。士卒疲勞…病者大半", "url": "https://zh.wikisource.org/zh-hant/三國志/卷64"},
     {"name": "壽春 257–258", "kind": "포위", "months": 8, "days": None, "lowerBound": False, "outcome": "함락(성 안 糧盡)",
      "book": "三國志 卷28 諸葛誕傳 · 卷4 三少帝紀", "quote": "六月，車駕東征…督中外諸軍二十六萬眾，臨淮討之 / 三年春二月，大將軍司馬文王陷壽春城", "url": "https://en.wikipedia.org/wiki/Zhuge_Dan%27s_Rebellion"},
-    {"name": "東武陽(臧洪, 연도 UNKNOWN)", "kind": "포위", "months": 12, "days": None, "lowerBound": True, "outcome": "함락(성 안 糧盡)",
-     "book": "三國志 卷7 臧洪傳", "quote": "紹興兵圍之，歷年不下", "url": "https://zh.wikisource.org/zh-hant/三國志/卷07"},
+    {"name": "東武陽(臧洪) 195/196–", "kind": "포위", "months": None, "days": None, "lowerBound": False, "unknownSpan": "해를 넘김(「歷年」, 달수 UNKNOWN)", "outcome": "함락(성 안 糧盡)",
+     "book": "三國志 卷7 臧洪傳 (資治通鑑 卷61 은 興平二年 十二月 雍丘 함락 조에 몰아 적었다 — 함락 월 없음)", "quote": "紹興兵圍之，歷年不下…城中糧穀以盡，外無強救", "url": "https://zh.wikisource.org/zh-hant/三國志/卷07"},
 )
 
 
@@ -137,7 +140,7 @@ def marches(tiles: dict, tempo: dict) -> list[dict]:
 
 
 def person_months(troops: int, turns: int, days_per_turn: float) -> float:
-    return troops * turns * days_per_turn / 30.0
+    return troops * turns * days_per_turn / RATION_MONTH_DAYS
 
 
 def grain_hu(troops: int, turns: int, days_per_turn: float, hu_per_month: float) -> int:
@@ -151,9 +154,23 @@ def arrival(loss_per_edge: float, edges: int) -> float:
 
 
 def wooden_ox_arrival(km: float) -> float:
-    """木牛 모델: 짐 = 1인 1년치(365일분), 하루 20里, 수송자가 제 짐에서 왕복분을 먹는다. 0 미만은 0."""
+    """木牛 모델. 사료: 짐 = 「一歲糧」, 하루 20里. 가정: 수송자 1명 = 1대, 하루 1인분, 왕복분을 제 짐에서 먹는다. 0 미만은 0."""
     days_round_trip = 2 * km / (20 * HAN_LI_KM)
     return max(0.0, 1 - days_round_trip / 365)
+
+
+def core_median_edge_km(g) -> tuple[int, float]:
+    """1차분 노트의 중원 간선 중앙값을 지금 타일에서 다시 잰다(하드코딩하지 않는다)."""
+    lo0, lo1, la0, la1 = CORE_BOX
+
+    def inside(p):
+        x, y = g.center[p]
+        return lo0 <= g.lon0 + x * g.dlon <= lo1 and la0 <= g.lat0 + y * g.dlat <= la1
+    ds = sorted(g.km(a, b) for a in g.adj for b in g.adj[a] if a < b and inside(a) and inside(b))
+    if not ds:
+        raise ValueError("no edges inside CORE_BOX")
+    mid = len(ds) // 2
+    return len(ds), ds[mid] if len(ds) % 2 else (ds[mid - 1] + ds[mid]) / 2
 
 
 def implied_loss(ratio_in_per_out: float, edges: int) -> float:
@@ -183,8 +200,10 @@ def build(tiles: dict, tempo: dict, economy: dict) -> dict:
     edge_counts = sorted(set(EXTRA_EDGES) | {m["edges"] for m in ms})
     arrivals = [{"edges": e, "arrival": {str(p): round(arrival(p, e), 3) for p in LOSS_PER_EDGE}} for e in edge_counts]
     ox = [{"from": m["from"], "to": m["to"], "km": m["km"], "arrival": round(wooden_ox_arrival(m["km"]), 3)} for m in ms]
-    thousand_li_edges = round(1000 * HAN_LI_KM / MEDIAN_EDGE_KM)
+    core_n, core_median = core_median_edge_km(M.Graph(tiles))
+    thousand_li_edges = round(1000 * HAN_LI_KM / core_median)
     anchors = [{"source": "xinan10zhong", "ratio": 64, "km": round(1000 * HAN_LI_KM, 1), "edges": thousand_li_edges,
+                "coreEdges": core_n, "coreMedianKm": round(core_median, 1),
                 "impliedLossPerEdge": round(implied_loss(64, thousand_li_edges), 3),
                 "woodenOxArrival": round(wooden_ox_arrival(1000 * HAN_LI_KM), 3)}]
     sieges = []
@@ -229,7 +248,7 @@ def render(r: dict) -> str:
     for a in r["arrivals"]:
         L.append(f"| {a['edges']} | " + " | ".join(f"{a['arrival'][str(p)]:.1%}" for p in LOSS_PER_EDGE) + " |")
     L.append("")
-    L.append("### B2. 木牛 모델 도착 비율(1인 1년치 적재 · 하루 20里 · 왕복분을 짐에서 먹음)")
+    L.append("### B2. 木牛 모델 도착 비율(사료: 1년치 적재 · 하루 20里 / 가정: 수송자 1명 = 1대, 왕복분을 제 짐에서 먹음)")
     L.append("")
     L.append("| 구간 | 경로 km | 도착 비율 |")
     L.append("|---|---|---|")
@@ -238,10 +257,10 @@ def render(r: dict) -> str:
     L.append("")
     L.append("### B3. 사료 기준점 역산")
     L.append("")
-    L.append("| 사료 | 투입 : 도착 | 거리 km | 간선 수(중앙값 32 km) | 그 비율을 내는 간선당 손실 | 같은 거리의 木牛 모델 도착 비율 |")
+    L.append("| 사료 | 투입 : 도착 | 거리 km | 간선 수(중원 간선 중앙값으로 나눔) | 그 비율을 내는 간선당 손실 | 같은 거리의 木牛 모델 도착 비율 |")
     L.append("|---|---|---|---|---|---|")
     for a in r["anchors"]:
-        L.append(f"| {SOURCES[a['source']]['book']} 「千里…率十餘鍾致一石」 | {a['ratio']} : 1 이상 | {a['km']} | {a['edges']} | {a['impliedLossPerEdge']:.1%} 이상 | {a['woodenOxArrival']:.1%} |")
+        L.append(f"| {SOURCES[a['source']]['book']} 「千里…率十餘鍾致一石」 | {a['ratio']} : 1 이상 | {a['km']} | {a['edges']} (간선 {a['coreEdges']}개 중앙값 {a['coreMedianKm']} km) | {a['impliedLossPerEdge']:.1%} 이상 | {a['woodenOxArrival']:.1%} |")
     L.append("")
     L.append("### C1. 사료상 포위·대치 기간의 순 환산")
     L.append("")
@@ -249,7 +268,7 @@ def render(r: dict) -> str:
     L.append("|---|---|---|---|" + "---|" * len(DAYS_PER_TURN) + "---|---|")
     for s in r["sieges"]:
         if s["approxDays"] is None:
-            span, days, turns = "UNKNOWN(「連月」)", "UNKNOWN", ["UNKNOWN"] * len(DAYS_PER_TURN)
+            span, days, turns = s["unknownSpan"], "UNKNOWN", ["UNKNOWN"] * len(DAYS_PER_TURN)
         else:
             span = (f"{s['months']}개월" if s["months"] is not None else f"{s['days']}일") + (" 이상" if s["lowerBound"] else "")
             days = f"{s['approxDays']}" + ("+" if s["lowerBound"] else "")

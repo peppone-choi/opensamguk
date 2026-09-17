@@ -26,11 +26,25 @@ class SiegeSupplyTest(unittest.TestCase):
     def test_everything_is_exploratory(self):
         self.assertEqual(self.result["status"], "EXPLORATORY")
 
-    def test_march_turns_are_the_approved_baseline_ones(self):
-        # 행군 노트 「승인된 기준선」 표와 같은 값이어야 한다 — 템포 원장을 안 읽고 다른 속도를 쓰면 빨개진다.
+    def test_march_turns_follow_the_approved_tempo_ledger(self):
+        # 도구가 템포 원장을 안 읽고 다른 속도를 쓰면 빨개진다. 기대값은 하드코딩하지 않고
+        # march_tempo 로 원장 값(속도·험지 계수)을 넣어 따로 계산한다 — han-tiles 가 바뀌어도(#804 로 30→29순) 같이 움직인다.
+        import math
+        g = S.M.Graph(self.tiles)
+        speed, rough = self.tempo["baseSpeedKmPerTurn"], self.tempo["roughTerrainFactor"]
+        self.assertEqual((speed, rough), (30, 1.5))  # 사용자 승인값(2026-09-17). 원장이 바뀌면 이 PR 의 노트도 다시 뽑아야 한다
         turns = {(e["from"], e["to"]): e["turns"] for e in self.result["expedition"]}
-        self.assertEqual(turns[("许县", "邺县")], 12)
-        self.assertEqual(turns[("长安县", "成都县")], 30)
+        self.assertEqual(set(turns), set(S.M.ROUTES))
+        for a, b in S.M.ROUTES:
+            cost, _, _ = g.shortest(S.M.county(self.tiles, a)["province"], S.M.county(self.tiles, b)["province"], rough)
+            self.assertEqual(turns[(a, b)], math.ceil(cost / speed), (a, b))
+
+    def test_core_median_edge_is_measured_not_hardcoded(self):
+        n, median = S.core_median_edge_km(S.M.Graph(self.tiles))
+        self.assertGreater(n, 100)
+        a = self.result["anchors"][0]
+        self.assertEqual(a["edges"], round(1000 * S.HAN_LI_KM / median))
+        self.assertEqual(a["coreMedianKm"], round(median, 1))
 
     def test_unapproved_tempo_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "not owner-approved"):
@@ -91,6 +105,22 @@ class SiegeSupplyTest(unittest.TestCase):
                 self.assertEqual(ts, [None] * len(ts))  # 「連月」은 수로 바꾸지 않는다
             else:
                 self.assertEqual(ts, sorted(ts, reverse=True))
+
+    def test_siege_durations_are_pinned_to_the_hand_collated_values(self):
+        # 고정점. 값이 사료와 맞는지는 증명하지 못한다(사람이 三國志 원문과 대조했다) — 누가 SIEGES 를 조용히 바꾸면
+        # 노트를 재생성해도 통과하던 구멍만 막는다. (개월, 일, 하한) — 셋 다 None/False 면 사료가 수를 주지 않는 것.
+        pinned = {
+            "雍丘 195": (4, None, False), "下邳 198": (3, None, False), "官渡 200": (2, None, False),
+            "鄴 204(공격 개시부터)": (6, None, False), "鄴 204(圍壍부터)": (3, None, False),
+            "合肥 208(劉馥傳)": (None, 100, True), "合肥 208(吳主傳 — 같은 포위, 기록 상충)": (1, None, True),
+            "江陵 208–209": (12, None, True), "樊(襄陽) 219": (2, None, True), "陳倉 228–229": (None, 20, True),
+            "襄平 238": (2, None, False), "合肥新城 253": (None, None, False), "壽春 257–258": (8, None, False),
+            "東武陽(臧洪) 195/196–": (None, None, False),
+        }
+        self.assertEqual({s["name"]: (s["months"], s["days"], s["lowerBound"]) for s in S.SIEGES}, pinned)
+        for s in S.SIEGES:
+            if s["months"] is None and s["days"] is None:
+                self.assertTrue(s.get("unknownSpan"), s["name"])
 
     def test_every_siege_and_ration_cites_a_source(self):
         for s in S.SIEGES:
