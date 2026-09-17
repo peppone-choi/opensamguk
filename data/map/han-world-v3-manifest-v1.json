@@ -5,8 +5,8 @@
   "inputs": {
     "selectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6",
     "migrationSha256": "2d4aad8395f44a2676b21973d8d3b913cedd1c9979a76c165fb5e3e34387cacc",
-    "hanTilesSha256": "f6e0da0eeabf77764b8f2ea598742ccfd8e0ad4d09d33f9f3a00a8982501339b",
-    "provinceCityAttributionSha256": "befb1ed1e48f28d500d72a9d7e12e66ccf1728ebb67237cd8ef3fe35c73969b6",
+    "hanTilesSha256": "f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3",
+    "provinceCityAttributionSha256": "832c90eaa841f3a944dde1eed7900d9206f48bec39675291f690baa44bd229b8",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {

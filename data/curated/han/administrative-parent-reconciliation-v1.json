@@ -16,7 +16,7 @@
       "70523"
     ],
     "inputTilesSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "outputDocumentSha256": "f783d2dc2895976039bd32fef54b67f611dd72892b74776b3ebc0190b2c9b48b"
+    "outputDocumentSha256": "8209333ce5fef0107af35e90bd5c0434b404be0546312b7f10d1f5430c2cd92f"
   },
   "countyRebindingProjection": {
     "affectedParentRegionIds": [
@@ -252,7 +252,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "f6e0da0eeabf77764b8f2ea598742ccfd8e0ad4d09d33f9f3a00a8982501339b"
+      "sha256": "f5c0e03cdb48996857444a7c25ad4b955439256060c1e32d487ee960b63a7de3"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",

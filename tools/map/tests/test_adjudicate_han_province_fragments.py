@@ -693,7 +693,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # supersedesJurisdictionSeatRecovery 참조.
         # 2026-09-15: 수·진·관 거점 73 곳이 제 省·관할을 받아 배열 끝에 붙었다(1,593 · 1,143).
         # 2026-09-16 1098: 平陰 省·관할이 더해져 1,594 · 1,144.
-        self.assertEqual((1594, 1144, 172), (
+        # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
+        self.assertEqual((1594, 1133, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),

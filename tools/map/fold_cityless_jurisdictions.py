@@ -8,7 +8,7 @@
 그 관할의 省을 城 있는 관할에 넘긴다.
 
 규칙(기하를 지어내지 않는다):
-  1. 省 칸(owner)·省 행 순서는 그대로다. 접히는 관할의 provinceIds 가 대상 관할 provinceIds 끝에 붙고, 그 省들의
+  1. 省 칸(owner)·省 행 순서는 그대로다. 접히는 관할의 provinceIds 가 대상 관할 provinceIds 에 (정렬해) 합쳐지고, 그 省들의
      jurisdictionId 가 대상으로 바뀐다. 대상 관할이 다른 郡이면(新平→右扶風 등) 省의 parentRegionId 도 대상 郡으로
      옮기고 郡 표면(parentOwner·adjacency.commandery)을 다시 잰다 — 시나리오 소유 원장과 계층 검증이 省의 郡으로
      소속을 읽기 때문이다. 되돌리기에 필요한 칸·간선은 원장에 핀으로 박는다.
@@ -104,7 +104,8 @@ def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | 
         targets_before.setdefault(target_id, list(target_row["provinceIds"]))
         for province_id in source_row["provinceIds"]:
             provinces[province_index[province_id]]["jurisdictionId"] = target_id
-        target_row["provinceIds"] = target_row["provinceIds"] + source_row["provinceIds"]
+        # 계층 검증(world_province_geometry.validate_materialized_hierarchy)은 정렬된 소속 목록을 요구한다.
+        target_row["provinceIds"] = sorted(target_row["provinceIds"] + source_row["provinceIds"])
         commandery["jurisdictionIds"] = [value for value in commandery["jurisdictionIds"] if value != source_id]
         if commandery["seatJurisdictionId"] == source_id:
             seat = decision.get("commanderySeatJurisdictionId")
@@ -135,7 +136,7 @@ def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | 
         before_source, before_target = list(source_row["provinceIds"]), list(target_row["provinceIds"])
         record["jurisdictionId"] = target_id
         source_row["provinceIds"] = [value for value in source_row["provinceIds"] if value != province_id]
-        target_row["provinceIds"] = target_row["provinceIds"] + [province_id]
+        target_row["provinceIds"] = sorted(target_row["provinceIds"] + [province_id])
         touching = _province_touches(document, province_id, before_target)
         if not touching:
             raise ValueError(f"transfer {province_id}: the province does not touch {target_id}")
@@ -156,7 +157,7 @@ def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | 
             commanderies_before.setdefault(commandery["id"], copy.deepcopy(commandery))
         row["commanderyId"] = target_commandery["id"]
         source_commandery["jurisdictionIds"] = [value for value in source_commandery["jurisdictionIds"] if value != row["id"]]
-        target_commandery["jurisdictionIds"] = target_commandery["jurisdictionIds"] + [row["id"]]
+        target_commandery["jurisdictionIds"] = sorted(target_commandery["jurisdictionIds"] + [row["id"]])
         moves.append({"jurisdictionId": row["id"], "fromCommanderyId": source_commandery["id"],
                       "toCommanderyId": target_commandery["id"]})
     commandery_of = {row["id"]: row["commanderyId"] for row in jurisdictions}
@@ -203,10 +204,19 @@ def _province_touches(document: dict, province_id: str, other_province_ids: list
     return count
 
 
+def _canonical_order(document: dict, stage: dict) -> dict:
+    """cities[] 배열 순서만 뒤바뀐 문서를 이 단계가 낸 순서로 되돌린다(거점 분할 단계와 같은 계약)."""
+    from tools.map import relocate_han_province as relocation
+    order = stage.get("outputCityOrder")
+    if order and set(order) == {row["id"] for row in document.get("cities", [])}:
+        return relocation.canonicalize_city_order(document, {"inputCityOrder": order})
+    return document
+
+
 def stage_for(document: dict, ledger: dict) -> dict | None:
     fingerprint = digest(document)
     for stage in ledger.get("geometry", {}).get("stages", []):
-        if stage["outputDocumentSha256"] == fingerprint:
+        if stage["outputDocumentSha256"] in (fingerprint, digest(_canonical_order(document, stage))):
             return stage
     return None
 
@@ -215,7 +225,7 @@ def restore_document(document: dict, ledger: dict) -> dict:
     stage = stage_for(document, ledger)
     if stage is None:
         raise ValueError("document is not a pinned cityless-jurisdiction fold output")
-    restored = copy.deepcopy(document)
+    restored = copy.deepcopy(_canonical_order(document, stage))
     province_by_id = {row["id"]: row for row in restored["provinceRecords"]}
     for province_id, move in stage.get("reparentedProvinces", {}).items():
         province_by_id[province_id]["parentRegionId"] = move["before"]
@@ -277,7 +287,8 @@ def build_stage(source: dict, decisions_document: dict) -> tuple[dict, dict]:
     moves = decisions_document.get("jurisdictionCommanderyMoves", [])
     document, result = apply_folds(source, decisions, transfers, moves)
     stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
-             "inputCounts": copy.deepcopy(source["_meta"]["counts"]), **result}
+             "inputCounts": copy.deepcopy(source["_meta"]["counts"]),
+             "outputCityOrder": [row["id"] for row in document["cities"]], **result}
     ledger = {
         "schemaVersion": 1,
         "ledgerId": "cityless-jurisdiction-folds-v1",
@@ -309,7 +320,7 @@ def check(document: dict, ledger: dict) -> list[str]:
     if (decisions != ledger["decisions"] or transfers != ledger.get("provinceTransfers", [])
             or moves != ledger.get("jurisdictionCommanderyMoves", [])):
         problems.append("fold ledger decisions differ from the reviewed decision file")
-    rebuilt, result = apply_folds(restore_document(document, ledger), decisions, transfers, moves)
+    rebuilt, result = apply_folds(restore_document(_canonical_order(document, stage), ledger), decisions, transfers, moves)
     for key in ("jurisdictionMoves", "reparentedProvinces", "parentSurfaces", "removedJurisdictions", "commanderiesBefore",
                 "targetProvinceIdsBefore", "adjacency", "transfers"):
         if result[key] != stage[key]:
