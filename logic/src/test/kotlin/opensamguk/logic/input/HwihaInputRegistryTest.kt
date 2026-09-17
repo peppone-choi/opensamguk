@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.RestAction
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -28,6 +29,19 @@ class HwihaInputRegistryTest {
     }
 
     @Test
+    fun `every legacy command code is WRONG_RULE_PROFILE in a hwiha world`() {
+        // 한 개만 보면 정규식을 `^che_.+$` 로 좁혀도 초록이다(교차 비평 변이 M7). 실제 코드 전수를 돈다.
+        val source = java.io.File("src/main/kotlin/opensamguk/logic/actions/CommandRegistry.kt").readText()
+        val branchKeys = Regex("""^\s+"([^"]+)"\s*->""", RegexOption.MULTILINE).findAll(source).map { it.groupValues[1] }.toSet()
+        val constKeys = (GameConst.availableGeneralCommand.values + GameConst.availableChiefCommand.values).flatten().toSet()
+        assertTrue(branchKeys.size >= 90 && constKeys.size >= 60, "코드 목록을 못 읽었다: ${branchKeys.size}/${constKeys.size}")
+        assertTrue(branchKeys.any { it.startsWith("cr_") } && branchKeys.any { it.startsWith("event_") })
+        (branchKeys + constKeys).forEach { code ->
+            assertEquals(InputRejection.WRONG_RULE_PROFILE, reject(RuleProfile.HWIHA, code), code)
+        }
+    }
+
+    @Test
     fun `hwiha input in a sammo world is rejected`() {
         assertEquals(InputRejection.WRONG_RULE_PROFILE, reject(RuleProfile.SAMMO, "action.enlist"))
     }
@@ -47,7 +61,7 @@ class HwihaInputRegistryTest {
     @Test
     fun `input with a registered handler resolves`() {
         val handler = InputHandler { }
-        val wired = HwihaInputRegistry(catalog, mapOf("action.enlist" to handler), requireDelivered = false)
+        val wired = HwihaInputRegistry.forWiringTest(catalog, mapOf("action.enlist" to handler))
         val resolved = assertIs<InputResolution.Resolved>(wired.resolve(RuleProfile.HWIHA, "action.enlist"))
         assertEquals(InputKind.GENERAL_ACTION, resolved.entry.kind)
         assertTrue(resolved.handler === handler)
@@ -56,7 +70,7 @@ class HwihaInputRegistryTest {
     @Test
     fun `handler for an id missing from the ledger fails construction`() {
         assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry(catalog, mapOf("action.ghost" to InputHandler { }), requireDelivered = false)
+            HwihaInputRegistry.forWiringTest(catalog, mapOf("action.ghost" to InputHandler { }))
         }
     }
 

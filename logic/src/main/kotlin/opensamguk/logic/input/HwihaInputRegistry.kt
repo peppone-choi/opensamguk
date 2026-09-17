@@ -114,14 +114,17 @@ sealed interface InputResolution {
 }
 
 /**
- * @param requireDelivered 원장 ↔ 코드 일치를 강제한다: 핸들러가 있는 입력은 원장에서 HANDLER_READY 이상이어야 하고,
- *   HANDLER_READY 이상인 입력은 핸들러가 있어야 한다. 테스트용 배선만 false 로 끈다.
+ * 원장 ↔ 코드 일치를 강제한다: 핸들러가 있는 입력은 원장에서 HANDLER_READY 이상이어야 하고,
+ * HANDLER_READY 이상인 입력은 핸들러가 있어야 한다.
  */
-class HwihaInputRegistry(
+class HwihaInputRegistry private constructor(
     private val catalog: HwihaInputCatalog,
     private val handlers: Map<String, InputHandler>,
-    requireDelivered: Boolean = true,
+    requireDelivered: Boolean,
 ) {
+    /** 프로덕션 배선은 이 생성자만 쓴다 — 원장 ↔ 코드 일치 검사를 끌 수 없다. */
+    constructor(catalog: HwihaInputCatalog, handlers: Map<String, InputHandler>) : this(catalog, handlers, true)
+
     init {
         val unknown = handlers.keys.filter { catalog[it] == null }
         require(unknown.isEmpty()) { "handlers registered for inputs missing from the ledger: $unknown" }
@@ -146,7 +149,11 @@ class HwihaInputRegistry(
 
     private fun reject(reason: InputRejection, raw: String) = InputResolution.Rejected(reason, raw)
 
-    private companion object {
-        val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
+    companion object {
+        /** 같은 모듈의 테스트만 쓴다: 원장이 아직 PLANNED 인 입력에 핸들러를 물려 resolve 경로를 본다. */
+        internal fun forWiringTest(catalog: HwihaInputCatalog, handlers: Map<String, InputHandler>) =
+            HwihaInputRegistry(catalog, handlers, false)
+
+        private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
     }
 }
