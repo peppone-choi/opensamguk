@@ -235,7 +235,8 @@ class MapAdministrativeOwnershipTest {
             // data/curated/han/county-misbinding-rebindings-v1.json 의
             // supersedesJurisdictionSeatRecovery 참조.
             // 2026-09-16 1098: + 平陰 관할 1 + 거점 관할 73 = 1,144.
-            assertEquals(1_144, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            // 2026-09-17: 城 없던 관할 11곳 접기 → 1,133.
+            assertEquals(1_133, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             assertEquals(172, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(
                 snapshot.provinceOccupancy.size,

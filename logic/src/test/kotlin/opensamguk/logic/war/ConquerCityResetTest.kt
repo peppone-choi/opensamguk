@@ -116,9 +116,11 @@ class ConquerCityResetTest {
         // 생성기(build_han_world.py)가 그런 城을 제 郡 治所와 직결하도록 고쳤다.
         //
         // 「고립 0곳」만 세지 않는다 — 두 덩어리로 갈라져도 path 는 비어 있지 않다. 전수 도달을 본다.
-        for ((variant, size) in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME) to 1098,
+        // 2026-09-17 1133 판은 섬 郡·郡國 밖 취락이 뱃길(build_han_world V3_SEA_ROUTES)로 이어져야 전수 도달한다.
+        for ((variant, size) in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME) to 1133,
                                        CityConstRegistry.hanWorld(HanWorldVariant.V3_848) to 848,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1098) to 1098)) {
+                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1098) to 1098,
+                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1133) to 1133)) {
             val all = variant.all()
             assertEquals(size, all.size)
             assertEquals(emptyList(), all.keys.sorted().filter { checkNotNull(variant.byId(it)).path.isEmpty() },

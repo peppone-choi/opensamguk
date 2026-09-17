@@ -31,13 +31,20 @@ class HanSpatialSupplyProviderTest {
 
     private fun provider() = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath)
 
+    /**
+     * 2026-09-17(ADR-LITE-056): legacy v2 han.json 의 두 城은 현행 han-tiles 에서 제 관할의 治所 省이 아니다 —
+     * 576 漢昌(蒼溪)은 巴中 관할(44621)에, 622 富平(涇陽 寄治)은 靈武 富平 관할(70524)에 접혔다(같은 縣의 중복 자리).
+     * v3 세계에는 그 자리 城이 없다. v2 城 목록을 현행 타일에 얹는 이 검사들만 그 둘을 뺀다.
+     */
+    private val foldedLegacyV2Seats = setOf(576, 622)
+
     @Test
     fun `reviewed active fallback policies are attached to the spatial network`() {
         val loader = HanSupplyDisconnectionPolicyLoader(
             mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
         )
         val provider = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath, loader)
-        val liveCities = MapJson.loadFromClasspath("han").cities.mapNotNull { city ->
+        val liveCities = MapJson.loadFromClasspath("han").cities.filter { it.id !in foldedLegacyV2Seats }.mapNotNull { city ->
             city.provinceId?.let { SpatialSupplyCity(city.id, it, 0) }
         }
 
@@ -94,7 +101,7 @@ class HanSpatialSupplyProviderTest {
 
     @Test
     fun `all 15 scenarios have owned mapped seats and supplied mapped capitals`() {
-        val cityCoords = MapJson.loadFromClasspath("han").cities
+        val cityCoords = MapJson.loadFromClasspath("han").cities.filter { it.id !in foldedLegacyV2Seats }
         val cityProvinceById = cityCoords.mapNotNull { city ->
             city.provinceId?.let { city.id to it }
         }.toMap()

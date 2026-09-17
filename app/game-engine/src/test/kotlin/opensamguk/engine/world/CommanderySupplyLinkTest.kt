@@ -67,7 +67,10 @@ class CommanderySupplyLinkTest {
         val root = mapper.readTree(Files.readAllBytes(artifact))
         val excluded = root.get("excludedByMisbinding").map { it.asText() }
         assertEquals(5, excluded.size, "동명이지 판정 5건이 그대로 제외돼야 한다")
-        val longest = root.get("stats").get("maxKm").asDouble()
-        assertTrue(longest < 500.0, "가장 긴 보급선이 ${longest}km 다 — 동명이지가 섞였을 수 있다")
+        // 2026-09-17: 사료 뱃길(canonicalGroup SEA_ROUTE, ADR-LITE-056)은 바다를 건너므로 길이 상한에서 뺀다 — 吳↔安平口 1,049km.
+        val longest = root.get("links").filter { it.get("canonicalGroup").asText() != "SEA_ROUTE" }
+            .maxOf { it.get("distanceKm").asDouble() }
+        assertTrue(longest < 500.0, "가장 긴 郡 내부 보급선이 ${longest}km 다 — 동명이지가 섞였을 수 있다")
+        assertEquals(13, root.get("links").count { it.get("canonicalGroup").asText() == "SEA_ROUTE" })
     }
 }
