@@ -45,8 +45,13 @@ REFERENCE_YEAR = 220
 # + 849–1024 城 없던 han-tiles 縣 관할 176곳 (w2-cityless-jurisdiction-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1025–1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS).
+# 2026-09-17: w2 중 같은 縣이 두 번 선 977·989 를 거두어 174곳, 그 두 번호와 1099–1133 에
+# 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
-JURISDICTION_ROUTE_CLAIM_COUNT = 176 + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
+EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 37
+CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 174
+JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
+                                  + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
 HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
@@ -523,7 +528,8 @@ def _validate_review_chain(
         raise ValueError("location adjudications must be reviewed")
     _require_exact_membership(
         contract.get("allowedNodeClasses"),
-        {"COUNTY_NODE", "DAO_NODE", "FERRY_NODE", "FORT_NODE", "MARQUISATE_NODE", "PASS_NODE", "TOWN_NODE"},
+        {"COUNTY_NODE", "DAO_NODE", "FERRY_NODE", "FORT_NODE", "MARQUISATE_NODE", "PASS_NODE", "SETTLEMENT_NODE",
+         "TOWN_NODE"},
         "validation contract allowed node classes",
     )
     _require_equal(contract.get("expectedSelectionCount"), 780, "validation contract selection count")
@@ -564,7 +570,7 @@ def _validate_review_chain(
     batches = policy.get("selectionBatches")
     if (
         not isinstance(batches, list)
-        or len(batches) != 8
+        or len(batches) != 9
         or not all(isinstance(row, dict) for row in batches)
         or {
         (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
@@ -576,9 +582,10 @@ def _validate_review_chain(
             ("w0c-hhs-external-location", 11, "APPROVED"),
             ("w1-frontier-county-location", 51, "APPROVED"),
             ("w1-script-variant-county-join", 13, "APPROVED"),
-            ("w2-cityless-jurisdiction-route-claim", JURISDICTION_ROUTE_CLAIM_COUNT - STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
+            ("w2-cityless-jurisdiction-route-claim", CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w4-vacated-county-location", 1, "APPROVED"),
+            ("w5-external-settlement-route-claim", EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")
@@ -620,7 +627,7 @@ def _validate_review_chain(
     _require_closed_enum(candidates.get("candidates"), "classification", {"EXTERNAL_OR_LATER_OR_MOVING", "HHS_AMBIGUOUS", "HHS_ATTRIBUTION_CONFLICT", "HHS_RESOLVED", "HHS_UNMAPPED"}, "route-node candidates", optional=True)
     _require_closed_enum(candidates.get("candidates"), "overlayJoinStatus", {"AMBIGUOUS_POINT", "NO_COORDINATE_CANDIDATE", "RESOLVED_POINT", "SOURCE_PLACEHOLDER"}, "route-node candidates", optional=True)
     _require_closed_enum(candidates.get("candidates"), "unitType", {"COUNTY", "DAO", "MARQUISATE", "TOWN"}, "route-node candidates", optional=True)
-    _require_closed_enum(rows, "nodeClass", {"COUNTY_NODE", "DAO_NODE", "FERRY_NODE", "FORT_NODE", "MARQUISATE_NODE", "PASS_NODE", "TOWN_NODE"}, "approved route-node selection")
+    _require_closed_enum(rows, "nodeClass", {"COUNTY_NODE", "DAO_NODE", "FERRY_NODE", "FORT_NODE", "MARQUISATE_NODE", "PASS_NODE", "SETTLEMENT_NODE", "TOWN_NODE"}, "approved route-node selection")
     _require_closed_enum(rows, "historicalBindingBasis", {"HHS_ADMINISTRATIVE_UNIT", "REVIEWED_SOURCE_CLAIM"}, "approved route-node selection")
     _require_closed_enum(rows, "seatRole", {"COMMANDERY_SEAT", "NON_SEAT"}, "approved route-node selection")
     _require_closed_enum(rows, "legacyDisposition", {"REPLACED", "RETAINED"}, "approved route-node selection", optional=True)
@@ -633,7 +640,7 @@ def _validate_review_chain(
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "batchId",
-        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim", "w4-vacated-county-location"},
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim", "w4-vacated-county-location", "w5-external-settlement-route-claim"},
         "approved route-node selection rationale",
     )
     _require_closed_enum(
@@ -1350,11 +1357,13 @@ def _assert_locked_contract(
         # 2026-09-15: w2 城 없던 縣 관할 176곳(849–1024)이 경로 노드로 서면서 798 → 973.
         # 衞國(85083)은 기존 시기 판정(東郡→魏郡)이 근거로 남는다. 승인 행은 기하 제안 157·직할지
         # 대기 17·외부 세력 대기 1 에서 왔다. unresolved 340 → 165, 승인 셀 +18_680 = 미결 셀 -18_680.
-        "exactApprovedRowCount": 973,
-        "exactApprovedCellCount": 100_713,
+        # 2026-09-17: w5 郡國 밖 취락 관할 37곳이 경로 노드로 서면서 郡國 밖 세력 검토 대기 38행 중 35행
+        # (5_841칸)이 승인으로 옮겨 973 → 1008, unresolved 165 → 130 · 6_443 → 602 셀로 보존된다.
+        "exactApprovedRowCount": 1_008,
+        "exactApprovedCellCount": 106_554,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
-        "unresolvedRowCount": 165,
-        "unresolvedCellCount": 6_443,
+        "unresolvedRowCount": 130,
+        "unresolvedCellCount": 602,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1369,9 +1378,10 @@ def _assert_locked_contract(
         # 2026-09-14: w1 11곳 편입(8 single + 3 multi, 872셀). 이웃 郡 jun 구성 변화로 3행이
         # single→multi 진단 캐스케이드(74셀, 판정 불변). 45113은 tie였다(ties 3→2).
         # 2026-09-15: w2 176곳이 미결 행에서 승인 행으로 옮겨가며 진단 대상이 줄었다(판정 규칙 불변).
-        "singleGroupJun": {"rowCount": 51, "cellCount": 229},
-        "multiGroupJun": {"rowCount": 71, "cellCount": 338},
-        "uniqueNearest": {"rowCount": 120, "cellCount": 567},
+        # 2026-09-17: 郡國 밖 세력 대기 3행이 기하 제안으로 옮겨 진단에 들어왔다(판정 규칙 불변).
+        "singleGroupJun": {"rowCount": 54, "cellCount": 43},
+        "multiGroupJun": {"rowCount": 71, "cellCount": 559},
+        "uniqueNearest": {"rowCount": 123, "cellCount": 602},
         "distanceTies": {"rowCount": 2, "cellCount": 0},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
@@ -1382,9 +1392,10 @@ def _assert_locked_contract(
         raise ValueError("locked direct-territory blocker row count changed")
     if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 0:
         raise ValueError("locked direct-territory blocker cell count changed")
-    if summary["decisionRowCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 38:
+    # 2026-09-17: w5 로 郡國 밖 취락 치소가 모두 경로 노드가 되어 대기 38행이 0 이다(승인 35 · 기하 제안 3).
+    if summary["decisionRowCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW", 0) != 0:
         raise ValueError("locked external-polity blocker row count changed")
-    if summary["decisionCellCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 5_876:
+    if summary["decisionCellCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW", 0) != 0:
         raise ValueError("locked external-polity blocker cell count changed")
     if summary["directTerritoryReview"] != {
         "rejectedSourcedGroupJunCount": 0,
@@ -1409,6 +1420,28 @@ def build_ledger(
         raise ValueError("ledger build requires every pinned input")
     sys.path.insert(0, str(ROOT))
     from tools.map import carve_strategic_site_provinces as carving
+    from tools.map import fold_cityless_jurisdictions as folding
+    fold_peeled, folded = folding.peel(documents["data/map/han-tiles.json"])
+    if folded is not None:
+        # 城 없는 관할 접기(2026-09-17)는 거점 분할보다도 나중이다. 省 기하·부모는 그대로고 관할 소속만
+        # 바뀐다 — 縣 부모 재조정의 입력(省 부모)이 달라지지 않으므로 접기 전 문서로 세우고 요약만 싣는다.
+        stage = folding.stage_for(documents["data/map/han-tiles.json"], folded)
+        prior_records = copy.deepcopy(input_records)
+        prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
+            (json.dumps(fold_peeled, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+        ).hexdigest()
+        prior = build_ledger(
+            {**documents, "data/map/han-tiles.json": fold_peeled}, prior_records,
+            expected_absent_terminal_ids=expected_absent_terminal_ids,
+        )
+        prior["inputs"] = {path: dict(input_records[path]) for path in sorted(input_records)}
+        prior["citylessJurisdictionFoldProjection"] = {
+            "inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"],
+            "outputDocumentSha256": stage["outputDocumentSha256"],
+            "foldedJurisdictionCount": len(stage["removedJurisdictions"]),
+            "foldedJurisdictionIds": [row["record"]["id"] for row in stage["removedJurisdictions"]],
+        }
+        return prior
     peeled_tiles, carved = carving.peel(documents["data/map/han-tiles.json"])
     if carved is not None:
         # 거점 省 분할(수·진·관)은 縣 부모 재조정의 대상이 아니다 — 새 城 점은 기증 縣의 郡을 그대로

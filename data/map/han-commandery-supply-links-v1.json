@@ -12,7 +12,7 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 56,
+  "linkCount": 62,
   "medianKm": 40.7,
   "p90Km": 130.8,
   "maxKm": 283.0
@@ -76,19 +76,19 @@
   },
   {
    "canonicalGroup": "北地郡",
-   "fromProvinceIndex": 479,
-   "toProvinceIndex": 497,
-   "fromCityName": "부평(北地郡)",
-   "toCityName": "이양",
-   "distanceKm": 84.4
-  },
-  {
-   "canonicalGroup": "北地郡",
    "fromProvinceIndex": 497,
    "toProvinceIndex": 498,
    "fromCityName": "이양",
    "toCityName": "익거",
    "distanceKm": 47.6
+  },
+  {
+   "canonicalGroup": "北沃沮",
+   "fromProvinceIndex": 1434,
+   "toProvinceIndex": 1443,
+   "fromCityName": "북옥저",
+   "toCityName": "읍루",
+   "distanceKm": 234.1
   },
   {
    "canonicalGroup": "北海國",
@@ -113,6 +113,14 @@
    "fromCityName": "교동",
    "toCityName": "즉묵",
    "distanceKm": 29.3
+  },
+  {
+   "canonicalGroup": "卒本",
+   "fromProvinceIndex": 1433,
+   "toProvinceIndex": 1549,
+   "fromCityName": "졸본",
+   "toCityName": "양구",
+   "distanceKm": 75.2
   },
   {
    "canonicalGroup": "卒本",
@@ -355,6 +363,14 @@
    "distanceKm": 78.0
   },
   {
+   "canonicalGroup": "狗邪國",
+   "fromProvinceIndex": 1449,
+   "toProvinceIndex": 1454,
+   "fromCityName": "구야국",
+   "toCityName": "대마국",
+   "distanceKm": 120.3
+  },
+  {
    "canonicalGroup": "益州郡",
    "fromProvinceIndex": 414,
    "toProvinceIndex": 425,
@@ -385,6 +401,38 @@
    "fromCityName": "태등",
    "toCityName": "착진",
    "distanceKm": 42.3
+  },
+  {
+   "canonicalGroup": "邪馬壹國",
+   "fromProvinceIndex": 1455,
+   "toProvinceIndex": 1456,
+   "fromCityName": "일대국",
+   "toCityName": "말로국",
+   "distanceKm": 42.0
+  },
+  {
+   "canonicalGroup": "邪馬壹國",
+   "fromProvinceIndex": 1456,
+   "toProvinceIndex": 1457,
+   "fromCityName": "말로국",
+   "toCityName": "이도국",
+   "distanceKm": 24.2
+  },
+  {
+   "canonicalGroup": "邪馬壹國",
+   "fromProvinceIndex": 1457,
+   "toProvinceIndex": 1458,
+   "fromCityName": "이도국",
+   "toCityName": "노국",
+   "distanceKm": 24.4
+  },
+  {
+   "canonicalGroup": "邪馬壹國",
+   "fromProvinceIndex": 1458,
+   "toProvinceIndex": 1459,
+   "fromCityName": "노국",
+   "toCityName": "야마일국",
+   "distanceKm": 23.1
   },
   {
    "canonicalGroup": "鄱陽郡",

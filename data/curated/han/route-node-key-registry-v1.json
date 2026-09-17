@@ -5095,7 +5095,13 @@
       "routeNodeKey": "7953cd44-539d-4ae3-9054-e7cb9ab46865",
       "initialAdministrativeUnitId": "han-tiles-jurisdiction:44621",
       "issuanceReason": "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND",
-      "numericCityId": 977
+      "numericCityId": 977,
+      "rebinding": {
+        "administrativeUnitId": "han-tiles-external-settlement:X028",
+        "reason": "DUPLICATE_ROUTE_NODE_SLOT_REUSE",
+        "withdrawnAdministrativeUnitId": "han-tiles-jurisdiction:44621",
+        "decisionRef": "data/curated/han/cityless-jurisdiction-fold-decisions-v1.json"
+      }
     },
     {
       "routeNodeKey": "ddc68650-9bd2-4935-927c-2530e03151f4",
@@ -5167,7 +5173,13 @@
       "routeNodeKey": "2ef68286-3c16-4076-945e-04ff3037bb5d",
       "initialAdministrativeUnitId": "han-tiles-jurisdiction:70523",
       "issuanceReason": "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND",
-      "numericCityId": 989
+      "numericCityId": 989,
+      "rebinding": {
+        "administrativeUnitId": "han-tiles-external-settlement:X029",
+        "reason": "DUPLICATE_ROUTE_NODE_SLOT_REUSE",
+        "withdrawnAdministrativeUnitId": "han-tiles-jurisdiction:70523",
+        "decisionRef": "data/curated/han/cityless-jurisdiction-fold-decisions-v1.json"
+      }
     },
     {
       "routeNodeKey": "7616c565-5b1c-4dad-bd59-87398d4d8905",
@@ -5822,6 +5834,216 @@
       "initialAdministrativeUnitId": "hhs:109:河南尹:011",
       "issuanceReason": "VACATED_COUNTY_LOCATION_V1_APPEND",
       "numericCityId": 1098
+    },
+    {
+      "routeNodeKey": "bf8b38b6-2fce-42e9-9e33-bbd87f9c00e4",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X030",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1099
+    },
+    {
+      "routeNodeKey": "db2ee405-0bec-4a0d-a78c-e063dadc85f0",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X031",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1100
+    },
+    {
+      "routeNodeKey": "454a5c60-169f-4e51-9a31-c998be180cc9",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X032",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1101
+    },
+    {
+      "routeNodeKey": "d4f48f51-79d1-464a-8519-106818c0ac49",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X033",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1102
+    },
+    {
+      "routeNodeKey": "31b7e704-f011-416d-b1ed-90e6b7250062",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X034",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1103
+    },
+    {
+      "routeNodeKey": "b06b7b8a-95fb-4ecb-a564-778c77fec7e3",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X035",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1104
+    },
+    {
+      "routeNodeKey": "f5061889-bf91-4794-9033-d299dbc946d1",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X036",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1105
+    },
+    {
+      "routeNodeKey": "088f238c-fc0a-4c0f-bbdf-1c998d443fab",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X037",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1106
+    },
+    {
+      "routeNodeKey": "45ebb005-8f6c-43d1-8283-9e4730c74696",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X038",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1107
+    },
+    {
+      "routeNodeKey": "38f5805e-1357-4d47-9806-5e7e3d83fbc0",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X039",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1108
+    },
+    {
+      "routeNodeKey": "a0e92f2a-34ef-499b-aaee-c715ea33bd53",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X040",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1109
+    },
+    {
+      "routeNodeKey": "e6a13666-3a1d-48df-a671-8ad50855e7f8",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X041",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1110
+    },
+    {
+      "routeNodeKey": "8f3bd599-b539-4c17-9fa9-3fff871da896",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X042",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1111
+    },
+    {
+      "routeNodeKey": "263164f7-6607-4bd1-b081-da0f1501beed",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X043",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1112
+    },
+    {
+      "routeNodeKey": "affa7367-741f-4067-b194-058937af822e",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X044",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1113
+    },
+    {
+      "routeNodeKey": "6f68bd1f-f8e1-48c4-aaa5-cd20c049d35c",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X045",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1114
+    },
+    {
+      "routeNodeKey": "21a82e97-0e56-40d2-8613-f1065c433527",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X046",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1115
+    },
+    {
+      "routeNodeKey": "ad4a2fec-abc5-4fbf-b25c-639bc393a688",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X047",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1116
+    },
+    {
+      "routeNodeKey": "841a448f-880a-48ac-86ca-47f6ae861677",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X048",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1117
+    },
+    {
+      "routeNodeKey": "630041a9-ec7e-4ae2-8a9d-c460622010db",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X049",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1118
+    },
+    {
+      "routeNodeKey": "f11db36c-518f-450f-a7d1-2a8851a0f4a6",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X050",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1119
+    },
+    {
+      "routeNodeKey": "e750fdbe-3a8f-4f8d-9b90-1ef7a44e9913",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X051",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1120
+    },
+    {
+      "routeNodeKey": "42e95487-1d7d-4501-8ad7-81edbfc2b5cf",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X052",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1121
+    },
+    {
+      "routeNodeKey": "cecffca9-67be-4f6e-ba8e-ad1685d946ff",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X053",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1122
+    },
+    {
+      "routeNodeKey": "5d4aea09-0fa7-402f-a6fd-122e37af28d6",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X054",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1123
+    },
+    {
+      "routeNodeKey": "4f1dda9d-84ff-4079-94b2-c9fa13a59b9c",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X055",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1124
+    },
+    {
+      "routeNodeKey": "965b9aa5-875f-4acc-bc18-9c2e584f9144",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X056",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1125
+    },
+    {
+      "routeNodeKey": "469a57eb-cdc4-4b88-9c28-c29124d30332",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X057",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1126
+    },
+    {
+      "routeNodeKey": "ec73fefb-c78f-478b-84e3-d7ce189b2354",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X058",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1127
+    },
+    {
+      "routeNodeKey": "f7b01bb4-e965-4c98-90a0-e6393b7aba2d",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X059",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1128
+    },
+    {
+      "routeNodeKey": "fa6886aa-33c6-4dc8-aaa5-842db8742e33",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X060",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1129
+    },
+    {
+      "routeNodeKey": "8c24f913-8f6b-4abb-a191-ac8aca54e110",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X061",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1130
+    },
+    {
+      "routeNodeKey": "16aea6bf-e3f1-4332-a05d-70ae2abd2e18",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X062",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1131
+    },
+    {
+      "routeNodeKey": "111f1817-f6dd-4d63-9c47-abb7de17f9d2",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X063",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1132
+    },
+    {
+      "routeNodeKey": "edafa4c3-52a0-427d-87eb-9ab7622ac5d1",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X064",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1133
     }
   ]
 }

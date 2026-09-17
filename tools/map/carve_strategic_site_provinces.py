@@ -396,6 +396,9 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     source = json.loads(args.source.read_text(encoding="utf-8"))
+    # 城 없는 관할 접기(fold_cityless_jurisdictions)는 이 단계보다 나중이다. 먼저 벗기고 끝에 다시 얹는다.
+    from tools.map import fold_cityless_jurisdictions as folding
+    source, folded = folding.peel(source)
     if args.check:
         problems = check(source, json.loads(LEDGER.read_text(encoding="utf-8")))
         for problem in problems:
@@ -406,6 +409,8 @@ def main() -> int:
     document, ledger = build_stage(source)
     if args.prepare:
         LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if folded is not None:
+        document = folding.reapply(document, folded)
     if args.output:
         args.output.write_text(json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n",
                                encoding="utf-8")

@@ -576,6 +576,11 @@ def main() -> int:
     source = json.loads(args.source.read_text(encoding='utf-8'))
     ledger = json.loads(args.ledger.read_text(encoding='utf-8'))
     if args.check:
+        # 거점 省 분할·城 없는 관할 접기는 이 단계보다 나중이다 — 벗긴 문서로 대조한다.
+        from tools.map import carve_strategic_site_provinces as carving
+        from tools.map import fold_cityless_jurisdictions as folding
+        source, _ = folding.peel(source)
+        source, _ = carving.peel(source)
         problems = check(source, ledger)
         for problem in problems:
             print(problem, file=sys.stderr)

@@ -5,8 +5,8 @@
   "generatorPolicyVersion": 1,
   "sources": {
     "claimsSha256": "b9d92d142fc744cdc4dd2f6b2e444e06709e5f532fcabf4702a70424fd02b12c",
-    "mapSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "scenarioCatalogSha256": "7f9efaa4b2f16968fbcc60465d8b76c144eecf0a34572c612ee1e4305da9a46c"
+    "mapSha256": "d7c9fb89a89ea86eff04f4016a082d1968bf67b1d9fcb1c2e79a51a6111d556d",
+    "scenarioCatalogSha256": "473f13dc747b31fe36d81045a7814b66b0ef3241334a4708a0b5d4927b3b1937"
   },
   "scenarios": [
     {

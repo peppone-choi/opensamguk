@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "cityless-jurisdiction-folds-v1",
+  "authority": "user-directive-2026-09-17 「절대 소속 없는 프로빈스가 있어선 안돼」 + 중복 판정 위임(「2번은 너가 판단해」)",
+  "inputs": {
+    "decisions": {
+      "path": "data/curated/han/cityless-jurisdiction-fold-decisions-v1.json",
+      "sha256": "d12f0d6d6b46cd05e042d4326f24ca0d9a1aca1efc5edad15f6731c0588e862f"
+    }
+  },
+  "decisions": [
+    {
+      "sourceJurisdictionId": "70634",
+      "targetJurisdictionId": "70633",
+      "targetRouteNodeCityId": 5,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 杜(220–264)는 杜陵(23–264)과 같은 자리 杜城이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "85064",
+      "targetJurisdictionId": "85065",
+      "targetRouteNodeCityId": 285,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 鄄良縣(14–220)은 鄄城縣(23–434)과 같은 자리다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "85281",
+      "targetJurisdictionId": "85280",
+      "targetRouteNodeCityId": 382,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 益都縣(220–555)은 益侯國(75–220)의 개명이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "85377",
+      "targetJurisdictionId": "85376",
+      "targetRouteNodeCityId": 917,
+      "reason": "SAME_PLACE_AS_CANDIDATE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 㡉縣(220–555)은 㡉侯國(30–220)의 개명이다 — 㡉侯國(917)이 섰다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "45748",
+      "targetJurisdictionId": "45751",
+      "targetRouteNodeCityId": 411,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 贊縣(220–222)과 陰縣은 CHGIS 좌표가 같다(乾德故城).",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+      "targetJurisdictionId": "70203",
+      "targetRouteNodeCityId": 80,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 新平郡 治所 漆縣은 右扶風에서 이속된 漆縣(0.02 km)이다. 新平郡은 郡國志 뒤에 선 郡이라 郡國志 세계에서는 右扶風 漆縣 땅이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+      "targetJurisdictionId": "40451",
+      "targetRouteNodeCityId": 848,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 毗陵典農校尉 治所는 毘陵縣(848)과 경위도가 같다. 典農校尉는 吳의 둔전 관서라 郡國志 세계에서는 吳郡 毗陵縣 땅이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+      "targetJurisdictionId": "44401",
+      "targetRouteNodeCityId": 632,
+      "reason": "SAME_PLACE_NOT_ADJACENT",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 汶山郡 治所 汶山縣은 綿虒道(846)와 같은 자리(0.02 km)지만 이 省(8칸)은 綿虒道 관할과 맞닿지 않는다. 유일하게 맞닿은 城 있는 관할인 蜀郡 廣都縣(632)에 접는다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
+      "targetJurisdictionId": "87405",
+      "targetRouteNodeCityId": 191,
+      "reason": "SAME_PLACE_AS_ROUTE_NODE",
+      "basis": "route-node-jurisdiction-claims-v1 excluded: 章武郡 治所 東平舒縣은 河閒國 東平舒縣(191)과 1.04 km 다. 章武郡은 晉 泰始 연간 郡이라 郡國志 세계에서는 河閒國 東平舒縣 땅이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "44621",
+      "targetJurisdictionId": "44580",
+      "targetRouteNodeCityId": 579,
+      "reason": "DUPLICATE_ROUTE_NODE",
+      "basis": "後漢書 卷113 郡國志 巴郡 「〖汉昌〗永元中置」 — 巴郡 漢昌은 한 縣이다. CHGIS V6 는 漢昌縣 점을 둘 적었다(44580 蒼溪 96–597, 44621 巴中 96–524). 郡國志 결속 城 579 가 44580 에 서 있고 w2 가 44621 에 城 977 을 또 세워 같은 縣이 두 번 섰다. 郡國志 결속 쪽(579)을 남기고 44621 省을 맞닿은 579 관할에 접는다. UNKNOWN: 讀史方輿紀要 卷068 은 蒼溪의 漢昌을 蕭齊 개치로 적어 治所 점 자체는 巴中 쪽이 맞을 수 있다 — 治所 점 이동은 후속이다.",
+      "commanderySeatJurisdictionId": null
+    },
+    {
+      "sourceJurisdictionId": "70523",
+      "targetJurisdictionId": "70524",
+      "targetRouteNodeCityId": 627,
+      "reason": "DUPLICATE_ROUTE_NODE",
+      "basis": "後漢書 卷113 郡國志 北地郡 「〖富平〗」 — 北地郡 富平은 한 縣이다. CHGIS V6 는 永初 內徙의 寄治 富平(70523, 涇陽 西北 111–220)과 還治 富平(70524, 靈武 西南 126–220)을 따로 적었다. 郡國志(永和 140 년 기준) 결속 城 627 이 70524 에 서 있고 w2 가 70523 에 城 989 를 또 세워 같은 縣이 두 번 섰다. 627 을 남기고 寄治 땅(70523 의 두 省)도 같은 縣 富平 관할(70524)에 접는다 — 떨어져 있어도 한 縣의 寄治 땅이다(宋書 卷48 「漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣」). 北地郡 治所 관할은 70524(富平, 城 627)로 옮긴다.",
+      "allowNonAdjacent": true,
+      "commanderySeatJurisdictionId": "70524"
+    }
+  ],
+  "provinceTransfers": [
+    {
+      "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
+      "fromJurisdictionId": "X029",
+      "toJurisdictionId": "fc-liaodong-008",
+      "reason": "SOURCE_ATTESTED_HAN_COUNTY_LAND",
+      "basis": "압록강 하구 省(lon 124.3–125.1 · lat 39.9–40.7, 209칸)은 卒本 관할에 기하 배정(NEAREST_SEAT_WITHIN_PARENT)으로만 묶여 있었다. 卒本 治所 점은 桓仁(41.27°N)이라 이 땅과 떨어져 있고, 사료는 이 자리를 遼東郡 西安平縣으로 적는다 — 漢書 卷28 地理志 玄菟郡 西蓋馬 注 「馬訾水西南至遼東郡西安平縣入海」, 後漢書 卷113 郡國志 遼東郡 「〖西安平〗」, 後漢書 卷85 東夷列傳 「質、桓之間，復犯遼東西安平，殺帶方令，掠得樂浪太守妻子」. 城 없던 卒本 관할이 城(989)을 받으면서 이 省이 遼東 西安平(787)과 樂浪 增地 사이를 끊어, 공손씨 樂浪·帶方 17城이 개시부터 보급에서 끊겼다(scenario 1070–1110). 맞닿은 西安平 관할(fc-liaodong-008)로 옮긴다. 郡 기하(parentRegionId)는 그대로다."
+    }
+  ],
+  "geometry": {
+    "stages": [
+      {
+        "inputDocumentSha256": "cc12b3d08a15846c719755278b3f902ff21cf15b2e121dec3e1d32e7e71f52a7",
+        "outputDocumentSha256": "f260b3cb3d8bfcce9a922ddbdd6893c3a684331a2c08d4c8b45093f292556fb2",
+        "inputCounts": {
+          "cities": 1263,
+          "seats": 172,
+          "regions": 38,
+          "adjCounty": 4275,
+          "adjCommandery": 410,
+          "COUNTY": 1013,
+          "EXTERNAL_PLACE": 37,
+          "COMMANDERY": 120,
+          "KINGDOM": 17,
+          "PROVINCE": 3,
+          "provinces": 1594,
+          "parentRegions": 172,
+          "jurisdictions": 1144,
+          "commanderies": 172,
+          "STRATEGIC_SITE": 73
+        },
+        "removedJurisdictions": [
+          {
+            "index": 506,
+            "record": {
+              "id": "70634",
+              "displayName": "두",
+              "nameCh": "杜",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0004",
+              "seatPlaceId": "70634",
+              "provinceIds": [
+                "70634"
+              ]
+            }
+          },
+          {
+            "index": 672,
+            "record": {
+              "id": "85064",
+              "displayName": "견량현",
+              "nameCh": "鄄良县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0029",
+              "seatPlaceId": "85064",
+              "provinceIds": [
+                "85064"
+              ]
+            }
+          },
+          {
+            "index": 703,
+            "record": {
+              "id": "85281",
+              "displayName": "익도현",
+              "nameCh": "益都县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0037",
+              "seatPlaceId": "85281",
+              "provinceIds": [
+                "85281"
+              ]
+            }
+          },
+          {
+            "index": 714,
+            "record": {
+              "id": "85377",
+              "displayName": "견현",
+              "nameCh": "㡉县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0039",
+              "seatPlaceId": "85377",
+              "provinceIds": [
+                "85377"
+              ]
+            }
+          },
+          {
+            "index": 437,
+            "record": {
+              "id": "45748",
+              "displayName": "찬현",
+              "nameCh": "赞县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0041",
+              "seatPlaceId": "45748",
+              "provinceIds": [
+                "45748"
+              ]
+            }
+          },
+          {
+            "index": 971,
+            "record": {
+              "id": "JURISDICTION-PARENT-0140-SEAT",
+              "displayName": "칠현",
+              "nameCh": "漆縣",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0140",
+              "seatPlaceId": "211738",
+              "provinceIds": [
+                "DIRECT-PARENT-0140-4962138710c0"
+              ]
+            }
+          },
+          {
+            "index": 971,
+            "record": {
+              "id": "JURISDICTION-PARENT-0145-SEAT",
+              "displayName": "비릉현",
+              "nameCh": "毗陵縣",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0145",
+              "seatPlaceId": "32365",
+              "provinceIds": [
+                "DIRECT-PARENT-0145-3a5b0d2b51a8"
+              ]
+            }
+          },
+          {
+            "index": 971,
+            "record": {
+              "id": "JURISDICTION-PARENT-0148-SEAT",
+              "displayName": "문산현",
+              "nameCh": "汶山縣",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0148",
+              "seatPlaceId": "211064",
+              "provinceIds": [
+                "DIRECT-PARENT-0148-9cee1dedcd80"
+              ]
+            }
+          },
+          {
+            "index": 972,
+            "record": {
+              "id": "JURISDICTION-PARENT-0157-SEAT",
+              "displayName": "동평서현",
+              "nameCh": "東平舒縣",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0157",
+              "seatPlaceId": "87628",
+              "provinceIds": [
+                "DIRECT-PARENT-0157-c2cb0084e22e"
+              ]
+            }
+          },
+          {
+            "index": 343,
+            "record": {
+              "id": "44621",
+              "displayName": "한창현",
+              "nameCh": "汉昌县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0055",
+              "seatPlaceId": "44621",
+              "provinceIds": [
+                "44621"
+              ]
+            }
+          },
+          {
+            "index": 477,
+            "record": {
+              "id": "70523",
+              "displayName": "부평현",
+              "nameCh": "富平县",
+              "kind": "COUNTY",
+              "commanderyId": "PARENT-0071",
+              "seatPlaceId": "70523",
+              "provinceIds": [
+                "70523",
+                "DIRECT-PARENT-0071-b74003c1e28f"
+              ]
+            }
+          }
+        ],
+        "commanderiesBefore": [
+          {
+            "id": "PARENT-0004",
+            "displayName": "경조윤",
+            "nameCh": "京兆尹",
+            "kind": "METROPOLITAN",
+            "seatJurisdictionId": "70623",
+            "jurisdictionIds": [
+              "200092",
+              "200094",
+              "70427",
+              "70623",
+              "70633",
+              "70634",
+              "70647",
+              "70674",
+              "70726",
+              "70735",
+              "70749",
+              "ss-wuguan"
+            ]
+          },
+          {
+            "id": "PARENT-0029",
+            "displayName": "제음군",
+            "nameCh": "濟陰郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "85058",
+            "jurisdictionIds": [
+              "85002",
+              "85013",
+              "85017",
+              "85044",
+              "85058",
+              "85064",
+              "85065",
+              "85067",
+              "85075",
+              "85108",
+              "85115"
+            ]
+          },
+          {
+            "id": "PARENT-0037",
+            "displayName": "낙안국",
+            "nameCh": "樂安國",
+            "kind": "KINGDOM",
+            "seatJurisdictionId": "85254",
+            "jurisdictionIds": [
+              "85240",
+              "85241",
+              "85249",
+              "85254",
+              "85256",
+              "85262",
+              "85268",
+              "85280",
+              "85281"
+            ]
+          },
+          {
+            "id": "PARENT-0039",
+            "displayName": "동래군",
+            "nameCh": "東萊郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "85371",
+            "jurisdictionIds": [
+              "200036",
+              "85371",
+              "85376",
+              "85377",
+              "85381",
+              "85386",
+              "85388",
+              "85401",
+              "85410",
+              "85441",
+              "85448",
+              "85481",
+              "85505"
+            ]
+          },
+          {
+            "id": "PARENT-0041",
+            "displayName": "남양군",
+            "nameCh": "南陽郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "82612",
+            "jurisdictionIds": [
+              "43618",
+              "45663",
+              "45707",
+              "45727",
+              "45748",
+              "45751",
+              "45755",
+              "82612",
+              "82620",
+              "82632",
+              "82633",
+              "82635",
+              "82644",
+              "82650",
+              "82657",
+              "82680",
+              "82683",
+              "82687",
+              "82692",
+              "82696",
+              "82700",
+              "82708",
+              "82749",
+              "82755",
+              "82763",
+              "82774",
+              "82783",
+              "82811",
+              "82971",
+              "82975"
+            ]
+          },
+          {
+            "id": "PARENT-0140",
+            "displayName": "신평군",
+            "nameCh": "新平郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+            "jurisdictionIds": [
+              "JURISDICTION-PARENT-0140-SEAT"
+            ]
+          },
+          {
+            "id": "PARENT-0145",
+            "displayName": "비릉전농교위",
+            "nameCh": "毗陵典農校尉",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+            "jurisdictionIds": [
+              "JURISDICTION-PARENT-0145-SEAT"
+            ]
+          },
+          {
+            "id": "PARENT-0148",
+            "displayName": "문산군",
+            "nameCh": "汶山郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+            "jurisdictionIds": [
+              "JURISDICTION-PARENT-0148-SEAT"
+            ]
+          },
+          {
+            "id": "PARENT-0157",
+            "displayName": "장무군",
+            "nameCh": "章武郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
+            "jurisdictionIds": [
+              "JURISDICTION-PARENT-0157-SEAT"
+            ]
+          },
+          {
+            "id": "PARENT-0055",
+            "displayName": "파군",
+            "nameCh": "巴郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "44662",
+            "jurisdictionIds": [
+              "44496",
+              "44505",
+              "44515",
+              "44537",
+              "44539",
+              "44553",
+              "44580",
+              "44587",
+              "44621",
+              "44662",
+              "44671",
+              "44679",
+              "96145",
+              "96259",
+              "ss-jiange",
+              "ss-wakou"
+            ]
+          },
+          {
+            "id": "PARENT-0071",
+            "displayName": "북지군",
+            "nameCh": "北地郡",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "70523",
+            "jurisdictionIds": [
+              "70523",
+              "70524",
+              "70610",
+              "70613",
+              "70614"
+            ]
+          }
+        ],
+        "targetProvinceIdsBefore": {
+          "70633": [
+            "70633"
+          ],
+          "85065": [
+            "85065"
+          ],
+          "85280": [
+            "85280"
+          ],
+          "85376": [
+            "85376"
+          ],
+          "45751": [
+            "45751"
+          ],
+          "70203": [
+            "70203"
+          ],
+          "40451": [
+            "40451"
+          ],
+          "44401": [
+            "44401"
+          ],
+          "87405": [
+            "87405"
+          ],
+          "44580": [
+            "44580"
+          ],
+          "70524": [
+            "70524",
+            "DIRECT-PARENT-0071-679cdaa0a3cd",
+            "DIRECT-PARENT-0071-7e186af4ddc5"
+          ]
+        },
+        "adjacency": [
+          {
+            "sourceJurisdictionId": "70634",
+            "targetJurisdictionId": "70633",
+            "sharedEdges": 7
+          },
+          {
+            "sourceJurisdictionId": "85064",
+            "targetJurisdictionId": "85065",
+            "sharedEdges": 10
+          },
+          {
+            "sourceJurisdictionId": "85281",
+            "targetJurisdictionId": "85280",
+            "sharedEdges": 8
+          },
+          {
+            "sourceJurisdictionId": "85377",
+            "targetJurisdictionId": "85376",
+            "sharedEdges": 4
+          },
+          {
+            "sourceJurisdictionId": "45748",
+            "targetJurisdictionId": "45751",
+            "sharedEdges": 8
+          },
+          {
+            "sourceJurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+            "targetJurisdictionId": "70203",
+            "sharedEdges": 4
+          },
+          {
+            "sourceJurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+            "targetJurisdictionId": "40451",
+            "sharedEdges": 4
+          },
+          {
+            "sourceJurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+            "targetJurisdictionId": "44401",
+            "sharedEdges": 18
+          },
+          {
+            "sourceJurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
+            "targetJurisdictionId": "87405",
+            "sharedEdges": 7
+          },
+          {
+            "sourceJurisdictionId": "44621",
+            "targetJurisdictionId": "44580",
+            "sharedEdges": 15
+          },
+          {
+            "sourceJurisdictionId": "70523",
+            "targetJurisdictionId": "70524",
+            "sharedEdges": 0
+          }
+        ],
+        "transfers": [
+          {
+            "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
+            "fromJurisdictionId": "X029",
+            "toJurisdictionId": "fc-liaodong-008",
+            "sourceProvinceIdsBefore": [
+              "DIRECT-PARENT-0112-2e303004dfcf",
+              "DIRECT-PARENT-0112-7088a81e7b78",
+              "DIRECT-PARENT-0112-7d564e99bc91",
+              "DIRECT-PARENT-0112-89796ae90028",
+              "DIRECT-PARENT-0112-f75f6a0d5eb0",
+              "X029"
+            ],
+            "targetProvinceIdsBefore": [
+              "fc-liaodong-008"
+            ],
+            "sharedEdges": 18
+          }
+        ]
+      }
+    ]
+  }
+}

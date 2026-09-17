@@ -1,5 +1,23 @@
 {
   "approvedPhysicalPlaceIdsAbsentFromTiles": [],
+  "citylessJurisdictionFoldProjection": {
+    "foldedJurisdictionCount": 11,
+    "foldedJurisdictionIds": [
+      "70634",
+      "85064",
+      "85281",
+      "85377",
+      "45748",
+      "JURISDICTION-PARENT-0140-SEAT",
+      "JURISDICTION-PARENT-0145-SEAT",
+      "JURISDICTION-PARENT-0148-SEAT",
+      "JURISDICTION-PARENT-0157-SEAT",
+      "44621",
+      "70523"
+    ],
+    "inputTilesSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
+    "outputDocumentSha256": "f260b3cb3d8bfcce9a922ddbdd6893c3a684331a2c08d4c8b45093f292556fb2"
+  },
   "countyRebindingProjection": {
     "affectedParentRegionIds": [
       "PARENT-0000",
@@ -67,15 +85,13 @@
         "crossParentRegionFootprintCount": 0,
         "decisionCellCounts": {
           "BLOCKED_DIRECT_TERRITORY_REVIEW": 0,
-          "BLOCKED_EXTERNAL_POLITY_REVIEW": 5876,
-          "EXACT_APPROVED": 100712,
-          "PROPOSED_GEOMETRIC": 567
+          "EXACT_APPROVED": 106553,
+          "PROPOSED_GEOMETRIC": 602
         },
         "decisionRowCounts": {
           "BLOCKED_DIRECT_TERRITORY_REVIEW": 5,
-          "BLOCKED_EXTERNAL_POLITY_REVIEW": 38,
-          "EXACT_APPROVED": 973,
-          "PROPOSED_GEOMETRIC": 122
+          "EXACT_APPROVED": 1008,
+          "PROPOSED_GEOMETRIC": 125
         },
         "directTerritoryCellCount": 120194,
         "directTerritoryProvinceCount": 526,
@@ -83,31 +99,31 @@
           "pendingCandidateJunCount": 5,
           "rejectedSourcedGroupJunCount": 0
         },
-        "exactApprovedCellCount": 100712,
-        "exactApprovedRowCount": 973,
+        "exactApprovedCellCount": 106553,
+        "exactApprovedRowCount": 1008,
         "geometryDiagnostics": {
           "distanceTies": {
             "cellCount": 0,
             "rowCount": 2
           },
           "multiGroupJun": {
-            "cellCount": 338,
+            "cellCount": 559,
             "rowCount": 71
           },
           "singleGroupJun": {
-            "cellCount": 229,
-            "rowCount": 51
+            "cellCount": 43,
+            "rowCount": 54
           },
           "uniqueNearest": {
-            "cellCount": 567,
-            "rowCount": 120
+            "cellCount": 602,
+            "rowCount": 123
           }
         },
         "landCellCount": 227349,
         "landOwnerRowCount": 1138,
         "provinceRecordCount": 1524,
-        "unresolvedCellCount": 6443,
-        "unresolvedRowCount": 165
+        "unresolvedCellCount": 602,
+        "unresolvedRowCount": 130
       }
     },
     "priorSummary": {
@@ -118,15 +134,13 @@
       "crossParentRegionFootprintCount": 0,
       "decisionCellCounts": {
         "BLOCKED_DIRECT_TERRITORY_REVIEW": 0,
-        "BLOCKED_EXTERNAL_POLITY_REVIEW": 5876,
-        "EXACT_APPROVED": 115160,
-        "PROPOSED_GEOMETRIC": 567
+        "EXACT_APPROVED": 121001,
+        "PROPOSED_GEOMETRIC": 602
       },
       "decisionRowCounts": {
         "BLOCKED_DIRECT_TERRITORY_REVIEW": 5,
-        "BLOCKED_EXTERNAL_POLITY_REVIEW": 38,
-        "EXACT_APPROVED": 1024,
-        "PROPOSED_GEOMETRIC": 122
+        "EXACT_APPROVED": 1059,
+        "PROPOSED_GEOMETRIC": 125
       },
       "directTerritoryCellCount": 105746,
       "directTerritoryProvinceCount": 463,
@@ -134,31 +148,31 @@
         "pendingCandidateJunCount": 5,
         "rejectedSourcedGroupJunCount": 0
       },
-      "exactApprovedCellCount": 115160,
-      "exactApprovedRowCount": 1024,
+      "exactApprovedCellCount": 121001,
+      "exactApprovedRowCount": 1059,
       "geometryDiagnostics": {
         "distanceTies": {
           "cellCount": 0,
           "rowCount": 2
         },
         "multiGroupJun": {
-          "cellCount": 338,
+          "cellCount": 559,
           "rowCount": 71
         },
         "singleGroupJun": {
-          "cellCount": 229,
-          "rowCount": 51
+          "cellCount": 43,
+          "rowCount": 54
         },
         "uniqueNearest": {
-          "cellCount": 567,
-          "rowCount": 120
+          "cellCount": 602,
+          "rowCount": 123
         }
       },
       "landCellCount": 227349,
       "landOwnerRowCount": 1189,
       "provinceRecordCount": 1520,
-      "unresolvedCellCount": 6443,
-      "unresolvedRowCount": 165
+      "unresolvedCellCount": 602,
+      "unresolvedRowCount": 130
     }
   },
   "directTerritoryJunReviews": [
@@ -210,19 +224,19 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "1d5bfe89f5feb67413162df389ede8bd063d3b3f5d5f7d2920b73ce0c6693e55"
+      "sha256": "1c546588d0df231cda80cecfe5c201e6726effd68524a2528ffd9f51765c91c0"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
+      "sha256": "61b3da2861c7d2582945a99c5cdc7994ab463b4683bea0aa211bd1d6d2f18e2b"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "60227256a34227426bdd451aa5bfffbe1f84bc2470c0d54e25c4113df4721806"
+      "sha256": "6f1094d68210d46577bdba6c39cc95d7764018d4ca05ec0827f94e99b287e02a"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
-      "sha256": "29177d58328787fa1c8ca85bfb5948d35b8a7cdda67f0b43dc5e2709a6da5ad3"
+      "sha256": "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
     },
     "data/map/external-places.json": {
       "path": "data/map/external-places.json",
@@ -238,7 +252,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40"
+      "sha256": "d7c9fb89a89ea86eff04f4016a082d1968bf67b1d9fcb1c2e79a51a6111d556d"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -3285,7 +3299,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "70610",
@@ -3298,7 +3312,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -18263,20 +18276,9 @@
       }
     },
     {
-      "approvalEvidence": {
-        "inputs": [
-          "routeNodeSelection.reviewState",
-          "routeNodeSelection.physicalPlaceRefTerminal",
-          "hanTiles.cities.id"
-        ],
-        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
-        "physicalPlaceRef": "chgis:v6:cnty:44621",
-        "routeNodeKey": "7953cd44-539d-4ae3-9054-e7cb9ab46865"
-      },
-      "approvedParentAdministrativeUnitId": "han-jurisdiction-route-claim-v1-44621",
       "cellCount": 249,
       "cityId": "44621",
-      "decision": "EXACT_APPROVED",
+      "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -18293,7 +18295,20 @@
           55
         ]
       },
-      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "geometryDiagnostic": {
+        "diagnosticOnly": true,
+        "distanceTie": false,
+        "groupCardinality": "MULTI_GROUP_JUN",
+        "nearestCandidates": [
+          {
+            "anchorCityId": "44580",
+            "candidateAdministrativeGroupId": "hhs-group:113:巴郡",
+            "candidateAdministrativeUnitId": "hhs:113:巴郡:014",
+            "squaredGridDistance": 305
+          }
+        ]
+      },
+      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "han-tiles-commandery:PARENT-0055",
@@ -23985,20 +24000,9 @@
       }
     },
     {
-      "approvalEvidence": {
-        "inputs": [
-          "routeNodeSelection.reviewState",
-          "routeNodeSelection.physicalPlaceRefTerminal",
-          "hanTiles.cities.id"
-        ],
-        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
-        "physicalPlaceRef": "chgis:v6:cnty:70523",
-        "routeNodeKey": "2ef68286-3c16-4076-945e-04ff3037bb5d"
-      },
-      "approvedParentAdministrativeUnitId": "han-jurisdiction-route-claim-v1-70523",
       "cellCount": 43,
       "cityId": "70523",
-      "decision": "EXACT_APPROVED",
+      "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -24015,10 +24019,22 @@
           71
         ]
       },
-      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
+      "geometryDiagnostic": {
+        "diagnosticOnly": true,
+        "distanceTie": false,
+        "groupCardinality": "SINGLE_GROUP_JUN",
+        "nearestCandidates": [
+          {
+            "anchorCityId": "70613",
+            "candidateAdministrativeGroupId": "hhs-group:113:北地郡",
+            "candidateAdministrativeUnitId": "hhs:113:北地郡:002",
+            "squaredGridDistance": 3028
+          }
+        ]
+      },
+      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -24060,7 +24076,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -24719,7 +24734,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -24761,7 +24775,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -24803,7 +24816,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0071",
           "hhs-group:113:北地郡"
         ],
         "diagnosticOnly": true,
@@ -44991,20 +45003,7 @@
     {
       "cellCount": 0,
       "cityId": "X009",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X009",
-          "kind": "COMMANDERY"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:9f8b548a35f46ba7b66bdbebf254cd3f3a9200299a7eac8317d85911f98b2ce5"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": null,
         "crossJun": false,
@@ -45013,9 +45012,24 @@
         "junDistribution": [],
         "majorityJunArrayIndices": []
       },
-      "reviewState": "BLOCKED",
+      "geometryDiagnostic": {
+        "diagnosticOnly": true,
+        "distanceTie": false,
+        "groupCardinality": "SINGLE_GROUP_JUN",
+        "nearestCandidates": [
+          {
+            "anchorCityId": "X064",
+            "candidateAdministrativeGroupId": "han-tiles-commandery:PARENT-0114",
+            "candidateAdministrativeUnitId": "han-external-settlement-route-claim-v1-X064",
+            "squaredGridDistance": 584
+          }
+        ]
+      },
+      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0114"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 114,
         "nameCh": "南匈奴"
@@ -45648,22 +45662,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X028",
+        "routeNodeKey": "7953cd44-539d-4ae3-9054-e7cb9ab46865"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X028",
       "cellCount": 240,
       "cityId": "X028",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X028",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:37a918bdcb4dfdc1c9da1782a51db41dbe5396a30c6e6f565ea8e68411214eb5"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45680,31 +45692,31 @@
           120
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0120"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 120,
         "nameCh": "國內城"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X029",
+        "routeNodeKey": "2ef68286-3c16-4076-945e-04ff3037bb5d"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X029",
       "cellCount": 219,
       "cityId": "X029",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X029",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:f1164e0ec6b82464dc4a29e476f47809f782a1fd3f611a5f12009cf4773b3a8c"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45721,31 +45733,31 @@
           112
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0112"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 112,
         "nameCh": "卒本"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X030",
+        "routeNodeKey": "bf8b38b6-2fce-42e9-9e33-bbd87f9c00e4"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X030",
       "cellCount": 228,
       "cityId": "X030",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X030",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:cb3a47a2142b03ccd09720d1a0caa96db5d8c8ab88bd840bbb23d3e5dc6faf2c"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45762,31 +45774,31 @@
           111
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0111"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 111,
         "nameCh": "北沃沮"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X031",
+        "routeNodeKey": "db2ee405-0bec-4a0d-a78c-e063dadc85f0"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X031",
       "cellCount": 105,
       "cityId": "X031",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X031",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:eda32d696a437746c36a8985be5785713e7fbea924e8b49ade7b82b9b5d54f42"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45803,31 +45815,31 @@
           124
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0124"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 124,
         "nameCh": "安邪國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X032",
+        "routeNodeKey": "454a5c60-169f-4e51-9a31-c998be180cc9"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X032",
       "cellCount": 197,
       "cityId": "X032",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X032",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:98092dd717ae4d0b225413440776c9cd654a63e6a49894e7bf46d41cd9bd223d"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45844,31 +45856,31 @@
           135
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0135"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 135,
         "nameCh": "悉直國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X033",
+        "routeNodeKey": "d4f48f51-79d1-464a-8519-106818c0ac49"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X033",
       "cellCount": 99,
       "cityId": "X033",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X033",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:ee88fc5cde8f62585534668bc663a568080800b3f17514705995010d6664929a"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45885,31 +45897,31 @@
           136
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0136"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 136,
         "nameCh": "押督國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X034",
+        "routeNodeKey": "31b7e704-f011-416d-b1ed-90e6b7250062"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X034",
       "cellCount": 127,
       "cityId": "X034",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X034",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:ec55604c6764b302eeb52fe2c3cb518e2b7fcf71ec6355901eb598509b2677ac"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45926,31 +45938,31 @@
           117
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0117"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 117,
         "nameCh": "召文國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X035",
+        "routeNodeKey": "b06b7b8a-95fb-4ecb-a564-778c77fec7e3"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X035",
       "cellCount": 23,
       "cityId": "X035",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X035",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:468634bcd8424003702cafaf094c86f1f0940dc8d74bae8ff583c6479557aedb"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -45967,31 +45979,31 @@
           108
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0108"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 108,
         "nameCh": "于山國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X036",
+        "routeNodeKey": "f5061889-bf91-4794-9033-d299dbc946d1"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X036",
       "cellCount": 234,
       "cityId": "X036",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X036",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:1c6e38ff267d7a41804c340aef9204425323865a8d3f2f51ec6e9841cdc22339"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46008,31 +46020,31 @@
           122
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0122"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 122,
         "nameCh": "夫餘"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X037",
+        "routeNodeKey": "088f238c-fc0a-4c0f-bbdf-1c998d443fab"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X037",
       "cellCount": 195,
       "cityId": "X037",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X037",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:28f600c20d51de037e36891eb2a99780b132aed850fb72458b3964d38a849190"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46049,31 +46061,31 @@
           143
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0143"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 143,
         "nameCh": "東沃沮"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X038",
+        "routeNodeKey": "45ebb005-8f6c-43d1-8283-9e4730c74696"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X038",
       "cellCount": 171,
       "cityId": "X038",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X038",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:d1165f6013e3397f34a79874c471ea2124b98025b5415403d4c28adecf647f42"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46090,31 +46102,31 @@
           151
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0151"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 151,
         "nameCh": "濊"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X039",
+        "routeNodeKey": "38f5805e-1357-4d47-9806-5e7e3d83fbc0"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X039",
       "cellCount": 239,
       "cityId": "X039",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X039",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:cb3a47a2142b03ccd09720d1a0caa96db5d8c8ab88bd840bbb23d3e5dc6faf2c"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46131,31 +46143,31 @@
           111
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0111"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 111,
         "nameCh": "北沃沮"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X040",
+        "routeNodeKey": "a0e92f2a-34ef-499b-aaee-c715ea33bd53"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X040",
       "cellCount": 190,
       "cityId": "X040",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X040",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:a70e6e1e8a4ab101070352c794ec006107882aada8d23cb17bde2d0b5f36a15f"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46172,31 +46184,31 @@
           156
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0156"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 156,
         "nameCh": "目支國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X041",
+        "routeNodeKey": "e6a13666-3a1d-48df-a671-8ad50855e7f8"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X041",
       "cellCount": 188,
       "cityId": "X041",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X041",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:373eee0c21cd85b66a1450f5b7ac4d5019482fe0127a8af13a7600ae49dcf171"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46213,31 +46225,31 @@
           164
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0164"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 164,
         "nameCh": "辟卑離國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X042",
+        "routeNodeKey": "8f3bd599-b539-4c17-9fa9-3fff871da896"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X042",
       "cellCount": 239,
       "cityId": "X042",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X042",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:88c70def2896a0f15f26e25d318e2ad1c768014402f20b2bef2bde68d1904e97"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46254,31 +46266,31 @@
           109
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0109"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 109,
         "nameCh": "伯濟國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X043",
+        "routeNodeKey": "263164f7-6607-4bd1-b081-da0f1501beed"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X043",
       "cellCount": 82,
       "cityId": "X043",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X043",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:0fd80bc72bb5574518e1571108c6516f0d19912656e0314bbfb858e2ca11e1db"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46295,31 +46307,31 @@
           128
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0128"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 128,
         "nameCh": "州胡"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X044",
+        "routeNodeKey": "affa7367-741f-4067-b194-058937af822e"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X044",
       "cellCount": 162,
       "cityId": "X044",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X044",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:e2d92c0448fe358177f0a4fdda19263a94fcdc5ed93de3791f7598f74b402ad8"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46336,31 +46348,31 @@
           137
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0137"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 137,
         "nameCh": "斯盧國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X045",
+        "routeNodeKey": "6f68bd1f-f8e1-48c4-aaa5-cd20c049d35c"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X045",
       "cellCount": 110,
       "cityId": "X045",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X045",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:bc76981e81edc6666e064299f7d42b5c845eb43e2fc3b5daefac6411186bfd3c"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46377,31 +46389,31 @@
           153
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0153"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 153,
         "nameCh": "狗邪國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X046",
+        "routeNodeKey": "21a82e97-0e56-40d2-8613-f1065c433527"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X046",
       "cellCount": 103,
       "cityId": "X046",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X046",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:ad8f7b0c8edb8fb53a14ce51a1a50c7f43721ab04919f531967dcd4be73787dc"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46418,31 +46430,31 @@
           116
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0116"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 116,
         "nameCh": "古資彌凍國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X047",
+        "routeNodeKey": "ad4a2fec-abc5-4fbf-b25c-639bc393a688"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X047",
       "cellCount": 162,
       "cityId": "X047",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X047",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:799128dc9de00fc0246427c44b3172bef8b2b409cd0bd1252d3430363db5bdd2"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46459,31 +46471,31 @@
           121
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0121"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 121,
         "nameCh": "大伽耶"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X048",
+        "routeNodeKey": "841a448f-880a-48ac-86ca-47f6ae861677"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X048",
       "cellCount": 122,
       "cityId": "X048",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X048",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:30eaa67d7f910e6a6233344c27ce5b62ab437c75d931892a6b0286b83ee34d70"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46500,31 +46512,31 @@
           142
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0142"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 142,
         "nameCh": "星山伽耶"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X049",
+        "routeNodeKey": "630041a9-ec7e-4ae2-8a9d-c460622010db"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X049",
       "cellCount": 226,
       "cityId": "X049",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X049",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:cb01a2f4b6b140217c9e38fab00a8a2a63c05ee037065de643cf13812100ed37"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46541,31 +46553,31 @@
           115
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0115"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 115,
         "nameCh": "古寧伽耶"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X050",
+        "routeNodeKey": "f11db36c-518f-450f-a7d1-2a8851a0f4a6"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X050",
       "cellCount": 42,
       "cityId": "X050",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X050",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:bc76981e81edc6666e064299f7d42b5c845eb43e2fc3b5daefac6411186bfd3c"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46582,31 +46594,31 @@
           153
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0153"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 153,
         "nameCh": "狗邪國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X051",
+        "routeNodeKey": "e750fdbe-3a8f-4f8d-9b90-1ef7a44e9913"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X051",
       "cellCount": 243,
       "cityId": "X051",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X051",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:953b4c55737a1df3e076ec660126c48701c4d80847eb2e52fb3f18b408bbcb98"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46623,31 +46635,31 @@
           165
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0165"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 165,
         "nameCh": "邪馬壹國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X052",
+        "routeNodeKey": "42e95487-1d7d-4501-8ad7-81edbfc2b5cf"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X052",
       "cellCount": 45,
       "cityId": "X052",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X052",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:953b4c55737a1df3e076ec660126c48701c4d80847eb2e52fb3f18b408bbcb98"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46664,31 +46676,31 @@
           165
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0165"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 165,
         "nameCh": "邪馬壹國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X053",
+        "routeNodeKey": "cecffca9-67be-4f6e-ba8e-ad1685d946ff"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X053",
       "cellCount": 147,
       "cityId": "X053",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X053",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:953b4c55737a1df3e076ec660126c48701c4d80847eb2e52fb3f18b408bbcb98"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46705,31 +46717,31 @@
           165
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0165"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 165,
         "nameCh": "邪馬壹國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X054",
+        "routeNodeKey": "5d4aea09-0fa7-402f-a6fd-122e37af28d6"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X054",
       "cellCount": 318,
       "cityId": "X054",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X054",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:953b4c55737a1df3e076ec660126c48701c4d80847eb2e52fb3f18b408bbcb98"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46746,31 +46758,31 @@
           165
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0165"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 165,
         "nameCh": "邪馬壹國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X055",
+        "routeNodeKey": "4f1dda9d-84ff-4079-94b2-c9fa13a59b9c"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X055",
       "cellCount": 47,
       "cityId": "X055",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X055",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:953b4c55737a1df3e076ec660126c48701c4d80847eb2e52fb3f18b408bbcb98"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46787,31 +46799,31 @@
           165
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0165"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 165,
         "nameCh": "邪馬壹國"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X056",
+        "routeNodeKey": "965b9aa5-875f-4acc-bc18-9c2e584f9144"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X056",
       "cellCount": 235,
       "cityId": "X056",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X056",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:f3f85b07ae5e8a1fc3f2c5f1dc07dbccab4347c66252fc45c2957b229ddaed61"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46828,31 +46840,31 @@
           123
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0123"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 123,
         "nameCh": "夷洲"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X057",
+        "routeNodeKey": "469a57eb-cdc4-4b88-9c28-c29124d30332"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X057",
       "cellCount": 155,
       "cityId": "X057",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X057",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:7408b3750e4ed14c0fae4a31dc60f3a2e204eaf1019e4223ed29a4fa15ae847f"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46869,31 +46881,31 @@
           149
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0149"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 149,
         "nameCh": "流求"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X058",
+        "routeNodeKey": "ec73fefb-c78f-478b-84e3-d7ce189b2354"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X058",
       "cellCount": 165,
       "cityId": "X058",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X058",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:55a18795e8715dd1e20a906b47d2b257a6e80856738053a809049dbb7c4f1004"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46910,31 +46922,31 @@
           163
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0163"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 163,
         "nameCh": "西羌"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X059",
+        "routeNodeKey": "f7b01bb4-e965-4c98-90a0-e6393b7aba2d"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X059",
       "cellCount": 50,
       "cityId": "X059",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X059",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:11739137b6c717c631f946866713e08169778104fab3268a83a706bd5ad3db4f"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46951,31 +46963,31 @@
           155
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0155"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 155,
         "nameCh": "白馬氐"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X060",
+        "routeNodeKey": "fa6886aa-33c6-4dc8-aaa5-842db8742e33"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X060",
       "cellCount": 223,
       "cityId": "X060",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X060",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:69fbe6c7e8d0d29c0f3398efecfe487790f92b9e8ff6fa5aef312081b1bf5310"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -46992,31 +47004,31 @@
           118
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0118"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 118,
         "nameCh": "哀牢"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X061",
+        "routeNodeKey": "8c24f913-8f6b-4abb-a191-ac8aca54e110"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X061",
       "cellCount": 76,
       "cityId": "X061",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X061",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:f24e5abdcf3d5315df299219f75a6c68f530b7f88a9f7009ae62002ddcd37b05"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -47033,31 +47045,31 @@
           127
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0127"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 127,
         "nameCh": "山越"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X062",
+        "routeNodeKey": "16aea6bf-e3f1-4332-a05d-70ae2abd2e18"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X062",
       "cellCount": 236,
       "cityId": "X062",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "IDENTIFIED",
-          "externalPlaceId": "X062",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:6529efb8b3e8adec8f16c282f5e4cfc31cf279b532d504018f1ffb3bdfb85541"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -47074,18 +47086,31 @@
           152
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0152"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 152,
         "nameCh": "烏桓"
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X063",
+        "routeNodeKey": "111f1817-f6dd-4d63-9c47-abb7de17f9d2"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X063",
       "cellCount": 229,
       "cityId": "X063",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -47102,20 +47127,7 @@
           170
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "87125",
-            "candidateAdministrativeGroupId": "han-tiles-commandery:PARENT-0170",
-            "candidateAdministrativeUnitId": "han-jurisdiction-route-claim-v1-87125",
-            "squaredGridDistance": 65
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "han-tiles-commandery:PARENT-0170"
@@ -47126,22 +47138,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "external:v1:X064",
+        "routeNodeKey": "edafa4c3-52a0-427d-87eb-9ab7622ac5d1"
+      },
+      "approvedParentAdministrativeUnitId": "han-external-settlement-route-claim-v1-X064",
       "cellCount": 233,
       "cityId": "X064",
-      "decision": "BLOCKED_EXTERNAL_POLITY_REVIEW",
-      "externalReview": {
-        "cityExternalPlaceCandidate": {
-          "candidateReviewState": "PENDING_EXTERNAL_POLITY_REVIEW",
-          "confidence": "DISPUTED",
-          "externalPlaceId": "X064",
-          "kind": "EXTERNAL_PLACE"
-        },
-        "diagnosticOnly": true,
-        "relatedPendingRouteNodeCandidateKeys": [
-          "current:sha256:9f8b548a35f46ba7b66bdbebf254cd3f3a9200299a7eac8317d85911f98b2ce5"
-        ],
-        "reviewState": "PENDING_EXTERNAL_POLITY_REVIEW"
-      },
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -47158,9 +47168,11 @@
           114
         ]
       },
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
-        "approvedAdministrativeGroupIds": [],
+        "approvedAdministrativeGroupIds": [
+          "han-tiles-commandery:PARENT-0114"
+        ],
         "diagnosticOnly": true,
         "junArrayIndex": 114,
         "nameCh": "南匈奴"
@@ -49294,15 +49306,13 @@
     "crossParentRegionFootprintCount": 0,
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 0,
-      "BLOCKED_EXTERNAL_POLITY_REVIEW": 5876,
-      "EXACT_APPROVED": 115299,
-      "PROPOSED_GEOMETRIC": 567
+      "EXACT_APPROVED": 121112,
+      "PROPOSED_GEOMETRIC": 630
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 4,
-      "BLOCKED_EXTERNAL_POLITY_REVIEW": 37,
-      "EXACT_APPROVED": 1025,
-      "PROPOSED_GEOMETRIC": 124
+      "EXACT_APPROVED": 1060,
+      "PROPOSED_GEOMETRIC": 126
     },
     "directTerritoryCellCount": 105607,
     "directTerritoryProvinceCount": 463,
@@ -49310,30 +49320,30 @@
       "pendingCandidateJunCount": 4,
       "rejectedSourcedGroupJunCount": 0
     },
-    "exactApprovedCellCount": 115299,
-    "exactApprovedRowCount": 1025,
+    "exactApprovedCellCount": 121112,
+    "exactApprovedRowCount": 1060,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 0,
         "rowCount": 2
       },
       "multiGroupJun": {
-        "cellCount": 338,
+        "cellCount": 587,
         "rowCount": 71
       },
       "singleGroupJun": {
-        "cellCount": 229,
-        "rowCount": 53
+        "cellCount": 43,
+        "rowCount": 55
       },
       "uniqueNearest": {
-        "cellCount": 567,
-        "rowCount": 122
+        "cellCount": 630,
+        "rowCount": 124
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1190,
     "provinceRecordCount": 1521,
-    "unresolvedCellCount": 6443,
-    "unresolvedRowCount": 165
+    "unresolvedCellCount": 630,
+    "unresolvedRowCount": 130
   }
 }

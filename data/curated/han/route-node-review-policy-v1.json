@@ -7,25 +7,14 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 1098,
+    "routeNodeCount": 1133,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51,
-    "reviewedSourceClaimBindingCount": 249,
+    "reviewedSourceClaimBindingCount": 284,
     "vacatedCountyLocationClaimCount": 1
   },
   "forbiddenSelections": {
     "canonicalNames": [
-      "流求",
-      "夷洲",
-      "古寧伽耶",
-      "大伽耶",
-      "星山伽耶",
-      "山越",
-      "白馬氐",
-      "西羌",
-      "南匈奴",
-      "烏桓",
-      "鮮卑",
       "龜茲屬國"
     ],
     "nodeClasses": [
@@ -33,45 +22,13 @@
       "REMOTE_GATE",
       "ALIAS_ONLY"
     ],
-    "physicalPlaceIds": [
-      "external:v1:X028",
-      "external:v1:X029",
-      "external:v1:X030",
-      "external:v1:X031",
-      "external:v1:X032",
-      "external:v1:X033",
-      "external:v1:X034",
-      "external:v1:X035",
-      "external:v1:X036",
-      "external:v1:X037",
-      "external:v1:X038",
-      "external:v1:X040",
-      "external:v1:X041",
-      "external:v1:X042",
-      "external:v1:X043",
-      "external:v1:X044",
-      "external:v1:X045",
-      "external:v1:X046",
-      "external:v1:X047",
-      "external:v1:X048",
-      "external:v1:X049",
-      "external:v1:X055",
-      "external:v1:X056",
-      "external:v1:X057",
-      "external:v1:X058",
-      "external:v1:X059",
-      "external:v1:X060",
-      "external:v1:X061",
-      "external:v1:X062",
-      "external:v1:X063",
-      "external:v1:X064"
-    ]
+    "physicalPlaceIds": []
   },
   "inputs": {
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "53a358f901ca1fa85fe61036005db6ed1ae4f586824f76d4732ecd8b24a05d9b"
+      "sha256": "61b3da2861c7d2582945a99c5cdc7994ab463b4683bea0aa211bd1d6d2f18e2b"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -84,15 +41,19 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "059e093ad371d13959ce785a0c00a9cfe0b7b85c8f2c7a0c11752c67acfd2c30"
+      "sha256": "87770ff0afb87ccae43dff55743de2eb0521bf9d7b9779cd7022c060d3075da9"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
-      "sha256": "22734281a19a5f40cfadd9d5c9e40973749d0f7eacbfb663b308b6f202d435c4"
+      "sha256": "6dddbdb9f474160977f2f9f88e95ca49328a60e3ecc7678b68d3d3c0dc3a6e82"
     },
     "strategicSiteRouteClaims": {
       "path": "data/curated/han/route-node-strategic-site-claims-v1.json",
       "sha256": "58759310ca6cfdebb58c1f75b03de716f599e31a9de70ec1315dc513d805ff99"
+    },
+    "externalSettlementRouteClaims": {
+      "path": "data/curated/han/route-node-external-settlement-claims-v1.json",
+      "sha256": "88a79549391484a4f4355fec09ba9b3cf30152d22808990273031e4ad1fbf576"
     }
   },
   "legacyAttributionCorrections": [
@@ -380,7 +341,7 @@
     {
       "batchId": "w2-cityless-jurisdiction-route-claim",
       "criteria": "han-tiles COUNTY jurisdiction without a route node, bound by an APPROVED route-node-jurisdiction-claims-v1 ROUTE_NODE claim",
-      "expectedCount": 176,
+      "expectedCount": 174,
       "reviewState": "APPROVED",
       "selectionRationale": "지도 縣 관할 가운데 게임 城이 없어 빈 프로빈스로 남던 곳을 사용자 결정(2026-09-15, 188 곳 전부 승격)에 따라 경로 노드로 올린다. 郡國志 식별자가 없으므로 HHS 결속이 아니라 CHGIS 縣 점 또는 대리 治所 관할을 근거로 한 source claim 결속이다. 같은 자리의 동일 실체와 이미 경로 노드인 治所는 원장 excluded 에 남긴다.",
       "claimLedger": "data/curated/han/route-node-jurisdiction-claims-v1.json"
@@ -402,6 +363,14 @@
         "hhs:109:河南尹:011"
       ],
       "selectionRationale": "續漢書 郡國志 河南尹 二十一城 〖平陰〗(hhs-109 38행). 城 56 五原郡 河陰이 같은 자리의 220년 개명 기록을 동명으로 차지해 좌표 후보를 잃었다. 56 을 사료 자리로 옮기면서(county-misbinding-rebindings-v1) 비운 발자국을 CHGIS 82879 平陰縣에 넘기고 경로 노드 1098 로 세운다(2026-09-16 사용자 결정). claim 배치 뒤에 번호를 받아 앞 판 번호를 밀지 않는다."
+    },
+    {
+      "batchId": "w5-external-settlement-route-claim",
+      "criteria": "han-tiles EXTERNAL_SETTLEMENT jurisdiction without a route node, bound by an APPROVED route-node-external-settlement-claims-v1 ROUTE_NODE claim",
+      "expectedCount": 37,
+      "reviewState": "APPROVED",
+      "selectionRationale": "郡國 밖 취락 관할에 城이 없어 그 省이 영원히 주인 없는 땅으로 남던 것을 사용자 결정(2026-09-17, 「절대 소속 없는 프로빈스가 있어선 안돼」)에 따라 경로 노드로 올린다. 근거는 external-places.json 의 비정 문장과 Wikidata 좌표다. 같은 縣이 두 번 선 城 두 곳의 번호는 키 재결속으로 이 batch 가 이어받는다.",
+      "claimLedger": "data/curated/han/route-node-external-settlement-claims-v1.json"
     }
   ],
   "status": "APPROVED",
