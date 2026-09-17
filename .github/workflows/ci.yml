@@ -63,14 +63,18 @@ jobs:
         run: python3 tools/map/build_external_places.py --check-offline
       - name: Warn on external places Wikidata drift (network, never fails the job)
         if: '!cancelled()'
+        # 엔드포인트가 거절 없이 멈추면 재시도 합이 12분을 넘는다. 스텝 타임아웃은 셸 밖에서 실패 처리되므로
+        # 셸의 timeout 으로 먼저 끊어 종료 코드(124)로 받고 경고로 보낸다. 아래 둘은 그래도 남는 경우의 안전망이다.
         timeout-minutes: 12
+        continue-on-error: true
         run: |
           set +e
-          python3 tools/map/build_external_places.py --check
+          timeout --signal=TERM --kill-after=15 540 python3 tools/map/build_external_places.py --check
           rc=$?
           case "$rc" in
             0) ;;
             1) echo "::warning::data/map/external-places.json drifted from a live Wikidata regeneration (coordinates/QIDs). Regenerate with tools/map/build_external_places.py and review the diff. Not failing this job -- GH #542." ;;
+            124|137) echo "::warning::Wikidata regeneration timed out after 9 minutes -- external-places.json coordinate drift was NOT verified in this run (GH #542). The offline table gate above still ran." ;;
             *) echo "::warning::Wikidata SPARQL unreachable (exit $rc) -- external-places.json coordinate drift was NOT verified in this run (GH #542). The offline table gate above still ran." ;;
           esac
           exit 0
