@@ -1036,7 +1036,7 @@ object HanWorldV3GateIndex {
         1024 to setOf("幽州", "鮮卑"),
         1025 to setOf("揚州"),
         1026 to setOf("揚州"),
-        1027 to setOf("高句麗"),
+        1027 to setOf("幽州"),
         1028 to setOf("冀州"),
         1029 to setOf("兗州"),
         1030 to setOf("益州"),

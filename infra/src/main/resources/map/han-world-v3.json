@@ -47896,7 +47896,7 @@
       "x": 544,
       "y": 106,
       "level": 1,
-      "region": 14,
+      "region": 12,
       "max": {
         "population": 107700,
         "agriculture": 2100,
@@ -47917,10 +47917,10 @@
         787
       ],
       "meta": {
-        "jun": "졸본",
-        "junCh": "卒本",
-        "ju": "동이",
-        "seat": "졸본",
+        "jun": "요동군",
+        "junCh": "遼東郡",
+        "ju": "유주",
+        "seat": "양평현",
         "nameCh": "安平口",
         "isSeat": false,
         "displayName": "안평구"

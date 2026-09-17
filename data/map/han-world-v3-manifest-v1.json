@@ -3,16 +3,16 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "6f1094d68210d46577bdba6c39cc95d7764018d4ca05ec0827f94e99b287e02a",
-    "migrationSha256": "f47b07ceae708d7eeada0d11f73fa36e4aff908b24fdc77258ba3d4505440a77",
-    "hanTilesSha256": "d7c9fb89a89ea86eff04f4016a082d1968bf67b1d9fcb1c2e79a51a6111d556d",
-    "provinceCityAttributionSha256": "df1784045a930703fdeef1e01f983a924a61744739a6d49d9a1d77ea04ef6229",
+    "selectionSha256": "52fef8452f0e0f885c8e7277ecb28ae982a4bccd27951db6d83be7513dc67d5a",
+    "migrationSha256": "1e29eaf3d9e515f598aae1b012f6ca20f2b43fae4303591c5b95831a3698e4ba",
+    "hanTilesSha256": "e4a29798a07689435d343f2cb18b7db915055790ca6ce6194db2e034c0773c01",
+    "provinceCityAttributionSha256": "f4c3ab35240db6dae183005fe682dd6a0b558999bc9983c84b01a422a81f379e",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
-    "worldJsonSha256": "4df592863d1f74a81aa65aaf5a2a448814b493330f880c035199f92c17d47a1f",
-    "cityConstSha256": "e7dbbe7ea106493a434af2e0f4f2902cdacf90702f41077307159aa27d04b30a",
-    "gateIndexSha256": "acc10b36d43448a140a54c4a59fe9b2386db6239af2ffb9140966474ecfd75e4"
+    "worldJsonSha256": "a3e44fece6b7d80212a9e81db22874798f8fdaf712a41bf16c40dc18aa22ed1b",
+    "cityConstSha256": "c0f6d7d388a1cae091dd33dbd97a37b6be15b6d65e27088455c4a8952f9d67cf",
+    "gateIndexSha256": "307e50ad40121c06fb062a7a400018d1f69dd40f389629904582a7f5f84951a6"
   },
   "routeNodes": [
     {

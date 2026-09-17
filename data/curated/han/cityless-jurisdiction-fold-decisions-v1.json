@@ -541,5 +541,14 @@
       "reason": "SOURCE_ATTESTED_HAN_COUNTY_LAND",
       "basis": "압록강 하구 省(lon 124.3–125.1 · lat 39.9–40.7, 209칸)은 卒本 관할에 기하 배정(NEAREST_SEAT_WITHIN_PARENT)으로만 묶여 있었다. 卒本 治所 점은 桓仁(41.27°N)이라 이 땅과 떨어져 있고, 사료는 이 자리를 遼東郡 西安平縣으로 적는다 — 漢書 卷28 地理志 玄菟郡 西蓋馬 注 「馬訾水西南至遼東郡西安平縣入海」, 後漢書 卷113 郡國志 遼東郡 「〖西安平〗」, 後漢書 卷85 東夷列傳 「質、桓之間，復犯遼東西安平，殺帶方令，掠得樂浪太守妻子」. 城 없던 卒本 관할이 城(989)을 받으면서 이 省이 遼東 西安平(787)과 樂浪 增地 사이를 끊어, 공손씨 樂浪·帶方 17城이 개시부터 보급에서 끊겼다(scenario 1070–1110). 맞닿은 西安平 관할(fc-liaodong-008)로 옮긴다. 郡 기하(parentRegionId)는 그대로다."
     }
+  ],
+  "jurisdictionCommanderyMoves": [
+    {
+      "jurisdictionId": "ss-anpingkou",
+      "fromCommanderyId": "PARENT-0112",
+      "toCommanderyId": "PARENT-0094",
+      "reason": "SOURCE_ATTESTED_COMMANDERY",
+      "basis": "安平口 거점 원장(strategic-strongholds-v1 anpingkou)은 anchorCounty 를 遼東郡 西安平縣으로 적고 「투영 셀은 郡國 밖 卒本 관할로 떨어진다」고 밝혀 두었다. 그 기증 省(1304)이 西安平 관할로 옮겨지면서 安平口 省만 卒本 郡의 섬으로 남으므로, 거점 관할을 遼東郡으로 옮긴다. 근거: 三國志 卷47 吳主傳 裴注 「恂等到安平口」, 漢書 卷28 地理志 「馬訾水西南至遼東郡西安平縣入海」."
+    }
   ]
 }

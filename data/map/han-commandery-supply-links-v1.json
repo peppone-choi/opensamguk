@@ -13,7 +13,7 @@
  "excludedByReviewedProtection": [],
  "stats": {
   "linkCount": 62,
-  "medianKm": 40.7,
+  "medianKm": 39.4,
   "p90Km": 130.8,
   "maxKm": 283.0
  },
@@ -121,14 +121,6 @@
    "fromCityName": "졸본",
    "toCityName": "양구",
    "distanceKm": 75.2
-  },
-  {
-   "canonicalGroup": "卒本",
-   "fromProvinceIndex": 1523,
-   "toProvinceIndex": 1549,
-   "fromCityName": "안평구",
-   "toCityName": "양구",
-   "distanceKm": 115.9
   },
   {
    "canonicalGroup": "南郡",
@@ -401,6 +393,14 @@
    "fromCityName": "태등",
    "toCityName": "착진",
    "distanceKm": 42.3
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "fromProvinceIndex": 1503,
+   "toProvinceIndex": 1523,
+   "fromCityName": "서안평",
+   "toCityName": "안평구",
+   "distanceKm": 5.8
   },
   {
    "canonicalGroup": "邪馬壹國",

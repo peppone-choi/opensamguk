@@ -8,8 +8,10 @@
 그 관할의 省을 城 있는 관할에 넘긴다.
 
 규칙(기하를 지어내지 않는다):
-  1. 省 칸(owner)·省 행·郡 기하(parentRegionId·parentOwner)는 그대로다. 바뀌는 것은 관할 소속뿐이다 —
-     접히는 관할의 provinceIds 가 대상 관할 provinceIds 끝에 붙고, 그 省들의 jurisdictionId 가 대상으로 바뀐다.
+  1. 省 칸(owner)·省 행 순서는 그대로다. 접히는 관할의 provinceIds 가 대상 관할 provinceIds 끝에 붙고, 그 省들의
+     jurisdictionId 가 대상으로 바뀐다. 대상 관할이 다른 郡이면(新平→右扶風 등) 省의 parentRegionId 도 대상 郡으로
+     옮기고 郡 표면(parentOwner·adjacency.commandery)을 다시 잰다 — 시나리오 소유 원장과 계층 검증이 省의 郡으로
+     소속을 읽기 때문이다. 되돌리기에 필요한 칸·간선은 원장에 핀으로 박는다.
   2. 대상은 원장이 적는다. 같은 실체 城의 관할이 접는 관할과 맞닿으면 그 관할, 맞닿지 않으면(汶山) 맞닿은
      城 있는 관할이다. 예외는 같은 縣이 두 번 선 중복(DUPLICATE_ROUTE_NODE)뿐이다 — 北地郡 富平의 寄治 땅은
      떨어져 있어도 富平 관할이다(allowNonAdjacent). 맞닿음은 이 도구가 다시 재서 원장에 적는다.
@@ -75,7 +77,8 @@ def shared_edges(document: dict, source_id: str, target_id: str) -> int:
     return count
 
 
-def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | None = None) -> tuple[dict, dict]:
+def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | None = None,
+                moves_in: list[dict] | None = None) -> tuple[dict, dict]:
     document = copy.deepcopy(source)
     jurisdictions = document["jurisdictionRecords"]
     by_id = {row["id"]: row for row in jurisdictions}
@@ -139,8 +142,49 @@ def apply_folds(source: dict, decisions: list[dict], transfers_in: list[dict] | 
         transfers.append({"provinceId": province_id, "fromJurisdictionId": source_id, "toJurisdictionId": target_id,
                           "sourceProvinceIdsBefore": before_source, "targetProvinceIdsBefore": before_target,
                           "sharedEdges": touching})
+    # 관할 郡 이동 — 사료가 지목한 郡으로 관할 하나를 통째로 옮긴다(郡 治所 관할은 옮기지 않는다).
+    moves = []
+    for move in moves_in or []:
+        row = by_id.get(move["jurisdictionId"])
+        source_commandery = commanderies.get(move["fromCommanderyId"])
+        target_commandery = commanderies.get(move["toCommanderyId"])
+        if row is None or source_commandery is None or target_commandery is None or row["commanderyId"] != source_commandery["id"]:
+            raise ValueError(f"move {move['jurisdictionId']}: commandery {move['fromCommanderyId']} does not hold it")
+        if source_commandery["seatJurisdictionId"] == row["id"]:
+            raise ValueError(f"move {row['id']}: a commandery seat jurisdiction cannot move")
+        for commandery in (source_commandery, target_commandery):
+            commanderies_before.setdefault(commandery["id"], copy.deepcopy(commandery))
+        row["commanderyId"] = target_commandery["id"]
+        source_commandery["jurisdictionIds"] = [value for value in source_commandery["jurisdictionIds"] if value != row["id"]]
+        target_commandery["jurisdictionIds"] = target_commandery["jurisdictionIds"] + [row["id"]]
+        moves.append({"jurisdictionId": row["id"], "fromCommanderyId": source_commandery["id"],
+                      "toCommanderyId": target_commandery["id"]})
+    commandery_of = {row["id"]: row["commanderyId"] for row in jurisdictions}
+    reparented = {}
+    for record in provinces:
+        target_parent = commandery_of[record["jurisdictionId"]]
+        if record["parentRegionId"] != target_parent:
+            reparented[record["id"]] = {"before": record["parentRegionId"], "after": target_parent}
+    surfaces = None
+    if reparented:
+        from tools.map.world_province_geometry import _rederive_parent_surfaces
+        meta = document["_meta"]
+        parent_before = expand(document["parentOwner"], meta["rows"], meta["cols"]).ravel().tolist()
+        commandery_before = copy.deepcopy(document["adjacency"]["commandery"])
+        adj_before = meta["counts"].get("adjCommandery")
+        for record in provinces:
+            if record["id"] in reparented:
+                record["parentRegionId"] = reparented[record["id"]]["after"]
+        _rederive_parent_surfaces(document)
+        parent_after = expand(document["parentOwner"], meta["rows"], meta["cols"]).ravel().tolist()
+        surfaces = {
+            "parentOwnerDelta": [[position, old, new] for position, (old, new)
+                                 in enumerate(zip(parent_before, parent_after)) if old != new],
+            "commanderyAdjacencyBefore": commandery_before,
+            "adjCommanderyBefore": adj_before,
+        }
     document["_meta"]["counts"]["jurisdictions"] = len(jurisdictions)
-    return document, {"removedJurisdictions": removed, "commanderiesBefore": list(commanderies_before.values()),
+    return document, {"jurisdictionMoves": moves, "reparentedProvinces": reparented, "parentSurfaces": surfaces, "removedJurisdictions": removed, "commanderiesBefore": list(commanderies_before.values()),
                       "targetProvinceIdsBefore": targets_before, "adjacency": adjacency, "transfers": transfers}
 
 
@@ -173,7 +217,22 @@ def restore_document(document: dict, ledger: dict) -> dict:
         raise ValueError("document is not a pinned cityless-jurisdiction fold output")
     restored = copy.deepcopy(document)
     province_by_id = {row["id"]: row for row in restored["provinceRecords"]}
+    for province_id, move in stage.get("reparentedProvinces", {}).items():
+        province_by_id[province_id]["parentRegionId"] = move["before"]
+    surfaces = stage.get("parentSurfaces")
+    if surfaces:
+        from tools.map.rebind_misbound_counties import encode
+        meta = restored["_meta"]
+        grid = expand(restored["parentOwner"], meta["rows"], meta["cols"]).ravel()
+        for position, old, new in surfaces["parentOwnerDelta"]:
+            if int(grid[position]) != new:
+                raise ValueError("parentOwner cell no longer matches the pinned fold surface")
+            grid[position] = old
+        restored["parentOwner"] = encode(grid.reshape(meta["rows"], meta["cols"]))
+        restored["adjacency"] = {**restored["adjacency"], "commandery": copy.deepcopy(surfaces["commanderyAdjacencyBefore"])}
     jurisdiction_by_id = {row["id"]: row for row in restored["jurisdictionRecords"]}
+    for move in reversed(stage.get("jurisdictionMoves", [])):
+        next(row for row in restored["jurisdictionRecords"] if row["id"] == move["jurisdictionId"])["commanderyId"] = move["fromCommanderyId"]
     for transfer in reversed(stage.get("transfers", [])):
         province_by_id[transfer["provinceId"]]["jurisdictionId"] = transfer["fromJurisdictionId"]
         jurisdiction_by_id[transfer["fromJurisdictionId"]]["provinceIds"] = list(transfer["sourceProvinceIdsBefore"])
@@ -207,14 +266,16 @@ def peel(document: dict) -> tuple[dict, dict | None]:
 
 
 def reapply(document: dict, ledger: dict) -> dict:
-    rebuilt, _ = apply_folds(document, ledger["decisions"], ledger.get("provinceTransfers"))
+    rebuilt, _ = apply_folds(document, ledger["decisions"], ledger.get("provinceTransfers"),
+                             ledger.get("jurisdictionCommanderyMoves"))
     return rebuilt
 
 
 def build_stage(source: dict, decisions_document: dict) -> tuple[dict, dict]:
     decisions = decisions_document["folds"]
     transfers = decisions_document.get("provinceTransfers", [])
-    document, result = apply_folds(source, decisions, transfers)
+    moves = decisions_document.get("jurisdictionCommanderyMoves", [])
+    document, result = apply_folds(source, decisions, transfers, moves)
     stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
              "inputCounts": copy.deepcopy(source["_meta"]["counts"]), **result}
     ledger = {
@@ -224,6 +285,7 @@ def build_stage(source: dict, decisions_document: dict) -> tuple[dict, dict]:
         "inputs": {"decisions": {"path": DECISIONS.relative_to(ROOT).as_posix(), "sha256": _sha256(DECISIONS)}},
         "decisions": decisions,
         "provinceTransfers": transfers,
+        "jurisdictionCommanderyMoves": moves,
         "geometry": {"stages": [stage]},
     }
     return document, ledger
@@ -243,10 +305,13 @@ def check(document: dict, ledger: dict) -> list[str]:
         problems.append(f"{ledger['inputs']['decisions']['path']} changed since the fold was prepared")
     reviewed = json.loads(DECISIONS.read_text(encoding="utf-8"))
     decisions, transfers = reviewed["folds"], reviewed.get("provinceTransfers", [])
-    if decisions != ledger["decisions"] or transfers != ledger.get("provinceTransfers", []):
+    moves = reviewed.get("jurisdictionCommanderyMoves", [])
+    if (decisions != ledger["decisions"] or transfers != ledger.get("provinceTransfers", [])
+            or moves != ledger.get("jurisdictionCommanderyMoves", [])):
         problems.append("fold ledger decisions differ from the reviewed decision file")
-    rebuilt, result = apply_folds(restore_document(document, ledger), decisions, transfers)
-    for key in ("removedJurisdictions", "commanderiesBefore", "targetProvinceIdsBefore", "adjacency", "transfers"):
+    rebuilt, result = apply_folds(restore_document(document, ledger), decisions, transfers, moves)
+    for key in ("jurisdictionMoves", "reparentedProvinces", "parentSurfaces", "removedJurisdictions", "commanderiesBefore",
+                "targetProvinceIdsBefore", "adjacency", "transfers"):
         if result[key] != stage[key]:
             problems.append(f"cityless-jurisdiction fold {key} differs from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:

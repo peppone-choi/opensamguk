@@ -2167,9 +2167,9 @@
         "surroundingDisplayNames": [
           "서안평현"
         ],
-        "commanderyId": "PARENT-0112",
+        "commanderyId": "PARENT-0094",
         "surroundingCommanderyId": "PARENT-0094",
-        "sameCommandery": false
+        "sameCommandery": true
       },
       {
         "id": "ss-dadu",
@@ -2384,7 +2384,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 43,
+    "disconnectedCount": 42,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -3496,29 +3496,6 @@
         ]
       },
       {
-        "id": "PARENT-0112",
-        "displayName": "졸본",
-        "componentCellCounts": [
-          1096,
-          8
-        ],
-        "components": [
-          {
-            "cellCount": 1096,
-            "memberIds": [
-              "X029",
-              "ss-liangkou"
-            ]
-          },
-          {
-            "cellCount": 8,
-            "memberIds": [
-              "ss-anpingkou"
-            ]
-          }
-        ]
-      },
-      {
         "id": "PARENT-0116",
         "displayName": "고자미동국",
         "componentCellCounts": [
@@ -3927,7 +3904,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 11,
+    "fullyEnclosedCount": 10,
     "fullyEnclosed": [
       {
         "id": "PARENT-0045",
@@ -3971,17 +3948,6 @@
         ],
         "surroundingDisplayNames": [
           "고량군"
-        ]
-      },
-      {
-        "id": "PARENT-0112",
-        "displayName": "졸본",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "PARENT-0094"
-        ],
-        "surroundingDisplayNames": [
-          "요동군"
         ]
       },
       {
@@ -8588,7 +8554,7 @@
         "currentCommanderyDisplayName": "요동군",
         "currentCommanderyNameCh": "遼東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 12,
+        "currentJurisdictionCount": 13,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -8776,7 +8742,7 @@
         "currentCommanderyDisplayName": "졸본",
         "currentCommanderyNameCh": "卒本",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 3,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -9585,7 +9551,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "d7c9fb89a89ea86eff04f4016a082d1968bf67b1d9fcb1c2e79a51a6111d556d"
+      "sha256": "e4a29798a07689435d343f2cb18b7db915055790ca6ce6194db2e034c0773c01"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
