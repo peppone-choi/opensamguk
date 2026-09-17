@@ -261,6 +261,30 @@ SEA_LINKS: list[tuple[str, str, str]] = [
 ]
 
 
+# han-world-v3 뱃길 — 城과 城을 잇는 바닷길(2026-09-17 사용자 결정 「고증에 맞춘 해로 연결」).
+# 끝점은 경로 노드의 physicalPlaceRef 다. 사료 색인(shiliao)에서 원문을 직접 확인한 노선만 싣는다.
+# v2 섬 郡 뱃길(SEA_LINKS) 가운데 夷洲·流求·州胡·于山國은 郡治끼리 그대로 잇고, 邪馬壹國↔狗邪國은
+# 倭人傳 도해 사슬(帶方→狗邪韓國→對馬→一大→末盧)로 바꾼다.
+V3_SEA_ROUTES: list[tuple[str, str, str]] = [
+    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:85371",
+     "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"),
+    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:40404",
+     "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"),
+    ("chgis:v6:cnty:40404", "curated:strategic-site-v1:ss-anpingkou",
+     "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"),
+    ("external:v1:X004", "external:v1:X045",
+     "三國志 卷30 倭人 「從郡至倭，循海岸水行，歷韓國…到其北岸狗邪韓國」 — 帶方 ↔ 狗邪韓國"),
+    ("external:v1:X045", "external:v1:X050", "三國志 卷30 倭人 「始渡一海，千餘里至對馬國」"),
+    ("external:v1:X050", "external:v1:X051", "三國志 卷30 倭人 「又南渡一海千餘里，名曰瀚海，至一大國」"),
+    ("external:v1:X051", "external:v1:X052", "三國志 卷30 倭人 「又渡一海，千餘里至末盧國」"),
+    ("chgis:v6:cnty:40165", "chgis:v6:cnty:42193",
+     "後漢書 卷33 鄭弘傳 「舊交阯七郡貢獻轉運，皆從東冶汎海而至」 — 東冶(東部侯官) ↔ 番禺"),
+    ("chgis:v6:cnty:42424", "chgis:v6:cnty:42444",
+     "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"),
+]
+V3_ISLAND_SEA_LINKS = [row for row in SEA_LINKS if (row[0], row[1]) != ("邪馬壹國", "狗邪國")]
+
+
 def canon_ju() -> dict[str, str]:
     """build_junguozhi.py 의 CANON_105 를 파싱해 郡→州(한자) 를 만든다.
 
@@ -1258,7 +1282,7 @@ def build_v3() -> tuple[str, str, str, str]:
     water_locked = water_locked_province_indices(tiles)
     # 섬 郡(夷洲·流求·州胡·邪馬壹國·于山國)은 郡治 자신이 물에 갇혀 있다. 2026-09-17 郡國 밖 취락(w5)이
     # 城으로 서면서 v3 에도 들어왔다. 지어낸 길로 잇지 않고 v2 와 같은 사료 표(SEA_LINKS)의 뱃길만 놓는다.
-    sea_link_islands = {island_ch for island_ch, _, _ in SEA_LINKS}
+    sea_link_islands = {island_ch for island_ch, _, _ in V3_ISLAND_SEA_LINKS}
     seat_patched: list[tuple[int, int]] = []
     for node in sorted(nodes, key=lambda n: n["numericCityId"]):
         cid = node["numericCityId"]
@@ -1283,13 +1307,25 @@ def build_v3() -> tuple[str, str, str, str]:
         print("물에 갇혀 郡治와 직결한 城: "
               + ", ".join(f"{cid}→{seat}" for cid, seat in seat_patched), file=sys.stderr)
     sea_linked: list[tuple[int, int]] = []
-    for island_ch, shore_ch, _ in SEA_LINKS:
+    # 화면이 뱃길을 곡선으로 그리도록 城 쌍과 근거를 세계 JSON 에 싣는다(seaRoutes).
+    sea_routes: list[dict] = []
+    route_by_place_ref = {node["physicalPlaceRef"]: node["numericCityId"] for node in nodes}
+    for a_ref, b_ref, why in V3_SEA_ROUTES:
+        a, b = route_by_place_ref.get(a_ref), route_by_place_ref.get(b_ref)
+        if a is None or b is None:
+            raise AssertionError(f"뱃길 끝점이 경로 노드가 아니다: {a_ref} ↔ {b_ref}")
+        connections[a].add(b)
+        connections[b].add(a)
+        sea_linked.append((a, b))
+        sea_routes.append({"from": min(a, b), "to": max(a, b), "source": why})
+    for island_ch, shore_ch, why in V3_ISLAND_SEA_LINKS:
         island, shore = seat_id_by_parent_ch.get(island_ch), seat_id_by_parent_ch.get(shore_ch)
         if island is None or shore is None:
             raise AssertionError(f"뱃길 {island_ch}↔{shore_ch} 의 郡治 노드가 v3 에 없다")
         connections[island].add(shore)
         connections[shore].add(island)
         sea_linked.append((island, shore))
+        sea_routes.append({"from": min(island, shore), "to": max(island, shore), "source": why})
     # 뱃길까지 놓은 뒤 城 그래프는 한 덩어리여야 한다 — 섬 郡(邪馬壹國 규슈 4국)처럼 城끼리는 이어져도
     # 본토와 끊긴 덩어리가 남으면 보급·수도 탐색이 막힌다(2026-09-16 pep 정지와 같은 모양).
     #
@@ -1573,6 +1609,7 @@ def build_v3() -> tuple[str, str, str, str]:
             "regions": legacy["_meta"]["regions"],
         },
         "width": legacy["width"], "height": legacy["height"], "cities": out_cities,
+        "seaRoutes": sorted(sea_routes, key=lambda row: (row["from"], row["to"])),
     }
     blob = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
     kt = kotlin(raw_rows, "HanWorldV3CityConst", "han-world-v3")

@@ -27,6 +27,7 @@ import {
   cityIconLevel,
   cityLabelBox,
   drawBattlefieldMark,
+  drawSeaRoute,
   drawCityFlag,
   drawCityName,
   drawCityRing,
@@ -42,6 +43,7 @@ import {
   ownerTint,
   type IsoMapData,
   type IsoBattlefieldMarker,
+  type IsoSeaRoute,
   type PlacedCity,
   type Rgb,
   type TintMode,
@@ -78,6 +80,7 @@ export type { TintMode };
 
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
+const EMPTY_SEA_ROUTES: readonly IsoSeaRoute[] = [];
 
 export interface IsoMap3DProps {
   data: IsoMapData;
@@ -103,6 +106,8 @@ export interface IsoMap3DProps {
   /** 전장. 城 위에 마름모로 얹고 城 보다 먼저 집힌다. */
   battlefields?: readonly IsoBattlefieldMarker[];
   onPickBattlefield?: (target: IsoBattlefieldMarker) => void;
+  /** 사료로 확인한 뱃길(城 id 쌍). 겹판에 곡선으로 긋는다 — 2D 판과 같은 그림이다. */
+  seaRoutes?: readonly IsoSeaRoute[];
   /** 렌더 통계(타일·흙벽·治所 수)를 캔버스 왼쪽 아래에 띄운다. 랩 전용이다. */
   showStats?: boolean;
   className?: string;
@@ -178,6 +183,7 @@ export function IsoMap3D({
   onHoverCity,
   battlefields = EMPTY_BATTLEFIELDS,
   onPickBattlefield,
+  seaRoutes = EMPTY_SEA_ROUTES,
   showStats = false,
   className,
 }: IsoMap3DProps) {
@@ -704,6 +710,25 @@ export function IsoMap3D({
         const half = Math.max(15 * k, tileWidth * 0.22);
         const below = Math.max(9, tileWidth * 0.22);
 
+        // 뱃길 — 깃발·이름보다 먼저(밑에) 긋는다. 축소 상태에서도 남긴다(郡治 뱃길이 대부분이다).
+        if (seaRoutes.length > 0) {
+          const byId = new Map(cities.map((city) => [city.id, city]));
+          const screenOf = (city: PlacedCity): [number, number] | null => {
+            const i = city.tileRow * cols + city.tileCol;
+            projected.set(city.drawCol - halfCols, y(baseHeight[i]), city.drawRow - halfRows);
+            projected.project(camera);
+            if (projected.z > 1) return null;
+            return [(projected.x * 0.5 + 0.5) * w, (-projected.y * 0.5 + 0.5) * h];
+          };
+          for (const route of seaRoutes) {
+            const a = byId.get(route.fromCityId);
+            const b = byId.get(route.toCityId);
+            const pa = a ? screenOf(a) : null;
+            const pb = b ? screenOf(b) : null;
+            if (pa && pb) drawSeaRoute(overlayContext, pa[0], pa[1], pb[0], pb[1], { k });
+          }
+        }
+
         const drawn: { city: PlacedCity; sx: number; sy: number; flagY: number }[] = [];
         for (const city of cities) {
           if (seatOnly && !city.seat) continue;
@@ -1014,7 +1039,7 @@ export function IsoMap3D({
       renderer?.dispose();
     };
   }, [data, cities, hideCityNames, currentCityId, selectedCityId, onPickTile, onPickCity,
-    onHoverCity, battlefields, onPickBattlefield]);
+    onHoverCity, battlefields, onPickBattlefield, seaRoutes]);
 
   // 색 세기·모드만 바뀌면 씬을 다시 짓지 않고 instanceColor 만 갈아 끼운다.
   useEffect(() => {

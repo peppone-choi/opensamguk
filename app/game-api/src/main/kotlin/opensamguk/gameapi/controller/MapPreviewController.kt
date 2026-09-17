@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.MapPreviewCity
 import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
+import opensamguk.gameapi.dto.MapPreviewSeaRoute
 import opensamguk.gameapi.dto.StrategicTopologyBinding
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
@@ -182,6 +183,9 @@ class MapPreviewController(
             commanderyControl = administrativeOwnership?.commanderyControl.orEmpty(),
             startYear = startYear,
             strategicTopology = selected.artifacts?.let { StrategicTopologyBinding.from(world.id, it.projection) },
+            seaRoutes = mapData.seaRoutes
+                .filter { it.fromCityId in coords && it.toCityId in coords }
+                .map { MapPreviewSeaRoute(it.fromCityId, it.toCityId, it.source) },
         )
     }
 

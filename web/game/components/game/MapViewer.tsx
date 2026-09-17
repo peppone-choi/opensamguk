@@ -459,6 +459,7 @@ export default function MapViewer({
                     <IsoWorldMap
                         terrainUrl={terrainUrl(data.mapCode)}
                         cities={data.cities}
+                        seaRoutes={data.seaRoutes}
                         nations={data.nations}
                         sourceSize={sourceSize}
                         provinceOccupancy={data.provinceOccupancy}
