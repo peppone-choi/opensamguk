@@ -79,7 +79,7 @@ class HanRuntimeConstantsIntegrityTest {
     @Test fun `1133 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1133-artifacts-v1/runtime-constants.json"))
-        assertEquals("69e2badcfeda53724300e77958bd2ecf4fc7324a80f96bde657c300d22d95714", sha(raw))
+        assertEquals("71b96111a252f25e95fd2049aaac9e01330e512873580f2eae5680a22d1ce956", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
