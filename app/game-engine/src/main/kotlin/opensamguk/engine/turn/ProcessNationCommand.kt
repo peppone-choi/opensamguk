@@ -517,6 +517,8 @@ class ProcessNationCommand(
             cityDistance = cityDistance,
         )
         definition.resolve(ctx)
+        // 월드 집계 대용 입력은 커맨드 인자가 아니다 — LastTurn.arg(PHP $this->arg = null)로 새지 않게 걷는다.
+        if (nationCommand.actionCode == "che_의병모집") resolveArgs.keys.removeAll(UIBYEONG_STAGED_KEYS)
 
         // --- drain draft (mirrors ReservedTurnHandler nation-capable path) ---
         recorder.diffGeneral(preGeneral, draft.general)
@@ -556,6 +558,10 @@ class ProcessNationCommand(
         if (draft.city != preCity) {
             recorder.diffCity(preCity, draft.city)
             world.getCityById(preCity.id)?.let { world.applyCityDirtyFree(applyLogicToCity(it, draft.city)) }
+        }
+
+        for (built in draft.createdGenerals) {
+            recorder.recordGeneralCreate(world, built.toTurnGeneral(world.allocateGeneralId(), world.getState()))
         }
 
         for (delta in draft.cascadeDiplomacy) {
@@ -645,7 +651,35 @@ class ProcessNationCommand(
                     args.putIfAbsent("__destLevel", dc.level)
                 }
             }
+            "che_의병모집" -> stageUibyeongMojipInputs(args, general)
         }
+    }
+
+    /**
+     * che_의병모집.php:124-138 의 DB 집계 대용. 이게 빠지면 resolver가 createGenCnt 부재로 조기 반환해
+     * exp/ded만 오르고 의병장이 한 명도 안 생긴다(UibyeongMojipLiveDispatchTest).
+     *  - createGenCnt = 3 + round(avg(gennum) FROM nation WHERE level > 0 / 8)
+     *  - avgGen = avg(dedication), avg(experience), avg(dex1..4 합), avg(dex5) FROM general WHERE nation=me
+     */
+    private fun stageUibyeongMojipInputs(args: MutableMap<String, Any?>, general: TurnGeneral) {
+        val generals = world.listGenerals()
+        val activeNations = world.listNations().filter { it.level > 0 }
+        fun gennumOf(nation: Nation): Int =
+            (nation.meta["gennum"] as? Number)?.toInt() ?: generals.count { it.nationId == nation.id }
+        val avgGennum = if (activeNations.isEmpty()) 0.0 else activeNations.sumOf(::gennumOf).toDouble() / activeNations.size
+        world.getNationById(general.nationId)?.let { args["nationGennum"] = gennumOf(it) }
+        fun metaInt(g: TurnGeneral, key: String) = (g.meta[key] as? Number)?.toInt() ?: 0
+        // actor 자신이 nation=me 에 들어가므로 비지 않는다.
+        val mine = generals.filter { it.nationId == general.nationId }.ifEmpty { listOf(general) }
+        val state = world.getState()
+        args["createGenCnt"] = 3 + phpRound(avgGennum / 8).toInt()
+        args["avgDexTotal"] = mine.sumOf { g -> (1..4).sumOf { metaInt(g, "dex$it") } }.toDouble() / mine.size
+        args["avgDex5"] = mine.sumOf { metaInt(it, "dex5") }.toDouble() / mine.size
+        args["avgExp"] = mine.sumOf { it.experience }.toDouble() / mine.size
+        args["avgDed"] = mine.sumOf { it.dedication }.toDouble() / mine.size
+        args["turnterm"] = (state.meta["turnterm"] as? Number)?.toInt() ?: turnTerm
+        args["fiction"] = (state.meta["fiction"] as? Number)?.toInt() ?: 0
+        args["existingGeneralNames"] = generals.map { it.name }
     }
 
     private fun stageCandidateGenerals(
@@ -1006,6 +1040,9 @@ class ProcessNationCommand(
             DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC)
         private const val NO_AGGRESSION_ACCEPT = "che_불가침수락"
         private const val CHEONDO_COMMAND_CODE = "che_천도"
+        private val UIBYEONG_STAGED_KEYS = setOf(
+            "createGenCnt", "nationGennum", "avgDexTotal", "avgDex5", "avgExp", "avgDed", "turnterm", "fiction", "existingGeneralNames",
+        )
         private const val CHEONDO_FALLBACK_DISTANCE = 50
         private const val LAST_CHEONDO_TRIAL_KEY = "last천도Trial"
         private const val DEST_NATION_VALUE_CONSTRAINT = "ReqDestNationValue"

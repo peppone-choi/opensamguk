@@ -37,6 +37,9 @@ class GeneralActionDraft(
     val createdDiplomacy: MutableList<Diplomacy> = mutableListOf()
     val createdNationTurns: MutableList<NationTurn> = mutableListOf()
 
+    // --- created generals (의병모집: NPC 의병장 INSERT). 엔진이 recorder.recordGeneralCreate로 흘린다. ---
+    val createdGenerals: MutableList<opensamguk.logic.world.BuiltGeneral> = mutableListOf()
+
     // --- cascade-set (방랑: bulk-mutate every general/city/diplomacy of the abandoned nation) ---
     val cascadeGenerals: MutableList<General> = mutableListOf()
     val cascadeCities: MutableList<City> = mutableListOf()
