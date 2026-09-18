@@ -28,9 +28,6 @@ EXEMPT = {
     "tools/scenario/migrate_han_ownership_claims.py": "main 에서 이미 적색(scenario-province-claims-v1 drift), GH #818 후속",
     "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
     "tools/map/build_han_parent_reconciliation.py": "통과하지만 23초 — contracts 예산 밖, 미배선",
-    "tools/map/measure_province_seat_offset.py": (
-        "Q1·Q1b 게이트 — 현행 커밋본에서 의도적으로 적색(480·24건, GH #806 계획 §6). ★ 지리 재분할이 han-tiles 에 "
-        "들어오는 PR 이 COUPLED 로 옮긴다. 적색인 것은 test_measure_province_seat_offset 가 고정한다"),
 }
 
 
@@ -92,6 +89,41 @@ class RunnerReportsAllStaleTest(unittest.TestCase):
         self.assertIn("a-red", err.getvalue())
         self.assertIn("c-red", err.getvalue())
         self.assertNotIn("b-green", err.getvalue())
+
+    def test_local_only_skip_is_reported_as_skipped_never_as_ok_and_red_stays_red(self):
+        """로컬 전용 검사(CHGIS 독립 축)는 입력이 없으면 exit 77 — 통과로 세지 않는다. 적색(exit 1)은 그대로 적색이다."""
+        import contextlib, io
+        real = C.COUPLED
+        try:
+            for code, expected_rc, marker in ((77, 0, "SKIPPED local"), (1, 1, "STALE local"), (0, 0, "OK    local")):
+                C.COUPLED = (C.Coupled("local", ("x",), (sys.executable, "-c", f"import sys; sys.exit({code})"), None,
+                                       local_only=True),)
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    rc = C.run_checks(include_slow=False)
+                self.assertEqual(rc, expected_rc, code)
+                self.assertIn(marker, out.getvalue())
+                if code == 77:
+                    self.assertIn("검증되지 않았다", out.getvalue())
+            # exit 77 은 local_only 항목에서만 SKIP 이다 — 보통 항목이 77 을 내면 낡은 것이다.
+            C.COUPLED = (C.Coupled("plain", ("x",), (sys.executable, "-c", "import sys; sys.exit(77)"), None),)
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(C.run_checks(include_slow=False), 1)
+        finally:
+            C.COUPLED = real
+
+    def test_chgis_axis_reports_skipped_when_the_gitignored_source_is_absent(self):
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("chgis_axis", ROOT / "tools/map/check_seat_cells_against_chgis.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        import contextlib, io
+        out = io.StringIO()
+        with mock.patch.object(module, "SOURCES", (ROOT / "data/chgis-source/__absent__.dbf",)), \
+                mock.patch.object(sys, "argv", ["chgis", "--check"]), contextlib.redirect_stdout(out):
+            self.assertEqual(module.main(), module.SKIPPED)
+        self.assertIn("SKIPPED", out.getvalue())
 
 
 if __name__ == "__main__":

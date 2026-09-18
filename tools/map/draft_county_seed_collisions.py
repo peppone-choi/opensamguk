@@ -21,7 +21,7 @@ from tools.map.partition_counties_by_location import TILES, project_cell, stage_
 
 LEDGER = ROOT / "data/curated/han/county-seed-collisions-v1.json"
 CURATED = ROOT / "data/curated/han"
-HUMAN_FIELDS = ("ruling", "reviewState", "basis", "evidenceRefs", "reviewedAt")
+HUMAN_FIELDS = ("ruling", "reviewState", "basis", "evidenceRefs", "absenceChecks", "reviewedAt")
 
 
 def _mentions(ids: list[str]) -> list[dict]:
@@ -84,7 +84,10 @@ def build(previous: dict | None) -> dict:
         "authority": "spec 2026-09-17-province-geography-first §3 규칙 2 — 자동 추정 금지",
         "generator": "tools/map/draft_county_seed_collisions.py",
         "scope": "거점 분할 앞 문서(★ 의 입력)의 城 있는 省. 실제 칸 = lon/lat 투영 내림.",
-        "unreviewedDefault": "판정 전에는 분할기가 규칙 2(b)(id 순, 가장 가까운 빈 칸)로 놓고 UNREVIEWED 로 표시한다",
+        "geometryRule": ("분할기의 기하는 판정과 무관하게 규칙 2(b)(id 순, 가장 가까운 빈 칸)다. SAME_ENTITY 쌍은 뒤의 접기 단계가 "
+                         "한 관할로 합치므로 합친 관할이 실제 칸을 갖는다. 판정은 이 원장에만 산다."),
+        "reviewStates": {"NEEDS_HUMAN_REVIEW": "사료가 가르지 못했다 — 기계 기본값(별개 縣, 규칙 2(b))을 그대로 둔다",
+                         "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION": "사료 색인 기반 초안(2026-09-18). 사람 확인 전"},
         "counts": {"cells": len(rows), "cities": sum(len(r["members"]) for r in rows),
                    "needsHumanReview": sum(r["reviewState"] == "NEEDS_HUMAN_REVIEW" for r in rows)},
         "rows": rows,

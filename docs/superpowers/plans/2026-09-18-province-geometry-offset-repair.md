@@ -1,6 +1,6 @@
 # 省 기하 밀림 — 진단과 국소 수리안 (계획)
 
-- 이슈: GH #806 / OPENSAM-278 · 상태: DRAFT(진단 + 계획만, 데이터 무변경)
+- 이슈: GH #806 / OPENSAM-278 · 상태: S0–S3 실행(2026-09-18, §9–§11). **S4(1133 번들 재핀)·S5 는 강 뱃길 PR(#826) 머지 뒤로 미룸**
 - 기준: `origin/main` `43ed3872`, `data/map/han-tiles.json` sha256 `ba08098a…566a0`(1133 roster)
 - 사용자 결정(2026-09-17): **지리 우선.** 넓이 균형을 포기하고 郡 안 縣 경계를 실제 위치로 다시 자른다. 「경제 입력만 보정」안은 거부됨.
 - 짝 문서: spec `docs/superpowers/specs/2026-09-17-province-geography-first.md`(브랜치 `work/opensamguk/province-geography-first`, DRAFT r2, main 미머지). 이 문서는 그 spec 의 P0(계측) 실측과 실행 순서를 채운다. 규칙 자체는 spec 이 정본이다.
@@ -219,3 +219,83 @@ spec 에 없어 구현이 기계적으로 정한 것 3가지(보고서 `mechanic
 - 초록 10: 저지 지형(terrain 동일, 1,332칸), 지명, 경로 노드 3, 자원지, 본관, 郡國志 결손, iso3d, Q7 locality(40칸 초과 50행 — 늘지 않음).
 
 **S2 전에 사용자가 답할 것**은 PR #806 댓글·PR 본문에 있다.
+
+## 9. 사용자 결정(2026-09-18)과 spec 에 더하는 규칙
+
+GH #806 댓글의 결정 7건을 이렇게 옮겼다. 규칙의 정본 문안은 `data/curated/han/county-location-partition-decisions-v1.json` `mechanicalRules`(근거·사료 검토 결과 포함)이고, spec r3 가 main 에 오를 때 §3 에 같은 문안으로 들어간다.
+
+| # | 결정 | 구현 |
+|---|---|---|
+| 1 | 변경 省 성김 수용 | 규칙 5 그대로(居延 11省). |
+| 2 | 鄧塞·樊城·孟津은 발자국을 줄여 세운다 | **규칙 4 보충 — 거점 기증 예약.** 거점 앵커가 떨어지는 관할의 최소 넓이 = `min_area`(8) + 거점 수 × carve `minimumFootprintCells`(4). 둘 다 현행 값이다. carve 는 같은 기증 省에 뒤에 설 거점 몫을 남기고, 4칸으로도 못 서면 앵커를 포함한 연결 발자국을 전수로 보며 1칸까지 줄인다. 실측: 襄陽 16칸 = 鄧塞 4 + 樊城 **2** + 縣 10, 平陰 12칸 = 孟津 4 + 縣 8. 거점 73/73. |
+| 3 | 8칸 미만 縣 6곳은 Q4 예외 행 | 결정 원장 `areaExceptions` 6행(陽安 1 · 張 4 · 平鄉 4 · 廣鄉 5 · 蕃 7 · 朝平 7). ★ `--check` 는 위반과 예외 행이 **정확히** 같기를 요구한다(새 위반·낡은 행·칸 수 드리프트 전부 적색). |
+| 4 | 씨앗 충돌 14행 사료 판정 초안 | `county-seed-collisions-v1`: DISTINCT 9 · SAME_ENTITY 3(㡉·益·杜) · NEEDS_HUMAN_REVIEW 2(鄄良 — 전 코퍼스 0건, 贊/陰 — 「贊縣」 0건, 酇이면 접기가 틀린다). 전 행 `SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION`. |
+| 5 | spec 밖 기계 규칙 3가지 | 아래 규칙 A–C. |
+| 6 | 汶山→44401 접기 | **綿虒道(200261)로 바꿨다.** 廣都를 汶山과 잇는 사료는 없다. 讀史方輿紀要 卷67 汶川縣 「漢綿虒縣，屬蜀郡，後漢曰綿虒道。蜀漢嘗分置汶山縣，移汶山郡治此」. 다른 전승(같은 卷 茂州 「漢置汶江道…晉仍曰汶山縣」)은 汶江道를 가리킨다 — 治所 점을 茂州로 옮긴다면 대상이 바뀐다. 초안. |
+| 7 | CHGIS 독립 축 | `tools/map/check_seat_cells_against_chgis.py`(로컬 전용, 입력 없으면 exit 77 = SKIPPED). §10. |
+
+**규칙 A (규칙 3 보충) — 대각 조각.** 8-이웃으로 자란 영역에서 제 씨앗과 4-이웃으로 안 이어지는 조각은 같은 郡에서 맞닿은 변이 가장 많은 4-이웃 관할로 넘긴다(동률 id 순, 실측 254칸). 이유: 거리는 8-이웃으로 재야 경계가 계단이 안 되지만 省 연결성·인접·런타임 보급망·단절 감사는 전부 4-이웃 변으로 센다. 그대로 두면 1–수 칸 고립 조각이 Q3 을 깨고 단절 행을 수백 개 만든다. 사료 문제가 아니다.
+
+**규칙 B (규칙 3 둘째 문단 보충) — 씨앗 없는 성분.** 가장 가까운 관할에 가되, 8칸 이상이면 그 관할의 城 없는 省 하나, 미만이면 seat 省의 다성분 예외(둘 다 components 행). 이유: 省은 이동·점령 단위라 8칸 넘는 떨어진 땅을 seat 省에 붙이면 한 省이 두 자리를 뜻하고 물 건너 이웃과 거짓 간선이 생긴다. 8칸 미만은 제 省이 되면 Q4 위반이다(같은 `min_area`). 사료: 縣이 떨어진 섬을 경내에 두는 것은 있다(後漢書 卷111 朐 劉昭注 「都州在海中，一曰郁州…在縣界」). 뭍 위 飛地 증언은 못 찾았다(水經注·通典 미색인).
+
+**규칙 C (규칙 2 보충) — 충돌의 기하는 판정과 무관하게 2(b).** spec 2(a)의 「접힐 관할은 씨앗을 받지 않는다」는 ★ 시점에 그 관할이 아직 있어(접기는 뒤 단계) 칸 0개 省을 만든다. 옆 칸에 놓아 두면 접기 단계가 합쳐 같은 결과가 된다. 판정은 원장에만 산다. 기본값 「별개 縣」은 12쌍 중 8쌍이 郡國志에 따로 실려 있어 경험적으로도 맞지만, SAME 3쌍은 모두 이름 앞글자를 공유했다 — 그런 쌍은 검토로 돌린다.
+
+## 10. S2–S3 실측 (2026-09-18, han-tiles `ba08098a…` → `6dde62bc…`)
+
+**S2 단계 사슬.** `조각 판정 → 劇 이전 → 재결속 → 변경 51縣 → ★ → 거점 → 접기 → 저지`. ★ 원장 `county-location-partition-v1.json` + 입력 blob(`…input.json.gz`, gzip mtime 0, **키 순서 보존** — 조각 판정 단계가 cities 를 키 순서까지 지문으로 본다) + 결정 원장. `carving.peel()` 이 ★ 까지 벗기고 `reapply()` 가 ★ → 거점 순으로 다시 얹는다(접기가 저지 단계를 싣는 것과 같은 방식) — 앞 단계 도구 4개(조각 판정·변경 51縣·재결속·부모 재조정)는 코드 변경 없이 초록이다. ★ 자신·영토 단절 감사·거점 앵커 테스트는 `peel_only()` 를 쓴다. 앞 단계의 판정 8건·원장·지문은 한 바이트도 안 바뀌었다.
+
+| 지표 | 앞 | 뒤 |
+|---|---|---|
+| Q1 (예외 행 빼기 전 → 뒤) | 480 | 47 → **0** (예외 = ★ seedExceptions 40행 + 거점 displacedFrom 16곳) |
+| Q1b | 24 | **0** |
+| 실제 칸 ∈ 제 省 / 관할 / 郡 | 637 / 651 / 1,106 | 1,075 / 1,084 / 1,106 |
+| seedOffset p90 / p99 / max | 12.8 / 39.1 / 61.0 | 0 / 2.65 / 15.8 |
+| 省 수 · 縣 인접 간선 | 1,594 · 4,275 | 1,333 · 3,555 |
+| 省 넓이 중앙값 / 최대 | 137 / 1,568 | 71 / 620 |
+| Q4 (8 미만 / 620 초과) | 11 (4 / 7) | 10 (10 / 0) = 예외 6행 + 축소 발자국 거점 4(鄧塞 4·樊城 2·孟津 4·小平津 5) |
+| PLAIN+BASIN 0칸인 城 있는 省 | 178 | 143 |
+| 거점 | 73 (앵커 밀림 10) | **73** (밀림 16) |
+| 접기 · 省 이관 · 郡 이동 | 11 · 1 · 1 | 11 · 1 · 1 (汶山 → 綿虒道, 압록강 하구 省 = `SUB-X029-f447e36b3ebd` 430칸) |
+| 城 그래프 간선(han-world-v3) | 3,053 | 3,105 |
+
+**S3.**
+- 영토 단절: ★ 뒤 행은 새 원장 `territory-disconnection-adjudications-partition-v1.json`(123행 — 그대로 56 · 구성원만 바뀜 45 · 같은 칸·단위만 바뀜 11 · 새 조각 11). 옮겨 온 67행은 `partitionCarry.pendingReview`. 새 11행은 격자에서 읽히는 것만 적은 `UNVERIFIED`·LOW 다(사료 판정 아님). 접기 단계 행 4: 富平 2행 유지, 巴郡 조각 구성원 갱신, 漢昌 81칸 새 행. 옛 119행은 ★ 앞 문서에 대해 그대로 성립한다(감사가 매번 확인). 은퇴 조각 8(南郡 1,597칸·北地 2,736칸 등 — 治所가 큰 덩어리로 돌아와 「본체」가 뒤바뀐 것).
+- 郡 보급선: 74 → **50**(뱃길 13 유지, 郡 내부 61 → 37, 郡 45 → 30).
+- 개시 보급 절단: 1010 113 · 1020·1021 5 · 1100 8 · 1110 1 그대로. **1041 0 → 15, 1120 76 → 91 — 나빠졌다.** 둘 다 같은 北海國 15城. 옛 기하에서는 밀려난 東安平의 23칸 월경 조각이 濟南·齊 쪽에 붙어 있어 郡 보급선이 袁紹·公孫瓚 땅과 北海 본체를 이어 줬다. 제자리로 돌아오니 다리가 없다 — 두 시나리오에서 北海의 이웃 城은 전부 무주다. 기준선은 실측으로 올리고 사유를 적었다. **고칠 자리는 시나리오 세력 배치다(사용자 확인 필요).**
+- 시나리오: scenario_1030·1031 에서 小平津(1086)이 張楊에게 간다 — 기증 縣이 溫縣(사료 郡 ≠ 래스터 郡 예외로 河南尹 안에 선 縣)으로 바뀐 결과. 그래서 경로 노드 후보 매니페스트 지문이 바뀌어 검토 정책 핀 2곳(`route-node-review-policy-v1`·검증기 상수 2개)을 재핀했다.
+- `build_han_world`: 섬 縣이 縣 안 재분할로 省 둘이 되면(朱崖 600 + 599칸) 省 하나씩은 「물에 갇힌 省」이 아니다 — 城의 省 **묶음**이 묶음 밖과 안 맞닿는지를 owner 격자로 본다.
+- 거점 원장 `tileAnchor` 47/65 재계산(은퇴 DIRECT id 5 제거). 은퇴 DIRECT id 를 아직 가리키는 파일은 ★ 앞 단계 원장 4개(그 단계 문서의 사실이라 그대로 둔다)와 동결 번들뿐이다.
+- 행군·보급 노트: 표를 도구 출력으로 다시 옮겼다. 격자 → km 적합이 0.0534 → 0.0542°/col(씨앗이 제자리로 와 투영식 그 자체로 수렴). **본문 해석과 승인 기준선 `march-tempo-targets-v1` 은 옛 수치 기준 — 재검토 대상.**
+
+**CHGIS 독립 축(로컬).** CHGIS V6 DBF 의 SYS_ID 좌표로 다시 쟀다: 비교 962(SYS_ID 없는 城 169) · 일치 929 · 예외 원장 25 · 좌표를 판정 원장이 고친 것 8(오배정 재결속 8縣 — 九原·河陰 등 僑置 동명이지) · **적색 0**. 적색 프로브: 좌표 1° 이동 → 적색 950, ★ 앞 커밋본 → 적색 434.
+
+## 11. S4 가 할 일 (강 뱃길 PR 머지 뒤)
+
+동결 번들 `data/map/han-world-v3-1133-artifacts-v1` 과 `Han1133Artifacts.CATALOG_SHA256` 은 이 조각에서 안 건드렸다. 아래가 지금 빨간 이유는 그것 하나다.
+
+**재핀 대상(옛 sha → 지금 라이브 sha).** 강 뱃길 PR 이 `han-world-v3.json` 을 또 바꾸므로 머지 뒤 `python3 tools/map/check_han_tiles_coupled.py --regenerate` 를 다시 돌린 값으로 굽는다(이 PR 의 재생성은 전부 도구 출력이다 — 손으로 고친 산출물 없음).
+
+| 번들 파일 | 번들의 sha | 라이브 sha (2026-09-18) |
+|---|---|---|
+| `data/map/han-tiles.json` | `ba08098abf93…` | `6dde62bc0286…` |
+| `data/map/han-water-topology-v1.json` | `70452cdf25ba…` | `50e3feef0fe5…` |
+| `data/curated/han/water-topology-adjudications-v1.json` | `f4e2dba2e1e8…` | `c22665197afa…` |
+| `data/map/han-strategic-topology-manifest-v1.json` | `50752b94c9dd…` | `a42e014c604b…` |
+| `infra/src/main/resources/map/han-world-v3.json` | `da990c88c3ce…` | `69e379efa10f…` |
+| `data/map/han-world-v3-manifest-v1.json` | `fcf4c8ffa603…` | `33df449a42fc…` |
+| `data/curated/han/route-node-selection-v1.json` | `0921d9e7b8cc…` | `696866fdf9af…` |
+| `data/curated/han/route-node-migration-v1.json` | `2d4aad8395f4…` | `bad2cd42dec9…` |
+| `data/map/han-scenario-province-ownership-v1.json` | `39583f1a56c7…` | `a674840314ce…` |
+| `data/map/han-commandery-supply-links-v1.json` | `cc8284e93118…` | `c9a79c9ab856…` |
+| `common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt` (runtime-constants `sourceSha256`, 스냅샷 `HanWorldV31133CityConst.kt` 재생성) | `015c27305a92…` | `3216c0253520…` |
+
+그리고: `catalog.json` 자체(`6bf882f59428…`) → `Han1133Artifacts.CATALOG_SHA256`, `HanStrategicTopologyJson.landCountByRoster[1133]` `1594 → 1333`, `sourceBaseCommit` 은 main 조상 커밋으로, README 1133 의 「경계가 바뀌면 새 식별자」 문언 개정(ADR-LITE-059), 운영 리셋 절차. `han-scenario-jurisdiction-conflict-allowlist-v1.json`(번들 파일)의 上庸 2행(1100·1110)은 上庸縣이 省 하나가 되어 **더는 관측되지 않는다** — 비우거나, 蜀의 上庸 공간 점유를 다른 방식으로 되살릴지 정해야 한다.
+
+**동결 번들 때문에만 빨간 것.**
+- Kotlin(라이브 han-tiles 1,333省을 `landCountByRoster[1133] = 1594` 로 읽는 것): `HanStrategicTopologyJsonTest`(기대값은 이 PR 에서 새 sha·1,333·새 DIRECT id 로 옮겨 둠 — S4 에서 확인), `HanSpatialSupplyProviderTest`·`HanStrategicSupplyProviderTest`(1,594·4,275·4,215 핀), `MapAdministrativeOwnershipTest`(1,594), `SpatialSupplyNetworkWiringTest`, `HanRuntimeConstantsIntegrityTest`(CityConst sourceSha256). `Han1133ArtifactsIntegrityTest`·`HanWorldArtifactsResolverTest` 는 번들만 읽으므로 초록으로 남아야 한다. **이 목록은 gradle 로 확인하지 못했다(UNKNOWN)** — 다른 작업이 gradle 을 쓰는 동안 기다리다 못 돌렸다.
+- 웹: `web/game/__tests__/provinceMap.test.ts` 「audits all 15 canonical scenario province colors…」 — 위 allowlist 2행이 낡음.
+- python: 없음. tools/map(745)·tools/scenario(421)·tools/sim(24) 스위트와 결합 목록 `--check --include-slow` 는 아래 한 건을 빼고 초록이다.
+
+**동결 번들과 무관하게 빨간 것(사용자 결정 필요).**
+- `tools/scenario/tests/test_province_ownership_audit.py::test_all_active_scenarios_have_no_unreviewed_interior_holes` — 陽安縣 1칸 省(`83166`, 11 시나리오)과 六安縣의 떨어진 38칸 省(`SUB-43138-5f794c6b1306`, 1021)이 한 세력에 둘러싸인 무주 구멍이다. 허용 목록 행은 `reviewState: APPROVED` 가 필요해 지어낼 수 없다. 선택지: ① 허용 행 승인 ② 소유 claim 추가(陽安郡을 汝南 주인에게) ③ 씨앗 성분이 8칸 미만이고 같은 郡에 더 큰 성분이 있으면 씨앗을 옮기는 규칙.
+
