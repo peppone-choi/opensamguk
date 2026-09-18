@@ -456,6 +456,8 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
         assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
+        // 계약 §2: 시나리오에 ruleProfile 이 없으면 SAMMO 가 명시적으로 기록된다(런타임이 부재를 추측하지 않게).
+        assertTrue(config.contains("\"ruleProfile\": \"SAMMO\"") || config.contains("\"ruleProfile\":\"SAMMO\""), "config has ruleProfile: $config")
         assertEquals(
             "30000",
             jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),

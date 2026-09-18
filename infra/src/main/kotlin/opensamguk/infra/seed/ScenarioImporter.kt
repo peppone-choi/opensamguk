@@ -201,6 +201,8 @@ class ScenarioImporter(
             "fiction" to fiction,
             "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
+            // 부재를 런타임이 추측하지 않도록 SAMMO 도 명시 기록한다(입력 registry 계약 §2).
+            "ruleProfile" to (scenario.ruleProfile ?: opensamguk.logic.input.RuleProfile.SAMMO).name,
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
