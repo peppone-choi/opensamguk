@@ -76,6 +76,8 @@ object ScenarioJson {
         val events = arr(root["events"]).map { decodeEvent(asList(it)) }
         val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
+        // 입력 registry 계약 §2: 시나리오가 선언한다. 없으면 null(시드가 SAMMO 로 기록), 모르는 글자는 실패.
+        val ruleProfile = strOrNull(root["ruleProfile"])?.let { opensamguk.logic.input.RuleProfile.fromWorldConfig(it) }
         val seedContract = root["seedContract"]?.let(::decodeSeedContract)
         val imperialGeneralNames = arr(root["imperialGenerals"]).map(::strOf).toSet()
 
@@ -142,6 +144,7 @@ object ScenarioJson {
             events = events,
             initialEvents = initialEvents,
             ignoreDefaultEvents = ignoreDefaultEvents,
+            ruleProfile = ruleProfile,
             seedContract = seedContract,
         )
     }
@@ -348,6 +351,8 @@ data class Scenario(
     val events: List<ScenarioEvent> = emptyList(),
     val initialEvents: List<ScenarioInitialEvent> = emptyList(),
     val ignoreDefaultEvents: Boolean = false,
+    /** 월드 규칙 프로필. null = 시나리오가 선언하지 않음(시드 때 SAMMO 로 기록). */
+    val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val seedContract: ScenarioSeedContract? = null,
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {

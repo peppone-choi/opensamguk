@@ -122,6 +122,40 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `hwiha scenario seeds one position row per general pinned to the boot topology`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        // 위치 권위 spec §2.2·§3-3: HWIHA 시드 = 전 장수 위치 행. 기존 1010 에 ruleProfile 만 얹는다.
+        val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
+        val scenario = ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\"," + raw)
+        val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
+        ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
+
+        val generals = jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1", Int::class.java)!!
+        val rows = jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java)!!
+        assertEquals(generals, rows)
+        assertTrue(generals > 100)
+        val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
+        assertTrue(config.contains("\"ruleProfile\": \"HWIHA\"") || config.contains("\"ruleProfile\":\"HWIHA\""))
+        // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
+        val cityIds = jdbc.queryForList("SELECT id FROM city WHERE world_id = 1", Int::class.java)
+        val topology = HanWorldArtifactsResolver(root).resolve(cityIds, emptyList()).projection.topology
+        val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
+        assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
+        // 각 행의 省 = 그 장수의 城이 선 省.
+        val mismatched = jdbc.queryForObject(
+            """SELECT count(*) FROM general g JOIN general_spatial_position p ON p.world_id = g.world_id AND p.general_id = g.id
+               WHERE g.world_id = 1 AND p.node_kind <> 'LAND_PROVINCE'""", Int::class.java)!!
+        assertEquals(0, mismatched)
+    }
+
+    @Test
+    fun `sammo scenario seeds no position rows`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        newImporter().importAll(jdbc, canonicalWorldId)
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
+    }
+
+    @Test
     fun `scenario 9200 seeds stable V3 ownership capitals and general locations`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
@@ -456,6 +490,8 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
         assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
+        // 계약 §2: 시나리오에 ruleProfile 이 없으면 SAMMO 가 명시적으로 기록된다(런타임이 부재를 추측하지 않게).
+        assertTrue(config.contains("\"ruleProfile\": \"SAMMO\"") || config.contains("\"ruleProfile\":\"SAMMO\""), "config has ruleProfile: $config")
         assertEquals(
             "30000",
             jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),

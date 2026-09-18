@@ -72,7 +72,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             ?.let { toLogicDiplomacy(it) }
 
     private fun physicalLogicGeneral(general: TurnGeneral): LogicGeneral =
-        toLogicGeneral(general).let { if (world.isGeneralAtBattlefield(general.id)) it.copy(cityId = 0) else it }
+        toLogicGeneral(general).let { if (!world.isGeneralAtCity(general.id)) it.copy(cityId = 0) else it }
 
     companion object {
         /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim + P2 mil/equip). */

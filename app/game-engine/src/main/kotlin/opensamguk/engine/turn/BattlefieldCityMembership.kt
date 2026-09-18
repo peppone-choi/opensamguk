@@ -13,6 +13,17 @@ fun applyPositionAwareGeneral(
     anchors: () -> Map<Int, StrategicNodeRef> = HistoricalBattlefieldCatalog::cityAnchors,
 ) {
     val previous = world.getGeneralById(next.id)
+    if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        // 위치 권위 spec §2.2·§3-5: HWIHA 의 城 이동은 「그 城의 省으로 이동」이며 moveGeneral 만 위치를 쓴다.
+        // 행은 절대 지우지 않고(불변식 1), 전장 열은 쓰지 않는다(불변식 4).
+        if (previous != null && previous.cityId != next.cityId) {
+            val node = checkNotNull(world.landNodeOfCity(next.cityId)) { "HWIHA: city ${next.cityId} has no province binding" }
+            val moved = recorder.moveGeneral(world, next.id, node)
+            check(moved !is GeneralPositionChangeResult.Denied) { "HWIHA: city arrival position was rejected: $moved" }
+        }
+        world.applyGeneralDirtyFree(next)
+        return
+    }
     val position = world.generalPositionSnapshot()?.stateFor(next.id)
     if (previous != null && position != null) {
         val relocated = previous.cityId != next.cityId

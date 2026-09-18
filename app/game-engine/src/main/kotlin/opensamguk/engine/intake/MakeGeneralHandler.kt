@@ -212,7 +212,7 @@ class MakeGeneralHandler(
             meta = generalMeta,
         )
 
-        world.createGeneral(turnGeneral)
+        recorder.recordGeneralCreate(world, turnGeneral)  // 위치 권위 spec §3-3: 생성 경로는 recorder 하나로(HWIHA 위치 행 생성)
         recorder.recordAccessLogUpsert(
             world,
             GeneralAccessLog(generalId = generalId, userId = command.userId.toLong(), lastRefresh = now),

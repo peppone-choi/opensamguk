@@ -472,7 +472,7 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
         // ── OPENSAM-153 (v2 R4) — 도시병사 보충. 원장 없음 = fail-closed deny (null 반환 금지: null이면
         //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
-        is CityGarrisonRecruit -> if (world.isGeneralAtBattlefield(command.generalId)) {
+        is CityGarrisonRecruit -> if (!world.isGeneralAtCity(command.generalId)) {
             V2GarrisonRecruitHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
         } else v2PrecheckFailure(command)?.let {
             V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
@@ -480,7 +480,7 @@ class TurnDaemonCommandDispatcher(
             V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
         } ?: (v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command))
         // ── OPENSAM-154 (v2 R5) — 도시 자원 수송. 같은 fail-closed 규약. ──
-        is CityTransport -> if (world.isGeneralAtBattlefield(command.generalId)) {
+        is CityTransport -> if (!world.isGeneralAtCity(command.generalId)) {
             V2CityTransportHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
         } else v2PrecheckFailure(command)?.let {
             V2CityTransportHandler.rejected(command, it.reason, it.code)

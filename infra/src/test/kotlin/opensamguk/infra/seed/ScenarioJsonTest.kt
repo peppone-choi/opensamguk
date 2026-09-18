@@ -19,6 +19,18 @@ class ScenarioJsonTest {
     }
 
     @Test
+    fun `ruleProfile is absent on committed scenarios and parses fail closed`() {
+        // 계약 §2: 값이 없으면 SAMMO(기존 시나리오 무변경). 모르는 글자는 조용히 SAMMO 로 떨어지지 않는다.
+        assertNull(ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json")).ruleProfile)
+        val base = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
+        assertEquals(
+            opensamguk.logic.input.RuleProfile.HWIHA,
+            ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\"," + base).ruleProfile,
+        )
+        assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": \"hwiha\"," + base) }
+    }
+
+    @Test
     fun `scenario_2 uses the canonical Han world contract`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
 

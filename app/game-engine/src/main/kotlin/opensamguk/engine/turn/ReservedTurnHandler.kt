@@ -289,7 +289,7 @@ class ReservedTurnHandler(
             return HandledTurn(generalId, runtimeRegistry.resolve(actionCode), !result.allowed,
                 result.reason, result.logs + listOfNotNull(result.reason), env, args, autorunMode)
         }
-        if (world.isGeneralAtBattlefield(generalId)) {
+        if (!world.isGeneralAtCity(generalId)) {
             val isRest = actionCode == runtimeRegistry.fallback.key
             val reason = if (isRest) null else "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다."
             reason?.let { world.pushLog(actionLog(general, it)) }
@@ -432,7 +432,7 @@ class ReservedTurnHandler(
             // 의 기본 정렬(= id 오름차순)이므로 id-ascending으로 정렬해 draw-for-draw 패러티를 유지한다.
             candidateGenerals = if (actionCode == MUJAKWI_GEONGUK || actionCode == IDONG) {
                 world.listGenerals()
-                    .filter { it.nationId == nationId && it.id != generalId && !world.isGeneralAtBattlefield(it.id) }
+                    .filter { it.nationId == nationId && it.id != generalId && world.isGeneralAtCity(it.id) }
                     .map { PerTurnOverlay.toLogicGeneral(it) }
             } else emptyList(),
             candidateCityIds = if (actionCode == MUJAKWI_GEONGUK) {
@@ -506,7 +506,7 @@ class ReservedTurnHandler(
             if (destG.id != generalId) {
                 val pre = world.getGeneralById(destG.id)
                     ?: error("ReservedTurnHandler: dest general ${destG.id} not in world")
-                if (world.isGeneralAtBattlefield(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
+                if (!world.isGeneralAtCity(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), destG)
                 opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(pre, destG))
             }
@@ -568,7 +568,7 @@ class ReservedTurnHandler(
         // draft.general, already diffed above) — the resolver appends only the OTHER moved generals.
         for (movedGeneral in draft.cascadeGenerals) {
             val pre = world.getGeneralById(movedGeneral.id) ?: continue
-            if (world.isGeneralAtBattlefield(pre.id) && movedGeneral.cityId != pre.cityId && movedGeneral.nationId == pre.nationId) continue
+            if (!world.isGeneralAtCity(pre.id) && movedGeneral.cityId != pre.cityId && movedGeneral.nationId == pre.nationId) continue
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), movedGeneral)
             opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyGeneralPatch(pre, movedGeneral))
         }
@@ -1264,7 +1264,7 @@ class ReservedTurnHandler(
 
     private fun preloadDisbandCascade(draft: GeneralActionDraft, nationId: Int, generalId: Int) {
         world.listGenerals()
-            .filter { it.nationId == nationId && it.id != generalId && !world.isGeneralAtBattlefield(it.id) }
+            .filter { it.nationId == nationId && it.id != generalId && world.isGeneralAtCity(it.id) }
             .sortedBy { it.id }
             .mapTo(draft.cascadeGenerals) { PerTurnOverlay.toLogicGeneral(it) }
         world.listCities()
