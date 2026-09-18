@@ -75,24 +75,51 @@ class MeasureTest(unittest.TestCase):
         rows = measure(document([[1, 1, 1, 1]] * 4))  # 甲은 칸이 없다 — 걸러지면 게이트가 눈을 감는다
         self.assertEqual([r["id"] for r in gate(rows)["Q1"]], ["A"])
 
-    def test_check_mode_is_red_on_the_committed_tiles_today(self):
-        """--check 는 아직 CI 차단 단계가 아니다. 현행 커밋본이 빨간 것이 이 게이트가 살아 있다는 증거다."""
+    EXCEPTIONS = [str(TILES.parents[1] / "curated/han/county-location-partition-v1.json"),
+                  str(TILES.parents[1] / "curated/han/strategic-site-province-carves-v1.json")]
+
+    def _run(self, *argv):
         import contextlib
         import io
         from unittest import mock
-        with mock.patch.object(sys, "argv", ["measure", "--check", "--top", "0"]), \
-                contextlib.redirect_stderr(io.StringIO()) as err, contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(), 1)
-        self.assertIn("Q1: 480 / 1131", err.getvalue())
-        self.assertIn("Q1b: 24 / 1131", err.getvalue())
+        with mock.patch.object(sys, "argv", ["measure", "--check", "--top", "0", *argv]), \
+                contextlib.redirect_stderr(io.StringIO()) as err, contextlib.redirect_stdout(io.StringIO()) as out:
+            return main(), err.getvalue() + out.getvalue()
+
+    def test_check_mode_is_green_on_the_committed_tiles_with_the_exception_ledgers(self):
+        """★ 지리 재분할(GH #806)이 han-tiles 에 들어왔다 — Q1·Q1b 는 이제 결합 목록의 차단 게이트다."""
+        rc, text = self._run("--exceptions", *self.EXCEPTIONS)
+        self.assertEqual(rc, 0, text)
+        self.assertIn("Q1: 0 / 1131", text)
+        self.assertIn("Q1b: 0 / 1131", text)
+
+    def test_red_probe_without_the_exception_ledgers_the_gate_is_red(self):
+        """적색 프로브: 예외 원장을 빼면 빨개진다 — 초록이 「아무것도 안 잰다」가 아님을 고정한다(실측 47 = 예외 31 + 거점 16)."""
+        rc, text = self._run()
+        self.assertEqual(rc, 1)
+        self.assertIn("Q1: 47 / 1131", text)
+
+    def test_red_probe_seat_moved_ten_cells_is_red_even_with_the_ledgers(self):
+        """적색 프로브(계획 §6): 예외 행이 없는 城 하나의 실제 좌표를 10칸(≈0.54°) 옮긴 문서."""
+        import json
+        import tempfile
+        document = json.loads(TILES.read_text())
+        city = next(row for row in document["cities"] if row["nameCh"] == "邺县")
+        city["lon"] += 10 * document["_meta"]["projection"]["cell"] / document["_meta"]["projection"]["k"]
+        with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
+            json.dump(document, handle)
+            handle.flush()
+            rc, text = self._run("--tiles", handle.name, "--exceptions", *self.EXCEPTIONS)
+        self.assertEqual(rc, 1)
+        self.assertIn("Q1: 1 / 1131", text)
 
     def test_committed_tiles_baseline(self):
-        """현행 커밋본의 실측 기준선. 지리 재분할(#806)이 들어오면 의도적으로 고친다."""
+        """현행 커밋본의 실측 기준선. ★ 앞은 637 / 651 / 1,106 이었다(계획 §2) — 郡 축(1,106)은 ★ 가 안 건드린다."""
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
         self.assertEqual(len(rows), 1131)
-        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 637)
-        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 651)
+        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1075)
+        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1084)
         self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1106)
 
 

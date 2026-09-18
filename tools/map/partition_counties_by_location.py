@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
-"""★ 지리 재분할 — 郡 안 縣 경계를 城의 실제 위치로 다시 자른다 (GH #806, S1: 스크래치 전용).
+"""★ 지리 재분할 — 郡 안 縣 경계를 城의 실제 위치로 다시 자른다 (GH #806, han-tiles 사슬 단계).
 
 사용자 결정(2026-09-17): 지리 우선. 넓이 균형을 포기한다.
 규칙 정본: docs/superpowers/specs/2026-09-17-province-geography-first.md §3 (규칙 0–7).
 
-이 도구는 **커밋된 산출물을 쓰지 않는다.** 입력은 커밋된 data/map/han-tiles.json 에서 저지 지형·접기·거점 분할을
-벗긴 문서(★ 가 사슬에서 설 자리)이고, 출력은 --output 으로 받은 스크래치 경로다. data/·infra/ 밑 경로는 거부한다.
+사슬에서의 자리: 조각 판정 → 劇 이전 → 오배정 재결속 → 변경 51縣 → **★** → 거점 분할 → 접기 → 저지 지형.
+입력은 커밋된 data/map/han-tiles.json 에서 저지 지형·접기·거점 분할(그리고 이미 얹힌 ★)을 벗긴 문서다.
+전체 재생성이 아니다 — 앞 네 단계의 roster·lon/lat·parentOwner·원장·지문은 그대로 남는다.
 
-  python3 tools/map/partition_counties_by_location.py --output build/province-partition/han-tiles.partitioned.json
+  python3 tools/map/partition_counties_by_location.py --output <스크래치>            # 스크래치 산출(data/ 밑 거부)
+  python3 tools/map/partition_counties_by_location.py --prepare --output data/map/han-tiles.json
+        # ★ 만 얹은 문서 + 원장 + 입력 blob 을 쓴다. 그 뒤 거점 분할 → 접기 → 저지 지형을 --prepare 로 다시 굽는다.
+  python3 tools/map/partition_counties_by_location.py --check                         # 단계 핀 + 재현 + Q2·Q3·Q4
+
+되돌리기는 ★ 가 갈아 끼운 필드(owner·省 행·관할 행·cities·縣 인접·counts)의 입력값 전체를 원장 옆 gz blob 으로
+핀해서 한다(spec §4). `peel()/reapply()` 는 다른 단계와 같은 계약이다.
 
 수치 출처: min_area 8 · max_area 620 은 spec §3 규칙 4·5 의 「현행」 값(`ProvinceQualityPolicy`)을 옮긴 것이다.
 10/14 는 spec 규칙 3 의 정수 비용이다. 이 파일은 새 임계를 짓지 않는다.
@@ -17,12 +24,16 @@ spec 에 없어 이 구현이 기계적으로 정한 것(보고서 `mechanicalCh
     4-이웃 관할 중 맞닿은 변이 가장 많은 곳(동률 id)으로 넘긴다.
   * 씨앗 없는 郡 성분·넘길 곳 없는 조각은 min_area 이상이면 城 없는 省 하나가 되고, 미만이면 seat 省에 붙은
     다성분 예외로 남는다(둘 다 `components` 행).
-  * 씨앗 충돌은 판정 원장이 없으므로 전부 규칙 2(b)(id 순, 가장 가까운 빈 칸)로 놓고 `UNREVIEWED` 로 표시한다.
+  * 씨앗 충돌의 기하는 판정과 무관하게 규칙 2(b)(id 순, 가장 가까운 빈 칸)다. 판정(SAME_ENTITY/DISTINCT)은
+    `county-seed-collisions-v1` 에만 산다 — 같은 실체 쌍은 뒤의 접기 단계가 한 관할로 합친다.
+  * 거점 기증 예약(사용자 결정 2026-09-18 ②): 거점 앵커가 떨어지는 관할의 최소 넓이는
+    min_area + 거점 수 × carve 의 minimumFootprintCells 다. 새 수치가 아니다 — 둘 다 현행 값이다.
 """
 from __future__ import annotations
 
 import argparse
 import copy
+import gzip
 import hashlib
 import heapq
 import json
@@ -41,6 +52,10 @@ MAX_AREA = 620    # spec §3 규칙 5 「현행 620」
 STRAIGHT, DIAGONAL = 10, 14  # spec §3 규칙 3
 SUBDIVISION_BASIS = "WITHIN_COUNTY_SUBDIVISION"
 SUBDIVISION_GEOMETRY = "COUNTY_LOCATION_PARTITION"
+LEDGER = ROOT / "data/curated/han/county-location-partition-v1.json"
+INPUT_BLOB = ROOT / "data/curated/han/county-location-partition-v1.input.json.gz"
+DECISIONS = ROOT / "data/curated/han/county-location-partition-decisions-v1.json"
+REPLACED_KEYS = ("owner", "provinceRecords", "jurisdictionRecords", "cities")  # + adjacency.county, _meta.counts
 FORBIDDEN_OUTPUT_ROOTS = ("data", "infra", "web", "app", "logic", "common")
 STEPS8 = ((-1, 0, STRAIGHT), (1, 0, STRAIGHT), (0, -1, STRAIGHT), (0, 1, STRAIGHT),
           (-1, -1, DIAGONAL), (-1, 1, DIAGONAL), (1, -1, DIAGONAL), (1, 1, DIAGONAL))
@@ -172,7 +187,7 @@ def _seeds(document: dict, owner: np.ndarray, parent: np.ndarray, order: list[di
         previous = exceptions.get(juris["id"])
         exceptions[juris["id"]] = {
             "jurisdictionId": juris["id"], "nameCh": juris["nameCh"], "commanderyId": juris["commanderyId"],
-            "class": "SEED_COLLISION", "ruling": "UNREVIEWED",
+            "class": "SEED_COLLISION",
             "trueCell": previous["trueCell"] if previous else {"col": cell[1], "row": cell[0]},
             "seedCell": {"col": moved[1], "row": moved[0]}, "cellDistance": distance, "seedBasis": basis,
             "sharedWith": sorted(j for j, rc in seeds.items() if rc == cell),
@@ -279,26 +294,49 @@ def _connected_without(cells: set[tuple[int, int]], removed: tuple[int, int]) ->
     return len(seen) == len(rest)
 
 
-def _fill_minimum(label, land, parent, order, seeds, min_area) -> list[dict]:
-    """규칙 4: min_area 미만이면 이웃 縣에서 가장 가까운 칸을 빌린다."""
+def site_reservations(document: dict, label: np.ndarray, land: np.ndarray, sites: list[dict]) -> dict[int, list[str]]:
+    """거점 앵커가 떨어지는 관할 순위 → 거점 id 들. 앵커 칸은 carve 와 같은 식(투영 내림, 물이면 6칸 안 가장 가까운 육지)."""
+    from tools.map import carve_strategic_site_provinces as carving
+    meta = document["_meta"]
+    rows, cols = meta["rows"], meta["cols"]
+    out: dict[int, list[str]] = {}
+    for site in sorted(sites, key=lambda row: row["id"]):
+        cell = project_cell(meta["projection"], site["latitude"], site["longitude"])
+        if not (0 <= cell[0] < rows and 0 <= cell[1] < cols):
+            continue
+        if not land[cell]:
+            near = [(int(r), int(c)) for r, c in np.argwhere(land)
+                    if (int(r) - cell[0]) ** 2 + (int(c) - cell[1]) ** 2 <= carving.MAXIMUM_DISPLACEMENT ** 2]
+            if not near:
+                continue
+            cell = min(near, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
+        out.setdefault(int(label[cell]), []).append(site["id"])
+    return out
+
+
+def _fill_minimum(label, land, parent, order, seeds, min_area, reserved: dict[int, int] | None = None) -> list[dict]:
+    """규칙 4: 최소 넓이 미만이면 이웃 縣에서 가장 가까운 칸을 빌린다. reserved = 관할 순위 → 거점 예약 칸 수."""
     rows, cols = label.shape
     seed_cells = set(seeds.values())
     borrowed = []
     areas = np.bincount(label[label >= 0], minlength=len(order)).tolist()
+    floors = [min_area + (reserved or {}).get(rank, 0) for rank in range(len(order))]
     for rank, juris in enumerate(order):
-        if areas[rank] >= min_area:
+        floor = floors[rank]
+        if areas[rank] >= floor:
             continue
         seed = seeds[juris["id"]]
         comp, _ = _components4(np.where(label == rank, 1, -1), label == rank)
         own = {tuple(rc) for rc in np.argwhere(comp == comp[seed]).tolist()}
         took, donors = 0, {}
-        while len(own) < min_area:
+        while len(own) < floor:
             candidates = set()
             for r, c in own:
                 for dr, dc in STEPS4:
                     n = (r + dr, c + dc)
                     if (0 <= n[0] < rows and 0 <= n[1] < cols and land[n] and parent[n] == parent[seed]
-                            and label[n] != rank and n not in seed_cells and areas[int(label[n])] > min_area):
+                            and label[n] != rank and n not in seed_cells
+                            and areas[int(label[n])] > floors[int(label[n])]):
                         candidates.add(n)
             chosen = None
             for n in sorted(candidates, key=lambda n: ((n[0] - seed[0]) ** 2 + (n[1] - seed[1]) ** 2, n)):
@@ -316,9 +354,12 @@ def _fill_minimum(label, land, parent, order, seeds, min_area) -> list[dict]:
             own.add(n)
             took += 1
             donors[order[donor]["id"]] = donors.get(order[donor]["id"], 0) + 1
-        borrowed.append({"jurisdictionId": juris["id"], "nameCh": juris["nameCh"], "borrowedCells": took,
-                         "donors": dict(sorted(donors.items())), "areaAfter": areas[rank],
-                         "satisfied": areas[rank] >= min_area})
+        row = {"jurisdictionId": juris["id"], "nameCh": juris["nameCh"], "borrowedCells": took,
+               "donors": dict(sorted(donors.items())), "areaAfter": areas[rank],
+               "satisfied": areas[rank] >= floor}
+        if floor != min_area:
+            row["floor"] = floor
+        borrowed.append(row)
     return borrowed
 
 
@@ -352,7 +393,8 @@ def _jurisdiction_order(document: dict) -> list[dict]:
     return sorted(document["jurisdictionRecords"], key=lambda row: row["id"])
 
 
-def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_AREA) -> tuple[dict, dict]:
+def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_AREA,
+              sites: list[dict] | None = None) -> tuple[dict, dict]:
     """순수 함수. (새 문서, 보고서). 입력의 배열 순서(cities·jurisdictionRecords)에 의존하지 않는다."""
     document = copy.deepcopy(source)
     meta = document["_meta"]
@@ -371,7 +413,12 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
     label = _dijkstra(land, parent, seeds_by_rank)
     seedless = _assign_seedless(label, land, parent, order, seeds, parent_index)
     repaired = _repair_diagonal_fragments(label, land, parent, seeds_by_rank)
-    borrowed = _fill_minimum(label, land, parent, order, seeds, min_area)
+    reservations: dict[int, list[str]] = {}
+    if sites:
+        from tools.map.carve_strategic_site_provinces import MINIMUM_FOOTPRINT
+        reservations = site_reservations(document, label, land, sites)
+    borrowed = _fill_minimum(label, land, parent, order, seeds, min_area,
+                             {rank: len(ids) * MINIMUM_FOOTPRINT for rank, ids in reservations.items()} if sites else None)
     if (label[land] < 0).any():
         raise ValueError("unassigned land after partition")
 
@@ -504,7 +551,7 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
         "rules": {"minArea": min_area, "maxArea": max_area, "straight": STRAIGHT, "diagonal": DIAGONAL,
                   "source": "spec 2026-09-17-province-geography-first §3 (현행 값을 옮김, 이 도구가 지은 임계 없음)"},
         "mechanicalChoices": ["DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR", "STRUCTURAL_COMPONENT_OWN_PROVINCE_IF_GE_MIN_AREA",
-                              "SEED_COLLISION_DEFAULT_RULE_2B_UNREVIEWED"],
+                              "SEED_COLLISION_GEOMETRY_RULE_2B", "STRONGHOLD_DONOR_FLOOR_RESERVATION"],
         "counts": {"jurisdictions": len(order), "provinces": len(records),
                    "seatProvinces": len(seat_records), "citylessProvinces": len(cityless),
                    "provincesBefore": len(provinces_in), "adjCounty": counts.get("adjCounty"),
@@ -514,6 +561,9 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
         "seedlessComponents": seedless,
         "components": components_ledger,
         "minAreaBorrowed": borrowed,
+        "strongholdReservations": [{"jurisdictionId": order[rank]["id"], "nameCh": order[rank]["nameCh"], "siteIds": ids}
+                                   for rank, ids in sorted(reservations.items()) if len(ids) > 0
+                                   and any(row["jurisdictionId"] == order[rank]["id"] for row in borrowed)],
         "subdivisions": subdivisions,
         "areaViolations": [{"provinceId": row["id"], "cells": areas[i],
                             "class": "BELOW_MIN" if areas[i] < min_area else "ABOVE_MAX"}
@@ -578,16 +628,192 @@ def dumps(document: dict) -> str:
     return json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-def stage_input(committed: dict) -> dict:
-    """커밋본에서 저지 지형·접기·거점 분할을 벗겨 ★ 가 설 자리의 문서를 만든다 (읽기 전용)."""
+# ── 사슬 단계 계약: 원장 + 입력 blob + peel/reapply/check ─────────────────────────────────────────────
+
+def digest(document: dict) -> str:
+    """다른 단계(carve·fold·relocation)와 같은 문서 지문."""
+    return hashlib.sha256(json.dumps(document, ensure_ascii=False, sort_keys=True,
+                                     separators=(",", ":")).encode()).hexdigest()
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _sites() -> list[dict]:
+    from tools.map import carve_strategic_site_provinces as carving
+    return carving.load_sites(json.loads(carving.STRONGHOLDS.read_text(encoding="utf-8")),
+                              json.loads(carving.PASSES.read_text(encoding="utf-8")))
+
+
+def _blob_bytes(source: dict) -> bytes:
+    body = {key: source[key] for key in REPLACED_KEYS}
+    body["adjacencyCounty"] = source["adjacency"]["county"]
+    body["counts"] = source["_meta"]["counts"]
+    # sort_keys 를 쓰지 않는다: 앞 단계(조각 판정)는 cities·juns 를 **키 순서까지** 지문으로 본다. 복원한 문서가
+    # 값은 같고 키 순서만 달라도 그 단계의 --check 가 「입력도 출력도 아니다」로 죽는다.
+    raw = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
+    return gzip.compress(raw, compresslevel=9, mtime=0)  # mtime=0: 바이트 결정론
+
+
+def _canonical_order(document: dict, stage: dict) -> dict:
+    """cities[] 배열 순서만 뒤바뀐 문서를 이 단계가 낸 순서로 되돌린다(거점 분할·접기 단계와 같은 계약)."""
+    from tools.map import relocate_han_province as relocation
+    order = stage.get("outputCityOrder")
+    if order and [row["id"] for row in document.get("cities", [])] != order \
+            and set(order) == {row["id"] for row in document.get("cities", [])}:
+        return relocation.canonicalize_city_order(document, {"inputCityOrder": order})
+    return document
+
+
+def stage_for(document: dict, ledger: dict) -> dict | None:
+    fingerprint = digest(document)
+    for stage in ledger.get("geometry", {}).get("stages", []):
+        if stage["outputDocumentSha256"] in (fingerprint, digest(_canonical_order(document, stage))):
+            return stage
+    return None
+
+
+def restore_document(document: dict, ledger: dict) -> dict:
+    """★ 를 되돌려 입력 문서로. ★ 가 갈아 끼운 필드를 blob 의 입력값으로 되돌린다."""
+    stage = stage_for(document, ledger)
+    if stage is None:
+        raise ValueError("document is not a pinned county-location partition output")
+    blob = stage["inputBlob"]
+    path = ROOT / blob["path"]
+    if _sha256(path) != blob["sha256"]:
+        raise ValueError(f"{blob['path']} differs from the pinned partition input blob")
+    body = json.loads(gzip.decompress(path.read_bytes()).decode("utf-8"))
+    restored = copy.deepcopy(document)
+    for key in REPLACED_KEYS:
+        restored[key] = body[key]
+    restored["adjacency"] = {**restored["adjacency"], "county": body["adjacencyCounty"]}
+    restored["_meta"]["counts"] = body["counts"]
+    if digest(restored) != stage["inputDocumentSha256"]:
+        raise ValueError("restored document differs from the pinned county-location partition input")
+    return restored
+
+
+def peel(document: dict) -> tuple[dict, dict | None]:
+    """★ 가 얹혀 있으면 벗긴 문서와 원장을, 아니면 (문서, None) 을 준다. 호출자는 거점 분할을 먼저 벗긴다."""
+    if not LEDGER.is_file():
+        return document, None
+    ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+    if stage_for(document, ledger) is None:
+        return document, None
+    return restore_document(document, ledger), ledger
+
+
+def reapply(document: dict, ledger: dict) -> dict:
+    """앞 단계 검사가 다시 세운 문서 위에 ★ 를 똑같이 얹는다."""
+    rebuilt, _ = partition(document, sites=_sites())
+    return rebuilt
+
+
+def build_stage(source: dict) -> tuple[dict, dict, bytes]:
+    from tools.map import carve_strategic_site_provinces as carving
+    document, report = partition(source, sites=_sites())
+    problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
+    if problems:
+        raise ValueError("partition gates failed: " + "; ".join(problems))
+    blob = _blob_bytes(source)
+    decisions = json.loads(DECISIONS.read_text(encoding="utf-8"))
+    stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
+             "inputBlob": {"path": INPUT_BLOB.relative_to(ROOT).as_posix(), "sha256": hashlib.sha256(blob).hexdigest(),
+                           "fields": [*REPLACED_KEYS, "adjacency.county", "_meta.counts"]},
+             "outputCityOrder": [row["id"] for row in document["cities"]],
+             "geometryDigest": geometry_digest(document),
+             "counts": report["counts"]}
+    ledger = {
+        "schemaVersion": 1,
+        "ledgerId": "county-location-partition-v1",
+        "authority": decisions["authority"],
+        "inputs": {"decisions": {"path": DECISIONS.relative_to(ROOT).as_posix(), "sha256": _sha256(DECISIONS)},
+                   "strongholds": {"path": carving.STRONGHOLDS.relative_to(ROOT).as_posix(), "sha256": _sha256(carving.STRONGHOLDS)},
+                   "passes": {"path": carving.PASSES.relative_to(ROOT).as_posix(), "sha256": _sha256(carving.PASSES)}},
+        "rule": report["rules"],
+        "mechanicalChoices": report["mechanicalChoices"],
+        "seedExceptions": report["seedExceptions"],
+        "seedlessComponents": report["seedlessComponents"],
+        "components": report["components"],
+        "multiComponentProvinceIds": report["multiComponentProvinceIds"],
+        "minAreaBorrowed": report["minAreaBorrowed"],
+        "strongholdReservations": report["strongholdReservations"],
+        "subdivisions": report["subdivisions"],
+        "areaViolations": report["areaViolations"],
+        "retiredProvinceIds": report["retiredProvinceIds"],
+        "geometry": {"stages": [stage]},
+    }
+    return document, ledger, blob
+
+
+def area_exception_problems(violations: list[dict], decisions: dict) -> list[str]:
+    """Q4: ★ 출력의 넓이 위반은 결정 원장의 예외 행과 **정확히** 같아야 한다 — 새 위반도, 낡은 예외 행도 적색."""
+    allowed = {row["provinceId"]: row for row in decisions["areaExceptions"]}
+    found = {row["provinceId"]: row for row in violations}
+    problems = [f"Q4 {pid} area {row['cells']} ({row['class']}) has no exception row"
+                for pid, row in sorted(found.items()) if pid not in allowed]
+    problems += [f"Q4 exception row {pid} no longer violates — remove it" for pid in sorted(allowed) if pid not in found]
+    problems += [f"Q4 exception row {pid} pins {allowed[pid]['cells']} cells, measured {found[pid]['cells']}"
+                 for pid in sorted(found) if pid in allowed and allowed[pid]["cells"] != found[pid]["cells"]]
+    return problems
+
+
+def check(document: dict, ledger: dict) -> list[str]:
+    """document = 거점 분할까지 벗긴 문서(★ 출력)."""
+    stage = stage_for(document, ledger)
+    if stage is None:
+        return ["han-tiles.json is not the reviewed county-location partition output"]
+    problems = []
+    for name, entry in ledger["inputs"].items():
+        if entry["sha256"] != _sha256(ROOT / entry["path"]):
+            problems.append(f"{entry['path']} changed since the partition was prepared")
+    source = restore_document(document, ledger)
+    rebuilt, rebuilt_ledger, blob = build_stage(source)
+    if hashlib.sha256(blob).hexdigest() != stage["inputBlob"]["sha256"]:
+        problems.append("partition input blob is not reproducible from the restored input")
+    for key in ("seedExceptions", "seedlessComponents", "components", "minAreaBorrowed", "subdivisions",
+                "areaViolations", "retiredProvinceIds", "multiComponentProvinceIds", "strongholdReservations"):
+        if rebuilt_ledger[key] != ledger[key]:
+            problems.append(f"county-location partition {key} differs from the reviewed stage")
+    if digest(rebuilt) != stage["outputDocumentSha256"]:
+        problems.append("re-applied county-location partition does not reproduce the staged document")
+    problems += area_exception_problems(ledger["areaViolations"], json.loads(DECISIONS.read_text(encoding="utf-8")))
+    return problems
+
+
+def committed_area_problems(committed: dict) -> list[str]:
+    """Q4 를 **커밋된 최종 문서**에 건다. 허용되는 위반은 둘뿐이다: 결정 원장의 areaExceptions 행, 그리고 거점 분할
+    원장이 carvedCellCount 로 적어 둔 축소 발자국 거점 省(carve 규칙 5). 그 밖의 8 미만·620 초과는 적색이다."""
+    from tools.map import carve_strategic_site_provinces as carving
+    decisions = json.loads(DECISIONS.read_text(encoding="utf-8"))
+    allowed = {row["provinceId"]: row["cells"] for row in decisions["areaExceptions"]}
+    if carving.LEDGER.is_file():
+        stage = json.loads(carving.LEDGER.read_text(encoding="utf-8"))["geometry"]["stages"][0]
+        allowed.update({row["placeId"]: row["carvedCellCount"] for row in stage["placements"]
+                        if row["carvedCellCount"] < MIN_AREA})
+    meta = committed["_meta"]
+    owner = expand(committed["owner"], meta["rows"], meta["cols"])
+    areas = np.bincount(owner[owner >= 0], minlength=len(committed["provinceRecords"]))
+    return [f"Q4 committed tiles: {row['id']} {row['nameCh']} area {int(areas[i])} has no exception"
+            for i, row in enumerate(committed["provinceRecords"])
+            if not MIN_AREA <= int(areas[i]) <= MAX_AREA and allowed.get(row["id"]) != int(areas[i])]
+
+
+def peel_later_stages(committed: dict) -> dict:
+    """커밋본에서 저지 지형·접기·거점 분할을 벗긴다(★ 출력 자리의 문서). 읽기 전용."""
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import fold_cityless_jurisdictions as folding
-    document, folded = folding.peel(committed)
-    if folded is None:
-        raise ValueError("fold stage does not match the committed tiles")
-    document, carved = carving.peel(document)
-    if carved is None:
-        raise ValueError("carve stage does not match the committed tiles")
+    # 단계가 안 얹혀 있으면 peel 은 문서를 그대로 돌려준다 — S2 재적층 도중(★ 만 얹힌 문서)에도 --check 가 돈다.
+    # 어느 단계도 안 맞는 문서는 뒤의 stage_for 가 걸러 낸다.
+    document, _ = folding.peel(committed)
+    document, _ = carving.peel_only(document)
+    return document
+
+
+def stage_input(committed: dict) -> dict:
+    """★ 가 설 자리의 **입력** 문서: 저지·접기·거점을 벗기고, ★ 가 이미 얹혀 있으면 그것도 벗긴다."""
+    document, _ = peel(peel_later_stages(committed))
     return document
 
 
@@ -598,7 +824,7 @@ def _refuse_committed_path(path: Path) -> None:
     except ValueError:
         return
     if relative.parts and relative.parts[0] in FORBIDDEN_OUTPUT_ROOTS:
-        raise SystemExit(f"refusing to write under {relative.parts[0]}/ — S1 은 스크래치 전용이다: {resolved}")
+        raise SystemExit(f"refusing to write under {relative.parts[0]}/ without --prepare: {resolved}")
 
 
 def main() -> int:
@@ -606,16 +832,37 @@ def main() -> int:
     parser.add_argument("--source", type=Path, default=TILES)
     parser.add_argument("--source-is-stage-input", action="store_true",
                         help="--source 가 이미 거점 분할 앞 문서다 (벗기지 않는다)")
-    parser.add_argument("--output", type=Path, required=True, help="스크래치 경로 (data/·infra/ 밑은 거부)")
+    parser.add_argument("--output", type=Path, help="스크래치 경로. --prepare 없이는 data/·infra/ 밑을 거부한다")
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--prepare", action="store_true", help="원장·입력 blob 을 쓰고 ★ 만 얹은 문서를 --output 에 쓴다")
+    parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    _refuse_committed_path(args.output)
-    if args.report:
-        _refuse_committed_path(args.report)
     source = json.loads(args.source.read_text(encoding="utf-8"))
+    if args.check:
+        problems = check(peel_later_stages(source), json.loads(LEDGER.read_text(encoding="utf-8")))
+        problems += committed_area_problems(source)
+        for problem in problems:
+            print(problem, file=sys.stderr)
+        return 1 if problems else 0
+    if args.output is None:
+        parser.error("--output is required")
+    if not args.prepare:
+        _refuse_committed_path(args.output)
+        if args.report:
+            _refuse_committed_path(args.report)
     if not args.source_is_stage_input:
         source = stage_input(source)
-    document, report = partition(source)
+    if args.prepare:
+        document, ledger, blob = build_stage(source)
+        INPUT_BLOB.write_bytes(blob)
+        LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        args.output.write_text(dumps(document), encoding="utf-8")
+        print(json.dumps({**ledger["geometry"]["stages"][0]["counts"], "areaViolations": len(ledger["areaViolations"]),
+                          "areaExceptionProblems": area_exception_problems(
+                              ledger["areaViolations"], json.loads(DECISIONS.read_text(encoding="utf-8")))},
+                         ensure_ascii=False, indent=1))
+        return 0
+    document, report = partition(source, sites=_sites())
     problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
     report["gates"] = {"Q2": not any(p.startswith("Q2") for p in problems),
                        "Q3": not any(p.startswith("Q3") for p in problems),

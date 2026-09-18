@@ -1,0 +1,5211 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "county-location-partition-v1",
+  "authority": "user-decision-2026-09-17 「지리 우선」 + user-decision-2026-09-18 (GH #806 댓글: 변경 省 성김 수용 · 거점 발자국 축소 · 8칸 미만 縣은 Q4 예외 행) + spec 2026-09-17-province-geography-first §3",
+  "inputs": {
+    "decisions": {
+      "path": "data/curated/han/county-location-partition-decisions-v1.json",
+      "sha256": "b89dae81b7b7376806d92c1fb451e45556630279544ad683ae724cc60bb37fcb"
+    },
+    "strongholds": {
+      "path": "data/curated/han/strategic-strongholds-v1.json",
+      "sha256": "9b3b491475479eaeba7052603d70b11b6f65a3109b440c7ec57b267e8fed6159"
+    },
+    "passes": {
+      "path": "data/curated/han/strategic-passes-v1.json",
+      "sha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429"
+    }
+  },
+  "rule": {
+    "minArea": 8,
+    "maxArea": 620,
+    "straight": 10,
+    "diagonal": 14,
+    "source": "spec 2026-09-17-province-geography-first §3 (현행 값을 옮김, 이 도구가 지은 임계 없음)"
+  },
+  "mechanicalChoices": [
+    "DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR",
+    "STRUCTURAL_COMPONENT_OWN_PROVINCE_IF_GE_MIN_AREA",
+    "SEED_COLLISION_GEOMETRY_RULE_2B",
+    "STRONGHOLD_DONOR_FLOOR_RESERVATION"
+  ],
+  "seedExceptions": [
+    {
+      "jurisdictionId": "200261",
+      "nameCh": "绵虒道",
+      "commanderyId": "PARENT-0057",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 208,
+        "row": 305
+      },
+      "seedCell": {
+        "col": 207,
+        "row": 305
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "40070",
+      "nameCh": "海盐县",
+      "commanderyId": "PARENT-0052",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 534,
+        "row": 321
+      },
+      "seedCell": {
+        "col": 534,
+        "row": 320
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "40451",
+      "nameCh": "毗陵县",
+      "commanderyId": "PARENT-0052",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 512,
+        "row": 296
+      },
+      "seedCell": {
+        "col": 511,
+        "row": 296
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "41194",
+      "nameCh": "鄡阳县",
+      "commanderyId": "PARENT-0053",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 446,
+        "row": 352
+      },
+      "seedCell": {
+        "col": 446,
+        "row": 350
+      },
+      "cellDistance": 2.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "42424",
+      "nameCh": "徐闻县",
+      "commanderyId": "PARENT-0101",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 331,
+        "row": 542
+      },
+      "seedCell": {
+        "col": 331,
+        "row": 541
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "42695",
+      "nameCh": "平安县",
+      "commanderyId": "PARENT-0033",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 500,
+        "row": 267
+      },
+      "seedCell": {
+        "col": 500,
+        "row": 266
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "43186",
+      "nameCh": "义成县",
+      "commanderyId": "PARENT-0010",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 462,
+        "row": 271
+      },
+      "seedCell": {
+        "col": 461,
+        "row": 269
+      },
+      "cellDistance": 2.24,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "43252",
+      "nameCh": "徐县",
+      "commanderyId": "PARENT-0034",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 480,
+        "row": 264
+      },
+      "seedCell": {
+        "col": 480,
+        "row": 263
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "43284",
+      "nameCh": "淮陵县",
+      "commanderyId": "PARENT-0034",
+      "class": "WATER_OR_OFF_GRID",
+      "trueCell": {
+        "col": 479,
+        "row": 270
+      },
+      "seedCell": {
+        "col": 479,
+        "row": 269
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "44564",
+      "nameCh": "西充国县",
+      "commanderyId": "PARENT-0129",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 252,
+        "row": 303
+      },
+      "seedCell": {
+        "col": 253,
+        "row": 301
+      },
+      "cellDistance": 2.24,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "45022",
+      "nameCh": "历城县",
+      "commanderyId": "PARENT-0035",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 457,
+        "row": 192
+      },
+      "seedCell": {
+        "col": 455,
+        "row": 190
+      },
+      "cellDistance": 2.83,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "45049",
+      "nameCh": "土鼓县",
+      "commanderyId": "PARENT-0035",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 467,
+        "row": 191
+      },
+      "seedCell": {
+        "col": 467,
+        "row": 190
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "45020"
+      ]
+    },
+    {
+      "jurisdictionId": "45087",
+      "nameCh": "高唐县",
+      "commanderyId": "PARENT-0036",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 449,
+        "row": 190
+      },
+      "seedCell": {
+        "col": 448,
+        "row": 189
+      },
+      "cellDistance": 1.41,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "45269",
+      "nameCh": "瑕丘县",
+      "commanderyId": "PARENT-0028",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 454,
+        "row": 215
+      },
+      "seedCell": {
+        "col": 456,
+        "row": 218
+      },
+      "cellDistance": 3.61,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "45751",
+      "nameCh": "阴县",
+      "commanderyId": "PARENT-0041",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 358,
+        "row": 282
+      },
+      "seedCell": {
+        "col": 358,
+        "row": 281
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "45748"
+      ]
+    },
+    {
+      "jurisdictionId": "70131",
+      "nameCh": "白石县",
+      "commanderyId": "PARENT-0066",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 199,
+        "row": 217
+      },
+      "seedCell": {
+        "col": 199,
+        "row": 216
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "70126"
+      ]
+    },
+    {
+      "jurisdictionId": "70203",
+      "nameCh": "漆县",
+      "commanderyId": "PARENT-0006",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 293,
+        "row": 227
+      },
+      "seedCell": {
+        "col": 292,
+        "row": 227
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "70634",
+      "nameCh": "杜",
+      "commanderyId": "PARENT-0004",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 308,
+        "row": 245
+      },
+      "seedCell": {
+        "col": 308,
+        "row": 244
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "70633"
+      ]
+    },
+    {
+      "jurisdictionId": "82003",
+      "nameCh": "陈县",
+      "commanderyId": "PARENT-0008",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 418,
+        "row": 254
+      },
+      "seedCell": {
+        "col": 416,
+        "row": 254
+      },
+      "cellDistance": 2.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "82520",
+      "nameCh": "温县",
+      "commanderyId": "PARENT-0000",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 383,
+        "row": 229
+      },
+      "seedCell": {
+        "col": 383,
+        "row": 231
+      },
+      "cellDistance": 2.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "85024",
+      "nameCh": "单父县",
+      "commanderyId": "PARENT-0028",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 440,
+        "row": 232
+      },
+      "seedCell": {
+        "col": 441,
+        "row": 230
+      },
+      "cellDistance": 2.24,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "85065",
+      "nameCh": "鄄城县",
+      "commanderyId": "PARENT-0029",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 430,
+        "row": 213
+      },
+      "seedCell": {
+        "col": 430,
+        "row": 212
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "85064"
+      ]
+    },
+    {
+      "jurisdictionId": "85281",
+      "nameCh": "益都县",
+      "commanderyId": "PARENT-0037",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 489,
+        "row": 188
+      },
+      "seedCell": {
+        "col": 489,
+        "row": 187
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "85280"
+      ]
+    },
+    {
+      "jurisdictionId": "85377",
+      "nameCh": "㡉县",
+      "commanderyId": "PARENT-0039",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 521,
+        "row": 172
+      },
+      "seedCell": {
+        "col": 521,
+        "row": 171
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "85376"
+      ]
+    },
+    {
+      "jurisdictionId": "85385",
+      "nameCh": "挺县",
+      "commanderyId": "PARENT-0038",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 526,
+        "row": 186
+      },
+      "seedCell": {
+        "col": 531,
+        "row": 186
+      },
+      "cellDistance": 5.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "85401",
+      "nameCh": "牟平县",
+      "commanderyId": "PARENT-0039",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 533,
+        "row": 173
+      },
+      "seedCell": {
+        "col": 532,
+        "row": 173
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "85466",
+      "nameCh": "平寿县",
+      "commanderyId": "PARENT-0038",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 495,
+        "row": 194
+      },
+      "seedCell": {
+        "col": 495,
+        "row": 193
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "85292"
+      ]
+    },
+    {
+      "jurisdictionId": "85634",
+      "nameCh": "东莞县",
+      "commanderyId": "PARENT-0105",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 487,
+        "row": 211
+      },
+      "seedCell": {
+        "col": 489,
+        "row": 209
+      },
+      "cellDistance": 2.83,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "87051",
+      "nameCh": "巨鹿县",
+      "commanderyId": "PARENT-0014",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 419,
+        "row": 185
+      },
+      "seedCell": {
+        "col": 418,
+        "row": 185
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "87173",
+      "nameCh": "杨氏县",
+      "commanderyId": "PARENT-0014",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 419,
+        "row": 172
+      },
+      "seedCell": {
+        "col": 419,
+        "row": 171
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "87061"
+      ]
+    },
+    {
+      "jurisdictionId": "87495",
+      "nameCh": "斥章县",
+      "commanderyId": "PARENT-0014",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 422,
+        "row": 191
+      },
+      "seedCell": {
+        "col": 422,
+        "row": 190
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "85186"
+      ]
+    },
+    {
+      "jurisdictionId": "87510",
+      "nameCh": "平乡县",
+      "commanderyId": "PARENT-0014",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 419,
+        "row": 185
+      },
+      "seedCell": {
+        "col": 418,
+        "row": 184
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "87051"
+      ]
+    },
+    {
+      "jurisdictionId": "87591",
+      "nameCh": "阜城县",
+      "commanderyId": "PARENT-0017",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 428,
+        "row": 172
+      },
+      "seedCell": {
+        "col": 428,
+        "row": 171
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "87569"
+      ]
+    },
+    {
+      "jurisdictionId": "X058",
+      "nameCh": "西羌",
+      "commanderyId": "PARENT-0163",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 176,
+        "row": 193
+      },
+      "seedCell": {
+        "col": 176,
+        "row": 192
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "X063",
+      "nameCh": "鮮卑",
+      "commanderyId": "PARENT-0170",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 418,
+        "row": 104
+      },
+      "seedCell": {
+        "col": 418,
+        "row": 103
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "87125"
+      ]
+    },
+    {
+      "jurisdictionId": "fc-liaodong-003",
+      "nameCh": "無慮縣",
+      "commanderyId": "PARENT-0094",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 546,
+        "row": 89
+      },
+      "seedCell": {
+        "col": 554,
+        "row": 90
+      },
+      "cellDistance": 8.06,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "fc-liaodong-008",
+      "nameCh": "西安平縣",
+      "commanderyId": "PARENT-0094",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 595,
+        "row": 117
+      },
+      "seedCell": {
+        "col": 591,
+        "row": 117
+      },
+      "cellDistance": 4.0,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "fc-xuantu-002",
+      "nameCh": "西蓋馬縣",
+      "commanderyId": "PARENT-0095",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 605,
+        "row": 110
+      },
+      "seedCell": {
+        "col": 592,
+        "row": 101
+      },
+      "cellDistance": 15.81,
+      "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "fc-xuantu-003",
+      "nameCh": "上殷台縣",
+      "commanderyId": "PARENT-0095",
+      "class": "SEED_COLLISION",
+      "trueCell": {
+        "col": 592,
+        "row": 107
+      },
+      "seedCell": {
+        "col": 592,
+        "row": 100
+      },
+      "cellDistance": 1.0,
+      "seedBasis": "LONLAT",
+      "sharedWith": [
+        "fc-xuantu-002"
+      ]
+    },
+    {
+      "jurisdictionId": "fc-xuantu-006",
+      "nameCh": "遼陽縣",
+      "commanderyId": "PARENT-0095",
+      "class": "SOURCE_PARENT_NOT_RASTER_PARENT",
+      "trueCell": {
+        "col": 567,
+        "row": 88
+      },
+      "seedCell": {
+        "col": 567,
+        "row": 85
+      },
+      "cellDistance": 3.0,
+      "seedBasis": "LONLAT"
+    }
+  ],
+  "seedlessComponents": [
+    {
+      "jurisdictionId": "fc-lelang-010",
+      "cells": 7,
+      "firstCell": {
+        "col": 598,
+        "row": 164
+      }
+    },
+    {
+      "jurisdictionId": "85217",
+      "cells": 23,
+      "firstCell": {
+        "col": 456,
+        "row": 178
+      }
+    },
+    {
+      "jurisdictionId": "X040",
+      "cells": 9,
+      "firstCell": {
+        "col": 629,
+        "row": 193
+      }
+    },
+    {
+      "jurisdictionId": "X035",
+      "cells": 14,
+      "firstCell": {
+        "col": 758,
+        "row": 199
+      }
+    },
+    {
+      "jurisdictionId": "X054",
+      "cells": 611,
+      "firstCell": {
+        "col": 745,
+        "row": 222
+      }
+    },
+    {
+      "jurisdictionId": "X054",
+      "cells": 480,
+      "firstCell": {
+        "col": 767,
+        "row": 243
+      }
+    },
+    {
+      "jurisdictionId": "X054",
+      "cells": 6,
+      "firstCell": {
+        "col": 744,
+        "row": 245
+      }
+    },
+    {
+      "jurisdictionId": "X054",
+      "cells": 4,
+      "firstCell": {
+        "col": 736,
+        "row": 262
+      }
+    },
+    {
+      "jurisdictionId": "X051",
+      "cells": 15,
+      "firstCell": {
+        "col": 681,
+        "row": 267
+      }
+    },
+    {
+      "jurisdictionId": "83166",
+      "cells": 15,
+      "firstCell": {
+        "col": 400,
+        "row": 275
+      }
+    },
+    {
+      "jurisdictionId": "X052",
+      "cells": 20,
+      "firstCell": {
+        "col": 673,
+        "row": 275
+      }
+    },
+    {
+      "jurisdictionId": "X055",
+      "cells": 41,
+      "firstCell": {
+        "col": 698,
+        "row": 280
+      }
+    },
+    {
+      "jurisdictionId": "43138",
+      "cells": 38,
+      "firstCell": {
+        "col": 463,
+        "row": 286
+      }
+    },
+    {
+      "jurisdictionId": "X055",
+      "cells": 7,
+      "firstCell": {
+        "col": 693,
+        "row": 296
+      }
+    },
+    {
+      "jurisdictionId": "44580",
+      "cells": 81,
+      "firstCell": {
+        "col": 246,
+        "row": 300
+      }
+    },
+    {
+      "jurisdictionId": "X055",
+      "cells": 28,
+      "firstCell": {
+        "col": 717,
+        "row": 316
+      }
+    },
+    {
+      "jurisdictionId": "X055",
+      "cells": 19,
+      "firstCell": {
+        "col": 707,
+        "row": 324
+      }
+    },
+    {
+      "jurisdictionId": "40740",
+      "cells": 30,
+      "firstCell": {
+        "col": 549,
+        "row": 331
+      }
+    },
+    {
+      "jurisdictionId": "40740",
+      "cells": 7,
+      "firstCell": {
+        "col": 551,
+        "row": 339
+      }
+    },
+    {
+      "jurisdictionId": "41194",
+      "cells": 28,
+      "firstCell": {
+        "col": 449,
+        "row": 353
+      }
+    },
+    {
+      "jurisdictionId": "X057",
+      "cells": 42,
+      "firstCell": {
+        "col": 692,
+        "row": 366
+      }
+    },
+    {
+      "jurisdictionId": "X057",
+      "cells": 12,
+      "firstCell": {
+        "col": 677,
+        "row": 379
+      }
+    },
+    {
+      "jurisdictionId": "X057",
+      "cells": 11,
+      "firstCell": {
+        "col": 610,
+        "row": 443
+      }
+    },
+    {
+      "jurisdictionId": "X057",
+      "cells": 19,
+      "firstCell": {
+        "col": 592,
+        "row": 449
+      }
+    },
+    {
+      "jurisdictionId": "40165",
+      "cells": 9,
+      "firstCell": {
+        "col": 483,
+        "row": 451
+      }
+    },
+    {
+      "jurisdictionId": "X056",
+      "cells": 15,
+      "firstCell": {
+        "col": 582,
+        "row": 453
+      }
+    },
+    {
+      "jurisdictionId": "42524",
+      "cells": 67,
+      "firstCell": {
+        "col": 367,
+        "row": 500
+      }
+    },
+    {
+      "jurisdictionId": "42301",
+      "cells": 16,
+      "firstCell": {
+        "col": 379,
+        "row": 509
+      }
+    },
+    {
+      "jurisdictionId": "fc-jiaozhi-006",
+      "cells": 4,
+      "firstCell": {
+        "col": 283,
+        "row": 525
+      }
+    },
+    {
+      "jurisdictionId": "fc-jiaozhi-006",
+      "cells": 2,
+      "firstCell": {
+        "col": 280,
+        "row": 528
+      }
+    }
+  ],
+  "components": [
+    {
+      "jurisdictionId": "40165",
+      "nameCh": "东部侯官县",
+      "cells": 9,
+      "firstCell": {
+        "col": 483,
+        "row": 451
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "40426",
+      "nameCh": "娄县",
+      "cells": 39,
+      "firstCell": {
+        "col": 535,
+        "row": 296
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "40740",
+      "nameCh": "鄮县",
+      "cells": 30,
+      "firstCell": {
+        "col": 549,
+        "row": 331
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "40740",
+      "nameCh": "鄮县",
+      "cells": 7,
+      "firstCell": {
+        "col": 551,
+        "row": 339
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "41154",
+      "nameCh": "彭泽县",
+      "cells": 3,
+      "firstCell": {
+        "col": 442,
+        "row": 340
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "41194",
+      "nameCh": "鄡阳县",
+      "cells": 28,
+      "firstCell": {
+        "col": 449,
+        "row": 353
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "42301",
+      "nameCh": "安宁县",
+      "cells": 16,
+      "firstCell": {
+        "col": 379,
+        "row": 509
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "42524",
+      "nameCh": "合浦县",
+      "cells": 67,
+      "firstCell": {
+        "col": 367,
+        "row": 500
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "43057",
+      "nameCh": "合肥县",
+      "cells": 1,
+      "firstCell": {
+        "col": 463,
+        "row": 301
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "43138",
+      "nameCh": "六安县",
+      "cells": 38,
+      "firstCell": {
+        "col": 463,
+        "row": 286
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "43252",
+      "nameCh": "徐县",
+      "cells": 9,
+      "firstCell": {
+        "col": 480,
+        "row": 266
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "43423",
+      "nameCh": "鄂县",
+      "cells": 1,
+      "firstCell": {
+        "col": 414,
+        "row": 330
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "43497",
+      "nameCh": "州陵县",
+      "cells": 5,
+      "firstCell": {
+        "col": 408,
+        "row": 331
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "44580",
+      "nameCh": "汉昌县",
+      "cells": 81,
+      "firstCell": {
+        "col": 246,
+        "row": 300
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "70620",
+      "nameCh": "西都县",
+      "cells": 1,
+      "firstCell": {
+        "col": 182,
+        "row": 187
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "83166",
+      "nameCh": "阳安县",
+      "cells": 15,
+      "firstCell": {
+        "col": 400,
+        "row": 275
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "85202",
+      "nameCh": "灵县",
+      "cells": 1,
+      "firstCell": {
+        "col": 447,
+        "row": 195
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "85217",
+      "nameCh": "东安平县",
+      "cells": 23,
+      "firstCell": {
+        "col": 456,
+        "row": 178
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "85344",
+      "nameCh": "琅邪县",
+      "cells": 3,
+      "firstCell": {
+        "col": 515,
+        "row": 208
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X035",
+      "nameCh": "于山國",
+      "cells": 14,
+      "firstCell": {
+        "col": 758,
+        "row": 199
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X040",
+      "nameCh": "目支國",
+      "cells": 9,
+      "firstCell": {
+        "col": 629,
+        "row": 193
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X041",
+      "nameCh": "辟卑離國",
+      "cells": 14,
+      "firstCell": {
+        "col": 625,
+        "row": 229
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X046",
+      "nameCh": "古資彌凍國",
+      "cells": 22,
+      "firstCell": {
+        "col": 659,
+        "row": 229
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X046",
+      "nameCh": "古資彌凍國",
+      "cells": 2,
+      "firstCell": {
+        "col": 656,
+        "row": 234
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X046",
+      "nameCh": "古資彌凍國",
+      "cells": 1,
+      "firstCell": {
+        "col": 643,
+        "row": 236
+      },
+      "reason": "PARENT_MASK_SPLIT",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X046",
+      "nameCh": "古資彌凍國",
+      "cells": 1,
+      "firstCell": {
+        "col": 657,
+        "row": 236
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X051",
+      "nameCh": "一大國",
+      "cells": 15,
+      "firstCell": {
+        "col": 681,
+        "row": 267
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X052",
+      "nameCh": "末盧國",
+      "cells": 1,
+      "firstCell": {
+        "col": 689,
+        "row": 262
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X052",
+      "nameCh": "末盧國",
+      "cells": 8,
+      "firstCell": {
+        "col": 687,
+        "row": 263
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X052",
+      "nameCh": "末盧國",
+      "cells": 20,
+      "firstCell": {
+        "col": 673,
+        "row": 275
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X052",
+      "nameCh": "末盧國",
+      "cells": 1,
+      "firstCell": {
+        "col": 693,
+        "row": 279
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X054",
+      "nameCh": "奴國",
+      "cells": 611,
+      "firstCell": {
+        "col": 745,
+        "row": 222
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X054",
+      "nameCh": "奴國",
+      "cells": 480,
+      "firstCell": {
+        "col": 767,
+        "row": 243
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X054",
+      "nameCh": "奴國",
+      "cells": 6,
+      "firstCell": {
+        "col": 744,
+        "row": 245
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X054",
+      "nameCh": "奴國",
+      "cells": 4,
+      "firstCell": {
+        "col": 736,
+        "row": 262
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X055",
+      "nameCh": "邪馬壹國",
+      "cells": 41,
+      "firstCell": {
+        "col": 698,
+        "row": 280
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X055",
+      "nameCh": "邪馬壹國",
+      "cells": 7,
+      "firstCell": {
+        "col": 693,
+        "row": 296
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X055",
+      "nameCh": "邪馬壹國",
+      "cells": 28,
+      "firstCell": {
+        "col": 717,
+        "row": 316
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X055",
+      "nameCh": "邪馬壹國",
+      "cells": 19,
+      "firstCell": {
+        "col": 707,
+        "row": 324
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X056",
+      "nameCh": "夷洲",
+      "cells": 15,
+      "firstCell": {
+        "col": 582,
+        "row": 453
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X057",
+      "nameCh": "流求",
+      "cells": 42,
+      "firstCell": {
+        "col": 692,
+        "row": 366
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X057",
+      "nameCh": "流求",
+      "cells": 12,
+      "firstCell": {
+        "col": 677,
+        "row": 379
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X057",
+      "nameCh": "流求",
+      "cells": 11,
+      "firstCell": {
+        "col": 610,
+        "row": 443
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "X057",
+      "nameCh": "流求",
+      "cells": 19,
+      "firstCell": {
+        "col": 592,
+        "row": 449
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "OWN_PROVINCE"
+    },
+    {
+      "jurisdictionId": "fc-jiaozhi-006",
+      "nameCh": "曲陽縣",
+      "cells": 4,
+      "firstCell": {
+        "col": 283,
+        "row": 525
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "fc-jiaozhi-006",
+      "nameCh": "曲陽縣",
+      "cells": 2,
+      "firstCell": {
+        "col": 280,
+        "row": 528
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    },
+    {
+      "jurisdictionId": "fc-lelang-010",
+      "nameCh": "海冥縣",
+      "cells": 7,
+      "firstCell": {
+        "col": 598,
+        "row": 164
+      },
+      "reason": "WATER_SEPARATED",
+      "reasonBasis": "MECHANICAL_UNREVIEWED",
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
+    }
+  ],
+  "multiComponentProvinceIds": [
+    "40740",
+    "41154",
+    "43057",
+    "43423",
+    "43497",
+    "70620",
+    "85202",
+    "85344",
+    "X046",
+    "X052",
+    "X054",
+    "X055",
+    "fc-jiaozhi-006",
+    "fc-lelang-010"
+  ],
+  "minAreaBorrowed": [
+    {
+      "jurisdictionId": "42817",
+      "nameCh": "广戚县",
+      "borrowedCells": 3,
+      "donors": {
+        "42818": 3
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "44564",
+      "nameCh": "西充国县",
+      "borrowedCells": 7,
+      "donors": {
+        "44558": 7
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "45203",
+      "nameCh": "蕃县",
+      "borrowedCells": 2,
+      "donors": {
+        "45210": 2
+      },
+      "areaAfter": 7,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "45269",
+      "nameCh": "瑕丘县",
+      "borrowedCells": 7,
+      "donors": {
+        "45188": 7
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "45651",
+      "nameCh": "襄阳县",
+      "borrowedCells": 13,
+      "donors": {
+        "45654": 7,
+        "45696": 6
+      },
+      "areaAfter": 16,
+      "satisfied": true,
+      "floor": 16
+    },
+    {
+      "jurisdictionId": "70634",
+      "nameCh": "杜",
+      "borrowedCells": 2,
+      "donors": {
+        "70623": 2
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "82879",
+      "nameCh": "平阴县",
+      "borrowedCells": 2,
+      "donors": {
+        "82828": 2
+      },
+      "areaAfter": 12,
+      "satisfied": true,
+      "floor": 12
+    },
+    {
+      "jurisdictionId": "87051",
+      "nameCh": "巨鹿县",
+      "borrowedCells": 1,
+      "donors": {
+        "87499": 1
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "87489",
+      "nameCh": "张县",
+      "borrowedCells": 1,
+      "donors": {
+        "87177": 1
+      },
+      "areaAfter": 4,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "87490",
+      "nameCh": "朝平县",
+      "borrowedCells": 1,
+      "donors": {
+        "87177": 1
+      },
+      "areaAfter": 7,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "87491",
+      "nameCh": "南和县",
+      "borrowedCells": 1,
+      "donors": {
+        "87513": 1
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "87506",
+      "nameCh": "广乡县",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 5,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "87510",
+      "nameCh": "平乡县",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 4,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "fc-jiaozhi-009",
+      "nameCh": "西于縣",
+      "borrowedCells": 3,
+      "donors": {
+        "fc-jiaozhi-002": 2,
+        "fc-jiaozhi-005": 1
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "fc-xuantu-002",
+      "nameCh": "西蓋馬縣",
+      "borrowedCells": 5,
+      "donors": {
+        "fc-xuantu-003": 5
+      },
+      "areaAfter": 8,
+      "satisfied": true
+    }
+  ],
+  "strongholdReservations": [
+    {
+      "jurisdictionId": "45651",
+      "nameCh": "襄阳县",
+      "siteIds": [
+        "dengsai",
+        "fancheng"
+      ]
+    },
+    {
+      "jurisdictionId": "82879",
+      "nameCh": "平阴县",
+      "siteIds": [
+        "mengjin"
+      ]
+    }
+  ],
+  "subdivisions": [
+    {
+      "jurisdictionId": "200176",
+      "nameCh": "丹兴县",
+      "componentCells": 1231,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "200281",
+      "nameCh": "笮秦县",
+      "componentCells": 1872,
+      "pieces": 4
+    },
+    {
+      "jurisdictionId": "200284",
+      "nameCh": "定笮县",
+      "componentCells": 886,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "40165",
+      "nameCh": "东部侯官县",
+      "componentCells": 1030,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "40303",
+      "nameCh": "南平县",
+      "componentCells": 946,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "40861",
+      "nameCh": "杨都县",
+      "componentCells": 726,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "41886",
+      "nameCh": "镡成县",
+      "componentCells": 912,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "42073",
+      "nameCh": "充县",
+      "componentCells": 622,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "42147",
+      "nameCh": "揭阳县",
+      "componentCells": 1461,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "42184",
+      "nameCh": "龙川县",
+      "componentCells": 899,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "42444",
+      "nameCh": "朱崖县",
+      "componentCells": 1199,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "42524",
+      "nameCh": "合浦县",
+      "componentCells": 862,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "43783",
+      "nameCh": "潭中县",
+      "componentCells": 1465,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "43860",
+      "nameCh": "安广县",
+      "componentCells": 682,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "44055",
+      "nameCh": "领方县",
+      "componentCells": 3248,
+      "pieces": 6
+    },
+    {
+      "jurisdictionId": "45372",
+      "nameCh": "云南县",
+      "componentCells": 893,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "45412",
+      "nameCh": "遂久县",
+      "componentCells": 1631,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "45445",
+      "nameCh": "不韦县",
+      "componentCells": 1088,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "45453",
+      "nameCh": "朱提县",
+      "componentCells": 1093,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "45532",
+      "nameCh": "宛温县",
+      "componentCells": 625,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "45572",
+      "nameCh": "双柏县",
+      "componentCells": 1038,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "45603",
+      "nameCh": "贲古县",
+      "componentCells": 2909,
+      "pieces": 5
+    },
+    {
+      "jurisdictionId": "45949",
+      "nameCh": "武陵县",
+      "componentCells": 670,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "70079",
+      "nameCh": "临洮县",
+      "componentCells": 1069,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "70126",
+      "nameCh": "枹罕县",
+      "componentCells": 1552,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70156",
+      "nameCh": "鹑阴县",
+      "componentCells": 855,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "70418",
+      "nameCh": "雕阴县",
+      "componentCells": 2024,
+      "pieces": 4
+    },
+    {
+      "jurisdictionId": "70459",
+      "nameCh": "延寿县",
+      "componentCells": 2574,
+      "pieces": 5
+    },
+    {
+      "jurisdictionId": "70500",
+      "nameCh": "居延县",
+      "componentCells": 6509,
+      "pieces": 11
+    },
+    {
+      "jurisdictionId": "70524",
+      "nameCh": "富平县",
+      "componentCells": 1451,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70595",
+      "nameCh": "效谷县",
+      "componentCells": 1768,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70596",
+      "nameCh": "龙勒县",
+      "componentCells": 3404,
+      "pieces": 6
+    },
+    {
+      "jurisdictionId": "70597",
+      "nameCh": "冥安县",
+      "componentCells": 1339,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70598",
+      "nameCh": "渊泉县",
+      "componentCells": 1598,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70599",
+      "nameCh": "玉门县",
+      "componentCells": 634,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "70601",
+      "nameCh": "昭武县",
+      "componentCells": 1153,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70605",
+      "nameCh": "删丹县",
+      "componentCells": 756,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "70609",
+      "nameCh": "显美县",
+      "componentCells": 3094,
+      "pieces": 5
+    },
+    {
+      "jurisdictionId": "70610",
+      "nameCh": "廉县",
+      "componentCells": 1285,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70617",
+      "nameCh": "临羌县",
+      "componentCells": 1864,
+      "pieces": 4
+    },
+    {
+      "jurisdictionId": "71009",
+      "nameCh": "龙亭侯国",
+      "componentCells": 754,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "80004",
+      "nameCh": "哀牢县",
+      "componentCells": 4134,
+      "pieces": 7
+    },
+    {
+      "jurisdictionId": "87436",
+      "nameCh": "潞县",
+      "componentCells": 1496,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "95016",
+      "nameCh": "平城县",
+      "componentCells": 938,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "96006",
+      "nameCh": "广武县",
+      "componentCells": 1344,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "96055",
+      "nameCh": "广柔县",
+      "componentCells": 1339,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "96382",
+      "nameCh": "汉嘉县",
+      "componentCells": 960,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "96436",
+      "nameCh": "蚕陵县",
+      "componentCells": 774,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "99004",
+      "nameCh": "夜郎县",
+      "componentCells": 721,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "99034",
+      "nameCh": "故且兰县",
+      "componentCells": 1035,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "99041",
+      "nameCh": "毋敛县",
+      "componentCells": 1049,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "99350",
+      "nameCh": "鄨县",
+      "componentCells": 1077,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
+      "nameCh": "離石縣",
+      "componentCells": 1181,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT",
+      "nameCh": "臨戎縣",
+      "componentCells": 4891,
+      "pieces": 8
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
+      "nameCh": "昌遼縣",
+      "componentCells": 1671,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0171-SEAT",
+      "nameCh": "龜茲屬國",
+      "componentCells": 679,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "X028",
+      "nameCh": "國內城",
+      "componentCells": 3357,
+      "pieces": 6
+    },
+    {
+      "jurisdictionId": "X029",
+      "nameCh": "卒本",
+      "componentCells": 1313,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "X030",
+      "nameCh": "北沃沮",
+      "componentCells": 2256,
+      "pieces": 4
+    },
+    {
+      "jurisdictionId": "X036",
+      "nameCh": "夫餘",
+      "componentCells": 5590,
+      "pieces": 10
+    },
+    {
+      "jurisdictionId": "X039",
+      "nameCh": "挹婁",
+      "componentCells": 3823,
+      "pieces": 7
+    },
+    {
+      "jurisdictionId": "X042",
+      "nameCh": "伯濟國",
+      "componentCells": 956,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "X055",
+      "nameCh": "邪馬壹國",
+      "componentCells": 1136,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "X056",
+      "nameCh": "夷洲",
+      "componentCells": 1311,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "X060",
+      "nameCh": "哀牢",
+      "componentCells": 1096,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "X062",
+      "nameCh": "烏桓",
+      "componentCells": 4030,
+      "pieces": 7
+    },
+    {
+      "jurisdictionId": "X063",
+      "nameCh": "鮮卑",
+      "componentCells": 1515,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "X064",
+      "nameCh": "南匈奴",
+      "componentCells": 3582,
+      "pieces": 6
+    },
+    {
+      "jurisdictionId": "fc-jiuzhen-003",
+      "nameCh": "咸懽縣",
+      "componentCells": 987,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "fc-liaodong-004",
+      "nameCh": "望平縣",
+      "componentCells": 1191,
+      "pieces": 2
+    },
+    {
+      "jurisdictionId": "fc-rinan-004",
+      "nameCh": "象林縣",
+      "componentCells": 1417,
+      "pieces": 3
+    }
+  ],
+  "areaViolations": [
+    {
+      "provinceId": "45203",
+      "cells": 7,
+      "class": "BELOW_MIN"
+    },
+    {
+      "provinceId": "83166",
+      "cells": 1,
+      "class": "BELOW_MIN"
+    },
+    {
+      "provinceId": "87489",
+      "cells": 4,
+      "class": "BELOW_MIN"
+    },
+    {
+      "provinceId": "87490",
+      "cells": 7,
+      "class": "BELOW_MIN"
+    },
+    {
+      "provinceId": "87506",
+      "cells": 5,
+      "class": "BELOW_MIN"
+    },
+    {
+      "provinceId": "87510",
+      "cells": 4,
+      "class": "BELOW_MIN"
+    }
+  ],
+  "retiredProvinceIds": [
+    {
+      "id": "DIRECT-PARENT-0046-2cbec5a2711d",
+      "jurisdictionId": "41935"
+    },
+    {
+      "id": "DIRECT-PARENT-0046-8097024d5dce",
+      "jurisdictionId": "43696"
+    },
+    {
+      "id": "DIRECT-PARENT-0046-b67fcf588773",
+      "jurisdictionId": "41906"
+    },
+    {
+      "id": "DIRECT-PARENT-0046-b7fa0ac430c7",
+      "jurisdictionId": "42049"
+    },
+    {
+      "id": "DIRECT-PARENT-0046-fabc59ecbe7a",
+      "jurisdictionId": "41886"
+    },
+    {
+      "id": "DIRECT-PARENT-0046-fcf417cd1812",
+      "jurisdictionId": "41886"
+    },
+    {
+      "id": "DIRECT-PARENT-0054-27a76df70ed1",
+      "jurisdictionId": "45930"
+    },
+    {
+      "id": "DIRECT-PARENT-0054-b3163831b975",
+      "jurisdictionId": "45934"
+    },
+    {
+      "id": "DIRECT-PARENT-0055-b75490cfca50",
+      "jurisdictionId": "44587"
+    },
+    {
+      "id": "DIRECT-PARENT-0055-e01ea9580974",
+      "jurisdictionId": "44671"
+    },
+    {
+      "id": "DIRECT-PARENT-0057-7951dafebc89",
+      "jurisdictionId": "200261"
+    },
+    {
+      "id": "DIRECT-PARENT-0057-7c26576d0a2d",
+      "jurisdictionId": "96436"
+    },
+    {
+      "id": "DIRECT-PARENT-0058-589cbe0631be",
+      "jurisdictionId": "96423"
+    },
+    {
+      "id": "DIRECT-PARENT-0058-b67ed8a3b2fc",
+      "jurisdictionId": "96424"
+    },
+    {
+      "id": "DIRECT-PARENT-0058-ebf9c5794323",
+      "jurisdictionId": "45458"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-1bee88d724d8",
+      "jurisdictionId": "99350"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-22440ad74901",
+      "jurisdictionId": "99350"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-26d99f5f3ad1",
+      "jurisdictionId": "99041"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-33cd842ae06b",
+      "jurisdictionId": "99341"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-3c97d8aae0f1",
+      "jurisdictionId": "99004"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-59d234ed0914",
+      "jurisdictionId": "99350"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-8a3da11ba4d5",
+      "jurisdictionId": "200170"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-996ba464f225",
+      "jurisdictionId": "99336"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-ad878fc18542",
+      "jurisdictionId": "99034"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-aed15d5cf237",
+      "jurisdictionId": "99004"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-b74c1f34f888",
+      "jurisdictionId": "99041"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-c51979a5904e",
+      "jurisdictionId": "99336"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-c8aef3267db2",
+      "jurisdictionId": "99004"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-e2f346437778",
+      "jurisdictionId": "99350"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-e46a6e05f5c3",
+      "jurisdictionId": "99034"
+    },
+    {
+      "id": "DIRECT-PARENT-0059-e9c81f89b285",
+      "jurisdictionId": "99041"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-1c3aca954389",
+      "jurisdictionId": "200281"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-3806c8a4c447",
+      "jurisdictionId": "200289"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-3d1491e6660a",
+      "jurisdictionId": "45412"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-5e7130635696",
+      "jurisdictionId": "200269"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-5e84e5a26c84",
+      "jurisdictionId": "200281"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-5f29cdf8e702",
+      "jurisdictionId": "200289"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-64cb601f0757",
+      "jurisdictionId": "45412"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-6dff6814175f",
+      "jurisdictionId": "45412"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-7bccddc1f821",
+      "jurisdictionId": "200281"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-7f36058c0194",
+      "jurisdictionId": "45412"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-83451879d2f7",
+      "jurisdictionId": "200289"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-8c5a1aaff058",
+      "jurisdictionId": "200284"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-b455fa6d983a",
+      "jurisdictionId": "200281"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-c047a90a36bd",
+      "jurisdictionId": "200281"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-cdd5e2776775",
+      "jurisdictionId": "80467"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-d1ba3ab9e40f",
+      "jurisdictionId": "200284"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-d1dc3d378b18",
+      "jurisdictionId": "45547"
+    },
+    {
+      "id": "DIRECT-PARENT-0060-fee556491853",
+      "jurisdictionId": "45547"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-01d085113dca",
+      "jurisdictionId": "45572"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-023ba32d6389",
+      "jurisdictionId": "45522"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-053e57539069",
+      "jurisdictionId": "45572"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-0b224acddc55",
+      "jurisdictionId": "80573"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-68e952b27509",
+      "jurisdictionId": "45526"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-705c177dedfd",
+      "jurisdictionId": "45603"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-8886da614396",
+      "jurisdictionId": "45530"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-8a3362eda3b3",
+      "jurisdictionId": "45572"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-8e0cb6409573",
+      "jurisdictionId": "80573"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-92519fd87b43",
+      "jurisdictionId": "45603"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-be71c77ae3dd",
+      "jurisdictionId": "80627"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-eb150cfcd7ef",
+      "jurisdictionId": "45527"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-f671496afed6",
+      "jurisdictionId": "45603"
+    },
+    {
+      "id": "DIRECT-PARENT-0061-fe3ce050703d",
+      "jurisdictionId": "45519"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-116ae9e86aab",
+      "jurisdictionId": "45381"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-1e77821d5ae9",
+      "jurisdictionId": "45629"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-1f8ebacde946",
+      "jurisdictionId": "45381"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-2a9051112164",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-358776908b79",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-4ce45f2bc919",
+      "jurisdictionId": "45380"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-552b34bd657e",
+      "jurisdictionId": "45445"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-68f7ce0760c8",
+      "jurisdictionId": "45372"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-6c0de122a90e",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-70c44b6124c6",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-87217fb77ad8",
+      "jurisdictionId": "45437"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-8a61b082698a",
+      "jurisdictionId": "45372"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-8f8ef64936ff",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-99a4d69e2cb0",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-a3c96a9456bd",
+      "jurisdictionId": "45437"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-a7942cac851f",
+      "jurisdictionId": "45445"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-b5203354ef60",
+      "jurisdictionId": "45629"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-c40b2175b15c",
+      "jurisdictionId": "80004"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-cb04a3be20e5",
+      "jurisdictionId": "45445"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-cb37f3f5b74a",
+      "jurisdictionId": "45445"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-d280599fd0cb",
+      "jurisdictionId": "45381"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-e61ea525b60a",
+      "jurisdictionId": "45445"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-eb752306d628",
+      "jurisdictionId": "45372"
+    },
+    {
+      "id": "DIRECT-PARENT-0062-fc8349b40c3b",
+      "jurisdictionId": "45381"
+    },
+    {
+      "id": "DIRECT-PARENT-0063-4c43e4c6fe1e",
+      "jurisdictionId": "96006"
+    },
+    {
+      "id": "DIRECT-PARENT-0063-749fe2e5877b",
+      "jurisdictionId": "96006"
+    },
+    {
+      "id": "DIRECT-PARENT-0063-77989854e14a",
+      "jurisdictionId": "96006"
+    },
+    {
+      "id": "DIRECT-PARENT-0063-b4602e162b30",
+      "jurisdictionId": "96006"
+    },
+    {
+      "id": "DIRECT-PARENT-0063-b4c6b204527b",
+      "jurisdictionId": "96006"
+    },
+    {
+      "id": "DIRECT-PARENT-0064-77ec712e0d04",
+      "jurisdictionId": "96358"
+    },
+    {
+      "id": "DIRECT-PARENT-0064-7b806bcb2df7",
+      "jurisdictionId": "96383"
+    },
+    {
+      "id": "DIRECT-PARENT-0064-892df3c57a7b",
+      "jurisdictionId": "96382"
+    },
+    {
+      "id": "DIRECT-PARENT-0064-eb540581fc2b",
+      "jurisdictionId": "96382"
+    },
+    {
+      "id": "DIRECT-PARENT-0065-1aac095718c9",
+      "jurisdictionId": "45453"
+    },
+    {
+      "id": "DIRECT-PARENT-0065-6f1aecb48c80",
+      "jurisdictionId": "45453"
+    },
+    {
+      "id": "DIRECT-PARENT-0065-ab71d213ac4d",
+      "jurisdictionId": "45453"
+    },
+    {
+      "id": "DIRECT-PARENT-0065-d99c8554b43b",
+      "jurisdictionId": "45453"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-2e1efde7a3dc",
+      "jurisdictionId": "70131"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-446b8c975fa3",
+      "jurisdictionId": "70005"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-5e62875d0a36",
+      "jurisdictionId": "70126"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-62100602c469",
+      "jurisdictionId": "70117"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-6804cef873a8",
+      "jurisdictionId": "70131"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-868fd58e4e0e",
+      "jurisdictionId": "70117"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-8e3c8240d563",
+      "jurisdictionId": "70005"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-c72e3e0a0722",
+      "jurisdictionId": "70131"
+    },
+    {
+      "id": "DIRECT-PARENT-0066-d3ff3ac3090b",
+      "jurisdictionId": "70033"
+    },
+    {
+      "id": "DIRECT-PARENT-0067-fdf4a63834de",
+      "jurisdictionId": "70060"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-14e8b9e925e4",
+      "jurisdictionId": "70617"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-3640cd94a06a",
+      "jurisdictionId": "70156"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-4eb58dd04880",
+      "jurisdictionId": "70618"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-50962fed1732",
+      "jurisdictionId": "70156"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-5e18a1c326d1",
+      "jurisdictionId": "70617"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-5ff77169f311",
+      "jurisdictionId": "70156"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-756e4c359c9a",
+      "jurisdictionId": "70156"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-827a7f191454",
+      "jurisdictionId": "70617"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-9145fa1bdd71",
+      "jurisdictionId": "70617"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-ea5ae3b12999",
+      "jurisdictionId": "70617"
+    },
+    {
+      "id": "DIRECT-PARENT-0069-eb4131eb3c19",
+      "jurisdictionId": "70619"
+    },
+    {
+      "id": "DIRECT-PARENT-0070-00fc004ee1f2",
+      "jurisdictionId": "70178"
+    },
+    {
+      "id": "DIRECT-PARENT-0070-20129a3a0e44",
+      "jurisdictionId": "70178"
+    },
+    {
+      "id": "DIRECT-PARENT-0070-81fe7b0d4b43",
+      "jurisdictionId": "70186"
+    },
+    {
+      "id": "DIRECT-PARENT-0070-e595ec672f22",
+      "jurisdictionId": "70178"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-0b41846dbaa5",
+      "jurisdictionId": "70610"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-30be7d10aefe",
+      "jurisdictionId": "70613"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-41b4a240df0e",
+      "jurisdictionId": "70613"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-679cdaa0a3cd",
+      "jurisdictionId": "70524"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-7e186af4ddc5",
+      "jurisdictionId": "70524"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-9b85f5c1f7d7",
+      "jurisdictionId": "70610"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-a25c41303569",
+      "jurisdictionId": "70614"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-b74003c1e28f",
+      "jurisdictionId": "70523"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-fb9636bcf55c",
+      "jurisdictionId": "70610"
+    },
+    {
+      "id": "DIRECT-PARENT-0071-fbbca6fe7382",
+      "jurisdictionId": "70614"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-0d037e4636cc",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-1b06b374c95e",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-29549d8659e9",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-3c95ebbb6b3b",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-6f2f84a557ed",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-74ae0d3d0202",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-8006327e03e2",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-a516a83c889b",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-ad51cd173472",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-d0afcc1c5a05",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-d8d42e8f5fcd",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0072-f94b082388b9",
+      "jurisdictionId": "70609"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-11a801bd70f9",
+      "jurisdictionId": "70606"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-33fe2b719e26",
+      "jurisdictionId": "70605"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-43e76c81eff8",
+      "jurisdictionId": "70608"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-52f884442611",
+      "jurisdictionId": "70601"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-6aece8257416",
+      "jurisdictionId": "70605"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-b7faa5ff096e",
+      "jurisdictionId": "70600"
+    },
+    {
+      "id": "DIRECT-PARENT-0073-d7778ee9d9c5",
+      "jurisdictionId": "70603"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-0d67aaadd9bd",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-0e15c1bab905",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-2561e4ca1c57",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-28cc1149f57b",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-2bbf397dfa92",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-42f5a7c25c7a",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-5084c15b384b",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-693120a1ce63",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-776484bbc9a6",
+      "jurisdictionId": "70599"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-7f2ff09ee19e",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-844342d92663",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-9527690d7121",
+      "jurisdictionId": "70598"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-a3d2fa57875b",
+      "jurisdictionId": "70599"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-bb717f6cd704",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-c23d1165f637",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-d70b892249d7",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0074-ddf9a4b9618c",
+      "jurisdictionId": "70459"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-0222e5121720",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-235416af4220",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-2a2cbcdcb3a6",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-38675a9209a6",
+      "jurisdictionId": "70594"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-4c55a7f046f0",
+      "jurisdictionId": "70597"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-4d94df632e25",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-4fe30cf23e32",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-526c7947a548",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-5891021f041c",
+      "jurisdictionId": "70597"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-5fedfd49807b",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-6270c54753ab",
+      "jurisdictionId": "70594"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-63ef7651a015",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-6f8f8c0e4e6d",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-784f4197b86a",
+      "jurisdictionId": "70597"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-7a21b5c0a929",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-93a649ecee8e",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-9a035e29fe95",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-9a059d463aec",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-b599f5d3e46b",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-c24fa1c415d5",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-c5fdbe48bf8f",
+      "jurisdictionId": "70596"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-d7b2d7d8f7bd",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-d917a42becff",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-e6ed53e5a0a8",
+      "jurisdictionId": "70595"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-eaa913e87653",
+      "jurisdictionId": "70594"
+    },
+    {
+      "id": "DIRECT-PARENT-0075-f848fa3e5d9e",
+      "jurisdictionId": "70597"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-101b14678a1a",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-139fc83a736e",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-14d8953ec8f9",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-19ffa6b867b0",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-231cdd15e6ce",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-29e2a9c8dace",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-34e40315411c",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-358ac10a80cd",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-6082642b2385",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-65e7a13714e9",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-7000e1d68f43",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-7c136f64bc82",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-7d7d3dcada83",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-7fa456fe55a3",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-9b0b05301ed0",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-9e6e97544349",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-a56f4e42a06c",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-a83d4c6ab40c",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-aea77dd799b7",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-aef91878c7d8",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-b830b3accaf5",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-bebe60f888be",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-c07bd1398785",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-ca6455de94fb",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-d23b43de4bcf",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-e41c876b2d1a",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0077-ec24f79d1877",
+      "jurisdictionId": "70500"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-0e4702e99e12",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-27658ad62469",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-3d56ffa9ee53",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-45a949de32f7",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-6ba353f0eb4f",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-a30d7671470a",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-a7c59c26690d",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0080-a806696ef74e",
+      "jurisdictionId": "70418"
+    },
+    {
+      "id": "DIRECT-PARENT-0081-2d2554a7ead8",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0081-49b6f86798b0",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0081-6884befaba27",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0081-a526b2310bfe",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0081-c6f658dab496",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0084-473c23241ef5",
+      "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0084-52ee5c84c24a",
+      "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0084-cf0f6fd2ceb0",
+      "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0085-6d99fc221cb2",
+      "jurisdictionId": "95126"
+    },
+    {
+      "id": "DIRECT-PARENT-0085-744caed3fced",
+      "jurisdictionId": "95016"
+    },
+    {
+      "id": "DIRECT-PARENT-0085-b00acf2898b8",
+      "jurisdictionId": "95096"
+    },
+    {
+      "id": "DIRECT-PARENT-0085-d2188dffbfc0",
+      "jurisdictionId": "95016"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-003662eb2cb7",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-3a744c50b3a5",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-3d5820eb517d",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-4308f86271e2",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-528bfa77822e",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-5888f11a12ec",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-626aac18c9c5",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-6385c113a0a0",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-64ce3add4ad5",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-685f6a89d220",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-6fbdf223343a",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-84c2f66ca412",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-9a93239317e0",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-b599dd69936e",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-bda79d736529",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-c9fc8ce4b299",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-ceb15b847a48",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-d44e593a5a69",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-d594f9e1221d",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-d9f9f7831946",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0086-ee96fccd74b7",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-12c9b21be189",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-88ee59c8a394",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-8af9b4191d41",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-9246053b7692",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-930cc4ffb7e1",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0091-d9e8c2d95973",
+      "jurisdictionId": "87436"
+    },
+    {
+      "id": "DIRECT-PARENT-0092-46b939fe3eb1",
+      "jurisdictionId": "87453"
+    },
+    {
+      "id": "DIRECT-PARENT-0093-8fe10a3a022f",
+      "jurisdictionId": "87473"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-117980e0eec2",
+      "jurisdictionId": "42184"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-1b6b9c84279b",
+      "jurisdictionId": "42212"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-56b80a05a4a7",
+      "jurisdictionId": "42212"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-5cd305ea804f",
+      "jurisdictionId": "42147"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-80dadfc14fe7",
+      "jurisdictionId": "42184"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-932f4760358c",
+      "jurisdictionId": "42147"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-a4a60af3517a",
+      "jurisdictionId": "42147"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-a83ad550df21",
+      "jurisdictionId": "42269"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-df92ee6bb0c5",
+      "jurisdictionId": "42193"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-ebf983cd8696",
+      "jurisdictionId": "42147"
+    },
+    {
+      "id": "DIRECT-PARENT-0098-f5723effeb63",
+      "jurisdictionId": "42147"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-030f7801dd3c",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-16c394866d38",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-366b1e74d3e1",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-37b2cc350556",
+      "jurisdictionId": "44214"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-405ce951f37c",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-450983594a69",
+      "jurisdictionId": "43860"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-492538e7c84e",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-4e63cca08a3c",
+      "jurisdictionId": "43860"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-51bb7ef8866a",
+      "jurisdictionId": "44244"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-56a84abe861c",
+      "jurisdictionId": "43860"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-591e80ce1b78",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-7d84c70ea7f6",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-945446314d09",
+      "jurisdictionId": "44214"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-a3cc4ca29674",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-a53d3423f2d3",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-b0716cde0e00",
+      "jurisdictionId": "44214"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-c85befce1567",
+      "jurisdictionId": "43860"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-c902d425d9dc",
+      "jurisdictionId": "43783"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-dd470a85de59",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0100-ecb6efff9fb2",
+      "jurisdictionId": "44055"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-01ad6e0e71b8",
+      "jurisdictionId": "42524"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-0913daee1326",
+      "jurisdictionId": "42444"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-1db0c585612b",
+      "jurisdictionId": "42444"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-50a2885e9c16",
+      "jurisdictionId": "42424"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-d41594f95a79",
+      "jurisdictionId": "42424"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-f4801ed780d1",
+      "jurisdictionId": "42524"
+    },
+    {
+      "id": "DIRECT-PARENT-0101-f69f7c61c789",
+      "jurisdictionId": "42524"
+    },
+    {
+      "id": "DIRECT-PARENT-0102-ce418dfe67e6",
+      "jurisdictionId": "JURISDICTION-PARENT-0102-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0109-3d532ed0127b",
+      "jurisdictionId": "X042"
+    },
+    {
+      "id": "DIRECT-PARENT-0109-8ee3f88787d1",
+      "jurisdictionId": "X042"
+    },
+    {
+      "id": "DIRECT-PARENT-0109-dc52621c88c6",
+      "jurisdictionId": "X042"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-024aa01d87a6",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-07d2992e3a40",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-094a5ce1fdf6",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-0ac149f74d66",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-0c37d4c0a0a6",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-1be851006e78",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-27f3889381b6",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-2efe11c1ef8c",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-38339e0aa71d",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-76602487ae8a",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-8642ef69a429",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-adda7a316ae8",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-b185e8463d5b",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-b2862a0ff74c",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-b7bd17941ab3",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-dc28076bceca",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-dd089ec9e957",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-e073204f59ea",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-e410d2b538c3",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-e431ee79d0fd",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-e9ddebb3101d",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-ea52c22b1bb4",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-f71799ef6720",
+      "jurisdictionId": "X039"
+    },
+    {
+      "id": "DIRECT-PARENT-0111-fbc98a0d209d",
+      "jurisdictionId": "X030"
+    },
+    {
+      "id": "DIRECT-PARENT-0112-2e303004dfcf",
+      "jurisdictionId": "X029"
+    },
+    {
+      "id": "DIRECT-PARENT-0112-7088a81e7b78",
+      "jurisdictionId": "X029"
+    },
+    {
+      "id": "DIRECT-PARENT-0112-7d564e99bc91",
+      "jurisdictionId": "X029"
+    },
+    {
+      "id": "DIRECT-PARENT-0112-89796ae90028",
+      "jurisdictionId": "X029"
+    },
+    {
+      "id": "DIRECT-PARENT-0112-f75f6a0d5eb0",
+      "jurisdictionId": "X029"
+    },
+    {
+      "id": "DIRECT-PARENT-0113-9a25366ea685",
+      "jurisdictionId": "71022"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-28edacd38a71",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-3ee51442c0a8",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-4381ed3eb8b0",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-4c8b60010121",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-4d5e6105610a",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-52af72cc7020",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-53c08dcc1e4c",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-6319e70fd710",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-65d19d12896a",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-713794908eea",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-8ac9e550204c",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-9e2c9ad82b0d",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-b64308c07a24",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-c1f278851de9",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0114-eabebef9a0ea",
+      "jurisdictionId": "X064"
+    },
+    {
+      "id": "DIRECT-PARENT-0115-d93abcb1bab4",
+      "jurisdictionId": "X049"
+    },
+    {
+      "id": "DIRECT-PARENT-0116-8a985f732c47",
+      "jurisdictionId": "X046"
+    },
+    {
+      "id": "DIRECT-PARENT-0117-eac2d391dbb0",
+      "jurisdictionId": "X034"
+    },
+    {
+      "id": "DIRECT-PARENT-0118-1b85dd25662c",
+      "jurisdictionId": "X060"
+    },
+    {
+      "id": "DIRECT-PARENT-0118-639f1baf5678",
+      "jurisdictionId": "X060"
+    },
+    {
+      "id": "DIRECT-PARENT-0118-64eac9b17ce9",
+      "jurisdictionId": "X060"
+    },
+    {
+      "id": "DIRECT-PARENT-0118-e0fffb2e48a7",
+      "jurisdictionId": "X060"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-05ed1948c39f",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-5058a46ca772",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-52245489d9cf",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-5e0d10910b1c",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-669a2b2629f0",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-6e661d545229",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-7251476d0036",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-8940e262c4ce",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-9460a7a8c37d",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-afeeb044db0a",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-dc87df2f53bc",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-e727cade4868",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0120-fc39cc36b5cf",
+      "jurisdictionId": "X028"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-08374007202a",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-1f0c6e1e916d",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-20ba6fcab7f9",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-2b79764dbc36",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-2fdc2ee14cc5",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-3f9724e33d39",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-55dbe5f22c6b",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-56759a4db296",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-574b570e3998",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-6397543cb04f",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-652ce62925e8",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-696afffde6e2",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-9001818857b7",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-9509bf9320c7",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-9fbf1bcc3099",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-a8ec0a427659",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-af3475562c01",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-b3faad060e2c",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-bbc956bb63c3",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-cf7d10af61b7",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-f19979ef7b98",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-f5c303bfea96",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0122-f6d3efd5208f",
+      "jurisdictionId": "X036"
+    },
+    {
+      "id": "DIRECT-PARENT-0123-0beede232fa9",
+      "jurisdictionId": "X056"
+    },
+    {
+      "id": "DIRECT-PARENT-0123-33437674051f",
+      "jurisdictionId": "X056"
+    },
+    {
+      "id": "DIRECT-PARENT-0123-3cc3049ada17",
+      "jurisdictionId": "X056"
+    },
+    {
+      "id": "DIRECT-PARENT-0123-4fcefeda4c62",
+      "jurisdictionId": "X056"
+    },
+    {
+      "id": "DIRECT-PARENT-0123-c3f15a28bfed",
+      "jurisdictionId": "X056"
+    },
+    {
+      "id": "DIRECT-PARENT-0130-23501b7ffcdd",
+      "jurisdictionId": "JURISDICTION-PARENT-0130-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0143-402f12a2891d",
+      "jurisdictionId": "X037"
+    },
+    {
+      "id": "DIRECT-PARENT-0143-86e6d3111617",
+      "jurisdictionId": "X037"
+    },
+    {
+      "id": "DIRECT-PARENT-0147-aad1e310313a",
+      "jurisdictionId": "96030"
+    },
+    {
+      "id": "DIRECT-PARENT-0150-2232eac7d10d",
+      "jurisdictionId": "200176"
+    },
+    {
+      "id": "DIRECT-PARENT-0150-6f4d95a9528d",
+      "jurisdictionId": "200176"
+    },
+    {
+      "id": "DIRECT-PARENT-0150-8f4ad7dd1e98",
+      "jurisdictionId": "200176"
+    },
+    {
+      "id": "DIRECT-PARENT-0150-9fcfbc89bc40",
+      "jurisdictionId": "200176"
+    },
+    {
+      "id": "DIRECT-PARENT-0150-dcdf10c26b84",
+      "jurisdictionId": "200176"
+    },
+    {
+      "id": "DIRECT-PARENT-0151-3caa5fe7c63c",
+      "jurisdictionId": "X038"
+    },
+    {
+      "id": "DIRECT-PARENT-0151-999871130cac",
+      "jurisdictionId": "X038"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-10f17fb54e70",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-404b0992659b",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-478f80f42bca",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-66ec4a14a788",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-80e2662e7699",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-825bd7a3bc54",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-85eb1647dbef",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-98b10c7f160c",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-b35ef18ffc15",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-b9d869784bfe",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-bc4a714f6e67",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-c4121c701e6e",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-dbe8e72afde7",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-ed01d700d6be",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-f05170a144d9",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0152-fe93d25b4d75",
+      "jurisdictionId": "X062"
+    },
+    {
+      "id": "DIRECT-PARENT-0156-a12c90338d9b",
+      "jurisdictionId": "X040"
+    },
+    {
+      "id": "DIRECT-PARENT-0164-22953cab254f",
+      "jurisdictionId": "X041"
+    },
+    {
+      "id": "DIRECT-PARENT-0164-3b5b11446871",
+      "jurisdictionId": "X041"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-40276a394699",
+      "jurisdictionId": "X054"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-5c3c53f4ab2e",
+      "jurisdictionId": "X055"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-719d56a5aadf",
+      "jurisdictionId": "X054"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-729a81ab38c0",
+      "jurisdictionId": "X051"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-8c71d799d2c0",
+      "jurisdictionId": "X054"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-ca0e4ceb7e91",
+      "jurisdictionId": "X053"
+    },
+    {
+      "id": "DIRECT-PARENT-0165-fb4a1f722549",
+      "jurisdictionId": "X051"
+    },
+    {
+      "id": "DIRECT-PARENT-0169-eba33ce69960",
+      "jurisdictionId": "42277"
+    },
+    {
+      "id": "DIRECT-PARENT-0170-5972e63114e9",
+      "jurisdictionId": "X063"
+    },
+    {
+      "id": "DIRECT-PARENT-0170-6cc829f3c66c",
+      "jurisdictionId": "X063"
+    },
+    {
+      "id": "DIRECT-PARENT-0170-763f32a8854a",
+      "jurisdictionId": "87125"
+    },
+    {
+      "id": "DIRECT-PARENT-0170-a24a0db55add",
+      "jurisdictionId": "X063"
+    },
+    {
+      "id": "DIRECT-PARENT-0170-f06fb787a806",
+      "jurisdictionId": "87125"
+    },
+    {
+      "id": "DIRECT-PARENT-0171-2b0157603e13",
+      "jurisdictionId": "JURISDICTION-PARENT-0171-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0171-6e1ee2ee7142",
+      "jurisdictionId": "JURISDICTION-PARENT-0171-SEAT"
+    },
+    {
+      "id": "DIRECT-PARENT-0171-b0af7ff47fb6",
+      "jurisdictionId": "JURISDICTION-PARENT-0171-SEAT"
+    }
+  ],
+  "geometry": {
+    "stages": [
+      {
+        "inputDocumentSha256": "8e4ce398a8852febe79b737534bda84e6927f411e39e65b89c4c175b02b5bd12",
+        "outputDocumentSha256": "0602e4d0db560f2019774a49b8708e1be7c7adf12ece609653df7dc69a2db335",
+        "inputBlob": {
+          "path": "data/curated/han/county-location-partition-v1.input.json.gz",
+          "sha256": "06a42cba73e264d62e86ecb4a7ff2445ecfe12a998d657df8628d6c85baba259",
+          "fields": [
+            "owner",
+            "provinceRecords",
+            "jurisdictionRecords",
+            "cities",
+            "adjacency.county",
+            "_meta.counts"
+          ]
+        },
+        "outputCityOrder": [
+          "85377",
+          "85376",
+          "82175",
+          "X051",
+          "70643",
+          "210170",
+          "45934",
+          "87096",
+          "200094",
+          "95374",
+          "83175",
+          "41220",
+          "40772",
+          "X008",
+          "X022",
+          "41198",
+          "87203",
+          "85468",
+          "87178",
+          "87638",
+          "42847",
+          "43187",
+          "42856",
+          "42821",
+          "33427",
+          "70797",
+          "43441",
+          "43446",
+          "85505",
+          "45445",
+          "87384",
+          "85637",
+          "85217",
+          "210600",
+          "87405",
+          "45243",
+          "45020",
+          "200026",
+          "85337",
+          "85168",
+          "85093",
+          "210546",
+          "33403",
+          "85410",
+          "85634",
+          "210648",
+          "210513",
+          "40165",
+          "45303",
+          "96358",
+          "87223",
+          "87534",
+          "45696",
+          "87356",
+          "44244",
+          "44356",
+          "95168",
+          "42805",
+          "40716",
+          "42277",
+          "70296",
+          "45064",
+          "41829",
+          "40091",
+          "40996",
+          "44537",
+          "95427",
+          "85589",
+          "41906",
+          "45783",
+          "70079",
+          "85254",
+          "85234",
+          "87469",
+          "41716",
+          "41843",
+          "70617",
+          "43923",
+          "45123",
+          "44445",
+          "83024",
+          "200176",
+          "40565",
+          "41377",
+          "32362",
+          "43186",
+          "40719",
+          "40126",
+          "41174",
+          "85249",
+          "210466",
+          "45318",
+          "95375",
+          "210019",
+          "87279",
+          "85553",
+          "210487",
+          "85002",
+          "95698",
+          "X001",
+          "87236",
+          "X035",
+          "45118",
+          "95125",
+          "45372",
+          "43483",
+          "70764",
+          "X010",
+          "87093",
+          "85131",
+          "X000",
+          "212275",
+          "44384",
+          "95172",
+          "44422",
+          "87421",
+          "210377",
+          "87473",
+          "87177",
+          "85155",
+          "210567",
+          "X053",
+          "41325",
+          "32280",
+          "X042",
+          "40785",
+          "40781",
+          "40085",
+          "41170",
+          "41950",
+          "45820",
+          "41689",
+          "87453",
+          "87566",
+          "82265",
+          "82846",
+          "45239",
+          "43249",
+          "200326",
+          "87158",
+          "87217",
+          "42073",
+          "45294",
+          "43138",
+          "45219",
+          "82275",
+          "40940",
+          "70040",
+          "82244",
+          "82708",
+          "85013",
+          "70597",
+          "41975",
+          "211829",
+          "87494",
+          "41729",
+          "45285",
+          "70605",
+          "85240",
+          "42901",
+          "33406",
+          "40767",
+          "85272",
+          "95093",
+          "210375",
+          "44514",
+          "211613",
+          "95401",
+          "87253",
+          "95010",
+          "87538",
+          "X030",
+          "210522",
+          "85256",
+          "85616",
+          "43711",
+          "70324",
+          "X029",
+          "85024",
+          "87055",
+          "71022",
+          "210962",
+          "44570",
+          "X064",
+          "87491",
+          "40980",
+          "85596",
+          "40871",
+          "87209",
+          "41821",
+          "40303",
+          "45188",
+          "200169",
+          "43584",
+          "45458",
+          "41092",
+          "85610",
+          "34191",
+          "87319",
+          "87076",
+          "87244",
+          "70983",
+          "34521",
+          "40878",
+          "210925",
+          "82040",
+          "45437",
+          "85653",
+          "45326",
+          "85241",
+          "82632",
+          "42171",
+          "87624",
+          "45199",
+          "85386",
+          "45098",
+          "87211",
+          "83180",
+          "85083",
+          "85577",
+          "85459",
+          "82523",
+          "45022",
+          "41244",
+          "85525",
+          "42913",
+          "40145",
+          "95126",
+          "82531",
+          "43325",
+          "45572",
+          "45323",
+          "42862",
+          "X049",
+          "X046",
+          "40533",
+          "200170",
+          "40736",
+          "85017",
+          "X034",
+          "45113",
+          "200279",
+          "X016",
+          "82811",
+          "42852",
+          "45299",
+          "42524",
+          "34235",
+          "43057",
+          "80574",
+          "80573",
+          "42778",
+          "42264",
+          "40404",
+          "40722",
+          "83171",
+          "32054",
+          "45526",
+          "X060",
+          "80004",
+          "87250",
+          "200092",
+          "42269",
+          "210974",
+          "44342",
+          "X028",
+          "87458",
+          "45049",
+          "95255",
+          "44679",
+          "43348",
+          "40556",
+          "87188",
+          "82783",
+          "42212",
+          "95318",
+          "82680",
+          "43235",
+          "70312",
+          "44335",
+          "99004",
+          "X047",
+          "95280",
+          "95604",
+          "210027",
+          "40638",
+          "42008",
+          "X036",
+          "85491",
+          "X056",
+          "43730",
+          "45796",
+          "85697",
+          "X054",
+          "40775",
+          "43738",
+          "70715",
+          "40663",
+          "40804",
+          "85353",
+          "40426",
+          "85677",
+          "43696",
+          "41310",
+          "45277",
+          "82085",
+          "85325",
+          "82575",
+          "82687",
+          "40147",
+          "41314",
+          "87549",
+          "87226",
+          "40934",
+          "83099",
+          "70619",
+          "42301",
+          "211762",
+          "200173",
+          "87064",
+          "43860",
+          "85706",
+          "87407",
+          "44553",
+          "95291",
+          "X031",
+          "200433",
+          "83169",
+          "43602",
+          "43379",
+          "43366",
+          "200197",
+          "211192",
+          "200284",
+          "95676",
+          "X024",
+          "40624",
+          "82803",
+          "85058",
+          "82612",
+          "45532",
+          "41302",
+          "41224",
+          "45676",
+          "40965",
+          "82871",
+          "41305",
+          "96259",
+          "87301",
+          "41781",
+          "82458",
+          "41097",
+          "43916",
+          "70524",
+          "70523",
+          "40088",
+          "43324",
+          "41256",
+          "85268",
+          "45258",
+          "43153",
+          "82323",
+          "43930",
+          "42737",
+          "44332",
+          "X050",
+          "44337",
+          "43032",
+          "70500",
+          "70603",
+          "95341",
+          "43375",
+          "X061",
+          "45663",
+          "82502",
+          "210587",
+          "40758",
+          "45381",
+          "82489",
+          "X043",
+          "43497",
+          "X015",
+          "85669",
+          "85108",
+          "87051",
+          "87049",
+          "44493",
+          "82087",
+          "85047",
+          "40957",
+          "212258",
+          "44234",
+          "X004",
+          "210345",
+          "87510",
+          "45100",
+          "210464",
+          "95016",
+          "42695",
+          "85466",
+          "85186",
+          "83158",
+          "87233",
+          "82683",
+          "82519",
+          "83172",
+          "95031",
+          "40906",
+          "44539",
+          "95415",
+          "85673",
+          "43181",
+          "210034",
+          "87506",
+          "44147",
+          "85216",
+          "87125",
+          "87200",
+          "87577",
+          "87159",
+          "87487",
+          "87513",
+          "41355",
+          "42817",
+          "87428",
+          "41195",
+          "96055",
+          "96006",
+          "95096",
+          "211105",
+          "44401",
+          "210402",
+          "42687",
+          "33416",
+          "85262",
+          "211782",
+          "32540",
+          "70610",
+          "X025",
+          "85075",
+          "X017",
+          "87061",
+          "70459",
+          "40523",
+          "45529",
+          "41217",
+          "40228",
+          "40236",
+          "41127",
+          "44320",
+          "85594",
+          "45547",
+          "70614",
+          "82553",
+          "210848",
+          "87619",
+          "83053",
+          "87489",
+          "211824",
+          "X021",
+          "X027",
+          "85441",
+          "87425",
+          "45776",
+          "42777",
+          "33425",
+          "41154",
+          "83034",
+          "43252",
+          "87456",
+          "42424",
+          "96383",
+          "96145",
+          "82506",
+          "41306",
+          "210906",
+          "X032",
+          "43328",
+          "83168",
+          "45291",
+          "200050",
+          "87400",
+          "43121",
+          "85115",
+          "82439",
+          "44394",
+          "85067",
+          "45216",
+          "87220",
+          "45921",
+          "82063",
+          "87569",
+          "82058",
+          "45224",
+          "X033",
+          "X039",
+          "85385",
+          "200036",
+          "42147",
+          "41761",
+          "99034",
+          "87318",
+          "71057",
+          "40161",
+          "70595",
+          "70594",
+          "211893",
+          "200012",
+          "87154",
+          "87495",
+          "X044",
+          "70726",
+          "87625",
+          "70033",
+          "210009",
+          "41111",
+          "40645",
+          "40820",
+          "87542",
+          "82008",
+          "211738",
+          "82588",
+          "82841",
+          "82061",
+          "40944",
+          "83173",
+          "82461",
+          "44416",
+          "32221",
+          "82749",
+          "85147",
+          "87308",
+          "40100",
+          "43727",
+          "85681",
+          "40444",
+          "70604",
+          "X002",
+          "45527",
+          "82807",
+          "45058",
+          "85312",
+          "45213",
+          "85133",
+          "85381",
+          "87297",
+          "87036",
+          "X048",
+          "41374",
+          "70601",
+          "42019",
+          "42013",
+          "70609",
+          "87499",
+          "85448",
+          "87505",
+          "42238",
+          "42878",
+          "40573",
+          "42869",
+          "44496",
+          "X011",
+          "83170",
+          "87247",
+          "87490",
+          "82269",
+          "70178",
+          "82700",
+          "82578",
+          "X052",
+          "42444",
+          "45453",
+          "85300",
+          "70634",
+          "70633",
+          "87410",
+          "87173",
+          "40861",
+          "X037",
+          "X013",
+          "42791",
+          "40610",
+          "82763",
+          "82216",
+          "43720",
+          "87273",
+          "44671",
+          "70126",
+          "87015",
+          "82167",
+          "41145",
+          "70415",
+          "42604",
+          "32836",
+          "87424",
+          "210769",
+          "87310",
+          "85666",
+          "45038",
+          "96107",
+          "211231",
+          "82755",
+          "45629",
+          "70104",
+          "95646",
+          "70707",
+          "X003",
+          "45178",
+          "41319",
+          "70249",
+          "42832",
+          "87073",
+          "211764",
+          "82228",
+          "82102",
+          "45755",
+          "82503",
+          "87616",
+          "87206",
+          "211791",
+          "96181",
+          "45949",
+          "32875",
+          "80627",
+          "99041",
+          "87543",
+          "45380",
+          "82650",
+          "32365",
+          "40451",
+          "70606",
+          "41142",
+          "40377",
+          "40697",
+          "95218",
+          "40132",
+          "40922",
+          "211954",
+          "211677",
+          "44505",
+          "40242",
+          "96382",
+          "211136",
+          "41691",
+          "96424",
+          "44587",
+          "41901",
+          "40958",
+          "44580",
+          "44621",
+          "42093",
+          "32827",
+          "211775",
+          "210811",
+          "82015",
+          "43318",
+          "40528",
+          "44409",
+          "34524",
+          "34528",
+          "44662",
+          "42681",
+          "96023",
+          "211206",
+          "43676",
+          "70671",
+          "82254",
+          "211064",
+          "200253",
+          "45290",
+          "95470",
+          "82501",
+          "41907",
+          "41795",
+          "71101",
+          "43421",
+          "42807",
+          "200064",
+          "87111",
+          "210217",
+          "210688",
+          "95285",
+          "82830",
+          "210872",
+          "88003",
+          "87611",
+          "82512",
+          "82880",
+          "45956",
+          "95369",
+          "41958",
+          "41955",
+          "82493",
+          "70613",
+          "95709",
+          "210628",
+          "41313",
+          "70186",
+          "43232",
+          "43770",
+          "X057",
+          "42256",
+          "210454",
+          "210446",
+          "44379",
+          "210615",
+          "44392",
+          "95061",
+          "87382",
+          "40111",
+          "41136",
+          "40070",
+          "42917",
+          "87468",
+          "42702",
+          "95521",
+          "87150",
+          "96113",
+          "211010",
+          "87307",
+          "87304",
+          "87128",
+          "42844",
+          "42760",
+          "42746",
+          "43284",
+          "85333",
+          "85165",
+          "70598",
+          "211383",
+          "82520",
+          "70628",
+          "40512",
+          "82644",
+          "85146",
+          "41740",
+          "41779",
+          "82692",
+          "40581",
+          "45514",
+          "70203",
+          "80284",
+          "200038",
+          "45122",
+          "87118",
+          "95335",
+          "87436",
+          "43783",
+          "X038",
+          "95724",
+          "43134",
+          "85202",
+          "87240",
+          "X062",
+          "41882",
+          "82289",
+          "82994",
+          "99400",
+          "X019",
+          "44468",
+          "85676",
+          "85401",
+          "45522",
+          "80171",
+          "211034",
+          "82975",
+          "70110",
+          "95070",
+          "95667",
+          "X045",
+          "95641",
+          "95478",
+          "44151",
+          "X006",
+          "70599",
+          "85344",
+          "210537",
+          "45269",
+          "210369",
+          "40052",
+          "95152",
+          "42818",
+          "70608",
+          "42193",
+          "70131",
+          "X059",
+          "82320",
+          "43000",
+          "95230",
+          "95627",
+          "85280",
+          "211052",
+          "80724",
+          "85281",
+          "41755",
+          "42739",
+          "85642",
+          "X040",
+          "43224",
+          "88410",
+          "82072",
+          "42860",
+          "41341",
+          "87091",
+          "43609",
+          "40886",
+          "42794",
+          "70618",
+          "95585",
+          "42896",
+          "45121",
+          "45809",
+          "95509",
+          "82696",
+          "43595",
+          "85691",
+          "40655",
+          "87283",
+          "87628",
+          "45713",
+          "34533",
+          "95716",
+          "42352",
+          "43196",
+          "43203",
+          "96030",
+          "200281",
+          "45727",
+          "70340",
+          "44448",
+          "83026",
+          "82247",
+          "45157",
+          "87189",
+          "95423",
+          "45930",
+          "96137",
+          "200261",
+          "82852",
+          "45764",
+          "45234",
+          "41775",
+          "44515",
+          "82331",
+          "41850",
+          "45295",
+          "87476",
+          "82620",
+          "85454",
+          "42698",
+          "82792",
+          "82657",
+          "45146",
+          "45117",
+          "87336",
+          "42829",
+          "41130",
+          "41366",
+          "34207",
+          "82465",
+          "82091",
+          "85103",
+          "87295",
+          "45332",
+          "45127",
+          "41770",
+          "43932",
+          "82207",
+          "44385",
+          "85619",
+          "45053",
+          "82260",
+          "45028",
+          "41980",
+          "41996",
+          "85292",
+          "42782",
+          "45076",
+          "41202",
+          "82082",
+          "85629",
+          "87241",
+          "95495",
+          "87100",
+          "87600",
+          "70749",
+          "82581",
+          "45707",
+          "45203",
+          "43210",
+          "43542",
+          "34540",
+          "45210",
+          "95134",
+          "82150",
+          "43243",
+          "96436",
+          "85671",
+          "211047",
+          "X020",
+          "87322",
+          "200048",
+          "82594",
+          "87012",
+          "95349",
+          "83031",
+          "70005",
+          "85588",
+          "82160",
+          "45651",
+          "34535",
+          "95443",
+          "44564",
+          "82026",
+          "70060",
+          "200069",
+          "211702",
+          "41117",
+          "85222",
+          "83167",
+          "45107",
+          "211841",
+          "40889",
+          "43130",
+          "X023",
+          "X058",
+          "70620",
+          "82633",
+          "82563",
+          "43503",
+          "87575",
+          "85393",
+          "95482",
+          "70600",
+          "83011",
+          "85350",
+          "40791",
+          "99336",
+          "99341",
+          "41960",
+          "43340",
+          "82843",
+          "85692",
+          "45525",
+          "43226",
+          "32583",
+          "45337",
+          "45603",
+          "85602",
+          "96423",
+          "45748",
+          "40830",
+          "42888",
+          "210359",
+          "211352",
+          "X018",
+          "95304",
+          "82570",
+          "82901",
+          "82494",
+          "X041",
+          "41804",
+          "42047",
+          "45519",
+          "41776",
+          "87316",
+          "45412",
+          "40918",
+          "40616",
+          "X007",
+          "X005",
+          "45654",
+          "45671",
+          "200269",
+          "X055",
+          "95145",
+          "87010",
+          "45192",
+          "45036",
+          "82196",
+          "43506",
+          "35008",
+          "70307",
+          "82976",
+          "70427",
+          "82774",
+          "96341",
+          "44398",
+          "85649",
+          "41682",
+          "85478",
+          "42017",
+          "83036",
+          "70930",
+          "45685",
+          "43423",
+          "45153",
+          "85065",
+          "85064",
+          "87326",
+          "40755",
+          "70747",
+          "87183",
+          "41194",
+          "44354",
+          "70032",
+          "99350",
+          "40740",
+          "41165",
+          "32610",
+          "83164",
+          "41877",
+          "82128",
+          "42049",
+          "211885",
+          "82282",
+          "41725",
+          "85536",
+          "41841",
+          "70333",
+          "82487",
+          "85158",
+          "70098",
+          "211752",
+          "X012",
+          "43221",
+          "40078",
+          "95502",
+          "200080",
+          "45530",
+          "41886",
+          "210314",
+          "95323",
+          "70623",
+          "40703",
+          "82032",
+          "85388",
+          "32819",
+          "83039",
+          "70674",
+          "95249",
+          "44558",
+          "200289",
+          "87591",
+          "85531",
+          "82893",
+          "40899",
+          "82053",
+          "83166",
+          "210837",
+          "45339",
+          "43447",
+          "95629",
+          "82525",
+          "43337",
+          "40463",
+          "82455",
+          "95591",
+          "85640",
+          "95729",
+          "45751",
+          "87166",
+          "41838",
+          "70735",
+          "44214",
+          "82936",
+          "211747",
+          "70920",
+          "82003",
+          "210791",
+          "44324",
+          "210717",
+          "83046",
+          "41347",
+          "70952",
+          "43618",
+          "82635",
+          "44326",
+          "44428",
+          "82828",
+          "70418",
+          "82606",
+          "40835",
+          "X009",
+          "41935",
+          "43769",
+          "32886",
+          "70647",
+          "80467",
+          "82047",
+          "85685",
+          "82304",
+          "44055",
+          "210732",
+          "83017",
+          "83009",
+          "87389",
+          "87355",
+          "45350",
+          "70117",
+          "70607",
+          "42300",
+          "34238",
+          "45087",
+          "87393",
+          "85496",
+          "45198",
+          "40885",
+          "45119",
+          "42266",
+          "87024",
+          "42714",
+          "95699",
+          "87286",
+          "70741",
+          "45124",
+          "87157",
+          "44996",
+          "210653",
+          "X014",
+          "X063",
+          "44482",
+          "45180",
+          "82971",
+          "70156",
+          "85371",
+          "85044",
+          "82316",
+          "41338",
+          "85481",
+          "41323",
+          "82922",
+          "210496",
+          "43182",
+          "71009",
+          "70596",
+          "42184",
+          "X026",
+          "fc-liaodong-002",
+          "fc-liaodong-003",
+          "fc-liaodong-004",
+          "fc-liaodong-006",
+          "fc-liaodong-007",
+          "fc-liaodong-008",
+          "fc-liaodong-009",
+          "fc-liaodong-010",
+          "fc-liaodong-011",
+          "fc-xuantu-002",
+          "fc-xuantu-003",
+          "fc-xuantu-004",
+          "fc-xuantu-005",
+          "fc-xuantu-006",
+          "fc-lelang-003",
+          "fc-lelang-004",
+          "fc-lelang-005",
+          "fc-lelang-006",
+          "fc-lelang-007",
+          "fc-lelang-009",
+          "fc-lelang-010",
+          "fc-lelang-011",
+          "fc-lelang-012",
+          "fc-lelang-013",
+          "fc-lelang-014",
+          "fc-lelang-015",
+          "fc-lelang-016",
+          "fc-lelang-017",
+          "fc-liaodong-shuguo-002",
+          "fc-liaodong-shuguo-003",
+          "fc-liaodong-shuguo-005",
+          "fc-liaodong-shuguo-006",
+          "fc-jiaozhi-002",
+          "fc-jiaozhi-003",
+          "fc-jiaozhi-004",
+          "fc-jiaozhi-005",
+          "fc-jiaozhi-006",
+          "fc-jiaozhi-007",
+          "fc-jiaozhi-008",
+          "fc-jiaozhi-009",
+          "fc-jiaozhi-010",
+          "fc-jiaozhi-011",
+          "fc-jiaozhi-012",
+          "fc-jiuzhen-002",
+          "fc-jiuzhen-003",
+          "fc-jiuzhen-004",
+          "fc-jiuzhen-005",
+          "fc-rinan-002",
+          "fc-rinan-003",
+          "fc-rinan-004",
+          "fc-rinan-005",
+          "82879"
+        ],
+        "geometryDigest": "8df1ce57e47351928dc161e4ae39d5a468482994ae45d423955c61ea06345e27",
+        "counts": {
+          "jurisdictions": 1071,
+          "provinces": 1260,
+          "seatProvinces": 1058,
+          "citylessProvinces": 202,
+          "provincesBefore": 1521,
+          "adjCounty": 3412,
+          "diagonalFragmentCellsReassigned": 254,
+          "seedlessComponents": 30,
+          "seedlessCells": 1680
+        }
+      }
+    ]
+  }
+}

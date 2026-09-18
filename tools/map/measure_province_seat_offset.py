@@ -134,11 +134,21 @@ def gate(rows: list[dict], exception_ids: frozenset[str] = frozenset()) -> dict[
     }
 
 
-def load_exception_ids(path: Path) -> frozenset[str]:
-    """분할기 보고서(seedExceptions) 또는 원장(rows)의 관할 id."""
-    document = json.loads(path.read_text(encoding="utf-8"))
-    rows = document.get("seedExceptions", document.get("rows", []))
-    return frozenset(row["jurisdictionId"] for row in rows)
+def load_exception_ids(*paths: Path) -> frozenset[str]:
+    """예외 원장들의 관할 id. 읽는 꼴은 셋이다:
+      * ★ 원장·분할기 보고서의 `seedExceptions`(물·격자 밖 / 사료 郡 ≠ 래스터 郡 / 씨앗 충돌)
+      * 일반 원장의 `rows`
+      * 거점 분할 원장(`strategic-site-province-carves-v1`)에서 `displacedFrom` 이 적힌 placements — carve 규칙 5 가
+        앵커를 옮긴 거점이다(城 점이 선 칸·기증 省이 갈라지는 칸·물). 옮긴 사유와 거리는 그 원장 행에 있다.
+    """
+    ids: set[str] = set()
+    for path in paths:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        rows = document.get("seedExceptions", document.get("rows", []))
+        ids |= {row["jurisdictionId"] for row in rows}
+        for stage in document.get("geometry", {}).get("stages", []):
+            ids |= {row["placeId"] for row in stage.get("placements", []) if "displacedFrom" in row}
+    return frozenset(ids)
 
 
 def percentiles(values, points=(50, 75, 90, 95, 99, 100)):
@@ -157,13 +167,14 @@ def main() -> int:
     parser.add_argument("--tsv", type=Path)
     parser.add_argument("--top", type=int, default=40)
     parser.add_argument("--check", action="store_true", help="Q1·Q1b 위반이 있으면 exit 1")
-    parser.add_argument("--exceptions", type=Path, help="Q1 예외 원장/분할기 보고서 (관할 id)")
+    parser.add_argument("--exceptions", type=Path, nargs="+", default=[],
+                        help="Q1 예외 원장들: ★ 원장(seedExceptions)·거점 분할 원장(displacedFrom)")
     args = parser.parse_args()
     every = measure(json.loads(args.tiles.read_text()))
     rows = [r for r in every if r.get("area")]
     if args.check:
         rows = every
-        failures = gate(rows, load_exception_ids(args.exceptions) if args.exceptions else frozenset())
+        failures = gate(rows, load_exception_ids(*args.exceptions))
         for name, failed in failures.items():
             print(f"{name}: {len(failed)} / {len(rows)}", file=sys.stderr if failed else sys.stdout)
             for r in sorted(failed, key=lambda r: (-r.get("nearestCell", math.inf), r["id"]))[:args.top]:

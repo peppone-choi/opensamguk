@@ -68,7 +68,9 @@ class RecomputedTiles:
         # 입력으로 칸을 떼어 가므로, 커밋된 han-tiles 에서는 그 단계를 벗겨 내고 다시 잰다.
         from tools.map import carve_strategic_site_provinces as carving
         from tools.map import fold_cityless_jurisdictions as folding
-        tiles, _ = carving.peel(folding.peel(load(TILES_PATH))[0])
+        # peel_only: ★ 지리 재분할(GH #806)은 분할 단계의 **입력**이라 벗기지 않는다. carving.peel() 은 ★ 까지 벗겨
+        # 옛 기하의 앵커(은퇴한 DIRECT id)를 그대로 통과시킨다.
+        tiles, _ = carving.peel_only(folding.peel(load(TILES_PATH))[0])
         meta = tiles['_meta']
         self.meta = meta
         self.projection = meta['projection']

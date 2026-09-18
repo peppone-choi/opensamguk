@@ -162,7 +162,8 @@ class RuleTest(unittest.TestCase):
         source = make([[0] * 5] * 3, [("B", 0, (1, 2)), ("A", 0, (1, 2))])
         document, report = pcl.partition(source, min_area=1)
         [row] = report["seedExceptions"]
-        self.assertEqual((row["jurisdictionId"], row["class"], row["ruling"]), ("B", "SEED_COLLISION", "UNREVIEWED"))
+        self.assertEqual((row["jurisdictionId"], row["class"]), ("B", "SEED_COLLISION"))
+        self.assertNotIn("ruling", row)  # 판정은 county-seed-collisions-v1 에만 산다 — 분할기는 짓지 않는다
         self.assertEqual(row["sharedWith"], ["A"])
         self.assertEqual(row["seedCell"], {"col": 2, "row": 0})  # 가장 가까운 빈 칸, 동률은 (row, col)
         self.assertEqual(pcl.check_cover(source, document, report), [])
@@ -308,7 +309,7 @@ class DeterminismTest(unittest.TestCase):
 
 
 class ScratchOnlyTest(unittest.TestCase):
-    def test_refuses_to_write_under_committed_roots(self):
+    def test_refuses_to_write_under_committed_roots_without_prepare(self):
         for path in (pcl.TILES, pcl.ROOT / "infra/src/main/resources/map/x.json"):
             with self.assertRaises(SystemExit):
                 pcl._refuse_committed_path(path)
@@ -317,25 +318,103 @@ class ScratchOnlyTest(unittest.TestCase):
         pcl._refuse_committed_path(pcl.ROOT / "build/province-partition/out.json")
 
 
-class CommittedTilesTest(unittest.TestCase):
-    """실데이터 1회(≈15–20 s: 단계 벗기기 3 s + 30만 칸 다익스트라). 실측 기준선 — 임계가 아니다."""
+class StrongholdReservationTest(unittest.TestCase):
+    """사용자 결정 2026-09-18 ②: 거점 기증 縣의 최소 넓이 = min_area + 거점 수 × 최소 발자국."""
 
-    def test_partition_of_the_committed_tiles(self):
-        committed_text = pcl.TILES.read_text(encoding="utf-8")
-        source = pcl.stage_input(json.loads(committed_text))
-        document, report = pcl.partition(source)
-        self.assertEqual(pcl.check_parent_unchanged(source, document), [])
-        self.assertEqual(pcl.check_cover(source, document, report), [])
-        rows = [r for r in measure(document) if r.get("area")]
-        before = gate([r for r in measure(source) if r.get("area")])
-        after = gate(rows)
-        exceptions = frozenset(row["jurisdictionId"] for row in report["seedExceptions"])
-        self.assertEqual((len(before["Q1"]), len(before["Q1b"])), (477, 19))  # 거점 분할 앞 문서 기준
-        self.assertEqual((len(after["Q1"]), len(after["Q1b"])), (40, 0))
+    def test_fill_minimum_uses_the_reserved_floor_and_never_breaks_a_neighbours_floor(self):
+        source = make([[0] * 8] * 4, [("A", 0, (0, 0)), ("B", 0, (0, 1))])
+        _, plain = pcl.partition(source, min_area=2)
+        self.assertEqual(plain["minAreaBorrowed"], [])
+        import numpy as np
+        label = np.zeros((4, 8), dtype=np.int32)
+        label[:, 1:] = 1
+        order = sorted(source["jurisdictionRecords"], key=lambda row: row["id"])
+        rows = pcl._fill_minimum(label, label >= 0, np.zeros((4, 8), dtype=np.int32), order,
+                                 {"A": (0, 0), "B": (0, 1)}, 4, {0: 4})
+        [row] = rows
+        self.assertEqual((row["jurisdictionId"], row["floor"], row["areaAfter"], row["satisfied"]), ("A", 8, 8, True))
+        # 적색 프로브: 이웃이 제 최소 넓이(예약 포함)에 닿아 있으면 빌리지 못하고 satisfied=False 로 남는다.
+        label[:, :] = 1
+        label[:, 0] = 0
+        [row] = pcl._fill_minimum(label, label >= 0, np.zeros((4, 8), dtype=np.int32), order,
+                                  {"A": (0, 0), "B": (0, 1)}, 4, {0: 4, 1: 24})
+        self.assertEqual((row["borrowedCells"], row["satisfied"]), (0, False))
+
+
+class CommittedStageTest(unittest.TestCase):
+    """커밋된 ★ 단계(원장 + 입력 blob). 실데이터 분할 1회 ≈ 12 s 를 세 검사가 나눠 쓴다 — 임계가 아니라 실측 기준선."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.committed_text = pcl.TILES.read_text(encoding="utf-8")
+        cls.staged = pcl.peel_later_stages(json.loads(cls.committed_text))
+        cls.ledger = json.loads(pcl.LEDGER.read_text(encoding="utf-8"))
+        cls.problems = pcl.check(cls.staged, cls.ledger)
+
+    def test_stage_check_is_green_and_the_chain_position_is_right(self):
+        self.assertEqual(self.problems, [])
+        source, ledger = pcl.peel(self.staged)
+        self.assertIsNotNone(ledger)
+        self.assertEqual(pcl.digest(source), self.ledger["geometry"]["stages"][0]["inputDocumentSha256"])
+        self.assertEqual(pcl.check_parent_unchanged(source, self.staged), [])  # Q2
+        self.assertEqual(pcl.TILES.read_text(encoding="utf-8"), self.committed_text)  # 검사는 커밋본을 안 건드린다
+
+    def test_restore_keeps_key_order_for_the_earlier_stages(self):
+        """조각 판정 단계는 cities 를 키 순서까지 지문으로 본다. blob 을 sort_keys 로 썼을 때 그 --check 가 죽었다."""
+        source, _ = pcl.peel(self.staged)
+        self.assertEqual(list(source["cities"][0]), list(self.staged["cities"][0]))
+
+    def test_measured_baseline(self):
+        stage = self.ledger["geometry"]["stages"][0]
+        self.assertEqual(stage["counts"]["provinces"], 1260)
+        self.assertEqual(len(self.ledger["seedExceptions"]), 40)
+        rows = [r for r in measure(self.staged) if r.get("area")]
+        exceptions = frozenset(row["jurisdictionId"] for row in self.ledger["seedExceptions"])
+        self.assertEqual((len(gate(rows)["Q1"]), len(gate(rows)["Q1b"])), (40, 0))
         self.assertEqual(gate(rows, exceptions)["Q1"], [])  # 남은 40 은 전부 사유 행이 있다
-        self.assertEqual(len(report["seedExceptions"]), 40)
-        self.assertEqual(report["counts"]["provinces"], 1260)
-        self.assertEqual(pcl.TILES.read_text(encoding="utf-8"), committed_text)  # 커밋본 무변경
+
+    def test_red_probe_tampered_owner_cell_breaks_the_stage_pin(self):
+        tampered = json.loads(json.dumps(self.staged))
+        tampered["owner"][0][1] += 1
+        tampered["owner"].insert(1, [tampered["owner"][0][0], -1])
+        self.assertEqual(pcl.check(tampered, self.ledger),
+                         ["han-tiles.json is not the reviewed county-location partition output"])
+
+    def test_red_probe_q4_exception_rows_must_match_exactly(self):
+        decisions = json.loads(pcl.DECISIONS.read_text(encoding="utf-8"))
+        violations = self.ledger["areaViolations"]
+        self.assertEqual(pcl.area_exception_problems(violations, decisions), [])
+        missing = {**decisions, "areaExceptions": decisions["areaExceptions"][1:]}
+        self.assertTrue(any("has no exception row" in p for p in pcl.area_exception_problems(violations, missing)))
+        self.assertTrue(any("no longer violates" in p for p in pcl.area_exception_problems(violations[1:], decisions)))
+        drift = [{**violations[0], "cells": violations[0]["cells"] + 1}, *violations[1:]]
+        self.assertTrue(any("pins" in p for p in pcl.area_exception_problems(drift, decisions)))
+
+    def test_committed_tiles_q4_and_red_probe(self):
+        committed = json.loads(self.committed_text)
+        self.assertEqual(pcl.committed_area_problems(committed), [])
+        # 적색 프로브: 예외 행이 없는 省의 칸을 7개만 남기고 이웃 省에 넘긴 문서.
+        meta = committed["_meta"]
+        owner = pcl.expand(committed["owner"], meta["rows"], meta["cols"]).copy()
+        index = next(i for i, row in enumerate(committed["provinceRecords"]) if row["nameCh"] == "邺县")
+        cells = [tuple(rc) for rc in __import__("numpy").argwhere(owner == index).tolist()]
+        other = next(i for i, row in enumerate(committed["provinceRecords"]) if row["nameCh"] == "内黄县")
+        for cell in cells[7:]:
+            owner[cell] = other
+        committed["owner"] = pcl.encode(owner)
+        [problem] = pcl.committed_area_problems(committed)
+        self.assertIn("邺县 area 7", problem)
+
+    def test_red_probe_tampered_input_blob_is_refused(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as scratch:
+            fake = Path(scratch) / "blob.gz"
+            fake.write_bytes(pcl.INPUT_BLOB.read_bytes()[:-8] + b"tampered")
+            ledger = json.loads(json.dumps(self.ledger))
+            with mock.patch.object(pcl, "ROOT", Path("/")):
+                ledger["geometry"]["stages"][0]["inputBlob"]["path"] = str(fake).lstrip("/")
+                with self.assertRaisesRegex(ValueError, "pinned partition input blob"):
+                    pcl.restore_document(self.staged, ledger)
 
 
 if __name__ == "__main__":
