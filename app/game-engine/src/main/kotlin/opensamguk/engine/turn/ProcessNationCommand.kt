@@ -3,7 +3,6 @@ package opensamguk.engine.turn
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.NoRng
 import opensamguk.common.rng.RandUtil
-import opensamguk.common.rng.serializeSeed
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -180,7 +179,7 @@ class ProcessNationCommand(
         // here — NOT one shared stream with the general pass, NOT the 'GeneralAI' decision stream.
         val rng = RandUtil(
             LiteHashDrbg(
-                serializeSeed(hiddenSeed, NATION_COMMAND_TOKEN, year, month, generalId, nationCommand.actionCode),
+                world.personalTurnSeed(hiddenSeed, NATION_COMMAND_TOKEN, year, month, generalId, nationCommand.actionCode),
             ),
         )
 
