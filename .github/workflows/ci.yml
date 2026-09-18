@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     # 5 분으로는 모자란다 — 縣 51 곳이 城으로 서면서 han-tiles 가 커져 tools/map 스위트
     # 한 단계만으로 5 분을 넘겼다(런 34574079528, 첫 단계에서 취소). 로컬 실측 약 11 분.
-    timeout-minutes: 25
+    # 2026-09-18 실측: 통과한 런이 20m6s(#815)라 25분은 여유가 없다 — #823·#824 가 실패 없이 취소됐다.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
