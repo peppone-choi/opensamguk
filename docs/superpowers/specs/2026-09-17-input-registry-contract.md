@@ -26,7 +26,9 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
 - **ruleProfile 의 자리(제안):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter` 가 `world_state` 에 적고, 런타임(엔진·game-api)은 `world_state` 만 읽는다. 지도가 이미 이 길을 쓴다 — 시나리오 `map.mapName` → `ScenarioImporter.kt` 가 `world_state.meta["map"]`·`config` 에 기록. 값이 없으면 `SAMMO` 다(기존 월드·시나리오 무변경). 월드가 살아 있는 동안 바뀌지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
-- 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `replacesLegacy[]` 로 역참조를 단다.
+- 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `legacyCommands[]` 로 역참조를 단다.
+- `legacyCommands[]` 는 **기존 명령 역참조**다. 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고(ADR-LITE-062), 같은 기존 명령이 위임 형태(방침·배치·공사)로도 간다. 그래서 **기존 명령 하나를 여러 행이 가리켜도 된다(다대일).** 대응 검사는 「기존 명령마다 가리키는 행이 하나 이상」으로 세고 「정확히 하나」를 요구하지 않는다. 금지는 둘뿐이다: 한 행 안의 같은 이름 중복, 실제 삼모 명령이 아닌 이름(`CommandRegistry.resolve` 가 `RestAction` 으로 떨어지는 이름). (#837, 옛 필드 이름 `replacesLegacy` 는 원장 파서가 거절한다.)
+- 직접 행동 행은 기존 표시 이름을 쓰되 `inputId` 는 새 꼴(`action.<name>`)이다 — `che_…` 꼴은 registry 가 `WRONG_RULE_PROFILE` 로 거절한다.
 
 ## 3. 원장 행
 
@@ -34,7 +36,7 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 inputId, kind, layer(1|2|3), actor(GENERAL|LORD|RULER|OFFICE_HOLDER),
 authorityRule, targetSchema, costSchema(전·곡·철·목재·말), timing, effectScope,
 failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
-tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
+tutorialObjectiveId|N/A, legacyCommands[], deliveryState
 ```
 
 - (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry 는 이런 입력을 `NOT_DELIVERED` 로 거절한다. 거절 사유는 4종이다: `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED`. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
