@@ -5,13 +5,14 @@
   "inputs": {
     "selectionSha256": "696866fdf9af35236a1477c97993df2fb131d6de25a9e305ad15246e89112eb9",
     "migrationSha256": "bad2cd42dec95486ce61ed3a8a468026404a12b51fd3df191adcf2fe1e910c20",
-    "hanTilesSha256": "6dde62bc0286e5c3e04f39f8b280fe0aa02424bed124300119546d533ef879b4",
-    "provinceCityAttributionSha256": "6138871936acbc309acb46df3323a187f4185ea65545c0287e02c200c83135d4",
-    "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+    "hanTilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
+    "provinceCityAttributionSha256": "cccae998e0f102ebb314ebe942c1adcd55673a40b6c2814ea01c1eb998559c15",
+    "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+    "waterwayNetworkSha256": "205705b64ca915ec6ae42f5ed377c1ed00eb370c2392c08f8718c9ee063837fe"
   },
   "outputs": {
-    "worldJsonSha256": "69e379efa10f947f9835455a9d68798a57b257006c84e0702d3e47f478c7989b",
-    "cityConstSha256": "3216c0253520bd1035c741787f49ec5c9941e73ce601972c80497ee10b8155de",
+    "worldJsonSha256": "d5009b950b9af2334a8d8690b62a07b9097c5c4ff139cb0458c5d87ad1fba58e",
+    "cityConstSha256": "5c91eb1df3a8a55db06a051f31db833c414866cbb0d75b2baf01e2bc4a685a66",
     "gateIndexSha256": "307e50ad40121c06fb062a7a400018d1f69dd40f389629904582a7f5f84951a6"
   },
   "routeNodes": [

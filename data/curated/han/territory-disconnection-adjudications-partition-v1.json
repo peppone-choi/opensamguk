@@ -4,7 +4,7 @@
  "authority": "spec 2026-09-17-province-geography-first §4 「영토 단절 원장 — 재심사, 자동 승계 금지(검토 표시)」",
  "generator": "tools/map/reissue_territory_rows_after_partition.py (1회용 이관 — 사람이 고친 뒤에는 다시 돌리지 않는다)",
  "scope": "★ 지리 재분할 출력(거점 분할 앞 문서)의 단절 조각 전수. ★ 앞 문서의 행은 territory-disconnection-adjudications-v1 에 그대로 있다.",
- "partitionStageOutputSha256": "0602e4d0db560f2019774a49b8708e1be7c7adf12ece609653df7dc69a2db335",
+ "partitionStageOutputSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
  "counts": {
   "CARRIED_EXACT": 56,
   "CARRIED_MEMBERS": 45,
@@ -772,7 +772,7 @@
    "componentKey": "43138@463:286",
    "cellCount": 38,
    "memberIds": [
-    "SUB-43138-5f794c6b1306"
+    "43138"
    ],
    "memberNamesCh": [
     "六安县"

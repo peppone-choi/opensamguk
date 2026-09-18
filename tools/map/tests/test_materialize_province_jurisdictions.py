@@ -56,7 +56,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertNotEqual("45022", commanderies["PARENT-0035"]["seatJurisdictionId"])
         self.assertFalse(cities["45022"]["zhi"])
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1_333, len(tiles["provinceRecords"]))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,333
+        self.assertEqual(1_331, len(tiles["provinceRecords"]))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,331
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
@@ -129,7 +129,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertNotIn("45277", commanderies["PARENT-0028"]["jurisdictionIds"])
         self.assertNotEqual("45277", commanderies["PARENT-0024"]["seatJurisdictionId"])
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1_333, len(document["provinceRecords"]))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,333
+        self.assertEqual(1_331, len(document["provinceRecords"]))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,331
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
@@ -472,7 +472,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         commandery_ids = {record["id"] for record in commanderies}
 
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1333, len(provinces))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,333
+        self.assertEqual(1331, len(provinces))  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,331
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.

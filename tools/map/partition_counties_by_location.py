@@ -130,7 +130,8 @@ def _components4(labels: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, list
     return np.asarray(seen, dtype=np.int32), comp_label
 
 
-def _seeds(document: dict, owner: np.ndarray, parent: np.ndarray, order: list[dict]) -> tuple[dict, list[dict]]:
+def _seeds(document: dict, owner: np.ndarray, parent: np.ndarray, order: list[dict],
+           min_area: int = MIN_AREA) -> tuple[dict, list[dict]]:
     """규칙 1·1b·2. {관할 id: (row, col)} 과 예외 행."""
     meta = document["_meta"]
     rows, cols = meta["rows"], meta["cols"]
@@ -194,7 +195,51 @@ def _seeds(document: dict, owner: np.ndarray, parent: np.ndarray, order: list[di
         }
         seeds[juris["id"]] = moved
         taken.add(moved)
+    _reseat_small_components(land, parent, order, seeds, taken, exceptions, min_area)
     return seeds, [exceptions[key] for key in sorted(exceptions)]
+
+
+def _reseat_small_components(land, parent, order, seeds, taken, exceptions, min_area) -> None:
+    """규칙 1c(위임 결정 2026-09-18 ③): 씨앗이 선 郡 마스크 성분이 min_area 미만이면, 같은 郡에서 **다른 씨앗이 없는**
+    가장 큰 성분으로 씨앗을 옮긴다(동률: 넓이 → 첫 칸 row-major). 그런 성분이 없으면 그대로 두고 Q4 예외 행이 된다.
+
+    왜: 陽安郡처럼 래스터가 郡을 1칸 + 15칸으로 갈라 놓고 실제 위치가 1칸 쪽에 떨어지면 縣 省이 1칸이 되어
+    (Q4 위반) 한 세력에 둘러싸인 무주 구멍이 되고, 제 땅 15칸은 城 없는 省으로 떨어져 나간다.
+    """
+    comp, _ = _components4(np.where(land, parent, -1), land)
+    sizes = np.bincount(comp[comp >= 0])
+    seeded: dict[int, list[str]] = {}
+    for juris in order:
+        seeded.setdefault(int(comp[seeds[juris["id"]]]), []).append(juris["id"])
+    first_cell: dict[int, tuple[int, int]] = {}
+    for r, c in np.argwhere(comp >= 0).tolist():
+        first_cell.setdefault(int(comp[r, c]), (r, c))
+    for juris in order:
+        seed = seeds[juris["id"]]
+        here = int(comp[seed])
+        if sizes[here] >= min_area:
+            continue
+        k = int(parent[seed])
+        candidates = [index for index, cell in first_cell.items()
+                      if int(parent[cell]) == k and index not in seeded and sizes[index] >= min_area]
+        if not candidates:
+            continue
+        target = min(candidates, key=lambda index: (-int(sizes[index]), first_cell[index]))
+        cells = np.asarray([rc for rc in np.argwhere(comp == target).tolist() if tuple(rc) not in taken], dtype=np.int64)
+        moved, distance = _nearest(cells, seed)
+        previous = exceptions.get(juris["id"])
+        exceptions[juris["id"]] = {
+            "jurisdictionId": juris["id"], "nameCh": juris["nameCh"], "commanderyId": juris["commanderyId"],
+            "class": "SEAT_COMPONENT_BELOW_FLOOR",
+            "trueCell": previous["trueCell"] if previous else {"col": seed[1], "row": seed[0]},
+            "seedCell": {"col": moved[1], "row": moved[0]}, "cellDistance": distance,
+            "seedBasis": previous["seedBasis"] if previous else "LONLAT",
+            "fromComponentCells": int(sizes[here]), "toComponentCells": int(sizes[target]),
+        }
+        taken.discard(seed)
+        taken.add(moved)
+        seeds[juris["id"]] = moved
+        seeded.setdefault(target, []).append(juris["id"])
 
 
 def _dijkstra(land: np.ndarray, parent: np.ndarray, seeds_by_rank: list[tuple[int, int]]) -> np.ndarray:
@@ -394,7 +439,7 @@ def _jurisdiction_order(document: dict) -> list[dict]:
 
 
 def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_AREA,
-              sites: list[dict] | None = None) -> tuple[dict, dict]:
+              sites: list[dict] | None = None, keep_in_seat: frozenset = frozenset()) -> tuple[dict, dict]:
     """순수 함수. (새 문서, 보고서). 입력의 배열 순서(cities·jurisdictionRecords)에 의존하지 않는다."""
     document = copy.deepcopy(source)
     meta = document["_meta"]
@@ -407,7 +452,7 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
     order = _jurisdiction_order(document)
     parent_index = {row["id"]: i for i, row in enumerate(document["parentRegions"])}
     provinces_in = {row["id"]: row for row in document["provinceRecords"]}
-    seeds, exceptions = _seeds(document, owner_in, parent, order)
+    seeds, exceptions = _seeds(document, owner_in, parent, order, min_area)
     seeds_by_rank = [seeds[j["id"]] for j in order]
 
     label = _dijkstra(land, parent, seeds_by_rank)
@@ -473,11 +518,16 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
                         "firstCell": {"col": int(cells[0, 1]), "row": int(cells[0, 0])},
                         "reason": "PARENT_MASK_SPLIT" if touches_foreign else "WATER_SEPARATED",
                         "reasonBasis": "MECHANICAL_UNREVIEWED",
-                        "disposition": ("OWN_PROVINCE" if comp_sizes[index] >= min_area else "KEPT_IN_SEAT_PROVINCE"),
+                        "disposition": ("OWN_PROVINCE" if comp_sizes[index] >= min_area and
+                                        (juris["id"], int(cells[0, 0]), int(cells[0, 1])) not in keep_in_seat
+                                        else "KEPT_IN_SEAT_PROVINCE"),
                     })
         kept = []
         for piece in extra:
-            if piece.get("structural") and int(piece["mask"].sum()) < min_area:
+            first = np.argwhere(piece["mask"])[0]
+            # keep_in_seat: 결정 원장이 지목한 포위 조각(남의 郡 땅에 완전히 둘러싸인 성분)은 넓이와 무관하게 seat 省에 남긴다.
+            if piece.get("structural") and (int(piece["mask"].sum()) < min_area
+                                            or (juris["id"], int(first[0]), int(first[1])) in keep_in_seat):
                 seat_piece["mask"] = seat_piece["mask"] | piece["mask"]
                 seat_piece["multiComponent"] = True
             else:
@@ -551,7 +601,8 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
         "rules": {"minArea": min_area, "maxArea": max_area, "straight": STRAIGHT, "diagonal": DIAGONAL,
                   "source": "spec 2026-09-17-province-geography-first §3 (현행 값을 옮김, 이 도구가 지은 임계 없음)"},
         "mechanicalChoices": ["DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR", "STRUCTURAL_COMPONENT_OWN_PROVINCE_IF_GE_MIN_AREA",
-                              "SEED_COLLISION_GEOMETRY_RULE_2B", "STRONGHOLD_DONOR_FLOOR_RESERVATION"],
+                              "SEED_COLLISION_GEOMETRY_RULE_2B", "STRONGHOLD_DONOR_FLOOR_RESERVATION",
+                              "SEAT_COMPONENT_BELOW_FLOOR_RESEAT"],
         "counts": {"jurisdictions": len(order), "provinces": len(records),
                    "seatProvinces": len(seat_records), "citylessProvinces": len(cityless),
                    "provincesBefore": len(provinces_in), "adjCounty": counts.get("adjCounty"),
@@ -640,6 +691,11 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _keep_in_seat() -> frozenset:
+    rows = json.loads(DECISIONS.read_text(encoding="utf-8")).get("enclosedComponentsKeptInSeatProvince", [])
+    return frozenset((row["jurisdictionId"], row["firstCell"]["row"], row["firstCell"]["col"]) for row in rows)
+
+
 def _sites() -> list[dict]:
     from tools.map import carve_strategic_site_provinces as carving
     return carving.load_sites(json.loads(carving.STRONGHOLDS.read_text(encoding="utf-8")),
@@ -706,13 +762,13 @@ def peel(document: dict) -> tuple[dict, dict | None]:
 
 def reapply(document: dict, ledger: dict) -> dict:
     """앞 단계 검사가 다시 세운 문서 위에 ★ 를 똑같이 얹는다."""
-    rebuilt, _ = partition(document, sites=_sites())
+    rebuilt, _ = partition(document, sites=_sites(), keep_in_seat=_keep_in_seat())
     return rebuilt
 
 
 def build_stage(source: dict) -> tuple[dict, dict, bytes]:
     from tools.map import carve_strategic_site_provinces as carving
-    document, report = partition(source, sites=_sites())
+    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat())
     problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
     if problems:
         raise ValueError("partition gates failed: " + "; ".join(problems))
@@ -862,7 +918,7 @@ def main() -> int:
                               ledger["areaViolations"], json.loads(DECISIONS.read_text(encoding="utf-8")))},
                          ensure_ascii=False, indent=1))
         return 0
-    document, report = partition(source, sites=_sites())
+    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat())
     problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
     report["gates"] = {"Q2": not any(p.startswith("Q2") for p in problems),
                        "Q3": not any(p.startswith("Q3") for p in problems),

@@ -234,9 +234,9 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
 
         self.assertEqual(15, len(generated))
         # 1,520 省 + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594 省 × 활성 시나리오 15.
-        # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,333, 15 시나리오 × 1,333 = 19,995 (앞은 23,910).
-        self.assertEqual(19_995, sum(len(rows) for rows in generated.values()))
-        self.assertTrue(all(len(rows) == 1_333 for rows in generated.values()))
+        # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,331, 15 시나리오 × 1,333 = 19,995 (앞은 23,910).
+        self.assertEqual(19_965, sum(len(rows) for rows in generated.values()))
+        self.assertTrue(all(len(rows) == 1_331 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)
@@ -245,7 +245,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
         self.assertEqual(15, len(first["scenarios"]))
         self.assertEqual(
-            19_995,  # 15 × 1,333 (GH #806 지리 재분할 뒤; 앞은 15 × 1,594 = 23,910)
+            19_965,  # 15 × 1,331 (GH #806 지리 재분할 뒤; 앞은 15 × 1,594 = 23,910)
             sum(len(scenario["assignments"]) for scenario in first["scenarios"]),
         )
         self.assertNotIn(str(ROOT), canonical_bytes(first).decode("utf-8"))

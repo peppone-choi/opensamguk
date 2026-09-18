@@ -120,20 +120,20 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "d155a5af142bfec2b076054733c400ea82ede8726a00f37284e2b23bbc370fd6",
-        "outputDocumentSha256": "ef7b902eb42cb2cbbe825409f38ba2eea0b20b7cfa98383cad43773ea9c02366",
+        "inputDocumentSha256": "1dbc2cbb97905f1295f145d3e82f04fc11b87d9311e83fc006fa3b395419975c",
+        "outputDocumentSha256": "4502de9b3c9973c7c6beedc7dee317f425af18cdd11f6df6c17c442334499011",
         "inputCounts": {
           "cities": 1263,
           "seats": 172,
           "regions": 38,
-          "adjCounty": 3555,
+          "adjCounty": 3551,
           "adjCommandery": 410,
           "COUNTY": 1013,
           "EXTERNAL_PLACE": 37,
           "COMMANDERY": 120,
           "KINGDOM": 17,
           "PROVINCE": 3,
-          "provinces": 1333,
+          "provinces": 1331,
           "parentRegions": 172,
           "jurisdictions": 1144,
           "commanderies": 172,

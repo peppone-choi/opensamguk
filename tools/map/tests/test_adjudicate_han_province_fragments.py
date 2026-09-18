@@ -695,8 +695,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-16 1098: 平陰 省·관할이 더해져 1,594 · 1,144.
         # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
         # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
-        # 縣 안 재분할 省 202 로 줄어 1,594 → 1,333(縣·城 없는 省 1,260 + 거점 73). 관할·郡 수는 그대로다.
-        self.assertEqual((1333, 1133, 172), (
+        # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
+        self.assertEqual((1331, 1133, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
@@ -713,7 +713,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 제 省이 아니게 됐다. 8칸 미만은 사용자 결정(2026-09-18 ③)의 Q4 예외 縣 6곳(county-location-partition-decisions-v1
         # areaExceptions — 이웃 縣의 최소 넓이를 깎지 않는다)과 축소 발자국 거점 4곳(carve 원장 carvedCellCount)뿐이다.
         island_remnants = {
-            "45203": 7, "83166": 1, "87489": 4, "87490": 7, "87506": 5, "87510": 4,
+            "45203": 7, "87489": 4, "87490": 7, "87506": 5, "87510": 4,
             "ss-dengsai": 4, "ss-fancheng": 2, "ss-mengjin": 4, "ss-xiaopingjin": 5,
         }
         below = {

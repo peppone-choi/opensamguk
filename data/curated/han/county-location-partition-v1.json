@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "ledgerId": "county-location-partition-v1",
-  "authority": "user-decision-2026-09-17 「지리 우선」 + user-decision-2026-09-18 (GH #806 댓글: 변경 省 성김 수용 · 거점 발자국 축소 · 8칸 미만 縣은 Q4 예외 행) + spec 2026-09-17-province-geography-first §3",
+  "authority": "user-decision-2026-09-17 「지리 우선」 + user-decision-2026-09-18 (GH #806 댓글: 변경 省 성김 수용 · 거점 발자국 축소 · 8칸 미만 縣은 Q4 예외 행) + spec 2026-09-17-province-geography-first §3 + 위임 결정 2026-09-18(사용자 「너가 판단해」 → main 세션): 씨앗 성분 < 8칸이면 같은 郡의 씨앗 없는 최대 성분으로 옮긴다",
   "inputs": {
     "decisions": {
       "path": "data/curated/han/county-location-partition-decisions-v1.json",
-      "sha256": "b89dae81b7b7376806d92c1fb451e45556630279544ad683ae724cc60bb37fcb"
+      "sha256": "d6cd04852e8fefa336efb99dce8336edd28a43e7c985835a40fe9a0b6efdaad6"
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "0ff3ef8d7d7c23775be22dd5850fe62d9a59e2ab66c082ff8bb5c46b00a6759a"
+      "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
     },
     "passes": {
       "path": "data/curated/han/strategic-passes-v1.json",
@@ -27,7 +27,8 @@
     "DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR",
     "STRUCTURAL_COMPONENT_OWN_PROVINCE_IF_GE_MIN_AREA",
     "SEED_COLLISION_GEOMETRY_RULE_2B",
-    "STRONGHOLD_DONOR_FLOOR_RESERVATION"
+    "STRONGHOLD_DONOR_FLOOR_RESERVATION",
+    "SEAT_COMPONENT_BELOW_FLOOR_RESEAT"
   ],
   "seedExceptions": [
     {
@@ -361,6 +362,24 @@
       },
       "cellDistance": 2.0,
       "seedBasis": "LONLAT"
+    },
+    {
+      "jurisdictionId": "83166",
+      "nameCh": "阳安县",
+      "commanderyId": "PARENT-0168",
+      "class": "SEAT_COMPONENT_BELOW_FLOOR",
+      "trueCell": {
+        "col": 403,
+        "row": 273
+      },
+      "seedCell": {
+        "col": 402,
+        "row": 275
+      },
+      "cellDistance": 2.24,
+      "seedBasis": "LONLAT",
+      "fromComponentCells": 1,
+      "toComponentCells": 15
     },
     {
       "jurisdictionId": "85024",
@@ -788,10 +807,10 @@
     },
     {
       "jurisdictionId": "83166",
-      "cells": 15,
+      "cells": 1,
       "firstCell": {
-        "col": 400,
-        "row": 275
+        "col": 403,
+        "row": 273
       }
     },
     {
@@ -1074,7 +1093,7 @@
       },
       "reason": "PARENT_MASK_SPLIT",
       "reasonBasis": "MECHANICAL_UNREVIEWED",
-      "disposition": "OWN_PROVINCE"
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
     },
     {
       "jurisdictionId": "43252",
@@ -1139,14 +1158,14 @@
     {
       "jurisdictionId": "83166",
       "nameCh": "阳安县",
-      "cells": 15,
+      "cells": 1,
       "firstCell": {
-        "col": 400,
-        "row": 275
+        "col": 403,
+        "row": 273
       },
       "reason": "PARENT_MASK_SPLIT",
       "reasonBasis": "MECHANICAL_UNREVIEWED",
-      "disposition": "OWN_PROVINCE"
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
     },
     {
       "jurisdictionId": "85202",
@@ -1525,9 +1544,11 @@
     "40740",
     "41154",
     "43057",
+    "43138",
     "43423",
     "43497",
     "70620",
+    "83166",
     "85202",
     "85344",
     "X046",
@@ -2138,11 +2159,6 @@
     {
       "provinceId": "45203",
       "cells": 7,
-      "class": "BELOW_MIN"
-    },
-    {
-      "provinceId": "83166",
-      "cells": 1,
       "class": "BELOW_MIN"
     },
     {
@@ -3988,7 +4004,7 @@
     "stages": [
       {
         "inputDocumentSha256": "8e4ce398a8852febe79b737534bda84e6927f411e39e65b89c4c175b02b5bd12",
-        "outputDocumentSha256": "0602e4d0db560f2019774a49b8708e1be7c7adf12ece609653df7dc69a2db335",
+        "outputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
         "inputBlob": {
           "path": "data/curated/han/county-location-partition-v1.input.json.gz",
           "sha256": "06a42cba73e264d62e86ecb4a7ff2445ecfe12a998d657df8628d6c85baba259",
@@ -5193,17 +5209,17 @@
           "fc-rinan-005",
           "82879"
         ],
-        "geometryDigest": "8df1ce57e47351928dc161e4ae39d5a468482994ae45d423955c61ea06345e27",
+        "geometryDigest": "89acc1deaa0383ff2aea76be241511261dfc1f43e84e2b26416cf2046d06a5eb",
         "counts": {
           "jurisdictions": 1071,
-          "provinces": 1260,
+          "provinces": 1258,
           "seatProvinces": 1058,
-          "citylessProvinces": 202,
+          "citylessProvinces": 200,
           "provincesBefore": 1521,
-          "adjCounty": 3412,
+          "adjCounty": 3408,
           "diagonalFragmentCellsReassigned": 254,
           "seedlessComponents": 30,
-          "seedlessCells": 1680
+          "seedlessCells": 1666
         }
       }
     ]

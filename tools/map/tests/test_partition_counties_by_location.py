@@ -318,6 +318,28 @@ class ScratchOnlyTest(unittest.TestCase):
         pcl._refuse_committed_path(pcl.ROOT / "build/province-partition/out.json")
 
 
+class SmallSeatComponentReseatTest(unittest.TestCase):
+    """규칙 1c(위임 결정 2026-09-18): 씨앗 성분이 min_area 미만이면 같은 郡의 씨앗 없는 최대 성분으로 옮긴다."""
+
+    def _source(self):
+        # 郡 0 이 1칸(0,0) + 4칸(0,2..5) 으로 갈라져 있다(사이 (0,1) 은 郡 1). 관할 A 의 실제 위치는 1칸 쪽.
+        return make([[0, 1, 0, 0, 0, 0]], [("A", 0, (0, 0)), ("B", 1, (0, 1))])
+
+    def test_seed_moves_to_the_largest_seedless_component(self):
+        document, report = pcl.partition(self._source(), min_area=2)
+        [row] = [r for r in report["seedExceptions"] if r["class"] == "SEAT_COMPONENT_BELOW_FLOOR"]
+        self.assertEqual((row["jurisdictionId"], row["fromComponentCells"], row["toComponentCells"]), ("A", 1, 4))
+        self.assertEqual(row["seedCell"], {"col": 2, "row": 0})
+
+    def test_red_probe_without_a_seedless_component_the_seed_stays(self):
+        # 큰 성분에 다른 관할(C)의 씨앗이 있으면 옮기지 않는다 — Q4 예외로 남는다.
+        source = make([[0, 1, 0, 0, 0, 0]], [("A", 0, (0, 0)), ("B", 1, (0, 1)), ("C", 0, (0, 4))])
+        _, report = pcl.partition(source, min_area=2)
+        self.assertFalse([r for r in report["seedExceptions"] if r["class"] == "SEAT_COMPONENT_BELOW_FLOOR"])
+        _, report = pcl.partition(self._source(), min_area=1)  # 문턱 아래가 아니면 그대로
+        self.assertFalse([r for r in report["seedExceptions"] if r["class"] == "SEAT_COMPONENT_BELOW_FLOOR"])
+
+
 class StrongholdReservationTest(unittest.TestCase):
     """사용자 결정 2026-09-18 ②: 거점 기증 縣의 최소 넓이 = min_area + 거점 수 × 최소 발자국."""
 
@@ -366,12 +388,12 @@ class CommittedStageTest(unittest.TestCase):
 
     def test_measured_baseline(self):
         stage = self.ledger["geometry"]["stages"][0]
-        self.assertEqual(stage["counts"]["provinces"], 1260)
-        self.assertEqual(len(self.ledger["seedExceptions"]), 40)
+        self.assertEqual(stage["counts"]["provinces"], 1258)
+        self.assertEqual(len(self.ledger["seedExceptions"]), 41)  # 40 + 陽安 성분 재배치(규칙 1c)
         rows = [r for r in measure(self.staged) if r.get("area")]
         exceptions = frozenset(row["jurisdictionId"] for row in self.ledger["seedExceptions"])
         self.assertEqual((len(gate(rows)["Q1"]), len(gate(rows)["Q1b"])), (40, 0))
-        self.assertEqual(gate(rows, exceptions)["Q1"], [])  # 남은 40 은 전부 사유 행이 있다
+        self.assertEqual(gate(rows, exceptions)["Q1"], [])  # 남은 40 은 전부 사유 행이 있다(예외 41 중 陽安 은 옮긴 뒤 제 관할이 실제 칸 1칸을 다시 덮는다)
 
     def test_red_probe_tampered_owner_cell_breaks_the_stage_pin(self):
         tampered = json.loads(json.dumps(self.staged))

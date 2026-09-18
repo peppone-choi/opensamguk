@@ -1,7 +1,7 @@
 {
  "schemaVersion": 1,
  "artifactId": "han-commandery-supply-links-v1",
- "note": "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, **보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051. canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다.",
+ "note": "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, **보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051. canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다. RIVER_ROUTE 행은 같은 규칙의 강 뱃길이다(ADR-LITE-060, 수로 망 원장의 portLinks).",
  "generator": "tools/map/build_commandery_supply_links.py",
  "excludedByMisbinding": [
   "上郡:정양(上郡)",
@@ -12,12 +12,66 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 50,
-  "medianKm": 74.8,
-  "p90Km": 693.7,
+  "linkCount": 56,
+  "medianKm": 77.5,
+  "p90Km": 471.4,
   "maxKm": 1049.3
  },
  "links": [
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 50,
+   "toProvinceIndex": 1305,
+   "fromCityName": "건업",
+   "toCityName": "유수구",
+   "distanceKm": 122.8,
+   "source": "三國志 卷51 吳書·宗室傳 裴注(江表傳) 「初權在武昌，欲還都建業，而慮水道溯流二千里」 — 濡須口 ↔ 建业县"
+  },
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 270,
+   "toProvinceIndex": 285,
+   "fromCityName": "사선",
+   "toCityName": "강릉",
+   "distanceKm": 204.0,
+   "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 江陵县 ↔ 沙羡县"
+  },
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 270,
+   "toProvinceIndex": 1270,
+   "fromCityName": "사선",
+   "toCityName": "번구",
+   "distanceKm": 55.9,
+   "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 沙羡县 ↔ 樊口"
+  },
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 285,
+   "toProvinceIndex": 443,
+   "fromCityName": "강릉",
+   "toCityName": "이릉",
+   "distanceKm": 94.3,
+   "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 夷陵县 ↔ 江陵县"
+  },
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 344,
+   "toProvinceIndex": 443,
+   "fromCityName": "강주",
+   "toCityName": "이릉",
+   "distanceKm": 471.4,
+   "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷32 蜀書二 先主傳 「諸葛亮、張飛、趙雲等將兵溯流定白帝、江州、江陽」 · 三國志 卷36 蜀書六 關張馬黃趙傳 (張飛) 「飛與諸葛亮等溯流而上，分定郡縣。至江州」 — 江州县 ↔ 夷陵县"
+  },
+  {
+   "canonicalGroup": "RIVER_ROUTE",
+   "fromProvinceIndex": 1270,
+   "toProvinceIndex": 1305,
+   "fromCityName": "번구",
+   "toCityName": "유수구",
+   "distanceKm": 309.6,
+   "source": "三國志 卷51 吳書·宗室傳 裴注(江表傳) 「初權在武昌，欲還都建業，而慮水道溯流二千里」 — 樊口 ↔ 濡須口"
+  },
   {
    "canonicalGroup": "SEA_ROUTE",
    "fromProvinceIndex": 38,
@@ -39,7 +93,7 @@
   {
    "canonicalGroup": "SEA_ROUTE",
    "fromProvinceIndex": 44,
-   "toProvinceIndex": 1262,
+   "toProvinceIndex": 1260,
    "fromCityName": "오(吳郡)",
    "toCityName": "안평구",
    "distanceKm": 1049.3,
@@ -194,7 +248,7 @@
   {
    "canonicalGroup": "南郡",
    "fromProvinceIndex": 287,
-   "toProvinceIndex": 1293,
+   "toProvinceIndex": 1291,
    "fromCityName": "화용",
    "toCityName": "육구",
    "distanceKm": 92.4
@@ -322,15 +376,15 @@
   {
    "canonicalGroup": "河南尹",
    "fromProvinceIndex": 316,
-   "toProvinceIndex": 1321,
+   "toProvinceIndex": 1319,
    "fromCityName": "경(河南尹)",
    "toCityName": "소평진",
    "distanceKm": 46.2
   },
   {
    "canonicalGroup": "河南尹",
-   "fromProvinceIndex": 1297,
-   "toProvinceIndex": 1321,
+   "fromProvinceIndex": 1295,
+   "toProvinceIndex": 1319,
    "fromCityName": "맹진",
    "toCityName": "소평진",
    "distanceKm": 17.5
@@ -354,15 +408,15 @@
   {
    "canonicalGroup": "犍為郡",
    "fromProvinceIndex": 946,
-   "toProvinceIndex": 1300,
+   "toProvinceIndex": 1298,
    "fromCityName": "무양(犍為郡)",
    "toCityName": "남안협구",
    "distanceKm": 78.0
   },
   {
    "canonicalGroup": "襄陽郡",
-   "fromProvinceIndex": 1267,
-   "toProvinceIndex": 1270,
+   "fromProvinceIndex": 1265,
+   "toProvinceIndex": 1268,
    "fromCityName": "등새",
    "toCityName": "번성",
    "distanceKm": 5.3
@@ -378,7 +432,7 @@
   {
    "canonicalGroup": "遼東郡",
    "fromProvinceIndex": 1040,
-   "toProvinceIndex": 1262,
+   "toProvinceIndex": 1260,
    "fromCityName": "서안평",
    "toCityName": "안평구",
    "distanceKm": 5.8

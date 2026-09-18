@@ -6799,8 +6799,8 @@
     {
       "id": 145,
       "name": "양안",
-      "x": 367,
-      "y": 249,
+      "x": 366,
+      "y": 251,
       "level": 10,
       "region": 2,
       "max": {
@@ -18606,9 +18606,11 @@
       },
       "connections": [
         399,
+        401,
         405,
         406,
         464,
+        473,
         534
       ],
       "meta": {
@@ -18793,9 +18795,11 @@
         "wall": 1000
       },
       "connections": [
+        397,
         398,
         400,
         407,
+        572,
         921,
         923,
         1085
@@ -22185,12 +22189,14 @@
         "wall": 1000
       },
       "connections": [
+        397,
         403,
         458,
         462,
         468,
         514,
-        927
+        927,
+        1037
       ],
       "meta": {
         "jun": "강하군",
@@ -26834,6 +26840,7 @@
         "wall": 5000
       },
       "connections": [
+        401,
         578,
         590,
         604,
@@ -43704,6 +43711,7 @@
         507,
         513,
         569,
+        1072,
         1075
       ],
       "meta": {
@@ -47954,9 +47962,9 @@
         "isSeat": false,
         "displayName": "안성"
       },
-      "provinceId": 1260,
+      "provinceId": 1258,
       "spatialProvinceId": "ss-ancheng",
-      "spatialProvinceIndex": 1260,
+      "spatialProvinceIndex": 1258,
       "routeNodeKey": "e004e513-8509-474a-95c7-67b2c2453d5e",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-ancheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-ancheng"
@@ -47998,9 +48006,9 @@
         "isSeat": false,
         "displayName": "안풍진"
       },
-      "provinceId": 1261,
+      "provinceId": 1259,
       "spatialProvinceId": "ss-anfengjin",
-      "spatialProvinceIndex": 1261,
+      "spatialProvinceIndex": 1259,
       "routeNodeKey": "0125d629-0fe7-4f76-af75-1a87ec0b1a26",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-anfengjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-anfengjin"
@@ -48041,9 +48049,9 @@
         "isSeat": false,
         "displayName": "안평구"
       },
-      "provinceId": 1262,
+      "provinceId": 1260,
       "spatialProvinceId": "ss-anpingkou",
-      "spatialProvinceIndex": 1262,
+      "spatialProvinceIndex": 1260,
       "routeNodeKey": "9b929f06-1e4b-485b-aaf4-b63e122f7cee",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-anpingkou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-anpingkou"
@@ -48085,9 +48093,9 @@
         "isSeat": false,
         "displayName": "박락진"
       },
-      "provinceId": 1263,
+      "provinceId": 1261,
       "spatialProvinceId": "ss-boluojin",
-      "spatialProvinceIndex": 1263,
+      "spatialProvinceIndex": 1261,
       "routeNodeKey": "2f6a6344-5e07-47d5-9515-2ea8a8bb7633",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-boluojin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-boluojin"
@@ -48129,9 +48137,9 @@
         "isSeat": false,
         "displayName": "창정진"
       },
-      "provinceId": 1264,
+      "provinceId": 1262,
       "spatialProvinceId": "ss-cangtingjin",
-      "spatialProvinceIndex": 1264,
+      "spatialProvinceIndex": 1262,
       "routeNodeKey": "632b3206-5322-4dff-ae24-b21c78dea1b0",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-cangtingjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-cangtingjin"
@@ -48172,9 +48180,9 @@
         "isSeat": false,
         "displayName": "대도"
       },
-      "provinceId": 1265,
+      "provinceId": 1263,
       "spatialProvinceId": "ss-dadu",
-      "spatialProvinceIndex": 1265,
+      "spatialProvinceIndex": 1263,
       "routeNodeKey": "2a43ff53-74bb-452b-ba88-768cd1d13efa",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-dadu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-dadu"
@@ -48217,9 +48225,9 @@
         "isSeat": false,
         "displayName": "당리구"
       },
-      "provinceId": 1266,
+      "provinceId": 1264,
       "spatialProvinceId": "ss-danglikou",
-      "spatialProvinceIndex": 1266,
+      "spatialProvinceIndex": 1264,
       "routeNodeKey": "8ab310d7-0b8b-459a-89f0-882348835ae6",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-danglikou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-danglikou"
@@ -48261,9 +48269,9 @@
         "isSeat": false,
         "displayName": "등새"
       },
-      "provinceId": 1267,
+      "provinceId": 1265,
       "spatialProvinceId": "ss-dengsai",
-      "spatialProvinceIndex": 1267,
+      "spatialProvinceIndex": 1265,
       "routeNodeKey": "d669e79b-67ea-49ad-930e-bb7686d6073c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-dengsai",
       "sourceClaimId": "han-strategic-site-route-claim-v1-dengsai"
@@ -48307,9 +48315,9 @@
         "isSeat": false,
         "displayName": "동포"
       },
-      "provinceId": 1268,
+      "provinceId": 1266,
       "spatialProvinceId": "ss-dongpu",
-      "spatialProvinceIndex": 1268,
+      "spatialProvinceIndex": 1266,
       "routeNodeKey": "d86d72e4-595f-4177-9ce6-2cf5ec3f30c2",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-dongpu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-dongpu"
@@ -48350,9 +48358,9 @@
         "isSeat": false,
         "displayName": "두진"
       },
-      "provinceId": 1269,
+      "provinceId": 1267,
       "spatialProvinceId": "ss-doujin",
-      "spatialProvinceIndex": 1269,
+      "spatialProvinceIndex": 1267,
       "routeNodeKey": "89b020f7-5179-403b-9899-a28545c8dda5",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-doujin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-doujin"
@@ -48393,9 +48401,9 @@
         "isSeat": false,
         "displayName": "번성"
       },
-      "provinceId": 1270,
+      "provinceId": 1268,
       "spatialProvinceId": "ss-fancheng",
-      "spatialProvinceIndex": 1270,
+      "spatialProvinceIndex": 1268,
       "routeNodeKey": "88877fb7-0329-4924-b1f3-d0f50506b514",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-fancheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-fancheng"
@@ -48436,9 +48444,9 @@
         "isSeat": false,
         "displayName": "범성"
       },
-      "provinceId": 1271,
+      "provinceId": 1269,
       "spatialProvinceId": "ss-fancheng-liaoxi",
-      "spatialProvinceIndex": 1271,
+      "spatialProvinceIndex": 1269,
       "routeNodeKey": "5ef599da-5215-4253-b471-fe7cbd5d6789",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-fancheng-liaoxi",
       "sourceClaimId": "han-strategic-site-route-claim-v1-fancheng-liaoxi"
@@ -48467,7 +48475,9 @@
         "wall": 500
       },
       "connections": [
-        467
+        467,
+        473,
+        1072
       ],
       "meta": {
         "jun": "강하군",
@@ -48478,9 +48488,9 @@
         "isSeat": false,
         "displayName": "번구"
       },
-      "provinceId": 1272,
+      "provinceId": 1270,
       "spatialProvinceId": "ss-fankou",
-      "spatialProvinceIndex": 1272,
+      "spatialProvinceIndex": 1270,
       "routeNodeKey": "aea0c153-f59b-4a60-ba58-3c823bae716f",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-fankou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-fankou"
@@ -48521,9 +48531,9 @@
         "isSeat": false,
         "displayName": "관도"
       },
-      "provinceId": 1273,
+      "provinceId": 1271,
       "spatialProvinceId": "ss-guandu",
-      "spatialProvinceIndex": 1273,
+      "spatialProvinceIndex": 1271,
       "routeNodeKey": "6c43f76f-0909-4a0d-a815-86ca0c55285f",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-guandu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-guandu"
@@ -48565,9 +48575,9 @@
         "isSeat": false,
         "displayName": "와구(渦口)"
       },
-      "provinceId": 1274,
+      "provinceId": 1272,
       "spatialProvinceId": "ss-guokou",
-      "spatialProvinceIndex": 1274,
+      "spatialProvinceIndex": 1272,
       "routeNodeKey": "35a6527e-ecb7-42df-a3e3-8cc0777f9a17",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-guokou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-guokou"
@@ -48609,9 +48619,9 @@
         "isSeat": false,
         "displayName": "곽씨오"
       },
-      "provinceId": 1275,
+      "provinceId": 1273,
       "spatialProvinceId": "ss-guoshiwu",
-      "spatialProvinceIndex": 1275,
+      "spatialProvinceIndex": 1273,
       "routeNodeKey": "155c228e-1845-404e-a8bc-7af096474396",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-guoshiwu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-guoshiwu"
@@ -48653,9 +48663,9 @@
         "isSeat": false,
         "displayName": "함곡관"
       },
-      "provinceId": 1276,
+      "provinceId": 1274,
       "spatialProvinceId": "ss-hanguguan",
-      "spatialProvinceIndex": 1276,
+      "spatialProvinceIndex": 1274,
       "routeNodeKey": "e4037257-5038-4e89-9c3b-2b8b94381c79",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-hanguguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-hanguguan"
@@ -48697,9 +48707,9 @@
         "isSeat": false,
         "displayName": "한진"
       },
-      "provinceId": 1277,
+      "provinceId": 1275,
       "spatialProvinceId": "ss-hanjin",
-      "spatialProvinceIndex": 1277,
+      "spatialProvinceIndex": 1275,
       "routeNodeKey": "0c4568f9-72d2-4ce9-8f6c-089ee7b969b1",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-hanjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-hanjin"
@@ -48740,9 +48750,9 @@
         "isSeat": false,
         "displayName": "횡강진"
       },
-      "provinceId": 1278,
+      "provinceId": 1276,
       "spatialProvinceId": "ss-hengjiangjin",
-      "spatialProvinceIndex": 1278,
+      "spatialProvinceIndex": 1276,
       "routeNodeKey": "96e73bd4-7b9f-49cb-b11b-fa97960b2908",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-hengjiangjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-hengjiangjin"
@@ -48785,9 +48795,9 @@
         "isSeat": false,
         "displayName": "황백성"
       },
-      "provinceId": 1279,
+      "provinceId": 1277,
       "spatialProvinceId": "ss-huangbaicheng",
-      "spatialProvinceIndex": 1279,
+      "spatialProvinceIndex": 1277,
       "routeNodeKey": "b4ac6835-38b3-4b11-bf20-69b0fc7dfcba",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-huangbaicheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-huangbaicheng"
@@ -48827,9 +48837,9 @@
         "isSeat": false,
         "displayName": "호관"
       },
-      "provinceId": 1280,
+      "provinceId": 1278,
       "spatialProvinceId": "ss-hukouguan",
-      "spatialProvinceIndex": 1280,
+      "spatialProvinceIndex": 1278,
       "routeNodeKey": "6ca29a45-931e-4777-90f3-567ffc9af4a8",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-hukouguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-hukouguan"
@@ -48871,9 +48881,9 @@
         "isSeat": false,
         "displayName": "호뢰관"
       },
-      "provinceId": 1281,
+      "provinceId": 1279,
       "spatialProvinceId": "ss-hulaoguan",
-      "spatialProvinceIndex": 1281,
+      "spatialProvinceIndex": 1279,
       "routeNodeKey": "cc33f4c8-b20b-4cf3-bf4f-b84f6239f2bb",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-hulaoguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-hulaoguan"
@@ -48913,9 +48923,9 @@
         "isSeat": false,
         "displayName": "검각"
       },
-      "provinceId": 1282,
+      "provinceId": 1280,
       "spatialProvinceId": "ss-jiange",
-      "spatialProvinceIndex": 1282,
+      "spatialProvinceIndex": 1280,
       "routeNodeKey": "b16126a9-b055-47bf-a7d2-2ade3b9a8a51",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-jiange",
       "sourceClaimId": "han-strategic-site-route-claim-v1-jiange"
@@ -48955,9 +48965,9 @@
         "isSeat": false,
         "displayName": "초구성"
       },
-      "provinceId": 1283,
+      "provinceId": 1281,
       "spatialProvinceId": "ss-jiaoqiucheng",
-      "spatialProvinceIndex": 1283,
+      "spatialProvinceIndex": 1281,
       "routeNodeKey": "ba83c279-d1e0-41ef-b4a9-55d8b6851684",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-jiaoqiucheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-jiaoqiucheng"
@@ -48999,9 +49009,9 @@
         "isSeat": false,
         "displayName": "경성"
       },
-      "provinceId": 1284,
+      "provinceId": 1282,
       "spatialProvinceId": "ss-jingcheng",
-      "spatialProvinceIndex": 1284,
+      "spatialProvinceIndex": 1282,
       "routeNodeKey": "b77f78fe-42c0-43dd-8d61-2ec0f6c08ebe",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-jingcheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-jingcheng"
@@ -49043,9 +49053,9 @@
         "isSeat": false,
         "displayName": "형성"
       },
-      "provinceId": 1285,
+      "provinceId": 1283,
       "spatialProvinceId": "ss-jingcheng-dangyang",
-      "spatialProvinceIndex": 1285,
+      "spatialProvinceIndex": 1283,
       "routeNodeKey": "058d6374-5e57-4cda-a4fc-304bfc079f0e",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-jingcheng-dangyang",
       "sourceClaimId": "han-strategic-site-route-claim-v1-jingcheng-dangyang"
@@ -49086,9 +49096,9 @@
         "isSeat": false,
         "displayName": "거구"
       },
-      "provinceId": 1286,
+      "provinceId": 1284,
       "spatialProvinceId": "ss-jukou",
-      "spatialProvinceIndex": 1286,
+      "spatialProvinceIndex": 1284,
       "routeNodeKey": "a0fc51cb-06a6-4665-ba3a-dfeea4550dc4",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-jukou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-jukou"
@@ -49128,9 +49138,9 @@
         "isSeat": false,
         "displayName": "남구"
       },
-      "provinceId": 1287,
+      "provinceId": 1285,
       "spatialProvinceId": "ss-lankou",
-      "spatialProvinceIndex": 1287,
+      "spatialProvinceIndex": 1285,
       "routeNodeKey": "5c6e0db5-45a8-4a55-986a-c3d5cbf9056c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-lankou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-lankou"
@@ -49172,9 +49182,9 @@
         "isSeat": false,
         "displayName": "양구"
       },
-      "provinceId": 1288,
+      "provinceId": 1286,
       "spatialProvinceId": "ss-liangkou",
-      "spatialProvinceIndex": 1288,
+      "spatialProvinceIndex": 1286,
       "routeNodeKey": "0111e929-e601-43df-bd04-c2c949eb711a",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-liangkou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-liangkou"
@@ -49214,9 +49224,9 @@
         "isSeat": false,
         "displayName": "요구"
       },
-      "provinceId": 1289,
+      "provinceId": 1287,
       "spatialProvinceId": "ss-liaokou",
-      "spatialProvinceIndex": 1289,
+      "spatialProvinceIndex": 1287,
       "routeNodeKey": "11d2d884-1316-4d1c-b8a3-a29c9be1292c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-liaokou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-liaokou"
@@ -49258,9 +49268,9 @@
         "isSeat": false,
         "displayName": "역성"
       },
-      "provinceId": 1290,
+      "provinceId": 1288,
       "spatialProvinceId": "ss-licheng",
-      "spatialProvinceIndex": 1290,
+      "spatialProvinceIndex": 1288,
       "routeNodeKey": "d1c4b000-0784-4204-abed-29d4b63b32e0",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-licheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-licheng"
@@ -49300,9 +49310,9 @@
         "isSeat": false,
         "displayName": "열류성"
       },
-      "provinceId": 1291,
+      "provinceId": 1289,
       "spatialProvinceId": "ss-lieliucheng",
-      "spatialProvinceIndex": 1291,
+      "spatialProvinceIndex": 1289,
       "routeNodeKey": "2a7986cb-0cbb-4a54-898a-25b517c1436d",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-lieliucheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-lieliucheng"
@@ -49343,9 +49353,9 @@
         "isSeat": false,
         "displayName": "노성"
       },
-      "provinceId": 1292,
+      "provinceId": 1290,
       "spatialProvinceId": "ss-lucheng",
-      "spatialProvinceIndex": 1292,
+      "spatialProvinceIndex": 1290,
       "routeNodeKey": "f2f268be-c084-4dd9-8a61-62afe99c3340",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-lucheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-lucheng"
@@ -49385,9 +49395,9 @@
         "isSeat": false,
         "displayName": "육구"
       },
-      "provinceId": 1293,
+      "provinceId": 1291,
       "spatialProvinceId": "ss-lukou",
-      "spatialProvinceIndex": 1293,
+      "spatialProvinceIndex": 1291,
       "routeNodeKey": "f0f614b2-a58e-47a4-a0ca-7cdc32065206",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-lukou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-lukou"
@@ -49427,9 +49437,9 @@
         "isSeat": false,
         "displayName": "노룡새"
       },
-      "provinceId": 1294,
+      "provinceId": 1292,
       "spatialProvinceId": "ss-lulongsai",
-      "spatialProvinceIndex": 1294,
+      "spatialProvinceIndex": 1292,
       "routeNodeKey": "3c778446-9a51-4858-a06e-7d8a82474a8e",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-lulongsai",
       "sourceClaimId": "han-strategic-site-route-claim-v1-lulongsai"
@@ -49471,9 +49481,9 @@
         "isSeat": false,
         "displayName": "맥성"
       },
-      "provinceId": 1295,
+      "provinceId": 1293,
       "spatialProvinceId": "ss-maicheng",
-      "spatialProvinceIndex": 1295,
+      "spatialProvinceIndex": 1293,
       "routeNodeKey": "0f7c97c6-4257-4495-8f5d-b8c765585331",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-maicheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-maicheng"
@@ -49513,9 +49523,9 @@
         "isSeat": false,
         "displayName": "모성"
       },
-      "provinceId": 1296,
+      "provinceId": 1294,
       "spatialProvinceId": "ss-maocheng",
-      "spatialProvinceIndex": 1296,
+      "spatialProvinceIndex": 1294,
       "routeNodeKey": "2513aecf-80f9-4841-9ebd-8f35cb7435fa",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-maocheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-maocheng"
@@ -49557,9 +49567,9 @@
         "isSeat": false,
         "displayName": "맹진"
       },
-      "provinceId": 1297,
+      "provinceId": 1295,
       "spatialProvinceId": "ss-mengjin",
-      "spatialProvinceIndex": 1297,
+      "spatialProvinceIndex": 1295,
       "routeNodeKey": "1461fdfb-daaf-4634-bc98-a935d13f9935",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-mengjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-mengjin"
@@ -49601,9 +49611,9 @@
         "isSeat": false,
         "displayName": "마피영"
       },
-      "provinceId": 1298,
+      "provinceId": 1296,
       "spatialProvinceId": "ss-mobeiying",
-      "spatialProvinceIndex": 1298,
+      "spatialProvinceIndex": 1296,
       "routeNodeKey": "b4ffcf7a-3d53-4872-9089-1dd0f6816703",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-mobeiying",
       "sourceClaimId": "han-strategic-site-route-claim-v1-mobeiying"
@@ -49643,9 +49653,9 @@
         "isSeat": false,
         "displayName": "목란새"
       },
-      "provinceId": 1299,
+      "provinceId": 1297,
       "spatialProvinceId": "ss-mulansai",
-      "spatialProvinceIndex": 1299,
+      "spatialProvinceIndex": 1297,
       "routeNodeKey": "90d27b42-689f-484f-b993-b32ed2681ed8",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-mulansai",
       "sourceClaimId": "han-strategic-site-route-claim-v1-mulansai"
@@ -49685,9 +49695,9 @@
         "isSeat": false,
         "displayName": "남안협구"
       },
-      "provinceId": 1300,
+      "provinceId": 1298,
       "spatialProvinceId": "ss-nanan-xiakou",
-      "spatialProvinceIndex": 1300,
+      "spatialProvinceIndex": 1298,
       "routeNodeKey": "c856e4ca-d131-4222-8888-b9d895434235",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-nanan-xiakou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-nanan-xiakou"
@@ -49730,9 +49740,9 @@
         "isSeat": false,
         "displayName": "우저영"
       },
-      "provinceId": 1301,
+      "provinceId": 1299,
       "spatialProvinceId": "ss-niuzhuying",
-      "spatialProvinceIndex": 1301,
+      "spatialProvinceIndex": 1299,
       "routeNodeKey": "d0a7a07a-83b2-4f29-9c2b-1dd3677e59ba",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-niuzhuying",
       "sourceClaimId": "han-strategic-site-route-claim-v1-niuzhuying"
@@ -49773,9 +49783,9 @@
         "isSeat": false,
         "displayName": "구구"
       },
-      "provinceId": 1302,
+      "provinceId": 1300,
       "spatialProvinceId": "ss-oukou",
-      "spatialProvinceIndex": 1302,
+      "spatialProvinceIndex": 1300,
       "routeNodeKey": "59cdfeb7-4060-426a-8403-ad5f33c98973",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-oukou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-oukou"
@@ -49817,9 +49827,9 @@
         "isSeat": false,
         "displayName": "포판진"
       },
-      "provinceId": 1303,
+      "provinceId": 1301,
       "spatialProvinceId": "ss-pubanjin",
-      "spatialProvinceIndex": 1303,
+      "spatialProvinceIndex": 1301,
       "routeNodeKey": "8bf9fe07-c578-4a99-8826-b1f90c7c53bf",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-pubanjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-pubanjin"
@@ -49860,9 +49870,9 @@
         "isSeat": false,
         "displayName": "기구"
       },
-      "provinceId": 1304,
+      "provinceId": 1302,
       "spatialProvinceId": "ss-qikou",
-      "spatialProvinceIndex": 1304,
+      "spatialProvinceIndex": 1302,
       "routeNodeKey": "5283a164-7ffa-473a-9d46-9c9c52ead8d5",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-qikou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-qikou"
@@ -49903,9 +49913,9 @@
         "isSeat": false,
         "displayName": "기리영"
       },
-      "provinceId": 1305,
+      "provinceId": 1303,
       "spatialProvinceId": "ss-qiliying",
-      "spatialProvinceIndex": 1305,
+      "spatialProvinceIndex": 1303,
       "routeNodeKey": "f648e3da-c569-4d09-9ba0-a5d268d02e48",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-qiliying",
       "sourceClaimId": "han-strategic-site-route-claim-v1-qiliying"
@@ -49946,9 +49956,9 @@
         "isSeat": false,
         "displayName": "국성"
       },
-      "provinceId": 1306,
+      "provinceId": 1304,
       "spatialProvinceId": "ss-qucheng",
-      "spatialProvinceIndex": 1306,
+      "spatialProvinceIndex": 1304,
       "routeNodeKey": "43f56c51-0795-47ae-9792-dfe60e65782b",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-qucheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-qucheng"
@@ -49978,7 +49988,9 @@
       },
       "connections": [
         503,
-        530
+        530,
+        934,
+        1037
       ],
       "meta": {
         "jun": "단양군",
@@ -49989,9 +50001,9 @@
         "isSeat": false,
         "displayName": "유수구"
       },
-      "provinceId": 1307,
+      "provinceId": 1305,
       "spatialProvinceId": "ss-ruxukou",
-      "spatialProvinceIndex": 1307,
+      "spatialProvinceIndex": 1305,
       "routeNodeKey": "2fc54a3c-1794-4fa8-a512-ad2dce6e3732",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-ruxukou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-ruxukou"
@@ -50032,9 +50044,9 @@
         "isSeat": false,
         "displayName": "상창성"
       },
-      "provinceId": 1308,
+      "provinceId": 1306,
       "spatialProvinceId": "ss-shangchangcheng",
-      "spatialProvinceIndex": 1308,
+      "spatialProvinceIndex": 1306,
       "routeNodeKey": "3e1de36f-4d98-4c01-a8d7-6f290dfee975",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-shangchangcheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-shangchangcheng"
@@ -50075,9 +50087,9 @@
         "isSeat": false,
         "displayName": "섬진"
       },
-      "provinceId": 1309,
+      "provinceId": 1307,
       "spatialProvinceId": "ss-shanjin",
-      "spatialProvinceIndex": 1309,
+      "spatialProvinceIndex": 1307,
       "routeNodeKey": "a8a596c9-c53d-411a-ab0d-dc29e5b2824c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-shanjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-shanjin"
@@ -50119,9 +50131,9 @@
         "isSeat": false,
         "displayName": "석두성"
       },
-      "provinceId": 1310,
+      "provinceId": 1308,
       "spatialProvinceId": "ss-shitoucheng",
-      "spatialProvinceIndex": 1310,
+      "spatialProvinceIndex": 1308,
       "routeNodeKey": "b2f3013e-f887-4b9b-acff-baa4554a1dd1",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-shitoucheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-shitoucheng"
@@ -50162,9 +50174,9 @@
         "isSeat": false,
         "displayName": "석영"
       },
-      "provinceId": 1311,
+      "provinceId": 1309,
       "spatialProvinceId": "ss-shiying",
-      "spatialProvinceIndex": 1311,
+      "spatialProvinceIndex": 1309,
       "routeNodeKey": "fe5af8e6-e2bb-489d-90e6-a59f6409fdd0",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-shiying",
       "sourceClaimId": "han-strategic-site-route-claim-v1-shiying"
@@ -50205,9 +50217,9 @@
         "isSeat": false,
         "displayName": "서구"
       },
-      "provinceId": 1312,
+      "provinceId": 1310,
       "spatialProvinceId": "ss-shukou",
-      "spatialProvinceIndex": 1312,
+      "spatialProvinceIndex": 1310,
       "routeNodeKey": "20412fd1-c2d7-43a0-a706-83173e2acd6b",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-shukou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-shukou"
@@ -50247,9 +50259,9 @@
         "isSeat": false,
         "displayName": "사구"
       },
-      "provinceId": 1313,
+      "provinceId": 1311,
       "spatialProvinceId": "ss-sikou",
-      "spatialProvinceIndex": 1313,
+      "spatialProvinceIndex": 1311,
       "routeNodeKey": "347491f2-ab1c-4bfd-bb4f-8e29c6c5ac4c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-sikou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-sikou"
@@ -50289,9 +50301,9 @@
         "isSeat": false,
         "displayName": "답진"
       },
-      "provinceId": 1314,
+      "provinceId": 1312,
       "spatialProvinceId": "ss-tajin",
-      "spatialProvinceIndex": 1314,
+      "spatialProvinceIndex": 1312,
       "routeNodeKey": "6f5102e7-36d1-4f08-a366-b323de4f8bde",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-tajin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-tajin"
@@ -50332,9 +50344,9 @@
         "isSeat": false,
         "displayName": "와구(瓦口)"
       },
-      "provinceId": 1315,
+      "provinceId": 1313,
       "spatialProvinceId": "ss-wakou",
-      "spatialProvinceIndex": 1315,
+      "spatialProvinceIndex": 1313,
       "routeNodeKey": "a67976ac-3d93-4e37-a902-431eae1061b9",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-wakou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-wakou"
@@ -50376,9 +50388,9 @@
         "isSeat": false,
         "displayName": "환구"
       },
-      "provinceId": 1316,
+      "provinceId": 1314,
       "spatialProvinceId": "ss-wankou",
-      "spatialProvinceIndex": 1316,
+      "spatialProvinceIndex": 1314,
       "routeNodeKey": "ed8c3ad9-b45b-4262-abf8-b9dc6d671555",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-wankou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-wankou"
@@ -50418,9 +50430,9 @@
         "isSeat": false,
         "displayName": "만세오"
       },
-      "provinceId": 1317,
+      "provinceId": 1315,
       "spatialProvinceId": "ss-wansuiwu",
-      "spatialProvinceIndex": 1317,
+      "spatialProvinceIndex": 1315,
       "routeNodeKey": "3fc0822e-f8ea-4476-a0bc-d8dfde43ffa2",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-wansuiwu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-wansuiwu"
@@ -50460,9 +50472,9 @@
         "isSeat": false,
         "displayName": "무관"
       },
-      "provinceId": 1318,
+      "provinceId": 1316,
       "spatialProvinceId": "ss-wuguan",
-      "spatialProvinceIndex": 1318,
+      "spatialProvinceIndex": 1316,
       "routeNodeKey": "e03bbbeb-d540-4d59-86f8-2a39f84b7639",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-wuguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-wuguan"
@@ -50502,9 +50514,9 @@
         "isSeat": false,
         "displayName": "무강구"
       },
-      "provinceId": 1319,
+      "provinceId": 1317,
       "spatialProvinceId": "ss-wuqiangkou",
-      "spatialProvinceIndex": 1319,
+      "spatialProvinceIndex": 1317,
       "routeNodeKey": "233eb1a7-6f8c-413a-a593-dd5b00d0e0e8",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-wuqiangkou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-wuqiangkou"
@@ -50544,9 +50556,9 @@
         "isSeat": false,
         "displayName": "협구"
       },
-      "provinceId": 1320,
+      "provinceId": 1318,
       "spatialProvinceId": "ss-xiakou",
-      "spatialProvinceIndex": 1320,
+      "spatialProvinceIndex": 1318,
       "routeNodeKey": "1fc5ba1b-6c01-478d-9cc3-ce42a98f6c16",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xiakou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xiakou"
@@ -50587,9 +50599,9 @@
         "isSeat": false,
         "displayName": "소평진"
       },
-      "provinceId": 1321,
+      "provinceId": 1319,
       "spatialProvinceId": "ss-xiaopingjin",
-      "spatialProvinceIndex": 1321,
+      "spatialProvinceIndex": 1319,
       "routeNodeKey": "d116a780-c466-41dd-8468-4caa4de02211",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xiaopingjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xiaopingjin"
@@ -50630,9 +50642,9 @@
         "isSeat": false,
         "displayName": "소요진"
       },
-      "provinceId": 1322,
+      "provinceId": 1320,
       "spatialProvinceId": "ss-xiaoyaojin",
-      "spatialProvinceIndex": 1322,
+      "spatialProvinceIndex": 1320,
       "routeNodeKey": "9bebe86d-1752-4e17-840a-04d17809be43",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xiaoyaojin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xiaoyaojin"
@@ -50674,9 +50686,9 @@
         "isSeat": false,
         "displayName": "사곡관"
       },
-      "provinceId": 1323,
+      "provinceId": 1321,
       "spatialProvinceId": "ss-xieguguan",
-      "spatialProvinceIndex": 1323,
+      "spatialProvinceIndex": 1321,
       "routeNodeKey": "37f8010e-04cb-4b72-9340-59608dc8afa6",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xieguguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xieguguan"
@@ -50716,9 +50728,9 @@
         "isSeat": false,
         "displayName": "흥국성"
       },
-      "provinceId": 1324,
+      "provinceId": 1322,
       "spatialProvinceId": "ss-xingguocheng",
-      "spatialProvinceIndex": 1324,
+      "spatialProvinceIndex": 1322,
       "routeNodeKey": "1b7fadc2-6563-4b38-9e92-613a767918ef",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xingguocheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xingguocheng"
@@ -50759,9 +50771,9 @@
         "isSeat": false,
         "displayName": "서새"
       },
-      "provinceId": 1325,
+      "provinceId": 1323,
       "spatialProvinceId": "ss-xisai",
-      "spatialProvinceIndex": 1325,
+      "spatialProvinceIndex": 1323,
       "routeNodeKey": "6fda69eb-0f73-455a-bdcf-d48eaf29e008",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xisai",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xisai"
@@ -50803,9 +50815,9 @@
         "isSeat": false,
         "displayName": "심구"
       },
-      "provinceId": 1326,
+      "provinceId": 1324,
       "spatialProvinceId": "ss-xunkou",
-      "spatialProvinceIndex": 1326,
+      "spatialProvinceIndex": 1324,
       "routeNodeKey": "58bde0b6-cd43-4d16-b1bc-a1568606b2a9",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-xunkou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-xunkou"
@@ -50845,9 +50857,9 @@
         "isSeat": false,
         "displayName": "양안관"
       },
-      "provinceId": 1327,
+      "provinceId": 1325,
       "spatialProvinceId": "ss-yanganguan",
-      "spatialProvinceIndex": 1327,
+      "spatialProvinceIndex": 1325,
       "routeNodeKey": "6e42969e-af73-4736-ad58-1638f1efe823",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-yanganguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-yanganguan"
@@ -50887,9 +50899,9 @@
         "isSeat": false,
         "displayName": "양평관"
       },
-      "provinceId": 1328,
+      "provinceId": 1326,
       "spatialProvinceId": "ss-yangpingguan",
-      "spatialProvinceIndex": 1328,
+      "spatialProvinceIndex": 1326,
       "routeNodeKey": "bbd4e6fa-39a8-4a99-af9c-8a20ce383ba3",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-yangpingguan",
       "sourceClaimId": "han-strategic-site-route-claim-v1-yangpingguan"
@@ -50932,9 +50944,9 @@
         "isSeat": false,
         "displayName": "연진"
       },
-      "provinceId": 1329,
+      "provinceId": 1327,
       "spatialProvinceId": "ss-yanjin",
-      "spatialProvinceIndex": 1329,
+      "spatialProvinceIndex": 1327,
       "routeNodeKey": "4b5a198c-ac1f-4be0-8614-cc2e9a725a1e",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-yanjin",
       "sourceClaimId": "han-strategic-site-route-claim-v1-yanjin"
@@ -50975,9 +50987,9 @@
         "isSeat": false,
         "displayName": "일천오"
       },
-      "provinceId": 1330,
+      "provinceId": 1328,
       "spatialProvinceId": "ss-yiquanwu",
-      "spatialProvinceIndex": 1330,
+      "spatialProvinceIndex": 1328,
       "routeNodeKey": "94bec4e9-1b92-4e40-8c7a-1ce706e79734",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-yiquanwu",
       "sourceClaimId": "han-strategic-site-route-claim-v1-yiquanwu"
@@ -51017,9 +51029,9 @@
         "isSeat": false,
         "displayName": "전음구"
       },
-      "provinceId": 1331,
+      "provinceId": 1329,
       "spatialProvinceId": "ss-zhanyinkou",
-      "spatialProvinceIndex": 1331,
+      "spatialProvinceIndex": 1329,
       "routeNodeKey": "4874cc04-a8b3-492b-bf9f-73154e0479c6",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-zhanyinkou",
       "sourceClaimId": "han-strategic-site-route-claim-v1-zhanyinkou"
@@ -51059,9 +51071,9 @@
         "isSeat": false,
         "displayName": "좌성"
       },
-      "provinceId": 1332,
+      "provinceId": 1330,
       "spatialProvinceId": "ss-zuocheng",
-      "spatialProvinceIndex": 1332,
+      "spatialProvinceIndex": 1330,
       "routeNodeKey": "2d881059-00f1-440f-92dc-c1b90b6f256c",
       "physicalPlaceRef": "curated:strategic-site-v1:ss-zuocheng",
       "sourceClaimId": "han-strategic-site-route-claim-v1-zuocheng"
@@ -52691,66 +52703,115 @@
     {
       "from": 368,
       "to": 790,
+      "kind": "SEA",
       "source": "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"
+    },
+    {
+      "from": 397,
+      "to": 401,
+      "kind": "RIVER",
+      "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 夷陵县 ↔ 江陵县"
+    },
+    {
+      "from": 397,
+      "to": 473,
+      "kind": "RIVER",
+      "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 江陵县 ↔ 沙羡县"
+    },
+    {
+      "from": 401,
+      "to": 572,
+      "kind": "RIVER",
+      "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷32 蜀書二 先主傳 「諸葛亮、張飛、趙雲等將兵溯流定白帝、江州、江陽」 · 三國志 卷36 蜀書六 關張馬黃趙傳 (張飛) 「飛與諸葛亮等溯流而上，分定郡縣。至江州」 — 江州县 ↔ 夷陵县"
+    },
+    {
+      "from": 473,
+      "to": 1037,
+      "kind": "RIVER",
+      "source": "晉書 卷42 列傳第十二 王濬 「濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之」 · 晉書 卷42 列傳第十二 王濬 「夏口、武昌，無相支抗。於是順流鼓棹，徑造三山」 · 晉書 卷42 列傳第十二 王濬 「二月庚申，克吳西陵」 · 三國志 卷47 吳書·吳主傳 「是歳，改夷陵爲西陵」 — 沙羡县 ↔ 樊口"
     },
     {
       "from": 536,
       "to": 1125,
+      "kind": "SEA",
       "source": "讀史方輿紀要 卷94 인용 後漢書 東夷傳 「會稽海外有夷洲、亶洲」 + 三國志 吳書 孫權傳 黃龍二年 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」"
     },
     {
       "from": 536,
       "to": 1126,
+      "kind": "SEA",
       "source": "隋書 卷81 東夷 流求國 「流求國，居海島之中，當建安郡東，水行五日而至」 — 建安郡은 260년 會稽에서 분치됐으므로 220년 시점의 관할은 會稽郡이다"
     },
     {
       "from": 737,
       "to": 956,
+      "kind": "SEA",
       "source": "後漢書 卷33 鄭弘傳 「舊交阯七郡貢獻轉運，皆從東冶汎海而至」 — 東冶(東部侯官) ↔ 番禺"
     },
     {
       "from": 743,
       "to": 744,
+      "kind": "SEA",
       "source": "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"
     },
     {
       "from": 790,
       "to": 847,
+      "kind": "SEA",
       "source": "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"
     },
     {
       "from": 847,
       "to": 1027,
+      "kind": "SEA",
       "source": "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"
+    },
+    {
+      "from": 934,
+      "to": 1072,
+      "kind": "RIVER",
+      "source": "三國志 卷51 吳書·宗室傳 裴注(江表傳) 「初權在武昌，欲還都建業，而慮水道溯流二千里」 — 濡須口 ↔ 建业县"
     },
     {
       "from": 1002,
       "to": 1114,
+      "kind": "SEA",
       "source": "三國志 卷30 倭人 「從郡至倭，循海岸水行，歷韓國…到其北岸狗邪韓國」 — 帶方 ↔ 狗邪韓國"
+    },
+    {
+      "from": 1037,
+      "to": 1072,
+      "kind": "RIVER",
+      "source": "三國志 卷51 吳書·宗室傳 裴注(江表傳) 「初權在武昌，欲還都建業，而慮水道溯流二千里」 — 樊口 ↔ 濡須口"
     },
     {
       "from": 1101,
       "to": 1104,
+      "kind": "SEA",
       "source": "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"
     },
     {
       "from": 1110,
       "to": 1112,
+      "kind": "SEA",
       "source": "三國志 魏書30 韓 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」 — 지도에 馬韓 자체는 없고 馬韓 소국만 있어 그중 최근접(257km)인 辟卑離國에 붙인다"
     },
     {
       "from": 1114,
       "to": 1119,
+      "kind": "SEA",
       "source": "三國志 卷30 倭人 「始渡一海，千餘里至對馬國」"
     },
     {
       "from": 1119,
       "to": 1120,
+      "kind": "SEA",
       "source": "三國志 卷30 倭人 「又南渡一海千餘里，名曰瀚海，至一大國」"
     },
     {
       "from": 1120,
       "to": 1121,
+      "kind": "SEA",
       "source": "三國志 卷30 倭人 「又渡一海，千餘里至末盧國」"
     }
   ]

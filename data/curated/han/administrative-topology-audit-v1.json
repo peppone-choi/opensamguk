@@ -15,23 +15,18 @@
     "noAutomaticRepair": true
   },
   "counts": {
-    "province": 1333,
+    "province": 1331,
     "jurisdiction": 1133,
     "commandery": 172
   },
   "provinceTopology": {
     "minimumCellCount": 8,
-    "belowMinimumCount": 10,
+    "belowMinimumCount": 9,
     "belowMinimum": [
       {
         "id": "45203",
         "displayName": "번현",
         "cellCount": 7
-      },
-      {
-        "id": "83166",
-        "displayName": "양안현",
-        "cellCount": 1
       },
       {
         "id": "87489",
@@ -74,7 +69,7 @@
         "cellCount": 5
       }
     ],
-    "disconnectedCount": 14,
+    "disconnectedCount": 16,
     "disconnected": [
       {
         "id": "40740",
@@ -143,6 +138,28 @@
         ]
       },
       {
+        "id": "43138",
+        "displayName": "육안현",
+        "componentCellCounts": [
+          130,
+          38
+        ],
+        "components": [
+          {
+            "cellCount": 130,
+            "memberIds": [
+              "43138"
+            ]
+          },
+          {
+            "cellCount": 38,
+            "memberIds": [
+              "43138"
+            ]
+          }
+        ]
+      },
+      {
         "id": "43423",
         "displayName": "악현",
         "componentCellCounts": [
@@ -204,6 +221,28 @@
             "cellCount": 1,
             "memberIds": [
               "70620"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "83166",
+        "displayName": "양안현",
+        "componentCellCounts": [
+          15,
+          1
+        ],
+        "components": [
+          {
+            "cellCount": 15,
+            "memberIds": [
+              "83166"
+            ]
+          },
+          {
+            "cellCount": 1,
+            "memberIds": [
+              "83166"
             ]
           }
         ]
@@ -871,7 +910,7 @@
           {
             "cellCount": 38,
             "memberIds": [
-              "SUB-43138-5f794c6b1306"
+              "43138"
             ]
           }
         ]
@@ -1022,7 +1061,7 @@
           {
             "cellCount": 15,
             "memberIds": [
-              "SUB-83166-25d1651f64ee"
+              "83166"
             ]
           },
           {
@@ -8977,7 +9016,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "6dde62bc0286e5c3e04f39f8b280fe0aa02424bed124300119546d533ef879b4"
+      "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
