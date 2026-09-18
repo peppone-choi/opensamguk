@@ -1196,7 +1196,11 @@ class ChangeRecorder(
             val positions = checkNotNull(world.generalPositionSnapshot())
             val result = applyGeneralPositionAssessment(world, null,
                 GeneralPositionAssessment(positions.topologyRevision, positions.topologyHash, general.id, node))
-            check(result is GeneralPositionChangeResult.Changed) { "HWIHA: position row for new general ${general.id} was rejected: $result" }
+            if (result !is GeneralPositionChangeResult.Changed) {
+                // 반쪽 생성을 남기지 않는다 — 같은 틱의 create-then-remove 는 완전히 상쇄된다(removeGeneral).
+                world.removeGeneral(general.id)
+                error("HWIHA: position row for new general ${general.id} was rejected: $result")
+            }
             return created
         }
         return world.createGeneral(general.copy(initialTurns = initialTurns.toList()))

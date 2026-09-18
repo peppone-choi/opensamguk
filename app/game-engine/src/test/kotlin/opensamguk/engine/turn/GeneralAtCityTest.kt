@@ -116,5 +116,11 @@ class HwihaPositionWriteTest {
         val world = world(); val recorder = ChangeRecorder()
         assertFailsWith<IllegalStateException> { recorder.recordGeneralCreate(world, general(9, 99)) }
         assertEquals(null, world.getGeneralById(9))
+        // 위치 쓰기가 거절돼도 장수가 반쪽으로 남지 않는다(삭제된 id 재사용 → UNKNOWN_GENERAL 거절 경로).
+        recorder.recordGeneralCreate(world, general(11, 20))
+        recorder.markGeneralDeleted(world, 11)
+        assertFailsWith<IllegalStateException> { recorder.recordGeneralCreate(world, general(11, 20)) }
+        assertEquals(null, world.getGeneralById(11))
+        assertEquals(null, world.positionOf(11))
     }
 }
