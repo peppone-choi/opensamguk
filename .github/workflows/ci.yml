@@ -27,7 +27,16 @@ jobs:
       # `always()` — a cancelled job still shouldn't keep grinding.
       - name: Verify Han map data contract tests
         if: '!cancelled()'
-        run: python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+        # 느린 두 파일은 map-slow-tests 잡이 병렬로 돈다(2026-09-18 로컬 실측: 전체 2,045초 중
+        # test_build_han_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
+        # 빼는 이름이 실제 파일이 아니면 실패한다 — 이름이 바뀌어 아무 데서도 안 도는 일을 막는다.
+        run: |
+          slow="test_build_han_parent_reconciliation test_territory_disconnection_adjudications"
+          for t in $slow; do test -f "tools/map/tests/$t.py" || { echo "slow test missing: $t" >&2; exit 1; }; done
+          grep -c "^          - test_" .github/workflows/ci.yml | grep -qx 2 || { echo "map-slow-tests matrix must list exactly the 2 excluded files" >&2; exit 1; }
+          for t in $slow; do grep -q "^          - $t$" .github/workflows/ci.yml || { echo "excluded but not in map-slow-tests matrix: $t" >&2; exit 1; }; done
+          files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_han_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
+          python3 -m unittest $files
       - name: Test march tempo simulator (tools/sim)
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/sim/tests -p 'test_*.py'
@@ -227,6 +236,26 @@ jobs:
   # GH #542 경고 축. contracts 에 두면 Wikidata 가 멈출 때 고아 프로세스가 25분 한도를 먹어 contracts 가
   # 통째로 취소됐다(런 35305964557: 「Terminate orphan process: timeout / python3」). 결과에 영향 없는
   # 경고이므로 자기 잡·자기 한도로 떼어 둔다 — 실패해도(continue-on-error) 다른 잡을 막지 않는다.
+  map-slow-tests:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - test_build_han_parent_reconciliation
+          - test_territory_disconnection_adjudications
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Han map test dependencies
+        run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
+      - name: Run ${{ matrix.test }}
+        run: python3 -m unittest tools/map/tests/${{ matrix.test }}.py
+
   external-places-drift:
     permissions:
       contents: read
