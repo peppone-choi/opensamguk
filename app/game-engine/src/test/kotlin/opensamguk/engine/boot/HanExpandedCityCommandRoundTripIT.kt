@@ -34,6 +34,7 @@ import kotlin.test.assertTrue
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HanExpandedCityCommandRoundTripIT {
     private lateinit var postgres: PostgreSQLContainer<*>
+    private lateinit var admin: JdbcTemplate
     private lateinit var jdbc: JdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
     private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
@@ -43,11 +44,37 @@ class HanExpandedCityCommandRoundTripIT {
             "Docker unavailable: expanded city command persistence not verified")
         postgres = PostgreSQLContainer("postgres:16-alpine")
         postgres.start()
-        val source = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-        Flyway.configure().dataSource(source).locations("classpath:db/migration")
+        // 시드는 한 번만 한다. 마이그레이션 + scenario_1020 시드를 끝낸 SEEDED DB 를 틀로 두고, 반복마다
+        // `CREATE DATABASE … TEMPLATE` 로 WORK DB 를 통째로 다시 찍는다. 실측(2026-09-18, 596 반복)에서
+        // 반복당 TRUNCATE+재시드가 벽시계의 66% 였다. 행 단위 되돌리기가 아니라 DB 복제라서 앞 반복의
+        // 흔적이 남을 길이 없다. DriverManagerDataSource 는 작업마다 연결을 열고 닫으므로 틀에 세션이 남지 않는다.
+        fun source(database: String) = DriverManagerDataSource(
+            "jdbc:postgresql://${postgres.host}:${postgres.getMappedPort(5432)}/$database", postgres.username, postgres.password)
+        admin = JdbcTemplate(source(postgres.databaseName))
+        admin.execute("CREATE DATABASE $SEEDED")
+        Flyway.configure().dataSource(source(SEEDED)).locations("classpath:db/migration")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+        assertTrue(bootstrap.ensureSeeded(JdbcTemplate(source(SEEDED))))
+        val source = source(WORK)
         jdbc = JdbcTemplate(source)
         executor = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
+    }
+
+    private val worldId = WorldId(1)
+    private val bootstrap = SeedBootstrap(scenarioCode = "scenario_1020", worldId = worldId)
+
+    private fun restoreSeededWorld() {
+        admin.execute("DROP DATABASE IF EXISTS $WORK WITH (FORCE)")
+        admin.execute("CREATE DATABASE $WORK TEMPLATE $SEEDED")
+    }
+
+    private fun load() = WorldSnapshotLoader(jdbc, bootstrap, worldId,
+        waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant }).buildSnapshot()
+
+    private companion object {
+        const val SEEDED = "expanded_city_seeded"
+        const val WORK = "expanded_city_work"
     }
 
     @AfterAll fun cleanup() { if (this::postgres.isInitialized) postgres.stop() }
@@ -60,18 +87,23 @@ class HanExpandedCityCommandRoundTripIT {
         val olderIds = artifacts.artifacts(HanWorldVariant.V3_835).cityConst.all().keys
         val additions = (currentIds - olderIds - isolated).sorted()
         assertTrue(additions.isNotEmpty(), "expansion evidence must exercise added cities")
+        // 틀에서 찍은 DB 는 매번 같은 내용이므로 시드 직후 스냅샷과 그것에만 의존하는 투영 입력은 한 번만 만든다.
+        // 끝에서 새로 찍은 DB 를 다시 읽어 baseline 과 같은지 대조한다 — 공유 객체가 도중에 변형됐다면 거기서 빨개진다.
+        restoreSeededWorld()
+        val baseline = load()
+        val bundle = artifacts.artifacts(assertNotNull(baseline.state.hanWorldVariant))
+        val mapper = ObjectMapper()
+        val apiOwnership = MapAdministrativeOwnership(mapper, "unused", "unused", "unused")
+        val supplyProvider = HanSpatialSupplyProvider(mapper, "unused", "unused")
+        val coords = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
+            .toString(Charsets.UTF_8)).cities.associateBy { it.id }
+        val provinces = mapper.readTree(bundle.artifactBytes("data/map/han-tiles.json")).path("provinceRecords")
+        val canonicalOwners = apiOwnership.project("1020", emptyList(), bundle).provinceOccupancy.map { it.nationId }
+        var restoredFirst = false
         for (destination in additions) for (command in listOf("che_이동", "che_출병")) {
-            // SeedBootstrap deliberately requires a single configured world per database.
-            // This PostgreSQL container belongs only to this test class.
-            jdbc.execute("TRUNCATE TABLE world_state CASCADE")
-            val worldId = WorldId(1)
-            val bootstrap = SeedBootstrap(scenarioCode = "scenario_1020", worldId = worldId)
-            assertTrue(bootstrap.ensureSeeded(jdbc))
-            fun load() = WorldSnapshotLoader(jdbc, bootstrap, worldId,
-                waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant }).buildSnapshot()
-            val baseline = load()
-            val bundle = artifacts.artifacts(assertNotNull(baseline.state.hanWorldVariant))
+            // 첫 반복은 위에서 찍은 DB 를 그대로 쓴다(아직 아무도 쓰지 않았다).
+            if (restoredFirst) restoreSeededWorld()
+            restoredFirst = true
             val sourceId = assertNotNull(bundle.cityConst.byId(destination)).path.keys.sorted().first()
             assertTrue(destination in assertNotNull(bundle.cityConst.byId(sourceId)).path)
             val actor = baseline.generals.first { it.nationId > 0 }
@@ -126,15 +158,8 @@ class HanExpandedCityCommandRoundTripIT {
             val world = InMemoryTurnWorld(load())
             assertEquals(sourceId, world.getGeneralById(actor.id)!!.cityId)
             assertEquals(if (attack) enemyId else nationId, world.getCityById(destination)!!.nationId)
-            val mapper = ObjectMapper()
-            val apiOwnership = MapAdministrativeOwnership(mapper, "unused", "unused", "unused")
-            val supplyProvider = HanSpatialSupplyProvider(mapper, "unused", "unused")
-            val coords = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
-                .toString(Charsets.UTF_8)).cities.associateBy { it.id }
-            val provinces = mapper.readTree(bundle.artifactBytes("data/map/han-tiles.json")).path("provinceRecords")
             val seat = assertNotNull(coords.getValue(destination).provinceId)
             val jurisdiction = provinces[seat].path("jurisdictionId").asText()
-            val canonicalOwners = apiOwnership.project("1020", emptyList(), bundle).provinceOccupancy.map { it.nationId }
             val affected = (0 until provinces.size()).filter { index ->
                 provinces[index].path("jurisdictionId").asText() == jurisdiction &&
                     canonicalOwners[index] == canonicalOwners[seat]
@@ -184,5 +209,11 @@ class HanExpandedCityCommandRoundTripIT {
             assertEquals(bundle.projection.topology.contentHash, assertNotNull(restored.waterControlSnapshot).topologyHash)
             println("EXPANDED_CITY_COMMAND destination=$destination command=$command persisted=true")
         }
+        restoreSeededWorld()
+        // 세 제어 스냅샷은 equals 가 없는 클래스라 참조 비교가 된다. 나머지 전 필드를 값으로 대조한다.
+        fun comparable(snapshot: WorldSnapshot) = snapshot.copy(
+            waterControlSnapshot = null, provinceControlSnapshot = null, generalPositionSnapshot = null)
+        assertEquals(comparable(baseline), comparable(load()),
+            "shared seeded baseline must still equal a fresh clone of the seeded template")
     }
 }
