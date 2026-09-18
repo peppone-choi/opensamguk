@@ -24,8 +24,11 @@
 
 - **HWIHA 월드**(입력 registry 계약 §2 의 `ruleProfile`): 장수의 위치 정본은 `general_spatial_position` 의 `(node_kind, node_id)` 다. **모든 장수가 행을 가진다**(없음 = 결함).
 - `general.city_id` 는 **기준 城**이다 — V59 의 귀환 城과 같은 뜻으로, **절대 0 이 되지 않는다.** 위치 省에 城이 있으면 그 城, 없으면 **마지막으로 섰던 城**을 유지한다. 도시 소속·소득·AI 도시 뷰 등 215곳의 `cityId` 소비자는 그대로 기준 城을 읽는다.
-- 「城에 없음」은 저장값이 아니라 **파생 술어** `atCity(g) := cityAnchors[g.cityId] == position(g).node` 다. 전장 주둔(`battlefield != null`)은 이 술어의 특수형이다. 도시 행동을 막는 18곳의 키를 `isGeneralAtBattlefield` 에서 `!isGeneralAtCity` 로 넓히는 것이 첫 묶음의 실제 작업이다(§3-4).
-- **SAMMO 월드**: 아무것도 바뀌지 않는다. `general.city_id` 정본, 위치 행 선택적, 기존 전장 경로 그대로(재설계 §17, 판정문 §4.4). `isGeneralAtCity` 는 SAMMO 에서 항상 `!isGeneralAtBattlefield` 와 같다.
+- 「城에 없음」은 저장값이 아니라 **파생 술어** `isGeneralAtCity` 다. 정의는 규칙 프로필마다 다르다(동치가 아니라 **정의**다 — 교차 비평 F4):
+  - **SAMMO:** `isGeneralAtCity := !isGeneralAtBattlefield`. 전장 주둔자는 행의 node 가 귀환 城의 省과 같아(`BattlefieldMovementRules.enter` 가 `anchors[cityId] == site.node` 를 요구) 위치 비교로는 「城에 있음」이 되고, 행 없는 장수(대다수)에서는 비교가 정의되지 않으며, 전장 이탈 뒤 `city_id` 만 갱신하는 우회 경로(`InstantActionHandler.kt:75`, `MonthlyPostUpdateHook.kt:283,287`)가 행을 낡게 둔다. 그래서 SAMMO 에서 위치 비교를 쓰면 바이트 불변이 깨진다.
+  - **HWIHA:** `isGeneralAtCity := battlefield == null && bindings[cityId].node == position.node`. 우회 경로 2곳은 HWIHA 에서 `moveGeneral` 로 돌린다(§3-5).
+  - 도시 행동을 막는 18곳의 키를 `isGeneralAtBattlefield` 에서 `!isGeneralAtCity` 로 넓히는 것이 첫 묶음의 실제 작업이다(§3-4). SAMMO 에서는 정의상 같은 값이라 바이트 불변이다. 단 `API/precheck/CommandPrecheckService.kt:116` 은 엔진 술어가 아니라 game-api 의 env 생산자를 바꿔야 한다.
+- **SAMMO 월드**: 아무것도 바뀌지 않는다. `general.city_id` 정본, 위치 행 선택적, 기존 전장 경로 그대로(재설계 §17, 판정문 §4.4).
 
 ### 2.2 동기 방향
 
@@ -36,7 +39,7 @@
 | 省 이동(행군, 뒤 묶음) | 없음 | 위치 쓰기. 도착 省에 城이 있으면 `city_id` 를 그 城으로, 없으면 기준 城 유지(`atCity = false`) |
 | 장수 생성(시드·이벤트 등장·유저 생성·`MakeGeneralHandler`) | 위치 행 없음 | **생성 = 위치 행 생성.** `recordGeneralCreate` 한 곳에서 `city_id` 의 省으로 행을 만들고, `MakeGeneralHandler.kt:215` 의 별도 경로도 같은 함수를 부른다 |
 | 행 삭제 | 전장 이탈·외부 거점·강제 해제 | **금지.** 사망·삭제 장수만 FK cascade 로 사라진다 |
-| `city_id` 를 직접 쓰는 우회 경로(`InstantActionHandler.kt:75-76` 즉시 퇴각 등) | `city_id` 직접 갱신 | 위치 쓰기 진입점으로 바꾼다. 「관리자 강제 이동」 인테이크는 코드에서 찾지 못했다(UNKNOWN) |
+| `city_id` 를 직접 쓰는 우회 경로(`InstantActionHandler.kt:75-76` 즉시 퇴각, `MonthlyPostUpdateHook.kt:283,287` 방랑군 월 처리) | `city_id` 직접 갱신 | 위치 쓰기 진입점으로 바꾼다. 「관리자 강제 이동」 인테이크는 코드에서 찾지 못했다(UNKNOWN) |
 
 ### 2.3 불변식(HWIHA)
 
@@ -55,8 +58,8 @@
 
 1. **읽기 뷰**: `InMemoryTurnWorld.positionOf(generalId)`(HWIHA 에서 non-null)와 `isGeneralAtCity(generalId)`. 기존 `generalPositionSnapshot()`·`isGeneralAtBattlefield` 위에 얇게.
 2. **쓰기 진입점 하나**: `recorder.moveGeneral(world, generalId, to: StrategicNodeRef)` — 위치 CAS 쓰기 + `city_id` 갱신(省에 城이 있을 때만)을 한 번에. `removeGeneralPosition` 이 이미 쓰는 「`diffGeneral` + `applyGeneralDirtyFree` 를 같은 버퍼에」 패턴을 따른다. HWIHA 의 모든 이동은 이것만 부른다.
-3. **생성 = 행 생성**: `recordGeneralCreate` 안에서 HWIHA 면 `cityAnchors[city_id]` 로 행을 만든다. `MakeGeneralHandler` 의 별도 경로도 같은 함수를 탄다. 시드는 `ScenarioImporter.importAdmitted` 의 `insertGenerals` 직후에 전 장수 행 INSERT(핀은 `HanWorldArtifactsResolver.resolve(cityIds, emptyList()).projection.topology`).
-4. **차단 키 넓히기**: 18곳의 `isGeneralAtBattlefield` 를 `!isGeneralAtCity` 로. SAMMO 에서는 두 값이 같으므로 바이트 불변.
+3. **생성 = 행 생성**: `recordGeneralCreate` 안에서 HWIHA 면 `bindings[city_id]` 로 행을 만든다. 바인딩이 없는 城(외부 거점 — 1133 리소스에서 0건)이면 조용히 건너뛰지 않고 **생성을 거절**한다. `MakeGeneralHandler` 의 별도 경로도 같은 함수를 탄다. 시드는 `ScenarioImporter.importAdmitted` 의 `insertGenerals` 직후에 전 장수 행 INSERT(핀은 `HanWorldArtifactsResolver.resolve(cityIds, emptyList()).projection.topology`).
+4. **차단 키 넓히기**: 18곳의 `isGeneralAtBattlefield` 를 `!isGeneralAtCity` 로. SAMMO 에서는 §2.1 의 정의상 같은 값이라 바이트 불변(동치를 검증하는 테스트가 아니라 정의를 고정하는 테스트를 둔다).
 5. **`applyPositionAwareGeneral`**: 호출자 14곳 중 이동인 곳은 `moveGeneral` 로, meta 갱신뿐인 4곳은 그대로 둔다(HWIHA 에서 통째로 끄면 그 갱신이 사라진다 — 교차 비평 S7). `InstantActionHandler` 의 우회 쓰기를 진입점으로 돌린다.
 6. **ruleProfile 선행 의존**: 계약 §2 의 ruleProfile 은 아직 코드에 없다(0건). 이 묶음은 「시나리오 JSON 에 `ruleProfile` 필드 하나(없으면 SAMMO) → `ScenarioImporter` 가 `world_state.config` 에 기록 → 런타임이 읽음」을 **함께** 구현한다. 기존 시나리오 파일은 필드가 없어 SAMMO 다.
 7. `cityAnchors` 는 클래스패스 리소스(`map/han-world-v3.json`)를 읽고 부팅은 변형 아카이브를 쓴다(교차 비평 S4) — 행 생성·`atCity` 는 부팅이 고른 변형의 `projection.bindingsByCityId` 를 써야 한다.
@@ -77,6 +80,6 @@
 
 ## 6. 미결
 
-- 18곳 밖에서 「城에 있음」을 전제하는 소비자(AI 도시 뷰 `AiWorldView.kt:371`, 보급 감쇠, 월 훅, 읽기 목록 등 교차 비평 S2 의 5계열)를 첫 슬라이스에서 어디까지 넓힐지 — 省 행군이 들어오기 전에는 `atCity` 가 거짓인 장수가 생기지 않으므로, 이 목록은 행군 묶음(판정문 §4.3-2)의 선행 조건으로 넘길 수 있다.
+- 18곳 밖에서 「城에 있음」을 전제하는 소비자 — 省 행군이 들어오기 전에는 `atCity` 가 거짓인 장수가 생기지 않으므로(교차 비평 확인, 1133 한정) 행군 묶음(판정문 §4.3-2)의 **선행 게이트**로 넘긴다. 고정 목록: `LOGIC/world/UpdateCitySupply.kt:255`(보급 감쇠), `LOGIC/operation/OperationRules.kt:172-176`(작전 이정표), `LOGIC/ai/AiWorldView.kt:371`(NPC 도시 뷰). 월 소득·징세(`ProcessIncome`·`PreUpdateMonthly`·`ProcessSemiAnnual`)는 `general.cityId` 를 읽지 않아 무관.
 - `moveGeneral` 이 받을 위상 핀 불일치(리셋 뒤 토폴로지 변경) 처리 — 기존 CAS 거절을 그대로 쓸지.
 - 재야(nation 0) 장수도 城·省을 가진다(시드 `ScenarioImporter.kt:496`, 유저 생성 `MakeGeneralHandler.kt:187`) — 현행 데이터와 맞는다. 방랑 주공(재설계 §2.1)이 城 없는 省에 서는 경우가 첫 `atCity = false` 사례가 될 것이다.
