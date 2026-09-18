@@ -237,7 +237,34 @@
   "龍": "龙",
   "龜": "龟",
   "呉": "吴",
-  "毘": "毗"
+  "毘": "毗",
+  "荧": "荥",
+  "菀": "苑",
+  "匽": "偃",
+  "睾": "皋",
+  "板": "坂",
+  "雒": "洛",
+  "渝": "隃",
+  "愼": "慎",
+  "郎": "朗",
+  "襃": "褒",
+  "憙": "喜",
+  "已": "己",
+  "髙": "高",
+  "鄕": "乡",
+  "楡": "榆",
+  "菑": "淄",
+  "湼": "涅",
+  "很": "佷",
+  "荼": "茶",
+  "榖": "谷",
+  "昬": "昏",
+  "稾": "稿",
+  "莋": "笮",
+  "巂": "嶲",
+  "驪": "骊",
+  "賓": "宾",
+  "谿": "溪"
  },
  "reviewedVariantAdditions": [
   {
@@ -258,6 +285,274 @@
    "sourceUrls": [
     "https://zh.wikisource.org/wiki/後漢書/卷112",
     "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_40451"
+   ]
+  },
+  {
+   "from": "荧",
+   "to": "荥",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 河南尹 荧阳; CHGIS44385 荥阳县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_44385"
+   ]
+  },
+  {
+   "from": "菀",
+   "to": "苑",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 河南尹 菀陵; CHGIS82465 苑陵县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82465"
+   ]
+  },
+  {
+   "from": "匽",
+   "to": "偃",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 河南尹 匽师; CHGIS82846 偃师县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82846"
+   ]
+  },
+  {
+   "from": "睾",
+   "to": "皋",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 河內郡 平睾; CHGIS82519 平皋县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82519"
+   ]
+  },
+  {
+   "from": "板",
+   "to": "坂",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 河東郡 蒲板; CHGIS95495 蒲坂县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_95495"
+   ]
+  },
+  {
+   "from": "雒",
+   "to": "洛",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 京兆尹 上雒; CHGIS200094 上洛县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_200094"
+   ]
+  },
+  {
+   "from": "渝",
+   "to": "隃",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷109 右扶風 渝麋; CHGIS70952 隃麋县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷109",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_70952"
+   ]
+  },
+  {
+   "from": "愼",
+   "to": "慎",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷110 汝南郡 愼陽; CHGIS83168 慎阳县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_83168"
+   ]
+  },
+  {
+   "from": "郎",
+   "to": "朗",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷110 汝南郡 郎陵; CHGIS83170 朗陵县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_83170"
+   ]
+  },
+  {
+   "from": "襃",
+   "to": "褒",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷110 汝南郡 襃信; CHGIS82594 褒信县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82594"
+   ]
+  },
+  {
+   "from": "憙",
+   "to": "喜",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷110 中山國 安憙; CHGIS87549 安喜县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷110",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_87549"
+   ]
+  },
+  {
+   "from": "已",
+   "to": "己",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷111 陳留郡 己吾; CHGIS82087 已吾县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82087"
+   ]
+  },
+  {
+   "from": "髙",
+   "to": "高",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷111 泰山郡 奉髙; CHGIS85697 奉高县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85697"
+   ]
+  },
+  {
+   "from": "鄕",
+   "to": "乡",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷111 山陽郡 金鄕; CHGIS85158 金乡县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85158"
+   ]
+  },
+  {
+   "from": "楡",
+   "to": "榆",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷111 東海郡 贛楡; CHGIS42888 赣榆县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷111",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_42888"
+   ]
+  },
+  {
+   "from": "菑",
+   "to": "淄",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 齊國 臨菑; CHGIS85234 临淄县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85234"
+   ]
+  },
+  {
+   "from": "湼",
+   "to": "涅",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 南陽郡 涅陽; CHGIS82692 湼阳县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_82692"
+   ]
+  },
+  {
+   "from": "很",
+   "to": "佷",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 南郡 很山; CHGIS45820 佷山县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_45820"
+   ]
+  },
+  {
+   "from": "荼",
+   "to": "茶",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 長沙郡 荼陵; CHGIS41770 茶陵县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_41770"
+   ]
+  },
+  {
+   "from": "榖",
+   "to": "谷",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 丹陽郡 春穀; CHGIS41374 春榖县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_41374"
+   ]
+  },
+  {
+   "from": "昬",
+   "to": "昏",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷112 豫章郡 海昬; CHGIS41136 海昏侯国",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷112",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_41136"
+   ]
+  },
+  {
+   "from": "稾",
+   "to": "稿",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 牂牁郡 谈稾; CHGIS99341 谈稿县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_99341"
+   ]
+  },
+  {
+   "from": "莋",
+   "to": "笮",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 越巂郡 定莋; CHGIS200284 定笮县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_200284"
+   ]
+  },
+  {
+   "from": "巂",
+   "to": "嶲",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 永昌郡 巂唐; CHGIS45381 嶲唐县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_45381"
+   ]
+  },
+  {
+   "from": "驪",
+   "to": "骊",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 玄菟郡 高句骊; han-tiles 高句驪縣(CHGIS 밖 관할, 繁體 표기)",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113"
+   ]
+  },
+  {
+   "from": "賓",
+   "to": "宾",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 遼東屬國 宾徒; han-tiles 賓徒縣(CHGIS 밖 관할, 繁體 표기)",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113"
+   ]
+  },
+  {
+   "from": "谿",
+   "to": "溪",
+   "scope": "Place-name comparison only; source spelling is preserved",
+   "witness": "後漢書卷113 蒼梧郡 端谿; CHGIS42352 端溪县",
+   "sourceUrls": [
+    "https://zh.wikisource.org/wiki/後漢書/卷113",
+    "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_42352"
    ]
   }
  ]
