@@ -195,10 +195,17 @@ class WorldSnapshotLoader(
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
             generalPositionSnapshot = topology?.let(::loadGeneralPositionSnapshot),
+            // SAMMO 는 바인딩을 읽지 않는다(무변경). HWIHA 만 읽고, 못 읽으면 여기서 실패한다.
+            cityLandProvinceById = if (topology != null && state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) cityLandProvinceBindings(state) else emptyMap(),
         )
         snapshotValidator(snapshot)
         return snapshot
     }
+
+    /** 城 → 省 (부팅이 고른 변형의 projection). 외부 거점처럼 省 없는 城은 빠진다 — HWIHA 부팅 검사가 잡는다. */
+    private fun cityLandProvinceBindings(state: TurnWorldState): Map<Int, String> =
+        historicalArtifacts.artifacts(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
+            .projection.bindingsByCityId.mapNotNull { (city, b) -> b.landProvinceId?.let { city to it } }.toMap()
 
     private fun spatialTopologyFor(state: TurnWorldState): StrategicTopologySnapshot? {
         // Small historical test snapshots may omit map identity; the production map validator still rejects them.
