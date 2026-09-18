@@ -42,3 +42,15 @@ CI 는 `tools/map/tests/test_*.py` 글롭과 `check_han_tiles_coupled.py`(키 `w
 
 - `SHILIAO_QUERY` 출처의 인용문은 CI 가 재검증하지 못한다(말뭉치 미커밋). 水經注는 색인에 없다.
 - 柴桑은 배·수군 문구를 찾지 못해 원장에 넣지 않았다.
+
+## 2026-09-18 후속 — 거점 원장 정정과 활성화 판정
+
+- **鸇陰口**: `strategic-strongholds-v1` 의 `supports` 를 `FERRY_CROSSING_IN_EVENT` → `INTERCEPTION_AT_SITE` 로 고쳤다.
+  三國志 卷15 魏書·張既傳 원문은 「旣至金城，欲渡河…遂渡河。賊七千餘騎逆拒軍於鸇陰口，旣揚聲軍從鸇陰，乃潛由且次出至武威」 —
+  渡河는 金城에서 끝났고 鸇陰口는 적이 막은 자리이며 張既는 그곳을 피했다. 게이트
+  `test_ferry_crossing_support_quotes_a_crossing` 가 같은 실수를 막는다(되돌리면 빨개진다).
+- **`tileAnchor.provinceId` 는 낡은 것이 아니다.** 1차 보고는 82879 같은 값이 `ss-*` 省 이전 것이라 오류라고 봤으나,
+  원장 공식(`tileAnchorBasis`)대로 다시 계산하면 **65행 전부 지금 값 그대로** 나온다. 앵커는 설계상 거점 省 분할
+  **전** 문서 기준이다 — `carve_strategic_site_provinces.py` 가 이 원장을 입력으로 칸을 떼므로, 분할 뒤 省(`ss-*`)을
+  여기 적으면 입력이 제 출력에 기대는 순환이 된다. `test_tile_anchor_matches_han_tiles` 가 분할·접기 단계를 벗겨 낸 뒤
+  독립 구현으로 다시 재어 이를 강제한다. 값은 바꾸지 않았다. `sha256AtBuild` 는 어떤 게이트도 읽지 않는 기록값이다.

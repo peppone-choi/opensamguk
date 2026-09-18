@@ -257,6 +257,21 @@ class StrongholdRoleTest(unittest.TestCase):
                     )
                 self.assertEqual(row['nameHan'], nfkc(row['nameHan']), 'nameHan 은 NFKC 정규화 값이어야 한다')
 
+    def test_ferry_crossing_support_quotes_a_crossing(self):
+        """FERRY_CROSSING_IN_EVENT 는 인용문 자체가 건넘·배를 말할 때만 쓴다.
+
+        鸇陰口(三國志 卷15 張既傳)가 이 표지를 달고 있었으나 원문은 적이 길을 막은 자리였고 張既는 그곳을
+        피했다(2026-09-18 정정). 이름이 나온다는 것과 그 나루로 건넜다는 것은 다른 주장이다.
+        """
+        for row in ROWS:
+            for cite in row['primaryEvidence']:
+                if 'FERRY_CROSSING_IN_EVENT' in cite.get('supports', []):
+                    with self.subTest(row=row['id']):
+                        self.assertTrue(
+                            set('渡度濟济船') & set(cite['quote']),
+                            f"{row['nameHan']} 인용문에 건넘(渡·度·濟)·배(船) 글자가 없다: {cite['quote']}",
+                        )
+
     def test_no_pass_is_restated(self):
         passes = load(PASSES_PATH)['passes']
         pass_points = {(p['coordinates']['latitude'], p['coordinates']['longitude']) for p in passes}

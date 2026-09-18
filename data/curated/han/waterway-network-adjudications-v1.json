@@ -11,7 +11,7 @@
   },
   "strongholds": {
    "path": "data/curated/han/strategic-strongholds-v1.json",
-   "sha256": "a99ffbe5f4b3a60b957ea31c910243fe5fe084d2cf218169637afc88ac398f9b"
+   "sha256": "cd1deccfa6f27c0ca34b1b46f949f3bbed31060a433c85ecda1c80a08aa75080"
   }
  },
  "systems": [
@@ -1232,7 +1232,7 @@
    },
    "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
    "measuredCellDistanceToWater": 1,
-   "note": "원장의 supports 는 FERRY_CROSSING 이지만 張既傳 원문에서 渡河는 鸇陰口 앞 문장이고 張既는 鸇陰을 피해 且次로 갔다.",
+   "note": "張既傳 원문에서 渡河는 鸇陰口 앞 문장(金城)이고 張既는 鸇陰을 피해 且次로 갔다. 거점 원장의 supports 도 2026-09-18 에 INTERCEPTION_AT_SITE 로 정정됐다.",
    "sourceRefs": [
     "stronghold:zhanyinkou#0",
     "shiliao:sgz15-zhanyin"
