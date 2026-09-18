@@ -1120,6 +1120,31 @@ def water_locked_province_indices(tiles: dict) -> set[int]:
     return {index for index in range(len(tiles["provinceRecords"])) if index not in touching}
 
 
+def province_touch_pairs(tiles: dict) -> set[tuple[int, int]]:
+    """owner 격자에서 4-이웃으로 맞닿은 (省, 다른 省) 쌍(양방향). water_locked_province_indices 와 같은 축이다.
+
+    지리 재분할(GH #806) 뒤 섬 縣이 縣 안 재분할로 省 둘이 됐다(朱崖 600 + 599칸). 省 하나씩 보면 서로 맞닿아
+    「물에 갇힌 省」이 아니지만, 그 城의 省 **묶음**은 여전히 물에 갇혀 있다. 묶음 단위 판정에 쓴다.
+    """
+    cols, rows = tiles["_meta"]["cols"], tiles["_meta"]["rows"]
+    grid: list[int] = []
+    for value, count in tiles["owner"]:
+        grid.extend([value] * count)
+    pairs: set[tuple[int, int]] = set()
+    for cell, owner in enumerate(grid):
+        if owner < 0:
+            continue
+        row, col = divmod(cell, cols)
+        for drow, dcol in ((1, 0), (0, 1)):
+            nrow, ncol = row + drow, col + dcol
+            if nrow < rows and ncol < cols:
+                other = grid[nrow * cols + ncol]
+                if other >= 0 and other != owner:
+                    pairs.add((owner, other))
+                    pairs.add((other, owner))
+    return pairs
+
+
 def _sha256_bytes(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
@@ -1280,6 +1305,7 @@ def build_v3() -> tuple[str, str, str, str]:
     for province_index, city_id in attribution.items():
         provinces_by_city[city_id].append(province_index)
     water_locked = water_locked_province_indices(tiles)
+    touch_pairs = province_touch_pairs(tiles)
     # 섬 郡(夷洲·流求·州胡·邪馬壹國·于山國)은 郡治 자신이 물에 갇혀 있다. 2026-09-17 郡國 밖 취락(w5)이
     # 城으로 서면서 v3 에도 들어왔다. 지어낸 길로 잇지 않고 v2 와 같은 사료 표(SEA_LINKS)의 뱃길만 놓는다.
     sea_link_islands = {island_ch for island_ch, _, _ in V3_ISLAND_SEA_LINKS}
@@ -1292,7 +1318,9 @@ def build_v3() -> tuple[str, str, str, str]:
         if node["seatRole"] == "COMMANDERY_SEAT" and world_parent_ch(node) in sea_link_islands:
             continue
         owned = provinces_by_city.get(cid, [])
-        if not owned or not all(index in water_locked for index in owned):
+        # 城의 省 묶음이 묶음 밖 省과 한 변도 안 맞닿으면 물에 갇힌 것이다(省 하나짜리면 위 집합과 같은 뜻).
+        bundle_locked = bool(owned) and not any(a in owned and b not in owned for a, b in touch_pairs)
+        if not owned or not (all(index in water_locked for index in owned) or bundle_locked):
             raise AssertionError(
                 f"城 {cid} 의 연결이 0개인데 물 때문이 아니다 — 省 {owned}. "
                 "귀속 원장이나 省 인접을 먼저 봐라, 여기서 길을 지어내지 마라"

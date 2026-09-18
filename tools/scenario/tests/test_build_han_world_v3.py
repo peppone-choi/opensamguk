@@ -298,8 +298,10 @@ class HanWorldV3Test(unittest.TestCase):
         # 재구성됐다. legacy han.json 의 provinceId 는 그 배열의 **인덱스**라, 재바인딩
         # (materialize_runtime_province_identity.py --write) 없이 두면 城이 남의 省을
         # 가리킨다. 城 집합·이름·좌표·연결은 불변이고 바뀐 것은 provinceId 뿐이다.
+        # 2026-09-18: 지리 재분할(GH #806)로 배열이 1,594→1,333 이 됐다. seat 省은 입력 순서를 지키지만 접기·거점
+        # 재적층으로 39城의 인덱스가 움직여 같은 도구로 다시 묶었다(앞 핀 13744d62…). 바뀐 것은 역시 provinceId 뿐이다.
         expected = {
-            "infra/src/main/resources/map/han.json": "13744d62cefe3b946398cb4ce6f2dc68f1024c8f45db8a9e3e66a5a476b9a08d",
+            "infra/src/main/resources/map/han.json": "a5aeee4ea5148a79dc7a0a0be96ca260f53f0747a3424ae690f2642a5e3cac46",
             "infra/src/main/resources/map/han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
         }
         for rel, digest in expected.items():

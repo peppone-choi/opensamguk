@@ -132,7 +132,10 @@ ROW_KEYS = frozenset({
 OPTIONAL_ROW_KEYS = frozenset({
     "proposedParent", "defectNote", "searched",
     "fragmentLedgerRef", "followUp", "overruledArgument",
+    # ★ 지리 재분할(GH #806) 뒤로 옮겨 온 행의 표시: 어느 옛 행에서 왔고 무엇이 바뀌었으며 재검토를 기다리는가.
+    "partitionCarry",
 })
+PARTITION_LEDGER = ROOT / "data/curated/han/territory-disconnection-adjudications-partition-v1.json"
 
 # An overturned row holds two arguments: the one the refuters broke and the one that
 # replaced it. `rationale` is the row's current position, so the withdrawn one lives
@@ -542,7 +545,7 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
                 and not (row["unitId"] in affected and row["componentKey"] not in current)]
         return kept + stage_rows, {"cityJurisdictionFoldStage": stage["outputDocumentSha256"],
                                    "priorProjection": projection}
-    before, carved = carving.peel(document)
+    before, carved = carving.peel_only(document)
     if carved is not None:
         # 거점 省은 기증 縣 省에서 조각 수를 늘리지 않게 떼어 냈다(carve 규칙). 앞 단계 심사 행이 그대로
         # 성립해야 하고, 떼어 낸 칸만큼 기증 조각의 cellCount 가 준 것이 이 단계의 전부다.
@@ -563,6 +566,23 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
                 row = {**row, "memberIds": now["memberIds"], "memberNamesCh": now["memberNamesCh"]}
             projected.append(row)
         return projected, {"strategicSiteCarveStage": stage["outputDocumentSha256"], "priorProjection": projection}
+    from tools.map import partition_counties_by_location as partition
+    before, parted = partition.peel(document)
+    if parted is not None:
+        # ★ 지리 재분할은 郡 안 縣 경계를 전부 다시 자른다. 앞 단계 심사 행은 ★ 앞 문서에 대해 그대로 성립해야
+        # 하고(드리프트면 여기서 멈춘다), ★ 뒤 문서의 행은 투영이 아니라 **재발행된 새 행 집합**이다
+        # (spec 2026-09-17-province-geography-first §4 — 자동 승계 금지, 옮겨 온 행은 partitionCarry 로 표시).
+        prior = check(before, ledger)
+        if prior["errors"]:
+            raise ValueError("prior territory review fails before the county-location partition: "
+                             + repr(prior["errors"]))
+        reissued = json.loads(PARTITION_LEDGER.read_text(encoding="utf-8"))
+        stage = partition.stage_for(document, parted)
+        if reissued.get("partitionStageOutputSha256") != stage["outputDocumentSha256"]:
+            raise ValueError("territory partition ledger was issued for a different county-location partition output")
+        stage_rows = validate_ledger({**ledger, "adjudications": reissued["adjudications"]})
+        return stage_rows, {"countyLocationPartitionStage": stage["outputDocumentSha256"],
+                            "priorProjection": prior["relocationProjection"]}
     if frontier.PLACEMENTS.exists():
         placements = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8"))
         stage = placements.get("priorStage")

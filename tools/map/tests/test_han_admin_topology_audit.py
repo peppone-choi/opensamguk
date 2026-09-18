@@ -394,17 +394,21 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
-        self.assertEqual(26, snapshot["provinceTopology"]["disconnectedCount"])
+        # 2026-09-18 ★ 지리 재분할(GH #806) 실측: 省 단절 26 → 14(균형 분할이 흩어 놓은 省이 제 城 둘레로 모였다),
+        # 완전 포위 37 → 22, 최소 면적 미달 4 → 10(Q4 예외 縣 6 + 축소 발자국 거점 4), 관할 단절 29 → 31 ·
+        # 포위 37 → 23. 관할 단절이 는 것은 씨앗 없는 郡 성분이 가장 가까운 縣의 떨어진 省이 되기 때문이다
+        # (county-location-partition-v1 components, 영토 단절 원장이 조각마다 행을 갖는다).
+        self.assertEqual(14, snapshot["provinceTopology"]["disconnectedCount"])
         # 23·22 = 실측. 사료가 지목한 郡으로 縣 4곳(無慮·高顯·遼陽·比景)의 씨앗칸을 옮기면서
         # 邊郡의 발자국이 다시 깎여 완전 포위된 省·관할이 각각 둘씩 풀렸다.
         # data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections 참조.
         # 2026-09-15: 縣 省 한가운데서 떼어 낸 수·진·관 거점 省이 완전 포위로 잡혀 23 → 37 · 22 → 38,
         # 5 칸짜리 孟津 · 7 칸짜리 樊城 省이 최소 면적 미달로 더해져 2 → 4 다(기증 縣과 마른땅 경계 규칙).
-        self.assertEqual(37, snapshot["provinceTopology"]["fullyEnclosedCount"])
-        self.assertEqual(4, snapshot["provinceTopology"]["belowMinimumCount"])
-        self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
+        self.assertEqual(22, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        self.assertEqual(10, snapshot["provinceTopology"]["belowMinimumCount"])
+        self.assertEqual(31, snapshot["jurisdictionTopology"]["disconnectedCount"])
         # 2026-09-17: 安平口 관할이 遼東郡 西安平 땅에 합쳐 38 → 37(ADR-LITE-056).
-        self.assertEqual(37, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        self.assertEqual(23, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])  # 2026-09-18 ★ 뒤 실측(위 주석)
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
