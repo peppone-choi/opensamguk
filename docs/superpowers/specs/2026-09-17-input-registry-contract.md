@@ -37,7 +37,8 @@ failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
 tutorialObjectiveId|N/A, replacesLegacy[], deliveryState
 ```
 
-- `deliveryState` 는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
+- (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry 는 이런 입력을 `NOT_DELIVERED` 로 거절한다. 거절 사유는 4종이다: `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED`. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
+- `PLANNED` 뒤는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
 - 원장 파일: `data/commands/hwiha-input-catalog.json`(신규). 알파 카탈로그 파일과 `PublicCommandCatalogIndex` 는 `SAMMO` 월드용으로 남는다.
 
 ## 4. 시점(timing)

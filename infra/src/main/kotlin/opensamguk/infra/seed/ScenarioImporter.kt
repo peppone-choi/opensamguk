@@ -83,6 +83,8 @@ class ScenarioImporter(
     private val hiddenSeed: String = "8ebfeb6fa932a181ec9ef43b7473f4c9",
     /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
+    /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트(저장소 루트). 테스트는 `..` 을 준다. */
+    private val artifactsRoot: java.nio.file.Path = java.nio.file.Path.of("."),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
@@ -100,6 +102,8 @@ class ScenarioImporter(
         val rankData: Int,
         val ngGames: Int,
         val event: Int,
+        /** HWIHA 시드만 0 이 아니다(위치 권위 spec §2.2). */
+        val generalPosition: Int = 0,
     )
 
     fun importAll(
@@ -133,6 +137,9 @@ class ScenarioImporter(
 
         val generalTurnCount = insertGeneralTurns(jdbc, general, worldId)
 
+        // 4f' — 위치 권위 spec §2.2·§3-3(HWIHA): 전 장수 위치 행. 부팅이 고를 변형과 같은 핀으로.
+        val positionCount = if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
+
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
         val nationTurnCount = insertNationTurns(jdbc, worldId)
 
@@ -158,6 +165,7 @@ class ScenarioImporter(
             rankData = rankCount,
             ngGames = ngGamesCount,
             event = eventCount,
+            generalPosition = positionCount,
         )
     }
 
@@ -201,6 +209,8 @@ class ScenarioImporter(
             "fiction" to fiction,
             "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
+            // 부재를 런타임이 추측하지 않도록 SAMMO 도 명시 기록한다(입력 registry 계약 §2).
+            "ruleProfile" to (scenario.ruleProfile ?: opensamguk.logic.input.RuleProfile.SAMMO).name,
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
@@ -454,6 +464,28 @@ class ScenarioImporter(
     private fun buildGenerals(startYear: Int): List<BuiltGeneral> = seedGenerals()
         .filter { isActiveAtStart(it, startYear) }
         .mapIndexed { idx, g -> BuiltGeneral(id = 1001 + idx, src = g) }
+
+    private fun insertGeneralPositions(jdbc: JdbcTemplate, worldId: WorldId): Int {
+        val cityIds = jdbc.queryForList("SELECT id FROM city WHERE world_id = ?", Int::class.java, worldId.value)
+        val projection = HanWorldArtifactsResolver(artifactsRoot).resolve(cityIds, emptyList()).projection
+        val topology = projection.topology
+        val rows = jdbc.query("SELECT id, city_id FROM general WHERE world_id = ? ORDER BY id", { rs, _ -> rs.getInt(1) to rs.getInt(2) }, worldId.value)
+        val batch = rows.map { (generalId, cityId) ->
+            val province = requireNotNull(projection.bindingsByCityId[cityId]?.landProvinceId) {
+                "HWIHA seed: general $generalId sits on city $cityId without a land-province binding"
+            }
+            arrayOf<Any>(worldId.value, generalId, topology.topologyRevision, topology.contentHash, "LAND_PROVINCE", province, 1L)
+        }
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_spatial_position
+                (world_id, general_id, topology_revision, topology_hash, node_kind, node_id, revision)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            batch,
+        )
+        return batch.size
+    }
 
     private fun insertGenerals(
         jdbc: JdbcTemplate,

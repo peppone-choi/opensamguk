@@ -8,6 +8,7 @@
 
 입력(커밋본): data/curated/han/administrative-units.json, data/map/han-tiles.json,
 data/curated/han/han-name-simplification-v1.json(audit_county_coverage 의 정규화 규칙을 그대로 쓴다)
+사람 판정 목록: data/curated/han/junguozhi-county-name-review-v1.json — 글자표로 접지 않은 한 글자 차이 후보(개명·잘림·이문)
 출력: data/curated/han/junguozhi-county-gaps-v1.json   (`--check` = 재생성 대조)
 """
 from __future__ import annotations
@@ -70,13 +71,21 @@ def build(units: dict, tiles: dict, world: dict) -> dict:
         # 부재 후보에 같은 郡의 「아직 안 맞은」 타일 縣 중 한 글자 차이 이름을 단다(異體字·개명 후보). 승격하지 않는다.
         taken = {r["_key"] for r in rows if r["status"] != "ABSENT"}
         free = sorted(set(own) - taken)
+        # 한 타일 縣이 여러 부재 행에 달리면(汝南 慎阳 → 新陽·灌陽·細陽·鮦陽·愼陽) 그 후보는 어느 행의 것도 아니다.
+        # 행마다 달지 않고 따로 모은다(#813).
+        claims = collections.Counter(f for r in rows if r["status"] == "ABSENT" for f in free if _near(r["_key"], f))
         for r in rows:
             key = r.pop("_key")
             if r["status"] == "ABSENT":
                 near = [f for f in free if _near(key, f)]
-                if near:
-                    r["nearMatchInOwnCommandery"] = near
+                unique = [f for f in near if claims[f] == 1]
+                shared = [f for f in near if claims[f] > 1]
+                if unique:
+                    r["nearMatchInOwnCommandery"] = unique
                     totals["absentWithNearMatch"] += 1
+                if shared:
+                    r["ambiguousNearMatchInOwnCommandery"] = shared
+                    totals["absentWithAmbiguousNearMatch"] += 1
             totals[r["status"]] += 1
         first = rows[0] if rows else None
         groups.append({

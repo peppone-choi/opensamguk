@@ -51,8 +51,31 @@ def _load(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_fold_table(path: Path | None = None) -> dict[str, str]:
+    """繁→簡 표에 검토된 異體字 쌍(reviewedVariantAdditions)을 얹는다.
+
+    쌍은 한 글자 → 한 글자이고, 기존 표와 값이 어긋나거나 to 가 다시 접히면(사슬) 실패한다.
+    """
+    doc = _load(path or TABLE_PATH)
+    table = dict(doc["table"])
+    additions = doc.get("reviewedVariantAdditions", [])
+    for row in additions:
+        src, dst = row["from"], row["to"]
+        if len(src) != 1 or len(dst) != 1 or src == dst:
+            raise ValueError(f"reviewedVariantAdditions must map one character to a different one: {row}")
+        if table.get(src, dst) != dst:
+            raise ValueError(f"reviewedVariantAdditions disagrees with the table: {src}→{table[src]} vs {dst}")
+        if not row.get("witness"):
+            raise ValueError(f"reviewedVariantAdditions needs a witness: {src}")
+        table[src] = dst
+    for row in additions:
+        if row["to"] in table:
+            raise ValueError(f"reviewedVariantAdditions chains ({row['from']}→{row['to']}→{table[row['to']]})")
+    return table
+
+
 def make_normalizer(*, group: bool = False) -> Any:
-    table = _load(TABLE_PATH)["table"]
+    table = load_fold_table()
 
     def normalize(name: str | None) -> str:
         text = (name or "").strip()

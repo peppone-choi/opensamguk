@@ -270,7 +270,11 @@ data class TurnWorldState(
     val writerEpoch: Long = 0L,
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
     val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
-)
+) {
+    /** 월드 규칙 프로필(입력 registry 계약 §2). 시드 전 월드는 config 에 없어 SAMMO, 모르는 글자는 부팅 실패. */
+    val ruleProfile: opensamguk.logic.input.RuleProfile
+        get() = opensamguk.logic.input.RuleProfile.fromWorldConfig(config["ruleProfile"] as? String)
+}
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"
 

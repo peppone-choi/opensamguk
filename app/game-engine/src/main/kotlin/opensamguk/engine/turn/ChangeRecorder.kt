@@ -16,6 +16,7 @@ import opensamguk.logic.world.ProvinceControlAssessment
 import opensamguk.logic.world.ProvinceControlChangeResult
 import opensamguk.logic.world.ProvinceControlDenialCode
 import opensamguk.logic.world.GeneralPositionAssessment
+import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.GeneralPositionChangeResult
 import opensamguk.logic.world.GeneralPositionDenialCode
 import opensamguk.logic.world.projectProvinceControl
@@ -820,6 +821,8 @@ class ChangeRecorder(
     /** Revoke explicit location with the same world/CAS contract as position writes. */
     fun removeGeneralPosition(world: InMemoryTurnWorld, generalId: Int): Boolean {
         gateMutation("removeGeneralPosition")
+        // 위치 권위 spec §2.2 불변식 1: HWIHA 에서 위치 행은 장수 삭제(FK cascade)로만 사라진다.
+        check(world.ruleProfile != opensamguk.logic.input.RuleProfile.HWIHA) { "HWIHA: general position rows are never removed (general $generalId)" }
         requireSpatialWorld(world.worldId)
         val before = world.generalPositionSnapshot() ?: return false
         val current = before.stateFor(generalId) ?: return false
@@ -1186,7 +1189,45 @@ class ChangeRecorder(
             "created general initial turn ring must be empty (canonical rest) or exactly 30 slots"
         }
         spatialWorldId = world.worldId
+        // 위치 권위 spec §2.2·§3-3(HWIHA): 생성 = 위치 행 생성. 바인딩 없는 城이면 건너뛰지 않고 거절한다.
+        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val node = checkNotNull(world.landNodeOfCity(general.cityId)) {
+                "HWIHA: cannot create general ${general.id} on city ${general.cityId} without a province binding"
+            }
+            val created = world.createGeneral(general.copy(initialTurns = initialTurns.toList()))
+            val positions = checkNotNull(world.generalPositionSnapshot())
+            val result = applyGeneralPositionAssessment(world, null,
+                GeneralPositionAssessment(positions.topologyRevision, positions.topologyHash, general.id, node))
+            if (result !is GeneralPositionChangeResult.Changed) {
+                // 반쪽 생성을 남기지 않는다 — 같은 틱의 create-then-remove 는 완전히 상쇄된다(removeGeneral).
+                world.removeGeneral(general.id)
+                error("HWIHA: position row for new general ${general.id} was rejected: $result")
+            }
+            return created
+        }
         return world.createGeneral(general.copy(initialTurns = initialTurns.toList()))
+    }
+
+    /**
+     * 위치 권위 spec §3-2 — HWIHA 의 유일한 이동 진입점. 위치 CAS 쓰기와 기준 城 갱신(도착 省에 城이 있을 때만)을
+     * 같은 버퍼에 쓴다. 城 없는 省이면 기준 城은 그대로 남고 `isGeneralAtCity` 가 거짓이 된다. 절대 city_id 를 0 으로 두지 않는다.
+     */
+    fun moveGeneral(world: InMemoryTurnWorld, generalId: Int, to: StrategicNodeRef): GeneralPositionChangeResult {
+        gateMutation("moveGeneral")
+        check(world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) { "moveGeneral is a HWIHA-only entry point" }
+        val general = checkNotNull(world.getGeneralById(generalId)) { "moveGeneral: unknown general $generalId" }
+        val positions = checkNotNull(world.generalPositionSnapshot())
+        val current = checkNotNull(positions.stateFor(generalId)) { "HWIHA general $generalId has no position row" }
+        val result = applyGeneralPositionAssessment(world, current.revision,
+            GeneralPositionAssessment(positions.topologyRevision, positions.topologyHash, generalId, to))
+        if (result !is GeneralPositionChangeResult.Changed) return result
+        val city = world.cityOfLandNode(to)
+        if (city != null && city != general.cityId) {
+            val after = general.copy(cityId = city)
+            diffGeneral(PerTurnOverlay.toLogicGeneral(general), PerTurnOverlay.toLogicGeneral(after))
+            world.applyGeneralDirtyFree(after)
+        }
+        return result
     }
 
     /**

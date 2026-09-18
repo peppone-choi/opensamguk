@@ -6,6 +6,7 @@ import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.WaterControlSnapshot
 import opensamguk.logic.world.ProvinceControlSnapshot
 import opensamguk.logic.world.GeneralPositionSnapshot
+import opensamguk.logic.world.StrategicNodeRef
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -39,6 +40,8 @@ data class WorldSnapshot(
     val waterControlSnapshot: WaterControlSnapshot? = null,
     val provinceControlSnapshot: ProvinceControlSnapshot? = null,
     val generalPositionSnapshot: GeneralPositionSnapshot? = null,
+    /** 城 id → 그 城이 선 省 id(부팅이 고른 변형의 `projection.bindingsByCityId`). 위치 권위 spec §3-7. */
+    val cityLandProvinceById: Map<Int, String> = emptyMap(),
 ) {
     init {
         require(state.id == worldId.value) {
@@ -64,6 +67,14 @@ data class WorldSnapshot(
             }
             val generalIds = generals.mapTo(hashSetOf()) { it.id }
             require(positions.statesByGeneralId.keys.all { it in generalIds }) { "Orphan general position" }
+        }
+        // 위치 권위 spec §2.3 불변식 1·2(HWIHA): 살아 있는 장수마다 위치 행, 기준 城마다 省 바인딩.
+        if (state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val positions = requireNotNull(generalPositionSnapshot) { "HWIHA world has no general position snapshot" }
+            val missing = generals.filter { positions.stateFor(it.id) == null }.map { it.id }
+            require(missing.isEmpty()) { "HWIHA world: generals without a position row: $missing" }
+            val unbound = generals.filter { it.cityId !in cityLandProvinceById }.map { it.id to it.cityId }
+            require(unbound.isEmpty()) { "HWIHA world: reference cities without a province binding: $unbound" }
         }
     }
 }
@@ -157,6 +168,7 @@ class InMemoryTurnWorld(
     @Volatile private var waterControl: WaterControlSnapshot? = snapshot.waterControlSnapshot
     @Volatile private var provinceControl: ProvinceControlSnapshot? = snapshot.provinceControlSnapshot
     @Volatile private var generalPosition: GeneralPositionSnapshot? = snapshot.generalPositionSnapshot
+    private val cityLandProvinceById: Map<Int, String> = snapshot.cityLandProvinceById
     private val serverId: String?
 
     /**
@@ -230,7 +242,33 @@ class InMemoryTurnWorld(
         generalPosition?.stateFor(generalId)?.battlefield != null
 
     fun isGeneralPhysicallyInCity(generalId: Int, cityId: Int): Boolean =
-        !isGeneralAtBattlefield(generalId) && getGeneralById(generalId)?.cityId == cityId
+        isGeneralAtCity(generalId) && getGeneralById(generalId)?.cityId == cityId
+
+    val ruleProfile: opensamguk.logic.input.RuleProfile get() = state.ruleProfile
+
+    /** 城 → 省 노드(HWIHA 만 실려 있다). */
+    fun landNodeOfCity(cityId: Int): StrategicNodeRef? = cityLandProvinceById[cityId]?.let { StrategicNodeRef.LandProvince(it) }
+
+    /** 省 → 그 省에 선 城(1133 은 城↔省 1:1). 城 없는 省이면 null. */
+    fun cityOfLandNode(node: StrategicNodeRef): Int? =
+        (node as? StrategicNodeRef.LandProvince)?.let { n -> cityLandProvinceById.entries.firstOrNull { it.value == n.id }?.key }
+
+    /** 위치 정본(HWIHA 에서 non-null). SAMMO 는 행이 선택적이라 null 일 수 있다. */
+    fun positionOf(generalId: Int): StrategicNodeRef? = generalPosition?.stateFor(generalId)?.node
+
+    /**
+     * 「城에 있음」— 위치 권위 spec §2.1. 프로필별 **정의**다(동치가 아니다):
+     * SAMMO 는 현행 그대로 `!isGeneralAtBattlefield`, HWIHA 는 기준 城의 省과 위치 省이 같을 때.
+     */
+    fun isGeneralAtCity(generalId: Int): Boolean = when (ruleProfile) {
+        opensamguk.logic.input.RuleProfile.SAMMO -> !isGeneralAtBattlefield(generalId)
+        opensamguk.logic.input.RuleProfile.HWIHA -> {
+            val general = getGeneralById(generalId) ?: return false
+            val position = checkNotNull(generalPosition?.stateFor(generalId)) { "HWIHA general $generalId has no position row" }
+            val province = checkNotNull(cityLandProvinceById[general.cityId]) { "HWIHA reference city ${general.cityId} has no province" }
+            position.battlefield == null && position.node == StrategicNodeRef.LandProvince(province)
+        }
+    }
 
 
     /** The recorder owns dirtiness; these setters preserve the immutable topology boundary. */
