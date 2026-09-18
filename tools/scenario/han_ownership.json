@@ -108,15 +108,15 @@
       {"scenarioCode": 1031, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
       {"scenarioCode": 1040, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
       {"scenarioCode": 1041, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
-      {"scenarioCode": 1050, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14은 영제 말 정양·운중·오원·삭방·상군의 유리·분산과 위 황초원년 태행 북쪽 방기를 기록한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
+      {"scenarioCode": 1050, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14은 영제 말 정양·운중·오원·삭방·상군의 유리·분산과 위 황초원년 태행 북쪽 방기를 기록한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
       {"scenarioCode": 1050, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
-      {"scenarioCode": 1060, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
+      {"scenarioCode": 1060, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
       {"scenarioCode": 1060, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
-      {"scenarioCode": 1070, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
+      {"scenarioCode": 1070, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
       {"scenarioCode": 1070, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
-      {"scenarioCode": 1080, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
+      {"scenarioCode": 1080, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
       {"scenarioCode": 1080, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
-      {"scenarioCode": 1090, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산·황초원년 방기 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
+      {"scenarioCode": 1090, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"], "basis": "晉書 卷14의 북방 5군 유리·분산·황초원년 방기 기사에 따라 직접 군현 소유색을 주지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"},
       {"scenarioCode": 1090, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X058"], "basis": "三國志 卷15·16의 서강 초무·호강교위 기사에 따라 서강을 위의 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-15.txt"},
       {"scenarioCode": 1090, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"}
     ]
@@ -2210,7 +2210,7 @@
     "auditAllowlist": [
       {
         "auditKind": "UNALLOWLISTED_HOLE",
-        "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"],
+        "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"],
         "basis": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다."
       },
       {
@@ -2399,7 +2399,7 @@
     "auditAllowlist": [
       {
         "auditKind": "UNALLOWLISTED_HOLE",
-        "provinceIds": ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"],
+        "provinceIds": ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"],
         "basis": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다."
       },
       {

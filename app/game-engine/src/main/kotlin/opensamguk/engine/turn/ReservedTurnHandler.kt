@@ -5,7 +5,6 @@ import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
-import opensamguk.common.rng.serializeSeed
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.engine.war.BattleCommandContextBuilder
@@ -359,7 +358,7 @@ class ReservedTurnHandler(
 
         // --- seed the per-action RNG (six-component PHP construction) ---
         val rng = actionRngFactory(
-            serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key),
+            world.personalTurnSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key),
         )
 
         val currentCity = world.getCityById(cityId)
@@ -939,7 +938,7 @@ class ReservedTurnHandler(
             world.pushLog(actionLog(general, "<C>●</><C>의술</>을 펼쳐 스스로 치료합니다!"))
         }
         val rng = RandUtil(
-            LiteHashDrbg(serializeSeed(hiddenSeed, "preprocess", year, month, generalId)),
+            LiteHashDrbg(world.personalTurnSeed(hiddenSeed, "preprocess", year, month, generalId)),
         )
         val curedPatients = world.listGenerals()
             .asSequence()

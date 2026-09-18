@@ -24,8 +24,6 @@ EXEMPT = {
     "tools/map/rebalance_han_tiles.py": "main 에서 ValueError(no city index) — 이미 죽은 단계, GH #818 후속",
     "tools/map/relocate_han_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
     "tools/map/materialize_province_jurisdictions.py": "main 에서 ValueError(parent seat inside another parent), GH #818 후속",
-    "tools/map/validate_han_strategic_site_anchors.py": "main 에서 이미 적색(han-tiles 입력 해시 불일치), GH #818 후속",
-    "tools/scenario/migrate_han_ownership_claims.py": "main 에서 이미 적색(scenario-province-claims-v1 drift), GH #818 후속",
     "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
     "tools/map/build_han_parent_reconciliation.py": "통과하지만 23초 — contracts 예산 밖, 미배선",
 }
