@@ -102,6 +102,10 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("scenario-province-ownership", ("data/map/han-scenario-province-ownership-v1.json",),
             _t("tools/scenario/build_scenario_province_ownership.py", "--check"),
             _t("tools/scenario/build_scenario_province_ownership.py")),
+    # ★ 지리 재분할(GH #806)의 씨앗 충돌 원장 초안. 기계 필드만 다시 뽑고 사람 판정 필드는 보존한다.
+    Coupled("county-seed-collisions", ("data/curated/han/county-seed-collisions-v1.json",),
+            _t("tools/map/draft_county_seed_collisions.py", "--check"),
+            _t("tools/map/draft_county_seed_collisions.py")),
     Coupled("iso3d-assets", ("web/game/public/models/iso3d/", "web/gateway/public/models/iso3d/"),
             _t("tools/assets/build_iso3d_assets.py", "--check"),
             _t("tools/assets/build_iso3d_assets.py")),

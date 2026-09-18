@@ -1,0 +1,522 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "county-seed-collisions-v1",
+  "status": "DRAFT",
+  "authority": "spec 2026-09-17-province-geography-first §3 규칙 2 — 자동 추정 금지",
+  "generator": "tools/map/draft_county_seed_collisions.py",
+  "scope": "거점 분할 앞 문서(★ 의 입력)의 城 있는 省. 실제 칸 = lon/lat 투영 내림.",
+  "unreviewedDefault": "판정 전에는 분할기가 규칙 2(b)(id 순, 가장 가까운 빈 칸)로 놓고 UNREVIEWED 로 표시한다",
+  "counts": {
+    "cells": 14,
+    "cities": 28,
+    "needsHumanReview": 14
+  },
+  "rows": [
+    {
+      "cell": {
+        "col": 418,
+        "row": 104
+      },
+      "members": [
+        {
+          "cityId": "87125",
+          "nameCh": "广宁县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87125",
+          "commanderyId": "PARENT-0170",
+          "lon": 114.88594,
+          "lat": 40.79126
+        },
+        {
+          "cityId": "X063",
+          "nameCh": "鮮卑",
+          "kind": "EXTERNAL_PLACE",
+          "jurisdictionId": "X063",
+          "commanderyId": "PARENT-0170",
+          "lon": 114.88114,
+          "lat": 40.81078
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 419,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "87061",
+          "nameCh": "廮陶县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87061",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91637,
+          "lat": 37.58687
+        },
+        {
+          "cityId": "87173",
+          "nameCh": "杨氏县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87173",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.9154,
+          "lat": 37.62109
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 428,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "87569",
+          "nameCh": "扶柳县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87569",
+          "commanderyId": "PARENT-0017",
+          "lon": 115.39907,
+          "lat": 37.61451
+        },
+        {
+          "cityId": "87591",
+          "nameCh": "阜城县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87591",
+          "commanderyId": "PARENT-0017",
+          "lon": 115.39907,
+          "lat": 37.61451
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 521,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "85376",
+          "nameCh": "㡉侯国",
+          "kind": "COUNTY",
+          "jurisdictionId": "85376",
+          "commanderyId": "PARENT-0039",
+          "lon": 120.46017,
+          "lat": 37.61027
+        },
+        {
+          "cityId": "85377",
+          "nameCh": "㡉县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85377",
+          "commanderyId": "PARENT-0039",
+          "lon": 120.46017,
+          "lat": 37.61027
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85377→85376",
+          "reason": "SAME_PLACE_AS_CANDIDATE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 419,
+        "row": 185
+      },
+      "members": [
+        {
+          "cityId": "87051",
+          "nameCh": "巨鹿县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87051",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91842,
+          "lat": 36.98014
+        },
+        {
+          "cityId": "87510",
+          "nameCh": "平乡县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87510",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91842,
+          "lat": 36.98014
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 489,
+        "row": 188
+      },
+      "members": [
+        {
+          "cityId": "85280",
+          "nameCh": "益侯国",
+          "kind": "COUNTY",
+          "jurisdictionId": "85280",
+          "commanderyId": "PARENT-0037",
+          "lon": 118.7355,
+          "lat": 36.83983
+        },
+        {
+          "cityId": "85281",
+          "nameCh": "益都县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85281",
+          "commanderyId": "PARENT-0037",
+          "lon": 118.7355,
+          "lat": 36.83983
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85281→85280",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 422,
+        "row": 191
+      },
+      "members": [
+        {
+          "cityId": "85186",
+          "nameCh": "平恩县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85186",
+          "commanderyId": "PARENT-0014",
+          "lon": 115.07701,
+          "lat": 36.70308
+        },
+        {
+          "cityId": "87495",
+          "nameCh": "斥章县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87495",
+          "commanderyId": "PARENT-0014",
+          "lon": 115.07701,
+          "lat": 36.70308
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 467,
+        "row": 191
+      },
+      "members": [
+        {
+          "cityId": "45020",
+          "nameCh": "东平陵县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45020",
+          "commanderyId": "PARENT-0035",
+          "lon": 117.52242,
+          "lat": 36.71219
+        },
+        {
+          "cityId": "45049",
+          "nameCh": "土鼓县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45049",
+          "commanderyId": "PARENT-0035",
+          "lon": 117.52242,
+          "lat": 36.71219
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 176,
+        "row": 193
+      },
+      "members": [
+        {
+          "cityId": "70620",
+          "nameCh": "西都县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70620",
+          "commanderyId": "PARENT-0162",
+          "lon": 101.78394,
+          "lat": 36.60886
+        },
+        {
+          "cityId": "X058",
+          "nameCh": "西羌",
+          "kind": "EXTERNAL_PLACE",
+          "jurisdictionId": "X058",
+          "commanderyId": "PARENT-0163",
+          "lon": 101.77866,
+          "lat": 36.62386
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": false,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 495,
+        "row": 194
+      },
+      "members": [
+        {
+          "cityId": "85292",
+          "nameCh": "营陵县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85292",
+          "commanderyId": "PARENT-0038",
+          "lon": 119.04401,
+          "lat": 36.54834
+        },
+        {
+          "cityId": "85466",
+          "nameCh": "平寿县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85466",
+          "commanderyId": "PARENT-0038",
+          "lon": 119.01411,
+          "lat": 36.58534
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 430,
+        "row": 213
+      },
+      "members": [
+        {
+          "cityId": "85064",
+          "nameCh": "鄄良县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85064",
+          "commanderyId": "PARENT-0029",
+          "lon": 115.50356,
+          "lat": 35.67287
+        },
+        {
+          "cityId": "85065",
+          "nameCh": "鄄城县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85065",
+          "commanderyId": "PARENT-0029",
+          "lon": 115.50356,
+          "lat": 35.67287
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85064→85065",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 199,
+        "row": 217
+      },
+      "members": [
+        {
+          "cityId": "70126",
+          "nameCh": "枹罕县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70126",
+          "commanderyId": "PARENT-0066",
+          "lon": 102.98101,
+          "lat": 35.49667
+        },
+        {
+          "cityId": "70131",
+          "nameCh": "白石县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70131",
+          "commanderyId": "PARENT-0066",
+          "lon": 102.98101,
+          "lat": 35.49667
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 308,
+        "row": 245
+      },
+      "members": [
+        {
+          "cityId": "70633",
+          "nameCh": "杜陵",
+          "kind": "COUNTY",
+          "jurisdictionId": "70633",
+          "commanderyId": "PARENT-0004",
+          "lon": 108.92208,
+          "lat": 34.1845
+        },
+        {
+          "cityId": "70634",
+          "nameCh": "杜",
+          "kind": "COUNTY",
+          "jurisdictionId": "70634",
+          "commanderyId": "PARENT-0004",
+          "lon": 108.92208,
+          "lat": 34.1845
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "70634→70633",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    },
+    {
+      "cell": {
+        "col": 358,
+        "row": 282
+      },
+      "members": [
+        {
+          "cityId": "45748",
+          "nameCh": "赞县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45748",
+          "commanderyId": "PARENT-0041",
+          "lon": 111.62382,
+          "lat": 32.46271
+        },
+        {
+          "cityId": "45751",
+          "nameCh": "阴县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45751",
+          "commanderyId": "PARENT-0041",
+          "lon": 111.62382,
+          "lat": 32.46271
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "45748→45751",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": null,
+      "evidenceRefs": [],
+      "reviewedAt": null
+    }
+  ]
+}

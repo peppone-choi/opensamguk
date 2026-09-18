@@ -28,6 +28,9 @@ EXEMPT = {
     "tools/scenario/migrate_han_ownership_claims.py": "main 에서 이미 적색(scenario-province-claims-v1 drift), GH #818 후속",
     "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
     "tools/map/build_han_parent_reconciliation.py": "통과하지만 23초 — contracts 예산 밖, 미배선",
+    "tools/map/measure_province_seat_offset.py": (
+        "Q1·Q1b 게이트 — 현행 커밋본에서 의도적으로 적색(480·24건, GH #806 계획 §6). ★ 지리 재분할이 han-tiles 에 "
+        "들어오는 PR 이 COUPLED 로 옮긴다. 적색인 것은 test_measure_province_seat_offset 가 고정한다"),
 }
 
 

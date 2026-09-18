@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from measure_province_seat_offset import TILES, measure, project_cell  # noqa: E402
+from measure_province_seat_offset import TILES, gate, main, measure, project_cell  # noqa: E402
 
 PROJECTION = {"cell": 1.0, "k": 1.0, "x0": 0.0, "pad": 0.0, "y1": 4.0}
 
@@ -55,6 +55,36 @@ class MeasureTest(unittest.TestCase):
         rows = measure(document([[0, 0, 1, 1]] * 4))
         self.assertTrue(rows[0]["trueCellInProvince"])
         self.assertFalse(rows[1]["trueCellInProvince"])
+
+    def test_gate_is_red_on_a_displaced_province_and_green_when_it_sits_on_its_seat(self):
+        red = gate(measure(document([[1, 1, 0, 0]] * 4)))
+        self.assertEqual([r["id"] for r in red["Q1"]], ["A"])
+        self.assertEqual([r["id"] for r in red["Q1b"]], ["A"])  # 실제 칸은 PLAIN 인데 제 省엔 저지 0칸
+        # 乙의 실제 칸 (col 1,row 3) 까지 제 땅이어야 초록이다.
+        green = gate(measure(document([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1]])))
+        self.assertEqual(green, {"Q1": [], "Q1b": []})
+
+    def test_gate_exception_needs_a_ledger_id_and_never_excuses_q1b(self):
+        rows = measure(document([[1, 1, 0, 0]] * 4))
+        excused = gate(rows, frozenset({"A"}))
+        self.assertEqual(excused["Q1"], [])
+        self.assertEqual([r["id"] for r in excused["Q1b"]], ["A"])
+        self.assertEqual([r["id"] for r in gate(rows, frozenset({"B"}))["Q1"]], ["A"])
+
+    def test_gate_counts_a_seat_province_without_any_cell(self):
+        rows = measure(document([[1, 1, 1, 1]] * 4))  # 甲은 칸이 없다 — 걸러지면 게이트가 눈을 감는다
+        self.assertEqual([r["id"] for r in gate(rows)["Q1"]], ["A"])
+
+    def test_check_mode_is_red_on_the_committed_tiles_today(self):
+        """--check 는 아직 CI 차단 단계가 아니다. 현행 커밋본이 빨간 것이 이 게이트가 살아 있다는 증거다."""
+        import contextlib
+        import io
+        from unittest import mock
+        with mock.patch.object(sys, "argv", ["measure", "--check", "--top", "0"]), \
+                contextlib.redirect_stderr(io.StringIO()) as err, contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(), 1)
+        self.assertIn("Q1: 480 / 1131", err.getvalue())
+        self.assertIn("Q1b: 24 / 1131", err.getvalue())
 
     def test_committed_tiles_baseline(self):
         """현행 커밋본의 실측 기준선. 지리 재분할(#806)이 들어오면 의도적으로 고친다."""

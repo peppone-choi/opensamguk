@@ -5,6 +5,11 @@
 
   python3 tools/map/measure_province_seat_offset.py            # 요약
   python3 tools/map/measure_province_seat_offset.py --tsv out  # 전수 TSV
+  python3 tools/map/measure_province_seat_offset.py --check    # Q1·Q1b 게이트 (현행 커밋본은 적색이다)
+
+--check 는 아직 CI 에 걸지 않는다. 현행 커밋본이 Q1 480건·Q1b 24건으로 빨갛기 때문이다(계획 §6).
+지리 재분할(★)이 han-tiles 에 들어오는 PR 이 이 모드를 차단 단계로 켠다. 예외는 --exceptions 로 받은
+원장 행(관할 id)뿐이고, 이 도구는 임계값을 갖지 않는다 — 통과 조건은 「0건」이다.
 """
 from __future__ import annotations
 
@@ -69,9 +74,10 @@ def measure(document: dict) -> list[dict]:
         city = document["cities"][city_index]
         if city.get("lon") is None or city.get("lat") is None:
             continue
+        juris = jurisdiction_of.get(record["id"])
         flat = cells_of.get(index)
         if flat is None or flat.size == 0:
-            out.append({"id": record["id"], "nameCh": record["nameCh"], "area": 0})
+            out.append({"id": record["id"], "nameCh": record["nameCh"], "jurisdictionId": juris, "area": 0})
             continue
         prow, pcol = np.divmod(flat, cols)
         tcol, trow = project_cell(meta["projection"], city["lat"], city["lon"])
@@ -85,11 +91,11 @@ def measure(document: dict) -> list[dict]:
         radius = math.sqrt(area / math.pi)
         terr = terrain[prow, pcol]
         true_owner = int(owner[irow, icol]) if inside_grid else -2
-        juris = jurisdiction_of.get(record["id"])
         true_parent = int(parent[irow, icol]) if inside_grid else -2
         out.append({
             "id": record["id"],
             "nameCh": record["nameCh"],
+            "jurisdictionId": juris,
             "kind": city["kind"],
             "seat": bool(city.get("seat")),
             "parent": record["parentRegionId"],
@@ -113,6 +119,28 @@ def measure(document: dict) -> list[dict]:
     return out
 
 
+def gate(rows: list[dict], exception_ids: frozenset[str] = frozenset()) -> dict[str, list[dict]]:
+    """Q1(실제 칸 ∈ 제 관할)·Q1b(실제 칸이 저지면 제 省에 저지 ≥ 1칸) 위반 행. 빈 목록이 통과다.
+
+    exception_ids 는 원장이 사유를 적은 관할 id 다(물·격자 밖 / 사료 郡 ≠ 래스터 郡 / 씨앗 충돌).
+    예외는 Q1 만 면제한다 — Q1b 는 省 안 지형을 보므로 씨앗이 옮겨져도 그대로 잰다.
+    """
+    measured = [r for r in rows if r.get("area")]
+    landless = [r for r in rows if not r.get("area")]  # 칸이 하나도 없는 城 있는 省 — 제자리일 수 없다
+    return {
+        "Q1": landless + [r for r in measured
+                          if not r["trueCellInJurisdiction"] and r["jurisdictionId"] not in exception_ids],
+        "Q1b": [r for r in measured if r["terrainAtTrue"] in ("PLAIN", "BASIN") and r["lowlandCells"] == 0],
+    }
+
+
+def load_exception_ids(path: Path) -> frozenset[str]:
+    """분할기 보고서(seedExceptions) 또는 원장(rows)의 관할 id."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    rows = document.get("seedExceptions", document.get("rows", []))
+    return frozenset(row["jurisdictionId"] for row in rows)
+
+
 def percentiles(values, points=(50, 75, 90, 95, 99, 100)):
     array = np.asarray(sorted(values), dtype=float)
     return {p: round(float(np.percentile(array, p)), 2) for p in points}
@@ -128,8 +156,21 @@ def main() -> int:
     parser.add_argument("--tiles", type=Path, default=TILES)
     parser.add_argument("--tsv", type=Path)
     parser.add_argument("--top", type=int, default=40)
+    parser.add_argument("--check", action="store_true", help="Q1·Q1b 위반이 있으면 exit 1")
+    parser.add_argument("--exceptions", type=Path, help="Q1 예외 원장/분할기 보고서 (관할 id)")
     args = parser.parse_args()
-    rows = [r for r in measure(json.loads(args.tiles.read_text())) if r.get("area")]
+    every = measure(json.loads(args.tiles.read_text()))
+    rows = [r for r in every if r.get("area")]
+    if args.check:
+        rows = every
+        failures = gate(rows, load_exception_ids(args.exceptions) if args.exceptions else frozenset())
+        for name, failed in failures.items():
+            print(f"{name}: {len(failed)} / {len(rows)}", file=sys.stderr if failed else sys.stdout)
+            for r in sorted(failed, key=lambda r: (-r.get("nearestCell", math.inf), r["id"]))[:args.top]:
+                print(f"  {name} {r['id']} {r['nameCh']} nearestCell={r.get('nearestCell', 'NO_CELLS')} "
+                      f"terrainAtTrue={r.get('terrainAtTrue')} lowlandCells={r.get('lowlandCells')}",
+                      file=sys.stderr)
+        return 1 if any(failures.values()) else 0
     rows.sort(key=lambda r: (-r["nearestCell"], r["id"]))
     print(f"seat provinces measured: {len(rows)}")
     for key in ("trueCellInProvince", "trueCellInJurisdiction", "trueCellInParent"):
