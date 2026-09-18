@@ -2,7 +2,7 @@
 
 This immutable release snapshot contains nine strategic loader inputs and five ownership/supply companions. The catalog records each original path, raw SHA-256 and byte length, and deterministic gzip blob hash (level 9, mtime 0). `sourceBaseCommit` records the reviewed source checkout.
 
-Do not regenerate this directory in place when future cities, names or boundaries change. Register a new release identity instead. The 832/835, 846, 848 and 1098 catalogs remain unchanged.
+Do not regenerate this directory in place when future cities or names change — register a new release identity. **Boundaries are the exception since ADR-LITE-063:** the resolver selects a release by its city-id set, so a boundary change that keeps the same 1,133 cities cannot get a new identity; it is re-pinned in place with a dated section below and every world pinned to 1133 must be reset. The 832/835, 846, 848 and 1098 catalogs remain unchanged.
 
 What changed from 1098 — no province is left without a city-bearing jurisdiction (user directive 2026-09-17):
 
@@ -43,3 +43,30 @@ Three blobs moved together with `catalog.json` and `Han1133Artifacts.CATALOG_SHA
 `sourceBaseCommit` is the main commit this work started from (`cd9d93ed`). 846/848/1098 bundles are byte-identical.
 
 Cost: blob hashes feed `StrategicTopology.contentHash`, so a world already pinned to 1133 fails to load until it is reset.
+
+## 2026-09-18 geography-first re-cut + river routes (ADR-LITE-063, GH #806 + #826)
+
+One in-place re-pin for two works, by user decision (the bundled reset of 2026-09-18). City identities (the 1,133 ids) are unchanged; **province identities and indices are not**:
+
+- County borders inside every commandery were re-cut to the cities' real positions (`partition_counties_by_location`, a new han-tiles stage between the frontier counties and the strategic-site carve; ledger `county-location-partition-v1`). Provinces 1,594 → **1,331** (1,258 county/cityless + 73 strategic sites), 457 old ids retired (the ledger lists them), surviving ids keep their records but not always their index. Q1 (a city's real cell lies in its own jurisdiction) 651/1,131 → 1,131/1,131 with ledger exceptions.
+- River routes: the waterway ledger now has 江陵·沙羨(夏口)·建業 as ports, so the river-route table is 江州–夷陵–江陵–沙羨–樊口–濡須口–建業 (6 `RIVER` rows; previously 3).
+- `HanStrategicTopologyJson.landCountByRoster[1133]` 1,594 → 1,331. The 上庸 conflict-allowlist rows (1100·1110) were retired — 上庸縣 is one province now.
+
+| path | old sha256 | new sha256 |
+| --- | --- | --- |
+| `data/map/han-tiles.json` | `ba08098a…1566a0` | `1b19cc34…d85f99` |
+| `data/map/han-water-topology-v1.json` | `70452cdf…af336c` | `02c71f78…7b4e7e` |
+| `data/curated/han/water-topology-adjudications-v1.json` | `f4e2dba2…811deb` | `897aa6a4…8039a4` |
+| `data/map/han-strategic-topology-manifest-v1.json` | `50752b94…39e817` | `eae9ceff…1e08f7` |
+| `infra/src/main/resources/map/han-world-v3.json` | `afaf2fb7…99d89f` | `d5009b95…fba58e` |
+| `data/map/han-world-v3-manifest-v1.json` | `c318f1e1…399233` | `832db18c…2dce28` |
+| `data/curated/han/route-node-selection-v1.json` | `0921d9e7…bcbaa6` | `696866fd…112eb9` |
+| `data/curated/han/route-node-migration-v1.json` | `2d4aad83…87cacc` | `bad2cd42…910c20` |
+| `data/map/han-scenario-province-ownership-v1.json` | `39583f1a…cc5e6b` | `f649a265…cb3374` |
+| `data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json` | `824aafbb…d74819` | `cd8bb52f…b55350` |
+| `data/map/han-commandery-supply-links-v1.json` | `705416d8…3ab569` | `ef8aac93…228d34` |
+
+`catalog.json` `3301ccfe…5f2e59` → `c102b6a9…ef04aa`. `runtime-constants.json` `5bd8890f…00e974` → `fa2e424e…70daac` (`HanWorldV31133CityConst` snapshot re-taken). `sourceBaseCommit` `bdf5ed8e` (origin/main at the time). 846/848/1098 bundles are byte-identical.
+
+Cost: every world pinned to 1133 fails to load until it is reset — and because province ids and indices changed, persisted `province_control` is not migratable. Reset, do not migrate.
+

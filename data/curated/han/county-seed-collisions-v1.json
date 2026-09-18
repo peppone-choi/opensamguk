@@ -478,7 +478,14 @@
         "raw 전 코퍼스 '鄄良': 0건",
         "'甄良': 0건",
         "'甄城' hhs: 0건; 대조군 '鄄城' 은 검출됨(조회 정상)"
-      ]
+      ],
+      "delegatedDecision": {
+        "decision": "DELEGATED_KEEP_DEFAULT",
+        "decidedAt": "2026-09-18",
+        "decidedBy": "main 세션(사용자 「전부 너가 판단해서 해결」)",
+        "reason": "사료 0건 — 鄄良·贊縣 모두 코퍼스 부재(대조 조회는 살아 있음). 기계 기본값 유지, 贊=酇 가설은 검증 전이라 기존 접기를 바꾸지 않는다",
+        "note": "ruling 열거값(SAME_ENTITY/DISTINCT_COUNTIES)에 이 값이 없어 새 값을 짓지 않고 reviewState 는 NEEDS_HUMAN_REVIEW 로 둔다. 기하 변경 없음."
+      }
     },
     {
       "cell": {
@@ -608,7 +615,14 @@
         "raw 전 코퍼스 '贊縣': 0건",
         "yhjx '酇': 0건",
         "宋書 州郡志 '酇' 은 沛/譙 의 酇만 검출"
-      ]
+      ],
+      "delegatedDecision": {
+        "decision": "DELEGATED_KEEP_DEFAULT",
+        "decidedAt": "2026-09-18",
+        "decidedBy": "main 세션(사용자 「전부 너가 판단해서 해결」)",
+        "reason": "사료 0건 — 鄄良·贊縣 모두 코퍼스 부재(대조 조회는 살아 있음). 기계 기본값 유지, 贊=酇 가설은 검증 전이라 기존 접기를 바꾸지 않는다",
+        "note": "ruling 열거값(SAME_ENTITY/DISTINCT_COUNTIES)에 이 값이 없어 새 값을 짓지 않고 reviewState 는 NEEDS_HUMAN_REVIEW 로 둔다. 기하 변경 없음."
+      }
     }
   ]
 }

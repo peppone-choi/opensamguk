@@ -21,7 +21,7 @@ from tools.map.partition_counties_by_location import TILES, project_cell, stage_
 
 LEDGER = ROOT / "data/curated/han/county-seed-collisions-v1.json"
 CURATED = ROOT / "data/curated/han"
-HUMAN_FIELDS = ("ruling", "reviewState", "basis", "evidenceRefs", "absenceChecks", "reviewedAt")
+HUMAN_FIELDS = ("ruling", "reviewState", "basis", "evidenceRefs", "absenceChecks", "reviewedAt", "delegatedDecision")
 
 
 def _mentions(ids: list[str]) -> list[dict]:

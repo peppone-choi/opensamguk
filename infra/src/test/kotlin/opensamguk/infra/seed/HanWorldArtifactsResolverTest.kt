@@ -67,7 +67,8 @@ class HanWorldArtifactsResolverTest {
         val selected = resolver.resolve((1..1133).toList(), emptyList())
         assertEquals(HanWorldVariant.V3_1133, selected.variant)
         assertEquals((1..1133).toList(), selected.cityConst.all().keys.sorted())
-        assertEquals(1594, selected.projection.topology.landProvinceIds.size)
+        // 2026-09-18 지리 재분할(GH #806, ADR-LITE-063): 1133 번들을 제자리 재핀 — 1,594 → 1,331.
+        assertEquals(1331, selected.projection.topology.landProvinceIds.size)
         assertNotEquals(
             resolver.resolve((1..1098).toList(), emptyList()).projection.topology.contentHash,
             selected.projection.topology.contentHash,
