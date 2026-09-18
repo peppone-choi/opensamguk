@@ -60,9 +60,9 @@
 2. **쓰기 진입점 하나**: `recorder.moveGeneral(world, generalId, to: StrategicNodeRef)` — 위치 CAS 쓰기 + `city_id` 갱신(省에 城이 있을 때만)을 한 번에. `removeGeneralPosition` 이 이미 쓰는 「`diffGeneral` + `applyGeneralDirtyFree` 를 같은 버퍼에」 패턴을 따른다. HWIHA 의 모든 이동은 이것만 부른다.
 3. **생성 = 행 생성**: `recordGeneralCreate` 안에서 HWIHA 면 `bindings[city_id]` 로 행을 만든다. 바인딩이 없는 城(외부 거점 — 1133 리소스에서 0건)이면 조용히 건너뛰지 않고 **생성을 거절**한다. `MakeGeneralHandler` 의 별도 경로도 같은 함수를 탄다. 시드는 `ScenarioImporter.importAdmitted` 의 `insertGenerals` 직후에 전 장수 행 INSERT(핀은 `HanWorldArtifactsResolver.resolve(cityIds, emptyList()).projection.topology`).
 4. **차단 키 넓히기**: 18곳의 `isGeneralAtBattlefield` 를 `!isGeneralAtCity` 로. SAMMO 에서는 §2.1 의 정의상 같은 값이라 바이트 불변(동치를 검증하는 테스트가 아니라 정의를 고정하는 테스트를 둔다).
-5. **`applyPositionAwareGeneral`**: 호출자 14곳 중 이동인 곳은 `moveGeneral` 로, meta 갱신뿐인 4곳은 그대로 둔다(HWIHA 에서 통째로 끄면 그 갱신이 사라진다 — 교차 비평 S7). `InstantActionHandler` 의 우회 쓰기를 진입점으로 돌린다.
+5. **`applyPositionAwareGeneral`**: 호출자 14곳 중 이동인 곳은 `moveGeneral` 로, meta 갱신뿐인 4곳은 그대로 둔다(HWIHA 에서 통째로 끄면 그 갱신이 사라진다 — 교차 비평 S7). 우회 쓰기 2곳(`InstantActionHandler.kt:75-76`, `MonthlyPostUpdateHook.kt:283,287`)을 진입점으로 돌린다.
 6. **ruleProfile 선행 의존**: 계약 §2 의 ruleProfile 은 아직 코드에 없다(0건). 이 묶음은 「시나리오 JSON 에 `ruleProfile` 필드 하나(없으면 SAMMO) → `ScenarioImporter` 가 `world_state.config` 에 기록 → 런타임이 읽음」을 **함께** 구현한다. 기존 시나리오 파일은 필드가 없어 SAMMO 다.
-7. `cityAnchors` 는 클래스패스 리소스(`map/han-world-v3.json`)를 읽고 부팅은 변형 아카이브를 쓴다(교차 비평 S4) — 행 생성·`atCity` 는 부팅이 고른 변형의 `projection.bindingsByCityId` 를 써야 한다.
+7. `cityAnchors` 는 클래스패스 리소스(`map/han-world-v3.json`)를 읽고 부팅은 변형 아카이브를 쓴다(교차 비평 S4) — 행 생성·`atCity` 는 부팅이 고른 변형의 `projection.bindingsByCityId`(`HanStrategicRouteBinding.landProvinceId: String?` → `StrategicNodeRef.LandProvince`)를 써야 한다. 이 문서의 `cityAnchors[…]`·`bindings[…]` 표기는 전부 이것을 뜻한다.
 8. 스키마 변경 없음. V50 표·CAS·flush 그대로.
 
 ## 4. 게이트(적색 프로브 필수)
