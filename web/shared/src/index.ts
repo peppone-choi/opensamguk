@@ -224,6 +224,12 @@ export {
   type CityNameInput,
 } from './iso/cityName';
 export {
+  countyGlossForJurisdiction,
+  splitCountyGloss,
+  PlaceNameWithGloss,
+  type PlaceNameWithGlossProps,
+} from './iso/countyNameGloss';
+export {
   externalPlaceLevel,
   type ExternalPlaceInput,
 } from './iso/externalPlaceTier';
