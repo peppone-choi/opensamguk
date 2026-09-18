@@ -242,7 +242,7 @@ class InMemoryTurnWorld(
         generalPosition?.stateFor(generalId)?.battlefield != null
 
     fun isGeneralPhysicallyInCity(generalId: Int, cityId: Int): Boolean =
-        !isGeneralAtBattlefield(generalId) && getGeneralById(generalId)?.cityId == cityId
+        isGeneralAtCity(generalId) && getGeneralById(generalId)?.cityId == cityId
 
     val ruleProfile: opensamguk.logic.input.RuleProfile get() = state.ruleProfile
 

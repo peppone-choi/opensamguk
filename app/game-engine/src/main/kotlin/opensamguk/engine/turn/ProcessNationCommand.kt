@@ -109,7 +109,7 @@ class ProcessNationCommand(
     ): LastTurn {
         val general = world.getGeneralById(generalId)
             ?: error("ProcessNationCommand: general $generalId not in world")
-        if (world.isGeneralAtBattlefield(generalId)) {
+        if (!world.isGeneralAtCity(generalId)) {
             world.pushLog(nationLog(general, "action", "general", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다."))
             return lastTurn
         }
@@ -197,7 +197,7 @@ class ProcessNationCommand(
     fun processInstant(generalId: Int, nationCommand: ChosenCommand): InstantResult {
         val general = world.getGeneralById(generalId)
             ?: return InstantResult.Denied("장수가 없습니다.")
-        if (world.isGeneralAtBattlefield(generalId))
+        if (!world.isGeneralAtCity(generalId))
             return InstantResult.Denied("전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.")
         if (!InstantNationCommandRegistry.isInstantNationCommand(nationCommand.actionCode)) {
             return InstantResult.Denied("처리할 수 없습니다.")
@@ -539,7 +539,7 @@ class ProcessNationCommand(
         draft.destGeneral?.let { destG ->
             if (destG.id == general.id) return@let
             val pre = world.getGeneralById(destG.id)?.let { toLogicGeneral(it) } ?: return@let
-            if (world.isGeneralAtBattlefield(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
+            if (!world.isGeneralAtCity(pre.id) && destG.cityId != pre.cityId && destG.nationId == pre.nationId) return@let
             if (destG != pre) {
                 recorder.diffGeneral(pre, destG)
                 world.getGeneralById(destG.id)?.let { opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(it, destG)) }
@@ -573,7 +573,7 @@ class ProcessNationCommand(
         }
         for (moved in draft.cascadeGenerals) {
             val pre = world.getGeneralById(moved.id) ?: continue
-            if (world.isGeneralAtBattlefield(pre.id) && moved.cityId != pre.cityId && moved.nationId == pre.nationId) continue
+            if (!world.isGeneralAtCity(pre.id) && moved.cityId != pre.cityId && moved.nationId == pre.nationId) continue
             recorder.diffGeneral(toLogicGeneral(pre), moved)
             opensamguk.engine.turn.applyPositionAwareGeneral(world, recorder, applyLogicToGeneral(pre, moved))
         }
