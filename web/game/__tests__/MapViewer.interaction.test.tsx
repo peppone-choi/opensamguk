@@ -41,6 +41,12 @@ vi.mock('@opensamguk/ui', async () => {
       return (
         <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
           <button type="button" onClick={() => props.onCountyHover?.(county, { x: 20, y: 30 })}>hover county</button>
+          <button
+            type="button"
+            onClick={() => county && props.onCountyHover?.({
+              ...county, commanderyName: '영천군', countyName: '양성현', countyGloss: '陽城',
+            }, { x: 20, y: 30 })}
+          >hover glossed county</button>
           <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'mouse' })}>activate mouse</button>
           <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'touch' })}>activate touch</button>
         </div>
@@ -138,6 +144,23 @@ describe('MapViewer 아이소 지도(정본)', () => {
     expect(screen.getByRole('status')).not.toHaveTextContent('사예');
     expect(screen.getByRole('status')).not.toHaveTextContent('【');
     expect(screen.getByRole('status')).toHaveTextContent('위');
+  });
+
+  // #838: 같은 郡 안 同音 縣(영천군 양성현 陽城·襄城)은 작고 흐린 漢字 병기를 뒤에 단다.
+  it('같은 郡 안 同音 縣이면 툴팁 이름 뒤에 漢字 병기 span 을 단다', () => {
+    render(<MapViewer legacyCanvas mapData={MAP} />);
+    fireEvent.click(screen.getByRole('button', { name: 'hover glossed county' }));
+    const name = document.querySelector('.map-tooltip-name');
+    expect(name).toHaveTextContent('영천군 양성현陽城');
+    const gloss = name?.querySelector('.os-place-gloss');
+    expect(gloss).toHaveTextContent('陽城');
+    expect(gloss).toHaveAttribute('lang', 'zh-Hant');
+  });
+
+  it('병기 대상이 아니면 툴팁 이름에 병기 span 이 없다', () => {
+    render(<MapViewer legacyCanvas mapData={MAP} />);
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
+    expect(document.querySelector('.map-tooltip-name .os-place-gloss')).toBeNull();
   });
 
   it('투영 소유권을 전달하고 툴팁은 활성 레이어 소유자만 표시한다', () => {

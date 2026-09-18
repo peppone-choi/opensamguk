@@ -16,7 +16,7 @@
 // via `cityDetail` to skip the fetch.
 
 import { useEffect, useState } from 'react';
-import { cityDisplayName } from '@opensamguk/ui';
+import { cityDisplayName, PlaceNameWithGloss, splitCountyGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
 import type { CityDetailResponse, MapPreviewCity } from '@/lib/types';
@@ -154,7 +154,9 @@ export default function MapCityDetail({
                 <div className="mcd-city-name">
                     {/* 레거시 【지역 | 등급】 도시명 — 상세 로드되면 서버 해석 한글명(regionName|levelName) 사용. */}
                     {/* 郡縣制 안이면 「뭐뭐현」 — 지도 이름표와 같은 함수를 쓴다(cityName.ts). */}
-                    {`【${detail ? `${detail.regionName} | ${detail.levelName}` : levelText(city.level)}】 ${cityDisplayName({ ...city, nameCh: detail?.nameCh ?? city.nameCh ?? undefined })}`}
+                    {/* 서버 표시명의 簡體 꼬리 「(阳城)」는 같은 郡 안 同音 縣 구분이다 — 작은 繁體 병기로 바꿔 단다(#838). */}
+                    {`【${detail ? `${detail.regionName} | ${detail.levelName}` : levelText(city.level)}】 `}
+                    <PlaceNameWithGloss {...splitCountyGloss(cityDisplayName({ ...city, nameCh: detail?.nameCh ?? city.nameCh ?? undefined }))} />
                     {isCurrent && <span className="mcd-current-tag"> · 현재 도시</span>}
                 </div>
                 {onClose && (

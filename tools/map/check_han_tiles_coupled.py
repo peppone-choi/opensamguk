@@ -114,6 +114,11 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("county-economy-inputs", ("data/curated/han/county-economy-inputs-v1.json",),
             _t("tools/map/build_county_economy_inputs.py", "--check"),
             _t("tools/map/build_county_economy_inputs.py")),
+    # 같은 郡 안 한글 표시명 충돌 목록 + 웹 병기 표(#838). han-world-v3 를 두 번째 축으로 읽으므로 그 뒤에 굽는다.
+    Coupled("county-display-name-collisions",
+            ("data/curated/han/county-display-name-collisions-v1.json", "web/shared/src/iso/countyNameGloss.generated.ts"),
+            _t("tools/map/build_county_display_name_collisions.py", "--check"),
+            _t("tools/map/build_county_display_name_collisions.py")),
     Coupled("junguozhi-county-gaps", ("data/curated/han/junguozhi-county-gaps-v1.json",),
             _t("tools/map/build_junguozhi_county_gaps.py", "--check"),
             _t("tools/map/build_junguozhi_county_gaps.py")),

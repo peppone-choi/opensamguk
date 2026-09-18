@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState } from '@opensamguk/ui';
+import { formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import IsoWorldMap, { type IsoView } from '../iso/IsoWorldMap';
 import type { PlacedCity } from '@opensamguk/ui';
@@ -462,7 +462,13 @@ export default function MapViewer({
             </div>
             {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
-                    <div className="map-tooltip-name">{hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}</div>
+                    <div className="map-tooltip-name">
+                        {/* 같은 郡 안 同音 縣이면 작은 漢字 병기(「양성현 陽城」, #838). */}
+                        <PlaceNameWithGloss
+                            name={hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}
+                            gloss={hoverCounty.countyGloss}
+                        />
+                    </div>
                     {hoverMeta && <div className="map-tooltip-meta">{hoverMeta}</div>}
                 </div>
             )}

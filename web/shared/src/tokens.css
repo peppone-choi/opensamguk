@@ -534,3 +534,11 @@
 .os-log__small { font-size: 0.9em; }
 .os-log__b { font-weight: 700; }
 .os-log__failed { color: var(--muted); text-decoration: line-through; }
+
+/* 같은 郡 안 同音 縣의 漢字 병기(#838) — 「양성현 陽城」. 배경색이 국가색·툴팁색으로 바뀌므로 색 대신 불투명도로 흐린다. */
+.os-place-gloss {
+  margin-left: 0.3em;
+  font-size: 0.8em;
+  font-weight: 400;
+  opacity: 0.72;
+}
