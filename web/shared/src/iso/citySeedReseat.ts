@@ -35,12 +35,10 @@ export interface CitySeedReseat {
   toRow: number;
 }
 
-export const CITY_SEED_RESEATS: readonly CitySeedReseat[] = [
-  { cityIndex: 101, placeId: 'X035', fromCol: 756, fromRow: 201, toCol: 714, toRow: 175 },
-  { cityIndex: 1026, placeId: '40078', fromCol: 526, fromRow: 335, toCol: 516, toRow: 328 },
-  { cityIndex: 353, placeId: '70524', fromCol: 266, fromRow: 154, toCol: 262, toRow: 164 },
-  { cityIndex: 498, placeId: '42147', fromCol: 451, fromRow: 461, toCol: 445, toRow: 468 },
-];
+// 2026-09-18 (GH #806): ★ 지리 재분할이 cities[].col/row 를 seat 省 안의 **실제 위치 칸**으로 바꿨다. 위 4곳
+// (于山國·錢唐·富平·揭陽)이 되돌아가던 칸이 이제 지형 파일의 씨앗 그 자체라 표가 비었다(원장 `retired` 에 행이 남아 있다).
+// 규칙과 함수는 남긴다 — 지형 파일이 다시 밀린 씨앗을 실으면 citySeedReseat.test.ts 가 그 城을 짚어 빨개진다.
+export const CITY_SEED_RESEATS: readonly CitySeedReseat[] = [];
 
 /** 되돌릴 대상 최소 모양. 지형 응답 cities[] 항목이 이보다 넓다. */
 export interface ReseatableCity {

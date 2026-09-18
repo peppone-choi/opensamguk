@@ -2690,7 +2690,7 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 1520,
+        "provinceIndex": 1057,
         "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "82879",
@@ -2799,27 +2799,35 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 630,
+        "provinceIndex": 589,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 730,
+            "cityId": "82520",
+            "name": "온현",
+            "nameCh": "温县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
-        "provinceId": "82846",
-        "jurisdictionId": "82846",
-        "jurisdictionName": "偃师县",
-        "jurisdictionNameKo": "언사현",
+        "provinceId": "82520",
+        "jurisdictionId": "82520",
+        "jurisdictionName": "温县",
+        "jurisdictionNameKo": "온현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0000",
         "commanderyName": "河南尹",
         "nearestSeat": {
-          "cityIndex": 135,
-          "cityId": "82846",
-          "name": "언사현",
-          "nameCh": "偃师县",
-          "col": 380,
-          "row": 233,
-          "cellDistance": 3.47
-        },
-        "sameCellPlaces": []
+          "cityIndex": 730,
+          "cityId": "82520",
+          "name": "온현",
+          "nameCh": "温县",
+          "col": 383,
+          "row": 231,
+          "cellDistance": 0.5
+        }
       },
-      "sameCellAsCountySeat": false,
+      "sameCellAsCountySeat": true,
       "placementNote": "나무위키 수확본 flags 에 UNCERTAIN 이 붙은 좌표다. 八關 중 하나지만 이름이 津이라 FERRY 로 둔다."
     },
     {
@@ -2906,27 +2914,35 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 592,
+        "provinceIndex": 314,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 55,
+            "cityId": "44356",
+            "name": "중모현",
+            "nameCh": "中牟县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
-        "provinceId": "82531",
-        "jurisdictionId": "82531",
-        "jurisdictionName": "原武县",
-        "jurisdictionNameKo": "원무현",
+        "provinceId": "44356",
+        "jurisdictionId": "44356",
+        "jurisdictionName": "中牟县",
+        "jurisdictionNameKo": "중모현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0000",
         "commanderyName": "河南尹",
         "nearestSeat": {
-          "cityIndex": 228,
-          "cityId": "82531",
-          "name": "원무현",
-          "nameCh": "原武县",
-          "col": 404,
-          "row": 231,
-          "cellDistance": 2.32
-        },
-        "sameCellPlaces": []
+          "cityIndex": 55,
+          "cityId": "44356",
+          "name": "중모현",
+          "nameCh": "中牟县",
+          "col": 403,
+          "row": 233,
+          "cellDistance": 0.47
+        }
       },
-      "sameCellAsCountySeat": false,
+      "sameCellAsCountySeat": true,
       "placementNote": "historical-battlefields-v1 의 guandu(官渡 전장)와 좌표가 같다(34.75145, 114.05092). 전장 표식과 거점 표식이 같은 점에 선다 — 렌더러에서 겹침을 따로 처리해야 한다. 이름 끝이 渡라 규칙상 FERRY."
     },
     {
@@ -2997,6 +3013,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 919,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "95495",
         "jurisdictionId": "95495",
@@ -3013,8 +3030,7 @@
           "col": 334,
           "row": 231,
           "cellDistance": 0.25
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "正史 표기는 「蒲阪津」이다. 나무위키 표제 蒲坂津을 nameHan 으로 두고 正史 표기는 alias."
@@ -3084,25 +3100,25 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 651,
+        "provinceIndex": 652,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "83046",
-        "jurisdictionId": "83046",
-        "jurisdictionName": "陕县",
-        "jurisdictionNameKo": "섬현",
+        "provinceId": "83053",
+        "jurisdictionId": "83053",
+        "jurisdictionName": "弘农县",
+        "jurisdictionNameKo": "홍농현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0003",
         "commanderyName": "弘農郡",
         "nearestSeat": {
-          "cityIndex": 1072,
-          "cityId": "83046",
-          "name": "섬현",
-          "nameCh": "陕县",
-          "col": 349,
-          "row": 232,
-          "cellDistance": 4.13
-        },
-        "sameCellPlaces": []
+          "cityIndex": 456,
+          "cityId": "83053",
+          "name": "홍농현",
+          "nameCh": "弘农县",
+          "col": 345,
+          "row": 235,
+          "cellDistance": 0.92
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "杜畿가 衞固의 陝津 봉쇄를 피해 돌아 건넌 나루. 연대는 본문에 없고 杜畿 河東太守 부임 기사로 잡았다(REIGN_CONTEXT)."
@@ -3194,6 +3210,15 @@
           "name": "RIVER"
         },
         "provinceIndex": 651,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 1072,
+            "cityId": "83046",
+            "name": "섬현",
+            "nameCh": "陕县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
         "provinceId": "83046",
         "jurisdictionId": "83046",
@@ -3210,16 +3235,7 @@
           "col": 349,
           "row": 232,
           "cellDistance": 0.87
-        },
-        "sameCellPlaces": [
-          {
-            "cityIndex": 1072,
-            "cityId": "83046",
-            "name": "섬현",
-            "nameCh": "陕县",
-            "kind": "COUNTY"
-          }
-        ]
+        }
       },
       "sameCellAsCountySeat": true,
       "placementNote": "셀이 陝縣 治所 셀과 같다 — 프로빈스를 쪼갤 수 없다."
@@ -3289,25 +3305,25 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 557,
+        "provinceIndex": 558,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "82207",
-        "jurisdictionId": "82207",
-        "jurisdictionName": "荡阴县",
-        "jurisdictionNameKo": "탕음현",
+        "provinceId": "82216",
+        "jurisdictionId": "82216",
+        "jurisdictionName": "林虑县",
+        "jurisdictionNameKo": "임려현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0001",
         "commanderyName": "河內郡",
         "nearestSeat": {
-          "cityIndex": 867,
-          "cityId": "82207",
-          "name": "탕음현",
-          "nameCh": "荡阴县",
-          "col": 403,
+          "cityIndex": 583,
+          "cityId": "82216",
+          "name": "임려현",
+          "nameCh": "林虑县",
+          "col": 399,
           "row": 205,
-          "cellDistance": 1.77
-        },
-        "sameCellPlaces": []
+          "cellDistance": 3.89
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "이름은 口지만 鄴 서쪽 漳水 가의 지점이다. 지형 셀은 MOUNTAIN."
@@ -3397,6 +3413,7 @@
           "name": "PLAIN"
         },
         "provinceIndex": 568,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "82289",
         "jurisdictionId": "82289",
@@ -3413,8 +3430,7 @@
           "col": 408,
           "row": 222,
           "cellDistance": 3.07
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -3487,25 +3503,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 396,
+        "provinceIndex": 404,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "45295",
-        "jurisdictionId": "45295",
-        "jurisdictionName": "聊城县",
-        "jurisdictionNameKo": "요성현",
+        "provinceId": "45339",
+        "jurisdictionId": "45339",
+        "jurisdictionName": "阳平县",
+        "jurisdictionNameKo": "양평현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0023",
         "commanderyName": "東郡",
         "nearestSeat": {
-          "cityIndex": 845,
-          "cityId": "45295",
-          "name": "요성현",
-          "nameCh": "聊城县",
-          "col": 439,
+          "cityIndex": 1050,
+          "cityId": "45339",
+          "name": "양평현",
+          "nameCh": "阳平县",
+          "col": 433,
           "row": 201,
-          "cellDistance": 3.14
-        },
-        "sameCellPlaces": []
+          "cellDistance": 3.39
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키 alias 蒼亭은 正史에서 晉書 載記(冉閔, 4세기)에만 나온다 — alias 로만 남기고 근거로 쓰지 않는다."
@@ -3594,25 +3610,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 598,
+        "provinceIndex": 269,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "82581",
-        "jurisdictionId": "82581",
-        "jurisdictionName": "蓼县",
-        "jurisdictionNameKo": "요현",
+        "provinceId": "43379",
+        "jurisdictionId": "43379",
+        "jurisdictionName": "安风县",
+        "jurisdictionNameKo": "안풍현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0050",
         "commanderyName": "廬江郡",
         "nearestSeat": {
-          "cityIndex": 886,
-          "cityId": "82581",
-          "name": "요현",
-          "nameCh": "蓼县",
-          "col": 434,
-          "row": 283,
-          "cellDistance": 10.1
-        },
-        "sameCellPlaces": []
+          "cityIndex": 329,
+          "cityId": "43379",
+          "name": "안풍현",
+          "nameCh": "安风县",
+          "col": 443,
+          "row": 285,
+          "cellDistance": 3.57
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "「安風津都尉」 — 나루에 都尉가 있었다는 직접 기사다. 투영 셀은 廬江郡 蓼縣 관할로 떨어지고 가장 가까운 治所가 10 셀 밖이다."
@@ -3702,6 +3718,15 @@
           "name": "PLAIN"
         },
         "provinceIndex": 798,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 833,
+            "cityId": "87189",
+            "name": "경현",
+            "nameCh": "经县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
         "provinceId": "87189",
         "jurisdictionId": "87189",
@@ -3718,16 +3743,7 @@
           "col": 423,
           "row": 183,
           "cellDistance": 0.53
-        },
-        "sameCellPlaces": [
-          {
-            "cityIndex": 833,
-            "cityId": "87189",
-            "name": "경현",
-            "nameCh": "经县",
-            "kind": "COUNTY"
-          }
-        ]
+        }
       },
       "sameCellAsCountySeat": true,
       "placementNote": "셀이 經縣 治所 셀과 같다 — 프로빈스를 쪼갤 수 없다."
@@ -3797,7 +3813,8 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1501,
+        "provinceIndex": 1038,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "fc-liaodong-006",
         "jurisdictionId": "fc-liaodong-006",
@@ -3814,8 +3831,7 @@
           "col": 561,
           "row": 104,
           "cellDistance": 1.6
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -3885,9 +3901,10 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1304,
+        "provinceIndex": 1200,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0112-7d564e99bc91",
+        "provinceId": "SUB-X029-f447e36b3ebd",
         "jurisdictionId": "X029",
         "jurisdictionName": "卒本",
         "jurisdictionNameKo": "졸본",
@@ -3902,8 +3919,7 @@
           "col": 612,
           "row": 94,
           "cellDistance": 27.27
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "근거가 裴注(吳書) 하나다. 투영 셀은 郡國 밖 卒本 관할(EXTERNAL_SETTLEMENT)로 떨어진다."
@@ -3973,7 +3989,8 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1506,
+        "provinceIndex": 1043,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "fc-liaodong-011",
         "jurisdictionId": "fc-liaodong-011",
@@ -3990,8 +4007,7 @@
           "col": 543,
           "row": 131,
           "cellDistance": 18.94
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "근거가 裴注(魏略 公孫淵表) 하나다. 가까운 沓渚(三國志 本文 2건)는 나무위키에 좌표가 없어 excluded(NO_EXPLICIT_COORDINATE)로 갔다."
@@ -4061,9 +4077,10 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1302,
+        "provinceIndex": 970,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0112-2e303004dfcf",
+        "provinceId": "X029",
         "jurisdictionId": "X029",
         "jurisdictionName": "卒本",
         "jurisdictionNameKo": "졸본",
@@ -4078,8 +4095,7 @@
           "col": 612,
           "row": 94,
           "cellDistance": 16.64
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키 원문 표기가 CJK 호환 한자(U+F97A)라 NFKC 로 정규화했다(namesHanAsRecorded 에 원형). 三國志 本文에는 「梁音渴」 음주가 붙는다. 투영 셀은 卒本 관할(EXTERNAL_SETTLEMENT)."
@@ -4150,6 +4166,7 @@
           "name": "PLATEAU"
         },
         "provinceIndex": 463,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "70156",
         "jurisdictionId": "70156",
@@ -4166,8 +4183,7 @@
           "col": 229,
           "row": 194,
           "cellDistance": 1.69
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "三國志 卷15 魏書·張既傳이 말하는 것은 적의 차단 지점이다 — 張既는 이곳을 피했으므로 도하점이라는 근거는 없다(2026-09-18 정정, supports FERRY_CROSSING_IN_EVENT → INTERCEPTION_AT_SITE). role=FERRY 는 이름 끝 글자 口 규칙(classificationRule)에 따른 것이다. 연대는 張既의 涼州刺史 재임(黃初 초)으로 잡았다."
@@ -4237,25 +4253,25 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 974,
+        "provinceIndex": 84,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0058-b67ed8a3b2fc",
-        "jurisdictionId": "96424",
-        "jurisdictionName": "汉安县",
-        "jurisdictionNameKo": "한안현",
+        "provinceId": "40871",
+        "jurisdictionId": "40871",
+        "jurisdictionName": "南安县",
+        "jurisdictionNameKo": "남안현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0058",
         "commanderyName": "犍為郡",
         "nearestSeat": {
-          "cityIndex": 644,
-          "cityId": "96424",
-          "name": "한안현",
-          "nameCh": "汉安县",
-          "col": 230,
-          "row": 348,
-          "cellDistance": 16.81
-        },
-        "sameCellPlaces": []
+          "cityIndex": 187,
+          "cityId": "40871",
+          "name": "남안현",
+          "nameCh": "南安县",
+          "col": 213,
+          "row": 343,
+          "cellDistance": 1.46
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "같은 「峽口」가 형주(西陵峽口, id xiakou)에도 있다. 이쪽은 三國志 楊洪傳 원문 표기 그대로 「南安峽口」를 nameHan 으로 써서 구별했다."
@@ -4326,6 +4342,7 @@
           "name": "BASIN"
         },
         "provinceIndex": 325,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "44428",
         "jurisdictionId": "44428",
@@ -4339,11 +4356,10 @@
           "cityId": "44428",
           "name": "낙현",
           "nameCh": "雒县",
-          "col": 222,
-          "row": 312,
-          "cellDistance": 6.45
-        },
-        "sameCellPlaces": []
+          "col": 223,
+          "row": 313,
+          "cellDistance": 5.03
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "이름 끝이 渡라 규칙상 FERRY. 鍾會傳의 「新都、大渡」는 成都 북쪽 길목이다."
@@ -4414,6 +4430,7 @@
           "name": "BASIN"
         },
         "provinceIndex": 947,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "96259",
         "jurisdictionId": "96259",
@@ -4430,8 +4447,7 @@
           "col": 282,
           "row": 308,
           "cellDistance": 12.43
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "瓦口는 巴西 宕渠의 산간 길목(隘)으로 알려져 있어 「수구」로 보기 어렵다. 사용자 확정 규칙(口→FERRY)을 그대로 따랐다 — 판단 보류 행이다."
@@ -4502,6 +4518,15 @@
           "name": "PLAIN"
         },
         "provinceIndex": 209,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 724,
+            "cityId": "42746",
+            "name": "회음현",
+            "nameCh": "淮阴县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
         "provinceId": "42746",
         "jurisdictionId": "42746",
@@ -4518,16 +4543,7 @@
           "col": 493,
           "row": 259,
           "cellDistance": 0.58
-        },
-        "sameCellPlaces": [
-          {
-            "cityIndex": 724,
-            "cityId": "42746",
-            "name": "회음현",
-            "nameCh": "淮阴县",
-            "kind": "COUNTY"
-          }
-        ]
+        }
       },
       "sameCellAsCountySeat": true,
       "placementNote": "셀이 淮陰縣 治所 셀과 같다 — 프로빈스를 쪼갤 수 없다."
@@ -4598,6 +4614,7 @@
           "name": "PLAIN"
         },
         "provinceIndex": 430,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "45671",
         "jurisdictionId": "45671",
@@ -4614,8 +4631,7 @@
           "col": 370,
           "row": 297,
           "cellDistance": 3.51
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -4710,6 +4726,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 432,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "45685",
         "jurisdictionId": "45685",
@@ -4723,11 +4740,10 @@
           "cityId": "45685",
           "name": "약현",
           "nameCh": "鄀县",
-          "col": 375,
-          "row": 314,
-          "cellDistance": 4.58
-        },
-        "sameCellPlaces": []
+          "col": 373,
+          "row": 302,
+          "cellDistance": 8.36
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키 표제는 靑泥(청니)이고 尋口를 다른 이름으로 달았다. 범위 글자로 끝나는 쪽이 尋口라 nameHan 을 尋口로 두고 靑泥·青泥를 alias 로 남겼다. 續漢書 郡國志 河南 鞏縣 注의 「尋口」는 다른 곳이다."
@@ -4817,6 +4833,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 281,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "43595",
         "jurisdictionId": "43595",
@@ -4833,8 +4850,7 @@
           "col": 381,
           "row": 324,
           "cellDistance": 6.51
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -4905,6 +4921,15 @@
           "name": "RIVER"
         },
         "provinceIndex": 271,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 995,
+            "cityId": "43423",
+            "name": "악현",
+            "nameCh": "鄂县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
         "provinceId": "43423",
         "jurisdictionId": "43423",
@@ -4919,12 +4944,11 @@
           "name": "악현",
           "nameCh": "鄂县",
           "col": 418,
-          "row": 330,
-          "cellDistance": 4.42
-        },
-        "sameCellPlaces": []
+          "row": 325,
+          "cellDistance": 0.72
+        }
       },
-      "sameCellAsCountySeat": false,
+      "sameCellAsCountySeat": true,
       "placementNote": "근거가 裴注(江表傳)다. 吳主傳 裴注(江表傳, 武昌 大船)에도 樊口가 나온다."
     },
     {
@@ -4993,6 +5017,7 @@
           "name": "MOUNTAIN"
         },
         "provinceIndex": 443,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "45796",
         "jurisdictionId": "45796",
@@ -5009,8 +5034,7 @@
           "col": 352,
           "row": 319,
           "cellDistance": 2.4
-        },
-        "sameCellPlaces": []
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "益州의 南安峽口(id nanan-xiakou)와 구별한다. 三國志 원문 표기가 「峽口」 그대로라 nameHan 을 수식 없이 둔다."
@@ -5099,25 +5123,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 285,
+        "provinceIndex": 276,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43676",
-        "jurisdictionId": "43676",
-        "jurisdictionName": "江陵县",
-        "jurisdictionNameKo": "강릉현",
+        "provinceId": "43497",
+        "jurisdictionId": "43497",
+        "jurisdictionName": "州陵县",
+        "jurisdictionNameKo": "주릉현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0042",
         "commanderyName": "南郡",
         "nearestSeat": {
-          "cityIndex": 664,
-          "cityId": "43676",
-          "name": "강릉현",
-          "nameCh": "江陵县",
-          "col": 392,
-          "row": 333,
-          "cellDistance": 5.5
-        },
-        "sameCellPlaces": []
+          "cityIndex": 380,
+          "cityId": "43497",
+          "name": "주릉현",
+          "nameCh": "州陵县",
+          "col": 401,
+          "row": 328,
+          "cellDistance": 9.58
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키 상위 縣은 蒲圻縣인데 투영 셀은 han-tiles 에서 南郡 江陵縣 관할로 떨어진다."
@@ -5206,25 +5230,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 159,
+        "provinceIndex": 148,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "41843",
-        "jurisdictionId": "41843",
-        "jurisdictionName": "临烝县",
-        "jurisdictionNameKo": "임증현",
+        "provinceId": "41770",
+        "jurisdictionId": "41770",
+        "jurisdictionName": "茶陵县",
+        "jurisdictionNameKo": "다릉현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0047",
         "commanderyName": "長沙郡",
         "nearestSeat": {
-          "cityIndex": 75,
-          "cityId": "41843",
-          "name": "임증현",
-          "nameCh": "临烝县",
-          "col": 384,
-          "row": 399,
-          "cellDistance": 11.62
-        },
-        "sameCellPlaces": []
+          "cityIndex": 865,
+          "cityId": "41770",
+          "name": "다릉현",
+          "nameCh": "茶陵县",
+          "col": 398,
+          "row": 398,
+          "cellDistance": 6.27
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -5294,25 +5318,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 239,
+        "provinceIndex": 238,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43121",
-        "jurisdictionId": "43121",
-        "jurisdictionName": "成德县",
-        "jurisdictionNameKo": "성덕현",
+        "provinceId": "43057",
+        "jurisdictionId": "43057",
+        "jurisdictionName": "合肥县",
+        "jurisdictionNameKo": "합비현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0048",
         "commanderyName": "九江郡",
         "nearestSeat": {
-          "cityIndex": 482,
-          "cityId": "43121",
-          "name": "성덕현",
-          "nameCh": "成德县",
-          "col": 461,
-          "row": 284,
-          "cellDistance": 10.84
-        },
-        "sameCellPlaces": []
+          "cityIndex": 248,
+          "cityId": "43057",
+          "name": "합비현",
+          "nameCh": "合肥县",
+          "col": 462,
+          "row": 294,
+          "cellDistance": 1.34
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -5382,25 +5406,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 247,
+        "provinceIndex": 240,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43187",
-        "jurisdictionId": "43187",
-        "jurisdictionName": "下蔡县",
-        "jurisdictionNameKo": "하채현",
+        "provinceId": "43130",
+        "jurisdictionId": "43130",
+        "jurisdictionName": "西曲阳县",
+        "jurisdictionNameKo": "서곡양현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0048",
         "commanderyName": "九江郡",
         "nearestSeat": {
-          "cityIndex": 21,
-          "cityId": "43187",
-          "name": "하채현",
-          "nameCh": "下蔡县",
-          "col": 452,
-          "row": 276,
-          "cellDistance": 10.88
-        },
-        "sameCellPlaces": []
+          "cityIndex": 923,
+          "cityId": "43130",
+          "name": "서곡양현",
+          "nameCh": "西曲阳县",
+          "col": 460,
+          "row": 278,
+          "cellDistance": 6.81
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "**晉書 보조 근거만 있다**(泰始 六年, 270). 三國志에서는 「渦口」가 걸리지 않는다. 184–280 안이라 채택했지만 판단 보류 행이다."
@@ -5471,6 +5495,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 238,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "43057",
         "jurisdictionId": "43057",
@@ -5484,11 +5509,10 @@
           "cityId": "43057",
           "name": "합비현",
           "nameCh": "合肥县",
-          "col": 466,
-          "row": 298,
-          "cellDistance": 17.05
-        },
-        "sameCellPlaces": []
+          "col": 462,
+          "row": 294,
+          "cellDistance": 21.63
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -5578,6 +5602,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 238,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "43057",
         "jurisdictionId": "43057",
@@ -5591,11 +5616,10 @@
           "cityId": "43057",
           "name": "합비현",
           "nameCh": "合肥县",
-          "col": 466,
-          "row": 298,
-          "cellDistance": 18.03
-        },
-        "sameCellPlaces": []
+          "col": 462,
+          "row": 294,
+          "cellDistance": 22.38
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -5687,6 +5711,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 238,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "43057",
         "jurisdictionId": "43057",
@@ -5700,11 +5725,10 @@
           "cityId": "43057",
           "name": "합비현",
           "nameCh": "合肥县",
-          "col": 466,
-          "row": 298,
-          "cellDistance": 17.51
-        },
-        "sameCellPlaces": []
+          "col": 462,
+          "row": 294,
+          "cellDistance": 22.26
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키 flags 에 UNCERTAIN. 董昭傳 표기는 「洞浦口」."
@@ -5775,6 +5799,7 @@
           "name": "LAKE"
         },
         "provinceIndex": -1,
+        "sameCellPlaces": [],
         "status": "WATER_OR_OUT_OF_SCOPE",
         "provinceId": null,
         "jurisdictionId": null,
@@ -5783,8 +5808,7 @@
         "jurisdictionKind": null,
         "commanderyId": null,
         "commanderyName": null,
-        "nearestSeat": null,
-        "sameCellPlaces": []
+        "nearestSeat": null
       },
       "sameCellAsCountySeat": false,
       "placementNote": "투영 셀 소유가 -1(수역·범위 밖, 지형 LAKE)이다. 가장 가까운 육지로 옮기지 않았다 — tileAnchor.status WATER_OR_OUT_OF_SCOPE."
@@ -5854,25 +5878,25 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 241,
+        "provinceIndex": 237,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43134",
-        "jurisdictionId": "43134",
-        "jurisdictionName": "灊县",
-        "jurisdictionNameKo": "첨현",
+        "provinceId": "43032",
+        "jurisdictionId": "43032",
+        "jurisdictionName": "居巢县",
+        "jurisdictionNameKo": "거소현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0050",
         "commanderyName": "廬江郡",
         "nearestSeat": {
-          "cityIndex": 750,
-          "cityId": "43134",
-          "name": "첨현",
-          "nameCh": "灊县",
-          "col": 457,
-          "row": 306,
-          "cellDistance": 4.61
-        },
-        "sameCellPlaces": []
+          "cityIndex": 367,
+          "cityId": "43032",
+          "name": "거소현",
+          "nameCh": "居巢县",
+          "col": 458,
+          "row": 316,
+          "cellDistance": 7.64
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -5943,6 +5967,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 133,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "41341",
         "jurisdictionId": "41341",
@@ -5956,11 +5981,10 @@
           "cityId": "41341",
           "name": "석성현",
           "nameCh": "石城县",
-          "col": 460,
-          "row": 326,
-          "cellDistance": 2.8
-        },
-        "sameCellPlaces": []
+          "col": 462,
+          "row": 324,
+          "cellDistance": 3.98
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": ""
@@ -6088,6 +6112,7 @@
           "name": "RIVER"
         },
         "provinceIndex": 137,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "41374",
         "jurisdictionId": "41374",
@@ -6101,11 +6126,10 @@
           "cityId": "41374",
           "name": "춘곡현",
           "nameCh": "春榖县",
-          "col": 478,
-          "row": 312,
-          "cellDistance": 2.99
-        },
-        "sameCellPlaces": []
+          "col": 479,
+          "row": 309,
+          "cellDistance": 2.93
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "나무위키는 濡須口(31.16699,117.99095)와 濡須塢(31.49902,117.98166)를 약 37 km 떨어진 두 행으로 둔다. 사용자 지시대로 한 행으로 합쳤다. 役割은 三國志에서 濡須口 6건 대 濡須塢 1건이고, 武帝紀도 「權在濡須口築城拒守」로 塢가 濡須口에 있다고 적어 FERRY(濡須口)로 정했다. 좌표는 채택한 이름(濡須口)의 것을 쓰고 濡須塢 좌표는 modernEvidence 에 MERGED_ALIAS_SITE_COORDINATE_NOT_USED 로 남겼다 — 판단 보류 행이다."
@@ -6177,25 +6201,25 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 271,
+        "provinceIndex": 278,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43423",
-        "jurisdictionId": "43423",
-        "jurisdictionName": "鄂县",
-        "jurisdictionNameKo": "악현",
+        "provinceId": "43506",
+        "jurisdictionId": "43506",
+        "jurisdictionName": "邾县",
+        "jurisdictionNameKo": "주현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0043",
         "commanderyName": "江夏郡",
         "nearestSeat": {
-          "cityIndex": 995,
-          "cityId": "43423",
-          "name": "악현",
-          "nameCh": "鄂县",
+          "cityIndex": 980,
+          "cityId": "43506",
+          "name": "주현",
+          "nameCh": "邾县",
           "col": 418,
-          "row": 330,
-          "cellDistance": 8.95
-        },
-        "sameCellPlaces": []
+          "row": 324,
+          "cellDistance": 2.95
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "正史 표기는 「舉口」. 군사 사건이 아니라 黃龍 출현(稱尊號·改元의 계기) 기사다."
@@ -6270,6 +6294,7 @@
           "name": "MOUNTAIN"
         },
         "provinceIndex": 632,
+        "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "82871",
         "jurisdictionId": "82871",
@@ -6283,11 +6308,10 @@
           "cityId": "82871",
           "name": "의양현",
           "nameCh": "宜阳县",
-          "col": 365,
-          "row": 237,
-          "cellDistance": 3.31
-        },
-        "sameCellPlaces": []
+          "col": 364,
+          "row": 238,
+          "cellDistance": 1.9
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "근거가 裴注(杜氏新書) 하나이고 연대는 「明帝崩時」 앞이라는 것뿐이다. 晉書(李矩傳·劉聰載記)의 一泉塢는 4세기 기사라 근거로 쓰지 않았다. 나무위키 alias 于父邑은 코퍼스 0건."
@@ -6379,27 +6403,35 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 467,
+        "provinceIndex": 521,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 993,
+            "cityId": "70930",
+            "name": "미현",
+            "nameCh": "郿县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
-        "provinceId": "70249",
-        "jurisdictionId": "70249",
-        "jurisdictionName": "武功县",
-        "jurisdictionNameKo": "무공현",
+        "provinceId": "70930",
+        "jurisdictionId": "70930",
+        "jurisdictionName": "郿县",
+        "jurisdictionNameKo": "미현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0006",
         "commanderyName": "右扶風",
         "nearestSeat": {
-          "cityIndex": 609,
-          "cityId": "70249",
-          "name": "무공현",
-          "nameCh": "武功县",
-          "col": 291,
-          "row": 241,
-          "cellDistance": 3.45
-        },
-        "sameCellPlaces": []
+          "cityIndex": 993,
+          "cityId": "70930",
+          "name": "미현",
+          "nameCh": "郿县",
+          "col": 288,
+          "row": 243,
+          "cellDistance": 0.42
+        }
       },
-      "sameCellAsCountySeat": false,
+      "sameCellAsCountySeat": true,
       "placementNote": "三國志 董卓傳은 「郿塢」, 後漢書 董卓傳은 「號曰萬歲塢」 — 같은 塢다. 투영 셀은 han-tiles 에서 右扶風 武功縣 관할로 떨어진다."
     },
     {
@@ -6467,25 +6499,25 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 467,
+        "provinceIndex": 521,
+        "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "70249",
-        "jurisdictionId": "70249",
-        "jurisdictionName": "武功县",
-        "jurisdictionNameKo": "무공현",
+        "provinceId": "70930",
+        "jurisdictionId": "70930",
+        "jurisdictionName": "郿县",
+        "jurisdictionNameKo": "미현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0006",
         "commanderyName": "右扶風",
         "nearestSeat": {
-          "cityIndex": 609,
-          "cityId": "70249",
-          "name": "무공현",
-          "nameCh": "武功县",
-          "col": 291,
-          "row": 241,
-          "cellDistance": 6.6
-        },
-        "sameCellPlaces": []
+          "cityIndex": 993,
+          "cityId": "70930",
+          "name": "미현",
+          "nameCh": "郿县",
+          "col": 288,
+          "row": 243,
+          "cellDistance": 3.14
+        }
       },
       "sameCellAsCountySeat": false,
       "placementNote": "근거가 裴注(漢晉春秋) 하나다. 五丈原 부근이라 萬歲塢와 같은 武功縣 관할로 떨어진다."
@@ -6706,24 +6738,24 @@
           "code": "3",
           "name": "RIVER"
         },
-        "provinceIndex": 204,
+        "provinceIndex": 201,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "42698",
-        "jurisdictionId": "42698",
-        "jurisdictionName": "舆国",
-        "jurisdictionNameKo": "여국",
+        "provinceId": "42681",
+        "jurisdictionId": "42681",
+        "jurisdictionName": "江都县",
+        "jurisdictionNameKo": "강도현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0033",
         "commanderyName": "廣陵郡",
         "nearestSeat": {
-          "cityIndex": 849,
-          "cityId": "42698",
-          "name": "여국",
-          "nameCh": "舆国",
-          "col": 499,
-          "row": 284,
-          "cellDistance": 5.49
+          "cityIndex": 661,
+          "cityId": "42681",
+          "name": "강도현",
+          "nameCh": "江都县",
+          "col": 503,
+          "row": 286,
+          "cellDistance": 1.38
         }
       },
       "sameCellAsCountySeat": false,
@@ -6832,24 +6864,24 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 825,
+        "provinceIndex": 787,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "87310",
-        "jurisdictionId": "87310",
-        "jurisdictionName": "梁期县",
-        "jurisdictionNameKo": "양기현",
+        "provinceId": "87150",
+        "jurisdictionId": "87150",
+        "jurisdictionName": "涉县",
+        "jurisdictionNameKo": "섭현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0013",
         "commanderyName": "魏郡",
         "nearestSeat": {
-          "cityIndex": 596,
-          "cityId": "87310",
-          "name": "양기현",
-          "nameCh": "梁期县",
-          "col": 398,
+          "cityIndex": 716,
+          "cityId": "87150",
+          "name": "섭현",
+          "nameCh": "涉县",
+          "col": 395,
           "row": 193,
-          "cellDistance": 4.88
+          "cellDistance": 2.31
         }
       },
       "sameCellAsCountySeat": false,
@@ -6939,24 +6971,24 @@
           "code": "6",
           "name": "PLATEAU"
         },
-        "provinceIndex": 515,
+        "provinceIndex": 509,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "70741",
-        "jurisdictionId": "70741",
-        "jurisdictionName": "高陆县",
-        "jurisdictionNameKo": "고륙현",
+        "provinceId": "70671",
+        "jurisdictionId": "70671",
+        "jurisdictionName": "池阳",
+        "jurisdictionNameKo": "지양",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0005",
         "commanderyName": "左馮翊",
         "nearestSeat": {
-          "cityIndex": 1114,
-          "cityId": "70741",
-          "name": "고륙현",
-          "nameCh": "高陆县",
-          "col": 310,
-          "row": 236,
-          "cellDistance": 1.26
+          "cityIndex": 665,
+          "cityId": "70671",
+          "name": "지양",
+          "nameCh": "池阳",
+          "col": 307,
+          "row": 237,
+          "cellDistance": 3.17
         }
       },
       "sameCellAsCountySeat": false,
@@ -7153,10 +7185,10 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 1070,
+        "provinceIndex": 455,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0067-fdf4a63834de",
+        "provinceId": "70060",
         "jurisdictionId": "70060",
         "jurisdictionName": "西县",
         "jurisdictionNameKo": "서현",
@@ -7260,10 +7292,10 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 1070,
+        "provinceIndex": 455,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0067-fdf4a63834de",
+        "provinceId": "70060",
         "jurisdictionId": "70060",
         "jurisdictionName": "西县",
         "jurisdictionNameKo": "서현",
@@ -7369,24 +7401,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 453,
+        "provinceIndex": 452,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "70033",
-        "jurisdictionId": "70033",
-        "jurisdictionName": "新兴县",
-        "jurisdictionNameKo": "신흥현",
+        "provinceId": "70032",
+        "jurisdictionId": "70032",
+        "jurisdictionName": "鄣县",
+        "jurisdictionNameKo": "장현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0066",
         "commanderyName": "隴西郡",
         "nearestSeat": {
-          "cityIndex": 513,
-          "cityId": "70033",
-          "name": "신흥현",
-          "nameCh": "新兴县",
-          "col": 225,
-          "row": 236,
-          "cellDistance": 7.84
+          "cityIndex": 1005,
+          "cityId": "70032",
+          "name": "장현",
+          "nameCh": "鄣县",
+          "col": 226,
+          "row": 231,
+          "cellDistance": 11.27
         }
       },
       "sameCellAsCountySeat": false,
@@ -7459,24 +7491,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1485,
+        "provinceIndex": 1029,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "fc-lelang-004",
-        "jurisdictionId": "fc-lelang-004",
-        "jurisdictionName": "含資縣",
-        "jurisdictionNameKo": "함자현",
+        "provinceId": "fc-lelang-012",
+        "jurisdictionId": "fc-lelang-012",
+        "jurisdictionName": "長岑縣",
+        "jurisdictionNameKo": "장잠현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0130",
         "commanderyName": "帶方郡",
         "nearestSeat": {
-          "cityIndex": 1153,
-          "cityId": "fc-lelang-004",
-          "name": "함자현",
-          "nameCh": "含資縣",
-          "col": 616,
-          "row": 152,
-          "cellDistance": 10.85
+          "cityIndex": 1160,
+          "cityId": "fc-lelang-012",
+          "name": "장잠현",
+          "nameCh": "長岑縣",
+          "col": 620,
+          "row": 158,
+          "cellDistance": 4.71
         }
       },
       "sameCellAsCountySeat": false,
@@ -7878,24 +7910,24 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 441,
+        "provinceIndex": 288,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "45776",
-        "jurisdictionId": "45776",
-        "jurisdictionName": "当阳县",
-        "jurisdictionNameKo": "당양현",
+        "provinceId": "43720",
+        "jurisdictionId": "43720",
+        "jurisdictionName": "枝江县",
+        "jurisdictionNameKo": "지강현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0042",
         "commanderyName": "南郡",
         "nearestSeat": {
-          "cityIndex": 463,
-          "cityId": "45776",
-          "name": "당양현",
-          "nameCh": "当阳县",
-          "col": 368,
-          "row": 314,
-          "cellDistance": 6.8
+          "cityIndex": 584,
+          "cityId": "43720",
+          "name": "지강현",
+          "nameCh": "枝江县",
+          "col": 363,
+          "row": 324,
+          "cellDistance": 4.48
         }
       },
       "sameCellAsCountySeat": false,
@@ -8007,27 +8039,35 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 49,
-        "sameCellPlaces": [],
+        "provinceIndex": 50,
+        "sameCellPlaces": [
+          {
+            "cityIndex": 443,
+            "cityId": "40523",
+            "name": "건업현",
+            "nameCh": "建业县",
+            "kind": "COUNTY"
+          }
+        ],
         "status": "LAND",
-        "provinceId": "40512",
-        "jurisdictionId": "40512",
-        "jurisdictionName": "湖熟县",
-        "jurisdictionNameKo": "호숙현",
+        "provinceId": "40523",
+        "jurisdictionId": "40523",
+        "jurisdictionName": "建业县",
+        "jurisdictionNameKo": "건업현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0049",
         "commanderyName": "丹陽郡",
         "nearestSeat": {
-          "cityIndex": 732,
-          "cityId": "40512",
-          "name": "호숙현",
-          "nameCh": "湖熟县",
-          "col": 494,
-          "row": 294,
-          "cellDistance": 5.02
+          "cityIndex": 443,
+          "cityId": "40523",
+          "name": "건업현",
+          "nameCh": "建业县",
+          "col": 490,
+          "row": 290,
+          "cellDistance": 0.78
         }
       },
-      "sameCellAsCountySeat": false,
+      "sameCellAsCountySeat": true,
       "placementNote": "續漢書 郡國志 丹陽 秣陵 劉昭注에도 「十七年，城石頭」(hhs-112:492)가 있다. 옹주 「石頭」(石頭山, 郭淮傳)와는 다른 곳이다. 투영 셀은 丹陽郡 湖熟縣 관할로 떨어진다."
     },
     {
@@ -8190,24 +8230,24 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 520,
+        "provinceIndex": 522,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "70920",
-        "jurisdictionId": "70920",
-        "jurisdictionName": "陈仓县",
-        "jurisdictionNameKo": "진창현",
+        "provinceId": "70952",
+        "jurisdictionId": "70952",
+        "jurisdictionName": "隃麋县",
+        "jurisdictionNameKo": "유미현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0006",
         "commanderyName": "右扶風",
         "nearestSeat": {
-          "cityIndex": 1067,
-          "cityId": "70920",
-          "name": "진창현",
-          "nameCh": "陈仓县",
-          "col": 277,
-          "row": 239,
-          "cellDistance": 14.0
+          "cityIndex": 1074,
+          "cityId": "70952",
+          "name": "유미현",
+          "nameCh": "隃麋县",
+          "col": 275,
+          "row": 235,
+          "cellDistance": 12.32
         }
       },
       "sameCellAsCountySeat": false,
@@ -8280,10 +8320,10 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 1125,
+        "provinceIndex": 1133,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "DIRECT-PARENT-0074-844342d92663",
+        "provinceId": "SUB-70459-c86c8fbee593",
         "jurisdictionId": "70459",
         "jurisdictionName": "延寿县",
         "jurisdictionNameKo": "연수현",
@@ -8370,24 +8410,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 283,
+        "provinceIndex": 282,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43609",
-        "jurisdictionId": "43609",
-        "jurisdictionName": "石阳县",
-        "jurisdictionNameKo": "석양현",
+        "provinceId": "43602",
+        "jurisdictionId": "43602",
+        "jurisdictionName": "安陆县",
+        "jurisdictionNameKo": "안륙현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0043",
         "commanderyName": "江夏郡",
         "nearestSeat": {
-          "cityIndex": 804,
-          "cityId": "43609",
-          "name": "석양현",
-          "nameCh": "石阳县",
-          "col": 393,
-          "row": 317,
-          "cellDistance": 5.17
+          "cityIndex": 328,
+          "cityId": "43602",
+          "name": "안륙현",
+          "nameCh": "安陆县",
+          "col": 397,
+          "row": 312,
+          "cellDistance": 2.57
         }
       },
       "sameCellAsCountySeat": false,
@@ -8477,24 +8517,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 269,
+        "provinceIndex": 264,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "43379",
-        "jurisdictionId": "43379",
-        "jurisdictionName": "安风县",
-        "jurisdictionNameKo": "안풍현",
+        "provinceId": "43337",
+        "jurisdictionId": "43337",
+        "jurisdictionName": "阳泉县",
+        "jurisdictionNameKo": "양천현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0050",
         "commanderyName": "廬江郡",
         "nearestSeat": {
-          "cityIndex": 329,
-          "cityId": "43379",
-          "name": "안풍현",
-          "nameCh": "安风县",
-          "col": 445,
-          "row": 286,
-          "cellDistance": 6.89
+          "cityIndex": 1054,
+          "cityId": "43337",
+          "name": "양천현",
+          "nameCh": "阳泉县",
+          "col": 448,
+          "row": 283,
+          "cellDistance": 3.83
         }
       },
       "sameCellAsCountySeat": false,
@@ -8565,24 +8605,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 432,
+        "provinceIndex": 441,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "45685",
-        "jurisdictionId": "45685",
-        "jurisdictionName": "鄀县",
-        "jurisdictionNameKo": "약현",
+        "provinceId": "45776",
+        "jurisdictionId": "45776",
+        "jurisdictionName": "当阳县",
+        "jurisdictionNameKo": "당양현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0042",
         "commanderyName": "南郡",
         "nearestSeat": {
-          "cityIndex": 994,
-          "cityId": "45685",
-          "name": "약현",
-          "nameCh": "鄀县",
-          "col": 375,
+          "cityIndex": 463,
+          "cityId": "45776",
+          "name": "당양현",
+          "nameCh": "当阳县",
+          "col": 368,
           "row": 314,
-          "cellDistance": 2.56
+          "cellDistance": 8.37
         }
       },
       "sameCellAsCountySeat": false,
@@ -8668,9 +8708,9 @@
           "cityId": "87473",
           "name": "영지현",
           "nameCh": "令支县",
-          "col": 486,
-          "row": 117,
-          "cellDistance": 17.5
+          "col": 488,
+          "row": 121,
+          "cellDistance": 21.23
         }
       },
       "sameCellAsCountySeat": false,
@@ -8746,24 +8786,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 453,
+        "provinceIndex": 456,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "70033",
-        "jurisdictionId": "70033",
-        "jurisdictionName": "新兴县",
-        "jurisdictionNameKo": "신흥현",
+        "provinceId": "70079",
+        "jurisdictionId": "70079",
+        "jurisdictionName": "临洮县",
+        "jurisdictionNameKo": "임도현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0066",
         "commanderyName": "隴西郡",
         "nearestSeat": {
-          "cityIndex": 513,
-          "cityId": "70033",
-          "name": "신흥현",
-          "nameCh": "新兴县",
-          "col": 225,
-          "row": 236,
-          "cellDistance": 5.83
+          "cityIndex": 70,
+          "cityId": "70079",
+          "name": "임도현",
+          "nameCh": "临洮县",
+          "col": 218,
+          "row": 239,
+          "cellDistance": 9.18
         }
       },
       "sameCellAsCountySeat": false,
@@ -8965,24 +9005,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 647,
+        "provinceIndex": 641,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "83031",
-        "jurisdictionId": "83031",
-        "jurisdictionName": "襄城县",
-        "jurisdictionNameKo": "양성현",
+        "provinceId": "82994",
+        "jurisdictionId": "82994",
+        "jurisdictionName": "父城县",
+        "jurisdictionNameKo": "부성현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0007",
         "commanderyName": "潁川郡",
         "nearestSeat": {
-          "cityIndex": 905,
-          "cityId": "83031",
-          "name": "양성현",
-          "nameCh": "襄城县",
-          "col": 392,
-          "row": 251,
-          "cellDistance": 1.56
+          "cityIndex": 756,
+          "cityId": "82994",
+          "name": "부성현",
+          "nameCh": "父城县",
+          "col": 388,
+          "row": 252,
+          "cellDistance": 2.9
         }
       },
       "sameCellAsCountySeat": false,
@@ -9074,24 +9114,24 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 107,
+        "provinceIndex": 101,
         "sameCellPlaces": [],
         "status": "LAND",
-        "provinceId": "41136",
-        "jurisdictionId": "41136",
-        "jurisdictionName": "海昏侯国",
-        "jurisdictionNameKo": "해혼후국",
+        "provinceId": "41092",
+        "jurisdictionId": "41092",
+        "jurisdictionName": "南昌县",
+        "jurisdictionNameKo": "남창현",
         "jurisdictionKind": "COUNTY",
         "commanderyId": "PARENT-0053",
         "commanderyName": "豫章郡",
         "nearestSeat": {
-          "cityIndex": 710,
-          "cityId": "41136",
-          "name": "해혼후국",
-          "nameCh": "海昏侯国",
-          "col": 434,
-          "row": 356,
-          "cellDistance": 6.43
+          "cityIndex": 195,
+          "cityId": "41092",
+          "name": "남창현",
+          "nameCh": "南昌县",
+          "col": 437,
+          "row": 362,
+          "cellDistance": 3.75
         }
       },
       "sameCellAsCountySeat": false,

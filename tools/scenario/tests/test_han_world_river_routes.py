@@ -45,7 +45,7 @@ class RiverRouteTest(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "PORT 노드가 아니다"):
             B.v3_river_routes(network)
         network = copy.deepcopy(self.network)
-        network["portLinks"][0]["toNodeId"] = "waterway-node:jiangling"   # blocked 에만 있는 城
+        network["portLinks"][0]["toNodeId"] = "waterway-node:guangling"   # blocked 에만 있는 城(江陵 은 GH #806 뒤 항구)
         with self.assertRaisesRegex(AssertionError, "PORT 노드가 아니다"):
             B.v3_river_routes(network)
 

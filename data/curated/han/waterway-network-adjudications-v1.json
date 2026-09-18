@@ -7,11 +7,11 @@
  "base": {
   "hanTiles": {
    "path": "data/map/han-tiles.json",
-   "sha256": "ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0"
+   "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
   },
   "strongholds": {
    "path": "data/curated/han/strategic-strongholds-v1.json",
-   "sha256": "cd1deccfa6f27c0ca34b1b46f949f3bbed31060a433c85ecda1c80a08aa75080"
+   "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
   }
  },
  "systems": [
@@ -1089,7 +1089,7 @@
      "col": 345
     },
     "bankB": {
-     "landProvinceId": "ss-doujin",
+     "landProvinceId": "83053",
      "row": 235,
      "col": 345
     },
@@ -1125,7 +1125,7 @@
      "col": 349
     },
     "bankB": {
-     "landProvinceId": "ss-shanjin",
+     "landProvinceId": "83046",
      "row": 233,
      "col": 349
     },
@@ -1158,7 +1158,7 @@
    "crossing": {
     "mode": "FERRY",
     "bankA": {
-     "landProvinceId": "45685",
+     "landProvinceId": "45776",
      "row": 319,
      "col": 375
     },
@@ -1240,8 +1240,8 @@
     "id": "44662"
    },
    "cell": {
-    "row": 342,
-    "col": 264
+    "row": 343,
+    "col": 265
    },
    "reach": "jiang-jiangzhou-yiling",
    "roles": [
@@ -1283,6 +1283,87 @@
      "shiliao:sgz32-yiling"
     ]
    }
+  },
+  {
+   "stableKey": "jianye",
+   "nameHan": "建业县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "40523"
+   },
+   "cell": {
+    "row": 290,
+    "col": 490
+   },
+   "reach": "jiang-ruxu-jianye",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz55-jianye"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "40523",
+    "sourceRefs": [
+     "shiliao:sgz55-jianye"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
+  },
+  {
+   "stableKey": "jiangling",
+   "nameHan": "江陵县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43676"
+   },
+   "cell": {
+    "row": 327,
+    "col": 369
+   },
+   "reach": "jiang-yiling-xiakou",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz36-jiangling"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "43676",
+    "sourceRefs": [
+     "shiliao:sgz36-jiangling"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
+  },
+  {
+   "stableKey": "xiakou-shaxian",
+   "nameHan": "沙羡县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43421"
+   },
+   "cell": {
+    "row": 322,
+    "col": 408
+   },
+   "reach": "jiang-xiakou-wuchang",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz-xiakou"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "43421",
+    "sourceRefs": [
+     "shiliao:sgz-xiakou"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
   }
  ],
  "flowLinks": [
@@ -1349,8 +1430,30 @@
    ]
   },
   {
-   "stableKey": "yiling--fankou",
+   "stableKey": "yiling--jiangling",
    "fromNode": "yiling",
+   "toNode": "jiangling",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "jiangling--xiakou-shaxian",
+   "fromNode": "jiangling",
+   "toNode": "xiakou-shaxian",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "xiakou-shaxian--fankou",
+   "fromNode": "xiakou-shaxian",
    "toNode": "fankou",
    "sourceRefs": [
     "shiliao:js42-wangjun-chengdu",
@@ -1363,6 +1466,14 @@
    "stableKey": "fankou--ruxukou",
    "fromNode": "fankou",
    "toNode": "ruxukou",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu"
+   ]
+  },
+  {
+   "stableKey": "ruxukou--jianye",
+   "fromNode": "ruxukou",
+   "toNode": "jianye",
    "sourceRefs": [
     "shiliao:sgz-jianye-suliu"
    ]
@@ -1797,50 +1908,6 @@
    ]
   },
   {
-   "stableKey": "jianye",
-   "nameHan": "建业县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "40523"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_REACH",
-   "measuredCellDistanceToWater": 1,
-   "note": "가장 가까운 물은 호수 칸(1칸)이고 江 구간까지는 5칸.",
-   "sourceRefs": [
-    "shiliao:sgz55-jianye"
-   ],
-   "reach": "jiang-ruxu-jianye",
-   "measuredCellDistanceToReach": 5
-  },
-  {
-   "stableKey": "jiangling",
-   "nameHan": "江陵县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "43676"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 2,
-   "note": "배 수백 척 집결 증거는 있으나 城 칸이 물에서 2칸.",
-   "sourceRefs": [
-    "shiliao:sgz36-jiangling"
-   ]
-  },
-  {
-   "stableKey": "xiakou-shaxian",
-   "nameHan": "沙羡县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "43421"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 2,
-   "note": "夏口(沙羡). 증거는 있으나 城 칸이 물에서 2칸.",
-   "sourceRefs": [
-    "shiliao:sgz-xiakou"
-   ]
-  },
-  {
    "stableKey": "guangling",
    "nameHan": "广陵县",
    "siteRef": {
@@ -1848,7 +1915,7 @@
     "id": "42687"
    },
    "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 4,
+   "measuredCellDistanceToWater": 3,
    "note": "臨江 증거는 있으나 城 칸이 물에서 4칸.",
    "sourceRefs": [
     "shiliao:sgz-guangling"

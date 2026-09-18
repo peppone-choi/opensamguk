@@ -226,7 +226,7 @@ class MapAdministrativeOwnershipTest {
         scenarioCodes.forEach { scenarioCode ->
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
             // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
-            assertEquals(1_594, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
+            assertEquals(1_331, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")
             // 1,071 에서 1,070 으로 — 南鄉郡(PARENT-0113)의 합성 치소 관할
             // JURISDICTION-PARENT-0113-SEAT 하나가 접혔다. 동명이지(漢中 南鄉縣)에 잘못
             // 묶여 있던 진짜 南鄉縣(71022)이 제자리로 돌아와 그 임시 관할과 같은 칸에

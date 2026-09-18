@@ -103,7 +103,9 @@ describe('citySeedReseat', () => {
   const found = recompute().sort((a, b) => b.before - a.before);
 
   it('지형 파일에서 다시 돌린 규칙이 표와 같은 곳을 짚는다', () => {
-    expect(found.map((row) => row.placeId)).toEqual(['X035', '40078', '70524', '42147']);
+    // 2026-09-18 (GH #806): 지리 재분할 뒤 씨앗이 실제 위치 칸이라 걸리는 곳이 없다. 앞 판에서는
+    // ['X035', '40078', '70524', '42147'] 네 곳이었다(원장 retired).
+    expect(found.map((row) => row.placeId)).toEqual([]);
     expect(found.map((row) => [row.cityIndex, row.from, row.to])).toEqual(
       CITY_SEED_RESEATS
         .map((row) => [row.cityIndex, [row.fromCol, row.fromRow], [row.toCol, row.toRow]]),
@@ -118,18 +120,29 @@ describe('citySeedReseat', () => {
     }))).toEqual(CITY_SEED_RESEATS.map((row) => ({ ...row })));
   });
 
-  it('于山國 을 오키 제도에서 울릉도로 되돌린다', () => {
-    const usan = found.find((row) => row.placeId === 'X035')!;
-    // 되돌리기 전 49 칸, 되돌린 뒤 반 칸.
-    expect(usan.before).toBeGreaterThan(45);
-    expect(usan.after).toBeLessThan(1);
-    // 옮길 칸은 지어낸 좌표가 아니라 **파일이 于山國 것이라고 적어 둔 칸**이다.
-    const [col, row] = usan.to;
+  it('于山國 씨앗이 지형 파일에서 이미 울릉도에 서 있다 (옛 표가 하던 일)', () => {
+    const cityIndex = tiles.cities.findIndex((city) => city.id === 'X035');
+    const usan = tiles.cities[cityIndex];
+    const [pc, pr] = project(usan.lat, usan.lon);
+    // 앞 판: 오키 제도 (756,201), 투영점에서 49칸. 지금: 투영점이 든 칸 그 자체.
+    expect(Math.hypot(pc - usan.col, pr - usan.row)).toBeLessThan(1);
+    expect([usan.col, usan.row]).not.toEqual([756, 201]);
     const province = (tiles.provinceRecords ?? []).findIndex((r) => r.id === 'X035');
-    expect(owner[row * srcCols + col]).toBe(province);
-    // 파일 자신의 郡 행도 같은 칸을 가리킨다.
+    expect(owner[usan.row * srcCols + usan.col]).toBe(province);
     const jun = (tiles.juns ?? []).find((entry) => entry.nameCh === '于山國');
-    expect(jun && [jun.col, jun.row]).toEqual([col, row]);
+    expect(jun && [jun.col, jun.row]).toEqual([usan.col, usan.row]);
+  });
+
+  it('적색 프로브: 씨앗을 옛 자리(오키)로 되돌린 문서에서는 규칙이 于山國 을 다시 짚는다', () => {
+    const cityIndex = tiles.cities.findIndex((city) => city.id === 'X035');
+    const saved = [tiles.cities[cityIndex].col, tiles.cities[cityIndex].row];
+    tiles.cities[cityIndex].col = 756;
+    tiles.cities[cityIndex].row = 201;
+    try {
+      expect(recompute().map((row) => row.placeId)).toEqual(['X035']);
+    } finally {
+      [tiles.cities[cityIndex].col, tiles.cities[cityIndex].row] = saved;
+    }
   });
 
   it('applyCitySeedReseats 가 표대로 옮기고, 두 번 부르면 다시 옮기지 않는다', () => {

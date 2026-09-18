@@ -15,8 +15,8 @@
       "44580",
       "70523"
     ],
-    "inputTilesSha256": "09995f94c0638e9b82fe5446dc45808f61e46d9583407dd78ce26adcc8944c40",
-    "outputDocumentSha256": "8209333ce5fef0107af35e90bd5c0434b404be0546312b7f10d1f5430c2cd92f"
+    "inputTilesSha256": "50e694f3f506176cdb221b95cad3f8e2b4d4ac6a435ec78248b61a4d7aa589a8",
+    "outputDocumentSha256": "4502de9b3c9973c7c6beedc7dee317f425af18cdd11f6df6c17c442334499011"
   },
   "countyRebindingProjection": {
     "affectedParentRegionIds": [
@@ -224,15 +224,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "9f53a29172a3041dea763ea0b807f0edae574f5a478475dbaed94268c9ff5951"
+      "sha256": "badb7a2f03c66c7c0729b6a0d5deda0e8e1e57b64f1f633c72e889cdde983b44"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "81411b35e0fe36096522ddd5b05cb50bbd2e5e9e43a875e6674b91508e6f3447"
+      "sha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6"
+      "sha256": "696866fdf9af35236a1477c97993df2fb131d6de25a9e305ad15246e89112eb9"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -252,7 +252,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0"
+      "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -49293,9 +49293,9 @@
   ],
   "schemaVersion": 1,
   "strategicSiteCarveProjection": {
-    "changedCellCount": 580,
+    "changedCellCount": 567,
     "inputTilesSha256": "61fb0a0993329e3515b952210a35ebb012df7607f10bf07e7983a11884e2183a",
-    "outputDocumentSha256": "cc12b3d08a15846c719755278b3f902ff21cf15b2e121dec3e1d32e7e71f52a7",
+    "outputDocumentSha256": "1dbc2cbb97905f1295f145d3e82f04fc11b87d9311e83fc006fa3b395419975c",
     "placedSiteCount": 73
   },
   "summary": {

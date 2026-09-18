@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "decisionSetId": "county-location-partition-decisions-v1",
+  "authority": "user-decision-2026-09-17 「지리 우선」 + user-decision-2026-09-18 (GH #806 댓글: 변경 省 성김 수용 · 거점 발자국 축소 · 8칸 미만 縣은 Q4 예외 행) + spec 2026-09-17-province-geography-first §3 + 위임 결정 2026-09-18(사용자 「너가 판단해」 → main 세션): 씨앗 성분 < 8칸이면 같은 郡의 씨앗 없는 최대 성분으로 옮긴다",
+  "reviewedAt": "2026-09-18",
+  "areaExceptions": [
+    {
+      "provinceId": "45203",
+      "nameCh": "蕃县",
+      "cells": 7,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    },
+    {
+      "provinceId": "87489",
+      "nameCh": "张县",
+      "cells": 4,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    },
+    {
+      "provinceId": "87490",
+      "nameCh": "朝平县",
+      "cells": 7,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    },
+    {
+      "provinceId": "87506",
+      "nameCh": "广乡县",
+      "cells": 5,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    },
+    {
+      "provinceId": "87510",
+      "nameCh": "平乡县",
+      "cells": 4,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    }
+  ],
+  "mechanicalRules": [
+    {
+      "id": "DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR",
+      "specRule": "3 보충",
+      "rule": "8-이웃 최단경로로 자란 縣 영역에서 제 씨앗과 4-이웃으로 이어지지 않는 조각(대각으로만 붙은 칸)은 같은 郡 안에서 맞닿은 변이 가장 많은 4-이웃 관할로 넘긴다(동률은 관할 id 순). 실측 254칸.",
+      "rationale": "거리는 8-이웃(√2 가중)으로 재야 경계가 45° 계단이 되지 않지만(spec 규칙 3), 省의 연결성·인접·런타임 보급망(projectHanDryLandEdges)·영토 단절 감사는 전부 4-이웃 변으로 센다. 대각으로만 붙은 칸을 그대로 두면 그 칸은 제 省과 간선이 없는 1–수 칸짜리 고립 조각이 되어 Q3(省당 성분 1)을 깨고 단절 원장 행을 수백 개 만든다. 맞닿은 변이 가장 많은 이웃에 주는 것이 경계를 가장 덜 움직인다.",
+      "sourceFinding": "NOT_A_SOURCE_QUESTION — 격자 대각 연결에 관한 사료 원칙은 없다(2026-09-18 사료 색인 검토).",
+      "status": "USER_DELEGATED_DRAFT_2026-09-18"
+    },
+    {
+      "id": "STRUCTURAL_COMPONENT_OWN_PROVINCE_IF_GE_MIN_AREA",
+      "specRule": "3 둘째 문단 보충",
+      "rule": "씨앗 없는 郡 성분(물·다른 郡에 끊긴 땅)은 같은 郡에서 유클리드로 가장 가까운 관할에 간다(spec). 그 조각이 min_area(8) 이상이면 그 관할의 城 없는 省 하나가 되고, 미만이면 seat 省에 붙은 다성분 예외로 남는다. 둘 다 원장 components 행(WATER_SEPARATED / PARENT_MASK_SPLIT)에 적는다. 실측 30성분·1,680칸, components 47행.",
+      "rationale": "省은 이동·점령 단위다. 8칸 이상인 떨어진 땅을 seat 省에 붙여 두면 한 省이 두 곳에 걸쳐 있어 「이 省에 들어간다」가 두 자리를 뜻하게 되고, 보급·이동 그래프에서 seat 省이 물 건너 조각의 이웃과도 이어진다(거짓 간선). 8칸 미만은 제 省이 되면 Q4(최소 넓이) 위반이 되므로 seat 省의 다성분 예외로 둔다 — 새 수치가 아니라 같은 min_area 다. R1(縣의 省은 함께 넘어간다)은 어느 쪽이든 지켜진다: 조각의 jurisdictionId 가 그 縣이다.",
+      "sourceFinding": "부분 근거. 縣이 뭍과 떨어진 땅(섬)을 제 경내에 두는 것은 사료에 있다 — 後漢書 卷111 郡國志三 東海郡 朐 劉昭注 「山海經曰：「都州在海中，一曰郁州。」郭璞曰：「在縣界。」, 卷112 東萊郡 黃 劉昭注 「地道記曰：「縣東二百三十里至海中，連岑有土道」. 뭍 위의 飛地를 증언하는 기사는 못 찾았다(郡國志 「寄治」 0건; 水經注·通典·太平御覽 미색인). 8칸 문턱은 사료 문제가 아니다.",
+      "status": "USER_DELEGATED_DRAFT_2026-09-18"
+    },
+    {
+      "id": "SEED_COLLISION_GEOMETRY_RULE_2B",
+      "specRule": "2 보충",
+      "rule": "같은 칸을 공유하는 城은 판정과 무관하게 id 순으로 앞 관할이 그 칸을 갖고 나머지는 같은 郡의 가장 가까운 빈 육지 칸에 놓는다(규칙 2(b)). SAME_ENTITY/DISTINCT_COUNTIES 판정은 county-seed-collisions-v1 에만 적는다.",
+      "rationale": "spec 규칙 2(a)는 「접힐 관할은 씨앗을 받지 않는다」고 했지만, 접기는 ★ 뒤 단계라 ★ 시점에는 그 관할이 아직 있고 省을 하나 이상 가져야 한다(칸 0개 省은 Q3 위반이고 접기 단계의 입력 계약도 깬다). 옆 칸에 놓아 두면 접기 단계가 두 관할을 합쳐 합친 관할이 실제 칸을 갖는다 — 결과는 같고 단계 계약은 안 깨진다. 미판정 쌍의 기본값이 「별개 縣」인 것은 사료 검토 결과와도 맞는다: 縣-縣 12쌍 중 8쌍이 郡國志에 따로 실린 별개 縣이었다. 다만 SAME 3쌍은 모두 이름 앞글자를 공유했다(㡉侯國/㡉縣·益/益都·杜/杜陵) — 그런 쌍은 기본값에 맡기지 말고 검토로 돌린다.",
+      "sourceFinding": "NOT_A_SOURCE_QUESTION(기하 규약). 경험적 뒷받침은 county-seed-collisions-v1 의 14행 판정 초안.",
+      "status": "USER_DELEGATED_DRAFT_2026-09-18"
+    },
+    {
+      "id": "STRONGHOLD_DONOR_FLOOR_RESERVATION",
+      "specRule": "4 보충 (user-decision-2026-09-18 ②)",
+      "rule": "거점(수·진·관) 앵커 칸이 떨어지는 관할의 최소 넓이는 min_area + 거점 수 × carve 의 minimumFootprintCells(4)다. 이웃의 최소 넓이(예약 포함)는 깎지 않는다. carve 는 같은 기증 省에 뒤에 설 거점 몫을 남기고, 최소 발자국으로도 못 서면 앵커를 포함한 연결 발자국을 전수로 보며 1칸까지 줄인다.",
+      "rationale": "사용자 결정: 鄧塞·樊城·孟津을 빼지 말고 발자국을 줄여 세우되 기증 縣은 최소 넓이를 지킨다. 襄陽縣은 자연 영역 3칸(보충 뒤 8칸)에 거점이 둘이라 발자국을 아무리 줄여도 8칸을 못 지킨다 — 그래서 분할 단계에서 거점 몫을 미리 빌린다. 8·4 는 현행 값이다. 실측: 襄陽 16칸(鄧塞 4 + 樊城 2 + 縣 10), 平陰 12칸(孟津 4 + 縣 8). 樊城 2칸은 縣 모양이 가늘어 4칸 연결 발자국이 마른땅 경계 조건을 못 채워서다.",
+      "sourceFinding": "NOT_A_SOURCE_QUESTION(기하 규약).",
+      "status": "USER_DECISION_2026-09-18_IMPLEMENTATION"
+    },
+    {
+      "id": "SEAT_COMPONENT_BELOW_FLOOR_RESEAT",
+      "specRule": "1c (위임 결정 2026-09-18 ③)",
+      "rule": "씨앗이 선 郡 마스크 4-연결 성분이 min_area(8) 미만이면 같은 郡에서 다른 씨앗이 없는 가장 큰 성분(8칸 이상)으로 씨앗을 옮긴다. 동률은 넓이 → 첫 칸(row-major). 옮길 곳은 그 성분에서 실제 칸에 가장 가까운 칸. 그런 성분이 없으면 그대로 두고 Q4 예외 행이 된다. 옮긴 사실은 seedExceptions 의 SEAT_COMPONENT_BELOW_FLOOR 행(거리·두 성분 넓이).",
+      "rationale": "陽安郡은 래스터가 1칸 + 15칸으로 갈라져 있고 陽安縣의 실제 위치가 1칸 쪽에 떨어진다. 그대로면 縣 省이 1칸(Q4 위반)이 되어 11개 시나리오에서 한 세력에 둘러싸인 무주 구멍이 되고, 제 땅 15칸은 城 없는 省으로 떨어져 나간다. 허용 목록 승인을 지어내는 대신 기하 규칙으로 닫는다.",
+      "sourceFinding": "NOT_A_SOURCE_QUESTION(래스터 조각의 처리 규약).",
+      "status": "DELEGATED_DECISION_2026-09-18"
+    }
+  ],
+  "enclosedComponentsKeptInSeatProvince": [
+    {
+      "jurisdictionId": "43138",
+      "nameCh": "六安县",
+      "firstCell": {
+        "row": 286,
+        "col": 463
+      },
+      "cells": 38,
+      "basis": "위임 결정 2026-09-18(main 세션): 廬江郡 래스터가 九江郡(合肥·成德·西曲陽) 안에 남긴 38칸 포위 조각이다. 제 省으로 세우면 廬江이 무주이고 九江이 한 세력인 scenario_1021 에서 둘러싸인 무주 구멍이 된다. 허용 목록 승인을 지어내지 않고 六安 seat 省의 다성분 예외로 남긴다(R1: 縣의 땅은 함께 넘어간다). 같은 꼴의 포위 조각 合浦 67·漢昌 81·東安平 23 은 구멍이 아니어서 그대로 제 省이다."
+    }
+  ]
+}

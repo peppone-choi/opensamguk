@@ -27,8 +27,9 @@ class HanStrategicTopologyJsonTest {
         val presentation = json.path("presentation")
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
-        // 2026-09-17 저지 지형 재분류 뒤의 han-tiles(마른 땅 클래스만 바뀌고 물 기하는 그대로다).
-        assertEquals("ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0",
+        // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
+        // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
+        assertEquals("1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
@@ -45,15 +46,16 @@ class HanStrategicTopologyJsonTest {
         val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val topology = loaded.topology
 
-        // 1,520 省 + 수·진·관 거점 省 73(배열 끝) — 앞 인덱스는 그대로다.
-        assertEquals(1594, topology.landProvinceIds.size)
+        // 지리 재분할(GH #806): 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331. 앞 판은 1,520 + 73 = 1,594 였다.
+        assertEquals(1331, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
         assertEquals(1133, loaded.bindingsByCityId.size)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
-        assertEquals("DIRECT-PARENT-0086-6fbdf223343a", loaded.bindingsByCityId.getValue(833).landProvinceId)
+        // 대리 治所 관할의 省 id 는 재분할로 다시 발급됐다(관할 id + ':geo:' + 순번의 해시, DIRECT- 접두어 유지).
+        assertEquals("DIRECT-PARENT-0086-a120c2e594e6", loaded.bindingsByCityId.getValue(833).landProvinceId)
         assertEquals("ss-jiange", loaded.bindingsByCityId.getValue(1047).landProvinceId)
         assertEquals("curated:strategic-site-v1:ss-jiange", loaded.bindingsByCityId.getValue(1047).physicalPlaceRef)
         assertEquals(setOf("NO_REVIEWED_RIVER_CROSSING_EVIDENCE", "NO_REVIEWED_PORT_OR_LANDING_EVIDENCE"), loaded.activationBlockerCodes)
@@ -74,7 +76,7 @@ class HanStrategicTopologyJsonTest {
         assertFailsWith<UnsupportedOperationException> { (topology.landProvinceIds as MutableSet).clear() }
         assertFailsWith<UnsupportedOperationException> { (loaded.activationBlockerCodes as MutableSet).clear() }
         // 省 없는 城은 이제 없다 — 704 龜茲屬國도 대리 治所 省 규칙으로 제 직할 省에 앉는다.
-        assertEquals("DIRECT-PARENT-0171-6e1ee2ee7142", loaded.bindingsByCityId.getValue(704).landProvinceId)
+        assertEquals("DIRECT-PARENT-0171-59e3d2566940", loaded.bindingsByCityId.getValue(704).landProvinceId)
         assertIs<StrategicPathResult.Resolved>(loaded.resolve(704, 704, 1, state(topology)))
         assertEquals(PathDenialCode.UNKNOWN_NODE,
             assertIs<StrategicPathResult.Denied>(loaded.resolve(9_999, 781, 1, state(topology))).code)

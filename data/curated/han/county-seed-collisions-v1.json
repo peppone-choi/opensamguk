@@ -1,0 +1,628 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "county-seed-collisions-v1",
+  "status": "DRAFT",
+  "authority": "spec 2026-09-17-province-geography-first §3 규칙 2 — 자동 추정 금지",
+  "generator": "tools/map/draft_county_seed_collisions.py",
+  "scope": "거점 분할 앞 문서(★ 의 입력)의 城 있는 省. 실제 칸 = lon/lat 투영 내림.",
+  "geometryRule": "분할기의 기하는 판정과 무관하게 규칙 2(b)(id 순, 가장 가까운 빈 칸)다. SAME_ENTITY 쌍은 뒤의 접기 단계가 한 관할로 합치므로 합친 관할이 실제 칸을 갖는다. 판정은 이 원장에만 산다.",
+  "reviewStates": {
+    "NEEDS_HUMAN_REVIEW": "사료가 가르지 못했다 — 기계 기본값(별개 縣, 규칙 2(b))을 그대로 둔다",
+    "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION": "사료 색인 기반 초안(2026-09-18). 사람 확인 전"
+  },
+  "counts": {
+    "cells": 14,
+    "cities": 28,
+    "needsHumanReview": 2
+  },
+  "rows": [
+    {
+      "cell": {
+        "col": 418,
+        "row": 104
+      },
+      "members": [
+        {
+          "cityId": "87125",
+          "nameCh": "广宁县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87125",
+          "commanderyId": "PARENT-0170",
+          "lon": 114.88594,
+          "lat": 40.79126
+        },
+        {
+          "cityId": "X063",
+          "nameCh": "鮮卑",
+          "kind": "EXTERNAL_PLACE",
+          "jurisdictionId": "X063",
+          "commanderyId": "PARENT-0170",
+          "lon": 114.88114,
+          "lat": 40.81078
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "廣甯은 郡國志 上谷郡 8城 중 하나인 실재 縣이고 X063 鮮卑는 縣이 아닌 외부 표지다. 같은 실체일 수 없으므로 縣 씨앗을 유지하고 표지를 옮긴다. 郡國志 표기는 「广甯」(甯)이라 「广宁/廣寧」 검색은 0건이다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷113 郡國志五 上谷郡「〖沮阳〗 〖潘〗永元十一年复。 〖甯〗 〖广甯〗 〖居庸〗 〖雊瞀〗 〖涿鹿〗 〖下落〗」",
+        "shiliao:讀史方輿紀要/卷17「廣寧城，州西北二百里。漢置廣寧縣，屬上谷郡。後漢曰廣寧縣。晉置廣寧郡，治下落城，縣併入焉。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "index 〖广宁 --book 後漢書: 0건",
+        "raw hhs-109~113 '廣寧'/'广宁': 0건 → 이체 '广甯' 으로 검출"
+      ]
+    },
+    {
+      "cell": {
+        "col": 419,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "87061",
+          "nameCh": "廮陶县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87061",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91637,
+          "lat": 37.58687
+        },
+        {
+          "cityId": "87173",
+          "nameCh": "杨氏县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87173",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.9154,
+          "lat": 37.62109
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 鉅鹿郡에 (廮)陶와 楊氏가 따로 실려 있고, 方輿紀要는 楊氏城=寧晉縣治, 廮陶城=그 서남 25리로 거리를 준다. 晉에 가서야 楊氏가 廮陶로 省入되었다. 주의: 코퍼스 hhs-110 은 廮 자가 빠져 「陶，有薄落亭」으로 찍혀 있다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷110 郡國志二 冀州 鉅鹿郡「陶，有薄落亭。 鉅鹿，故大鹿，有大陸澤。」",
+        "shiliao:後漢書/卷110 郡國志二 冀州 鉅鹿郡「楊氏， 鄡， 下曲陽，有鼓聚」",
+        "shiliao:讀史方輿紀要/卷14「寧晉縣，即古楊氏城。…陶城，縣西南二十五里。漢置縣，屬鉅鹿郡。…晉以楊氏縣省入，亦爲鉅鹿國治。」",
+        "shiliao:漢書/卷28 地理志 鉅鹿郡「縣二十：鉅鹿，南讀，廣阿，象氏，廮陶，宋子，楊氏」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "index 〖杨氏: 0건 (卷110 은 번체·〖〗 없음)",
+        "raw hhs-110 '廮陶' 는 魏郡 劉昭注에만, 鉅鹿 목록은 '陶' 로만 나옴"
+      ]
+    },
+    {
+      "cell": {
+        "col": 428,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "87569",
+          "nameCh": "扶柳县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87569",
+          "commanderyId": "PARENT-0017",
+          "lon": 115.39907,
+          "lat": 37.61451
+        },
+        {
+          "cityId": "87591",
+          "nameCh": "阜城县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87591",
+          "commanderyId": "PARENT-0017",
+          "lon": 115.39907,
+          "lat": 37.61451
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 安平國 13城에 阜城과 扶柳가 나란히 따로 실려 있다. 方輿紀要는 扶柳城을 冀州 서남 60리로 둔다. 단 阜城의 위치는 「故昌城」 주기에 대해 校勘記가 「未詳孰是」라 했으므로 CHGIS 동일 좌표는 신뢰할 수 없다(위치만 검토 필요).",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷110 郡國志二 冀州 安平國「信都，有絳水、呼沱河。 阜城，故昌城。 南宮， 扶柳， 下博，」",
+        "shiliao:後漢書/卷110 郡國志二 冀州 校勘記「前志昌城縣屬信都郡，而勃海郡卻有阜城縣。…續志云故昌城，信都有昌城，未詳孰是。」",
+        "shiliao:讀史方輿紀要/卷14「扶柳城，州西南六十里。…漢置縣，屬信都國。」"
+      ],
+      "reviewedAt": "2026-09-18"
+    },
+    {
+      "cell": {
+        "col": 521,
+        "row": 172
+      },
+      "members": [
+        {
+          "cityId": "85376",
+          "nameCh": "㡉侯国",
+          "kind": "COUNTY",
+          "jurisdictionId": "85376",
+          "commanderyId": "PARENT-0039",
+          "lon": 120.46017,
+          "lat": 37.61027
+        },
+        {
+          "cityId": "85377",
+          "nameCh": "㡉县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85377",
+          "commanderyId": "PARENT-0039",
+          "lon": 120.46017,
+          "lat": 37.61027
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85377→85376",
+          "reason": "SAME_PLACE_AS_CANDIDATE"
+        }
+      ],
+      "ruling": "SAME_ENTITY",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 東萊郡에 「惤，侯國」 하나뿐이고(校勘記: 惤은 㡉의 오자), 晉書도 같은 이름 하나를 侯國 주기와 함께 싣는다. 侯國→縣 개칭일 뿐 한 縣이다. (접는 방향: 85376)",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志四 東萊郡「牟平， 惤，侯國。」",
+        "shiliao:後漢書/卷112 郡國志四 校勘記「從巾之「〈巾弦〉」是東萊縣，則此當從巾而從心，誤也。」",
+        "shiliao:晉書/卷15 地理志 東萊國「惤{{*|弦侯國。有百支萊王祠。}}」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "raw '㡉' 전 hhs/js: 0건 (코퍼스는 惤 또는 〈巾弦〉로 표기)"
+      ]
+    },
+    {
+      "cell": {
+        "col": 419,
+        "row": 185
+      },
+      "members": [
+        {
+          "cityId": "87051",
+          "nameCh": "巨鹿县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87051",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91842,
+          "lat": 36.98014
+        },
+        {
+          "cityId": "87510",
+          "nameCh": "平乡县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87510",
+          "commanderyId": "PARENT-0014",
+          "lon": 114.91842,
+          "lat": 36.98014
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 鉅鹿郡에 鉅鹿과 平鄉이 따로 실려 있다. 方輿紀要에 따르면 漢 平鄉은 任縣 경계(후대 縣 동남 20리)에 있었고 後魏 景明 2년에야 옛 鉅鹿城으로 옮겼다. CHGIS 동일 좌표는 후대 平鄉 자리이므로 平鄉을 옮겨야 한다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷110 郡國志二 冀州 鉅鹿郡「廣平， 斥章， 廣宗， 曲周， 列人， 廣年， 平鄉，」",
+        "shiliao:讀史方輿紀要/卷15「平鄉城，縣東南二十里。漢平鄉縣，屬廣平郡，在今任縣界。晉末罷。後魏景明二年始移治故鉅鹿城。」",
+        "shiliao:讀史方輿紀要/卷15「《括地志》：「漢鉅鹿郡故城，在平鄉縣北十一里。故鉅鹿縣城，即平鄉縣治。」"
+      ],
+      "reviewedAt": "2026-09-18"
+    },
+    {
+      "cell": {
+        "col": 489,
+        "row": 188
+      },
+      "members": [
+        {
+          "cityId": "85280",
+          "nameCh": "益侯国",
+          "kind": "COUNTY",
+          "jurisdictionId": "85280",
+          "commanderyId": "PARENT-0037",
+          "lon": 118.7355,
+          "lat": 36.83983
+        },
+        {
+          "cityId": "85281",
+          "nameCh": "益都县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85281",
+          "commanderyId": "PARENT-0037",
+          "lon": 118.7355,
+          "lat": 36.83983
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85281→85280",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": "SAME_ENTITY",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 樂安國에는 「益，侯國」만 있고 益都는 없다. 方輿紀要는 益都가 漢代에 益縣으로 병합됐다가 三國魏에 復置됐다고 한다. 140–220 에 동시 존재하지 않으므로 둘 다 씨앗을 주면 안 된다. 단 「같은 곳의 개칭」은 아니다: 益城은 壽光縣 서 40리, 益都城은 북 20리로 별개 유적이다(fold 사유 문구 수정 필요). (접는 방향: 85280)",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志四 樂安國「利，故屬齊。 益，侯國。故屬北海。 壽光，故屬北海。」",
+        "shiliao:讀史方輿紀要/卷35「縣西四十里有益城，漢益縣也。縣北二十里有益都城，漢武封淄川懿王子胡爲侯邑處。」",
+        "shiliao:讀史方輿紀要/卷35「後并入益縣。 三國魏復置益都縣，晉改利益縣，屬樂安郡。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "raw js-014/015 '益都': 0건",
+        "hhs-109~113 에 益都 없음(〖益 은 益兰만)"
+      ]
+    },
+    {
+      "cell": {
+        "col": 422,
+        "row": 191
+      },
+      "members": [
+        {
+          "cityId": "85186",
+          "nameCh": "平恩县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85186",
+          "commanderyId": "PARENT-0014",
+          "lon": 115.07701,
+          "lat": 36.70308
+        },
+        {
+          "cityId": "87495",
+          "nameCh": "斥章县",
+          "kind": "COUNTY",
+          "jurisdictionId": "87495",
+          "commanderyId": "PARENT-0014",
+          "lon": 115.07701,
+          "lat": 36.70308
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "平恩은 郡國志에서 魏郡, 斥章은 鉅鹿郡 소속으로 郡이 다른 별개 縣이다(래스터의 平恩=鉅鹿郡은 오류). 後齊 때 斥章이 平恩에 省入되어 후대 좌표가 겹친 것이다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷110 郡國志二 冀州 魏郡「館陶， 清淵， 平恩， 沙，侯國。」",
+        "shiliao:後漢書/卷110 郡國志二 冀州 鉅鹿郡「南和， 廣平， 斥章， 廣宗，」",
+        "shiliao:讀史方輿紀要/卷15「漢廣平國斥章縣地。後漢屬鉅鹿郡。…後齊省入平恩縣。」",
+        "shiliao:漢書/卷28 魏郡「平恩，邯溝，武安。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "dsfy '平恩城'/'平恩廢縣': 0건 (平恩 故城 거리 기사는 못 찾음)"
+      ]
+    },
+    {
+      "cell": {
+        "col": 467,
+        "row": 191
+      },
+      "members": [
+        {
+          "cityId": "45020",
+          "nameCh": "东平陵县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45020",
+          "commanderyId": "PARENT-0035",
+          "lon": 117.52242,
+          "lat": 36.71219
+        },
+        {
+          "cityId": "45049",
+          "nameCh": "土鼓县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45049",
+          "commanderyId": "PARENT-0035",
+          "lon": 117.52242,
+          "lat": 36.71219
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 濟南國 10城에 東平陵과 土鼓가 따로 실려 있다. 方輿紀要는 東平陵城을 濟南府 동 75리, 土鼓城을 (淄川)縣 서 50리로 따로 둔다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志四 濟南國「東平陵，有鐵。有譚城。…菅，有賴亭。 土鼓， 梁鄒，」",
+        "shiliao:讀史方輿紀要/卷31「東平陵城，府東七十五里。」",
+        "shiliao:讀史方輿紀要/卷31「土鼓城，縣西五十里，漢置土鼓縣，屬濟南郡。後漢因之，晉省。」"
+      ],
+      "reviewedAt": "2026-09-18"
+    },
+    {
+      "cell": {
+        "col": 176,
+        "row": 193
+      },
+      "members": [
+        {
+          "cityId": "70620",
+          "nameCh": "西都县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70620",
+          "commanderyId": "PARENT-0162",
+          "lon": 101.78394,
+          "lat": 36.60886
+        },
+        {
+          "cityId": "X058",
+          "nameCh": "西羌",
+          "kind": "EXTERNAL_PLACE",
+          "jurisdictionId": "X058",
+          "commanderyId": "PARENT-0163",
+          "lon": 101.77866,
+          "lat": 36.62386
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": false,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "西都는 建安 연간에 설치된 西平郡 治所 縣이고 X058 西羌은 외부 표지라 같은 실체가 아니다. 주의: 西都는 郡國志(c.140)에 없고 建安 이후에만 존재한다.",
+      "evidenceRefs": [
+        "shiliao:讀史方輿紀要/卷64「漢爲破羌縣地，屬金城郡。後漢建安中，置西都縣，爲西平郡治。晉因之。」",
+        "shiliao:晉書/卷14 西平郡「西都　臨羌　長寧　安夷」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "raw hhs-113 '〖西都'/'西平': 0건 (金城郡 목록에 없음)"
+      ]
+    },
+    {
+      "cell": {
+        "col": 495,
+        "row": 194
+      },
+      "members": [
+        {
+          "cityId": "85292",
+          "nameCh": "营陵县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85292",
+          "commanderyId": "PARENT-0038",
+          "lon": 119.04401,
+          "lat": 36.54834
+        },
+        {
+          "cityId": "85466",
+          "nameCh": "平寿县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85466",
+          "commanderyId": "PARENT-0038",
+          "lon": 119.01411,
+          "lat": 36.58534
+        }
+      ],
+      "sameLonLat": false,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 北海國에 營陵과 平壽가 연달아 따로 실려 있다. 方輿紀要는 營陵을 昌樂縣 동남, 平壽城을 濰縣 서남 30리로 둔다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志四 北海國「劇，有紀亭，古紀國。 營陵， 平壽，有斟城。」",
+        "shiliao:讀史方輿紀要/卷36「平壽城，縣西南三十里。漢縣，屬北海郡。」",
+        "shiliao:讀史方輿紀要/卷1「昌樂縣東南廢營陵城爲古營丘。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "index 〖营陵/〖平寿: 0건 (卷112 는 번체)"
+      ]
+    },
+    {
+      "cell": {
+        "col": 430,
+        "row": 213
+      },
+      "members": [
+        {
+          "cityId": "85064",
+          "nameCh": "鄄良县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85064",
+          "commanderyId": "PARENT-0029",
+          "lon": 115.50356,
+          "lat": 35.67287
+        },
+        {
+          "cityId": "85065",
+          "nameCh": "鄄城县",
+          "kind": "COUNTY",
+          "jurisdictionId": "85065",
+          "commanderyId": "PARENT-0029",
+          "lon": 115.50356,
+          "lat": 35.67287
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "85064→85065",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": "「鄄良」은 코퍼스 1,271권 전체에 한 번도 나오지 않아 사료로 동일성도 별개성도 증명할 수 없다. 郡國志 濟陰郡에는 鄄城만 있으므로 씨앗은 鄄城 하나만 두는 기존 fold 를 유지하는 것이 사료와 모순되지 않는다. 水經注·通典·太平御覽은 미색인이다. (접는 방향: 85065)",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷111 郡國志三 濟陰郡「〖鄄城〗 〖離狐〗故屬東郡。」",
+        "shiliao:漢書/卷28 濟陰郡「縣九：定陶，冤句，呂都，葭密，成陽，鄄城，句陽，秺，乘氏。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "raw 전 코퍼스 '鄄良': 0건",
+        "'甄良': 0건",
+        "'甄城' hhs: 0건; 대조군 '鄄城' 은 검출됨(조회 정상)"
+      ],
+      "delegatedDecision": {
+        "decision": "DELEGATED_KEEP_DEFAULT",
+        "decidedAt": "2026-09-18",
+        "decidedBy": "main 세션(사용자 「전부 너가 판단해서 해결」)",
+        "reason": "사료 0건 — 鄄良·贊縣 모두 코퍼스 부재(대조 조회는 살아 있음). 기계 기본값 유지, 贊=酇 가설은 검증 전이라 기존 접기를 바꾸지 않는다",
+        "note": "ruling 열거값(SAME_ENTITY/DISTINCT_COUNTIES)에 이 값이 없어 새 값을 짓지 않고 reviewState 는 NEEDS_HUMAN_REVIEW 로 둔다. 기하 변경 없음."
+      }
+    },
+    {
+      "cell": {
+        "col": 199,
+        "row": 217
+      },
+      "members": [
+        {
+          "cityId": "70126",
+          "nameCh": "枹罕县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70126",
+          "commanderyId": "PARENT-0066",
+          "lon": 102.98101,
+          "lat": 35.49667
+        },
+        {
+          "cityId": "70131",
+          "nameCh": "白石县",
+          "kind": "COUNTY",
+          "jurisdictionId": "70131",
+          "commanderyId": "PARENT-0066",
+          "lon": 102.98101,
+          "lat": 35.49667
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [],
+      "ruling": "DISTINCT_COUNTIES",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "郡國志 隴西郡에 枹罕과 白石이 따로(둘 다 故屬金城) 실려 있고, 永元 10년에 두 장수가 각각 枹罕과 白石에 나뉘어 주둔했다. 白石城은 河州 서쪽, 狄道 서북 280리로 별개 城이다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷113 郡國志五 隴西郡「〖枹罕〗故属金城。 〖白石〗故属金城。」",
+        "shiliao:讀史方輿紀要/卷60「白石城，在州西。漢縣，屬金城郡。闞駰曰：「白石城，在狄道縣西北二百八十里。」",
+        "shiliao:讀史方輿紀要/卷60「謁者王信、耿譚代領其兵。信屯枹罕，譚屯白石」"
+      ],
+      "reviewedAt": "2026-09-18"
+    },
+    {
+      "cell": {
+        "col": 308,
+        "row": 245
+      },
+      "members": [
+        {
+          "cityId": "70633",
+          "nameCh": "杜陵",
+          "kind": "COUNTY",
+          "jurisdictionId": "70633",
+          "commanderyId": "PARENT-0004",
+          "lon": 108.92208,
+          "lat": 34.1845
+        },
+        {
+          "cityId": "70634",
+          "nameCh": "杜",
+          "kind": "COUNTY",
+          "jurisdictionId": "70634",
+          "commanderyId": "PARENT-0004",
+          "lon": 108.92208,
+          "lat": 34.1845
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "70634→70633",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": "SAME_ENTITY",
+      "reviewState": "SOURCE_DRAFT_PENDING_HUMAN_CONFIRMATION",
+      "basis": "秦 杜縣을 宣帝 元康 원년에 杜陵縣으로 개칭한 것이고 郡國志·漢志·晉志 모두 京兆에 杜陵 하나만 싣는다. 後漢 시점 이름인 杜陵(70633)으로 접는다. (접는 방향: 70633)",
+      "evidenceRefs": [
+        "shiliao:讀史方輿紀要/卷53「秦武公十一年初置杜縣。漢宣帝元康元年葬於杜東原上，曰杜陵，更縣曰杜陵縣。…晉曰杜城縣。後魏曰杜縣。」",
+        "shiliao:後漢書/卷109 郡國志一 京兆尹「〖杜陵{{*|杜預曰古唐杜氏也。}}〗酆在西南。」"
+      ],
+      "reviewedAt": "2026-09-18"
+    },
+    {
+      "cell": {
+        "col": 358,
+        "row": 282
+      },
+      "members": [
+        {
+          "cityId": "45748",
+          "nameCh": "赞县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45748",
+          "commanderyId": "PARENT-0041",
+          "lon": 111.62382,
+          "lat": 32.46271
+        },
+        {
+          "cityId": "45751",
+          "nameCh": "阴县",
+          "kind": "COUNTY",
+          "jurisdictionId": "45751",
+          "commanderyId": "PARENT-0041",
+          "lon": 111.62382,
+          "lat": 32.46271
+        }
+      ],
+      "sameLonLat": true,
+      "sameCommandery": true,
+      "existingAdjudicationMentions": [
+        {
+          "ledger": "cityless-jurisdiction-fold-decisions-v1",
+          "row": "45748→45751",
+          "reason": "SAME_PLACE_AS_ROUTE_NODE"
+        }
+      ],
+      "ruling": null,
+      "reviewState": "NEEDS_HUMAN_REVIEW",
+      "basis": "「贊縣」은 코퍼스 전체 0건이다. 酇의 이표기라면 郡國志 南陽郡에 陰과 酇이 따로 실려 있고 方輿紀要가 陰城=光化縣 서, 酇城=동북 40리로 갈라 놓으므로 DISTINCT 가 되어 기존 fold 는 틀린다. 그러나 贊=酇 동일성 자체를 사료로 확인하지 못했고, 데이터셋에 酇縣 항목이 따로 있는지도 확인해야 한다.",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志四 南陽郡「涅陽， 陰， 酇， 鄧，」",
+        "shiliao:讀史方輿紀要/卷79 光化縣「陰城，在縣西。今漢水北岸，古縣城是也。…漢置陰縣，屬南陽郡。後漢因之。」",
+        "shiliao:讀史方輿紀要/卷79 光化縣「城，縣東北四十里。秦置縣。漢因之，屬南陽郡。高祖封蕭何於此。」"
+      ],
+      "reviewedAt": "2026-09-18",
+      "absenceChecks": [
+        "raw 전 코퍼스 '贊縣': 0건",
+        "yhjx '酇': 0건",
+        "宋書 州郡志 '酇' 은 沛/譙 의 酇만 검출"
+      ],
+      "delegatedDecision": {
+        "decision": "DELEGATED_KEEP_DEFAULT",
+        "decidedAt": "2026-09-18",
+        "decidedBy": "main 세션(사용자 「전부 너가 판단해서 해결」)",
+        "reason": "사료 0건 — 鄄良·贊縣 모두 코퍼스 부재(대조 조회는 살아 있음). 기계 기본값 유지, 贊=酇 가설은 검증 전이라 기존 접기를 바꾸지 않는다",
+        "note": "ruling 열거값(SAME_ENTITY/DISTINCT_COUNTIES)에 이 값이 없어 새 값을 짓지 않고 reviewState 는 NEEDS_HUMAN_REVIEW 로 둔다. 기하 변경 없음."
+      }
+    }
+  ]
+}

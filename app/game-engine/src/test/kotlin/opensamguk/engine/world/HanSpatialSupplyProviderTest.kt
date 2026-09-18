@@ -58,16 +58,18 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `canonical Han topology exposes 1594 provinces and 4275 symmetric edges`() {
+    fun `canonical Han topology exposes 1331 provinces and 3551 symmetric edges`() {
         val network = provider().network(1020, emptyList())
 
         // 2026-09-15: 수·진·관 거점 省 73 을 縣 省에서 떼어 배열 끝에 붙였다. 2026-09-16 平陰 省 1 이 더해져 1,594 다.
-        assertEquals(1_594, network.provinceOwners.size)
-        assertEquals(1_594, network.provinceAdjacency.size)
+        // 2026-09-18 지리 재분할(GH #806): 郡 안 縣 경계를 城의 실제 위치로 다시 잘라 1,594 → 1,331 省.
+        assertEquals(1_331, network.provinceOwners.size)
+        assertEquals(1_331, network.provinceAdjacency.size)
         // 동명이지에 잘못 묶인 縣 4곳을 CHGIS 제자리로 되돌리면서 省 인접이 2간선 늘었다
         // (4,118 → 4,120). 거점 省이 이웃과 새 경계를 내어 4,274 다. han-tiles.json adjacency.county 실측값이다.
         // 2026-09-16 1098: 五原郡 九原·河陰이 南匈奴 땅에서 발자국을 받고 平陰 省이 생기며 4,275.
-        assertEquals(4_275, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        // 2026-09-18 지리 재분할: han-tiles adjacency.county 실측 4,275 → 3,551.
+        assertEquals(3_551, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         network.provinceAdjacency.forEachIndexed { a, neighbors ->
             neighbors.forEach { b -> assertTrue(a in network.provinceAdjacency[b]) }
         }
