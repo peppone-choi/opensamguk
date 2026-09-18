@@ -5,6 +5,9 @@ validates already-loaded JSON-compatible objects so the protected orchestrator a
 the public contract checker can share one fail-closed schema implementation.  An
 attestation records orchestrator-produced manifests; it is not proof that execution
 occurred, so execution and materialization remain protected-orchestrator duties.
+
+NOTE (ADR-LITE-059, 2026-09-17): the v1 lock/attestation flow is retired — no lock exists and none can be
+derived truthfully. Generic helpers here (e.g. `loads_json_strict`) stay in use by other map tools.
 """
 
 from __future__ import annotations
