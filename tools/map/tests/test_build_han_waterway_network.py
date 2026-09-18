@@ -135,6 +135,35 @@ class WaterwayNetworkTest(unittest.TestCase):
         ledger["flowLinks"][0]["downstreamReach"] = "jiang-jiangzhou-yiling"
         self.assertRed(ledger, "do not touch")
 
+    def test_port_links_are_exactly_the_consecutive_ports(self):
+        artifact = self.build(self.ledger)
+        self.assertEqual([row["id"] for row in artifact["portLinks"]],
+                         ["port-link:fankou--ruxukou", "port-link:jiangzhou--yiling",
+                          "port-link:yiling--fankou"])
+        self.assertTrue(all(row["status"] == "CITY_CONNECTION_ONLY" for row in artifact["portLinks"]))
+
+        def link(a, b):
+            return {"stableKey": f"{a}--{b}", "fromNode": a, "toNode": b,
+                    "sourceRefs": ["shiliao:sgz-jianye-suliu"]}
+        ledger = self.mutated()   # 夷陵을 건너뛴다
+        ledger["portLinks"].append(link("jiangzhou", "fankou"))
+        self.assertRed(ledger, "skip a port")
+        ledger = self.mutated()   # 沔水 구간은 江 과 흐름으로 이어져 있지 않다
+        ledger["portLinks"].append(link("hanjin", "fankou"))
+        self.assertRed(ledger, "cannot jump between reaches")
+        ledger = self.mutated()   # 도하점은 항구가 아니다
+        ledger["portLinks"].append(link("mengjin", "fankou"))
+        self.assertRed(ledger, "reviewed PORT nodes")
+        ledger = self.mutated()   # 빠뜨리기
+        ledger["portLinks"].pop()
+        self.assertRed(ledger, "port links missing")
+        ledger = self.mutated()   # 출처 없음
+        ledger["portLinks"][0]["sourceRefs"] = []
+        self.assertRed(ledger, "has no source")
+        ledger = self.mutated()   # 흐름 연결을 지우면 그 위의 뱃길도 선다
+        ledger["flowLinks"] = [f for f in ledger["flowLinks"] if f["stableKey"] != "jiang-yiling-to-xiakou"]
+        self.assertRed(ledger, "cannot jump between reaches")
+
     def test_activation_and_base_pins_are_enforced(self):
         ledger = self.mutated()
         ledger["activation"] = "ACTIVE"

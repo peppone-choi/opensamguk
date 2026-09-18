@@ -316,6 +316,89 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
                           "directionPairKey": key, "sourceRefs": refs,
                           "status": "PROPOSED_NOT_ACTIVATED"})
 
+    # --- port links --------------------------------------------------------------------------
+    # 항구와 항구를 잇는 물길. han-world-v3 의 城↔城 강 뱃길(build_han_world.py)이 이 표만 읽는다.
+    # 원장은 출처를 달 뿐 쌍을 고르지 못한다 — 쌍은 구간·흐름에서 아래 규칙으로 유도되고, 원장의 쌍
+    # 집합이 유도된 집합과 정확히 같아야 한다(빠뜨려도, 건너뛰어도, 끊긴 구간을 넘어도 죽는다).
+    reach_graph: dict[str, set[str]] = {key: set() for key in reach_cells}
+    for row in ledger["flowLinks"]:
+        reach_graph[row["upstreamReach"]].add(row["downstreamReach"])
+        reach_graph[row["downstreamReach"]].add(row["upstreamReach"])
+
+    def reach_path(start: str, goal: str) -> list[str] | None:
+        previous: dict[str, str | None] = {start: None}
+        queue = deque([start])
+        while queue:
+            current = queue.popleft()
+            if current == goal:
+                path = []
+                while current is not None:
+                    path.append(current)
+                    current = previous[current]
+                return path[::-1]
+            for nxt in sorted(reach_graph[current]):
+                if nxt not in previous:
+                    previous[nxt] = current
+                    queue.append(nxt)
+        return None
+
+    def water_distance(a: tuple[int, int], b: tuple[int, int], cells: set) -> int | None:
+        starts = [cell for cell in cells if max(abs(cell[0] - a[0]), abs(cell[1] - a[1])) <= 1]
+        goals = {cell for cell in cells if max(abs(cell[0] - b[0]), abs(cell[1] - b[1])) <= 1}
+        seen = {cell: 0 for cell in starts}
+        queue = deque(starts)
+        while queue:
+            current = queue.popleft()
+            if current in goals:
+                return seen[current]
+            for dr, dc in NEIGH8:
+                nxt = (current[0] + dr, current[1] + dc)
+                if nxt in cells and nxt not in seen:
+                    seen[nxt] = seen[current] + 1
+                    queue.append(nxt)
+        return None
+
+    ports = {row["stableKey"]: row for row in ledger["nodes"] if "PORT" in row["roles"]}
+    port_cell = {key: (row["cell"]["row"], row["cell"]["col"]) for key, row in ports.items()}
+    derived: dict[tuple[str, str], tuple[list[str], int]] = {}
+    for a in sorted(ports):
+        for b in sorted(ports):
+            if a >= b:
+                continue
+            path = reach_path(ports[a]["reach"], ports[b]["reach"])
+            if path is None:
+                continue
+            cells = set().union(*(reach_cells[key] for key in path))
+            span = water_distance(port_cell[a], port_cell[b], cells)
+            need(span is not None, f"port pair {a}/{b}: flow-linked reaches are not one water body")
+            between = [c for c in ports if c not in (a, b) and ports[c]["reach"] in path
+                       and (water_distance(port_cell[a], port_cell[c], cells) or 0) < span
+                       and (water_distance(port_cell[c], port_cell[b], cells) or 0) < span]
+            if not between:
+                derived[(a, b)] = (path, span)
+    port_link_rows = []
+    listed: set[tuple[str, str]] = set()
+    for row in ledger.get("portLinks", []):
+        key = row["stableKey"]
+        a, b = row["fromNode"], row["toNode"]
+        need(a in ports and b in ports, f"port link {key}: endpoints must be reviewed PORT nodes")
+        pair = (min(a, b), max(a, b))
+        need(a != b and pair not in listed, f"port link {key}: duplicate or self link")
+        listed.add(pair)
+        need(pair in derived,
+             f"port link {key}: {a}/{b} are not consecutive ports on flow-linked reaches "
+             "(a route cannot jump between reaches or skip a port)")
+        path, span = derived[pair]
+        port_link_rows.append({
+            "id": f"port-link:{key}", "fromNodeId": f"waterway-node:{a}", "toNodeId": f"waterway-node:{b}",
+            "fromSiteRef": ports[a]["siteRef"], "toSiteRef": ports[b]["siteRef"],
+            "reachPath": [f"water-zone:{r}" for r in path], "waterCellDistance": span,
+            "sourceRefs": _refs(row, sources, f"port link {key}"),
+            "status": "CITY_CONNECTION_ONLY",
+        })
+    need(listed == set(derived),
+         f"port links missing for consecutive ports: {sorted(set(derived) - listed)}")
+
     # --- blocked -----------------------------------------------------------------------------
     blocked_rows = []
     for row in ledger["blocked"]:
@@ -352,7 +435,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
          f"FERRY strongholds unaccounted: missing={sorted(set(ferries) - ferry_sites)}")
 
     need(len({e["id"] for e in edges}) == len(edges), "duplicate edge id")
-    used = {ref for coll in (reach_rows, node_rows, edges, blocked_rows) for r in coll
+    used = {ref for coll in (reach_rows, node_rows, edges, blocked_rows, port_link_rows) for r in coll
             for ref in r["sourceRefs"]}
     need(used == set(sources), f"unused sources: {sorted(set(sources) - used)}")
     return {
@@ -363,11 +446,13 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
         "nodes": sorted(node_rows, key=lambda r: r["id"]),
         "proposedTraversalEdges": sorted(edges, key=lambda r: r["id"]),
         "blockedNodes": sorted(blocked_rows, key=lambda r: r["id"]),
+        "portLinks": sorted(port_link_rows, key=lambda r: r["id"]),
         "counts": {
             "reaches": len(reach_rows), "nodes": len(node_rows),
             "crossings": sum(e["mode"] == "FERRY" for e in edges),
             "ports": sum(e["mode"] == "EMBARK" for e in edges),
             "flowLinks": len(ledger["flowLinks"]), "blocked": len(blocked_rows),
+            "portLinks": len(port_link_rows),
         },
     }
 
