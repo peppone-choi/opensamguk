@@ -59,3 +59,62 @@ class GeneralAtCityTest {
         }
     }
 }
+
+/** spec §2.2·§3-2·§3-3: 이동 진입점 하나, 생성 = 위치 행 생성. */
+class HwihaPositionWriteTest {
+    private val hash = "c".repeat(64)
+    private val p1 = StrategicNodeRef.LandProvince("p1")
+    private val p2 = StrategicNodeRef.LandProvince("p2")
+    private val p3 = StrategicNodeRef.LandProvince("p3")  // 城 없는 省
+    private fun general(id: Int, city: Int) = TurnGeneral(id = id, name = "G$id", nationId = 0, cityId = city,
+        troopId = 0, stats = GeneralStats(50, 50, 50), experience = 0, dedication = 0,
+        officerLevel = 0, turnTime = Instant.EPOCH)
+    private fun world(profile: String = "HWIHA"): InMemoryTurnWorld {
+        val positions = GeneralPositionSnapshot("r1", hash, setOf("p1", "p2", "p3"), emptySet())
+            .withState(GeneralPositionState("r1", hash, 7, p1, 1))
+        return InMemoryTurnWorld(WorldSnapshot(
+            TurnWorldState(1, 200, 1, 60, Instant.EPOCH, config = mapOf("mapName" to "han-world-v3", "ruleProfile" to profile)),
+            worldId = WorldId(1), generals = listOf(general(7, 10)), generalPositionSnapshot = positions,
+            cityLandProvinceById = mapOf(10 to "p1", 20 to "p2"),
+        ))
+    }
+
+    @Test
+    fun `moving to a province with a city retargets the reference city`() {
+        val world = world(); val recorder = ChangeRecorder()
+        recorder.moveGeneral(world, 7, p2)
+        assertEquals(20, world.getGeneralById(7)!!.cityId)
+        assertEquals(p2, world.positionOf(7))
+        assertTrue(world.isGeneralAtCity(7))
+    }
+
+    @Test
+    fun `moving to a province without a city keeps the reference city and leaves the city`() {
+        val world = world(); val recorder = ChangeRecorder()
+        recorder.moveGeneral(world, 7, p3)
+        assertEquals(10, world.getGeneralById(7)!!.cityId)  // 기준 城 유지 — 절대 0 이 되지 않는다
+        assertEquals(p3, world.positionOf(7))
+        assertFalse(world.isGeneralAtCity(7))
+    }
+
+    @Test
+    fun `moveGeneral is refused outside hwiha worlds`() {
+        val world = world("SAMMO"); val recorder = ChangeRecorder()
+        assertFailsWith<IllegalStateException> { recorder.moveGeneral(world, 7, p2) }
+    }
+
+    @Test
+    fun `creating a general creates its position row from the reference city`() {
+        val world = world(); val recorder = ChangeRecorder()
+        recorder.recordGeneralCreate(world, general(8, 20))
+        assertEquals(p2, world.positionOf(8))
+        assertTrue(world.isGeneralAtCity(8))
+    }
+
+    @Test
+    fun `creating a general on a city without a province binding is refused, not skipped`() {
+        val world = world(); val recorder = ChangeRecorder()
+        assertFailsWith<IllegalStateException> { recorder.recordGeneralCreate(world, general(9, 99)) }
+        assertEquals(null, world.getGeneralById(9))
+    }
+}

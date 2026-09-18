@@ -246,6 +246,13 @@ class InMemoryTurnWorld(
 
     val ruleProfile: opensamguk.logic.input.RuleProfile get() = state.ruleProfile
 
+    /** 城 → 省 노드(HWIHA 만 실려 있다). */
+    fun landNodeOfCity(cityId: Int): StrategicNodeRef? = cityLandProvinceById[cityId]?.let { StrategicNodeRef.LandProvince(it) }
+
+    /** 省 → 그 省에 선 城(1133 은 城↔省 1:1). 城 없는 省이면 null. */
+    fun cityOfLandNode(node: StrategicNodeRef): Int? =
+        (node as? StrategicNodeRef.LandProvince)?.let { n -> cityLandProvinceById.entries.firstOrNull { it.value == n.id }?.key }
+
     /** 위치 정본(HWIHA 에서 non-null). SAMMO 는 행이 선택적이라 null 일 수 있다. */
     fun positionOf(generalId: Int): StrategicNodeRef? = generalPosition?.stateFor(generalId)?.node
 
