@@ -95,6 +95,9 @@ data/map/*
 # 예전으로 돌아간다 — 실측: CI 에서 게이트 24건이 빨개졌다). 담고 있는 것은 프로빈스 인덱스·
 # 城 이름·郡 이름과 간선 길이(km) 하나뿐이라 좌표를 복원할 수 없다. 원본·좌표는 계속 미커밋.
 !data/map/han-commandery-supply-links-v1.json
+# #826 수로 망 1차(비활성 오버레이). 구간 물 칸·나루 칸은 이미 커밋된 han-tiles.json 에서 읽은 것뿐이다.
+# 예외가 없으면 CI 에서만 --check 가 빨개진다.
+!data/map/han-waterway-network-v1.json
 **/v6_*_pts*
 **/v6_*_pgn*
 **/v6_*_lin*

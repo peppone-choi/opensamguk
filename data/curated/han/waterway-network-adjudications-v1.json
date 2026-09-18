@@ -1,0 +1,1697 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "han-waterway-network-adjudications-v1",
+ "activation": "NON_ACTIVATING",
+ "note": "#826 1차. 런타임이 읽지 않는 별도 원장이다. han-water-topology-v1 과 그 원장은 1133 번들·contentHash 에 물려 있어 건드리지 않는다. 비용·용량은 증거가 없어 적지 않는다.",
+ "bankRule": "나루의 양안 省 = 노드 칸에서 3칸 안, 구간 물 칸에 붙은 마른 칸의 소유 省. 사료는 「그 물을 그 나루에서 건넜다」까지만 증명하고 省 은 han-tiles 소유 격자에서 읽는다.",
+ "base": {
+  "hanTiles": {
+   "path": "data/map/han-tiles.json",
+   "sha256": "6dde62bc0286e5c3e04f39f8b280fe0aa02424bed124300119546d533ef879b4"
+  },
+  "strongholds": {
+   "path": "data/curated/han/strategic-strongholds-v1.json",
+   "sha256": "0ff3ef8d7d7c23775be22dd5850fe62d9a59e2ab66c082ff8bb5c46b00a6759a"
+  }
+ },
+ "systems": [
+  {
+   "stableKey": "changjiang",
+   "nameHan": "長江 계통",
+   "seedRow": 319,
+   "seedCol": 352,
+   "expectedCellCount": 1661
+  },
+  {
+   "stableKey": "huanghe",
+   "nameHan": "黃河 계통",
+   "seedRow": 231,
+   "seedCol": 379,
+   "expectedCellCount": 707
+  }
+ ],
+ "sources": [
+  {
+   "sourceId": "shiliao:sgz32-hanjin",
+   "book": "三國志",
+   "chapter": "卷32 蜀書二 先主傳",
+   "quote": "先主斜趨漢津，適與羽船會，得濟沔",
+   "claim": "漢津에서 關羽의 배와 만나 沔水를 건넜다 — 승선·도하 둘 다, 물 이름은 沔",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "漢津",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz47-fankou",
+   "book": "三國志",
+   "chapter": "卷47 吳書·吳主傳",
+   "quote": "裝大船，名爲長安，試泛之釣臺圻。時風大盛，谷利令柂工取樊口",
+   "claim": "大船이 樊口로 배를 댔다 — 접안지",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "取樊口",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz55-ruxu",
+   "book": "三國志",
+   "chapter": "卷55 吳書·十二虎臣傳 (董襲)",
+   "quote": "使襲督五樓船住濡須口",
+   "claim": "樓船 다섯 척이 濡須口에 정박 — 수군 기지",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "濡須口",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz36-jiangzhou",
+   "book": "三國志",
+   "chapter": "卷36 蜀書六 關張馬黃趙傳 (張飛)",
+   "quote": "飛與諸葛亮等溯流而上，分定郡縣。至江州",
+   "claim": "荊州에서 江을 거슬러 江州에 닿았다 — 江州가 상류, 하선지",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "江州",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz32-yiling",
+   "book": "三國志",
+   "chapter": "卷32 蜀書二 先主傳",
+   "quote": "將軍吳班、陳式水軍屯夷陵，夾江東西岸",
+   "claim": "水軍이 夷陵에 주둔, 江 양안 — 수군 기지",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "夷陵",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz32-suliu",
+   "book": "三國志",
+   "chapter": "卷32 蜀書二 先主傳",
+   "quote": "諸葛亮、張飛、趙雲等將兵溯流定白帝、江州、江陽",
+   "claim": "白帝(魚復)–江州–江陽 이 한 물길로 이어진다, 방향은 서쪽이 상류",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "江州",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz-jianye-suliu",
+   "book": "三國志",
+   "chapter": "卷51 吳書·宗室傳 裴注(江表傳)",
+   "quote": "初權在武昌，欲還都建業，而慮水道溯流二千里",
+   "claim": "武昌–建業 이 한 水道이고 武昌 이 상류다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "建業",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz55-jianye",
+   "book": "三國志",
+   "chapter": "卷55 吳書·十二虎臣傳 (徐盛)",
+   "quote": "盛建計從建業築圍，作薄落，圍上設假樓，江中浮船",
+   "claim": "建業 앞 江에 배를 띄웠다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "建業",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz36-jiangling",
+   "book": "三國志",
+   "chapter": "卷36 蜀書六 關張馬黃趙傳 (關羽)",
+   "quote": "別遣羽乘船數百艘會江陵",
+   "claim": "배 수백 척의 집결지 江陵",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "江陵",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz-xiakou",
+   "book": "三國志",
+   "chapter": "卷46 呉書·孫破虜討逆傳 (孫策) — 말뭉치의 ProperNoun 마크업을 걷어낸 본문",
+   "quote": "船千艘，遂前進夏口",
+   "claim": "배 천 척이 夏口로 나아갔다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "夏口",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz-guangling",
+   "book": "三國志",
+   "chapter": "卷28 魏書·王毌丘諸葛鄧鍾傳 (王凌)",
+   "quote": "與張遼等至廣陵討孫權。臨江，夜大風，吳將呂範等船漂至北岸",
+   "claim": "廣陵 에서 江에 임했다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "廣陵",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz54-hengjiang",
+   "book": "三國志",
+   "chapter": "卷54 吴書·周瑜、魯肅、吕蒙傳 (周瑜)",
+   "quote": "遂從攻橫江、當利，皆拔之。乃渡江擊秣陵",
+   "claim": "橫江·當利를 뺏고 江을 건넜다 — 도하 증거",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "橫江",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz15-zhanyin",
+   "book": "三國志",
+   "chapter": "卷15 魏書 (張既)",
+   "quote": "遂渡河。賊七千餘騎逆拒軍於鸇陰口，旣揚聲軍從鸇陰，乃潛由且次出至武威",
+   "claim": "渡河는 鸇陰口 앞 문장이고 張既는 鸇陰을 지나지 않았다 — 이 나루에서의 도하는 입증되지 않는다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "鸇陰",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "shiliao:fyjy72-nanan",
+   "book": "讀史方輿紀要",
+   "chapter": "卷072 四川七 嘉定州",
+   "quote": "青衣水經南安故城亦謂之南安峽口",
+   "claim": "南安峽口 의 물은 江 본류가 아니라 青衣水",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "南安峽口",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "internal:pengli",
+   "book": "(내부) water-topology-adjudications-v1",
+   "chapter": "zoneAdjudications lake-pengli-poyang",
+   "quote": "彭蠡澤 LAKE_BASIN seed 343:442, 83 cells",
+   "claim": "彭蠡澤 호구가 江 구간의 분기점",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "query": "(internal ledger reference, no corpus query)",
+    "queriedOn": "2026-09-18"
+   }
+  },
+  {
+   "sourceId": "stronghold:pubanjin#0",
+   "book": "三國志·魏書·武帝紀",
+   "chapter": "卷1",
+   "quote": "而潛遣徐晃、朱靈等夜渡蒲阪津，據河西爲營",
+   "claim": "蒲阪津을 건너 河西에 진을 쳤다 — 물은 河, 양안은 河東·河西",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "pubanjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:shanjin#0",
+   "book": "三國志·魏書·杜畿傳",
+   "chapter": "卷16",
+   "quote": "固等使兵数千人绝陕津，畿至不得渡",
+   "claim": "FERRY_BLOCKADE_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "shanjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:doujin#0",
+   "book": "三國志·魏書·杜畿傳",
+   "chapter": "卷16",
+   "quote": "遂诡道从郖津度",
+   "claim": "FERRY_CROSSING_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "doujin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:mengjin#0",
+   "book": "三國志·魏書·賈逵傳 裴注(魏略列傳·楊沛)",
+   "chapter": "卷15",
+   "quote": "大軍西讨，沛随軍，都督孟津渡事",
+   "claim": "FERRY_CROSSING_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "mengjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:mengjin#2",
+   "book": "晉書·武帝紀 泰始十年",
+   "chapter": "卷3",
+   "quote": "立河橋于富平津",
+   "claim": "ALIAS_ATTESTED",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "mengjin",
+    "evidenceIndex": 2
+   }
+  },
+  {
+   "sourceId": "stronghold:hanjin#0",
+   "book": "三國志·蜀書·先主傳",
+   "chapter": "卷32",
+   "quote": "先主斜趨漢津，適與羽船會",
+   "claim": "FERRY_CROSSING_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "hanjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:fankou#0",
+   "book": "三國志·蜀書·先主傳 裴注(江表傳)",
+   "chapter": "卷32",
+   "quote": "備從魯肅計，進住鄂縣之樊口",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "fankou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:ruxukou#0",
+   "book": "三國志·魏書·武帝紀",
+   "chapter": "卷1",
+   "quote": "十八年春正月，進軍濡須口",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "ruxukou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:xiaopingjin#0",
+   "book": "後漢書·何進傳",
+   "chapter": "卷69",
+   "quote": "遂將帝與陳留王數十人步出穀門，奔小平津",
+   "claim": "SITE_NAMED_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "xiaopingjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:xiaopingjin#1",
+   "book": "三國志·魏書·袁紹傳",
+   "chapter": "卷6",
+   "quote": "劫帝及帝弟陳留王走小平津",
+   "claim": "SITE_NAMED_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "xiaopingjin",
+    "evidenceIndex": 1
+   }
+  },
+  {
+   "sourceId": "stronghold:zhanyinkou#0",
+   "book": "三國志·魏書·張既傳",
+   "chapter": "卷15",
+   "quote": "賊七千餘騎逆拒軍於鸇陰口",
+   "claim": "FERRY_CROSSING_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "zhanyinkou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:nanan-xiakou#0",
+   "book": "三國志·蜀書·楊洪傳",
+   "chapter": "卷41",
+   "quote": "敕曶、綽但於南安峽口遮即便得矣",
+   "claim": "INTERCEPTION_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "nanan-xiakou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:xunkou#0",
+   "book": "三國志·魏書·文聘傳",
+   "chapter": "卷18",
+   "quote": "與樂進討關羽於尋口",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "xunkou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:lukou#0",
+   "book": "三國志·吳書·吳主傳",
+   "chapter": "卷47",
+   "quote": "以魯肅爲太守，屯陸口",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "lukou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:lukou#1",
+   "book": "三國志·吳書·呂蒙傳",
+   "chapter": "卷54",
+   "quote": "魯肅卒，蒙西屯陸口",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "lukou",
+    "evidenceIndex": 1
+   }
+  },
+  {
+   "sourceId": "stronghold:hengjiangjin#0",
+   "book": "三國志·吳書·孫策傳",
+   "chapter": "卷46",
+   "quote": "東屯橫江津",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "hengjiangjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:danglikou#0",
+   "book": "三國志·吳書·妃嬪傳(徐夫人)",
+   "chapter": "卷50",
+   "quote": "擊張英於當利口",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "danglikou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:danglikou#1",
+   "book": "三國志·吳書·孫策傳",
+   "chapter": "卷46",
+   "quote": "屯當利口，以距術",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "danglikou",
+    "evidenceIndex": 1
+   }
+  },
+  {
+   "sourceId": "stronghold:dongpu#0",
+   "book": "三國志·魏書·曹休傳",
+   "chapter": "卷9",
+   "quote": "擊權大將吕範等於洞浦，破之",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "dongpu",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:dongpu#1",
+   "book": "三國志·魏書·董昭傳",
+   "chapter": "卷14",
+   "quote": "征東大將軍曹休臨江在洞浦口",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "dongpu",
+    "evidenceIndex": 1
+   }
+  },
+  {
+   "sourceId": "stronghold:wankou#0",
+   "book": "三國志·吳書·吳主傳",
+   "chapter": "卷47",
+   "quote": "秋八月，權至皖口",
+   "claim": "ROYAL_CAMPAIGN_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "wankou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:jukou#0",
+   "book": "三國志·吳書·胡綜傳",
+   "chapter": "卷62",
+   "quote": "黃龍見舉口",
+   "claim": "PORTENT_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "jukou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:shukou#0",
+   "book": "三國志·魏書·臧霸傳",
+   "chapter": "卷18",
+   "quote": "權遣數萬人乘船屯舒口",
+   "claim": "NAVAL_GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "shukou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:guandu#0",
+   "book": "三國志·魏書·武帝紀",
+   "chapter": "卷1",
+   "quote": "十二月，公軍官渡",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "guandu",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:lankou#0",
+   "book": "三國志·魏書·袁紹傳 附 袁尚",
+   "chapter": "卷6",
+   "quote": "尚還走濫口",
+   "claim": "RETREAT_TO_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "lankou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:yanjin#0",
+   "book": "三國志·魏書·袁紹傳",
+   "chapter": "卷6",
+   "quote": "會卓西入關，紹還軍延津",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "yanjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:cangtingjin#0",
+   "book": "三國志·魏書·程昱傳",
+   "chapter": "卷14",
+   "quote": "昱又遣別騎絕倉亭津，陳宮至，不得渡",
+   "claim": "FERRY_BLOCKADE_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "cangtingjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:anfengjin#0",
+   "book": "三國志·魏書·諸葛誕傳",
+   "chapter": "卷28",
+   "quote": "使誕督豫州諸軍，渡安風津向壽春",
+   "claim": "FERRY_CROSSING_IN_EVENT",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "anfengjin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:boluojin#0",
+   "book": "三國志·魏書·袁紹傳 裴注(英雄記)",
+   "chapter": "卷6",
+   "quote": "紹旣破瓚，引軍南到薄落津",
+   "claim": "GATHERING_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "boluojin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:liaokou#0",
+   "book": "三國志·魏書·公孫淵傳",
+   "chapter": "卷8",
+   "quote": "運船自遼口徑至城下",
+   "claim": "WATER_ROUTE_ENTRY",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "liaokou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:anpingkou#0",
+   "book": "三國志·吳書·吳主傳 裴注(吳書)",
+   "chapter": "卷47",
+   "quote": "恂等到安平口，先遣校尉陳奉前見宮",
+   "claim": "LANDING_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "anpingkou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:tajin#0",
+   "book": "三國志·魏書·公孫淵傳 裴注(魏略 公孫淵表)",
+   "chapter": "卷8",
+   "quote": "可七八千人，到沓津",
+   "claim": "LANDING_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "tajin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:liangkou#0",
+   "book": "三國志·魏書·毌丘儉傳",
+   "chapter": "卷28",
+   "quote": "進軍沸流水上，大戰梁口",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "liangkou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:dadu#0",
+   "book": "三國志·魏書·鍾會傳",
+   "chapter": "卷28",
+   "quote": "出新都、大渡截其前",
+   "claim": "INTERCEPTION_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "dadu",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:wakou#0",
+   "book": "三國志·蜀書·先主傳",
+   "chapter": "卷32",
+   "quote": "與郃等戰於瓦口，破郃等",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "wakou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:sikou#0",
+   "book": "三國志·魏書·劉曄傳",
+   "chapter": "卷14",
+   "quote": "五年，幸廣陵泗口",
+   "claim": "ROYAL_CAMPAIGN_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "sikou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:qikou#0",
+   "book": "三國志·魏書·張郃傳",
+   "chapter": "卷17",
+   "quote": "擊孫權別將劉阿等，追至祁口，交戰，破之",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "qikou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:xiakou#0",
+   "book": "三國志·吳書·吳主傳",
+   "chapter": "卷47",
+   "quote": "還屯夷陵，守峽口以備蜀",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "xiakou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:oukou#0",
+   "book": "三國志·吳書·步騭傳",
+   "chapter": "卷52",
+   "quote": "假節，徙屯漚口",
+   "claim": "GARRISON_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "oukou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:xiaoyaojin#0",
+   "book": "三國志·吳書·甘寧傳",
+   "chapter": "卷55",
+   "quote": "從權逍遙津北",
+   "claim": "BATTLE_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "xiaoyaojin",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:guokou#0",
+   "book": "晉書·武帝紀 泰始六年",
+   "chapter": "卷3",
+   "quote": "吳將丁奉入渦口，揚州刺史牽弘擊走之",
+   "claim": "NAVAL_INCURSION_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "guokou",
+    "evidenceIndex": 0
+   }
+  },
+  {
+   "sourceId": "stronghold:wuqiangkou#0",
+   "book": "三國志·魏書·滿寵傳",
+   "chapter": "卷26",
+   "quote": "賊果從無彊口斷夾石，要休還路",
+   "claim": "AMBUSH_AT_SITE",
+   "origin": {
+    "kind": "STRONGHOLD_PRIMARY_EVIDENCE",
+    "strongholdId": "wuqiangkou",
+    "evidenceIndex": 0
+   }
+  }
+ ],
+ "reaches": [
+  {
+   "stableKey": "jiang-jiangzhou-yiling",
+   "system": "changjiang",
+   "nameHan": "江水 江州–夷陵",
+   "flowDirection": "EAST",
+   "upstreamJunction": "江州",
+   "downstreamJunction": "夷陵(峽口)",
+   "selector": {
+    "seedRow": 312,
+    "seedCol": 330,
+    "rowMin": 306,
+    "rowMax": 346,
+    "colMin": 258,
+    "colMax": 356,
+    "expectedCellCount": 131
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:sgz32-suliu",
+    "shiliao:sgz36-jiangzhou",
+    "shiliao:sgz32-yiling"
+   ]
+  },
+  {
+   "stableKey": "jiang-wuchang-pengli",
+   "system": "changjiang",
+   "nameHan": "江水 武昌(樊口)–彭蠡",
+   "flowDirection": "EAST",
+   "upstreamJunction": "樊口",
+   "downstreamJunction": "彭蠡澤 湖口",
+   "selector": {
+    "seedRow": 325,
+    "seedCol": 419,
+    "rowMin": 318,
+    "rowMax": 339,
+    "colMin": 417,
+    "colMax": 446,
+    "expectedCellCount": 42
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu",
+    "internal:pengli"
+   ]
+  },
+  {
+   "stableKey": "jiang-pengli-ruxu",
+   "system": "changjiang",
+   "nameHan": "江水 彭蠡–濡須口",
+   "flowDirection": "EAST",
+   "upstreamJunction": "彭蠡澤 湖口",
+   "downstreamJunction": "濡須口",
+   "selector": {
+    "seedRow": 324,
+    "seedCol": 459,
+    "rowMin": 309,
+    "rowMax": 339,
+    "colMin": 447,
+    "colMax": 476,
+    "expectedCellCount": 48
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu",
+    "internal:pengli",
+    "shiliao:sgz55-ruxu"
+   ]
+  },
+  {
+   "stableKey": "jiang-ruxu-jianye",
+   "system": "changjiang",
+   "nameHan": "江水 濡須口–建業",
+   "flowDirection": "EAST",
+   "upstreamJunction": "濡須口",
+   "downstreamJunction": "建業 아래(격자 끝)",
+   "selector": {
+    "seedRow": 300,
+    "seedCol": 483,
+    "rowMin": 286,
+    "rowMax": 308,
+    "colMin": 477,
+    "colMax": 505,
+    "expectedCellCount": 45
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu",
+    "shiliao:sgz55-jianye"
+   ]
+  },
+  {
+   "stableKey": "mian-hanjin",
+   "system": "changjiang",
+   "nameHan": "沔水(漢水) 漢津 구간",
+   "flowDirection": null,
+   "upstreamJunction": "격자 상단(미판정)",
+   "downstreamJunction": "격자 하단(미판정)",
+   "selector": {
+    "seedRow": 319,
+    "seedCol": 376,
+    "rowMin": 300,
+    "rowMax": 338,
+    "colMin": 370,
+    "colMax": 384,
+    "expectedCellCount": 34
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:sgz32-hanjin"
+   ]
+  },
+  {
+   "stableKey": "he-puban",
+   "system": "huanghe",
+   "nameHan": "河水 蒲阪津 구간(龍門 아래–潼關 굽이)",
+   "flowDirection": null,
+   "upstreamJunction": "격자 컷(미판정)",
+   "downstreamJunction": "河 굽이(潼關 쪽)",
+   "selector": {
+    "seedRow": 231,
+    "seedCol": 333,
+    "rowMin": 200,
+    "rowMax": 235,
+    "colMin": 328,
+    "colMax": 338,
+    "expectedCellCount": 21
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "stronghold:pubanjin#0"
+   ]
+  },
+  {
+   "stableKey": "he-shan",
+   "system": "huanghe",
+   "nameHan": "河水 郖津–陝津 구간",
+   "flowDirection": null,
+   "upstreamJunction": "河 굽이(潼關 쪽)",
+   "downstreamJunction": "陝津 아래 격자 컷",
+   "selector": {
+    "seedRow": 232,
+    "seedCol": 349,
+    "rowMin": 229,
+    "rowMax": 236,
+    "colMin": 339,
+    "colMax": 362,
+    "expectedCellCount": 24
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "stronghold:shanjin#0",
+    "stronghold:doujin#0"
+   ]
+  },
+  {
+   "stableKey": "he-mengjin",
+   "system": "huanghe",
+   "nameHan": "河水 孟津–小平津 구간",
+   "flowDirection": null,
+   "upstreamJunction": "격자 컷(미판정)",
+   "downstreamJunction": "격자 컷(미판정)",
+   "selector": {
+    "seedRow": 231,
+    "seedCol": 379,
+    "rowMin": 226,
+    "rowMax": 233,
+    "colMin": 363,
+    "colMax": 392,
+    "expectedCellCount": 33
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "stronghold:mengjin#0",
+    "stronghold:mengjin#2"
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "stableKey": "mengjin",
+   "nameHan": "孟津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "mengjin"
+   },
+   "cell": {
+    "row": 231,
+    "col": 379
+   },
+   "reach": "he-mengjin",
+   "roles": [
+    "CROSSING"
+   ],
+   "sourceRefs": [
+    "stronghold:mengjin#0"
+   ],
+   "crossing": {
+    "mode": "FERRY",
+    "bankA": {
+     "landProvinceId": "ss-mengjin",
+     "row": 230,
+     "col": 379
+    },
+    "bankB": {
+     "landProvinceId": "82879",
+     "row": 232,
+     "col": 378
+    },
+    "sourceRefs": [
+     "stronghold:mengjin#0"
+    ]
+   },
+   "port": null
+  },
+  {
+   "stableKey": "pubanjin",
+   "nameHan": "蒲坂津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "pubanjin"
+   },
+   "cell": {
+    "row": 231,
+    "col": 333
+   },
+   "reach": "he-puban",
+   "roles": [
+    "CROSSING"
+   ],
+   "sourceRefs": [
+    "stronghold:pubanjin#0"
+   ],
+   "crossing": {
+    "mode": "FERRY",
+    "bankA": {
+     "landProvinceId": "70296",
+     "row": 228,
+     "col": 332
+    },
+    "bankB": {
+     "landProvinceId": "95495",
+     "row": 229,
+     "col": 334
+    },
+    "sourceRefs": [
+     "stronghold:pubanjin#0"
+    ]
+   },
+   "port": null
+  },
+  {
+   "stableKey": "doujin",
+   "nameHan": "郖津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "doujin"
+   },
+   "cell": {
+    "row": 234,
+    "col": 345
+   },
+   "reach": "he-shan",
+   "roles": [
+    "CROSSING"
+   ],
+   "sourceRefs": [
+    "stronghold:doujin#0"
+   ],
+   "crossing": {
+    "mode": "FERRY",
+    "bankA": {
+     "landProvinceId": "95285",
+     "row": 233,
+     "col": 345
+    },
+    "bankB": {
+     "landProvinceId": "83053",
+     "row": 235,
+     "col": 345
+    },
+    "sourceRefs": [
+     "stronghold:doujin#0"
+    ]
+   },
+   "port": null
+  },
+  {
+   "stableKey": "shanjin",
+   "nameHan": "陝津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "shanjin"
+   },
+   "cell": {
+    "row": 232,
+    "col": 349
+   },
+   "reach": "he-shan",
+   "roles": [
+    "CROSSING"
+   ],
+   "sourceRefs": [
+    "stronghold:shanjin#0"
+   ],
+   "crossing": {
+    "mode": "FERRY",
+    "bankA": {
+     "landProvinceId": "95280",
+     "row": 230,
+     "col": 349
+    },
+    "bankB": {
+     "landProvinceId": "83046",
+     "row": 233,
+     "col": 349
+    },
+    "sourceRefs": [
+     "stronghold:shanjin#0"
+    ]
+   },
+   "port": null
+  },
+  {
+   "stableKey": "hanjin",
+   "nameHan": "漢津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "hanjin"
+   },
+   "cell": {
+    "row": 319,
+    "col": 376
+   },
+   "reach": "mian-hanjin",
+   "roles": [
+    "CROSSING",
+    "PORT"
+   ],
+   "sourceRefs": [
+    "stronghold:hanjin#0",
+    "shiliao:sgz32-hanjin"
+   ],
+   "crossing": {
+    "mode": "FERRY",
+    "bankA": {
+     "landProvinceId": "45776",
+     "row": 319,
+     "col": 375
+    },
+    "bankB": {
+     "landProvinceId": "ss-hanjin",
+     "row": 319,
+     "col": 377
+    },
+    "sourceRefs": [
+     "shiliao:sgz32-hanjin"
+    ]
+   },
+   "port": {
+    "landProvinceId": "ss-hanjin",
+    "sourceRefs": [
+     "shiliao:sgz32-hanjin"
+    ]
+   }
+  },
+  {
+   "stableKey": "fankou",
+   "nameHan": "樊口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "fankou"
+   },
+   "cell": {
+    "row": 325,
+    "col": 418
+   },
+   "reach": "jiang-wuchang-pengli",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "stronghold:fankou#0",
+    "shiliao:sgz47-fankou"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "ss-fankou",
+    "sourceRefs": [
+     "shiliao:sgz47-fankou"
+    ]
+   }
+  },
+  {
+   "stableKey": "ruxukou",
+   "nameHan": "濡須口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "ruxukou"
+   },
+   "cell": {
+    "row": 309,
+    "col": 476
+   },
+   "reach": "jiang-pengli-ruxu",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "stronghold:ruxukou#0",
+    "shiliao:sgz55-ruxu"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "ss-ruxukou",
+    "sourceRefs": [
+     "shiliao:sgz55-ruxu"
+    ]
+   }
+  },
+  {
+   "stableKey": "jiangzhou",
+   "nameHan": "江州县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "44662"
+   },
+   "cell": {
+    "row": 343,
+    "col": 265
+   },
+   "reach": "jiang-jiangzhou-yiling",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz36-jiangzhou"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "44662",
+    "sourceRefs": [
+     "shiliao:sgz36-jiangzhou"
+    ]
+   }
+  },
+  {
+   "stableKey": "yiling",
+   "nameHan": "夷陵县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "45796"
+   },
+   "cell": {
+    "row": 319,
+    "col": 352
+   },
+   "reach": "jiang-jiangzhou-yiling",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz32-yiling"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "45796",
+    "sourceRefs": [
+     "shiliao:sgz32-yiling"
+    ]
+   }
+  }
+ ],
+ "flowLinks": [
+  {
+   "stableKey": "jiang-wuchang-to-pengli",
+   "upstreamReach": "jiang-wuchang-pengli",
+   "downstreamReach": "jiang-pengli-ruxu",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu"
+   ]
+  },
+  {
+   "stableKey": "jiang-pengli-to-jianye",
+   "upstreamReach": "jiang-pengli-ruxu",
+   "downstreamReach": "jiang-ruxu-jianye",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu"
+   ]
+  }
+ ],
+ "blocked": [
+  {
+   "stableKey": "xiaopingjin",
+   "nameHan": "小平津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "xiaopingjin"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "기록된 인용은 「奔小平津」「走小平津」뿐 — 건넜다는 말도 배를 탔다는 말도 없다.",
+   "sourceRefs": [
+    "stronghold:xiaopingjin#0",
+    "stronghold:xiaopingjin#1"
+   ]
+  },
+  {
+   "stableKey": "zhanyinkou",
+   "nameHan": "鸇陰口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "zhanyinkou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 1,
+   "note": "張既傳 원문에서 渡河는 鸇陰口 앞 문장(金城)이고 張既는 鸇陰을 피해 且次로 갔다. 거점 원장의 supports 도 2026-09-18 에 INTERCEPTION_AT_SITE 로 정정됐다.",
+   "sourceRefs": [
+    "stronghold:zhanyinkou#0",
+    "shiliao:sgz15-zhanyin"
+   ]
+  },
+  {
+   "stableKey": "nanan-xiakou",
+   "nameHan": "南安峽口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "nanan-xiakou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "讀史方輿紀要는 이 물을 青衣水라 한다(江 본류 아님). 인용은 차단(遮)이지 승선이 아니다. 青衣水 구간 판정 뒤로 미룬다.",
+   "sourceRefs": [
+    "stronghold:nanan-xiakou#0",
+    "shiliao:fyjy72-nanan"
+   ]
+  },
+  {
+   "stableKey": "xunkou",
+   "nameHan": "尋口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "xunkou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "전투 기사뿐.",
+   "sourceRefs": [
+    "stronghold:xunkou#0"
+   ]
+  },
+  {
+   "stableKey": "lukou",
+   "nameHan": "陸口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "lukou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 1,
+   "note": "屯陸口(주둔) 기사뿐 — 三國志 陸口 검색 결과에 배·수군 문구가 없다.",
+   "sourceRefs": [
+    "stronghold:lukou#0",
+    "stronghold:lukou#1"
+   ]
+  },
+  {
+   "stableKey": "hengjiangjin",
+   "nameHan": "橫江津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "hengjiangjin"
+   },
+   "reasonCode": "SITE_PROVINCE_DOES_NOT_TOUCH_REACH",
+   "measuredCellDistanceToWater": 0,
+   "note": "周瑜傳에 도하(渡江) 증거가 있으나 앵커 칸(299,483)은 물 위인데 ss-hengjiangjin 省 칸은 물에서 2칸 이상 — 사이에 ss-dongpu 가 끼어 있다. 省 기하 판정 필요.",
+   "sourceRefs": [
+    "stronghold:hengjiangjin#0",
+    "shiliao:sgz54-hengjiang"
+   ]
+  },
+  {
+   "stableKey": "danglikou",
+   "nameHan": "當利口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "danglikou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "전투·주둔 기사뿐.",
+   "sourceRefs": [
+    "stronghold:danglikou#0",
+    "stronghold:danglikou#1"
+   ]
+  },
+  {
+   "stableKey": "dongpu",
+   "nameHan": "洞浦",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "dongpu"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "曹休가 江에 임했다(臨江)·呂範이 舟師로 막았다 — 이 나루에서 승선·도하한 기록은 아니다.",
+   "sourceRefs": [
+    "stronghold:dongpu#0",
+    "stronghold:dongpu#1"
+   ]
+  },
+  {
+   "stableKey": "wankou",
+   "nameHan": "皖口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "wankou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 0,
+   "note": "「權至皖口」뿐 — 三國志에 배 문구 없음(讀史方輿紀要의 舟車衝要는 후대 일반론).",
+   "sourceRefs": [
+    "stronghold:wankou#0"
+   ]
+  },
+  {
+   "stableKey": "jukou",
+   "nameHan": "擧口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "jukou"
+   },
+   "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
+   "measuredCellDistanceToWater": 1,
+   "note": "黃龍 출현 기사 — 군사·수운 증거 아님.",
+   "sourceRefs": [
+    "stronghold:jukou#0"
+   ]
+  },
+  {
+   "stableKey": "shukou",
+   "nameHan": "舒口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "shukou"
+   },
+   "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+   "measuredCellDistanceToWater": 0,
+   "note": "巢湖 계통 — 이번 판은 長江·黃河만.",
+   "sourceRefs": [
+    "stronghold:shukou#0"
+   ]
+  },
+  {
+   "stableKey": "guandu",
+   "nameHan": "官渡",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "guandu"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 3,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 3칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:guandu#0"
+   ]
+  },
+  {
+   "stableKey": "lankou",
+   "nameHan": "濫口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "lankou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 18,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 18칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:lankou#0"
+   ]
+  },
+  {
+   "stableKey": "yanjin",
+   "nameHan": "延津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "yanjin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 10,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 10칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:yanjin#0"
+   ]
+  },
+  {
+   "stableKey": "cangtingjin",
+   "nameHan": "倉亭津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "cangtingjin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 3,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 3칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:cangtingjin#0"
+   ]
+  },
+  {
+   "stableKey": "anfengjin",
+   "nameHan": "安風津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "anfengjin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 19,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 19칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:anfengjin#0"
+   ]
+  },
+  {
+   "stableKey": "boluojin",
+   "nameHan": "薄落津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "boluojin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 19,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 19칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:boluojin#0"
+   ]
+  },
+  {
+   "stableKey": "liaokou",
+   "nameHan": "遼口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "liaokou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 4,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 4칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:liaokou#0"
+   ]
+  },
+  {
+   "stableKey": "anpingkou",
+   "nameHan": "安平口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "anpingkou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 33,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 33칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:anpingkou#0"
+   ]
+  },
+  {
+   "stableKey": "tajin",
+   "nameHan": "沓津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "tajin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 39,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 39칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:tajin#0"
+   ]
+  },
+  {
+   "stableKey": "liangkou",
+   "nameHan": "梁口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "liangkou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 19,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 19칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:liangkou#0"
+   ]
+  },
+  {
+   "stableKey": "dadu",
+   "nameHan": "大渡",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "dadu"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 28,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 28칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:dadu#0"
+   ]
+  },
+  {
+   "stableKey": "wakou",
+   "nameHan": "瓦口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "wakou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 17,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 17칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:wakou#0"
+   ]
+  },
+  {
+   "stableKey": "sikou",
+   "nameHan": "泗口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "sikou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 3,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 3칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:sikou#0"
+   ]
+  },
+  {
+   "stableKey": "qikou",
+   "nameHan": "祁口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "qikou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 3,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 3칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:qikou#0"
+   ]
+  },
+  {
+   "stableKey": "xiakou",
+   "nameHan": "峽口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "xiakou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 2,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 2칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:xiakou#0"
+   ]
+  },
+  {
+   "stableKey": "oukou",
+   "nameHan": "漚口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "oukou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 21,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 21칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:oukou#0"
+   ]
+  },
+  {
+   "stableKey": "xiaoyaojin",
+   "nameHan": "逍遙津",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "xiaoyaojin"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 4,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 4칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:xiaoyaojin#0"
+   ]
+  },
+  {
+   "stableKey": "guokou",
+   "nameHan": "渦口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "guokou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 11,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 11칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:guokou#0"
+   ]
+  },
+  {
+   "stableKey": "wuqiangkou",
+   "nameHan": "無彊口",
+   "siteRef": {
+    "kind": "STRONGHOLD",
+    "id": "wuqiangkou"
+   },
+   "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
+   "measuredCellDistanceToWater": 6,
+   "note": "가장 가까운 RIVER/LAKE 칸까지 6칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+   "sourceRefs": [
+    "stronghold:wuqiangkou#0"
+   ]
+  },
+  {
+   "stableKey": "jianye",
+   "nameHan": "建业县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "40523"
+   },
+   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_REACH",
+   "measuredCellDistanceToWater": 1,
+   "note": "가장 가까운 물은 호수 칸(1칸)이고 江 구간까지는 5칸.",
+   "sourceRefs": [
+    "shiliao:sgz55-jianye"
+   ],
+   "reach": "jiang-ruxu-jianye",
+   "measuredCellDistanceToReach": 5
+  },
+  {
+   "stableKey": "jiangling",
+   "nameHan": "江陵县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43676"
+   },
+   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
+   "measuredCellDistanceToWater": 2,
+   "note": "배 수백 척 집결 증거는 있으나 城 칸이 물에서 2칸.",
+   "sourceRefs": [
+    "shiliao:sgz36-jiangling"
+   ]
+  },
+  {
+   "stableKey": "xiakou-shaxian",
+   "nameHan": "沙羡县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43421"
+   },
+   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
+   "measuredCellDistanceToWater": 2,
+   "note": "夏口(沙羡). 증거는 있으나 城 칸이 물에서 2칸.",
+   "sourceRefs": [
+    "shiliao:sgz-xiakou"
+   ]
+  },
+  {
+   "stableKey": "guangling",
+   "nameHan": "广陵县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "42687"
+   },
+   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
+   "measuredCellDistanceToWater": 3,
+   "note": "臨江 증거는 있으나 城 칸이 물에서 4칸.",
+   "sourceRefs": [
+    "shiliao:sgz-guangling"
+   ]
+  }
+ ]
+}

@@ -4126,14 +4126,14 @@
           "quote": "賊七千餘騎逆拒軍於鸇陰口",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
-            "FERRY_CROSSING_IN_EVENT"
+            "INTERCEPTION_AT_SITE"
           ],
           "eventYears": {
             "from": 220,
             "to": 223
           },
           "eventDatingBasis": "REIGN_CONTEXT",
-          "eraContext": "張既의 涼州 평정 — 적 기병이 鸇陰口에서 막음(黃河 도하점)"
+          "eraContext": "張既의 涼州 평정 — 渡河는 金城에서 이미 끝났고(「旣至金城…遂渡河」), 적 7천여 기가 鸇陰口에서 길을 막자 張既는 鸇陰으로 간다고 소문만 내고 且次로 돌아 武威에 닿았다(「旣揚聲軍從鸇陰，乃潛由且次出至武威」). 이 나루에서의 도하는 원문에 없다"
         }
       ],
       "modernEvidence": [
@@ -4186,7 +4186,7 @@
         }
       },
       "sameCellAsCountySeat": false,
-      "placementNote": "黃河 도하점. 연대는 張既의 涼州刺史 재임(黃初 초)으로 잡았다."
+      "placementNote": "三國志 卷15 魏書·張既傳이 말하는 것은 적의 차단 지점이다 — 張既는 이곳을 피했으므로 도하점이라는 근거는 없다(2026-09-18 정정, supports FERRY_CROSSING_IN_EVENT → INTERCEPTION_AT_SITE). role=FERRY 는 이름 끝 글자 口 규칙(classificationRule)에 따른 것이다. 연대는 張既의 涼州刺史 재임(黃初 초)으로 잡았다."
     },
     {
       "id": "nanan-xiakou",
