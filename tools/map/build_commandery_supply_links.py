@@ -126,7 +126,7 @@ def build() -> dict[str, Any]:
         tile_b = tile_by_id[next(c for c in runtime["cities"] if c["id"] == route["to"])["physicalPlaceRef"].split(":")[-1]]
         low, high = (a, b) if a < b else (b, a)
         links.append({
-            "canonicalGroup": "SEA_ROUTE",
+            "canonicalGroup": "RIVER_ROUTE" if route.get("kind") == "RIVER" else "SEA_ROUTE",
             "fromProvinceIndex": low,
             "toProvinceIndex": high,
             "fromCityName": name_by_city[route["from"] if low == a else route["to"]],
@@ -183,7 +183,8 @@ def build() -> dict[str, Any]:
         "note": (
             "郡 내부 보급선. 같은 郡의 프로빈스가 보급에서 서로 닿게 하는 최소 간선이며, "
             "**보급에만** 더해진다 — 이동(전략 위상 LAND 간선)은 바뀌지 않는다. ADR-LITE-051. "
-            "canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다."
+            "canonicalGroup SEA_ROUTE 행은 사료로 확인한 뱃길이다(ADR-LITE-056) — 城 연결(이동)과 보급을 함께 싣는다. "
+            "RIVER_ROUTE 행은 같은 규칙의 강 뱃길이다(ADR-LITE-060, 수로 망 원장의 portLinks)."
         ),
         "generator": "tools/map/build_commandery_supply_links.py",
         "excludedByMisbinding": sorted(f"{group}:{name}" for group, name in excluded_names),

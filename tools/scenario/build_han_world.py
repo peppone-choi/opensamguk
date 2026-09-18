@@ -71,6 +71,7 @@ OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
 PROVINCE_ATTRIBUTION = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
+WATERWAY_NETWORK = ROOT / "data" / "map" / "han-waterway-network-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
 # han-world-v3 城 수: legacy 780 + 781 歷城 + 782..832 변경 縣 51 + 833..835 城 없던 郡治 3
 # (朔方·西河·定襄, route-node-key-registry-v1) + 836..846 간체표 폴딩 결합 11
@@ -283,6 +284,38 @@ V3_SEA_ROUTES: list[tuple[str, str, str]] = [
      "漢書 卷28 地理志 「自合浦徐聞南入海，得大州」 · 三國志 卷47 「以兵三萬討珠崖、儋耳」 — 徐聞 ↔ 朱崖"),
 ]
 V3_ISLAND_SEA_LINKS = [row for row in SEA_LINKS if (row[0], row[1]) != ("邪馬壹國", "狗邪國")]
+
+
+def v3_river_routes(network: dict) -> list[tuple[str, str, str]]:
+    """han-world-v3 강 뱃길 — 城과 城을 잇는 물길(2026-09-18 사용자 결정 「강 뱃길도 해로처럼 넣는다」).
+
+    여기에 표를 따로 두지 않는다. 수로 망 산출물(`han-waterway-network-v1.json`)의 `portLinks` 를 그대로 읽는다 —
+    그 표는 검토된 PORT 노드끼리, 흐름으로 이어진 구간 위에서, 사이에 다른 항구가 없는 쌍만 담도록
+    `build_han_waterway_network.py` 가 강제한다. 그래서 두 표가 어긋날 수 없다. 끝점은 경로 노드의
+    physicalPlaceRef 로 옮긴다(거점 → `curated:strategic-site-v1:ss-<id>`, 縣 → `chgis:v6:cnty:<id>`).
+    비용·용량은 지어내지 않는다 — 다른 城 연결과 같은 한 칸이다.
+    """
+    ports = {row["id"]: row for row in network["nodes"] if "PORT" in row["roles"]}
+    sources = {row["sourceId"]: row for row in network["sources"]}
+    prefix = {"STRONGHOLD": "curated:strategic-site-v1:ss-", "CITY": "chgis:v6:cnty:"}
+    routes: list[tuple[str, str, str]] = []
+    for link in network["portLinks"]:
+        if link.get("status") != "CITY_CONNECTION_ONLY":
+            raise AssertionError(f"강 뱃길 {link['id']} 의 상태를 모른다: {link.get('status')}")
+        ends = []
+        for node_id in (link["fromNodeId"], link["toNodeId"]):
+            port = ports.get(node_id)
+            if port is None:
+                raise AssertionError(f"강 뱃길 {link['id']} 의 끝점 {node_id} 이 검토된 PORT 노드가 아니다")
+            ends.append(prefix[port["siteRef"]["kind"]] + port["siteRef"]["id"])
+        if not link["sourceRefs"]:
+            raise AssertionError(f"강 뱃길 {link['id']} 에 출처가 없다")
+        why = " · ".join(
+            f"{sources[ref]['book']} {sources[ref]['chapter']} 「{sources[ref]['quote']}」" for ref in link["sourceRefs"]
+        )
+        names = " ↔ ".join(ports[node_id]["nameHan"] for node_id in (link["fromNodeId"], link["toNodeId"]))
+        routes.append((ends[0], ends[1], f"{why} — {names}"))
+    return routes
 
 
 def canon_ju() -> dict[str, str]:
@@ -1317,7 +1350,16 @@ def build_v3() -> tuple[str, str, str, str]:
         connections[a].add(b)
         connections[b].add(a)
         sea_linked.append((a, b))
-        sea_routes.append({"from": min(a, b), "to": max(a, b), "source": why})
+        sea_routes.append({"from": min(a, b), "to": max(a, b), "kind": "SEA", "source": why})
+    # 강 뱃길도 같은 자리에 같은 방식으로 놓는다 — 城 연결 한 줄 + 화면·보급이 읽는 seaRoutes 한 줄(kind=RIVER).
+    for a_ref, b_ref, why in v3_river_routes(json.loads(WATERWAY_NETWORK.read_text(encoding="utf-8"))):
+        a, b = route_by_place_ref.get(a_ref), route_by_place_ref.get(b_ref)
+        if a is None or b is None:
+            raise AssertionError(f"강 뱃길 끝점이 경로 노드가 아니다: {a_ref} ↔ {b_ref}")
+        connections[a].add(b)
+        connections[b].add(a)
+        sea_linked.append((a, b))
+        sea_routes.append({"from": min(a, b), "to": max(a, b), "kind": "RIVER", "source": why})
     for island_ch, shore_ch, why in V3_ISLAND_SEA_LINKS:
         island, shore = seat_id_by_parent_ch.get(island_ch), seat_id_by_parent_ch.get(shore_ch)
         if island is None or shore is None:
@@ -1325,7 +1367,7 @@ def build_v3() -> tuple[str, str, str, str]:
         connections[island].add(shore)
         connections[shore].add(island)
         sea_linked.append((island, shore))
-        sea_routes.append({"from": min(island, shore), "to": max(island, shore), "source": why})
+        sea_routes.append({"from": min(island, shore), "to": max(island, shore), "kind": "SEA", "source": why})
     # 뱃길까지 놓은 뒤 城 그래프는 한 덩어리여야 한다 — 섬 郡(邪馬壹國 규슈 4국)처럼 城끼리는 이어져도
     # 본토와 끊긴 덩어리가 남으면 보급·수도 탐색이 막힌다(2026-09-16 pep 정지와 같은 모양).
     #
@@ -1641,6 +1683,7 @@ def build_v3() -> tuple[str, str, str, str]:
             "hanTilesSha256": _sha256_path(TILES),
             "provinceCityAttributionSha256": _sha256_path(PROVINCE_ATTRIBUTION),
             "legacy780Sha256": _sha256_path(LEGACY_780_JSON),
+            "waterwayNetworkSha256": _sha256_path(WATERWAY_NETWORK),
         },
         "outputs": {
             "worldJsonSha256": _sha256_bytes(blob.encode()),

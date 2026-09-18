@@ -6734,7 +6734,7 @@
    "arableCells": 204,
    "terrainScore": 212.5,
    "wetAdjacentCells": 39,
-   "connections": 6,
+   "connections": 7,
    "households": 79180,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -8660,7 +8660,7 @@
    "arableCells": 0,
    "terrainScore": 15.5,
    "wetAdjacentCells": 31,
-   "connections": 5,
+   "connections": 7,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS"
   },
@@ -21007,7 +21007,7 @@
    "arableCells": 4,
    "terrainScore": 6.0,
    "wetAdjacentCells": 8,
-   "connections": 1,
+   "connections": 3,
    "households": 69,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -21689,7 +21689,7 @@
    "arableCells": 5,
    "terrainScore": 6.5,
    "wetAdjacentCells": 5,
-   "connections": 3,
+   "connections": 4,
    "households": 122,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
