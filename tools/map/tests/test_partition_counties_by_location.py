@@ -427,6 +427,18 @@ class CommittedStageTest(unittest.TestCase):
         [problem] = pcl.committed_area_problems(committed)
         self.assertIn("邺县 area 7", problem)
 
+    def test_blob_reproducibility_ignores_compressor_bytes_but_not_content(self):
+        """다른 zlib(CI ubuntu)이 낸 압축 바이트는 통과, 내용이 다르면 적색 — 압축 수준만 바꿔 흉내 낸다."""
+        import gzip
+        from unittest import mock
+        real = pcl._blob_bytes
+        with mock.patch.object(pcl, "_blob_bytes", lambda source: gzip.compress(gzip.decompress(real(source)),
+                                                                                 compresslevel=1, mtime=0)):
+            self.assertEqual(pcl.check(self.staged, self.ledger), [])
+        with mock.patch.object(pcl, "_blob_bytes", lambda source: gzip.compress(b"{}", mtime=0)):
+            self.assertIn("partition input blob is not reproducible from the restored input",
+                          pcl.check(self.staged, self.ledger))
+
     def test_red_probe_tampered_input_blob_is_refused(self):
         from unittest import mock
         with tempfile.TemporaryDirectory() as scratch:

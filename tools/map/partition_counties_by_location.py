@@ -826,7 +826,10 @@ def check(document: dict, ledger: dict) -> list[str]:
             problems.append(f"{entry['path']} changed since the partition was prepared")
     source = restore_document(document, ledger)
     rebuilt, rebuilt_ledger, blob = build_stage(source)
-    if hashlib.sha256(blob).hexdigest() != stage["inputBlob"]["sha256"]:
+    # 압축 바이트는 zlib 구현마다 다르다(macOS 와 CI ubuntu 가 같은 입력에서 다른 gzip 을 낸다 — PR #835 CI 실측).
+    # 재현성은 **풀어낸 내용**으로 본다. 커밋된 blob 파일 자체의 무결성은 restore_document 가 압축 sha 로 따로 본다.
+    committed_raw = gzip.decompress((ROOT / stage["inputBlob"]["path"]).read_bytes())
+    if gzip.decompress(blob) != committed_raw:
         problems.append("partition input blob is not reproducible from the restored input")
     for key in ("seedExceptions", "seedlessComponents", "components", "minAreaBorrowed", "subdivisions",
                 "areaViolations", "retiredProvinceIds", "multiComponentProvinceIds", "strongholdReservations"):
