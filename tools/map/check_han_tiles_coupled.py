@@ -102,9 +102,16 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("administrative-topology-audit", ("data/curated/han/administrative-topology-audit-v1.json",),
             _t("tools/map/audit_han_admin_topology.py", "--check"),
             _t("tools/map/audit_han_admin_topology.py")),
+    # claims 가 ownership 의 입력이다(claimsSha256) — 순서를 지킨다.
+    Coupled("scenario-province-claims", ("data/curated/han/scenario-province-claims-v1.json",),
+            _t("tools/scenario/migrate_han_ownership_claims.py", "--check"),
+            _t("tools/scenario/migrate_han_ownership_claims.py", "--write")),
     Coupled("scenario-province-ownership", ("data/map/han-scenario-province-ownership-v1.json",),
             _t("tools/scenario/build_scenario_province_ownership.py", "--check"),
             _t("tools/scenario/build_scenario_province_ownership.py")),
+    # 손으로 검토한 원장이다. 적색이면 해시만 갈지 말고 후보 셀의 투영·지형 검사가 새 타일에서도 통과하는지 본다.
+    Coupled("strategic-site-anchor-review", ("data/curated/han/strategic-site-anchor-review-v1.json",),
+            _t("tools/map/validate_han_strategic_site_anchors.py", "--check"), None),
     Coupled("iso3d-assets", ("web/game/public/models/iso3d/", "web/gateway/public/models/iso3d/"),
             _t("tools/assets/build_iso3d_assets.py", "--check"),
             _t("tools/assets/build_iso3d_assets.py")),
