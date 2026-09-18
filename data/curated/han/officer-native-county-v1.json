@@ -39,8 +39,8 @@
    "NO_BIOGRAPHY_STATEMENT": 536
   },
   "byMatchStatus": {
-   "COUNTY_NOT_IN_COMMANDERY": 34,
-   "MATCHED": 96,
+   "COUNTY_NOT_IN_COMMANDERY": 33,
+   "MATCHED": 97,
    "NO_COUNTY": 19,
    "UNSPLIT": 16
   },
@@ -919,8 +919,8 @@
    "nativeCommandery": "陳留郡",
    "commanderyId": "PARENT-0022",
    "nativeCounty": "己吾",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "82087",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷18",

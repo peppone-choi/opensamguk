@@ -1,0 +1,183 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "junguozhi-county-name-review-v1",
+ "note": "郡國志 縣 결손 원장의 한 글자 차이 후보 중 異體字로 접지 않은 행. proposedKind 는 분류 제안이지 판정이 아니다 — 개명·僑置·원문 잘림·이문은 사료로 사람이 가린다. 글자표(han-name-simplification-v1)에 넣지 않는 이유: 글자 단위 동치가 아니라 이름 단위 사건이라서다. 행 집합은 tools/map/tests/test_build_junguozhi_county_gaps.py 가 원장과 맞춘다.",
+ "rows": [
+  {
+   "sourceVolume": 109,
+   "commandery": "河東郡",
+   "ordinal": 11,
+   "sourceName": "绛",
+   "tileCandidates": [
+    "绛邑"
+   ],
+   "proposedKind": "SUFFIX_OR_RENAME",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "京兆尹",
+   "ordinal": 2,
+   "sourceName": "霸陵",
+   "tileCandidates": [
+    "霸城"
+   ],
+   "proposedKind": "RENAME_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 109,
+   "commandery": "左馮翊",
+   "ordinal": 1,
+   "sourceName": "高陵",
+   "tileCandidates": [
+    "高陆"
+   ],
+   "proposedKind": "RENAME_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "梁國",
+   "ordinal": 4,
+   "sourceName": "碭山",
+   "tileCandidates": [
+    "砀"
+   ],
+   "proposedKind": "SOURCE_PARSE_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "魯國",
+   "ordinal": 1,
+   "sourceName": "魯國",
+   "tileCandidates": [
+    "鲁"
+   ],
+   "proposedKind": "SOURCE_PARSE_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "鉅鹿郡",
+   "ordinal": 1,
+   "sourceName": "陶",
+   "tileCandidates": [
+    "廮陶"
+   ],
+   "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 110,
+   "commandery": "安平國",
+   "ordinal": 12,
+   "sourceName": "南深",
+   "tileCandidates": [
+    "南䜌"
+   ],
+   "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "東海郡",
+   "ordinal": 1,
+   "sourceName": "郯",
+   "tileCandidates": [
+    "郯城"
+   ],
+   "proposedKind": "RENAME_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "東海郡",
+   "ordinal": 10,
+   "sourceName": "合鄕",
+   "tileCandidates": [
+    "合城"
+   ],
+   "proposedKind": "RENAME_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 111,
+   "commandery": "廣陵郡",
+   "ordinal": 9,
+   "sourceName": "輿",
+   "tileCandidates": [
+    "舆国"
+   ],
+   "proposedKind": "SUFFIX_OR_RENAME",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 112,
+   "commandery": "吳郡",
+   "ordinal": 9,
+   "sourceName": "安",
+   "tileCandidates": [
+    "永安"
+   ],
+   "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "蜀郡",
+   "ordinal": 9,
+   "sourceName": "八陵",
+   "tileCandidates": [
+    "蚕陵"
+   ],
+   "proposedKind": "SOURCE_CORRUPTION_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "益州郡",
+   "ordinal": 6,
+   "sourceName": "毋棳",
+   "tileCandidates": [
+    "毋单"
+   ],
+   "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "安定郡",
+   "ordinal": 7,
+   "sourceName": "彭阳",
+   "tileCandidates": [
+    "泾阳"
+   ],
+   "proposedKind": "UNRELATED_SUSPECT",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "鴈門郡",
+   "ordinal": 5,
+   "sourceName": "汪陶",
+   "tileCandidates": [
+    "浧陶"
+   ],
+   "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  },
+  {
+   "sourceVolume": 113,
+   "commandery": "上谷郡",
+   "ordinal": 8,
+   "sourceName": "下落",
+   "tileCandidates": [
+    "下洛"
+   ],
+   "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
+   "review": "NEEDS_HUMAN"
+  }
+ ]
+}
