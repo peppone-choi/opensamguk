@@ -821,6 +821,8 @@ class ChangeRecorder(
     /** Revoke explicit location with the same world/CAS contract as position writes. */
     fun removeGeneralPosition(world: InMemoryTurnWorld, generalId: Int): Boolean {
         gateMutation("removeGeneralPosition")
+        // 위치 권위 spec §2.2 불변식 1: HWIHA 에서 위치 행은 장수 삭제(FK cascade)로만 사라진다.
+        check(world.ruleProfile != opensamguk.logic.input.RuleProfile.HWIHA) { "HWIHA: general position rows are never removed (general $generalId)" }
         requireSpatialWorld(world.worldId)
         val before = world.generalPositionSnapshot() ?: return false
         val current = before.stateFor(generalId) ?: return false

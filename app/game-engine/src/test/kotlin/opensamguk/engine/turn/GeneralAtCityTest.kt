@@ -123,4 +123,14 @@ class HwihaPositionWriteTest {
         assertEquals(null, world.getGeneralById(11))
         assertEquals(null, world.positionOf(11))
     }
+
+    @Test
+    fun `legacy city relocation in hwiha goes through moveGeneral and never deletes the row`() {
+        val world = world(); val recorder = ChangeRecorder()
+        applyPositionAwareGeneral(world, recorder, world.getGeneralById(7)!!.copy(cityId = 20))
+        assertEquals(p2, world.positionOf(7))
+        assertEquals(20, world.getGeneralById(7)!!.cityId)
+        assertFailsWith<IllegalStateException> { recorder.removeGeneralPosition(world, 7) }
+        assertEquals(p2, world.positionOf(7))
+    }
 }
