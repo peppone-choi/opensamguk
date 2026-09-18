@@ -56,6 +56,10 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("province-city-attribution", ("data/curated/han/province-city-attribution-v1.json",),
             _t("tools/scenario/build_province_city_attribution.py", "--check"),
             _t("tools/scenario/build_province_city_attribution.py")),
+    # 수로 망은 han-world-v3 의 입력이다(강 뱃길 = portLinks). 세계 파일보다 먼저 굽는다.
+    Coupled("waterway-network", ("data/map/han-waterway-network-v1.json",),
+            _t("tools/map/build_han_waterway_network.py", "--check"),
+            _t("tools/map/build_han_waterway_network.py", "--write")),
     Coupled("han-world-v3", ("infra/src/main/resources/map/han-world-v3.json", "data/map/han-world-v3-manifest-v1.json"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3", "--check"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3")),
@@ -84,9 +88,6 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_han_water_topology.py", "--write")),
     Coupled("water-topology-audit", ("data/map/han-water-topology-v1.json",),
             _t("tools/map/audit_han_water_topology.py", "--check"), None),
-    Coupled("waterway-network", ("data/map/han-waterway-network-v1.json",),
-            _t("tools/map/build_han_waterway_network.py", "--check"),
-            _t("tools/map/build_han_waterway_network.py", "--write")),
     Coupled("resource-sites", ("data/curated/han/resource-sites-v1.json",),
             _t("tools/map/build_resource_sites.py", "--check"),
             _t("tools/map/build_resource_sites.py")),
@@ -113,6 +114,10 @@ COUPLED: tuple[Coupled, ...] = (
             ("docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
              "docs/superpowers/research/2026-09-17-siege-supply-baseline.md"),
             (PY, "-m", "unittest", "discover", "-s", "tools/sim/tests", "-p", "test_*.py"), None),
+    # 1133 릴리스 번들은 위 산출물의 동결본이다. 드리프트는 「재핀 + 월드 초기화」라는 사용자 결정 사항이라
+    # 자동 재생성하지 않는다(ADR-LITE-058·060). 도구: tools/map/repin_han_1133_bundle.py --write.
+    Coupled("release-1133-bundle", ("data/map/han-world-v3-1133-artifacts-v1/catalog.json",),
+            _t("tools/map/repin_han_1133_bundle.py", "--check"), None),
 )
 
 

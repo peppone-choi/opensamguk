@@ -1212,3 +1212,41 @@
   일치한다. 보증 범위는 「커밋된 정본에서 각 후속 단계가 결정론으로 재생성된다」다.
 - Reversal: owner 가 승인한 wheelhouse 로 기반 5단계 출력(`5d888dc6…`)의 바이트 재현을 보인 뒤, v1 을 「기반 단계 재현성」 전용으로 한정해 되살린다.
 
+## ADR-LITE-060 — 강 뱃길을 城 연결로 놓고, 1133 릴리스를 제자리에서 재핀한다 (2026-09-18)
+
+- Context: 수로 망 원장(#826, `waterway-network-adjudications-v1`)은 長江·黃河의 구간·나루·항구를 사료로 세웠지만
+  NON_ACTIVATING 이었다. 타입 간선(FERRY/EMBARK/RIVER_*)으로 활성화하면 로더가 요구하는 RiverBarrier 가 기존 LAND
+  간선을 지워 연결이 오히려 줄고, 비-LAND 간선은 런타임 소비자가 없어 효과가 0 이다(2026-09-18 활성화 판정 노트).
+  한편 장수 이동·출병·AI 는 전략 위상이 아니라 `han-world-v3.json` 의 城 `connections` 를 읽는다 —
+  `HanWorldV31133CityConst` → `HanCityConstVariant.path` → `CalcCityDistance`(che_이동 `nearCity(1)`·강행 `nearCity(3)`),
+  `SearchDistanceListToDest`(che_출병 경로), `SetNationFront`(전선), `AiDistance`·AI families, `ConquerCity`(수도 이전 후보),
+  `GetConstController`(클라이언트 거리 안내). ADR-LITE-056 의 바닷길 13줄이 이미 그 방식이다.
+- Decision (사용자 결정 2026-09-18 「진행해」): 강 뱃길을 바닷길과 **같은 방식**으로 지금 넣는다 — 사료로 세운 항구 城끼리
+  `connections` 한 줄 + `seaRoutes` 한 줄(`kind: "RIVER"`, 기존 13줄은 `kind: "SEA"`). 형제 목록 `riverRoutes` 를 두지
+  않은 이유: `seaRoutes` 의 소비자(MapJson → MapPreviewDto → IsoWorldMap 곡선, 보급선 빌더)가 전부 「城 쌍 + 근거」만 읽어
+  그대로 동작하고, 구분이 필요한 곳은 `kind` 로 가른다(보급선 `canonicalGroup` SEA_ROUTE/RIVER_ROUTE).
+- Decision: 표를 두 군데 두지 않는다. 원장에 `portLinks` 를 더하고 빌더가 쌍을 **유도**한다 — 검토된 PORT 노드끼리,
+  flowLinks 로 이어진 구간 위에서, 물길 거리로 사이에 다른 항구가 없는 쌍. 원장의 쌍 집합이 유도 집합과 정확히 같아야
+  한다(원장은 출처만 단다). `build_han_world.v3_river_routes` 는 산출물의 portLinks 만 읽고 월드 매니페스트가 그 해시를
+  핀한다(`inputs.waterwayNetworkSha256`).
+- Result: 3줄 — 江州(572)↔夷陵(401), 夷陵(401)↔樊口(1037), 樊口(1037)↔濡須口(1072). 夷陵–樊口 를 잇기 위해 원장에
+  江水 夷陵–夏口·夏口–武昌 구간과 흐름 연결 3개를 더했다(晉書 卷42 王濬傳 「二月庚申，克吳西陵」「夏口、武昌，無相支抗。
+  於是順流鼓棹，徑造三山」, 三國志 卷47 「是歳，改夷陵爲西陵」 — 코퍼스에서 원문 확인). 漢津은 沔水 구간이 江 과 흐름으로
+  이어져 있지 않아 뺐다(沔口 합류 미판정). 建業·江陵·夏口·廣陵은 城 칸이 물에서 멀어 여전히 blocked 다.
+- Measured: 夷陵↔江州 5→1홉, 夷陵↔樊口 7→1홉, 樊口↔濡須口 6→1홉. 城 쌍 641,278 중 98,692쌍(15.4%)의 최단 홉이 줄고
+  최대 9홉 준다(江州→建業 13→6). 城 연결 3,053 → 3,056. 보급선 74 → 77(바닷길과 같이 뱃길은 보급도 싣는다).
+- Not invented: 비용·용량·계절. 연결 한 줄은 다른 모든 연결과 같은 한 칸이다. 三峽 471 km 를 한 턴에 가는 것이 과한지는
+  밸런스 판정이고 이 결정의 범위 밖이다 — 타입 간선·다턴 수송 설계(ADR-LITE-057 계열)가 오면 거기서 대체한다.
+- Decision: `han-world-v3-1133` 을 **제자리에서 재핀**한다(사용자 결정, ADR-LITE-058 과 같은 이유 — 城 id 집합이 그대로라
+  병행 식별자가 불가능하다). 바뀐 blob 3개(`han-world-v3.json`·월드 매니페스트·郡 보급선), `catalog.json`,
+  `Han1133Artifacts.CATALOG_SHA256`, `HanWorldV31133CityConst` 스냅샷과 `runtime-constants.json`(+ 그 해시를 핀한
+  `HanRuntimeConstantsIntegrityTest`)이 함께 움직인다. 846/848/1098 번들은 바이트 단위로 그대로다.
+- Consequences: blob 해시가 `StrategicTopology.contentHash` 입력이다. **1133 으로 pin 이 박힌 월드는 로드에 실패한다 —
+  배포 뒤 월드 리셋이 필요하다**(사용자가 수락, 리셋은 메인 세션이 한다).
+- Gate: `test_build_han_waterway_network`(portLinks: 항구 건너뛰기·끊긴 구간 넘기·도하점 끝점·누락·출처 없음·흐름 삭제 적색),
+  `test_han_world_river_routes`(세계 파일 RIVER 줄 = portLinks, 끝점 PORT 아님·출처 없음·상태 모름 적색),
+  `build_han_world --check`(원장이 바뀌면 매니페스트 핀으로 STALE), `repin_han_1133_bundle.py --check`
+  (`check_han_tiles_coupled` 키 `release-1133-bundle` — 번들이 작업 트리와 어긋나면 적색; 재핀 전 상태에서 적색 확인).
+- Reversal: 원장에서 `portLinks` 를 비우고(유도 집합이 비지 않으므로 구간·흐름 추가분도 함께 되돌린다) 같은 순서로
+  재생성·재핀한다. 역시 월드 리셋이 든다.
+

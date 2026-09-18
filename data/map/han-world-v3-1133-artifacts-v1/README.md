@@ -25,3 +25,21 @@ Six blobs moved together with `catalog.json` and `Han1133Artifacts.CATALOG_SHA25
 `sourceBaseCommit` is the main commit this work started from, not a branch commit that a squash merge would orphan; blob hashes are the identity. The commandery `cross`/`ford` annotations inside han-tiles were not re-derived for the new terrain (ADR-LITE-058, Not done).
 
 Cost: blob hashes feed `StrategicTopology.contentHash`, so a world already pinned to 1133 fails to load until it is reset.
+
+## 2026-09-18 river route re-pin (ADR-LITE-060)
+
+Re-pinned in place by user decision (2026-09-18, "진행해": put the river waterways into the game the same way the 13 sea routes work). City, province and jurisdiction identities, `han-tiles.json`, owner grids, the typed strategic topology (`han-water-topology-v1.json`, its ledger and manifest), coordinates and the gate index are byte-identical. What changed is the city graph: three river connections between evidence-backed ports — 江州(572)↔夷陵(401), 夷陵(401)↔樊口(1037), 樊口(1037)↔濡須口(1072) — derived from `portLinks` of the reviewed waterway ledger (`data/curated/han/waterway-network-adjudications-v1.json` → `data/map/han-waterway-network-v1.json`). They are listed in `seaRoutes` with `kind: "RIVER"` (the existing 13 rows gained `kind: "SEA"`), and like the sea routes they also carry supply (`canonicalGroup: "RIVER_ROUTE"` rows in the commandery supply links). A connection costs what every other connection costs; no cost or capacity was invented.
+
+Three blobs moved together with `catalog.json` and `Han1133Artifacts.CATALOG_SHA256`:
+
+| path | old sha256 | new sha256 |
+| --- | --- | --- |
+| `infra/src/main/resources/map/han-world-v3.json` | `da990c88…10aa8a` | `afaf2fb7…99d89f` |
+| `data/map/han-world-v3-manifest-v1.json` | `fcf4c8ff…2cf3fb` | `c318f1e1…399233` |
+| `data/map/han-commandery-supply-links-v1.json` | `cc8284e9…711891` | `705416d8…ab569` |
+
+`catalog.json` `6bf882f5…9bc362` → `3301ccfe…5f2e59`. `runtime-constants.json` `629b6095…63fdc9` → `5bd8890f…00e974` (the `HanWorldV31133CityConst` snapshot was re-taken from the regenerated `HanWorldV3CityConst`: source `015c2730…` → `674b9052…`, snapshot `547c5661…` → `7cdbcf2b…`; the gate index snapshot is unchanged). The eleven untouched blobs were reproduced byte-for-byte with the same method (gzip level 9, mtime 0) before the three were written — `tools/map/repin_han_1133_bundle.py` does this and its `--check` is now part of `check_han_tiles_coupled.py`.
+
+`sourceBaseCommit` is the main commit this work started from (`cd9d93ed`). 846/848/1098 bundles are byte-identical.
+
+Cost: blob hashes feed `StrategicTopology.contentHash`, so a world already pinned to 1133 fails to load until it is reset.
