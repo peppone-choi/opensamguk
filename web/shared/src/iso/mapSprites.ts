@@ -5,7 +5,7 @@ export function acquireMapSprite(url: string) {
   return sprites.acquire(url, signal => new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
     const cleanup = () => { image.onload = null; image.onerror = null; signal.removeEventListener('abort', abort); };
-    const abort = () => { cleanup(); image.src = ''; reject(new DOMException('Aborted', 'AbortError')); };
+    const abort = () => { cleanup(); image.removeAttribute('src'); reject(new DOMException('Aborted', 'AbortError')); };
     image.decoding = 'async';
     image.onload = () => {
       image.decode().then(() => { cleanup(); resolve(image); }, error => { cleanup(); reject(error); });

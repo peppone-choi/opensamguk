@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { useIsoTileGrid } from '../iso/useIsoTileGrid';
+let useIsoTileGrid: typeof import('../iso/useIsoTileGrid').useIsoTileGrid;
 const tiles = { _meta:{cols:4,rows:4,year:190}, terrain:['1111','1111','1111','1111'],owner:[[0,16]],cities:[],provinceRecords:[],parentRegions:[] };
-beforeEach(()=>{
+beforeEach(async()=>{
+ vi.resetModules();
+ ({useIsoTileGrid}=await import('../iso/useIsoTileGrid'));
  vi.stubGlobal('createImageBitmap',vi.fn(async()=>({width:2,height:2,close(){}})));
  vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({drawImage(){},getImageData:()=>({data:new Uint8ClampedArray(16),width:2,height:2})} as unknown as CanvasRenderingContext2D);
 });
