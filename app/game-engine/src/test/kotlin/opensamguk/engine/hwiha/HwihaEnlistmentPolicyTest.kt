@@ -61,4 +61,15 @@ class HwihaEnlistmentPolicyTest {
             assertTrue(result.policy.freeRenownByLord.isEmpty())
         }
     }
+    @Test fun `malformed lord status anywhere rejects before executor can read it`() {
+        for (corruptId in listOf(1, 2, 10)) {
+            val generals = listOf(general(1), general(2).copy(nationId = 0), general(10, true)).map {
+                if (it.id == corruptId) it.copy(meta = it.meta + ("hwihaLord" to "true")) else it
+            }
+            val result = HwihaEnlistmentPolicy(world(generals)).current(request)
+            assertEquals(EnlistmentPolicyUnavailable.INVALID_LORD_STATUS,
+                assertIs<HwihaEnlistmentPolicyResult.Unavailable>(result).reason)
+        }
+    }
+
 }

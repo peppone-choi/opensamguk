@@ -18,7 +18,10 @@ sealed interface HwihaEnlistmentPolicyResult {
     data class Unavailable(val reason: EnlistmentPolicyUnavailable) : HwihaEnlistmentPolicyResult
 }
 
-/** Recomputed from current direct cards. Source metadata is a seed contract, not source verification. */
+/**
+ * Recomputed from current direct person cards. Source metadata is a seed contract, not verification.
+ * Named-unit cards have no model here and are unsupported; this is not a complete retinue budget.
+ */
 class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
     private class Invalid(val reason: EnlistmentPolicyUnavailable) : RuntimeException()
     private fun unavailable(reason: EnlistmentPolicyUnavailable): Nothing = throw Invalid(reason)
@@ -43,6 +46,12 @@ class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
         val generals = world.listGenerals().associateBy { it.id }
         val actor = generals[request.actorId]
             ?: return HwihaEnlistmentPolicyResult.Unavailable(EnlistmentPolicyUnavailable.ACTOR_NOT_FOUND)
+        // The executor reads every general's lord status, including unaffiliated people.
+        val lordStatuses = try {
+            generals.mapValues { (_, general) -> HwihaLordStatus.read(general.meta) }
+        } catch (_: IllegalArgumentException) {
+            return HwihaEnlistmentPolicyResult.Unavailable(EnlistmentPolicyUnavailable.INVALID_LORD_STATUS)
+        }
         val actorCost = try { cost(actor) } catch (e: Invalid) {
             return HwihaEnlistmentPolicyResult.Unavailable(e.reason)
         }
@@ -51,11 +60,7 @@ class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
         val failures = linkedMapOf<Int, EnlistmentPolicyUnavailable>()
         for (lord in generals.values.sortedBy { it.id }) {
             if (lord.nationId <= 0) continue
-            val isLord = try { HwihaLordStatus.read(lord.meta) } catch (_: IllegalArgumentException) {
-                failures[lord.id] = EnlistmentPolicyUnavailable.INVALID_LORD_STATUS
-                continue
-            }
-            if (!isLord) continue
+            if (lordStatuses[lord.id] != true) continue
             try {
                 val state = person(lord)
                 if (state.acceptsEnlistment) accepting.add(lord.id)
