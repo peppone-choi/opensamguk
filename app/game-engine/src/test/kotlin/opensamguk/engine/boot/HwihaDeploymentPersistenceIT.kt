@@ -210,6 +210,36 @@ class HwihaDeploymentPersistenceIT {
         assertNull(executor(world, ChangeRecorder()).projection())
     }
 
+    @Test fun `world reaction inventory reloads without inventing clear passage or erasing unresolved records`() {
+        val id = 619; fixture.seed(id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7", id)
+        var world = cold(id)
+        val node = world.positionOf(10) as StrategicNodeRef.LandProvince
+        assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
+        fun store(raw: Any?) {
+            jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], ?::jsonb) WHERE id=?",
+                HwihaMarchReactions.META_KEY, opensamguk.infra.persistence.MetaJson.encode(raw), id)
+        }
+        store(HwihaMarchReactions.Empty.toMetaValue()); world = cold(id)
+        assertEquals(LandMarchEntry.CLEAR, military(world).entryAt(10, node))
+        val recorder = ChangeRecorder()
+        assertIs<DeploymentExecution.Applied>(executor(world, recorder).deploy("reaction-$id", DeploymentRequest(1, null, listOf(7))))
+        world.setCurrentDate(200, 1, 2)
+        save(world, recorder); world = cold(id)
+        assertEquals(HwihaMarchReactions.Empty, HwihaMarchReactions.read(world.getState().meta))
+        assertEquals(LandMarchEntry.ENCOUNTER, military(world).entryAt(10, node))
+        for (raw in listOf(null, HwihaMarchReactions.Empty.toMetaValue() - "avoidanceOrders",
+            HwihaMarchReactions.Empty.toMetaValue() + ("version" to 2),
+            HwihaMarchReactions.Empty.toMetaValue() + ("avoidanceOrders" to listOf(mapOf("id" to "pending"))))) {
+            store(raw); world = cold(id)
+            // Even a hostile corps cannot substitute for unknown avoidance or installed reactions.
+            assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
+        }
+        jdbc.update("UPDATE world_state SET meta=meta - ? WHERE id=?", HwihaMarchReactions.META_KEY, id)
+        world = cold(id)
+        assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
+    }
+
     @Test fun `reservation assessment is rechecked before deployment after troop ownership changes`() {
         val id=613;fixture.seed(id)
         var world=cold(id);val request=DeploymentRequest(1,4,listOf(7))

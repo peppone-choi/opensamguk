@@ -16,6 +16,15 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
         HwihaMilitaryPresence.assess(actorId, it, wars())
     } ?: MilitaryPresenceAssessment.Unavailable
 
+    /** Production entry reader: missing or unsupported reaction inventories are not clear terrain. */
+    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry {
+        if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
+        val reactions = try { HwihaMarchReactions.read(world.getState().meta) }
+            catch (_: IllegalArgumentException) { return LandMarchEntry.UNAVAILABLE }
+        if (reactions != HwihaMarchReactions.Empty) return LandMarchEntry.UNAVAILABLE
+        return entryAt(actorId, node, LandMarchEntry.CLEAR)
+    }
+
     /** Other encounter authorities (installed schemes, interception, avoidance) are mandatory. */
     fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, otherHazards: LandMarchEntry): LandMarchEntry {
         if (!topology.containsNode(node)) return LandMarchEntry.UNAVAILABLE
