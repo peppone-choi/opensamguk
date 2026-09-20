@@ -36,40 +36,14 @@ class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val 
         return DeploymentExecution.Applied(corps)
     }
 
-    /** Corrupt metadata is not an empty battlefield. Consumers must preserve the unavailable result. */
-    fun projection(): DeploymentProjection? { return try {
-        val positions = world.generalPositionSnapshot() ?: return null
-        require(positions.topologyRevision == topology.topologyRevision && positions.topologyHash == topology.contentHash)
-        require(positions.knownLandProvinceIds == topology.landProvinceIds &&
-            positions.knownWaterZoneIds == topology.waterZones.map { it.id }.toSet())
-        val people = world.listGenerals().sortedBy { it.id }
-        val corps = people.flatMap { person ->
-            HwihaDeploymentState.read(person.meta)?.corps.orEmpty().also { rows ->
-                require(rows.all { it.ownerGeneralId == person.id })
-            }
-        }
-        require(corps.map { it.orderId }.distinct().size == corps.size)
-        require(corps.map { it.commanderGeneralId }.distinct().size == corps.size)
-        require(corps.flatMap { it.bugokIds }.distinct().size == corps.sumOf { it.bugokIds.size })
-        DeploymentProjection(world.ruleProfile, people.map { person ->
-            val position = positions.stateFor(person.id)
-            val march = HwihaMarchState.read(person.meta, topology, metrics)
-            require(march == null || march.path.nodeKeys[march.cursor.edgeIndex] == position?.node?.canonicalKey)
-            val corpsMarch = HwihaCorpsMarchState.read(person.meta, topology, metrics)
-            if (corpsMarch != null) {
-                val deployed = corps.singleOrNull { it.commanderGeneralId == person.id }
-                    ?: throw IllegalArgumentException("Corps march has no deployment")
-                corpsMarch.requireBinding(deployed, person.id)
-                val checkpoint = corpsMarch.checkpoint
-                require(checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex] == position?.node?.canonicalKey)
-                require(march == null) { "Assignment and corps marches cannot own the same position" }
-            }
-            DeploymentPerson(person.id, person.nationId, person.npcState == 2 && (person.userId.isNullOrBlank() || person.userId.toLongOrNull()?.let { it <= 0 } == true),
-                position?.node, position?.battlefield != null || march?.stop == LandMarchStop.ENCOUNTER ||
-                    corpsMarch?.checkpoint?.stop == LandMarchStop.ENCOUNTER)
-        }, world.listBugoks().map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },
-            world.listRetainers().map { DeploymentRetainer(it.id, it.masterGeneralId, it.generalId,
-                it.relation == RetainerRules.RELATION_LIEUTENANT) }, corps)
-    } catch (_: IllegalArgumentException) { null }
-    }
+    /** Corrupt metadata remains unavailable in the shared API/engine projection. */
+    fun projection(): DeploymentProjection? = HwihaDeploymentProjection.build(
+        world.ruleProfile,
+        world.listGenerals().map { DeploymentPersonSource(it.id, it.nationId,
+            it.npcState == 2 && (it.userId.isNullOrBlank() || it.userId.toLongOrNull()?.let { id -> id <= 0 } == true), it.meta) },
+        world.listBugoks().map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },
+        world.listRetainers().map { DeploymentRetainer(it.id, it.masterGeneralId, it.generalId,
+            it.relation == RetainerRules.RELATION_LIEUTENANT) },
+        world.generalPositionSnapshot(), topology, metrics,
+    )
 }
