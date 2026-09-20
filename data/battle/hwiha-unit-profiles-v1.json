@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "crewTypeId": 1100,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1101,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1102,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1103,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1104,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1105,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1106,
+      "movementSteps": 1,
+      "attackRange": 1,
+      "attackPower": 100,
+      "defencePower": 120,
+      "initiative": 20
+    },
+    {
+      "crewTypeId": 1200,
+      "movementSteps": 1,
+      "attackRange": 3,
+      "attackPower": 80,
+      "defencePower": 80,
+      "initiative": 10
+    },
+    {
+      "crewTypeId": 1201,
+      "movementSteps": 1,
+      "attackRange": 3,
+      "attackPower": 80,
+      "defencePower": 80,
+      "initiative": 10
+    },
+    {
+      "crewTypeId": 1202,
+      "movementSteps": 1,
+      "attackRange": 3,
+      "attackPower": 80,
+      "defencePower": 80,
+      "initiative": 10
+    },
+    {
+      "crewTypeId": 1203,
+      "movementSteps": 1,
+      "attackRange": 3,
+      "attackPower": 80,
+      "defencePower": 80,
+      "initiative": 10
+    },
+    {
+      "crewTypeId": 1204,
+      "movementSteps": 1,
+      "attackRange": 3,
+      "attackPower": 80,
+      "defencePower": 80,
+      "initiative": 10
+    },
+    {
+      "crewTypeId": 1300,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1301,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1302,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1303,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1304,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1305,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1306,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    },
+    {
+      "crewTypeId": 1307,
+      "movementSteps": 2,
+      "attackRange": 1,
+      "attackPower": 110,
+      "defencePower": 100,
+      "initiative": 30
+    }
+  ],
+  "unsupportedCrewTypeIds": [
+    1000,
+    1400,
+    1401,
+    1402,
+    1403,
+    1404,
+    1405,
+    1406,
+    1407,
+    1408,
+    1500,
+    1501,
+    1502,
+    1503
+  ]
+}

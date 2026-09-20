@@ -45,3 +45,8 @@ tasks.test {
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
+
+// One checked-in HWIHA rules source, packaged without runtime working-directory fallback.
+tasks.processResources {
+    from(rootProject.file("data/battle/hwiha-unit-profiles-v1.json")) { into("battle") }
+}
