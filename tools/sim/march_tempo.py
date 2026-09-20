@@ -7,8 +7,8 @@
 사용자가 목표 템포 표를 고르기 위한 근거 표다.
 
 격자 → km 변환: han-tiles `_meta` 에 경위도 범위가 없어 `cities[]` 의 (col,row)↔(lon,lat)
-쌍을 최소제곱으로 맞춘 축척을 쓴다(2026-09-17 실측: 0.0534°/col · 0.0461°/row, 잔차 최대 약 2.8°
-— 城 칸은 지형에 맞춰 밀린 씨앗이라 개별 좌표는 어긋나도 축척은 안정적이다).
+쌍을 최소제곱으로 맞춘 축척을 쓴다(재분할 후 약 0.0542°/col · -0.0469°/row).
+끝점은 城 좌표가 아니라 省 마른땅 중심이므로 실제 도로 거리와 같지 않다.
 ADR-LITE-053 의 「lon 80.5–116.6」 범위는 이 격자와 맞지 않는다.
 """
 from __future__ import annotations
@@ -19,6 +19,8 @@ import heapq
 import json
 import math
 from pathlib import Path
+
+import simulation_evidence as E
 
 ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data/map/han-tiles.json"
@@ -142,9 +144,16 @@ def table(tiles: dict) -> list[dict]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json", action="store_true")
+    output = ap.add_mutually_exclusive_group()
+    output.add_argument("--json", action="store_true")
+    output.add_argument("--evidence", action="store_true", help="JSON result with exact source hashes (exploratory, not S2 acceptance)")
     args = ap.parse_args(argv)
+    paths = [TILES, Path(__file__).resolve(), Path(E.__file__).resolve()]
+    before = E.snapshot(ROOT, paths) if args.evidence else None
     rows = table(json.loads(TILES.read_text(encoding="utf-8")))
+    if args.evidence:
+        print(json.dumps(E.evidence(ROOT, paths, before, rows), ensure_ascii=False, indent=1))
+        return 0
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=1))
         return 0

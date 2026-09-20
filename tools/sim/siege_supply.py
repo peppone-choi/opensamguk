@@ -290,10 +290,16 @@ def run() -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json", action="store_true")
+    output = ap.add_mutually_exclusive_group()
+    output.add_argument("--json", action="store_true")
+    output.add_argument("--evidence", action="store_true", help="JSON result with exact source hashes (exploratory, not S2 acceptance)")
     args = ap.parse_args(argv)
+    paths = [M.TILES, TEMPO, ECONOMY, Path(__file__).resolve(), Path(M.__file__).resolve(), Path(M.E.__file__).resolve()]
+    before = M.E.snapshot(ROOT, paths) if args.evidence else None
     r = run()
-    if args.json:
+    if args.evidence:
+        print(json.dumps(M.E.evidence(ROOT, paths, before, {**r, "sources": SOURCES}), ensure_ascii=False, indent=1))
+    elif args.json:
         print(json.dumps({**r, "sources": SOURCES}, ensure_ascii=False, indent=1))
     else:
         sys.stdout.write(render(r))
