@@ -105,4 +105,12 @@ class HwihaEnlistmentRulesTest {
         denied(EnlistmentFailure.TARGET_NOT_LORD, state(), EnlistmentRequest(1, EnlistmentMode.GENERAL, 2))
         assertFailsWith<IllegalArgumentException> { choices(snapshot = state().copy(actorCardCost = 0)) }
     }
+    @Test fun `storage name conflict is shared by direct and random prechecks`() {
+        val conflict = state().copy(nameConflictingLordIds = setOf(10))
+        denied(EnlistmentFailure.DUPLICATE_RETAINER_NAME, conflict)
+        assertEquals(listOf(20), choices(EnlistmentRequest(1, EnlistmentMode.RANDOM), conflict).map { it.masterId })
+        denied(EnlistmentFailure.NO_ELIGIBLE_NATION, conflict.copy(nameConflictingLordIds = setOf(10, 20)),
+            EnlistmentRequest(1, EnlistmentMode.RANDOM))
+    }
+
 }

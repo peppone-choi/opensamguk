@@ -18,13 +18,15 @@ data class EnlistmentSnapshot(
     val freeRenownByLord: Map<Int, Int>,
     /** Price of the actor's card only; their personal retinue stays on their own budget. */
     val actorCardCost: Int,
+    /** Includes unlinked recruited cards: storage requires unique names per master. */
+    val nameConflictingLordIds: Set<Int> = emptySet(),
 )
 
 enum class EnlistmentFailure {
     WRONG_RULE_PROFILE, INVALID_REQUEST, ACTOR_NOT_FOUND, ALREADY_SERVING,
     ALREADY_BOUND, INVALID_RETINUE, HUMAN_RETAINER_REQUIRES_LORD,
     TARGET_NOT_FOUND, TARGET_NOT_LORD, TARGET_NOT_ACCEPTING, INSUFFICIENT_RENOWN,
-    NO_ELIGIBLE_NATION,
+    NO_ELIGIBLE_NATION, DUPLICATE_RETAINER_NAME,
 }
 
 /** This is an intent, not a committed result. It contains no teleport or asset transfer. */
@@ -98,6 +100,7 @@ object HwihaEnlistmentRules {
                 return deny(EnlistmentFailure.TARGET_NOT_LORD)
             }
             if (master.id !in state.acceptingLordIds) return deny(EnlistmentFailure.TARGET_NOT_ACCEPTING)
+            if (master.id in state.nameConflictingLordIds) return deny(EnlistmentFailure.DUPLICATE_RETAINER_NAME)
             val budget = state.freeRenownByLord[master.id]
                 ?: return deny(EnlistmentFailure.INSUFFICIENT_RENOWN)
             if (budget < state.actorCardCost) return deny(EnlistmentFailure.INSUFFICIENT_RENOWN)
