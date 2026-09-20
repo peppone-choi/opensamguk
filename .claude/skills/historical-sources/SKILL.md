@@ -9,7 +9,7 @@ Grounds historical claims in text you can quote. **The point of this skill is to
 "I don't know" measurable**: zero hits establish only that the query found no match
 in the indexed corpus. Report UNKNOWN with the search scope, never absence from all historical records.
 
-Run all commands below from the opensamguk project root. This skill remains in the Claude skill directory; Codex can read it through the repository AGENTS.md link.
+Run all commands below from the opensamguk project root. This skill remains in the Claude skill directory. For historical-source tasks, Codex should directly read `.claude/skills/historical-sources/SKILL.md` as directed by `docs/development/agent-reference.md`; do not assume automatic discovery.
 
 ## Setup (once)
 
