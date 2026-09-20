@@ -8,7 +8,7 @@
 > `.claudeignore` + `scripts/agent/protect-sensitive-files.sh`(시크릿·골든·legacy 차단 훅).
 > 자세한 경위는 `.ai/decisions.md` ADR-LITE-047.
 
-이 디렉터리는 **장기 규칙이 아니라 현재 상태**를 담는다. 영구 규칙은 `CLAUDE.md`(정본)·`AGENTS.md`(요약), 절차는 `docs/agent/`에 있다.
+이 디렉터리는 **장기 규칙이 아니라 현재 상태**를 담는다. 영구 규칙은 `CLAUDE.md`(정본)·`AGENTS.md`(요약), 현재 작업 진입점은 `AGENTS.md`, 필요한 절차는 `docs/superpowers/WORKING_SYSTEM.md`에 있다. 재개·인수인계·관련 결정 조회 때만 필요한 파일을 읽는다.
 
 | 파일 | 역할 | 갱신 주체 |
 |---|---|---|
@@ -21,7 +21,7 @@
 
 ## 규칙
 
-- 우선순위: 사용자 직접 지시 > `task.md` > `decisions.md` > `CLAUDE.md`/`AGENTS.md` > 실행 가능한 설정·테스트 > `docs/agent/` > 코드 패턴 > `current-state.md`/`handoff.md` > 에이전트 추론.
+- 우선순위: 사용자 직접 지시 > `task.md` > `decisions.md` > `CLAUDE.md`/`AGENTS.md` > 실행 가능한 설정·테스트 > 코드 패턴 > `current-state.md`/`handoff.md` > 에이전트 추론.
 - `current-state.md`·`handoff.md`는 **자동으로 최신이 아니다**. `Updated at`이 오래됐으면 `git log`·`docs/loops/*/LEDGER.md`로 재검증 후 신뢰한다.
 - 이 디렉터리에 장황한 로그를 쌓지 않는다. 상세 이력의 정본은 `docs/loops/*/LEDGER.md`와 `docs/superpowers/SESSION_HANDOFF.md`다.
 - 에이전트가 `decisions.md`에 임의로 `approved`를 만들면 안 된다(`proposed`까지만).

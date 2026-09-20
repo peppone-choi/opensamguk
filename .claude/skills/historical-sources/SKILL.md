@@ -1,13 +1,15 @@
 ---
 name: historical-sources
-description: Use when a claim about Han/Three-Kingdoms history needs a primary source — unit types, offices, place names, people, events, distances, populations. Queries a local FTS index over 719 volumes of public-domain Chinese histories (三國志·後漢書 including 續漢書 志·華陽國志·晉書·資治通鑑·元和郡縣圖志·宋書·世說新語·三國演義) and returns book, volume, and the verbatim passage. Use it INSTEAD of guessing, and use it to prove a term is absent before calling it fabricated.
+description: "Use when verifying Han/Three-Kingdoms names, offices, places or historical claims against the local Chinese-text corpus. Returns cited passages; distinguish histories from fiction and report corpus limits. Not for general game coding or auditing this skill."
 ---
 
 # Historical Sources — 사료 질의
 
 Grounds historical claims in text you can quote. **The point of this skill is to make
-"I don't know" measurable**: a query that returns nothing is evidence of absence, and
-absence must be reported as UNKNOWN — never filled in from memory.
+"I don't know" measurable**: zero hits establish only that the query found no match
+in the indexed corpus. Report UNKNOWN with the search scope, never absence from all historical records.
+
+Run all commands below from the opensamguk project root. This skill remains in the Claude skill directory; Codex can read it through the repository AGENTS.md link.
 
 ## Setup (once)
 
@@ -36,7 +38,7 @@ administrative geography and the office/military-rank tables.
 ## Rules
 
 1. **Query before asserting.** Naming a unit, office, county, or polity from memory is
-   fabrication until the index confirms it. Two claims this index has already overturned:
+   unverified until checked against a relevant passage; a matching substring alone is not confirmation. Two claims this index has already overturned:
    「象兵」's only 後漢書 hit is 「執銅鏡以象兵」 — a verb, not a corps; 「白毦兵」 appears in
    no volume at all.
 2. **Search 繁體.** The corpus is traditional. 簡體 queries miss (雒阳 finds nothing, 雒陽 works).
