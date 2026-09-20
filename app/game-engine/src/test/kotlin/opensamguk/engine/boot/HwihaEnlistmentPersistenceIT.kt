@@ -146,40 +146,45 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(world.listRetainers(), load(3).retainers)
         assertEquals(world.listNations(), load(3).nations)
     }
+    private fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>): opensamguk.engine.run.TurnRunService {
+        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
+        val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
+        val handler = ReservedTurnHandler(active,
+            opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200)
+        val lifecycle = TurnDaemonLifecycle(active, handler,
+            pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
+            reservedActionOf = { reservations.readReserved(id, it, 0) })
+        val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
+            override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
+        }
+        val publisher = object : opensamguk.engine.redis.RealtimePublisher(redis, "fixture", id) {
+            override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
+        }
+        return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher,
+            commandOutboxRelay = opensamguk.engine.redis.CommandOutboxRelay(
+                opensamguk.infra.persistence.CommandResultRepository(NamedParameterJdbcTemplate(jdbc)), publisher, id))
+    }
+
     @Test fun `undelivered input result slot consumption and personal time commit together and survive restart`() {
         seed(4)
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=4 AND id<>1")
         val id = WorldId(4)
         val named = NamedParameterJdbcTemplate(jdbc)
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(named)
-        reservations.reserve(id, 1, 0, "action.enlist", "{}", requestId = "undelivered-request")
+        reservations.reserve(id, 1, 0, "placement.assign", "{}", requestId = "undelivered-request")
         reservations.reserve(id, 1, 1, "court.dispatch", "{}", requestId = "next-request")
         val before = load(4)
         val world = InMemoryTurnWorld(before)
-        val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
         val published = mutableListOf<String>()
-        fun service(active: InMemoryTurnWorld): opensamguk.engine.run.TurnRunService {
-            val handler = ReservedTurnHandler(active,
-                opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200)
-            val lifecycle = TurnDaemonLifecycle(active, handler,
-                pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
-                reservedActionOf = { reservations.readReserved(id, it, 0) })
-            val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
-                override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
-            }
-            val publisher = object : opensamguk.engine.redis.RealtimePublisher(redis, "fixture", id) {
-                override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
-            }
-            return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher)
-        }
         val at = java.time.Instant.parse("0200-01-01T00:00:01Z")
-        val result = service(world).runDueGeneralTurns(at).handled.single()
+        val result = service(id, world, published).runDueGeneralTurns(at).handled.single()
         assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
         assertEquals(listOf("undelivered-request"), published)
         assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
         val after = load(4)
         assertEquals(before.generals.map { if (it.id == 1) it.copy(
             turnTime = it.turnTime.plusSeconds(3600),
+            meta = HwihaPersonalTurn.after(it.meta, world.getState()),
             initialTurns = it.initialTurns.drop(1) + GeneralTurnSeed("휴식", "{}", "휴식"),
         ) else it }, after.generals)
         assertEquals(before.retainers, after.retainers)
@@ -191,11 +196,98 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals("executionRejected", stored.type)
         assertFalse(stored.ok)
         assertEquals("NOT_DELIVERED", stored.code)
-        assertEquals("action.enlist", stored.actionCode)
-        assertTrue(service(InMemoryTurnWorld(after)).runDueGeneralTurns(at).handled.isEmpty())
+        assertEquals("placement.assign", stored.actionCode)
+        assertTrue(service(id, InMemoryTurnWorld(after), published).runDueGeneralTurns(at).handled.isEmpty())
         assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=4 AND request_id='undelivered-request'", Int::class.java))
         assertEquals(1, published.size)
+    }
+
+    @Test fun `reserved enlistment success persists once despite overdue repeated drains and cold restart`() {
+        seed(5)
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=5 AND id<>1")
+        val id = WorldId(5)
+        val named = NamedParameterJdbcTemplate(jdbc)
+        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(named)
+        val args = """{"mode":"NATION","targetId":1}"""
+        reservations.reserve(id, 1, 0, "action.enlist", args, requestId = "enlist-success")
+        reservations.reserve(id, 1, 1, "action.enlist", args, requestId = "enlist-again")
+        val before = load(5)
+        val world = InMemoryTurnWorld(before)
+        val published = mutableListOf<String>()
+        val runner = service(id, world, published)
+        val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
+        val handled = runner.runDueGeneralTurns(late).handled.single()
+        assertIs<HwihaTurnOutcome.Applied>(handled.hwihaOutcome)
+        assertNull(handled.definition)
+        assertFalse(handled.fellBack)
+        assertEquals("enlist-success", handled.requestId)
+        assertTrue(runner.runDueGeneralTurns(late).handled.isEmpty())
+        assertEquals(listOf("enlist-success"), published)
+        val after = load(5)
+        assertEquals(setOf(1), after.generals.map { it.nationId }.toSet())
+        assertFalse(HwihaLordStatus.read(after.generals.single { it.id == 1 }.meta))
+        assertEquals(2, after.retainers.size)
+        assertEquals(10, after.retainers.single { it.generalId == 1 }.masterGeneralId)
+        assertEquals(before.bugoks, after.bugoks)
+        assertEquals(before.cities, after.cities)
+        assertEquals(before.generalPositionSnapshot!!.statesByGeneralId, after.generalPositionSnapshot!!.statesByGeneralId)
+        val cold = InMemoryTurnWorld(after)
+        assertTrue(service(id, cold, published).runDueGeneralTurns(late).handled.isEmpty())
+        assertEquals("enlist-again", reservations.readReserved(id, 1, 0).requestId)
+        val results = opensamguk.infra.persistence.CommandResultRepository(named)
+        fun result(request: String): opensamguk.common.wire.CommandLifecycleResult {
+            val envelope = opensamguk.common.wire.WireJson.decodeFromString(
+                opensamguk.common.wire.TurnDaemonEventEnvelope.serializer(), results.findResultPayload(id, request)!!)
+            return (envelope.event as opensamguk.common.wire.TurnDaemonEvent.CommandResult).result
+                as opensamguk.common.wire.CommandLifecycleResult
+        }
+        assertTrue(result("enlist-success").ok)
+        assertEquals("executionApplied", result("enlist-success").type)
+        assertEquals("action.enlist", result("enlist-success").actionCode)
+        cold.setCurrentDate(200, 1, 2)
+        val second = service(id, cold, published).runDueGeneralTurns(late).handled.single()
+        assertEquals("ALREADY_SERVING", assertIs<HwihaTurnOutcome.Rejected>(second.hwihaOutcome).code)
+        assertFalse(result("enlist-again").ok)
+        assertEquals(2, load(5).retainers.size)
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=5", Int::class.java))
+        assertEquals(listOf("enlist-success", "enlist-again"), published)
+    }
+
+    @Test fun `reserved success flush failure rolls back action phase stamp slot and result then retries once`() {
+        seed(6)
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=6 AND id<>1")
+        val id = WorldId(6)
+        val named = NamedParameterJdbcTemplate(jdbc)
+        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(named)
+        reservations.reserve(id, 1, 0, "action.enlist", """{"mode":"GENERAL","targetId":10}""", requestId = "enlist-retry")
+        val before = load(6)
+        val world = InMemoryTurnWorld(before)
+        val published = mutableListOf<String>()
+        val runner = service(id, world, published)
+        val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
+        jdbc.execute("""CREATE FUNCTION enlistment_transient_probe() RETURNS trigger LANGUAGE plpgsql AS
+            'BEGIN IF NEW.world_id=6 AND NEW.general_id=1 THEN
+             RAISE EXCEPTION ''serialization retry probe'' USING ERRCODE = ''40001'';
+             END IF; RETURN NEW; END'""")
+        jdbc.execute("CREATE TRIGGER enlistment_phase_failure BEFORE INSERT ON general_retainers FOR EACH ROW EXECUTE FUNCTION enlistment_transient_probe()")
+        try {
+            assertFailsWith<org.springframework.dao.TransientDataAccessException> { runner.runDueGeneralTurns(late) }
+            assertSameSnapshot(before, load(6))
+            assertEquals("enlist-retry", reservations.readReserved(id, 1, 0).requestId)
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=6", Int::class.java))
+            assertTrue(published.isEmpty())
+        } finally {
+            jdbc.execute("DROP TRIGGER enlistment_phase_failure ON general_retainers")
+            jdbc.execute("DROP FUNCTION enlistment_transient_probe()")
+        }
+        assertTrue(runner.retryRetainedFlush())
+        assertFailsWith<IllegalStateException> { runner.retryRetainedFlush() }
+        val cold = InMemoryTurnWorld(load(6))
+        assertEquals(2, cold.listRetainers().size)
+        assertTrue(service(id, cold, published).runDueGeneralTurns(late).handled.isEmpty())
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=6", Int::class.java))
+        assertEquals(listOf("enlist-retry"), published)
     }
 
 }

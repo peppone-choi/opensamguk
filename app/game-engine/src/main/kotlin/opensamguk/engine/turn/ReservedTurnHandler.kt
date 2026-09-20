@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
 import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.HwihaEnlistmentHandler
+import opensamguk.logic.input.InputHandler
 import opensamguk.logic.input.HwihaInputCatalog
 import opensamguk.logic.input.HwihaInputRegistry
 import opensamguk.logic.input.InputResolution
@@ -195,7 +197,8 @@ class ReservedTurnHandler(
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
 
-    private val pendingHwihaRegistry by lazy { HwihaInputRegistry(HwihaInputCatalog.load(), emptyMap()) }
+    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
+    private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -259,11 +262,23 @@ class ReservedTurnHandler(
         val general = world.getGeneralById(generalId)
             ?: error("ReservedTurnHandler: general $generalId not in world")
         if (world.ruleProfile == RuleProfile.HWIHA || '.' in reserved.actionCode) {
-            val resolution = pendingHwihaRegistry.resolve(world.ruleProfile, reserved.actionCode)
-            check(resolution is InputResolution.Rejected) { "delivered HWIHA input requires an execution adapter" }
-            val rejected = HwihaTurnOutcome.Rejected(reserved.actionCode, resolution.reason.name, resolution.reason.message)
-            return HandledTurn(generalId, null, false, rejected.reason, emptyList(), emptyMap(),
-                requestId = reserved.requestId, reservedActionCode = reserved.actionCode, hwihaOutcome = rejected)
+            var applied: HwihaTurnOutcome? = null
+            val inputs = HwihaInputRegistry(hwihaCatalog, mapOf(
+                HwihaEnlistmentHandler.INPUT_ID to InputHandler {
+                    applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month)
+                },
+            ))
+            val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
+                is InputResolution.Rejected -> HwihaTurnOutcome.Rejected(
+                    reserved.actionCode, resolution.reason.name, resolution.reason.message)
+                is InputResolution.Resolved -> {
+                    resolution.handler.handle()
+                    checkNotNull(applied) { "HWIHA handler must produce an execution outcome" }
+                }
+            }
+            return HandledTurn(generalId, null, false, (outcome as? HwihaTurnOutcome.Rejected)?.reason,
+                emptyList(), emptyMap(), requestId = reserved.requestId,
+                reservedActionCode = reserved.actionCode, hwihaOutcome = outcome)
         }
         val cityId = general.cityId
         val nationId = general.nationId

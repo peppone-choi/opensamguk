@@ -30,7 +30,7 @@ class HwihaReservedTurnRejectionTest {
         val before = world.getGeneralById(1)
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
             aiHook = { _, _ -> error("legacy AI must not run") })
-        val result = handler.handle(1, ReservedTurn("action.enlist", "{}", requestId = "request"), 200, 1, "00:00")
+        val result = handler.handle(1, ReservedTurn("placement.assign", "{}", requestId = "request"), 200, 1, "00:00")
         assertNull(result.definition)
         assertFalse(result.fellBack)
         assertEquals("아직 제공되지 않는 입력입니다.", result.denyReason)
@@ -41,7 +41,7 @@ class HwihaReservedTurnRejectionTest {
     @Test fun `cross profile and unknown hwiha codes never resolve legacy definitions`() {
         for ((profile, code, reason) in listOf(
             Triple("HWIHA", "che_임관", "이 월드의 규칙에서 사용할 수 없는 입력입니다."),
-            Triple("SAMMO", "action.enlist", "이 월드의 규칙에서 사용할 수 없는 입력입니다."),
+            Triple("SAMMO", "placement.assign", "이 월드의 규칙에서 사용할 수 없는 입력입니다."),
             Triple("HWIHA", "action.missing", "등록되지 않은 입력입니다."),
             Triple("HWIHA", "?", "입력 식별자가 올바르지 않습니다."),
         )) {
@@ -72,19 +72,57 @@ class HwihaReservedTurnRejectionTest {
                 pullNationTurnOf = { _, _ -> error("legacy nation ring pull") },
                 pullGeneralTurnOf = { pulls++ },
                 observeHandledTurn = { observations++ },
-                reservedActionOf = { ReservedTurn("action.enlist", "{}", requestId = "blocked-request") })
+                reservedActionOf = { ReservedTurn("placement.assign", "{}", requestId = "blocked-request") })
             val result = lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).single()
             assertFalse(result.fellBack)
             assertNotNull(result.hwihaOutcome)
             assertEquals("blocked-request", result.requestId)
-            assertEquals("action.enlist", result.reservedActionCode)
-            assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong())), world.getGeneralById(1))
+            assertEquals("placement.assign", result.reservedActionCode)
+            assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong()),
+                meta = if (profile == "HWIHA") HwihaPersonalTurn.after(original.meta, world.getState()) else original.meta), world.getGeneralById(1))
             assertEquals(1, pulls)
             assertEquals(1, observations)
             assertTrue(lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).isEmpty())
             assertEquals(1, pulls)
             assertTrue(handler.recorder.generalPatches().isNotEmpty())
         }
+    }
+
+    @Test fun `overdue HWIHA queue drains once per world phase before reservation read and survives scheduling`() {
+        val world = world("HWIHA")
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
+            aiHook = { _, _ -> error("legacy AI") }, actionRngFactory = { error("undelivered RNG") })
+        var reads = 0
+        var pulls = 0
+        val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { pulls++ },
+            reservedActionOf = { reads++; ReservedTurn("placement.assign", "{}") })
+        val late = Instant.EPOCH.plusSeconds(10801)
+        assertEquals(1, lifecycle.runTick(late).size)
+        assertTrue(lifecycle.runTick(late).isEmpty())
+        assertNull(lifecycle.nextGeneralRunTime())
+        assertEquals(1, reads)
+        assertEquals(1, pulls)
+        world.setCurrentDate(200, 1, 2)
+        assertNotNull(lifecycle.nextGeneralRunTime())
+        assertEquals(1, lifecycle.runTick(late).size)
+        assertTrue(lifecycle.runTick(late).isEmpty())
+        assertEquals(2, reads)
+        assertEquals(2, pulls)
+        assertEquals(Instant.EPOCH.plusSeconds(7200), world.getGeneralById(1)!!.turnTime)
+        world.setCurrentDate(200, 1, 1)
+        assertTrue(lifecycle.runTick(late).isEmpty())
+        assertEquals(2, reads)
+    }
+
+    @Test fun `corrupt persisted phase stamp fails before reading or mutating a reservation`() {
+        val world = world("HWIHA")
+        val general = world.getGeneralById(1)!!
+        world.applyGeneralDirtyFree(general.copy(meta = general.meta + (HwihaPersonalTurn.META_KEY to "corrupt")))
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
+        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { error("reservation must not be read") })
+        assertFailsWith<IllegalStateException> { lifecycle.runTick(Instant.EPOCH.plusSeconds(1)) }
+        assertFalse(handler.recorder.isDirty)
+        assertEquals(Instant.EPOCH, world.getGeneralById(1)!!.turnTime)
     }
 
 }

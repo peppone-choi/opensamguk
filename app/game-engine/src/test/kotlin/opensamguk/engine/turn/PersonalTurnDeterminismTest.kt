@@ -158,7 +158,7 @@ class PersonalTurnDeterminismTest {
     }
     @Test
     fun `undelivered and wrong profile inputs do not consume an action random stream`() {
-        for (code in listOf("휴식", "action.enlist")) {
+        for (code in listOf("휴식", "placement.assign")) {
             val seeds = mutableListOf<String>()
             val result = handler(world(RuleProfile.HWIHA, listOf(gen(17))), seeds)
                 .handle(17, code, 200, 6, "14:00")

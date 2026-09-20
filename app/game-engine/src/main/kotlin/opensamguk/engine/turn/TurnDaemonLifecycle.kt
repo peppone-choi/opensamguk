@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.engine.hwiha.HwihaPersonalTurn
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.tick.ServerClock
@@ -93,7 +95,7 @@ class TurnDaemonLifecycle(
 
     /** The first instant at which the strict `turnTime < runTime` gate can select any general. */
     fun nextGeneralRunTime(): Instant? =
-        world.listGenerals().minOfOrNull { it.turnTime }?.plusNanos(1)
+        world.listGenerals().filter(::eligibleInCurrentPhase).minOfOrNull { it.turnTime }?.plusNanos(1)
 
     /**
      * The generals due at [runTime], in deterministic order (ascending `turnTime`, then ascending id).
@@ -104,8 +106,11 @@ class TurnDaemonLifecycle(
      */
     fun dueGenerals(runTime: Instant): List<TurnGeneral> =
         world.listGenerals()
-            .filter { it.turnTime.isBefore(runTime) }
+            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
+
+    private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
+        world.ruleProfile != RuleProfile.HWIHA || HwihaPersonalTurn.eligible(general.meta, world.getState())
 
     class GeneralDrainCohort internal constructor(
         internal val identityTokens: Map<Int, Long>,
@@ -161,7 +166,7 @@ class TurnDaemonLifecycle(
         for (dueGeneral in due) {
             val g = world.getGeneralById(dueGeneral.generalId)
                 ?.takeIf {
-                    it.turnTime == dueGeneral.turnTime &&
+                    it.turnTime == dueGeneral.turnTime && eligibleInCurrentPhase(it) &&
                         cohort.identityTokens[it.id] == world.getGeneralIdentityToken(it.id)
                 }
                 ?: continue
@@ -180,7 +185,9 @@ class TurnDaemonLifecycle(
                 observeHandledTurn(result)
                 pullGeneralTurnOf(g.id)
                 val beforeAdvance = checkNotNull(world.getGeneralById(g.id))
-                val advanced = beforeAdvance.copy(turnTime = g.turnTime.plusSeconds(state.tickSeconds.toLong()))
+                val advanced = beforeAdvance.copy(turnTime = g.turnTime.plusSeconds(state.tickSeconds.toLong()),
+                    meta = if (world.ruleProfile == RuleProfile.HWIHA) HwihaPersonalTurn.after(beforeAdvance.meta, state)
+                        else beforeAdvance.meta)
                 handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeAdvance), PerTurnOverlay.toLogicGeneral(advanced))
                 world.applyGeneralDirtyFree(advanced)
                 continue
