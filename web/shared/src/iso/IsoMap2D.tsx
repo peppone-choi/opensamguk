@@ -22,7 +22,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { attachMapGestures } from './mapGestures';
-import { MapSurfaceCache, type SurfaceBounds } from './mapSurfaceCache';
+import type { SurfaceBounds } from './mapSurfaceCache';
+import { MapChunkCache, drawMapChunk } from './mapChunkCache';
 import { observePixelRatio } from './observePixelRatio';
 import {
   MAX_LEVEL,
@@ -197,7 +198,7 @@ export function IsoMap2D({
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const surfaceCache = useMemo(() => new MapSurfaceCache(),
+  const surfaceCache = useMemo(() => new MapChunkCache(),
     [data, sprites, tintMode, tintStrength, nationColorByOwner]);
   useEffect(() => () => surfaceCache.dispose(), [surfaceCache]);
 
@@ -259,6 +260,8 @@ export function IsoMap2D({
     // 화면 변환: 배율 1 에서 타일 폭 256px. 시작 배율은 전체가 담기도록 맞춘다.
     const view = viewRef.current;
     let frame = 0;
+    let zoomTimer: ReturnType<typeof setTimeout> | undefined;
+    let zooming = false;
 
     // 城 집기 상자. 표식과 같은 **화면 좌표**다. 매 그리기마다 다시 채운다.
     const hits: { city: PlacedCity; x0: number; x1: number; y0: number; y1: number }[] = [];
@@ -283,7 +286,7 @@ export function IsoMap2D({
       ];
     };
 
-    const drawSurface = (context: CanvasRenderingContext2D, bounds: SurfaceBounds) => {
+    const drawSurface = (context: CanvasRenderingContext2D, bounds: SurfaceBounds, renderScale = view.scale) => {
       const toCell = (x: number, y: number) => [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
       const corners = [toCell(bounds.x, bounds.y), toCell(bounds.x + bounds.width, bounds.y),
         toCell(bounds.x, bounds.y + bounds.height), toCell(bounds.x + bounds.width, bounds.y + bounds.height)];
@@ -367,7 +370,7 @@ export function IsoMap2D({
       // 세력 판정은 색 문자열로 한다. 같은 나라의 두 縣 은 같은 색을 받으므로 그 사이에는
       // 국경이 서지 않고, 대신 郡 경계가 남는다.
       {
-        const tilePixels = view.scale * TILE_SCREEN_WIDTH;
+        const tilePixels = renderScale * TILE_SCREEN_WIDTH;
         // 축소하면 아래 등급부터 끈다. 전체 보기(타일 13px)에서 郡 경계까지 다 그으면
         // 금이 땅보다 넓어져 세력 덩어리가 안 보인다.
         const showCounty = tilePixels >= 26;
@@ -386,7 +389,7 @@ export function IsoMap2D({
         const nationWidth = Math.max(1.2, Math.min(3, tilePixels / 12));
         const bandWidth = Math.max(1.5, Math.min(5, tilePixels / 9));
         // 띠 중심선이 국경선에서 떨어진 거리(세계 px). 잉크선 반 폭 + 띠 반 폭.
-        const bandOffset = (nationWidth / 2 + bandWidth / 2) / view.scale;
+        const bandOffset = (nationWidth / 2 + bandWidth / 2) / renderScale;
         const addBand = (key: string, ax: number, ay: number, bx: number, by: number,
           towardX: number, towardY: number) => {
           if (key === '') return;
@@ -445,14 +448,14 @@ export function IsoMap2D({
         // 띠를 먼저 긋고 잉크선을 위에 얹는다 — 모서리에서 띠가 이웃 쪽으로 새도 금이 덮는다.
         context.lineCap = 'square';
         for (const [key, path] of bandPaths) {
-          context.lineWidth = bandWidth / view.scale;
+          context.lineWidth = bandWidth / renderScale;
           if (isAchromaticNationColor(key)) {
             // 무채색은 'color' 합성으로 색이 안 나온다. 잉크 바탕에 회색 띠를 끊어 그어
             // 「주인 없음」이 아니라 「회색 세력」임을 보인다.
             context.setLineDash([]);
             context.strokeStyle = 'rgba(12, 15, 14, 0.85)';
             context.stroke(path);
-            context.setLineDash([(bandWidth * 2.2) / view.scale, (bandWidth * 1.4) / view.scale]);
+            context.setLineDash([(bandWidth * 2.2) / renderScale, (bandWidth * 1.4) / renderScale]);
           } else {
             context.setLineDash([]);
           }
@@ -468,7 +471,7 @@ export function IsoMap2D({
         ];
         for (const [path, style, width] of strokes) {
           context.strokeStyle = style;
-          context.lineWidth = width / view.scale;
+          context.lineWidth = width / renderScale;
           context.stroke(path);
         }
         context.restore();
@@ -525,18 +528,16 @@ export function IsoMap2D({
       const r0 = Math.max(0, Math.floor(Math.min(...rs)) - pad);
       const r1 = Math.min(rows - 1, Math.ceil(Math.max(...rs)) + pad);
 
-      const surface = surfaceCache.get({ width: w, height: h, ...view, dpr }, drawSurface);
-      const drawn = surface ? surface.tiles : drawSurface(context, {
+      const chunkFrame = surfaceCache.get({ width: w, height: h, ...view, dpr }, drawSurface, !zooming);
+      const drawn = chunkFrame ? chunkFrame.surfaces.reduce((sum, chunk) => sum + chunk.tiles, 0) : drawSurface(context, {
         x: -view.panX / view.scale, y: -view.panY / view.scale,
         width: w / view.scale, height: h / view.scale,
       });
-      if (surface) {
-        const b = surface.bounds;
-        // Smooth upscaled terrain only; native-density surfaces need no second filter.
-        context.imageSmoothingEnabled = surface.pixelRatio < dpr;
-        context.drawImage(surface.canvas, b.x, b.y, b.width, b.height);
-        context.imageSmoothingEnabled = view.scale < 1;
+      if (chunkFrame) {
+        for (const chunk of chunkFrame.surfaces) drawMapChunk(context, chunk, view.scale * dpr);
+        if (chunkFrame.pending) schedule();
       }
+      canvas.dataset.surfacePending = String(chunkFrame?.pending ?? false);
 
       // 城 건물 — 세계 좌표. 지형과 같은 배율로 서야 등급별 크기가 뜻을 갖는다.
       // 축소 상태에서는 郡治만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
@@ -673,6 +674,13 @@ export function IsoMap2D({
       if (!frame) frame = requestAnimationFrame(draw);
     };
 
+    const scheduleZoom = () => {
+      zooming = true;
+      if (zoomTimer !== undefined) clearTimeout(zoomTimer);
+      zoomTimer = setTimeout(() => { zoomTimer = undefined; zooming = false; schedule(); }, 120);
+      schedule();
+    };
+
     /** 화면 좌표 (x, y) 위에 있는 城. 위에 그려진 쪽을 먼저 집는다. */
     const cityAt = (x: number, y: number): PlacedCity | null => {
       for (let n = hits.length - 1; n >= 0; n -= 1) {
@@ -694,7 +702,7 @@ export function IsoMap2D({
         view.panX = x - (x - view.panX) * applied;
         view.panY = y - (y - view.panY) * applied;
         view.scale = next;
-        schedule();
+        scheduleZoom();
       },
     });
     // 마우스를 얹기만 해도 城 정보가 나와야 한다 — 눌러야 나오는 건 지도가 아니라 목록이다.
@@ -728,7 +736,7 @@ export function IsoMap2D({
       view.panX = mx - (mx - view.panX) * applied;
       view.panY = my - (my - view.panY) * applied;
       view.scale = next;
-      schedule();
+      scheduleZoom();
     };
     const onClick = (e: MouseEvent) => {
       if (!onPickTile && !onPickCity && !onPickBattlefield) return;
@@ -773,11 +781,11 @@ export function IsoMap2D({
         view.panX = mx - (mx - view.panX) * applied;
         view.panY = my - (my - view.panY) * applied;
         view.scale = next;
-        schedule();
+        scheduleZoom();
       },
       fit: () => {
         view.fitted = false;
-        schedule();
+        scheduleZoom();
       },
     };
 
@@ -794,6 +802,7 @@ export function IsoMap2D({
 
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      if (zoomTimer !== undefined) clearTimeout(zoomTimer);
       zoomRef.current = null;
       observer.disconnect();
       stopObservingPixelRatio();
