@@ -168,7 +168,7 @@ assert_project_cleanup() {
   local docker_capture="$3"
   local source_prefix="$4"
   local cleanup_artifact="$artifact_dir/cleanup-resources.txt"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local volumes=(pgdata redisdata profile-icons)
   local service
   local volume
@@ -202,7 +202,7 @@ run_build_mode_contracts() {
   local sequential_docker_capture="$tmp_dir/sequential-docker.txt"
   local default_artifact_dir="$tmp_dir/default-build-mode-artifacts"
   local sequential_artifact_dir="$tmp_dir/sequential-build-mode-artifacts"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local builds=()
   local index
 
@@ -217,7 +217,7 @@ run_build_mode_contracts() {
   "$gate"
 
   grep -Fq ' up -d --build' "$default_capture" || fail "default build mode did not preserve compose up -d --build"
-  if grep -Eq ' build (gateway-api|game-api|game-engine|web-gateway|web-game)$' "$default_capture"; then
+  if grep -Eq ' build (gateway-api|board-api|game-api|game-engine|web-gateway|web-game)$' "$default_capture"; then
     fail "default build mode unexpectedly performed sequential service builds"
   fi
   assert_project_cleanup default-build "$default_artifact_dir" "$default_docker_capture" opensamguk
@@ -232,7 +232,7 @@ run_build_mode_contracts() {
   E2E_ARTIFACT_DIR="$sequential_artifact_dir" \
   "$gate"
 
-  mapfile -t builds < <(grep -E ' build (gateway-api|game-api|game-engine|web-gateway|web-game)$' "$sequential_capture")
+  mapfile -t builds < <(grep -E ' build (gateway-api|board-api|game-api|game-engine|web-gateway|web-game)$' "$sequential_capture")
   [[ "${#builds[@]}" == "${#services[@]}" ]] || fail "sequential build mode did not build each application service exactly once"
   for index in "${!services[@]}"; do
     [[ "${builds[$index]}" == *" build ${services[$index]}" ]] || {
@@ -259,7 +259,7 @@ run_prebuilt_image_contracts() {
   local invalid_output="$tmp_dir/invalid-prebuilt-prefix.log"
   local missing_output="$tmp_dir/missing-prebuilt-source.log"
   local existing_output="$tmp_dir/existing-prebuilt-target.log"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local service
 
   export E2E_IMAGE_CAPTURE_FILE="$default_capture"
@@ -348,7 +348,7 @@ run_failure_cleanup_contracts() {
   local cleanup_artifact_dir="$tmp_dir/cleanup-failure-artifacts"
   local playwright_docker_capture="$tmp_dir/playwright-failure-docker.txt"
   local cleanup_docker_capture="$tmp_dir/cleanup-failure-docker.txt"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local service
 
   export E2E_DOCKER_CAPTURE_FILE="$playwright_docker_capture"

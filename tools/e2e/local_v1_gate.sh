@@ -75,7 +75,7 @@ if [[ ! "$compose_project_name" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
 fi
 printf '%s\n' "$compose_project_name" >"$artifact_dir/compose-project-name.txt"
 
-application_services=(gateway-api game-api game-engine web-gateway web-game)
+application_services=(gateway-api board-api game-api game-engine web-gateway web-game)
 owned_image_aliases=()
 owned_volume_names=()
 cleanup_resources_file="$artifact_dir/cleanup-resources.txt"
