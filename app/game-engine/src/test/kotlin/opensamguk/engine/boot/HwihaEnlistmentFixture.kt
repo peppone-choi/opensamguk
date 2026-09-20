@@ -45,7 +45,7 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
-    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>): opensamguk.engine.run.TurnRunService {
+    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false): opensamguk.engine.run.TurnRunService {
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
         val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
         val handler = ReservedTurnHandler(active,
@@ -60,6 +60,10 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
             override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
         }
         return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher,
+            auctionRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.AuctionRepository::class.java) else null,
+            auctionBidRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.AuctionBidRepository::class.java) else null,
+            boardPostRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.BoardPostRepository::class.java) else null,
+            commandInboxRepository = if (intake) opensamguk.infra.persistence.CommandInboxRepository(NamedParameterJdbcTemplate(jdbc)) else null,
             commandOutboxRelay = opensamguk.engine.redis.CommandOutboxRelay(
                 opensamguk.infra.persistence.CommandResultRepository(NamedParameterJdbcTemplate(jdbc)), publisher, id))
     }

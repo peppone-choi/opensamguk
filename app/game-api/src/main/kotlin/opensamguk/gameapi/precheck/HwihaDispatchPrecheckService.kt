@@ -17,8 +17,12 @@ class HwihaDispatchPrecheckService(
     fun assessDispatch(request: DispatchRequest, ownerUserId: Long): DispatchAssessment {
         owned(request.actorId, ownerUserId)
         val snapshot = snapshot()
-        return snapshot.failure?.let { DispatchAssessment.Rejected(it) }
-            ?: HwihaDispatchRules.assess(request, snapshot.state!!)
+        snapshot.failure?.let { return DispatchAssessment.Rejected(it) }
+        return try {
+            val actor = snapshot.state!!.people.single { it.id == request.actorId }
+            if (HwihaQueuedDispatch.read(actor.meta) != null) DispatchAssessment.Rejected(DispatchFailure.ALREADY_QUEUED)
+            else HwihaDispatchRules.assess(request, snapshot.state)
+        } catch (_: IllegalArgumentException) { DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE) }
     }
 
     fun assessReply(request: DispatchReplyRequest, ownerUserId: Long): DispatchAssessment {

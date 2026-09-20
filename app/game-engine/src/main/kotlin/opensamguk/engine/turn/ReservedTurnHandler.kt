@@ -198,6 +198,7 @@ class ReservedTurnHandler(
 ) {
 
     private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
+    val courtHandler by lazy { opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -267,6 +268,8 @@ class ReservedTurnHandler(
                 HwihaEnlistmentHandler.INPUT_ID to InputHandler {
                     applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month)
                 },
+                "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
+                "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
             ))
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
                 is InputResolution.Rejected -> HwihaTurnOutcome.Rejected(

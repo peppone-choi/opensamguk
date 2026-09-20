@@ -109,6 +109,29 @@ class CommandReserveServiceTest {
         assertEquals("reservationAccepted", results.rows.single().resultType)
     }
 
+    @Test fun `court request collision binds actor owner input and canonical arguments`() {
+        val admission = mock(HwihaCourtAdmission::class.java)
+        val base = opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput(
+            "client-id", 10, 999, "court.dispatch", "{args}")
+        val variants = listOf(base.copy(generalId = 11) to 42,
+            base to 43, base.copy(inputId = "court.dispatchReply") to 42,
+            base.copy(argJson = "{other}") to 42)
+        for ((variant, owner) in variants) {
+            `when`(admission.canonicalArguments(10, 42, base.inputId, base.argJson)).thenReturn(base.argJson)
+            `when`(admission.canonicalArguments(variant.generalId, owner, variant.inputId, variant.argJson)).thenReturn(variant.argJson)
+            val inbox = RecordingInbox()
+            val service = CommandReserveService(RecordingReservedTurns(), inbox, RecordingResults(), redis(),
+                CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture",
+                requestIds = { "court-collision" }, transactions = TestTransactions,
+                worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = admission)
+            service.publishImmediate(base, 42)
+            service.publishImmediate(base.copy(requestId = "another-client-id", ownerUserId = 777), 42)
+            assertFailsWith<IllegalStateException> { service.publishImmediate(variant, owner) }
+            assertEquals(1, inbox.accepted.size)
+            assertEquals(42, inbox.accepted.single().ownerUserId)
+        }
+    }
+
     private class RecordingReservedTurns :
         ReservedTurnRepository(mock(NamedParameterJdbcTemplate::class.java)) {
         data class ReserveCall(

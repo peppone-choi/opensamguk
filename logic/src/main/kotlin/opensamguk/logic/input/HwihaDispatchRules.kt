@@ -8,11 +8,18 @@ data class DispatchCounty(val id: Int, val nationId: Int)
 data class HwihaDispatchProjection(val profile: RuleProfile, val people: List<DispatchPerson>,
     val retainers: List<DispatchRetainer>, val counties: List<DispatchCounty>)
 
-enum class DispatchFailure {
-    WRONG_RULE_PROFILE, ACTOR_NOT_FOUND, NOT_LORD, TARGET_NOT_FOUND, TARGET_NOT_HUMAN,
-    NOT_DIRECT_RETAINER, DIFFERENT_NATION, INVALID_COUNTY, COUNTY_OCCUPIED, ALREADY_PENDING,
-    NO_DISPATCH, ALREADY_RESOLVED, NOT_RECIPIENT, RELATION_CHANGED, POLICY_UNAVAILABLE, STATE_UNAVAILABLE,
+enum class DispatchFailure(val message: String) {
+    WRONG_RULE_PROFILE("이 월드의 규칙에서 사용할 수 없는 입력입니다."),
+    ACTOR_NOT_FOUND("장수를 찾을 수 없습니다."), NOT_LORD("주공만 발령할 수 있습니다."),
+    TARGET_NOT_FOUND("발령 대상 장수를 찾을 수 없습니다."), TARGET_NOT_HUMAN("사람이 조작하는 장수에게만 발령할 수 있습니다."),
+    NOT_DIRECT_RETAINER("직접 거느린 장수에게만 발령할 수 있습니다."), DIFFERENT_NATION("같은 세력의 장수에게만 발령할 수 있습니다."),
+    INVALID_COUNTY("발령할 수 있는 아군 현을 선택해 주세요."), COUNTY_OCCUPIED("이미 담당 장수나 대기 중인 발령이 있는 현입니다."),
+    ALREADY_PENDING("대상 장수가 이전 발령에 아직 응답하지 않았습니다."), NO_DISPATCH("응답할 발령이 없습니다."),
+    ALREADY_QUEUED("다음 턴에 실행할 발령이 이미 있습니다."), ALREADY_RESOLVED("이미 처리된 발령입니다."),
+    NOT_RECIPIENT("자신에게 도착한 발령에만 응답할 수 있습니다."), RELATION_CHANGED("발령 이후 소속이나 휘하 관계가 바뀌었습니다."),
+    POLICY_UNAVAILABLE("발령 정책을 확인할 수 없습니다."), STATE_UNAVAILABLE("저장된 발령 상태를 확인할 수 없습니다."),
 }
+
 sealed interface DispatchAssessment {
     data class Eligible(val issuer: DispatchPerson, val target: DispatchPerson, val card: DispatchRetainer) : DispatchAssessment
     data class Rejected(val reason: DispatchFailure) : DispatchAssessment

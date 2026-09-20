@@ -14,9 +14,11 @@ class HwihaDispatchExecutor(
     private val recorder: ChangeRecorder,
     private val policy: HwihaDispatchPolicy = HwihaDispatchPolicy(),
 ) {
+    fun assess(request: DispatchRequest): DispatchAssessment = projection()?.let { HwihaDispatchRules.assess(request, it) }
+        ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
+
     fun issue(dispatchId: String, request: DispatchRequest): DispatchExecution {
-        val assessment = projection()?.let { HwihaDispatchRules.assess(request, it) }
-            ?: return reject(DispatchFailure.STATE_UNAVAILABLE)
+        val assessment = assess(request)
         if (assessment is DispatchAssessment.Rejected) return reject(assessment.reason)
         assessment as DispatchAssessment.Eligible
         val now = now()

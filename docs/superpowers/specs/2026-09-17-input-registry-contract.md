@@ -9,7 +9,7 @@
 
 사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언을 적고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 누락만 SAMMO 기본값이며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
-2026-09-21 현재 원장은 출사 `action.enlist`만 HANDLER_READY이고 나머지6행은 PLANNED다. 이 결정은 입력 기능 완료나 계약 전체의 승격이 아니다. actor·권한·효과 봉투는 출사 소비자의 접수·실행 계약을 따르며, 아래 WORK·UI·이전 관련 미결을 기반 구현 완료로 포장하지 않는다.
+2026-09-21 현재 원장은 출사 `action.enlist`와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 나머지4행은 PLANNED다. 이 결정은 입력 기능 완료나 계약 전체의 승격이 아니다. actor·권한·효과 봉투는 출사 소비자의 접수·실행 계약을 따르며, 아래 WORK·UI·이전 관련 미결을 기반 구현 완료로 포장하지 않는다.
 
 ## 1. 왜 필요한가 — 2026-09-17 SAMMO 경로 관측
 
@@ -20,7 +20,7 @@
 | 새 결과 타입을 직렬화기 집합에 안 넣으면 턴 루프 전체가 멈춘다 | `TurnDaemonCommandResultSerializer` `else -> throw` 전례(2026-09-06 boardRead) | 입력이 늘수록 같은 사고가 난다 — 등록을 한 곳에서 강제해야 한다 |
 | 제품 범위 정본이 알파 카탈로그 124행(기존 별칭 70) | `data/commands/public-alpha-command-catalog.json`, `PublicCommandCatalogIndex` | ADR-LITE-057 이 정본 지위를 거뒀다. 새 원장이 필요하다 |
 
-현재는 `HwihaInputRegistry`와 출사 HANDLER_READY·나머지6행 PLANNED 원장이 구현돼 있다. 아래 관측은 기존 경로의 출발점이며, 남은 작업은 새 입력의 실제 소비자 연결이다.
+현재는 `HwihaInputRegistry`와 출사·발령·응답 HANDLER_READY·나머지4행 PLANNED 원장이 구현돼 있다. 아래 관측은 기존 경로의 출발점이며, 남은 작업은 새 입력의 실제 소비자 연결이다.
 
 ## 2. 식별과 종류
 
@@ -114,7 +114,7 @@ tutorialObjectiveId|N/A, legacyCommands[], deliveryState
 - 방랑 주공은 출사 후 주공 지위를 잃는다. 그가 사람 장수를 직접 거느렸다면 `HUMAN_RETAINER_REQUIRES_LORD`로 거절하며 자동 재배속하지 않는다. 누락 장수·이중 주인·순환·소속 불일치·개인 휘하 내부 비주공의 사람 장수 지배는 `INVALID_RETINUE`다.
 - `HwihaEnlistmentRules.assess`를 사전검사와 실행 재검사에서 공유한다. 실행은 최신 스냅샷으로 다시 평가해야 한다. 랜덤 선택은 재검사 뒤 하며 후보 하나일 때 RNG를 소비하지 않는다. 반환 계획은 저장 완료 결과가 아니다.
 
-현재 구현은 순수 판정, 서버 명망 정책, 실제 API/예약·개인 턴 실행·결과 조회와 flush/콜드 재로드 검증까지 포함한다. 출사는 HANDLER_READY이며 나머지6행은 PLANNED다. 출사 화면과 기본 NPC 선택 연결은 구현 중이며 실제 브라우저·AI 저장 검증 전에는 상태를 승격하지 않는다. 지연 등장 주공지위 전달과 한 州 플레이는 아직 남아 있다. 기존 `JoinCommand`의 도시 즉시이동이나 `RetainerHandler`의 NPC 주공 금지를 새 입력에 그대로 적용하지 않는다. 새 범용 입력 프레임워크나 별도 저장 경로는 만들지 않는다.
+현재 구현은 순수 판정, 서버 명망 정책, 실제 API/예약·개인 턴 실행·결과 조회와 flush/콜드 재로드 검증까지 포함한다. 출사·발령·응답은 HANDLER_READY이며 나머지4행은 PLANNED다. 출사 화면과 기본 NPC 선택 연결은 구현 중이며 실제 브라우저·AI 저장 검증 전에는 상태를 승격하지 않는다. 지연 등장 주공지위 전달과 한 州 플레이는 아직 남아 있다. 기존 `JoinCommand`의 도시 즉시이동이나 `RetainerHandler`의 NPC 주공 금지를 새 입력에 그대로 적용하지 않는다. 새 범용 입력 프레임워크나 별도 저장 경로는 만들지 않는다.
 
 
 ### 주공 상태의 첫 저장 연결
@@ -143,7 +143,7 @@ V55의 주공별 이름 유일성은 실제 인물과 생성 카드 모두에 �
 
 HWIHA 입력과 다른 프로필에 들어온 새 형식 입력은 기존 AI·국가 명령·휴식 정의에 넘기지 않는다. 실행 결과는 `HwihaTurnOutcome`으로 구분하고, 기존 `CommandLifecycleResult`의 `executionRejected`·`code`·`reason`으로 원래 requestId/inputId를 보존한다. `fellBack=false`를 새 입력의 성공으로 해석하지 않는다.
 
-출사는 실제 `HwihaEnlistmentHandler`를 registry에 등록하여 현재 상태 재검사 후 소속·휘하 관계를 변경한다. 나머지6행은 PLANNED이며 NOT_DELIVERED로 거절한다. 다른 프로필·미등록·잘못된 식별자는 기존의 명시적 거절을 유지한다. 거절 예약은 개인 슬롯 한 개를 소비하고 기존 개인 마감 시각에 월드 tickSeconds를 더한 시각으로 전진한다. 상태·슬롯 소비·거절 결과는 기존 단일 flush/재시도 경로를 공유한다. 이 경로에 기존 부상 회복·차단·국가 AI·killturn 사망/환생을 적용하지 않는다. 출사는 소속을 변경하고 해당 개인 턴을 종료한다. 정치→이동→전투 전체 순서·HWIHA AI·월 경계 처리는 후속 연결이며, 현재 경로로 S3 실행 완료를 주장하지 않는다.
+출사는 실제 `HwihaEnlistmentHandler`를 registry에 등록하여 현재 상태 재검사 후 소속·휘하 관계를 변경한다. 발령과 응답은 별도 조정 입력 경로에서 처리하며 개인 예약으로 넣으면 INVALID_INPUT_CHANNEL로 거절한다. 나머지4행은 PLANNED이며 NOT_DELIVERED로 거절한다. 다른 프로필·미등록·잘못된 식별자는 기존의 명시적 거절을 유지한다. 거절 예약은 개인 슬롯 한 개를 소비하고 기존 개인 마감 시각에 월드 tickSeconds를 더한 시각으로 전진한다. 상태·슬롯 소비·거절 결과는 기존 단일 flush/재시도 경로를 공유한다. 이 경로에 기존 부상 회복·차단·국가 AI·killturn 사망/환생을 적용하지 않는다. 출사는 소속을 변경하고 해당 개인 턴을 종료한다. 정치→이동→전투 전체 순서·HWIHA AI·월 경계 처리는 후속 연결이며, 현재 경로로 S3 실행 완료를 주장하지 않는다.
 
 인물 명망 비용의 순수 식과 신규 시작 상한은 상위 설계 §2.8/§6.6을 따른다. 저장된 명망·수락 여부·검증된 능력치 출처를 읽는 서버 정책은 클라이언트 인자로 대체할 수 없다.
 
@@ -201,4 +201,11 @@ HWIHA 시드의 개인 예약은 빈 큐로 시작한다. 예약된 행의 실�
 - 수락·만료 시 현재 직속 관계와 縣 소유권을 재검사한다. 만료 시 관계나 목적지가 무효면 취소하며 자동 전향·이동·벌점을 만들지 않는다. 함락된 縣에 대한 이전 세력의 배속은 새 소유자의 자리를 점유하지 않는다.
 - 보류·수락·거절 상태와 부임 목표는 비공개 장수 metadata에 typed codec으로 저장하고 기존 recorder→flush→cold reload를 사용한다.
 
-현재는 도메인 전이와 저장 경로를 구현·검증하는 단계다. 발령 접수·결정권자 턴의 실행·응답 즉시 처리·만료 스케줄링·화면은 아직 연결되지 않았으므로 두 입력의 카탈로그는 `PLANNED`를 유지한다.
+발령 접수·결정권자 턴 실행·응답 즉시 처리·만료 스케줄링을 연결하며 두 입력을 `HANDLER_READY`로 등록한다. 화면·NPC 주공의 자동 발령·행군은 후속이며 UI_READY나 S3 완료로 승격하지 않는다.
+
+- `POST /api/commands/court/dispatch?generalId=...`는 `targetGeneralId`, `countyId`만 받는다. 인증 계정과 장수 소유권을 검사하고 서버가 requestId·제출자를 묶어 기존 durable inbox에 접수한다. 내용이 다른 동일 requestId는 충돌이다.
+- 엔진 접수는 주공 metadata에 대기 발령 한 건을 저장한다. 개인 예약 12칸을 사용하지 않으며, 다음 실행 가능한 주공 턴에 개인 행동과 별도로 현재 권한·소속·목적지를 재검사해 전달한다. 소유자가 바뀌면 거절하고 큐를 소비한다.
+- 접수 결과 seq1은 대기이며 발령 실행 결과 seq2까지 실행 성공을 표시하지 않는다. 큐 소비·대상 발령·결과는 같은 flush에 들어간다. 콜드 재시작이나 저장 재시도는 중복 발령을 만들지 않는다.
+- `POST /api/commands/court/dispatchReply?generalId=...`는 `dispatchId`, `accept`만 받으며 개인 행동을 소모하지 않는다. 순을 진행하는 tick은 먼저 경계와 만료를 확정한 뒤 조정 입력을 원래 순서로 처리한다. 해당 tick에 이미 끝난 주공 턴으로 새 접수를 소급 실행하지 않는다. 순을 진행하지 않는 intake/general drain은 현재 확정된 순을 기준으로 한다.
+- `GET /api/commands/dispatches?generalId=...`는 본인 장수의 발령 및 현재 직접 거느린 장수에게 본인이 낸 발령만 반환한다. 결과 조회는 접수 당시 제출자만 읽으며 새 장수 소유자에게 이전 요청 내용을 넘기지 않는다.
+- 거절 시 공통 실패 코드와 한국어 사유를 반환한다. 타 프로필·미등록·다른 입력 채널은 기존 명령으로 우회하지 않는다.
