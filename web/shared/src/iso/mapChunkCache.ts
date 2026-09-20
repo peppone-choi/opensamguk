@@ -9,12 +9,13 @@ export interface MapChunk {
   ratio: number;
   scale: number;
   tiles: number;
+  composite?: { revision: object; canvas: HTMLCanvasElement };
 }
 export interface ChunkFrame { surfaces: MapChunk[]; pending: boolean }
 export type ChunkRenderer = (context: CanvasRenderingContext2D, bounds: SurfaceBounds, scale: number) => number;
 const SIDE = 512;
 const INTERIOR = SIDE - 2;
-const LIMIT = 16; // 16 × 512² = 4,194,304 pixels (16 MiB RGBA).
+const LIMIT = 16; // Terrain16 MiB + optional composites16 MiB, released together on eviction.
 const VISIBLE_LIMIT = 12; // Reserve four allocations for neighbouring chunks.
 const intersects = (a: SurfaceBounds, b: SurfaceBounds) =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
@@ -99,16 +100,32 @@ export class MapChunkCache {
     return { surfaces: [...old, ...current], pending: settled && targets.some(t => !this.chunks.has(t.key)) };
   }
 
+  /** Political changes rebuild only the composite; the terrain bitmap stays intact. */
+  decorate(chunk: MapChunk, revision: object, render: ChunkRenderer): HTMLCanvasElement | null {
+    if (chunk.composite?.revision === revision) return chunk.composite.canvas;
+    const canvas = chunk.composite?.canvas ?? this.createCanvas();
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    canvas.width = SIDE; canvas.height = SIDE;
+    context.drawImage(chunk.canvas, 0, 0);
+    const b = chunk.rasterBounds;
+    context.setTransform(chunk.ratio, 0, 0, chunk.ratio, -b.x * chunk.ratio, -b.y * chunk.ratio);
+    render(context, b, chunk.scale);
+    chunk.composite = { revision, canvas };
+    return canvas;
+  }
+
   private remove(key: string): void {
     const chunk = this.chunks.get(key)!;
     chunk.canvas.width = 0; chunk.canvas.height = 0;
+    if (chunk.composite) { chunk.composite.canvas.width = 0; chunk.composite.canvas.height = 0; }
     this.chunks.delete(key);
   }
   dispose(): void { for (const key of this.chunks.keys()) this.remove(key); }
 }
 
 /** Clip the interior but sample the gutter, avoiding filtering seams at chunk edges. */
-export function drawMapChunk(context: CanvasRenderingContext2D, chunk: MapChunk, displayRatio: number): void {
+export function drawMapChunk(context: CanvasRenderingContext2D, chunk: MapChunk, displayRatio: number, image = chunk.canvas, overlay?: (context: CanvasRenderingContext2D) => void): void {
   const b = chunk.bounds, r = chunk.rasterBounds;
   context.save();
   // Integer device-pixel clip edges avoid alpha seams between adjacent clips.
@@ -120,6 +137,7 @@ export function drawMapChunk(context: CanvasRenderingContext2D, chunk: MapChunk,
   const y1 = (Math.round((b.y + b.height) * transform.d + transform.f) - transform.f) / transform.d;
   context.beginPath(); context.rect(x0, y0, x1 - x0, y1 - y0); context.clip();
   context.imageSmoothingEnabled = chunk.ratio !== displayRatio;
-  context.drawImage(chunk.canvas, r.x, r.y, r.width, r.height);
+  context.drawImage(image, r.x, r.y, r.width, r.height);
+  overlay?.(context);
   context.restore();
 }
