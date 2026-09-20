@@ -22,9 +22,10 @@
   },
   "counts": {
     "NAME_ONLY_REQUIRES_BOUNDARY_REVIEW": 633,
-    "NO_EXACT_CLAUSE": 165,
+    "NO_EXACT_CLAUSE": 145,
     "SOURCE_PLACEHOLDER": 3,
     "UNIQUE_CLAUSE_CANDIDATE": 378,
+    "UNRESOLVED_BODY_MARKER": 20,
     "UNSUPPORTED_MARKUP": 1
   },
   "groups": [
@@ -213,7 +214,10 @@
           "body": "菀陵有[C97B]林。有制泽。有琐候亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[C97B]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河南尹\",11]",
@@ -247,7 +251,10 @@
           "body": "穀城[E767]水出。有函谷关。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[E767]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河南尹\",13]",
@@ -281,7 +288,10 @@
           "body": "巩有寻谷水。有东訾聚，今名訾城。有坎[C279]聚。有黄亭。有湟水。有明谿泉。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[C279]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河南尹\",15]",
@@ -354,7 +364,11 @@
           "body": "新城有高都城。有广成聚。有[D822]聚，古[D822]氏，今名蛮中。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[D822]",
+            "[D822]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河南尹\",19]",
@@ -453,7 +467,10 @@
           "body": "怀有[DAF4]城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[DAF4]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",2]",
@@ -492,7 +509,10 @@
           "body": "轵有原乡。有[CA4D]梁。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[CA4D]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",4]",
@@ -509,7 +529,10 @@
           "body": "波有[D13D]城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[D13D]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",5]",
@@ -543,7 +566,10 @@
           "body": "野王有太行山。有射犬聚。有[B534]城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[B534]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",7]",
@@ -689,7 +715,10 @@
           "body": "共本国。淇水出。有[B02A]亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[B02A]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",15]",
@@ -740,7 +769,10 @@
           "body": "荡阴有[BD39]里城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[BD39]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河內郡\",18]",
@@ -1012,7 +1044,10 @@
           "body": "永安故[E5E9]，陽嘉二年更名。有霍大山。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[E5E9]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"河東郡\",13]",
@@ -1463,7 +1498,10 @@
           "body": "新丰有骊山，东有鸿门亭及戏亭。有[C37D]城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[C37D]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"京兆尹\",6]",
@@ -1662,7 +1700,10 @@
           "body": "祋祤永元九年夏。[1111]",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[1111]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[109,\"左馮翊\",5]",
@@ -3159,7 +3200,11 @@
           "body": "宋，公國，周名[C745]丘，漢改為新[C745]，章帝建初四年徙宋公於此。有繁陽亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[C745]",
+            "[C745]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[110,\"汝南郡\",32]",
@@ -3641,7 +3686,10 @@
           "body": "酇，有[D279]聚。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[D279]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[110,\"沛國\",6]",
@@ -7070,7 +7118,10 @@
           "body": "臨邑有[B925]廟。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[B925]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"東郡\",9]",
@@ -7724,7 +7775,10 @@
           "body": "費侯國，故屬東海。有[BD25]亭。有臺亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[BD25]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"泰山郡\",12]",
@@ -7806,7 +7860,10 @@
           "body": "蛇丘有遂鄕。有下[F446]亭。有鑄鄕城。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[F446]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"濟北國\",3]",
@@ -10573,7 +10630,10 @@
           "body": "東安平，故屬菑川。六國時曰安平。有[F043]亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[F043]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[112,\"北海國\",10]",
@@ -17396,7 +17456,10 @@
           "body": "律高石室山出锡。[B428]町山出银、铅。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[B428]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[113,\"益州郡\",5]",

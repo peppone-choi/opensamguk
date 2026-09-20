@@ -47,6 +47,11 @@ def align_note_bodies(rows: list[dict], witness: str, table: dict[str, str]) -> 
             status = "SOURCE_PLACEHOLDER"
         elif body is None:
             status = "UNSUPPORTED_MARKUP"
+        elif markers := re.findall(r"\[[0-9A-Fa-f]{4}\]|\ufffd", body):
+            # Preserve unresolved source markers, including numeric markers whose
+            # meaning needs review; never silently repair or use them as anchors.
+            row["bodyMarkers"] = markers
+            status = "UNRESOLVED_BODY_MARKER"
         elif fold(body) == fold(source["sourceName"]):
             status = "NAME_ONLY_REQUIRES_BOUNDARY_REVIEW"
         elif not fold(body).startswith(fold(source["sourceName"])):

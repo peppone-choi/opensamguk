@@ -87,6 +87,16 @@ class CountyNoteAlignmentTest(unittest.TestCase):
         self.assertEqual(rows[0]["comparison"], "UNIQUE_CLAUSE_CANDIDATE")
         self.assertEqual(rows[0]["body"], "陽城有鐵")
 
+    def test_body_markers_are_not_hidden_as_ordinary_mismatches_or_matches(self):
+        for body in ("酇有[D279]聚", "宋周名[C745]丘漢改為新[C745]", "祋祤永元九年夏[1111]", "酇有�聚"):
+            with self.subTest(body=body):
+                rows, _ = audit.align_note_bodies(
+                    [{"sourceName": body[:1], "body": body}], body, {})
+                self.assertEqual(rows[0]["comparison"], "UNRESOLVED_BODY_MARKER")
+                self.assertEqual(rows[0]["candidates"], [])
+                self.assertEqual(rows[0]["body"], body)
+                self.assertTrue(rows[0]["bodyMarkers"])
+
     def test_placeholder_never_becomes_candidate(self):
         rows, _ = audit.align_note_bodies([{"sourceName": "参[�]", "body": "参[�]有鐵", "sourceNameStatus": "SOURCE_PLACEHOLDER"}], "参[�]有鐵", {})
         self.assertEqual(rows[0]["comparison"], "SOURCE_PLACEHOLDER")
