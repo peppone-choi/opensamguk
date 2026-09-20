@@ -62,7 +62,17 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
     fun onIssuerTurn(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = HwihaQueuedDispatch.read(actor.meta) ?: return
+        val queued = HwihaQueuedDispatch.read(actor.meta)
+        if (queued == null) {
+            HwihaNpcDispatchSelector.select(world, generalId, executor)?.let { request ->
+                if (executor.issue(HwihaNpcDispatchSelector.dispatchId(world, request), request) is DispatchExecution.Applied) {
+                    world.pushLog(LogEntryDraft(scope = "general", category = "action",
+                        text = "담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다.",
+                        generalId = request.targetGeneralId, nationId = actor.nationId))
+                }
+            }
+            return
+        }
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, "court.dispatch", false, "FORBIDDEN", "발령 제출 후 장수 소유자가 변경되었습니다.")
         } else when (val applied = executor.issue(queued.requestId,
