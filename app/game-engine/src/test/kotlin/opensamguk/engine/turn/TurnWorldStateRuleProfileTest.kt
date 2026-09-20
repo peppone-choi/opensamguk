@@ -24,4 +24,14 @@ class TurnWorldStateRuleProfileTest {
     fun `unknown text fails instead of quietly becoming SAMMO`() {
         assertFailsWith<IllegalArgumentException> { state(mapOf("ruleProfile" to "hwiha")).ruleProfile }
     }
+
+    @Test
+    fun `non string config values fail instead of quietly becoming SAMMO`() {
+        for (value in listOf(1, true, listOf("HWIHA"), mapOf("name" to "HWIHA"))) {
+            assertFailsWith<IllegalArgumentException>("invalid ruleProfile: $value") {
+                state(mapOf("ruleProfile" to value)).ruleProfile
+            }
+        }
+    }
+
 }
