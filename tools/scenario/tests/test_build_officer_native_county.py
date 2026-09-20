@@ -54,7 +54,7 @@ def _gazetteer():
 
 def _hit(name, place, book="三國志", volume="卷01", zi="某"):
     return {"nameKanjiTraditional": name, "courtesyName": zi, "placeText": place, "form": "A", "book": book,
-            "volume": volume, "title": "t", "quote": f"{name}字{zi}，{place}人也", "volumeSha256": "0"}
+            "volume": volume, "title": "t", "quote": f"{name}字{zi}，{place}人也", "volumeSha256": "0" * 64}
 
 
 def _ledger(registry_names, hits, scenario=None):
@@ -189,6 +189,38 @@ class LedgerRuleTest(unittest.TestCase):
         bad["quote"] = "張飛字益德，河東解人也"
         with self.assertRaises(builder.LedgerError):
             _ledger(["関羽"], [bad])
+
+
+class ExtractIdentityTest(unittest.TestCase):
+    def test_committed_taboo_forms_retain_their_identity(self):
+        payload = builder._load_json(builder.EXTRACTS_PATH)
+        special = [h for h in payload["hits"] if h["form"] in ("E", "F")]
+        self.assertEqual({(h["nameKanjiTraditional"], h["form"]) for h in special},
+                         {("劉備", "E"), ("曹操", "F")})
+        builder.validate_extracts({**payload, "hits": special}, builder.CharTables(builder._load_json(builder.CHAR_MAP_PATH)))
+
+    def test_taboo_forms_reject_another_person_name(self):
+        payload = builder._load_json(builder.EXTRACTS_PATH)
+        tables = builder.CharTables(builder._load_json(builder.CHAR_MAP_PATH))
+        for hit in payload["hits"]:
+            if hit["form"] not in ("E", "F"):
+                continue
+            with self.subTest(form=hit["form"]):
+                forged = {**hit, "nameKanjiTraditional": "張飛"}
+                with self.assertRaises(builder.LedgerError):
+                    builder.validate_extracts({**payload, "hits": [forged]}, tables)
+
+    def test_volume_digest_must_be_a_sha256_string(self):
+        for digest in (None, "", "0", "g" * 64, 123):
+            with self.subTest(digest=digest):
+                hit = _hit("關羽", "河東解")
+                hit["volumeSha256"] = digest
+                with self.assertRaises(builder.LedgerError):
+                    _ledger(["関羽"], [hit])
+        hit = _hit("關羽", "河東解")
+        del hit["volumeSha256"]
+        with self.assertRaises(builder.LedgerError):
+            _ledger(["関羽"], [hit])
 
 
 class CommittedArtifactsTest(unittest.TestCase):
