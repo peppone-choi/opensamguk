@@ -5,6 +5,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
+import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
+import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.logic.world.*
 
 /** Reserves the actual participants of a pending encounter; it does not resolve a battle. */
@@ -50,6 +52,7 @@ class HwihaCorpsEncounterRecorder(
             require(HwihaEncounterDeployment.META_KEY !in general.meta)
             require(HwihaEncounterRelations.META_KEY !in general.meta)
             require(HwihaEncounterForces.META_KEY !in general.meta)
+            require(HwihaEncounterCombatProfiles.META_KEY !in general.meta)
         }
         val value = encounter.toMetaValue()
         val deployment = HwihaEncounterDeployment.defaultMetaValue(encounter, cells)
@@ -69,11 +72,13 @@ class HwihaCorpsEncounterRecorder(
             }).also { it.requireBinding(encounter) }
         val sealedRelations = relations.toMetaValue()
         val sealedForces = forces.toMetaValue()
+        val combatProfiles = HwihaEncounterCombatProfiles.capture(forces, HwihaUnitProfilesJson.loadDefault()).toMetaValue()
         for (corps in participants) {
             val before = requireNotNull(world.getGeneralById(corps.commanderGeneralId))
             val after = before.copy(meta = before.meta + (HwihaCorpsEncounter.META_KEY to value) +
                 (HwihaEncounterDeployment.META_KEY to deployment) +
-                (HwihaEncounterRelations.META_KEY to sealedRelations) + (HwihaEncounterForces.META_KEY to sealedForces))
+                (HwihaEncounterRelations.META_KEY to sealedRelations) + (HwihaEncounterForces.META_KEY to sealedForces) +
+                (HwihaEncounterCombatProfiles.META_KEY to combatProfiles))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {

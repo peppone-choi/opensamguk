@@ -2,6 +2,8 @@ package opensamguk.engine.boot
 
 import java.nio.file.Path
 import kotlin.test.*
+import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
+import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
@@ -632,6 +634,9 @@ class HwihaMarchPersistenceIT {
                 assertEquals(original.commanderRetainerId,unit.commanderRetainerId)
             }
             assertEquals(listOf(1,100,101),forces.commanders.map { it.generalId })
+            val combat=assertNotNull(HwihaEncounterCombatProfiles.read(world.getGeneralById(commander)!!.meta,forces,HwihaUnitProfilesJson.loadDefault()))
+            assertFalse(combat.ready)
+            assertTrue(combat.unavailable.any { it.crewTypeId==1 && it.reason==HwihaEncounterCombatProfiles.Reason.UNKNOWN_CREW_TYPE })
             val relations=assertNotNull(HwihaEncounterRelations.read(world.getGeneralById(commander)!!.meta,encounter))
             assertEquals(3,relations.pairs.size)
             assertTrue(relations.pairs.all { it.hostile })
@@ -656,6 +661,8 @@ class HwihaMarchPersistenceIT {
 
     @Test fun `real personal entry seals occupied cells and detects stored placement tampering`() {
         val id=649;var world=encounterFixture(id,listOf(100))
+        jdbc.update("UPDATE general_bugok SET crew_type_id=1100 WHERE world_id=?",id)
+        world=cold(id)
         val units=world.listBugoks();val published=mutableListOf<String>()
         reserveDeployment(id,world,"encounter-$id")
         assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
@@ -669,9 +676,25 @@ class HwihaMarchPersistenceIT {
             assertEquals(expected,meta[HwihaEncounterDeployment.META_KEY])
             assertEquals(listOf(7,1100),deployment.tokens.map { it.bugokId }.sorted())
             assertEquals(2,deployment.tokens.mapNotNull { it.position }.distinct().size)
+            val forces=assertNotNull(HwihaEncounterForces.read(meta,encounter))
+            val combat=assertNotNull(HwihaEncounterCombatProfiles.read(meta,forces,HwihaUnitProfilesJson.loadDefault()))
+            assertTrue(combat.ready)
+            assertEquals(listOf(1100),combat.profiles.map { it.crewTypeId })
+            assertEquals(world.getGeneralById(1)!!.meta[HwihaEncounterCombatProfiles.META_KEY],combat.toMetaValue())
         }
         assertEquals(units,world.listBugoks())
         assertEquals(listOf("encounter-$id"),published)
+        val storedCombat=world.getGeneralById(1)!!.meta[HwihaEncounterCombatProfiles.META_KEY]
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
+            '{hwihaEncounterCombatProfiles,profiles,0,attackPower}','101'::jsonb) WHERE world_id=? AND id=1""",id)
+        world=cold(id)
+        assertFailsWith<IllegalArgumentException> {
+            HwihaEncounterCombatProfiles.read(world.getGeneralById(1)!!.meta,
+                HwihaEncounterForces.read(world.getGeneralById(1)!!.meta,encounter)!!,HwihaUnitProfilesJson.loadDefault())
+        }
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaEncounterCombatProfiles}',?::jsonb) WHERE world_id=? AND id=1",
+            com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(storedCombat),id)
+        world=cold(id)
         val frozen=assertNotNull(HwihaEncounterForces.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
         val relations=assertNotNull(HwihaEncounterRelations.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
         jdbc.update("UPDATE general_bugok SET morale=morale-1,provisions=provisions+1 WHERE world_id=? AND id=7",id)

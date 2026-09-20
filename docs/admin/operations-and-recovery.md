@@ -262,3 +262,5 @@ DB를 추측으로 고치지 말고 restart-rehydrate 증거와 quarantine 절�
 공개 `/profile-icons/<관리이름>.portrait/{hero|card|icon}.jpg`는 렌더 결과만 제공합니다. 원본 및 자르기 정보는 인증된 본인 전용 `/auth/account/profile-icon/{source|crops}`이며 캐시하지 않습니다. 원본과 metadata의 `X-Portrait-Id`가 다르면 클라이언트는 동시 변경으로 판정해 다시 읽도록 안내합니다.
 
 Gateway Next 서버가 공개 변형 요청을 gateway-api로 전달합니다. game 단독 개발 서버는 `GATEWAY_WEB_URL`(기본 http://localhost:3000)로 같은 경로를 전달합니다. archive 자체를 nginx 정적 파일 허용 목록에 추가해서는 안 됩니다.
+
+조우 병종 규칙은 `data/battle/hwiha-unit-profiles-v1.json`의 버전과 원본 해시, 사용한 수치를 함께 저장합니다. 이전 조우를 읽을 때는 동일 해시의 원장이 필요하므로 규칙을 개정할 때 이전 버전 파일을 보존해야 합니다. 미등록 병종과 아직 지원하지 않는 병종은 준비 불가 사유를 남기며, 다른 병종으로 자동 치환하지 않습니다. 현재 피해·전투 정산은 개발 중입니다.
