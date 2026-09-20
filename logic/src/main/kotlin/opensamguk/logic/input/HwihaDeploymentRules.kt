@@ -13,7 +13,7 @@ data class DeploymentRequest(val ownerId: Int, val commanderRetainerId: Int?, va
 enum class DeploymentFailure {
     WRONG_RULE_PROFILE, INVALID_INPUT, OWNER_UNAVAILABLE, COMMANDER_UNAVAILABLE, DIFFERENT_NATION,
     POSITION_UNAVAILABLE, MUST_ASSEMBLE, BATTLE_PENDING, UNIT_UNAVAILABLE, COMMANDER_CHANGED,
-    ALREADY_DEPLOYED, STATE_UNAVAILABLE,
+    ALREADY_DEPLOYED, STATE_UNAVAILABLE, INVALID_DESTINATION, NO_ROUTE,
 }
 sealed interface DeploymentAssessment {
     data class Eligible(val owner: DeploymentPerson, val commander: DeploymentPerson,

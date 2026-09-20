@@ -30,6 +30,15 @@ object HwihaDeploymentProjection {
                 val march = HwihaMarchState.read(person.meta, topology, metrics)
                 require(march == null || march.path.nodeKeys[march.cursor.edgeIndex] == position?.node?.canonicalKey)
                 val corpsMarch = HwihaCorpsMarchState.read(person.meta, topology, metrics)
+                val order = HwihaCorpsOrder.read(person.meta, topology)
+                if (order != null) {
+                    val deployed = corps.singleOrNull { it.commanderGeneralId == person.id }
+                        ?: throw IllegalArgumentException("Corps destination has no deployment")
+                    order.requireBinding(deployed, person.id)
+                    require(corpsMarch == null || corpsMarch.checkpoint.path.nodeKeys.last() == order.destination.canonicalKey) {
+                        "Corps path destination differs from durable order"
+                    }
+                }
                 if (corpsMarch != null) {
                     val deployed = corps.singleOrNull { it.commanderGeneralId == person.id }
                         ?: throw IllegalArgumentException("Corps march has no deployment")

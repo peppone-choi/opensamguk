@@ -81,4 +81,15 @@ class HwihaDeploymentProjectionTest {
                 .people.single { it.id == 2 }.inBattle)
         }
     }
+    @Test fun `destination requires its deployed commander and cannot override an existing path`() {
+        val order=HwihaCorpsOrder("order",1,2,b,topology.topologyRevision,topology.contentHash)
+        val meta=mapOf(HwihaCorpsOrder.META_KEY to order.toMetaValue())
+        assertNotNull(build(listOf(owner,deputy.copy(meta=meta))))
+        assertNull(build(listOf(owner.copy(meta=emptyMap()),deputy.copy(meta=meta))))
+        assertNull(build(listOf(owner.copy(meta=owner.meta+meta),deputy)))
+        assertNull(build(listOf(owner,deputy.copy(meta=mapOf(HwihaCorpsOrder.META_KEY to order.copy(orderId="wrong").toMetaValue())))))
+        assertNull(build(listOf(owner,deputy.copy(meta=mapOf(HwihaCorpsOrder.META_KEY to order.copy(destination=a).toMetaValue(),
+            HwihaCorpsMarchState.META_KEY to state.toMetaValue())))))
+    }
+
 }
