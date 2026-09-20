@@ -9,6 +9,7 @@
      × 「1순 = N일」 후보 × 병력 후보 × 1인 월 식량 후보. 출발 郡 戶數(경제 입력 원장)와 견준다.
   B. 보급선 길이별 도착 비율 — 간선당 손실 후보의 거듭제곱, 그리고 사료 수치만 쓰는 木牛 모델.
   C. 포위 기간 — 사료상 실제 기간을 「1순 = N일」 후보별 순으로 환산, 포위 기간 후보와 대조.
+  D. 성 안 재고 — 승인 목표를 참고한 소비 순분 단위 실험. 부족 시점은 함락 판정이 아니다.
 
 사료 인용은 SOURCES 에 있다. 로컬 색인(shiliao)으로 원문을 확인한 것만 PRIMARY 다.
 """
@@ -183,6 +184,63 @@ def siege_days(s: dict):
     return s["days"]
 
 
+def siege_stock(initial_stock: int, consumption_per_turn: int, turns: int,
+                deliveries: dict[int, int]) -> list[dict]:
+    """Explore stock balance only; depletion does not decide capture or surrender.
+
+    Units are caller-supplied integer grain units, not historical hu. Deliveries
+    are quantities actually arriving before consumption on a turn boundary.
+    Blockade/transport routing must decide those arrivals outside this function.
+    """
+    if (type(initial_stock) is not int or initial_stock < 0
+            or type(consumption_per_turn) is not int or consumption_per_turn <= 0
+            or type(turns) is not int or turns <= 0):
+        raise ValueError("stock must be nonnegative; consumption and turns positive integers")
+    if any(type(t) is not int or not 1 <= t <= turns
+           or type(q) is not int or q < 0 for t, q in deliveries.items()):
+        raise ValueError("delivery requires an in-window integer turn and nonnegative quantity")
+    stock = initial_stock
+    rows = []
+    for turn in range(1, turns + 1):
+        delivered = deliveries.get(turn, 0)
+        available = stock + delivered
+        consumed = min(available, consumption_per_turn)
+        closing = available - consumed
+        rows.append({"turn": turn, "openingStock": stock, "delivered": delivered,
+                     "consumed": consumed, "shortfall": consumption_per_turn - consumed,
+                     "closingStock": closing})
+        stock = closing
+    return rows
+
+
+def stock_sensitivity(tempo: dict) -> dict:
+    target = tempo["siegeTarget"]
+    clock = tempo["turnClock"]["defaultRealMinutesPerTurn"]
+    low, high = target["minTurns"], target["maxTurns"]
+    if (target["status"] != "OWNER_APPROVED_TARGET"
+            or type(low) is not int or type(high) is not int or not 0 < low <= high
+            or type(clock) is not int or clock <= 0):
+        raise ValueError("stock comparison requires an approved positive siege target and clock")
+    horizon = high * 2
+    cases = []
+    for reserve in sorted({low, (low + high) // 2, high}):
+        for label, deliveries in (
+            ("완전 봉쇄", {}),
+            ("중간에 초기 재고 절반 도착", {max(1, reserve // 2): reserve // 2}),
+            ("중간부터 매순 소비량 보급", {t: 1 for t in range(max(1, reserve // 2), horizon + 1)}),
+        ):
+            rows = siege_stock(reserve, 1, horizon, deliveries)
+            first_shortfall = next((r["turn"] for r in rows if r["shortfall"]), None)
+            cases.append({"initialReserveTurns": reserve, "supplyCase": label,
+                          "firstShortfallTurn": first_shortfall,
+                          "firstShortfallRealHours": None if first_shortfall is None else first_shortfall * clock / 60,
+                          "timeline": rows})
+    return {"status": STATUS, "unit": "고정된 성 안 총소비량 1순분 = 1; 병력·민간인 구성 및 실제 곡물 단위 미정",
+            "interpretation": "재고 민감도이며 함락 시점·승인 목표 충족을 판정하지 않는다. 도착 전 차단·수송은 입력으로만 표현한다.",
+            "horizonTurns": horizon, "defaultRealMinutesPerTurn": clock,
+            "approvedTarget": target, "cases": cases}
+
+
 def build(tiles: dict, tempo: dict, economy: dict) -> dict:
     ms = marches(tiles, tempo)
     expedition = []
@@ -212,7 +270,8 @@ def build(tiles: dict, tempo: dict, economy: dict) -> dict:
         sieges.append({**s, "approxDays": days, "turns": {str(d): None if days is None else math.ceil(days / d) for d in DAYS_PER_TURN}})
     candidates = [{"turns": t, "days": {str(d): round(t * d, 1) for d in DAYS_PER_TURN}} for t in SIEGE_TURN_CANDIDATES]
     return {"status": STATUS, "expedition": expedition, "grain": grain, "arrivals": arrivals, "woodenOx": ox,
-            "anchors": anchors, "sieges": sieges, "siegeCandidates": candidates}
+            "anchors": anchors, "sieges": sieges, "siegeCandidates": candidates,
+            "stockSensitivity": stock_sensitivity(tempo)}
 
 
 def _d(x: float) -> str:
@@ -281,6 +340,15 @@ def render(r: dict) -> str:
     L.append("|---|" + "---|" * len(DAYS_PER_TURN))
     for c in r["siegeCandidates"]:
         L.append(f"| {c['turns']} | " + " | ".join(f"{_d(c['days'][str(d)])}일" for d in DAYS_PER_TURN) + " |")
+    stock = r["stockSensitivity"]
+    L.extend(["", "### D. 성 안 군량 재고 민감도(함락 판정 아님)", "", stock["unit"], "", stock["interpretation"], "",
+              f"관측 {stock['horizonTurns']}순, 기본 시계 1순={stock['defaultRealMinutesPerTurn']}분. 부족 없음은 관측 기간 안에서만 뜻한다.", "",
+              "| 초기 재고(소비 순분) | 보급 조건 | 첫 소비 부족 순 | 기본 시계 경과 시간 |",
+              "|---|---|---|---|"])
+    for c in stock["cases"]:
+        turn = c["firstShortfallTurn"]
+        hours = c["firstShortfallRealHours"]
+        L.append(f"| {c['initialReserveTurns']} | {c['supplyCase']} | {turn if turn is not None else '관측 중 없음'} | {f'{hours:g}시간' if hours is not None else '—'} |")
     return "\n".join(L) + "\n"
 
 
