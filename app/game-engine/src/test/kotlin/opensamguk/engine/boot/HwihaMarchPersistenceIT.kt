@@ -570,4 +570,82 @@ class HwihaMarchPersistenceIT {
         }
     }
 
+    private fun encounterFixture(id: Int): InMemoryTurnWorld {
+        var world = personalDeploymentFixture(id)
+        val source = world.positionOf(1)!!
+        val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
+            StrategicPathRequest(source, destination(world), 1),
+            HwihaLandPassageState.read(world.getState().meta, topology)!!, metrics)).path
+        val province = path.nodeKeys[1].removePrefix("land:")
+        assertTrue(metrics.edgesById.getValue(path.edgeIds.first()).costMm <= LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
+        for (enemyId in listOf(100, 101)) {
+            jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,
+                crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
+                SELECT world_id,?,'encounter-fixture',0,city_id,2,0,1000,2000,100,70,70,70,70,70,
+                '0300-01-01T00:00:00Z',last_turn,meta || '{"hwihaLord":true}'::jsonb
+                FROM general WHERE world_id=? AND id=2""", enemyId, id)
+            jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
+                VALUES (?,?,?,?,'LAND_PROVINCE',?,1)""", id, enemyId, topology.topologyRevision, topology.contentHash, province)
+            jdbc.update("""INSERT INTO general_bugok(world_id,id,master_general_id,name,troops,crew_type_id,training,morale,provisions)
+                VALUES (?,?,?,'encounter-fixture',100,1,50,50,200)""", id, 1000 + enemyId, enemyId)
+        }
+        world = cold(id)
+        val recorder = ChangeRecorder()
+        for (enemyId in listOf(100, 101)) {
+            val orderId = "enemy-$id-$enemyId"
+            assertIs<DeploymentExecution.Applied>(HwihaDeploymentExecutor(world,recorder,topology,metrics)
+                .deploy(orderId,DeploymentRequest(enemyId,null,listOf(1000 + enemyId))))
+            val before = world.getGeneralById(enemyId)!!
+            val order = HwihaCorpsOrder(orderId,enemyId,enemyId,StrategicNodeRef.LandProvince(province),
+                topology.topologyRevision,topology.contentHash)
+            val after = before.copy(meta=before.meta+(HwihaCorpsOrder.META_KEY to order.toMetaValue()))
+            recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before),PerTurnOverlay.toLogicGeneral(after))
+            world.applyGeneralDirtyFree(after)
+        }
+        save(world,recorder)
+        return cold(id)
+    }
+
+    @Test fun `real personal entry captures all hostile corps and locks both sides after cold reload`() {
+        val id=647;var world=encounterFixture(id)
+        val units=world.listBugoks();val published=mutableListOf<String>()
+        reserveDeployment(id,world,"encounter-$id")
+        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        world=cold(id)
+        val encounter=assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta,topology))
+        assertEquals(listOf(100,101),encounter.defenders.map { it.commanderGeneralId })
+        assertEquals("encounter-$id",encounter.attacker.orderId)
+        val projection=assertNotNull(HwihaDeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection())
+        for (commander in listOf(1,100,101)) {
+            assertEquals(encounter.toMetaValue(),HwihaCorpsEncounter.read(world.getGeneralById(commander)!!.meta,topology)?.toMetaValue())
+            assertEquals(encounter.province,world.positionOf(commander))
+            assertTrue(projection.people.single { it.id==commander }.inBattle)
+        }
+        assertEquals(units,world.listBugoks())
+        // A different friendly general cannot enroll the already locked hostile corps into another event.
+        assertNull(HwihaCorpsEncounterRecorder(world,ChangeRecorder(),topology,metrics).defendersAt(2,encounter.province))
+        val before=world.listGenerals().associate { it.id to world.positionOf(it.id) }
+        jdbc.update("UPDATE world_state SET current_phase=current_phase+1 WHERE id=?",id)
+        jdbc.update("UPDATE general SET turn_time='0200-01-01T00:00:00Z' WHERE world_id=? AND id IN (100,101)",id)
+        world=cold(id);runDeploymentTurn(id,world,published);world=cold(id)
+        assertEquals(before,world.listGenerals().associate { it.id to world.positionOf(it.id) })
+        assertEquals(encounter.toMetaValue(),HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta,topology)?.toMetaValue())
+        assertEquals(listOf("encounter-$id"),published)
+        jdbc.update("UPDATE general SET meta=meta-'hwihaCorpsEncounter' WHERE world_id=? AND id=100",id)
+        assertNull(HwihaDeploymentExecutor(cold(id),ChangeRecorder(),topology,metrics).projection())
+    }
+
+    @Test fun `position conflict rolls back encounter records on every participant`() {
+        val id=648;var world=encounterFixture(id)
+        reserveDeployment(id,world,"encounter-rollback-$id");world=cold(id)
+        val before=listOf(1,100,101).associateWith { world.getGeneralById(it) }
+        jdbc.update("UPDATE general_spatial_position SET revision=revision+1 WHERE world_id=? AND general_id=1",id)
+        val published=mutableListOf<String>()
+        assertFailsWith<opensamguk.infra.persistence.StaleGeneralPositionException> { runDeploymentTurn(id,world,published) }
+        world=cold(id)
+        for ((generalId,general) in before) assertEquals(general,world.getGeneralById(generalId))
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?",Int::class.java,id))
+        assertTrue(published.isEmpty())
+    }
+
 }

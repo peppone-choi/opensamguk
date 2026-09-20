@@ -139,4 +139,41 @@ class HwihaDeployPrecheckServiceTest {
         verifyNoInteractions(rawCards)
     }
 
+    @Test fun `defender options show pending encounter without revealing the attacking roster`() {
+        val (defender, _) = setup()
+        val attacker = generals.findAll().single { it.id == 2 }
+        val phase = HwihaPhase(200,1,1)
+        val attacking = HwihaDeployedCorps("private-attack-order",2,2,null,2,listOf(5),phase)
+        val defending = HwihaDeployedCorps("my-defense-order",1,1,null,1,listOf(4),phase)
+        val encounter = HwihaCorpsEncounter(HwihaEncounterParticipant.from(attacking),
+            listOf(HwihaEncounterParticipant.from(defending)),b,a,phase,topology.topologyRevision,topology.contentHash)
+        val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
+            StrategicPathRequest(a,b,1),HwihaLandPassageState.read(setupWorldMeta(),topology)!!,metrics)).path
+        val checkpoint = HwihaMarchCheckpoint(path,LandMarchCursor(path.pathHash,1,0),phase,LandMarchStop.ENCOUNTER)
+        fun meta(corps:HwihaDeployedCorps) = mapOf(
+            HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue(),
+            HwihaCorpsOrder.META_KEY to HwihaCorpsOrder(corps.orderId,corps.ownerGeneralId,corps.commanderGeneralId,
+                b,topology.topologyRevision,topology.contentHash).toMetaValue(),
+            HwihaCorpsEncounter.META_KEY to encounter.toMetaValue())
+        defender.meta = meta(defending)
+        attacker.meta = meta(attacking) + (HwihaCorpsMarchState.META_KEY to
+            HwihaCorpsMarchState(attacking.orderId,2,2,checkpoint).toMetaValue())
+        `when`(spatial.readSnapshot(1,topology)).thenReturn(SpatialStateReadSnapshot(
+            ProvinceControlSnapshot.fromTopology(topology),GeneralPositionSnapshot.fromTopology(topology,
+                listOf(1,2).map { GeneralPositionState(topology.topologyRevision,topology.contentHash,it,b,1) })))
+        val result = service.options(1,41)
+        assertFalse(result.available)
+        assertEquals("ENCOUNTER",result.order?.stop)
+        assertEquals("my-defense-order",result.order?.orderId)
+        assertEquals(listOf(4),result.bugoks.map { it.id })
+        val rendered = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(result)
+        assertFalse(rendered.contains("private-attack-order")); assertFalse(rendered.contains("비공개 상대부대"))
+        attacker.meta = attacker.meta - HwihaCorpsEncounter.META_KEY
+        assertEquals("STATE_UNAVAILABLE",service.options(1,41).code)
+        assertNull(service.options(1,41).order)
+    }
+
+    private fun setupWorldMeta(): Map<String,Any> = mapOf(
+        HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology))
+
 }
