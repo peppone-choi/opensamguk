@@ -140,20 +140,23 @@ describe('han-world-v3 의 meta.nameCh', () => {
     }))).toEqual([]);
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
     // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136. 縣 은 여전히 98 이다.
-    expect(outside.length).toBe(136);
+    expect(outside.length).toBe(197);
     const rest = outside
-      .filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
+      .filter((c) => c.id <= 1133 && !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
     // 郡治는 이제 한 곳만 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
     // 싣는다. 남는 候官은 張掖屬國 都尉 治所라 縣 이름이 사료에 안 남았다(route-node-jurisdiction-claims-v1).
     // 나머지는 2026-09-17 城으로 선 郡國 밖 취락 37 곳이다 — 縣 이 아니므로 「뭐뭐현」을 받지 않는다.
     expect(rest).toEqual([
-      '고령가야', '고자미동국', '구야국', '국내성', '남흉노', '노국', '대가야', '대마국', '동옥저', '말로국',
-      '목지국', '백마저', '백제국', '벽비리국', '부여', '북옥저', '사로국', '산월', '서강', '선비', '성산가야',
+      '고자미동국', '구야국', '국내성', '남흉노', '노국', '대마국', '동옥저', '말로국',
+      '목지국', '백마저', '백제국', '벽비리국', '부여', '북옥저', '사로국', '산월', '서강', '선비',
       '소문국', '실직국', '안야국', '압독국', '애뢰(哀牢)', '야마일국', '예', '오환', '우산국', '유구', '읍루',
-      '이도국', '이주', '일대국', '졸본', '주호', '후관',
-    ]);
+      '이도국', '이주', '일대국', '졸본', '주호', '후관', '함창 취락', '반로', '성주 취락',
+    ].sort());
+    const added = world.cities.filter((c) => c.id > 1133);
+    expect(added).toHaveLength(61);
+    expect(added.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
   });
 
   it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
@@ -238,7 +241,7 @@ describe('han-world-v3 의 meta.displayName', () => {
       '1039 와구(九江郡): 와구(渦口)',
       '1080 와구(巴郡): 와구(瓦口)',
     ]);
-    expect(world.cities.length).toBe(1133);
+    expect(world.cities.length).toBe(1194);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
@@ -246,7 +249,7 @@ describe('han-world-v3 의 meta.displayName', () => {
     // 834 → 847. 같게 남는 건 704 구자속국 하나뿐이다.
     // 2026-09-15: 1028, 2026-09-16 平陰(1098) +1. 이름이 곧 표기인 城(704 구자속국·867 송공·991 후관 등)만 같게 남는다.
     // 2026-09-17: 977·989 가 縣에서 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-    expect(changed.length).toBe(1028);
+    expect(changed.length).toBe(1030);
   });
 
   it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "inputSha256": "cf00db47a8048f87aaf534b9c80e8fb9b205a00e7b5f26ed1ace2c882c488744",
+  "outputSha256": "15d585177fd91e8a63a3525058fb65506bef4ffcd418f879cc323bc5cb25a9f1",
+  "rowOffset": 174,
+  "replacedComponentKeys": [
+    "PARENT-0156@629:367",
+    "PARENT-0164@625:403",
+    "X040@629:367",
+    "X041@625:403"
+  ],
+  "adjudications": [
+    {
+      "unitKind": "COMMANDERY",
+      "unitId": "PARENT-0156",
+      "unitNameCh": "目支國",
+      "cellCount": 9,
+      "memberIds": [
+        "X078"
+      ],
+      "memberNamesCh": [
+        "泰安聚落"
+      ],
+      "holdsSeat": false,
+      "componentKey": "PARENT-0156@629:367",
+      "verdict": "WATER_SEPARATED",
+      "confidence": "HIGH",
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "ifRule": "WATER_ROUTE_ONLY",
+      "evidenceRefs": [
+        "map:data/map/han-tiles.json#PARENT-0156@629:367",
+        "repo:data/curated/han/korea-place-corrections-v1.json"
+      ],
+      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "review": {
+        "state": "UPHELD",
+        "votes": [
+          {
+            "lens": "geometry",
+            "refuted": false,
+            "reason": "실측 9칸; 육지 이웃 없음; 바다 경계 16개. 원래 좌표로 되돌리면 보존된 도서와 일치한다."
+          },
+          {
+            "lens": "chronology",
+            "refuted": false,
+            "reason": "새 독립국의 역사적 국경을 주장하지 않는 게임 취락 관할 배분이다. 바다 분리 판정은 정치체 존속 연대와 독립적이다."
+          }
+        ]
+      }
+    },
+    {
+      "unitKind": "COMMANDERY",
+      "unitId": "PARENT-0164",
+      "unitNameCh": "辟卑離國",
+      "cellCount": 14,
+      "memberIds": [
+        "X088"
+      ],
+      "memberNamesCh": [
+        "務安聚落"
+      ],
+      "holdsSeat": false,
+      "componentKey": "PARENT-0164@625:403",
+      "verdict": "WATER_SEPARATED",
+      "confidence": "HIGH",
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "ifRule": "WATER_ROUTE_ONLY",
+      "evidenceRefs": [
+        "map:data/map/han-tiles.json#PARENT-0164@625:403",
+        "repo:data/curated/han/korea-place-corrections-v1.json"
+      ],
+      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "review": {
+        "state": "UPHELD",
+        "votes": [
+          {
+            "lens": "geometry",
+            "refuted": false,
+            "reason": "실측 14칸; 육지 이웃 없음; 바다 경계 20개. 원래 좌표로 되돌리면 보존된 도서와 일치한다."
+          },
+          {
+            "lens": "chronology",
+            "refuted": false,
+            "reason": "새 독립국의 역사적 국경을 주장하지 않는 게임 취락 관할 배분이다. 바다 분리 판정은 정치체 존속 연대와 독립적이다."
+          }
+        ]
+      }
+    },
+    {
+      "unitKind": "JURISDICTION",
+      "unitId": "X078",
+      "unitNameCh": "泰安聚落",
+      "cellCount": 9,
+      "memberIds": [
+        "SUB-X040-541a9c6ebb19"
+      ],
+      "memberNamesCh": [
+        "泰安聚落"
+      ],
+      "holdsSeat": false,
+      "componentKey": "X078@629:367",
+      "verdict": "WATER_SEPARATED",
+      "confidence": "HIGH",
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "ifRule": "WATER_ROUTE_ONLY",
+      "evidenceRefs": [
+        "map:data/map/han-tiles.json#X078@629:367",
+        "repo:data/curated/han/korea-place-corrections-v1.json"
+      ],
+      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "review": {
+        "state": "UPHELD",
+        "votes": [
+          {
+            "lens": "geometry",
+            "refuted": false,
+            "reason": "실측 9칸; 육지 이웃 없음; 바다 경계 16개. 원래 좌표로 되돌리면 보존된 도서와 일치한다."
+          },
+          {
+            "lens": "chronology",
+            "refuted": false,
+            "reason": "새 독립국의 역사적 국경을 주장하지 않는 게임 취락 관할 배분이다. 바다 분리 판정은 정치체 존속 연대와 독립적이다."
+          }
+        ]
+      }
+    },
+    {
+      "unitKind": "JURISDICTION",
+      "unitId": "X088",
+      "unitNameCh": "務安聚落",
+      "cellCount": 14,
+      "memberIds": [
+        "SUB-X041-17b9700aed53"
+      ],
+      "memberNamesCh": [
+        "務安聚落"
+      ],
+      "holdsSeat": false,
+      "componentKey": "X088@625:403",
+      "verdict": "WATER_SEPARATED",
+      "confidence": "HIGH",
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "ifRule": "WATER_ROUTE_ONLY",
+      "evidenceRefs": [
+        "map:data/map/han-tiles.json#X088@625:403",
+        "repo:data/curated/han/korea-place-corrections-v1.json"
+      ],
+      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "review": {
+        "state": "UPHELD",
+        "votes": [
+          {
+            "lens": "geometry",
+            "refuted": false,
+            "reason": "실측 14칸; 육지 이웃 없음; 바다 경계 20개. 원래 좌표로 되돌리면 보존된 도서와 일치한다."
+          },
+          {
+            "lens": "chronology",
+            "refuted": false,
+            "reason": "새 독립국의 역사적 국경을 주장하지 않는 게임 취락 관할 배분이다. 바다 분리 판정은 정치체 존속 연대와 독립적이다."
+          }
+        ]
+      }
+    }
+  ]
+}

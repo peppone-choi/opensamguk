@@ -25,18 +25,18 @@ class HanStrategicTopologyJsonTest {
         val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val json = mapper.valueToTree<JsonNode>(loaded)
         val presentation = json.path("presentation")
-        assertEquals(768, presentation.path("cols").asInt())
-        assertEquals(669, presentation.path("rows").asInt())
+        assertEquals(864, presentation.path("cols").asInt())
+        assertEquals(843, presentation.path("rows").asInt())
         // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
         // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
-        assertEquals("1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
+        assertEquals("0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
             presentation.path("zoneConnections").fields().asSequence().map { it.value.asText() }.toList())
         val coast = presentation.path("geometries")[0].path("cellRuns")
         assertEquals(1, coast.size())
-        assertEquals(543, coast[0].path("row").asInt())
+        assertEquals(717, coast[0].path("row").asInt())
         assertEquals(305, coast[0].path("startCol").asInt())
         assertEquals(351, coast[0].path("endCol").asInt())
     }
@@ -47,12 +47,12 @@ class HanStrategicTopologyJsonTest {
         val topology = loaded.topology
 
         // 지리 재분할(GH #806): 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331. 앞 판은 1,520 + 73 = 1,594 였다.
-        assertEquals(1331, topology.landProvinceIds.size)
+        assertEquals(1558, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(1133, loaded.bindingsByCityId.size)
+        assertEquals(1194, loaded.bindingsByCityId.size)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         // 대리 治所 관할의 省 id 는 재분할로 다시 발급됐다(관할 id + ':geo:' + 순번의 해시, DIRECT- 접두어 유지).
         assertEquals("DIRECT-PARENT-0086-a120c2e594e6", loaded.bindingsByCityId.getValue(833).landProvinceId)
@@ -238,8 +238,8 @@ class HanStrategicTopologyJsonTest {
         update(files, ADJUDICATIONS) {
             val zone = it["zoneAdjudications"].single { row -> row["kind"].asText() == "COASTAL_SEA" }
             val runs = (zone["geometrySelector"] as ObjectNode).putArray("cellRuns")
-            runs.addObject().put("row", 543).put("startCol", 328).put("endCol", 351)
-            runs.addObject().put("row", 543).put("startCol", 305).put("endCol", 327)
+            runs.addObject().put("row", 717).put("startCol", 328).put("endCol", 351)
+            runs.addObject().put("row", 717).put("startCol", 305).put("endCol", 327)
         }
         repinManifests(files)
         assertLuToLicheng(files)

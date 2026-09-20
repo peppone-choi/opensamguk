@@ -82,7 +82,7 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
 # 2026-09-17: 같은 縣이 두 번 선 977·989 를 거두고 그 번호와 1099..1133 에 城 없던 郡國 밖 취락 관할 37 곳
 # (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
-V3_ROUTE_NODE_COUNT = 1133
+V3_ROUTE_NODE_COUNT = 1194
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
 # 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.
@@ -105,7 +105,9 @@ DONGYI = "동이"      # 부여·고구려·옥저·예·삼한·주호·왜 —
 
 # 한반도·왜·부여·이주·유구는 '이민족'(level '이')에서 뺀다(2026-08-19 사용자 지시). 州와 같은 층위의
 # 자기 권역으로 떼고, 등급은 다른 郡과 똑같이 戶數 사분위로 매긴다.
-# 戶數는 전부 『三國志』魏書 東夷傳/韓傳 원문 수치다. 원문에 수치가 없는 곳은 None 으로 두어
+# 아래 값은 『三國志』의 권역 호수와 소국 규모를 추정한 등급용 대푯값이 섞여 있다.
+# 4500·650·3000·10000 등은 개별 소국의 실측 호수가 아니다. 원문·범위·단위는
+# korea-economic-evidence-v1.json 에 보존한다. 원문에 수치가 없는 곳은 None 으로 두어
 # 최저 등급('소')으로 떨어뜨린다 — 없는 숫자를 지어내지 않는다.
 # region 이 None 이면 지역을 따로 두지 않고 가까운 州에 흡수시킨다(등급만 戶數로 매긴다).
 FRONTIER: dict[str, tuple[str | None, int | None, str]] = {
@@ -141,6 +143,10 @@ FRONTIER: dict[str, tuple[str | None, int | None, str]] = {
     "夷洲": ("양주", None, "吳志 孫權傳 「浮海求夷洲」 — 戶數 기록 없음"),
     "流求": ("양주", None, "隋書 流求國傳 「當建安郡東」 — 戶數 기록 없음"),
 }
+
+# Final-stage geographic groups: no attested local census; game budgets below.
+for _name in ('挹婁', '松花江聚落', '黑龍江聚落', '烏蘇里江聚落'):
+    FRONTIER[_name] = (DONGYI, None, '게임 취락권; 개별 호구 사료 없음')
 
 # 郡급 사다리(이·소·중·대·특·경)와 縣급 사다리(영현·장현)는 **별개**다. 여기 붙는 숫자
 # id 는 크기 순서가 아니다 — 10·11 이 9(경)보다 크지만 縣은 京師보다 작다. 숫자를 크기로
@@ -984,6 +990,8 @@ def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
         # han/han-780 표는 13 개 인자 그대로다 — 그 둘의 생성기 입력은 gitignored 라
         # 여기서 다시 낼 수 없고, 낼 수 없는 파일을 바꾸면 --check 가 영구히 빨개진다.
         extra = f', "{rest[0]}"' if rest else ""
+        if len(rest) > 1 and rest[1]:
+            extra += ', statScale = 1'
         body.append(
             f'        RawCity({cid}, "{name}", "{lv}", {s}, "{region}", {x}, {y}, listOf({p}){extra}),'
         )
@@ -1555,7 +1563,7 @@ def build_v3() -> tuple[str, str, str, str]:
             parent_ch, node["seatRole"] == "COMMANDERY_SEAT"
         )
         # 郡國 밖 취락(w5) — 東夷傳 권역(FRONTIER)은 v2 와 같이 戶數·縣 규칙, 그 밖 이민족 거점은 '이'(v2 level_of).
-        if node["nodeClass"] == "SETTLEMENT_NODE" and parent_ch not in FRONTIER:
+        if node["nodeClass"] == "SETTLEMENT_NODE" and parent_ch not in FRONTIER and node["seatRole"] == "COMMANDERY_SEAT":
             level_name = "이"
         elif node["nodeClass"] == "SETTLEMENT_NODE" and node["seatRole"] != "COMMANDERY_SEAT":
             # 치소가 아닌 취락(挹婁·對馬·一大·末盧·伊都·奴)은 縣이 아니다 — 縣 등급(영현·장현)을 주면
@@ -1584,6 +1592,11 @@ def build_v3() -> tuple[str, str, str, str]:
         else:
             out["sourceClaimId"] = node["sourceClaimId"]
         out_cities.append(out)
+
+    from korea_place_history import attach
+    attach(out_cities, tiles, json.loads((ROOT / "data/curated/han/korea-place-corrections-v1.json").read_text()))
+    from korea_settlement_economy import allocate
+    allocate(out_cities, tiles, json.loads((ROOT / 'data/curated/han/korea-place-corrections-v1.json').read_text()))
 
     # RawCity resolves paths by display name.  Qualify only collisions so the
     # generated Kotlin graph cannot silently redirect an edge to the last row
@@ -1672,10 +1685,10 @@ def build_v3() -> tuple[str, str, str, str]:
     raw_rows = [
         (
             row["id"], row["name"], LEVELS[row["level"] - 1],
-            [row["max"][key] // 100 for key in STAT_KEYS],
+            [row["max"][key] // (1 if "economyBasis" in row["meta"] else 100) for key in STAT_KEYS],
             legacy["_meta"]["regions"][row["region"] - 1], row["x"], row["y"],
             [out_cities_by_id[n]["name"] for n in row["connections"]],
-            row["meta"]["displayName"],
+            row["meta"]["displayName"], "economyBasis" in row["meta"],
         )
         for row in out_cities
     ]

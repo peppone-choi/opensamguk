@@ -3,8 +3,8 @@
   "auditId": "han-administrative-topology-audit-v1",
   "referenceYear": 220,
   "grid": {
-    "rows": 669,
-    "cols": 768,
+    "rows": 843,
+    "cols": 864,
     "connectivity": "FOUR_NEIGHBOR"
   },
   "policy": {
@@ -15,13 +15,13 @@
     "noAutomaticRepair": true
   },
   "counts": {
-    "province": 1331,
-    "jurisdiction": 1133,
-    "commandery": 172
+    "province": 1558,
+    "jurisdiction": 1194,
+    "commandery": 176
   },
   "provinceTopology": {
     "minimumCellCount": 8,
-    "belowMinimumCount": 9,
+    "belowMinimumCount": 14,
     "belowMinimum": [
       {
         "id": "45203",
@@ -49,6 +49,16 @@
         "cellCount": 4
       },
       {
+        "id": "SUB-X028-10fc23deade6",
+        "displayName": "주나",
+        "cellCount": 1
+      },
+      {
+        "id": "SUB-X029-d36cd99b5619",
+        "displayName": "졸본",
+        "cellCount": 6
+      },
+      {
         "id": "ss-dengsai",
         "displayName": "등새",
         "cellCount": 4
@@ -67,9 +77,24 @@
         "id": "ss-xiaopingjin",
         "displayName": "소평진",
         "cellCount": 5
+      },
+      {
+        "id": "KOR-X068-SUB-X028-febacb66851d",
+        "displayName": "개마",
+        "cellCount": 6
+      },
+      {
+        "id": "KOR-X109-X030",
+        "displayName": "해안 취락",
+        "cellCount": 2
+      },
+      {
+        "id": "KOR-X116-SUB-X036-0ee440c65661",
+        "displayName": "송눈 평원",
+        "cellCount": 1
       }
     ],
-    "disconnectedCount": 16,
+    "disconnectedCount": 21,
     "disconnected": [
       {
         "id": "40740",
@@ -292,6 +317,123 @@
         ]
       },
       {
+        "id": "KOR-X110-SUB-X030-b78cb489a20c",
+        "displayName": "두만강 취락",
+        "componentCellCounts": [
+          14,
+          3,
+          1
+        ],
+        "components": [
+          {
+            "cellCount": 14,
+            "memberIds": [
+              "KOR-X110-SUB-X030-b78cb489a20c"
+            ]
+          },
+          {
+            "cellCount": 3,
+            "memberIds": [
+              "KOR-X110-SUB-X030-b78cb489a20c"
+            ]
+          },
+          {
+            "cellCount": 1,
+            "memberIds": [
+              "KOR-X110-SUB-X030-b78cb489a20c"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X028-7238a630ea3c",
+        "displayName": "주나",
+        "componentCellCounts": [
+          39,
+          17
+        ],
+        "components": [
+          {
+            "cellCount": 39,
+            "memberIds": [
+              "SUB-X028-7238a630ea3c"
+            ]
+          },
+          {
+            "cellCount": 17,
+            "memberIds": [
+              "SUB-X028-7238a630ea3c"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X030-b78cb489a20c",
+        "displayName": "북옥저",
+        "componentCellCounts": [
+          12,
+          1
+        ],
+        "components": [
+          {
+            "cellCount": 12,
+            "memberIds": [
+              "SUB-X030-b78cb489a20c"
+            ]
+          },
+          {
+            "cellCount": 1,
+            "memberIds": [
+              "SUB-X030-b78cb489a20c"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X036-d12fe29247d1",
+        "displayName": "부여",
+        "componentCellCounts": [
+          7,
+          3
+        ],
+        "components": [
+          {
+            "cellCount": 7,
+            "memberIds": [
+              "SUB-X036-d12fe29247d1"
+            ]
+          },
+          {
+            "cellCount": 3,
+            "memberIds": [
+              "SUB-X036-d12fe29247d1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X042-1f00b3225ad9",
+        "displayName": "백제국",
+        "componentCellCounts": [
+          163,
+          1
+        ],
+        "components": [
+          {
+            "cellCount": 163,
+            "memberIds": [
+              "SUB-X042-1f00b3225ad9"
+            ]
+          },
+          {
+            "cellCount": 1,
+            "memberIds": [
+              "SUB-X042-1f00b3225ad9"
+            ]
+          }
+        ]
+      },
+      {
         "id": "X046",
         "displayName": "고자미동국",
         "componentCellCounts": [
@@ -480,7 +622,7 @@
           "SUB-X029-f447e36b3ebd"
         ],
         "surroundingDisplayNames": [
-          "졸본"
+          "서안평현"
         ]
       },
       {
@@ -1161,50 +1303,6 @@
         ]
       },
       {
-        "id": "X040",
-        "displayName": "목지국",
-        "componentCellCounts": [
-          371,
-          9
-        ],
-        "components": [
-          {
-            "cellCount": 371,
-            "memberIds": [
-              "X040"
-            ]
-          },
-          {
-            "cellCount": 9,
-            "memberIds": [
-              "SUB-X040-541a9c6ebb19"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X041",
-        "displayName": "벽비리국",
-        "componentCellCounts": [
-          550,
-          14
-        ],
-        "components": [
-          {
-            "cellCount": 550,
-            "memberIds": [
-              "X041"
-            ]
-          },
-          {
-            "cellCount": 14,
-            "memberIds": [
-              "SUB-X041-17b9700aed53"
-            ]
-          }
-        ]
-      },
-      {
         "id": "X046",
         "displayName": "고자미동국",
         "componentCellCounts": [
@@ -1462,6 +1560,50 @@
             "cellCount": 11,
             "memberIds": [
               "SUB-X057-f6cdaf119bf2"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "X078",
+        "displayName": "태안 취락",
+        "componentCellCounts": [
+          15,
+          9
+        ],
+        "components": [
+          {
+            "cellCount": 15,
+            "memberIds": [
+              "KOR-X078-X040"
+            ]
+          },
+          {
+            "cellCount": 9,
+            "memberIds": [
+              "SUB-X040-541a9c6ebb19"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "X088",
+        "displayName": "무안 취락",
+        "componentCellCounts": [
+          38,
+          14
+        ],
+        "components": [
+          {
+            "cellCount": 38,
+            "memberIds": [
+              "KOR-X088-X041"
+            ]
+          },
+          {
+            "cellCount": 14,
+            "memberIds": [
+              "SUB-X041-17b9700aed53"
             ]
           }
         ]
@@ -3129,7 +3271,10 @@
           {
             "cellCount": 110,
             "memberIds": [
-              "X045"
+              "X045",
+              "X102",
+              "X103",
+              "X104"
             ]
           },
           {
@@ -3151,13 +3296,24 @@
           {
             "cellCount": 371,
             "memberIds": [
-              "X040"
+              "X040",
+              "X073",
+              "X075",
+              "X076",
+              "X077",
+              "X078",
+              "X080",
+              "X086",
+              "X091",
+              "X092",
+              "X093",
+              "X094"
             ]
           },
           {
             "cellCount": 9,
             "memberIds": [
-              "X040"
+              "X078"
             ]
           }
         ]
@@ -3195,13 +3351,22 @@
           {
             "cellCount": 550,
             "memberIds": [
-              "X041"
+              "X041",
+              "X081",
+              "X082",
+              "X083",
+              "X084",
+              "X085",
+              "X087",
+              "X088",
+              "X089",
+              "X090"
             ]
           },
           {
             "cellCount": 14,
             "memberIds": [
-              "X041"
+              "X088"
             ]
           }
         ]
@@ -3483,7 +3648,7 @@
       }
     ]
   },
-  "singleJurisdictionCommanderyCount": 56,
+  "singleJurisdictionCommanderyCount": 44,
   "singleJurisdictionCommanderies": [
     {
       "id": "PARENT-0063",
@@ -4317,14 +4482,6 @@
       "sourceGroupMatch": false
     },
     {
-      "id": "PARENT-0109",
-      "displayName": "백제국",
-      "nameCh": "伯濟國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X042",
-      "sourceGroupMatch": false
-    },
-    {
       "id": "PARENT-0110",
       "displayName": "이성군",
       "nameCh": "利城郡",
@@ -4346,14 +4503,6 @@
       "nameCh": "南匈奴",
       "kind": "COMMANDERY",
       "jurisdictionId": "X064",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0115",
-      "displayName": "고령가야",
-      "nameCh": "古寧伽耶",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X049",
       "sourceGroupMatch": false
     },
     {
@@ -4386,30 +4535,6 @@
       "nameCh": "固陵郡",
       "kind": "COMMANDERY",
       "jurisdictionId": "44482",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0120",
-      "displayName": "국내성",
-      "nameCh": "國內城",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X028",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0121",
-      "displayName": "대가야",
-      "nameCh": "大伽耶",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X047",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0122",
-      "displayName": "부여",
-      "nameCh": "夫餘",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X036",
       "sourceGroupMatch": false
     },
     {
@@ -4477,51 +4602,11 @@
       "sourceGroupMatch": false
     },
     {
-      "id": "PARENT-0135",
-      "displayName": "실직국",
-      "nameCh": "悉直國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X032",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0136",
-      "displayName": "압독국",
-      "nameCh": "押督國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X033",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0137",
-      "displayName": "사로국",
-      "nameCh": "斯盧國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X044",
-      "sourceGroupMatch": false
-    },
-    {
       "id": "PARENT-0138",
       "displayName": "신흥군",
       "nameCh": "新興郡",
       "kind": "COMMANDERY",
       "jurisdictionId": "JURISDICTION-PARENT-0138-SEAT",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0142",
-      "displayName": "성산가야",
-      "nameCh": "星山伽耶",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X048",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0143",
-      "displayName": "동옥저",
-      "nameCh": "東沃沮",
-      "kind": "COMMANDERY",
-      "jurisdictionId": "X037",
       "sourceGroupMatch": false
     },
     {
@@ -4581,14 +4666,6 @@
       "sourceGroupMatch": false
     },
     {
-      "id": "PARENT-0156",
-      "displayName": "목지국",
-      "nameCh": "目支國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X040",
-      "sourceGroupMatch": false
-    },
-    {
       "id": "PARENT-0158",
       "displayName": "장릉군",
       "nameCh": "章陵郡",
@@ -4618,14 +4695,6 @@
       "nameCh": "西羌",
       "kind": "COMMANDERY",
       "jurisdictionId": "X058",
-      "sourceGroupMatch": false
-    },
-    {
-      "id": "PARENT-0164",
-      "displayName": "벽비리국",
-      "nameCh": "辟卑離國",
-      "kind": "KINGDOM",
-      "jurisdictionId": "X041",
       "sourceGroupMatch": false
     },
     {
@@ -6882,9 +6951,9 @@
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       }
     ],
-    "currentCommanderyCount": 172,
+    "currentCommanderyCount": 176,
     "sourceLinkedCurrentCommanderyCount": 105,
-    "currentOnlyCommanderyCount": 67,
+    "currentOnlyCommanderyCount": 71,
     "currentCommanderies": [
       {
         "currentCommanderyId": "PARENT-0000",
@@ -8019,7 +8088,7 @@
         "currentCommanderyDisplayName": "요동군",
         "currentCommanderyNameCh": "遼東郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 13,
+        "currentJurisdictionCount": 14,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 11,
@@ -8043,7 +8112,7 @@
         "currentCommanderyDisplayName": "낙랑군",
         "currentCommanderyNameCh": "樂浪郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 9,
+        "currentJurisdictionCount": 11,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 18,
@@ -8183,7 +8252,7 @@
         "currentCommanderyDisplayName": "백제국",
         "currentCommanderyNameCh": "伯濟國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 4,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8199,7 +8268,7 @@
         "currentCommanderyDisplayName": "북옥저",
         "currentCommanderyNameCh": "北沃沮",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 2,
+        "currentJurisdictionCount": 4,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8207,7 +8276,7 @@
         "currentCommanderyDisplayName": "졸본",
         "currentCommanderyNameCh": "卒本",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 2,
+        "currentJurisdictionCount": 3,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8228,10 +8297,10 @@
       },
       {
         "currentCommanderyId": "PARENT-0115",
-        "currentCommanderyDisplayName": "고령가야",
+        "currentCommanderyDisplayName": "함창 취락",
         "currentCommanderyNameCh": "古寧伽耶",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8271,15 +8340,15 @@
         "currentCommanderyDisplayName": "국내성",
         "currentCommanderyNameCh": "國內城",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 7,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
         "currentCommanderyId": "PARENT-0121",
-        "currentCommanderyDisplayName": "대가야",
+        "currentCommanderyDisplayName": "반로",
         "currentCommanderyNameCh": "大伽耶",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8287,7 +8356,7 @@
         "currentCommanderyDisplayName": "부여",
         "currentCommanderyNameCh": "夫餘",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 3,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8391,7 +8460,7 @@
         "currentCommanderyDisplayName": "실직국",
         "currentCommanderyNameCh": "悉直國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8399,7 +8468,7 @@
         "currentCommanderyDisplayName": "압독국",
         "currentCommanderyNameCh": "押督國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 3,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8407,7 +8476,7 @@
         "currentCommanderyDisplayName": "사로국",
         "currentCommanderyNameCh": "斯盧國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 3,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8444,10 +8513,10 @@
       },
       {
         "currentCommanderyId": "PARENT-0142",
-        "currentCommanderyDisplayName": "성산가야",
+        "currentCommanderyDisplayName": "성주 취락",
         "currentCommanderyNameCh": "星山伽耶",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8455,7 +8524,7 @@
         "currentCommanderyDisplayName": "동옥저",
         "currentCommanderyNameCh": "東沃沮",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 2,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8535,7 +8604,7 @@
         "currentCommanderyDisplayName": "구야국",
         "currentCommanderyNameCh": "狗邪國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 2,
+        "currentJurisdictionCount": 5,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8559,7 +8628,7 @@
         "currentCommanderyDisplayName": "목지국",
         "currentCommanderyNameCh": "目支國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 12,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8623,7 +8692,7 @@
         "currentCommanderyDisplayName": "벽비리국",
         "currentCommanderyNameCh": "辟卑離國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 1,
+        "currentJurisdictionCount": 10,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       },
       {
@@ -8681,6 +8750,38 @@
         "kind": "COMMANDERY",
         "currentJurisdictionCount": 1,
         "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
+      },
+      {
+        "currentCommanderyId": "PARENT-0172",
+        "currentCommanderyDisplayName": "읍루",
+        "currentCommanderyNameCh": "挹婁",
+        "kind": "COMMANDERY",
+        "currentJurisdictionCount": 2,
+        "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
+      },
+      {
+        "currentCommanderyId": "PARENT-0173",
+        "currentCommanderyDisplayName": "송화강 취락권",
+        "currentCommanderyNameCh": "松花江聚落",
+        "kind": "COMMANDERY",
+        "currentJurisdictionCount": 2,
+        "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
+      },
+      {
+        "currentCommanderyId": "PARENT-0174",
+        "currentCommanderyDisplayName": "흑룡강 취락권",
+        "currentCommanderyNameCh": "黑龍江聚落",
+        "kind": "COMMANDERY",
+        "currentJurisdictionCount": 4,
+        "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
+      },
+      {
+        "currentCommanderyId": "PARENT-0175",
+        "currentCommanderyDisplayName": "우수리강 취락권",
+        "currentCommanderyNameCh": "烏蘇里江聚落",
+        "kind": "COMMANDERY",
+        "currentJurisdictionCount": 4,
+        "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW"
       }
     ]
   },
@@ -8711,10 +8812,10 @@
     "referenceYear": 220,
     "politicalOwnershipSeparate": true,
     "recruitmentEligibilitySeparate": true,
-    "externalJurisdictionCount": 38,
-    "coveredJurisdictionCount": 38,
+    "externalJurisdictionCount": 99,
+    "coveredJurisdictionCount": 99,
     "uncoveredJurisdictionIds": [],
-    "macroRegionCount": 21,
+    "macroRegionCount": 24,
     "macroRegions": [
       {
         "id": "WESTERN-REGIONS-HAN-ADMINISTRATION",
@@ -8729,20 +8830,31 @@
         "id": "GOGURYEO",
         "displayName": "고구려",
         "classification": "POLITY",
-        "geographicScope": "KOREAN_PENINSULA",
+        "geographicScope": "NORTHEAST_ASIA",
         "jurisdictionIds": [
           "X028",
-          "X029"
+          "X029",
+          "X065",
+          "X066",
+          "X067",
+          "X068",
+          "X069",
+          "X070",
+          "X071",
+          "X072",
+          "X110",
+          "X111"
         ]
       },
       {
         "id": "OKJEO",
         "displayName": "옥저",
         "classification": "PEOPLE_REGION",
-        "geographicScope": "KOREAN_PENINSULA",
+        "geographicScope": "NORTHEAST_ASIA",
         "jurisdictionIds": [
           "X030",
-          "X037"
+          "X037",
+          "X109"
         ]
       },
       {
@@ -8751,7 +8863,8 @@
         "classification": "PEOPLE_REGION",
         "geographicScope": "NORTHEAST_ASIA",
         "jurisdictionIds": [
-          "X039"
+          "X039",
+          "X113"
         ]
       },
       {
@@ -8760,7 +8873,10 @@
         "classification": "POLITY",
         "geographicScope": "NORTHEAST_ASIA",
         "jurisdictionIds": [
-          "X036"
+          "X036",
+          "X112",
+          "X114",
+          "X125"
         ]
       },
       {
@@ -8769,7 +8885,10 @@
         "classification": "PEOPLE_REGION",
         "geographicScope": "KOREAN_PENINSULA",
         "jurisdictionIds": [
-          "X038"
+          "X038",
+          "X106",
+          "X107",
+          "X108"
         ]
       },
       {
@@ -8780,7 +8899,30 @@
         "jurisdictionIds": [
           "X040",
           "X041",
-          "X042"
+          "X042",
+          "X073",
+          "X074",
+          "X075",
+          "X076",
+          "X077",
+          "X078",
+          "X079",
+          "X080",
+          "X081",
+          "X082",
+          "X083",
+          "X084",
+          "X085",
+          "X086",
+          "X087",
+          "X088",
+          "X089",
+          "X090",
+          "X091",
+          "X092",
+          "X093",
+          "X094",
+          "X095"
         ]
       },
       {
@@ -8793,7 +8935,13 @@
           "X033",
           "X034",
           "X044",
-          "X049"
+          "X049",
+          "X096",
+          "X097",
+          "X098",
+          "X099",
+          "X100",
+          "X101"
         ]
       },
       {
@@ -8806,7 +8954,11 @@
           "X045",
           "X046",
           "X047",
-          "X048"
+          "X048",
+          "X102",
+          "X103",
+          "X104",
+          "X105"
         ]
       },
       {
@@ -8921,6 +9073,40 @@
         "jurisdictionIds": [
           "X064"
         ]
+      },
+      {
+        "id": "SONGHUA",
+        "displayName": "송화강 취락권",
+        "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
+        "geographicScope": "NORTHEAST_ASIA",
+        "jurisdictionIds": [
+          "X115",
+          "X116"
+        ]
+      },
+      {
+        "id": "AMUR",
+        "displayName": "흑룡강 취락권",
+        "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
+        "geographicScope": "NORTHEAST_ASIA",
+        "jurisdictionIds": [
+          "X117",
+          "X118",
+          "X119",
+          "X120"
+        ]
+      },
+      {
+        "id": "USSURI",
+        "displayName": "우수리강 취락권",
+        "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
+        "geographicScope": "NORTHEAST_ASIA",
+        "jurisdictionIds": [
+          "X121",
+          "X122",
+          "X123",
+          "X124"
+        ]
       }
     ],
     "sourceBackedCandidateCount": 5,
@@ -9016,7 +9202,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
+      "sha256": "0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
@@ -9025,7 +9211,7 @@
       "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
     },
     "externalRegionHierarchyPolicy": {
-      "sha256": "6e3188aa5b6cf8bad465ef54a61029412663d371ea08bb0c91b487cfd1a40693"
+      "sha256": "435d21841f9a49996ab6b23d4ecdea913a799203ec053b2c0c609755617cbb85"
     }
   }
 }

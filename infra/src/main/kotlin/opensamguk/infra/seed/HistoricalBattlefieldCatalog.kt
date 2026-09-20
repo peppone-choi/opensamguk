@@ -39,7 +39,18 @@ object HistoricalBattlefieldCatalog {
                 "curated:frontier-county-v1:$province", "curated:strategic-site-v1:$province")
             val standInSeat = province.startsWith("DIRECT-") &&
                 listOf("chgis:v6:cnty:", "chgis:v6:pref:", "external:v1:").any { physical.startsWith(it) }
-            require(sameId || standInSeat) {
+            // Repartitioning preserves old province IDs. An external settlement may
+            // therefore occupy either a newly carved KOR province or its donor's
+            // retained SUB province, as recorded in the reviewed runtime budget group.
+            val placeId = physical.removePrefix("external:v1:")
+            val budget = row.path("meta").path("economyBasis")
+            val donor = budget.path("fundingJurisdictionId").asText()
+            val reviewedSettlement = physical.startsWith("external:v1:") && donor.isNotEmpty() &&
+                budget.path("kind").asText() == "GAME_DESIGN_CONSERVED_BUDGET" &&
+                budget.path("memberJurisdictionIds").any { it.asText() == placeId }
+            val settlementProvince = reviewedSettlement &&
+                (province.startsWith("KOR-$placeId-") || province.startsWith("SUB-$donor-"))
+            require(sameId || standInSeat || settlementProvince) {
                 "Runtime city $id has inconsistent physical binding"
             }
             require(result.put(id, StrategicNodeRef.LandProvince(province)) == null) { "Duplicate runtime city" }

@@ -19,7 +19,7 @@ LON = (124.0, 131.0)
 LAT = (33.0, 43.0)
 
 # 비정이 갈리는 실체 (원장 conf=DISPUTED). 2026-09-17 城으로 섰지만 등급은 원장·claim 에 그대로 남는다.
-DISPUTED_KOREA_PLACES = frozenset({"X030", "X040", "X041", "X047", "X055"})
+DISPUTED_KOREA_PLACES = frozenset({"X030", "X040", "X041", "X047", "X055"} | {f"X{i:03d}" for i in range(65, 73)})
 
 # 도시가 물리 참조로 거는 외부 실체 (郡治 좌표). 720/X003 등 13곳. 새 연결이
 # 생기면 심사해야 풀린다(승격 기구 작업).
@@ -29,7 +29,7 @@ DISPUTED_KOREA_PLACES = frozenset({"X030", "X040", "X041", "X047", "X055"})
 LINKED_COMMANDERY_EXTERNALS = frozenset({
     "X000", "X001", "X002", "X003", "X004", "X005", "X006", "X007",
     "X011", "X023", "X024", "X026", "X027",
-} | {f"X{index:03d}" for index in range(28, 65)})  # 2026-09-17 郡國 밖 취락 37곳(w5)
+} | {f"X{index:03d}" for index in range(28, 73)})  # 2026-09-17 郡國 밖 취락 37곳(w5)
 
 
 def korea_externals():

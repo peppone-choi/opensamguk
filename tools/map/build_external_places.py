@@ -10,11 +10,11 @@
 
 **좌표를 손으로 적지 않는다.** 손으로 적으면 출처가 나고, 그건 출처가 아니다.
 비정(어느 현대 지점인가)은 문헌이 정하고, 좌표(그 지점이 어디인가)는 Wikidata P625 가
-준다. QID 를 같이 적어 사후에 남이 검증할 수 있게 한다. 후보가 여럿이면 임의로 고르지
-않고 unresolved 로 남긴다 — 지도에 안 실리는 편이 틀린 자리에 실리는 것보다 낫다.
+준다. QID 를 같이 적어 사후에 남이 검증할 수 있게 한다. 후보가 여럿이면 채택한 비정과 경쟁설을 기록한다. 2026-09-20 사용자 결정에 따라
+정확한 위치가 없는 옛 소국은 별도 결정 원장에 GAME_DESIGN_LOCALITY_PROXY로 표시한다.
 
-**소국은 적게 찍는다.** 三國志 魏書 東夷傳이 이름을 남긴 것 중 위치 비정이 굳은 것만
-넣는다. 邑落 단위까지 찍으면 지도가 이름으로 덮이고, 대부분은 비정이 갈린다.
+**역사와 게임 배치를 구분한다.** 문헌에 등장하는 소국·주민집단은 기존 지도의
+거점으로 쓸 수 있다. 현대 대표점과 게임 관할 경계는 고대 국읍·국경의 확정값이 아니다.
 
 usage:  python3 tools/map/build_external_places.py [--check | --check-offline]
 """
@@ -131,9 +131,9 @@ PLACES = [
     ("卒本", "EXTERNAL_PLACE", 4, "Huanren Manchu Autonomous County", CN, None, None,
      "『魏書』高句麗傳 「遂至紇升骨城，遂居焉，號曰高句麗」. 卒本 = 오녀산성, 환런 일대. "
      "건국 도읍이자 220년에도 남은 고구려의 옛 거점", "Liaoning", 30),
-    ("北沃沮", "EXTERNAL_PLACE", 4, "Hoeryong", KP, None, None,
-     "東夷傳 「北沃沮一名置溝婁，去南沃沮八百餘里」. 두만강 유역 회령 일대 — 비정이 갈린다",
-     "North Hamgyong Province", 40),
+    ("北沃沮", "EXTERNAL_PLACE", 4, "Hunchun", CN, None, None,
+     "東夷傳 「北沃沮一名置溝婁，去南沃沮八百餘里」. 동북아역사재단 『고구려통사』 초기 정복활동과 진출범위의 혼춘 중심설 채택. 회령 등 두만강 유역 비정과 경합하며 정확한 국읍 위치는 미상",
+     None, 40),
     ("安邪國", "EXTERNAL_PLACE", 4, "Haman County", KR, None, None,
      "韓傳 「弁辰安邪國」. 『삼국사기』 지리지 咸安郡 「法興王以大兵滅阿尸良國(一云阿那加耶)」 "
      "— 함안 말이산 고분군", None, 20),
@@ -151,8 +151,8 @@ PLACES = [
     ("于山國", "EXTERNAL_PLACE", 4, "Ulleung County", KR, None, None,
      "『삼국사기』 신라본기 지증마립간 13년 「于山國歸服 … 或名鬱陵島」. 220년에는 아직 "
      "신라 밖의 섬 세력", None, 20),
-    ("夫餘", "EXTERNAL_PLACE", 4, "Nong'an County", CN, None, None,
-     "쑹화강 유역 눙안 일대. 東夷傳 「夫餘在長城之北，去玄菟千里」", None, 20),
+    ("夫餘", "EXTERNAL_PLACE", 4, "Jilin City", CN, None, None,
+     "東夷傳 「夫餘在長城之北，去玄菟千里」. 동북아역사재단 『고구려통사』의 초기 길림 중심·285년 이후 농안 이동설에 따라 220년 대표점을 길림으로 교정. 현대 시 중심 좌표이며 왕성의 확정 위치가 아님", None, 20),
     ("東沃沮", "EXTERNAL_PLACE", 4, "Hamhung", KP, None, None,
      "東夷傳 「東沃沮在高句麗蓋馬大山之東，濱大海而居」. 함흥 일대", None, 20),
     ("濊", "EXTERNAL_PLACE", 4, "Gangneung", KR, None, None,
@@ -253,7 +253,12 @@ PLACES = [
      "Inner Mongolia", 40),
 ]
 
-DISPUTED = {"目支國", "辟卑離國", "大伽耶", "北沃沮", "鮮卑", "南匈奴", "邪馬壹國", "流求", "張掖屬國", "龜茲屬國"}                       # 비정이 갈리는 것. 게임은 견디지만 기록은 못 견딘다.
+# Reviewed historic regions + game-design locality anchors (user 2026-09-20).
+KOREA_SETTLEMENT_DECISIONS = json.loads((ROOT / "data/curated/han/korea-place-corrections-v1.json").read_text(encoding="utf-8"))["settlements"]
+PLACES.extend((r["nameCh"], "EXTERNAL_PLACE", 4, r["modern"], {"CN": CN, "KP": KP, "KR": KR, "RU": RU}[r["country"]],
+               None, None, r["basis"], None, 30) for r in KOREA_SETTLEMENT_DECISIONS)
+
+DISPUTED = {"夫餘", "目支國", "辟卑離國", "大伽耶", "北沃沮", "鮮卑", "南匈奴", "邪馬壹國", "流求", "張掖屬國", "龜茲屬國"}                       # 비정이 갈리는 것. 게임은 견디지만 기록은 못 견딘다.
 # 도로 간선의 허브 — 郡國志에 없는 세력이라도 이곳들은 郡治급으로 승격해 오갈 수 있어야
 # 한다(build_terrain_grid.py). level 이 아니라 여기서만 표시한다.
 HUB = {"國內城", "卒本", "北沃沮", "安邪國", "悉直國", "押督國", "召文國", "于山國", "夫餘", "東沃沮", "濊", "目支國", "辟卑離國", "伯濟國", "州胡", "斯盧國",
@@ -268,6 +273,9 @@ if _bad_place_kinds:
     raise ValueError(f"unrecognized kind(s): {_bad_place_kinds}")
 del _bad_place_kinds
 
+
+DISPUTED.update(r["nameCh"] for r in KOREA_SETTLEMENT_DECISIONS)
+HUB.update(r["nameCh"] for r in KOREA_SETTLEMENT_DECISIONS)
 
 def spread_km(cand):
     """후보들이 얼마나 흩어져 있나. 위도 1도 = 111km, 경도는 cos 로 누른다."""
@@ -287,9 +295,12 @@ def resolve():
     # 라벨을 언어 태그 리터럴로 직접 매칭한다. FILTER(STR(?l)=...) 는 전체 라벨을 훑어
     # 504 로 죽는다 — 태그 리터럴은 색인을 타서 즉시 돌아온다.
     # 한 번에 다 물으면 504 가 난다. 20행씩 끊어 묻고 합친다.
+    reviewed = json.loads((ROOT / "data/curated/han/korea-place-corrections-v1.json").read_text())
+    pinned = {r['id']: r for r in reviewed['decisions'] + reviewed['settlements']}
+    live_places = [r for i,r in enumerate(PLACES) if f'X{i:03d}' not in pinned]
     rows = []
-    for k in range(0, len(PLACES), 20):
-        values = " ".join(f'("{r[3]}"@en wd:{r[4]})' for r in PLACES[k:k + 20])
+    for k in range(0, len(live_places), 20):
+        values = " ".join(f'("{r[3]}"@en wd:{r[4]})' for r in live_places[k:k + 20])
         rows += sparql(f"""
 SELECT ?label ?item ?coord WHERE {{
   VALUES (?label ?country) {{ {values} }}
@@ -322,6 +333,11 @@ SELECT ?label ?item WHERE {{
     out, unresolved = [], []
     for i, row in enumerate(PLACES):
         p = dict(zip(FIELDS, row))
+        pid = f"X{i:03d}"
+        if pid in pinned:
+            d=pinned[pid]
+            out.append({**authored_rows()[pid], **{key:d[key] for key in ('lon','lat','wikidata')}})
+            continue
         cand = hits.get(p["modern"], [])
         # 같은 곳을 여러 항목이 조금씩 다르게 적어둔 경우가 많다(시청 좌표 대 중심 좌표).
         # 후보가 10km 안에 모여 있으면 같은 곳으로 보고 첫 항목을 쓴다. 흩어져 있으면
@@ -347,7 +363,7 @@ def build_meta(resolved: int, unresolved: int) -> dict:
     return {
         "source": "비정 = 三國志 魏書 東夷傳·後漢書 郡國志 · 좌표 = Wikidata P625 (CC0)",
         "generator": "tools/map/build_external_places.py",
-        "note": "CHGIS V6 커버리지(현대 중국 국경) 밖 지점. 좌표는 손으로 적지 않는다.",
+        "note": "문헌 비정 + Wikidata 현대 대표점. 명시적 GAME_DESIGN/PINNED 좌표는 korea-place-corrections-v1의 승인된 게임 배치이며 P625 좌표라는 주장이 아니다.",
         "resolved": resolved, "unresolved": unresolved,
     }
 

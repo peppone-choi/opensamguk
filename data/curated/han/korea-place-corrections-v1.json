@@ -1,0 +1,1869 @@
+{
+  "schemaVersion": 1,
+  "effectiveYear": 220,
+  "purpose": "한반도·만주 전역의 기존 지도 거점·구획·출처·운영 경제를 보강한다.",
+  "historicalSource": "https://contents.nahf.or.kr/item/level.do?levelId=gt.d_0002_0020_0010_0010",
+  "primarySource": "三國志 卷30 魏書 烏丸鮮卑東夷傳",
+  "coordinateLicense": "Wikidata CC0 modern witnesses where provided; GAME_DESIGN_* and PINNED_* coordinates are explicitly derived game placements, not P625 claims.",
+  "decisions": [
+    {
+      "id": "X030",
+      "modern": "Hunchun",
+      "wikidata": "Q128674",
+      "revision": 2540275253,
+      "lon": 130.35845,
+      "lat": 42.86788,
+      "confidence": "DISPUTED",
+      "basis": "東夷傳 「北沃沮一名置溝婁，去南沃沮八百餘里」. 동북아역사재단 『고구려통사』 초기 정복활동과 진출범위의 혼춘 중심설 채택. 회령 등 두만강 유역 비정과 경합하며 정확한 국읍 위치는 미상",
+      "coordinateSource": "https://www.wikidata.org/wiki/Special:EntityData/Q128674.json?revision=2540275253"
+    },
+    {
+      "id": "X036",
+      "modern": "Jilin City",
+      "wikidata": "Q92277",
+      "revision": 2526615234,
+      "lon": 126.56157,
+      "lat": 43.8461,
+      "confidence": "DISPUTED",
+      "basis": "東夷傳 「夫餘在長城之北，去玄菟千里」. 동북아역사재단 『고구려통사』의 초기 길림 중심·285년 이후 농안 이동설에 따라 220년 대표점을 길림으로 교정. 현대 시 중심 좌표이며 왕성의 확정 위치가 아님",
+      "coordinateSource": "https://www.wikidata.org/wiki/Special:EntityData/Q92277.json?revision=2526615234"
+    }
+  ],
+  "boundaryPolicy": "기존 도시 ID·남부 지형을 보존한다. 읍루와 북방 하천 취락권은 별도 게임 상위 구획으로 분리한다.",
+  "interpretationPolicy": {
+    "disputedLocations": "상충하는 비정이 있어도 문헌·시대 적합성을 비교해 대표점을 채택하고 DISPUTED와 선택 근거를 함께 보존한다.",
+    "differentPeriods": "고조선·진번·임둔 및 초기 병합 소국, 후기 가야의 이름을 220년 독립 세력으로 동시에 배치하지 않는다.",
+    "aliases": "북부여/부여·남옥저/동옥저 등 중복 가능 명칭은 별도 도시로 복제하지 않는다.",
+    "ethnonyms": "예·맥을 일률적인 정치 영토 구분으로 사용하지 않는다."
+  },
+  "settlements": [
+    {
+      "id": "X065",
+      "name": "비류",
+      "nameCh": "沸流",
+      "modern": "Tonghua",
+      "country": "CN",
+      "wikidata": "Q92324",
+      "revision": 2526615246,
+      "lon": 125.94705,
+      "lat": 41.73015,
+      "confidence": "DISPUTED",
+      "basis": "비류수(혼강) 상류의 비류국. 고구려 건국기 복속. [게임 기획] Tonghua 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://encykorea.aks.ac.kr/Article/E0025129",
+        "claim": "비류수(혼강) 상류의 비류국. 고구려 건국기 복속."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X066",
+      "name": "조나",
+      "nameCh": "藻那",
+      "modern": "Chasong County",
+      "country": "KP",
+      "wikidata": "Q698477",
+      "revision": 2186678598,
+      "lon": 126.6414,
+      "lat": 41.4608,
+      "confidence": "DISPUTED",
+      "basis": "압록강 중상류 나국. 태조왕 20년(72) 병합. [게임 기획] Chasong County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "압록강 중상류 나국. 태조왕 20년(72) 병합."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X067",
+      "name": "주나",
+      "nameCh": "朱那",
+      "modern": "Chunggang County",
+      "country": "KP",
+      "wikidata": "Q430493",
+      "revision": 2309130365,
+      "lon": 126.895,
+      "lat": 41.65472,
+      "confidence": "DISPUTED",
+      "basis": "압록강 중상류 나국. 태조왕 22년(74) 병합. [게임 기획] Chunggang County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "압록강 중상류 나국. 태조왕 22년(74) 병합."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X068",
+      "name": "개마",
+      "nameCh": "蓋馬",
+      "modern": "Kapsan County",
+      "country": "KP",
+      "wikidata": "Q705082",
+      "revision": 2341363165,
+      "lon": 128.38639,
+      "lat": 41.12278,
+      "confidence": "DISPUTED",
+      "basis": "개마고원 일대 소국. 대무신왕 9년(26) 병합. [게임 기획] Kapsan County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "개마고원 일대 소국. 대무신왕 9년(26) 병합."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X069",
+      "name": "구다",
+      "nameCh": "句茶",
+      "modern": "Kimhyonggwon County",
+      "country": "KP",
+      "wikidata": "Q196242",
+      "revision": 2352820696,
+      "lon": 128.16667,
+      "lat": 40.75,
+      "confidence": "DISPUTED",
+      "basis": "개마 인근 소국. 대무신왕 9년(26) 항복. [게임 기획] Kimhyonggwon County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "개마 인근 소국. 대무신왕 9년(26) 항복."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X037",
+      "commanderyId": "PARENT-0143",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X070",
+      "name": "행인",
+      "nameCh": "荇人",
+      "modern": "Musan County",
+      "country": "KP",
+      "wikidata": "Q718513",
+      "revision": 2410131493,
+      "lon": 129.33889,
+      "lat": 42.07056,
+      "confidence": "DISPUTED",
+      "basis": "태백산 동남의 소국. 동명왕 6년 정벌. 무산·함경북도 방면설 채택. [게임 기획] Musan County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://encykorea.aks.ac.kr/Article/E0062831",
+        "claim": "태백산 동남의 소국. 동명왕 6년 정벌. 무산·함경북도 방면설 채택."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X071",
+      "name": "양맥",
+      "nameCh": "梁貊",
+      "modern": "Xinbin Manchu Autonomous County",
+      "country": "CN",
+      "wikidata": "Q1366676",
+      "revision": 2526582580,
+      "lon": 125.03078,
+      "lat": 41.72873,
+      "confidence": "DISPUTED",
+      "basis": "태자하 상류의 맥 집단. 정벌 기사와 직접 지배 시점의 해석은 구분. [게임 기획] Xinbin Manchu Autonomous County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://contents.nahf.or.kr/item/level.do?levelId=gt.d_0002_0020_0010_0010",
+        "claim": "태자하 상류의 맥 집단. 정벌 기사와 직접 지배 시점의 해석은 구분."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X029",
+      "commanderyId": "PARENT-0112",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X072",
+      "name": "소수맥",
+      "nameCh": "小水貊",
+      "modern": "Kuandian Manchu Autonomous County",
+      "country": "CN",
+      "wikidata": "Q1367572",
+      "revision": 2526583204,
+      "lon": 124.78,
+      "lat": 40.72664,
+      "confidence": "DISPUTED",
+      "basis": "압록강 하류 북쪽 애하·포석하 유역의 주민집단. 맥궁 생산 기록. [게임 기획] Kuandian Manchu Autonomous County 현대 대표점을 해당 권역의 취락 앵커로 채택; 고대 성터의 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://encykorea.aks.ac.kr/Article/E0018043",
+        "claim": "압록강 하류 북쪽 애하·포석하 유역의 주민집단. 맥궁 생산 기록."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "fc-liaodong-008",
+      "commanderyId": "PARENT-0094",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO"
+    },
+    {
+      "id": "X073",
+      "name": "고원",
+      "nameCh": "古爰",
+      "modern": "Yesan_County",
+      "country": "KR",
+      "wikidata": "Q50307",
+      "revision": 2516834792,
+      "lon": 126.845,
+      "lat": 36.679166666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yesan_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.845,
+        "lat": 36.679166666667
+      }
+    },
+    {
+      "id": "X074",
+      "name": "천안 취락",
+      "nameCh": "天安聚落",
+      "modern": "Cheonan",
+      "country": "KR",
+      "wikidata": "Q42146",
+      "revision": 2527158988,
+      "lon": 127.1475,
+      "lat": 36.81,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Cheonan 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X042",
+      "commanderyId": "PARENT-0109",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.1475,
+        "lat": 36.81
+      }
+    },
+    {
+      "id": "X075",
+      "name": "염로",
+      "nameCh": "冉路",
+      "modern": "Asan",
+      "country": "KR",
+      "wikidata": "Q42114",
+      "revision": 2532333824,
+      "lon": 126.91666666667,
+      "lat": 36.35,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Asan 권역의 육지 대표점 채택. 三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.91666666667,
+        "lat": 36.35
+      }
+    },
+    {
+      "id": "X076",
+      "name": "감해비리",
+      "nameCh": "監奚卑離",
+      "modern": "Hongseong_County",
+      "country": "KR",
+      "wikidata": "Q50343",
+      "revision": 2381750786,
+      "lon": 126.66277777778,
+      "lat": 36.599444444444,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Hongseong_County 권역의 육지 대표점 채택. 三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.66277777778,
+        "lat": 36.599444444444
+      }
+    },
+    {
+      "id": "X077",
+      "name": "치리국",
+      "nameCh": "致利鞠",
+      "modern": "Seosan",
+      "country": "KR",
+      "wikidata": "Q42105",
+      "revision": 2537762828,
+      "lon": 126.45222222222,
+      "lat": 36.781666666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Seosan 권역의 육지 대표점 채택. 三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.45222222222,
+        "lat": 36.781666666667
+      }
+    },
+    {
+      "id": "X078",
+      "name": "태안 취락",
+      "nameCh": "泰安聚落",
+      "modern": "Taean_County",
+      "country": "KR",
+      "wikidata": "Q50335",
+      "revision": 2501835558,
+      "lon": 126.29777777778,
+      "lat": 36.756388888889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Taean_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.29777777778,
+        "lat": 36.756388888889
+      }
+    },
+    {
+      "id": "X079",
+      "name": "연안 취락",
+      "nameCh": "沿岸聚落",
+      "modern": "Dangjin",
+      "country": "KR",
+      "wikidata": "Q42089",
+      "revision": 2443518687,
+      "lon": 126.62972222222,
+      "lat": 36.894444444444,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Dangjin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X042",
+      "commanderyId": "PARENT-0109",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.62972222222,
+        "lat": 36.894444444444
+      }
+    },
+    {
+      "id": "X080",
+      "name": "불운",
+      "nameCh": "不雲",
+      "modern": "Gongju",
+      "country": "KR",
+      "wikidata": "Q42062",
+      "revision": 2506792293,
+      "lon": 127.12472222222,
+      "lat": 36.455555555556,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Gongju 권역의 육지 대표점 채택. 三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.12472222222,
+        "lat": 36.455555555556
+      }
+    },
+    {
+      "id": "X081",
+      "name": "지반",
+      "nameCh": "支半",
+      "modern": "Buan_County",
+      "country": "KR",
+      "wikidata": "Q50246",
+      "revision": 2489647227,
+      "lon": 126.73194444444,
+      "lat": 35.728055555556,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Buan_County 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.73194444444,
+        "lat": 35.728055555556
+      }
+    },
+    {
+      "id": "X082",
+      "name": "고랍",
+      "nameCh": "古臘",
+      "modern": "Namwon",
+      "country": "KR",
+      "wikidata": "Q42087",
+      "revision": 2517002641,
+      "lon": 127.38583333333,
+      "lat": 35.41,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Namwon 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.38583333333,
+        "lat": 35.41
+      }
+    },
+    {
+      "id": "X083",
+      "name": "초산도비리",
+      "nameCh": "楚山塗卑離",
+      "modern": "Jeongeup",
+      "country": "KR",
+      "wikidata": "Q42141",
+      "revision": 2532333842,
+      "lon": 126.85611111111,
+      "lat": 35.565277777778,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Jeongeup 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.85611111111,
+        "lat": 35.565277777778
+      }
+    },
+    {
+      "id": "X084",
+      "name": "모로비리",
+      "nameCh": "牟盧卑離",
+      "modern": "Gochang_County",
+      "country": "KR",
+      "wikidata": "Q50210",
+      "revision": 2514144591,
+      "lon": 126.7,
+      "lat": 35.433333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Gochang_County 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.7,
+        "lat": 35.433333333333
+      }
+    },
+    {
+      "id": "X085",
+      "name": "불사분사",
+      "nameCh": "不斯濆邪",
+      "modern": "Jeonju",
+      "country": "KR",
+      "wikidata": "Q42140",
+      "revision": 2542580446,
+      "lon": 127.1475,
+      "lat": 35.82388888888889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Jeonju 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.1475,
+        "lat": 35.82388888888889
+      }
+    },
+    {
+      "id": "X086",
+      "name": "만로",
+      "nameCh": "萬盧",
+      "modern": "Gunsan",
+      "country": "KR",
+      "wikidata": "Q42074",
+      "revision": 2484343500,
+      "lon": 126.71138888889,
+      "lat": 35.978611111111,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Gunsan 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.71138888889,
+        "lat": 35.978611111111
+      }
+    },
+    {
+      "id": "X087",
+      "name": "불미",
+      "nameCh": "不彌",
+      "modern": "Naju",
+      "country": "KR",
+      "wikidata": "Q42083",
+      "revision": 2528902808,
+      "lon": 126.7175,
+      "lat": 35.028333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Naju 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.7175,
+        "lat": 35.028333333333
+      }
+    },
+    {
+      "id": "X088",
+      "name": "무안 취락",
+      "nameCh": "務安聚落",
+      "modern": "Muan_County",
+      "country": "KR",
+      "wikidata": "Q50241",
+      "revision": 2537762802,
+      "lon": 126.47138888889,
+      "lat": 34.989722222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Muan_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.47138888889,
+        "lat": 34.989722222222
+      }
+    },
+    {
+      "id": "X089",
+      "name": "침미다례 권역",
+      "nameCh": "忱彌多禮",
+      "modern": "Haenam_County",
+      "country": "KR",
+      "wikidata": "Q50342",
+      "revision": 2515062271,
+      "lon": 126.5975,
+      "lat": 34.574166666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Haenam_County 권역의 육지 대표점 채택. 후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.5975,
+        "lat": 34.574166666667
+      }
+    },
+    {
+      "id": "X090",
+      "name": "영암 취락",
+      "nameCh": "靈巖聚落",
+      "modern": "Yeongam_County",
+      "country": "KR",
+      "wikidata": "Q50262",
+      "revision": 2515062930,
+      "lon": 126.7,
+      "lat": 34.798333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yeongam_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.7,
+        "lat": 34.798333333333
+      }
+    },
+    {
+      "id": "X091",
+      "name": "금강 취락",
+      "nameCh": "錦江聚落",
+      "modern": "Nonsan",
+      "country": "KR",
+      "wikidata": "Q42088",
+      "revision": 2452113866,
+      "lon": 127.08472222222,
+      "lat": 36.203888888889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nonsan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.08472222222,
+        "lat": 36.203888888889
+      }
+    },
+    {
+      "id": "X092",
+      "name": "웅천 취락",
+      "nameCh": "熊川聚落",
+      "modern": "Buyeo_County",
+      "country": "KR",
+      "wikidata": "Q50247",
+      "revision": 2506791696,
+      "lon": 126.9125,
+      "lat": 36.281944444444,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Buyeo_County 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.9125,
+        "lat": 36.281944444444
+      }
+    },
+    {
+      "id": "X093",
+      "name": "금강 하구",
+      "nameCh": "錦江河口",
+      "modern": "Seocheon_County",
+      "country": "KR",
+      "wikidata": "Q50249",
+      "revision": 2400517043,
+      "lon": 126.69138888889,
+      "lat": 36.080277777778,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Seocheon_County 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.69138888889,
+        "lat": 36.080277777778
+      }
+    },
+    {
+      "id": "X094",
+      "name": "서해 취락",
+      "nameCh": "西海聚落",
+      "modern": "Boryeong",
+      "country": "KR",
+      "wikidata": "Q42098",
+      "revision": 2535590951,
+      "lon": 126.61666666666666,
+      "lat": 36.333333333333336,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Boryeong 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.61666666666666,
+        "lat": 36.333333333333336
+      }
+    },
+    {
+      "id": "X095",
+      "name": "중원 취락",
+      "nameCh": "中原聚落",
+      "modern": "Cheongju",
+      "country": "KR",
+      "wikidata": "Q42147",
+      "revision": 2506107993,
+      "lon": 127.48972222222,
+      "lat": 36.637222222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Cheongju 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X049",
+      "commanderyId": "PARENT-0115",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.48972222222,
+        "lat": 36.637222222222
+      }
+    },
+    {
+      "id": "X096",
+      "name": "골벌",
+      "nameCh": "骨伐",
+      "modern": "Yeongcheon",
+      "country": "KR",
+      "wikidata": "Q42128",
+      "revision": 2533143397,
+      "lon": 128.93861111111,
+      "lat": 35.973333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yeongcheon 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X033",
+      "commanderyId": "PARENT-0136",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 128.93861111111,
+        "lat": 35.973333333333
+      }
+    },
+    {
+      "id": "X097",
+      "name": "이서",
+      "nameCh": "伊西",
+      "modern": "Cheongdo_County",
+      "country": "KR",
+      "wikidata": "Q50330",
+      "revision": 2476223860,
+      "lon": 128.74305555556,
+      "lat": 35.643611111111,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Cheongdo_County 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X033",
+      "commanderyId": "PARENT-0136",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 128.74305555556,
+        "lat": 35.643611111111
+      }
+    },
+    {
+      "id": "X098",
+      "name": "감문",
+      "nameCh": "甘文",
+      "modern": "Gimcheon",
+      "country": "KR",
+      "wikidata": "Q42078",
+      "revision": 2487548673,
+      "lon": 128.11527777778,
+      "lat": 36.119166666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Gimcheon 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X048",
+      "commanderyId": "PARENT-0142",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 128.11527777778,
+        "lat": 36.119166666667
+      }
+    },
+    {
+      "id": "X099",
+      "name": "우유",
+      "nameCh": "優由",
+      "modern": "Uljin_County",
+      "country": "KR",
+      "wikidata": "Q50314",
+      "revision": 2516834796,
+      "lon": 129.38333333333,
+      "lat": 36.983333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Uljin_County 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X032",
+      "commanderyId": "PARENT-0135",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 129.38333333333,
+        "lat": 36.983333333333
+      }
+    },
+    {
+      "id": "X100",
+      "name": "근기",
+      "nameCh": "勤耆",
+      "modern": "Pohang",
+      "country": "KR",
+      "wikidata": "Q42157",
+      "revision": 2515833096,
+      "lon": 129.365,
+      "lat": 36.032222222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Pohang 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X044",
+      "commanderyId": "PARENT-0137",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 129.365,
+        "lat": 36.032222222222
+      }
+    },
+    {
+      "id": "X101",
+      "name": "우시산",
+      "nameCh": "于尸山",
+      "modern": "Ulsan",
+      "country": "KR",
+      "wikidata": "Q41278",
+      "revision": 2541075424,
+      "lon": 129.31666666667,
+      "lat": 35.55,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Ulsan 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X044",
+      "commanderyId": "PARENT-0137",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "JINHAN",
+      "coordinateWitness": {
+        "lon": 129.31666666667,
+        "lat": 35.55
+      }
+    },
+    {
+      "id": "X102",
+      "name": "미리미동",
+      "nameCh": "彌離彌凍",
+      "modern": "Miryang",
+      "country": "KR",
+      "wikidata": "Q42096",
+      "revision": 2535582723,
+      "lon": 128.74888888889,
+      "lat": 35.493333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Miryang 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X045",
+      "commanderyId": "PARENT-0153",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BYEONHAN",
+      "coordinateWitness": {
+        "lon": 128.74888888889,
+        "lat": 35.493333333333
+      }
+    },
+    {
+      "id": "X103",
+      "name": "독로",
+      "nameCh": "瀆盧",
+      "modern": "Busan",
+      "country": "KR",
+      "wikidata": "Q16520",
+      "revision": 2547799375,
+      "lon": 129.075,
+      "lat": 35.18,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Busan 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X045",
+      "commanderyId": "PARENT-0153",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BYEONHAN",
+      "coordinateWitness": {
+        "lon": 129.075,
+        "lat": 35.18
+      }
+    },
+    {
+      "id": "X104",
+      "name": "접도",
+      "nameCh": "接塗",
+      "modern": "Changwon",
+      "country": "KR",
+      "wikidata": "Q243327",
+      "revision": 2527726535,
+      "lon": 128.68111111111,
+      "lat": 35.228055555556,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Changwon 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X045",
+      "commanderyId": "PARENT-0153",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BYEONHAN",
+      "coordinateWitness": {
+        "lon": 128.68111111111,
+        "lat": 35.228055555556
+      }
+    },
+    {
+      "id": "X105",
+      "name": "다라 권역",
+      "nameCh": "多羅",
+      "modern": "Hapcheon_County",
+      "country": "KR",
+      "wikidata": "Q50341",
+      "revision": 2476224257,
+      "lon": 128.15944444444,
+      "lat": 35.565555555556,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Hapcheon_County 권역의 육지 대표점 채택. 후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X047",
+      "commanderyId": "PARENT-0121",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BYEONHAN",
+      "coordinateWitness": {
+        "lon": 128.15944444444,
+        "lat": 35.565555555556
+      }
+    },
+    {
+      "id": "X106",
+      "name": "맥",
+      "nameCh": "貊",
+      "modern": "Chuncheon",
+      "country": "KR",
+      "wikidata": "Q42148",
+      "revision": 2542580567,
+      "lon": 127.73416666667,
+      "lat": 37.874722222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Chuncheon 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X042",
+      "commanderyId": "PARENT-0109",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "YE",
+      "coordinateWitness": {
+        "lon": 127.73416666667,
+        "lat": 37.874722222222
+      }
+    },
+    {
+      "id": "X107",
+      "name": "불내",
+      "nameCh": "不耐",
+      "modern": "Anbyon_County",
+      "country": "KP",
+      "wikidata": "Q484890",
+      "revision": 2516570024,
+      "lon": 127.52539,
+      "lat": 39.04323,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Anbyon_County 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "fc-lelang-015",
+      "commanderyId": "PARENT-0096",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "YE",
+      "coordinateWitness": {
+        "lon": 127.52539,
+        "lat": 39.04323
+      }
+    },
+    {
+      "id": "X108",
+      "name": "화려",
+      "nameCh": "華麗",
+      "modern": "Kumya_County",
+      "country": "KP",
+      "wikidata": "Q706067",
+      "revision": 2213986379,
+      "lon": 127.29194444444,
+      "lat": 39.543055555556,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Kumya_County 권역의 육지 대표점 채택. 사료 이름의 지역 비정 채택. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+        "claim": "사료 이름의 지역 비정 채택"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "fc-lelang-006",
+      "commanderyId": "PARENT-0096",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "YE",
+      "coordinateWitness": {
+        "lon": 127.29194444444,
+        "lat": 39.543055555556
+      }
+    },
+    {
+      "id": "X109",
+      "name": "해안 취락",
+      "nameCh": "海岸聚落",
+      "modern": "Chongjin",
+      "country": "KP",
+      "wikidata": "Q109336",
+      "revision": 2532329011,
+      "lon": 129.78333333333333,
+      "lat": 41.78333333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Chongjin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "OKJEO",
+      "coordinateWitness": {
+        "lon": 129.78333333333333,
+        "lat": 41.78333333333333
+      }
+    },
+    {
+      "id": "X110",
+      "name": "두만강 취락",
+      "nameCh": "豆滿江聚落",
+      "modern": "Yanji",
+      "country": "CN",
+      "wikidata": "Q713362",
+      "revision": 2540644536,
+      "lon": 129.5067,
+      "lat": 42.9044,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yanji 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO",
+      "coordinateWitness": {
+        "lon": 129.5067,
+        "lat": 42.9044
+      }
+    },
+    {
+      "id": "X111",
+      "name": "혼강 취락",
+      "nameCh": "渾江聚落",
+      "modern": "Baishan",
+      "country": "CN",
+      "wikidata": "Q92348",
+      "revision": 2526615247,
+      "lon": 126.41794,
+      "lat": 41.93771,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Baishan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO",
+      "coordinateWitness": {
+        "lon": 126.41794,
+        "lat": 41.93771
+      }
+    },
+    {
+      "id": "X112",
+      "name": "돈화 취락",
+      "nameCh": "敦化聚落",
+      "modern": "Dunhua",
+      "country": "CN",
+      "wikidata": "Q713307",
+      "revision": 2532200507,
+      "lon": 128.23333333333,
+      "lat": 43.366666666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Dunhua 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 128.23333333333,
+        "lat": 43.366666666667
+      }
+    },
+    {
+      "id": "X113",
+      "name": "목단강 취락",
+      "nameCh": "牡丹江聚落",
+      "modern": "Mudanjiang",
+      "country": "CN",
+      "wikidata": "Q217646",
+      "revision": 2526608950,
+      "lon": 129.599722,
+      "lat": 44.586111,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Mudanjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "YILOU",
+      "coordinateWitness": {
+        "lon": 129.599722,
+        "lat": 44.586111
+      }
+    },
+    {
+      "id": "X114",
+      "name": "이통하 취락",
+      "nameCh": "伊通河聚落",
+      "modern": "Changchun",
+      "country": "CN",
+      "wikidata": "Q92161",
+      "revision": 2526615222,
+      "lon": 125.32277777778,
+      "lat": 43.88,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Changchun 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 125.32277777778,
+        "lat": 43.88
+      }
+    },
+    {
+      "id": "X115",
+      "name": "송화강 합류",
+      "nameCh": "松花江合流",
+      "modern": "Harbin",
+      "country": "CN",
+      "wikidata": "Q42956",
+      "revision": 2543422302,
+      "lon": 126.63333333333,
+      "lat": 45.75,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Harbin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "SONGHUA",
+      "coordinateWitness": {
+        "lon": 126.63333333333,
+        "lat": 45.75
+      }
+    },
+    {
+      "id": "X116",
+      "name": "송눈 평원",
+      "nameCh": "松嫩平原",
+      "modern": "Daqing",
+      "country": "CN",
+      "wikidata": "Q304848",
+      "revision": 2526609677,
+      "lon": 125.00798,
+      "lat": 46.59791,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Daqing 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "SONGHUA",
+      "coordinateWitness": {
+        "lon": 125.00798,
+        "lat": 46.59791
+      }
+    },
+    {
+      "id": "X117",
+      "name": "흑룡강 중류",
+      "nameCh": "黑龍江中流",
+      "modern": "Heihe",
+      "country": "CN",
+      "wikidata": "Q349983",
+      "revision": 2526610453,
+      "lon": 127.488611,
+      "lat": 50.245833,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Heihe 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 127.488611,
+        "lat": 50.245833
+      }
+    },
+    {
+      "id": "X118",
+      "name": "눈강 취락",
+      "nameCh": "嫩江聚落",
+      "modern": "Nenjiang_City",
+      "country": "CN",
+      "wikidata": "Q1344863",
+      "revision": 2526581607,
+      "lon": 125.21595,
+      "lat": 49.17448,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nenjiang_City 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 125.21595,
+        "lat": 49.17448
+      }
+    },
+    {
+      "id": "X119",
+      "name": "흑룡강 상류",
+      "nameCh": "黑龍江上流",
+      "modern": "Mohe_City",
+      "country": "CN",
+      "wikidata": "Q163094",
+      "revision": 2526608127,
+      "lon": 122.53095,
+      "lat": 52.96881,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Mohe_City 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 122.53095,
+        "lat": 52.96881
+      }
+    },
+    {
+      "id": "X120",
+      "name": "흑룡강 남안",
+      "nameCh": "黑龍江南岸",
+      "modern": "Bei'an",
+      "country": "CN",
+      "wikidata": "Q814616",
+      "revision": 2526614913,
+      "lon": 126.50368,
+      "lat": 48.23952,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Bei'an 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 126.50368,
+        "lat": 48.23952
+      }
+    },
+    {
+      "id": "X121",
+      "name": "삼강 취락",
+      "nameCh": "三江聚落",
+      "modern": "Fujin,_Heilongjiang",
+      "country": "CN",
+      "wikidata": "Q614877",
+      "revision": 2526612998,
+      "lon": 132.03406,
+      "lat": 47.24889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Fujin,_Heilongjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 132.03406,
+        "lat": 47.24889
+      }
+    },
+    {
+      "id": "X122",
+      "name": "송화강 하구",
+      "nameCh": "松花江河口",
+      "modern": "Tongjiang,_Heilongjiang",
+      "country": "CN",
+      "wikidata": "Q1022983",
+      "revision": 2526542025,
+      "lon": 132.50297,
+      "lat": 47.65017,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Tongjiang,_Heilongjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 132.50297,
+        "lat": 47.65017
+      }
+    },
+    {
+      "id": "X123",
+      "name": "우수리 북부",
+      "nameCh": "烏蘇里北部",
+      "modern": "Shuangyashan",
+      "country": "CN",
+      "wikidata": "Q349973",
+      "revision": 2526610443,
+      "lon": 131.15452,
+      "lat": 46.63883,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Shuangyashan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 131.15452,
+        "lat": 46.63883
+      }
+    },
+    {
+      "id": "X124",
+      "name": "흑룡강 하구길",
+      "nameCh": "黑龍江東路",
+      "modern": "Khabarovsk",
+      "country": "RU",
+      "wikidata": "Q4454",
+      "revision": 2532333969,
+      "lon": 135.06666666667,
+      "lat": 48.483333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Khabarovsk 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 135.06666666667,
+        "lat": 48.483333333333
+      }
+    },
+    {
+      "id": "X125",
+      "name": "농안 취락",
+      "nameCh": "農安聚落",
+      "modern": "Nong’an historical locality proxy",
+      "country": "CN",
+      "wikidata": "Q92277",
+      "revision": 0,
+      "lon": 125.1604763546087,
+      "lat": 44.496622395,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nong’an historical locality proxy 권역의 육지 대표점 채택. 후기 부여 왕성 비정권; 220년에는 지방 취락으로 사용. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "후기 부여 왕성 비정권; 220년에는 지방 취락으로 사용"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 125.17216,
+        "lat": 44.4309
+      },
+      "coordinateBasis": "PINNED_PRE_CORRECTION_MAP_POINT"
+    }
+  ],
+  "gameDesignAuthority": "사용자 2026-09-20: 고구려 쪽 소국 거점 추가·밀도 조정, 사료 미기재는 게임 기획으로 처리, 운영용 데이터 수정",
+  "densityPolicy": "Keep reviewed locality/geographic anchors only. No farthest-cell placement or numbered settlements to meet a density target. Spatial subdivision does not create cities.",
+  "economicDesign": {
+    "classification": "GAME_DESIGN",
+    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+    "conservedFields": [
+      "population",
+      "agriculture",
+      "commerce"
+    ],
+    "budgets": [
+      "initial",
+      "max"
+    ],
+    "capacityUnit": 1,
+    "basis": "사료에 개별 거점 경제량이 없으므로 기존 관할의 게임 예산을 균등 분할한다. 사료 호구 총량과 동일시하지 않는다."
+  },
+  "extension": {
+    "terrainSha256": "a8af80e0c9d794babdb6d52ddd8ffd80378f3437358daf9f28ff8ce852098f5a",
+    "policy": "GAME_DESIGN_ADDITIVE_FRAME; old cells preserved; northern geography is not a historical political frontier"
+  },
+  "newParents": [
+    {
+      "id": "PARENT-0172",
+      "identity": "挹婁",
+      "nameCh": "挹婁",
+      "displayName": "읍루",
+      "regionId": "YILOU",
+      "seatPlaceId": "X039",
+      "jurisdictionIds": [
+        "X039",
+        "X113"
+      ],
+      "basis": "三國志: 挹婁南與北沃沮接; separate people region, not North Okjeo sovereignty"
+    },
+    {
+      "id": "PARENT-0173",
+      "identity": "松花江聚落",
+      "nameCh": "松花江聚落",
+      "displayName": "송화강 취락권",
+      "regionId": "SONGHUA",
+      "seatPlaceId": "X115",
+      "jurisdictionIds": [
+        "X115",
+        "X116"
+      ],
+      "basis": "GAME_GEOGRAPHIC_REGION_NOT_SOVEREIGN_BOUNDARY"
+    },
+    {
+      "id": "PARENT-0174",
+      "identity": "黑龍江聚落",
+      "nameCh": "黑龍江聚落",
+      "displayName": "흑룡강 취락권",
+      "regionId": "AMUR",
+      "seatPlaceId": "X117",
+      "jurisdictionIds": [
+        "X117",
+        "X118",
+        "X119",
+        "X120"
+      ],
+      "basis": "GAME_GEOGRAPHIC_REGION_NOT_SOVEREIGN_BOUNDARY"
+    },
+    {
+      "id": "PARENT-0175",
+      "identity": "烏蘇里江聚落",
+      "nameCh": "烏蘇里江聚落",
+      "displayName": "우수리강 취락권",
+      "regionId": "USSURI",
+      "seatPlaceId": "X121",
+      "jurisdictionIds": [
+        "X121",
+        "X122",
+        "X123",
+        "X124"
+      ],
+      "basis": "GAME_GEOGRAPHIC_REGION_NOT_SOVEREIGN_BOUNDARY"
+    }
+  ],
+  "labelOverrides": [
+    {
+      "id": "X047",
+      "displayName": "반로",
+      "aliases": [
+        "대가야"
+      ],
+      "basis": "半路國의 고령 비정을 게임 대표지로 채택. 大伽耶는 후대 명칭으로 별도 보존"
+    },
+    {
+      "id": "X048",
+      "displayName": "성주 취락",
+      "aliases": [
+        "성산가야"
+      ],
+      "basis": "성산가야는 후대 전승명. 220년 표시에는 지역 취락 명칭 사용"
+    },
+    {
+      "id": "X049",
+      "displayName": "함창 취락",
+      "aliases": [
+        "고령가야"
+      ],
+      "basis": "고령가야 함창 비정 채택; 후대 전승명과 현재 취락 구분"
+    }
+  ],
+  "nameInterpretations": [
+    {
+      "names": [
+        "고조선",
+        "왕검성"
+      ],
+      "target": "fc-lelang-001",
+      "role": "FORMER_POLITY_CENTRE",
+      "basis": "평양 왕검성 중심설 채택; 220년 낙랑 군현과 별도 독립국으로 중복하지 않음"
+    },
+    {
+      "names": [
+        "진번국",
+        "진번군"
+      ],
+      "target": "PARENT-0130",
+      "role": "FORMER_REGION_OVERLAY",
+      "basis": "황해도 방면 비정 채택. 대방권 옛 지역명 참조로 보존; 정확한 치소는 게임에서 별도 확정하지 않음"
+    },
+    {
+      "names": [
+        "임둔국",
+        "임둔군"
+      ],
+      "target": "X108",
+      "role": "FORMER_REGION_OVERLAY",
+      "basis": "함경남도 영흥·금야 방면 비정 선택; 화려권의 전대 지역명"
+    },
+    {
+      "names": [
+        "낙랑국",
+        "대방국"
+      ],
+      "target": "PARENT-0096",
+      "role": "DISPUTED_TRADITION_NOT_ADDITIONAL_STATE",
+      "basis": "낙랑·대방 군현과 다른 독립국의 별도 경계는 만들지 않음"
+    },
+    {
+      "names": [
+        "북부여",
+        "부여"
+      ],
+      "target": "X036",
+      "role": "ALIAS",
+      "basis": "220년 길림 부여 대표점"
+    },
+    {
+      "names": [
+        "졸본부여"
+      ],
+      "target": "X029",
+      "role": "FOUNDATION_TRADITION",
+      "basis": "졸본과 동일 거점, 별도 국가 복제 없음"
+    },
+    {
+      "names": [
+        "남옥저",
+        "동옥저"
+      ],
+      "target": "X037",
+      "role": "ALIAS",
+      "basis": "동일 계통 권역명으로 묶음"
+    },
+    {
+      "names": [
+        "북명"
+      ],
+      "target": "X038",
+      "role": "DISPUTED_ALIAS",
+      "basis": "강릉 비정 채택; 예 기존 대표점에 연결"
+    },
+    {
+      "names": [
+        "고리국"
+      ],
+      "target": "X125",
+      "role": "FOUNDATION_TRADITION",
+      "basis": "부여 건국 전승의 북방 선행 집단. 농안권 게임 참조점이며 확정 국읍 비정 아님"
+    },
+    {
+      "names": [
+        "동부여",
+        "갈사국"
+      ],
+      "target": "X112",
+      "role": "DISPUTED_TRADITION",
+      "basis": "동방 부여계 전승을 돈화·두만강 연결권에 참조. 두 이름의 동일성·정확한 수도는 주장하지 않음"
+    },
+    {
+      "names": [
+        "해두국",
+        "황룡국"
+      ],
+      "target": "X036",
+      "role": "FOUNDATION_TRADITION_UNLOCATED",
+      "basis": "부여계 전승명. 사료의 구체적 위치를 확보하지 못해 중심지 이력에 보존; 새로운 확정 국가명으로 조작하지 않음"
+    },
+    {
+      "names": [
+        "대수맥"
+      ],
+      "target": "X028",
+      "role": "PEOPLE_REGION_ALIAS",
+      "basis": "압록강 본류 고구려권 주민집단을 지칭하는 맥락. 소수맥과 동일 급 독립국으로 중복하지 않음"
+    }
+  ],
+  "retirementRef": "data/curated/han/korea-retired-settlements-v1.json"
+}

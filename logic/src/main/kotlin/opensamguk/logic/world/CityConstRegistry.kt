@@ -13,6 +13,12 @@ import opensamguk.common.constants.HanWorldV3846CityConst
 import opensamguk.common.constants.HanWorldV3846GateIndex
 import opensamguk.common.constants.HanWorldV31098CityConst
 import opensamguk.common.constants.HanWorldV31098GateIndex
+import opensamguk.common.constants.HanWorldV31194CityConst
+import opensamguk.common.constants.HanWorldV31194GateIndex
+import opensamguk.common.constants.HanWorldV31341CityConst
+import opensamguk.common.constants.HanWorldV31341GateIndex
+import opensamguk.common.constants.HanWorldV31141CityConst
+import opensamguk.common.constants.HanWorldV31141GateIndex
 import opensamguk.common.constants.HanWorldV31133CityConst
 import opensamguk.common.constants.HanWorldV31133GateIndex
 import opensamguk.common.constants.HanWorldV3848CityConst
@@ -359,6 +365,18 @@ private val historicalHanWorlds: Map<HanWorldVariant, CityConstVariant> by lazy 
         ),
         HanWorldVariant.V3_1098 to HanCityConstVariant(
             HAN_WORLD_V3_MAP_NAME, HanWorldV31098CityConst.initCity, HanWorldV31098GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        HanWorldVariant.V3_1194 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV31194CityConst.initCity, HanWorldV31194GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        HanWorldVariant.V3_1341 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV31341CityConst.initCity, HanWorldV31341GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        HanWorldVariant.V3_1141 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV31141CityConst.initCity, HanWorldV31141GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         HanWorldVariant.V3_1133 to HanCityConstVariant(

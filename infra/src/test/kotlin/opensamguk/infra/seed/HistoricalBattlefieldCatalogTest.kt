@@ -8,6 +8,15 @@ import kotlin.test.assertFailsWith
 
 class HistoricalBattlefieldCatalogTest {
     @Test
+    fun `expanded settlements preserve their distinct physical province anchors`() {
+        val anchors = HistoricalBattlefieldCatalog.cityAnchors()
+        for (id in 1134..1194) {
+            assertIs<StrategicNodeRef.LandProvince>(anchors.getValue(id))
+        }
+        assertEquals(61, (1134..1194).map { anchors.getValue(it) }.toSet().size)
+    }
+
+    @Test
     fun `Guandu uses reconstructed Yuanwu ingress and its own source point`() {
         val entry = HistoricalBattlefieldCatalog.load().entries.getValue("guandu")
         assertEquals(51, entry.ingressCityId)

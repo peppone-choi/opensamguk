@@ -6,7 +6,7 @@
 //   지형·소유·城  → /api/game/api/map/terrain (HanMapCanvas 와 같은 응답)
 //   높낮이        → /map/elevation/han-world-v3-levels.png (NOAA ETOPO1 파생, 정적)
 //
-// 둘을 384×334 타일 격자 하나로 합치는 계산은 전부 isoTileGrid.ts 에 있다.
+// 격자 크기에 맞춰 두 입력을 합치는 계산은 전부 isoTileGrid.ts 에 있다.
 // 여기서는 가져오고 디코드하는 일만 한다.
 
 import { useEffect, useState } from 'react';
@@ -24,6 +24,17 @@ import { applyCitySeedReseats } from './citySeedReseat';
 
 export const LEVEL_PNG_URL = '/map/elevation/han-world-v3-levels.png';
 export const ELEVATION_MANIFEST_URL = '/map/elevation/manifest.json';
+
+/** Older saved worlds retain their original terrain frame and DEM. */
+export function elevationAssetsForGrid(cols: number, rows: number) {
+  if (cols === 864 && rows === 843) {
+    return { levels: LEVEL_PNG_URL, manifest: ELEVATION_MANIFEST_URL };
+  }
+  if (cols === 768 && rows === 669) {
+    return { levels: '/map/elevation/han-world-v3-legacy-levels.png', manifest: '/map/elevation/manifest-legacy.json' };
+  }
+  throw new Error(`지원하지 않는 지도 격자: ${cols}×${rows}`);
+}
 
 export interface IsoCity {
   id: string;
@@ -197,13 +208,14 @@ export function useIsoTileGrid(terrainUrl: string): State {
     const { signal } = controller;
 
     (async () => {
-      const [tilesResponse, image, manifestResponse] = await Promise.all([
-        fetch(terrainUrl, { signal }),
-        decodeLevelPng(LEVEL_PNG_URL, signal),
-        fetch(ELEVATION_MANIFEST_URL, { signal }).catch(() => null),
-      ]);
+      const tilesResponse = await fetch(terrainUrl, { signal });
       if (!tilesResponse.ok) throw new Error(`지형을 못 받았다: ${tilesResponse.status}`);
       const tiles = (await tilesResponse.json()) as HanTiles;
+      const assets = elevationAssetsForGrid(tiles._meta.cols, tiles._meta.rows);
+      const [image, manifestResponse] = await Promise.all([
+        decodeLevelPng(assets.levels, signal),
+        fetch(assets.manifest, { signal }).catch(() => null),
+      ]);
 
       // 제 경위도에서 크게 밀려 앉은 城 을 제 영역 안으로 먼저 되돌린다 — 于山國이
       // 울릉도 대신 오키 제도에 서 있었다(citySeedReseat.ts). 아래 모든 계산이 이
