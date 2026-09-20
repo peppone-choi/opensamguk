@@ -42,6 +42,7 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
     fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)), WorldId(id),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
         hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+        administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
     fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>): opensamguk.engine.run.TurnRunService {
