@@ -217,11 +217,11 @@ class CommandController(
     //     필드 보존). deny(ok=false)도 RESOLVED로 돌아온다 — 성공 토스트 위조 금지의 근거 데이터.
     //   - 손상 페이로드 → PENDING (RESOLVED를 위조하지 않는다).
 
-    /** 키 부재/손상 시의 PENDING 폴링 응답. */
     @org.springframework.web.bind.annotation.ExceptionHandler(opensamguk.gameapi.reserve.HwihaAdmissionDenied::class)
     fun admissionDenied(denied: opensamguk.gameapi.reserve.HwihaAdmissionDenied): ResponseEntity<Any> =
         ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
 
+    /** 키 부재/손상 시의 PENDING 폴링 응답. */
     private fun pending(requestId: String, phase: String? = null): ResponseEntity<Any> =
         ResponseEntity.ok(
             linkedMapOf<String, Any?>("status" to "PENDING", "requestId" to requestId).apply {

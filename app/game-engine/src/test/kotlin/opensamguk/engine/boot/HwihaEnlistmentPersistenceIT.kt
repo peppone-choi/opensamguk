@@ -1,15 +1,12 @@
 package opensamguk.engine.boot
 
-import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.input.*
-import opensamguk.logic.world.HanWorldVariant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -30,8 +27,7 @@ class HwihaEnlistmentPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
-    private val bundle by lazy { artifacts.artifacts(HanWorldVariant.V3_1133) }
+    private lateinit var fixture: HwihaEnlistmentFixture
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable,
@@ -43,40 +39,12 @@ class HwihaEnlistmentPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
+        fixture = HwihaEnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
-    private fun seed(id: Int) {
-        jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta)
-            VALUES (?, 'enlistment-storage-test',200,1,3600,
-            '{"mapName":"han-world-v3","ruleProfile":"HWIHA"}'::jsonb,
-            '{"lastTurnTime":"0200-01-01T00:00:00Z"}'::jsonb)""", id)
-        jdbc.batchUpdate("""INSERT INTO city(world_id,id,name,level,nation_id,pop,pop_max,agri,agri_max,comm,comm_max,
-            secu,secu_max,def,def_max,wall,wall_max,region) VALUES (?,?,?,1,0,100,1000,10,1000,10,1000,10,1000,10,1000,10,1000,1)""",
-            bundle.cityConst.all().keys.map { arrayOf<Any>(id, it, "fixture-$it") })
-        val binding = bundle.projection.bindingsByCityId.entries.sortedBy { it.key }.first { it.value.landProvinceId != null }
-        jdbc.update("INSERT INTO nation(world_id,id,name,color,gold,capital_city_id,meta) VALUES (?,1,'주공국','#000000',500,?,'{\"gennum\":1,\"keep\":42}'::jsonb)", id, binding.key)
-        for ((generalId, nation, npc) in listOf(Triple(1, 0, 0), Triple(2, 0, 2), Triple(10, 1, 2))) {
-            jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
-                VALUES (?,?,?,?,?,?,?,1000,2000,300,70,70,70,70,70,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,?::jsonb)""",
-                id, generalId, "G$generalId", nation, binding.key, npc, if (generalId == 10) 12 else 0,
-                """{"hwihaLord":${generalId != 2},"keep":"unchanged","hwihaPersonPolicy":{
-                    "renownCapacity":30,"acceptsEnlistment":true,"statSourceId":"synthetic-storage-fixture",
-                    "statSourceRevision":"fixture-v1","officerId":$generalId}}""")
-            val topology = bundle.projection.topology
-            jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
-                VALUES (?,?,?,?,'LAND_PROVINCE',?,1)""", id, generalId, topology.topologyRevision, topology.contentHash, binding.value.landProvinceId)
-        }
-        jdbc.update("""INSERT INTO general_retainers(world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
-            VALUES (?,4,1,'EXISTING',2,'G2','lieutenant',true,'MUTUAL')""", id)
-        jdbc.update("""INSERT INTO general_bugok(world_id,id,master_general_id,name,troops,crew_type_id,training,morale,provisions,commander_retainer_id)
-            VALUES (?,7,1,'personal',100,1,50,50,200,4)""", id)
-    }
-    private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)), WorldId(id),
-        waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
-        cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
-            .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
+    private fun seed(id: Int) = fixture.seed(id)
+    private fun load(id: Int) = fixture.load(id)
     private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaEnlistmentExecutor(world, recorder).execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
 
     private fun assertSameSnapshot(expected: WorldSnapshot, actual: WorldSnapshot) {
@@ -146,24 +114,7 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(world.listRetainers(), load(3).retainers)
         assertEquals(world.listNations(), load(3).nations)
     }
-    private fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>): opensamguk.engine.run.TurnRunService {
-        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
-        val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
-        val handler = ReservedTurnHandler(active,
-            opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200)
-        val lifecycle = TurnDaemonLifecycle(active, handler,
-            pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
-            reservedActionOf = { reservations.readReserved(id, it, 0) })
-        val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
-            override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
-        }
-        val publisher = object : opensamguk.engine.redis.RealtimePublisher(redis, "fixture", id) {
-            override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
-        }
-        return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher,
-            commandOutboxRelay = opensamguk.engine.redis.CommandOutboxRelay(
-                opensamguk.infra.persistence.CommandResultRepository(NamedParameterJdbcTemplate(jdbc)), publisher, id))
-    }
+    private fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>) = fixture.service(id, active, published)
 
     @Test fun `undelivered input result slot consumption and personal time commit together and survive restart`() {
         seed(4)

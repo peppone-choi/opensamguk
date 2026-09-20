@@ -235,6 +235,9 @@ class VerticalSliceE2EIT {
         // === STEP 2: game-api reserve → general_turn ring row + daemon poke on the command stream ==
         val reservedRepo = ReservedTurnRepository(jdbc)
         val reserveService = CommandReserveService(
+            worldStates = WorldStateReadRepository(
+                JpaRepositoryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))
+                    .getRepository(WorldStateReadRawRepository::class.java), GameApiProcessWorld(1)),
             reservedTurns = reservedRepo,
             commandInbox = opensamguk.infra.persistence.CommandInboxRepository(jdbc),
             commandResults = opensamguk.infra.persistence.CommandResultRepository(jdbc),
