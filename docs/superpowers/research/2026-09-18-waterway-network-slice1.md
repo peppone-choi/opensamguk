@@ -54,3 +54,15 @@ CI 는 `tools/map/tests/test_*.py` 글롭과 `check_han_tiles_coupled.py`(키 `w
   **전** 문서 기준이다 — `carve_strategic_site_provinces.py` 가 이 원장을 입력으로 칸을 떼므로, 분할 뒤 省(`ss-*`)을
   여기 적으면 입력이 제 출력에 기대는 순환이 된다. `test_tile_anchor_matches_han_tiles` 가 분할·접기 단계를 벗겨 낸 뒤
   독립 구현으로 다시 재어 이를 강제한다. 값은 바꾸지 않았다. `sha256AtBuild` 는 어떤 게이트도 읽지 않는 기록값이다.
+
+## 2026-09-18 후속 2 — 강 뱃길을 城 연결로 (ADR-LITE-060)
+
+타입 간선 활성화는 여전히 막혀 있다(위 판정). 사용자 결정으로 바닷길 13줄과 **같은 방식**을 택했다 — 항구 城끼리
+`han-world-v3.json` `connections` + `seaRoutes`(`kind: "RIVER"`). 원장에 `portLinks` 가 생겼고, 빌더가 쌍을 유도한다
+(검토된 PORT 끼리 · flowLinks 로 이어진 구간 위 · 물길 거리로 사이에 다른 항구 없음 · 원장 집합 = 유도 집합).
+`build_han_world.v3_river_routes` 는 산출물의 portLinks 만 읽는다. 타입 간선은 그대로 `PROPOSED_NOT_ACTIVATED` 다.
+
+- 추가 구간: `jiang-yiling-xiakou`(97칸) · `jiang-xiakou-wuchang`(31칸, 沔水 하류 토막 포함 — 沔口 합류 미판정). 구간 10 · 흐름 5.
+- 뱃길 3줄: 江州↔夷陵(물길 92칸) · 夷陵↔樊口(89칸) · 樊口↔濡須口(63칸). 漢津은 沔水가 江 과 흐름으로 이어져 있지 않아 빠졌다.
+- 출처: 晉書 卷42 王濬傳(成都 → 西陵 → 夏口·武昌 → 三山, 順流) · 三國志 卷47 「是歳，改夷陵爲西陵」 · 기존 江表傳·先主傳·張飛傳.
+- 실측 효과: 5→1 · 7→1 · 6→1홉, 전체 城 쌍의 15.4% 가 짧아졌다(최대 9홉). 1133 재핀 — 월드 리셋 필요.

@@ -45,6 +45,7 @@ import {
   type AdministrativeOwnershipData,
 } from './provinceMap';
 import { isOwnedNationVisual } from './nationVisual';
+import { countyGlossForJurisdiction } from './iso/countyNameGloss';
 import {
   buildStrategicMapScene, validStrategicBinding, validatedWaterControls, waterControlLabel,
   strategicModeLabel, strategicZoneLabel, strategicCapacityLabel, serverRoutePoints,
@@ -234,6 +235,11 @@ export interface IsoCountyHover {
   commanderyName: string;
   countyName: string;
   displayName?: string;
+  /**
+   * 같은 郡 안에서 한글 표시명이 겹치는 縣의 漢字 병기(「陽城」, #838). 목록 밖이거나 郡 층 표시면 없다.
+   * 화면은 displayName 뒤에 작고 흐리게 단다 — PlaceNameWithGloss.
+   */
+  countyGloss?: string;
   level: number;
   nationId: number;
   nationName?: string;
@@ -2077,6 +2083,9 @@ export function HanMapCanvas({
       regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
       commanderyName,
       countyName: jurisdictionRecord?.displayName ?? provinceRecord?.displayName ?? county!.name,
+      countyGloss: administrativeLayer === 'COMMANDERY'
+        ? undefined
+        : countyGlossForJurisdiction(jurisdictionRecord?.id ?? provinceRecord?.jurisdictionId),
       displayName: administrativeLayer === 'COMMANDERY'
         ? commanderyName
         : provinceRecord

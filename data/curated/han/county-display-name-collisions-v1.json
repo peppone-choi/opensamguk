@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "listId": "county-display-name-collisions-v1",
+  "issue": "https://github.com/peppone-choi/opensamguk/issues/838",
+  "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
+  "generator": "tools/map/build_county_display_name_collisions.py",
+  "inputs": {
+    "hanTilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
+    "hanWorldV3Sha256": "d5009b950b9af2334a8d8690b62a07b9097c5c4ff139cb0458c5d87ad1fba58e",
+    "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
+    "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
+  },
+  "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
+  "summary": {
+    "jurisdictions": 1133,
+    "sameCommanderyCollisionGroups": 5,
+    "sameCommanderyCollidingJurisdictions": 10,
+    "commanderiesWithCollisions": 5,
+    "byClassification": {
+      "HOMOPHONE": 3,
+      "TILES_READING_DIVERGES_FROM_RUNTIME": 2
+    },
+    "displayNamesSharedAcrossCommanderies": 90
+  },
+  "collisions": [
+    {
+      "commanderyId": "PARENT-0007",
+      "commanderyDisplayName": "영천군",
+      "commanderyNameCh": "潁川郡",
+      "displayName": "양성현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "82893",
+          "kind": "COUNTY",
+          "nameCh": "阳城县",
+          "simplifiedStem": "阳城",
+          "gloss": "陽城",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 134,
+          "runtimeDisplayName": "영천군 양성현(阳城)"
+        },
+        {
+          "jurisdictionId": "83031",
+          "kind": "COUNTY",
+          "nameCh": "襄城县",
+          "simplifiedStem": "襄城",
+          "gloss": "襄城",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 129,
+          "runtimeDisplayName": "영천군 양성현(襄城)"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0044",
+      "commanderyDisplayName": "영릉군",
+      "commanderyNameCh": "零陵郡",
+      "displayName": "영도현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "41955",
+          "kind": "COUNTY",
+          "nameCh": "泠道县",
+          "simplifiedStem": "泠道",
+          "gloss": "泠道",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 490,
+          "runtimeDisplayName": "영릉군 영도현(泠道)"
+        },
+        {
+          "jurisdictionId": "41996",
+          "kind": "COUNTY",
+          "nameCh": "营道县",
+          "simplifiedStem": "营道",
+          "gloss": "營道",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 495,
+          "runtimeDisplayName": "영릉군 영도현(营道)"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0049",
+      "commanderyDisplayName": "단양군",
+      "commanderyNameCh": "丹陽郡",
+      "displayName": "완릉현",
+      "classification": "TILES_READING_DIVERGES_FROM_RUNTIME",
+      "members": [
+        {
+          "jurisdictionId": "41302",
+          "kind": "COUNTY",
+          "nameCh": "宛陵县",
+          "simplifiedStem": "宛陵",
+          "gloss": "宛陵",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 499,
+          "runtimeDisplayName": "단양군 완릉현"
+        },
+        {
+          "jurisdictionId": "41305",
+          "kind": "COUNTY",
+          "nameCh": "宣城县",
+          "simplifiedStem": "宣城",
+          "gloss": "宣城",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 936,
+          "runtimeDisplayName": "단양군 선성현"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0050",
+      "commanderyDisplayName": "여강군",
+      "commanderyNameCh": "廬江郡",
+      "displayName": "안풍현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "43379",
+          "kind": "COUNTY",
+          "nameCh": "安风县",
+          "simplifiedStem": "安风",
+          "gloss": "安風",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 528,
+          "runtimeDisplayName": "여강군 안풍현(安风)"
+        },
+        {
+          "jurisdictionId": "82575",
+          "kind": "COUNTY",
+          "nameCh": "安丰县",
+          "simplifiedStem": "安丰",
+          "gloss": "安豐",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 527,
+          "runtimeDisplayName": "여강군 안풍현(安丰)"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0051",
+      "commanderyDisplayName": "회계군",
+      "commanderyNameCh": "會稽郡",
+      "displayName": "시령현",
+      "classification": "TILES_READING_DIVERGES_FROM_RUNTIME",
+      "members": [
+        {
+          "jurisdictionId": "40663",
+          "kind": "COUNTY",
+          "nameCh": "始平县",
+          "simplifiedStem": "始平",
+          "gloss": "始平",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 949,
+          "runtimeDisplayName": "회계군 시평현"
+        },
+        {
+          "jurisdictionId": "40775",
+          "kind": "COUNTY",
+          "nameCh": "始宁县",
+          "simplifiedStem": "始宁",
+          "gloss": "始寧",
+          "glossBasis": "REVIEWED",
+          "runtimeCityId": 953,
+          "runtimeDisplayName": "회계군 시령현"
+        }
+      ]
+    }
+  ]
+}

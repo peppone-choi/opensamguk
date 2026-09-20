@@ -116,7 +116,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         module = load_module()
         mutations = [
             ("legacy direct territory", "200012", "kind", "DIRECT_TERRITORY"),
-            ("legacy county", "DIRECT-PARENT-0046-2cbec5a2711d", "kind", "COUNTY"),
+            ("legacy county", "SUB-X029-d36cd99b5619", "kind", "COUNTY"),  # 城 없는 省(GH #806 뒤 id)
             ("unknown kind", "200012", "kind", "UNKNOWN"),
         ]
         for label, province_id, field, value in mutations:

@@ -7994,9 +7994,9 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "81411b35e0fe36096522ddd5b05cb50bbd2e5e9e43a875e6674b91508e6f3447",
+  "sourceCandidateSha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "0921d9e7b8cc7f4b4ff42f1aaec8051bb59656cb18cb05ec42b70e0847bcbaa6",
+  "sourceSelectionSha256": "696866fdf9af35236a1477c97993df2fb131d6de25a9e305ad15246e89112eb9",
   "summary": {
     "appendedIdentityCount": 353,
     "displayNameChangeCount": 778,

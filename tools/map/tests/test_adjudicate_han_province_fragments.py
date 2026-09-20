@@ -694,7 +694,9 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-15: 수·진·관 거점 73 곳이 제 省·관할을 받아 배열 끝에 붙었다(1,593 · 1,143).
         # 2026-09-16 1098: 平陰 省·관할이 더해져 1,594 · 1,144.
         # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
-        self.assertEqual((1594, 1133, 172), (
+        # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
+        # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
+        self.assertEqual((1331, 1133, 172), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
@@ -707,11 +709,12 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 거점 省 두 곳도 예외다 — 발자국은 남는 기증 縣 省과 마른땅 경계를 나눠야 한다(런타임 보급이 마른땅
         # 경계만 잇는다). 孟津은 河陰縣 省이 20 칸짜리 가는 띠라 5 칸, 樊城은 8 칸이면 漢水 가의 맞닿는 마른땅
         # 칸까지 먹어 7 칸으로 섰다(strategic-site-province-carves-v1).
+        # 2026-09-18 ★ 지리 재분할 뒤: 물로 끊긴 直領 자투리 두 곳은 가장 가까운 縣(海冥·曲陽)의 다성분 예외로 들어가
+        # 제 省이 아니게 됐다. 8칸 미만은 사용자 결정(2026-09-18 ③)의 Q4 예외 縣 6곳(county-location-partition-decisions-v1
+        # areaExceptions — 이웃 縣의 최소 넓이를 깎지 않는다)과 축소 발자국 거점 4곳(carve 원장 carvedCellCount)뿐이다.
         island_remnants = {
-            "DIRECT-PARENT-0130-23501b7ffcdd": 7,
-            "DIRECT-PARENT-0102-ce418dfe67e6": 6,
-            "ss-mengjin": 5,
-            "ss-fancheng": 7,
+            "45203": 7, "87489": 4, "87490": 7, "87506": 5, "87510": 4,
+            "ss-dengsai": 4, "ss-fancheng": 2, "ss-mengjin": 4, "ss-xiaopingjin": 5,
         }
         below = {
             tiles["provinceRecords"][index]["id"]: count
@@ -719,10 +722,17 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
             if count < 8
         }
         self.assertEqual(island_remnants, below)
+        # 조각 판정의 칸 재배정은 ★ 지리 재분할(GH #806) **앞** 문서의 사실이다 — ★ 는 郡 안 owner 를 통째로 다시 자르므로
+        # 커밋본에서는 그 칸들이 새 경계를 따른다(spec §4 「뜻만 옮긴다」). 단계 사슬에서 ★ 입력을 복원해 거기서 확인한다.
+        from tools.map import partition_counties_by_location as partition
+        before_partition = partition.stage_input(tiles)
+        self.assertNotEqual(partition.digest(before_partition), partition.digest(partition.peel_later_stages(tiles)))
+        owner_before = expand_rle(before_partition["owner"], rows, cols)
+        index_before = {record["id"]: index for index, record in enumerate(before_partition["provinceRecords"])}
         for decision in ledger["reassignments"]:
-            target_index = province_index[decision["targetProvinceId"]]
+            target_index = index_before[decision["targetProvinceId"]]
             self.assertTrue(all(
-                owner[row][col] == target_index for col, row in decision["cells"]
+                owner_before[row][col] == target_index for col, row in decision["cells"]
             ))
         self.assertEqual(26, len(ledger["deferred"]))
         self.assertEqual(
@@ -737,7 +747,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         self.assertEqual(
             ["X055"], [row["provinceId"] for row in ledger["preservations"]]
         )
-        city_by_id = {city["id"]: city for city in tiles["cities"]}
+        city_by_id = {city["id"]: city for city in before_partition["cities"]}  # anchoredReassignments 도 ★ 앞 문서의 사실
         self.assertEqual((423, 386), (city_by_id["32540"]["col"], city_by_id["32540"]["row"]))
         self.assertEqual((435, 174), (city_by_id["210314"]["col"], city_by_id["210314"]["row"]))
         # The historical fragment hashes pin the state before the later relocation.

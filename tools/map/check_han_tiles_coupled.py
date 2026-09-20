@@ -31,6 +31,10 @@ class Coupled:
     check: tuple[str, ...]              # 적색이면 낡았다
     regenerate: tuple[str, ...] | None  # None = 사람 판정(자동 재생성 없음)
     slow: bool = False                  # contracts 잡의 개별 스텝으로만 돈다
+    local_only: bool = False            # gitignored 입력이 있어야 돈다. 없으면 exit 77 = SKIPPED(통과 아님)
+
+
+SKIPPED_EXIT = 77
 
 
 def _t(*a: str) -> tuple[str, ...]:
@@ -45,6 +49,19 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/fold_cityless_jurisdictions.py", "--check"), None),
     Coupled("tiles-stage-strategic-carve", ("data/map/han-tiles.json",),
             _t("tools/map/carve_strategic_site_provinces.py", "--check"), None),
+    # ★ 지리 재분할(GH #806): 단계 핀 + 재현 + Q2(郡 불변)·Q3(덮개)·Q4(넓이 — 예외는 결정 원장 행과 정확히 일치).
+    Coupled("tiles-stage-county-location-partition",
+            ("data/map/han-tiles.json", "data/curated/han/county-location-partition-v1.json",
+             "data/curated/han/county-location-partition-v1.input.json.gz"),
+            _t("tools/map/partition_counties_by_location.py", "--check"), None),
+    # Q1(城의 실제 칸 ∈ 제 관할)·Q1b(실제 칸이 저지면 제 省에 저지 ≥ 1칸). 예외는 원장 행뿐이다.
+    Coupled("tiles-seat-in-place-q1", ("data/map/han-tiles.json",),
+            _t("tools/map/measure_province_seat_offset.py", "--check", "--exceptions",
+               "data/curated/han/county-location-partition-v1.json",
+               "data/curated/han/strategic-site-province-carves-v1.json"), None),
+    # 같은 Q1 을 CHGIS 원본 좌표(독립 축)로 다시 잰다. 원본은 gitignored 라 CI 에서는 SKIPPED 다.
+    Coupled("tiles-seat-in-place-chgis-axis", ("data/map/han-tiles.json",),
+            _t("tools/map/check_seat_cells_against_chgis.py", "--check"), None, local_only=True),
     Coupled("tiles-stage-place-names", ("data/map/han-tiles.json",),
             _t("tools/map/materialize_han_place_names.py", "--check"), None),
     Coupled("tiles-stage-county-rebindings", ("data/curated/han/county-misbinding-rebindings-v1.json",),
@@ -56,6 +73,10 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("province-city-attribution", ("data/curated/han/province-city-attribution-v1.json",),
             _t("tools/scenario/build_province_city_attribution.py", "--check"),
             _t("tools/scenario/build_province_city_attribution.py")),
+    # 수로 망은 han-world-v3 의 입력이다(강 뱃길 = portLinks). 세계 파일보다 먼저 굽는다.
+    Coupled("waterway-network", ("data/map/han-waterway-network-v1.json",),
+            _t("tools/map/build_han_waterway_network.py", "--check"),
+            _t("tools/map/build_han_waterway_network.py", "--write")),
     Coupled("han-world-v3", ("infra/src/main/resources/map/han-world-v3.json", "data/map/han-world-v3-manifest-v1.json"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3", "--check"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3")),
@@ -84,9 +105,6 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_han_water_topology.py", "--write")),
     Coupled("water-topology-audit", ("data/map/han-water-topology-v1.json",),
             _t("tools/map/audit_han_water_topology.py", "--check"), None),
-    Coupled("waterway-network", ("data/map/han-waterway-network-v1.json",),
-            _t("tools/map/build_han_waterway_network.py", "--check"),
-            _t("tools/map/build_han_waterway_network.py", "--write")),
     Coupled("resource-sites", ("data/curated/han/resource-sites-v1.json",),
             _t("tools/map/build_resource_sites.py", "--check"),
             _t("tools/map/build_resource_sites.py")),
@@ -96,6 +114,11 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("county-economy-inputs", ("data/curated/han/county-economy-inputs-v1.json",),
             _t("tools/map/build_county_economy_inputs.py", "--check"),
             _t("tools/map/build_county_economy_inputs.py")),
+    # 같은 郡 안 한글 표시명 충돌 목록 + 웹 병기 표(#838). han-world-v3 를 두 번째 축으로 읽으므로 그 뒤에 굽는다.
+    Coupled("county-display-name-collisions",
+            ("data/curated/han/county-display-name-collisions-v1.json", "web/shared/src/iso/countyNameGloss.generated.ts"),
+            _t("tools/map/build_county_display_name_collisions.py", "--check"),
+            _t("tools/map/build_county_display_name_collisions.py")),
     Coupled("junguozhi-county-gaps", ("data/curated/han/junguozhi-county-gaps-v1.json",),
             _t("tools/map/build_junguozhi_county_gaps.py", "--check"),
             _t("tools/map/build_junguozhi_county_gaps.py")),
@@ -109,6 +132,10 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("scenario-province-ownership", ("data/map/han-scenario-province-ownership-v1.json",),
             _t("tools/scenario/build_scenario_province_ownership.py", "--check"),
             _t("tools/scenario/build_scenario_province_ownership.py")),
+    # ★ 지리 재분할(GH #806)의 씨앗 충돌 원장 초안. 기계 필드만 다시 뽑고 사람 판정 필드는 보존한다.
+    Coupled("county-seed-collisions", ("data/curated/han/county-seed-collisions-v1.json",),
+            _t("tools/map/draft_county_seed_collisions.py", "--check"),
+            _t("tools/map/draft_county_seed_collisions.py")),
     # 손으로 검토한 원장이다. 적색이면 해시만 갈지 말고 후보 셀의 투영·지형 검사가 새 타일에서도 통과하는지 본다.
     Coupled("strategic-site-anchor-review", ("data/curated/han/strategic-site-anchor-review-v1.json",),
             _t("tools/map/validate_han_strategic_site_anchors.py", "--check"), None),
@@ -120,16 +147,26 @@ COUPLED: tuple[Coupled, ...] = (
             ("docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
              "docs/superpowers/research/2026-09-17-siege-supply-baseline.md"),
             (PY, "-m", "unittest", "discover", "-s", "tools/sim/tests", "-p", "test_*.py"), None),
+    # 1133 릴리스 번들은 위 산출물의 동결본이다. 드리프트는 「재핀 + 월드 초기화」라는 사용자 결정 사항이라
+    # 자동 재생성하지 않는다(ADR-LITE-058·060). 도구: tools/map/repin_han_1133_bundle.py --write.
+    Coupled("release-1133-bundle", ("data/map/han-world-v3-1133-artifacts-v1/catalog.json",),
+            _t("tools/map/repin_han_1133_bundle.py", "--check"), None),
 )
 
 
 def run_checks(include_slow: bool) -> int:
     stale: list[Coupled] = []
+    skipped: list[str] = []
     for c in COUPLED:
         if c.slow and not include_slow:
             print(f"SKIP  {c.key} (slow — contracts 잡의 개별 스텝)")
             continue
         p = subprocess.run(c.check, cwd=ROOT, capture_output=True, text=True)
+        if c.local_only and p.returncode == SKIPPED_EXIT:
+            # 통과가 아니다. 로컬 전용 입력이 없어 못 돌았다는 사실을 따로 센다.
+            print(f"SKIPPED {c.key} (local-only — gitignored 입력 없음, 통과 아님)")
+            skipped.append(c.key)
+            continue
         print(f"{'OK   ' if p.returncode == 0 else 'STALE'} {c.key}")
         if p.returncode != 0:
             stale.append(c)
@@ -141,7 +178,7 @@ def run_checks(include_slow: bool) -> int:
             fix = " ".join(c.regenerate) if c.regenerate else "사람 판정 — 원장·노트를 검토해 고친다"
             print(f"  - {c.key}: {', '.join(c.artifacts)}\n      재생성: {fix}", file=sys.stderr)
         return 1
-    print("\nhan-tiles 결합 산출물: 전부 최신")
+    print("\nhan-tiles 결합 산출물: 전부 최신" + (f" (로컬 전용 {len(skipped)}건은 SKIPPED — 검증되지 않았다)" if skipped else ""))
     return 0
 
 

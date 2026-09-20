@@ -725,12 +725,13 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
         binding = contract_validator.water_overlay_base_binding(base, base_bytes)
 
         self.assertEqual(
-            # 2026-09-17 저지 지형 재분류 단계(reclassify_han_lowland_terrain) 뒤의 han-tiles.
-            "ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0",
+            # 2026-09-18 ★ 지리 재분할(partition_counties_by_location, GH #806) → 거점 → 접기 → 저지 재적층 뒤의 han-tiles.
+            # 앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 단계 뒤 문서였다.
+            "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
-        self.assertEqual(1_594, len(binding["landProvinceIds"]))
+        self.assertEqual(1_331, len(binding["landProvinceIds"]))  # GH #806 지리 재분할: 1,594 → 1,331
 
 
 if __name__ == "__main__":

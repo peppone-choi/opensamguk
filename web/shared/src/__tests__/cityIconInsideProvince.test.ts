@@ -13,7 +13,7 @@ const ROOT = resolve(__dirname, '../../../..');
 const tiles = JSON.parse(readFileSync(resolve(ROOT, 'data/map/han-tiles.json'), 'utf-8')) as HanTiles;
 const world = JSON.parse(
   readFileSync(resolve(ROOT, 'infra/src/main/resources/map/han-world-v3.json'), 'utf-8'),
-) as { cities: { id: number; provinceId?: number }[]; seaRoutes: { from: number; to: number }[] };
+) as { cities: { id: number; provinceId?: number }[]; seaRoutes: { from: number; to: number; kind: string }[] };
 
 describe('城 아이콘은 제 省 안에 선다', () => {
   const owner = expandRunLength(tiles.owner, tiles._meta.cols * tiles._meta.rows);
@@ -43,9 +43,13 @@ describe('城 아이콘은 제 省 안에 선다', () => {
 });
 
 describe('뱃길', () => {
-  it('세계 파일이 뱃길 13 줄을 싣고, 끝점은 모두 게임 城 이다', () => {
+  it('세계 파일이 바닷길 13 줄 + 강 뱃길 6 줄을 싣고, 끝점은 모두 게임 城 이다', () => {
     const ids = new Set(world.cities.map((city) => city.id));
-    expect(world.seaRoutes).toHaveLength(13);
+    // 2026-09-18 강 뱃길(kind=RIVER, 수로 망 원장 portLinks: 江州–夷陵–樊口–濡須口)이 같은 목록에 들어왔다.
+    expect(world.seaRoutes.filter((route) => route.kind === 'SEA')).toHaveLength(13);
+    // 2026-09-18 GH #806: 城 씨앗이 실제 위치로 와 江陵·沙羨(夏口)·建業이 항구가 되어 江州–夷陵–江陵–沙羨–樊口–濡須口–建業 6줄.
+    expect(world.seaRoutes.filter((route) => route.kind === 'RIVER')).toHaveLength(6);
+    expect(world.seaRoutes).toHaveLength(19);
     expect(world.seaRoutes.every((route) => ids.has(route.from) && ids.has(route.to))).toBe(true);
   });
 

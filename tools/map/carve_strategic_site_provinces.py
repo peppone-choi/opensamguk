@@ -20,7 +20,9 @@ ADR-LITE-052 는 縣이 아닌 거점(關·津·鎭)에 프로빈스와 점령·
   5. 투영 칸에서 그렇게 뗄 수 없으면(城 점이 서 있거나, 같은 縣의 앞 거점이 가져갔거나, 목이 좁아
      기증 省이 갈라지면) 같은 縣 省 안에서 MAXIMUM_DISPLACEMENT 칸 이내의 가까운 칸을 차례로 시도하고
      옮긴 사실(displacedFrom)을 원장에 적는다. 기증 省이 가늘어 8칸으로는 어디서도 안 되면 발자국을
-     MINIMUM_FOOTPRINT 칸까지 줄여 다시 시도한다(carvedCellCount 에 남는다). 끝내 못 하면 DONOR_TOO_SMALL.
+     MINIMUM_FOOTPRINT 칸까지 줄여 다시 시도한다(carvedCellCount 에 남는다). 그래도 안 되면 앵커를 포함한 연결
+     발자국을 전수로 보며 1칸까지 줄인다(사용자 결정 2026-09-18 「빼지 말고 발자국을 줄여 세운다」 — 襄陽縣의
+     樊城). 같은 기증 省에 뒤에 설 거점 몫(MINIMUM_FOOTPRINT × 수)은 남겨 둔다. 끝내 못 하면 DONOR_TOO_SMALL.
      떼어 낸 발자국은 남는 기증 省과 마른땅 경계(DRY_TERRAIN 칸끼리 맞닿은 변)를 하나 이상 공유해야 한다 —
      런타임 보급망은 마른땅 경계만 잇는다(projectHanDryLandEdges). 강 칸으로만 붙으면 거점이 제 縣과 같은
      주인이어도 끊긴다. 이 조건 때문에 孟津(5칸)·樊城(7칸)은 최소 면적 아래로 선다.
@@ -139,7 +141,8 @@ def _shares_dry_border(carved: set[tuple[int, int]], remainder: set[tuple[int, i
 
 
 def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: set[tuple[int, int]],
-           footprint: int = FOOTPRINT, terrain: list[str] | None = None, dry: frozenset[str] = frozenset()):
+           footprint: int = FOOTPRINT, terrain: list[str] | None = None, dry: frozenset[str] = frozenset(),
+           reserve: int = 0):
     """앵커에서 거리 순으로 FOOTPRINT 칸. 기증 省의 조각 수를 늘리지 않고 최소 면적을 지킨다.
 
     기증 省이 원래 여러 조각이면(섬·월경지 — territory-disconnection 원장이 판정한 것) 그 조각 수
@@ -147,7 +150,9 @@ def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: se
     """
     rows, cols = owner.shape
     donor_cells = {(int(r), int(c)) for r, c in np.argwhere(owner == donor)}
-    if len(donor_cells) - footprint < MINIMUM_AREA:
+    # reserve = 같은 기증 省에서 아직 설 거점들의 최소 발자국 합. 앞 거점이 8칸을 다 가져가 뒤 거점이
+    # DONOR_TOO_SMALL 로 빠지는 것을 막는다(사용자 결정 2026-09-18: 빼지 말고 발자국을 줄여 세운다).
+    if len(donor_cells) - footprint < MINIMUM_AREA + reserve:
         return None
     pieces = _components(donor_cells, rows, cols)
     carved = {anchor}
@@ -172,6 +177,58 @@ def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: se
     return carved
 
 
+def _carve_exhaustive(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: set[tuple[int, int]],
+                      footprint: int, terrain: list[str], dry: frozenset[str], reserve: int):
+    """_carve 는 한 칸씩 자라며 매 걸음 기증 省이 안 갈라지기를 요구한다. 뱀처럼 가는 기증 省에서는 끝 덩어리를
+    통째로 떼면 되는데도 중간 걸음이 갈라져 실패한다(襄陽縣 — 樊城). 최소 발자국에서만, 앵커를 포함한 연결
+    발자국을 전수로 보고 (앵커 거리 제곱합, 칸 목록) 최소를 고른다. 조건은 _carve 와 같다."""
+    rows, cols = owner.shape
+    donor_cells = {(int(r), int(c)) for r, c in np.argwhere(owner == donor)}
+    if len(donor_cells) - footprint < MINIMUM_AREA + reserve or anchor in protected:
+        return None
+    pieces = _components(donor_cells, rows, cols)
+    shapes = {frozenset({anchor})}
+    for _ in range(footprint - 1):
+        shapes = {shape | {cell} for shape in shapes for taken in shape
+                  for cell in neighbours(taken[0], taken[1], rows, cols)
+                  if cell in donor_cells and cell not in protected and cell not in shape}
+    best = None
+    for shape in shapes:
+        remainder = donor_cells - shape
+        if _components(remainder, rows, cols) > pieces:
+            continue
+        if not _shares_dry_border(set(shape), remainder, terrain, dry, rows, cols):
+            continue
+        key = (sum((r - anchor[0]) ** 2 + (c - anchor[1]) ** 2 for r, c in shape), sorted(shape))
+        if best is None or key < best[0]:
+            best = (key, set(shape))
+    return best[1] if best else None
+
+
+def _site_cell(before: np.ndarray, site: dict, projection, rows: int, cols: int):
+    """(투영 칸, 앵커로 삼을 육지 칸 | None). 규칙 1·2."""
+    col, row = projection.to_cell(site["longitude"], site["latitude"])
+    cell = (math.floor(row), math.floor(col))
+    if not (0 <= cell[0] < rows and 0 <= cell[1] < cols):
+        return cell, None
+    if int(before[cell]) >= 0:
+        return cell, cell
+    land = [(int(r), int(c)) for r, c in np.argwhere(before >= 0)
+            if (int(r) - cell[0]) ** 2 + (int(c) - cell[1]) ** 2 <= MAXIMUM_DISPLACEMENT ** 2]
+    if not land:
+        return cell, None
+    return cell, min(land, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
+
+
+def _pending_by_donor(before: np.ndarray, sites: list[dict], projection, rows: int, cols: int) -> dict[int, list[str]]:
+    pending: dict[int, list[str]] = {}
+    for site in sites:
+        _, cell = _site_cell(before, site, projection, rows, cols)
+        if cell is not None:
+            pending.setdefault(int(before[cell]), []).append(site["id"])
+    return pending
+
+
 def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
     document = copy.deepcopy(source)
     meta = document["_meta"]
@@ -185,6 +242,7 @@ def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
     point_cells = {(row["row"], row["col"]) for row in document["cities"]}
     terrain, dry = document["terrain"], _dry_codes(document)
     placements, excluded = [], []
+    pending = _pending_by_donor(before, sites, projection, rows, cols)
     for site in sites:
         base = {"siteId": site["id"], "nameHan": site["nameHan"], "role": site["role"]}
         col, row = projection.to_cell(site["longitude"], site["latitude"])
@@ -209,14 +267,27 @@ def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
                              "donorProvinceId": donor_record["id"], "jurisdictionKind": jurisdiction["kind"]})
             continue
         anchor, carved = None, None
+        pending[donor].remove(site["id"])
+        reserve = MINIMUM_FOOTPRINT * len(pending[donor])
         for footprint in range(FOOTPRINT, MINIMUM_FOOTPRINT - 1, -1):
             for candidate in _anchor_candidates(owner, donor, cell, point_cells):
-                carved = _carve(owner, donor, candidate, point_cells, footprint, terrain, dry)
+                carved = _carve(owner, donor, candidate, point_cells, footprint, terrain, dry, reserve)
                 if carved is not None:
                     anchor = candidate
                     break
             if carved is not None:
                 break
+        if carved is None:
+            # 사용자 결정(2026-09-18, GH #806): 기증 縣이 작아 못 서는 거점은 빼지 않고 발자국을 더 줄여 세운다.
+            # 기증 省의 최소 넓이·연결·마른땅 경계 조건은 그대로다. 줄어든 크기는 carvedCellCount 에 남는다.
+            for footprint in range(MINIMUM_FOOTPRINT, 0, -1):
+                for candidate in _anchor_candidates(owner, donor, cell, point_cells):
+                    carved = _carve_exhaustive(owner, donor, candidate, point_cells, footprint, terrain, dry, reserve)
+                    if carved is not None:
+                        anchor = candidate
+                        break
+                if carved is not None:
+                    break
         if carved is None:
             excluded.append({**base, "reason": "DONOR_TOO_SMALL", "donorProvinceId": donor_record["id"],
                              "donorCellCount": int((owner == donor).sum())})
@@ -325,8 +396,11 @@ def restore_document(document: dict, ledger: dict) -> dict:
     return restored
 
 
-def peel(document: dict) -> tuple[dict, dict | None]:
-    """이 단계가 얹혀 있으면 벗긴 문서와 원장을, 아니면 (문서, None) 을 준다."""
+PARTITION_KEY = "_countyLocationPartitionLedger"
+
+
+def peel_only(document: dict) -> tuple[dict, dict | None]:
+    """이 단계만 벗긴다 — ★ 지리 재분할(이 단계의 입력)은 그대로 둔다. ★ 자신과 영토 단절 감사가 쓴다."""
     if not LEDGER.is_file():
         return document, None
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
@@ -335,8 +409,28 @@ def peel(document: dict) -> tuple[dict, dict | None]:
     return restore_document(document, ledger), ledger
 
 
+def peel(document: dict) -> tuple[dict, dict | None]:
+    """이 단계가 얹혀 있으면 벗긴 문서와 원장을, 아니면 (문서, None) 을 준다.
+
+    ★ 지리 재분할(partition_counties_by_location, GH #806)은 변경 51縣 과 이 단계 사이에 끼어 있다. 앞 단계
+    검사들은 모두 이 함수를 거치므로 여기서 ★ 도 함께 벗기고, 벗긴 원장을 돌려주는 원장에 실어 reapply() 가
+    ★ → 거점 순으로 다시 얹게 한다(접기 단계가 저지 지형 단계를 싣는 것과 같은 방식).
+    """
+    from tools.map import partition_counties_by_location as partition
+    peeled, ledger = peel_only(document)
+    if ledger is None:
+        return document, None
+    restored, partition_ledger = partition.peel(peeled)
+    if partition_ledger is not None:
+        ledger[PARTITION_KEY] = partition_ledger
+    return restored, ledger
+
+
 def reapply(document: dict, ledger: dict) -> dict:
-    """벗겨 낸 뒤 앞 단계 검사가 다시 세운 문서 위에 이 단계를 똑같이 얹는다."""
+    """벗겨 낸 뒤 앞 단계 검사가 다시 세운 문서 위에 (★ 와) 이 단계를 똑같이 얹는다."""
+    if ledger.get(PARTITION_KEY) is not None:
+        from tools.map import partition_counties_by_location as partition
+        document = partition.reapply(document, ledger[PARTITION_KEY])
     rebuilt, _ = apply_carves(document, _ledger_sites(ledger))
     return rebuilt
 
@@ -363,6 +457,7 @@ def build_stage(source: dict) -> tuple[dict, dict]:
         "inputs": {"strongholds": {"path": "data/curated/han/strategic-strongholds-v1.json", "sha256": _sha256(STRONGHOLDS)},
                    "passes": {"path": "data/curated/han/strategic-passes-v1.json", "sha256": _sha256(PASSES)}},
         "rule": {"footprintCells": FOOTPRINT, "minimumFootprintCells": MINIMUM_FOOTPRINT, "minimumDonorArea": MINIMUM_AREA,
+                 "laterSiteReserve": "minimumFootprintCells × 같은 기증 省에 아직 설 거점 수 (user-decision-2026-09-18)",
                  "donorBorderTerrain": sorted(DRY_TERRAIN_NAMES),
                  "roleLevels": ROLE_LEVEL, "placeIdPrefix": SITE_PREFIX,
                  "boundaryBasis": "LOCAL_ADAPTED_PARTITION_NOT_HISTORICAL_BOUNDARY"},
@@ -405,7 +500,7 @@ def main() -> int:
             print(problem, file=sys.stderr)
         return 1 if problems else 0
     if LEDGER.is_file():
-        source, _ = peel(source)
+        source, _ = peel_only(source)
     document, ledger = build_stage(source)
     if args.prepare:
         LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

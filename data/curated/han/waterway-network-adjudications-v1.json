@@ -2,16 +2,16 @@
  "schemaVersion": 1,
  "ledgerId": "han-waterway-network-adjudications-v1",
  "activation": "NON_ACTIVATING",
- "note": "#826 1차. 런타임이 읽지 않는 별도 원장이다. han-water-topology-v1 과 그 원장은 1133 번들·contentHash 에 물려 있어 건드리지 않는다. 비용·용량은 증거가 없어 적지 않는다.",
+ "note": "#826 1차. 런타임이 읽지 않는 별도 원장이다. han-water-topology-v1 과 그 원장은 1133 번들·contentHash 에 물려 있어 건드리지 않는다. 비용·용량은 증거가 없어 적지 않는다. 2026-09-18 추가: portLinks 는 항구와 항구를 잇는 물길 표다 — 타입 간선(EMBARK/RIVER_*)은 여전히 NON_ACTIVATING 이고, portLinks 만 han-world-v3 의 城↔城 연결(강 뱃길)로 쓰인다(사용자 결정 2026-09-18).",
  "bankRule": "나루의 양안 省 = 노드 칸에서 3칸 안, 구간 물 칸에 붙은 마른 칸의 소유 省. 사료는 「그 물을 그 나루에서 건넜다」까지만 증명하고 省 은 han-tiles 소유 격자에서 읽는다.",
  "base": {
   "hanTiles": {
    "path": "data/map/han-tiles.json",
-   "sha256": "ba08098abf93f4f834406219ae4628ad3ab1d356a6733e58cb01c4cd451566a0"
+   "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
   },
   "strongholds": {
    "path": "data/curated/han/strategic-strongholds-v1.json",
-   "sha256": "cd1deccfa6f27c0ca34b1b46f949f3bbed31060a433c85ecda1c80a08aa75080"
+   "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
   }
  },
  "systems": [
@@ -714,6 +714,54 @@
     "strongholdId": "wuqiangkou",
     "evidenceIndex": 0
    }
+  },
+  {
+   "sourceId": "shiliao:js42-wangjun-chengdu",
+   "book": "晉書",
+   "chapter": "卷42 列傳第十二 王濬",
+   "quote": "濬發自成都，率巴東監軍、廣武將軍唐彬攻吳丹楊，克之",
+   "claim": "王濬의 수군이 成都에서 江을 타고 내려왔다 — 아래 두 인용과 한 기사다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "queriedOn": "2026-09-18",
+    "query": "順流鼓棹"
+   }
+  },
+  {
+   "sourceId": "shiliao:js42-wangjun-xiling",
+   "book": "晉書",
+   "chapter": "卷42 列傳第十二 王濬",
+   "quote": "二月庚申，克吳西陵",
+   "claim": "같은 함대가 西陵(=夷陵)을 지났다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "queriedOn": "2026-09-18",
+    "query": "順流鼓棹"
+   }
+  },
+  {
+   "sourceId": "shiliao:js42-wangjun-sanshan",
+   "book": "晉書",
+   "chapter": "卷42 列傳第十二 王濬",
+   "quote": "夏口、武昌，無相支抗。於是順流鼓棹，徑造三山",
+   "claim": "西陵을 지난 함대가 夏口·武昌을 거쳐 順流로 三山(建業)에 닿았다 — 夷陵–夏口–武昌 이 한 물길이고 夷陵이 상류다",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "queriedOn": "2026-09-18",
+    "query": "順流鼓棹"
+   }
+  },
+  {
+   "sourceId": "shiliao:sgz47-xiling",
+   "book": "三國志",
+   "chapter": "卷47 吳書·吳主傳",
+   "quote": "是歳，改夷陵爲西陵",
+   "claim": "西陵은 夷陵의 吳 이름이다(黃武元年)",
+   "origin": {
+    "kind": "SHILIAO_QUERY",
+    "queriedOn": "2026-09-18",
+    "query": "改夷陵"
+   }
   }
  ],
  "reaches": [
@@ -738,6 +786,54 @@
     "shiliao:sgz32-suliu",
     "shiliao:sgz36-jiangzhou",
     "shiliao:sgz32-yiling"
+   ]
+  },
+  {
+   "stableKey": "jiang-yiling-xiakou",
+   "system": "changjiang",
+   "nameHan": "江水 夷陵–夏口",
+   "flowDirection": "EAST",
+   "upstreamJunction": "夷陵(峽口)",
+   "downstreamJunction": "夏口",
+   "selector": {
+    "seedRow": 328,
+    "seedCol": 357,
+    "rowMin": 324,
+    "rowMax": 352,
+    "colMin": 357,
+    "colMax": 416,
+    "expectedCellCount": 97
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed)",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "jiang-xiakou-wuchang",
+   "system": "changjiang",
+   "nameHan": "江水 夏口–武昌(樊口)",
+   "flowDirection": "EAST",
+   "upstreamJunction": "夏口",
+   "downstreamJunction": "樊口",
+   "selector": {
+    "seedRow": 322,
+    "seedCol": 405,
+    "rowMin": 318,
+    "rowMax": 323,
+    "colMin": 385,
+    "colMax": 416,
+    "expectedCellCount": 31
+   },
+   "geometryReview": "BOX_CUT_ON_SYSTEM_COMPONENT; tributary stubs inside the box are not separated (unreviewed); 沔水 하류 토막(col 394–403)이 상자 안에 들어 있다 — 沔口 합류는 판정하지 않았다",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
    ]
   },
   {
@@ -993,7 +1089,7 @@
      "col": 345
     },
     "bankB": {
-     "landProvinceId": "ss-doujin",
+     "landProvinceId": "83053",
      "row": 235,
      "col": 345
     },
@@ -1029,7 +1125,7 @@
      "col": 349
     },
     "bankB": {
-     "landProvinceId": "ss-shanjin",
+     "landProvinceId": "83046",
      "row": 233,
      "col": 349
     },
@@ -1062,7 +1158,7 @@
    "crossing": {
     "mode": "FERRY",
     "bankA": {
-     "landProvinceId": "45685",
+     "landProvinceId": "45776",
      "row": 319,
      "col": 375
     },
@@ -1144,8 +1240,8 @@
     "id": "44662"
    },
    "cell": {
-    "row": 342,
-    "col": 264
+    "row": 343,
+    "col": 265
    },
    "reach": "jiang-jiangzhou-yiling",
    "roles": [
@@ -1187,6 +1283,87 @@
      "shiliao:sgz32-yiling"
     ]
    }
+  },
+  {
+   "stableKey": "jianye",
+   "nameHan": "建业县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "40523"
+   },
+   "cell": {
+    "row": 290,
+    "col": 490
+   },
+   "reach": "jiang-ruxu-jianye",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz55-jianye"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "40523",
+    "sourceRefs": [
+     "shiliao:sgz55-jianye"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
+  },
+  {
+   "stableKey": "jiangling",
+   "nameHan": "江陵县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43676"
+   },
+   "cell": {
+    "row": 327,
+    "col": 369
+   },
+   "reach": "jiang-yiling-xiakou",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz36-jiangling"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "43676",
+    "sourceRefs": [
+     "shiliao:sgz36-jiangling"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
+  },
+  {
+   "stableKey": "xiakou-shaxian",
+   "nameHan": "沙羡县",
+   "siteRef": {
+    "kind": "CITY",
+    "id": "43421"
+   },
+   "cell": {
+    "row": 322,
+    "col": 408
+   },
+   "reach": "jiang-xiakou-wuchang",
+   "roles": [
+    "PORT"
+   ],
+   "sourceRefs": [
+    "shiliao:sgz-xiakou"
+   ],
+   "crossing": null,
+   "port": {
+    "landProvinceId": "43421",
+    "sourceRefs": [
+     "shiliao:sgz-xiakou"
+    ]
+   },
+   "note": "2026-09-18 GH #806: 城 씨앗이 실제 위치 칸으로 돌아와 江 구간에 붙었다(옛 칸은 2–5칸 떨어져 차단 행이었다). 사료 근거는 차단 행의 것 그대로이며 말뭉치에서 축자 재확인했다. 위임 결정(main 세션)."
   }
  ],
  "flowLinks": [
@@ -1202,6 +1379,101 @@
    "stableKey": "jiang-pengli-to-jianye",
    "upstreamReach": "jiang-pengli-ruxu",
    "downstreamReach": "jiang-ruxu-jianye",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu"
+   ]
+  },
+  {
+   "stableKey": "jiang-yiling-to-xiakou",
+   "upstreamReach": "jiang-jiangzhou-yiling",
+   "downstreamReach": "jiang-yiling-xiakou",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "jiang-xiakou-to-xiakou-wuchang",
+   "upstreamReach": "jiang-yiling-xiakou",
+   "downstreamReach": "jiang-xiakou-wuchang",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "jiang-xiakou-wuchang-to-wuchang",
+   "upstreamReach": "jiang-xiakou-wuchang",
+   "downstreamReach": "jiang-wuchang-pengli",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  }
+ ],
+ "portLinks": [
+  {
+   "stableKey": "jiangzhou--yiling",
+   "fromNode": "jiangzhou",
+   "toNode": "yiling",
+   "sourceRefs": [
+    "shiliao:sgz32-suliu",
+    "shiliao:sgz36-jiangzhou",
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling"
+   ]
+  },
+  {
+   "stableKey": "yiling--jiangling",
+   "fromNode": "yiling",
+   "toNode": "jiangling",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "jiangling--xiakou-shaxian",
+   "fromNode": "jiangling",
+   "toNode": "xiakou-shaxian",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "xiakou-shaxian--fankou",
+   "fromNode": "xiakou-shaxian",
+   "toNode": "fankou",
+   "sourceRefs": [
+    "shiliao:js42-wangjun-chengdu",
+    "shiliao:js42-wangjun-xiling",
+    "shiliao:js42-wangjun-sanshan",
+    "shiliao:sgz47-xiling"
+   ]
+  },
+  {
+   "stableKey": "fankou--ruxukou",
+   "fromNode": "fankou",
+   "toNode": "ruxukou",
+   "sourceRefs": [
+    "shiliao:sgz-jianye-suliu"
+   ]
+  },
+  {
+   "stableKey": "ruxukou--jianye",
+   "fromNode": "ruxukou",
+   "toNode": "jianye",
    "sourceRefs": [
     "shiliao:sgz-jianye-suliu"
    ]
@@ -1636,50 +1908,6 @@
    ]
   },
   {
-   "stableKey": "jianye",
-   "nameHan": "建业县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "40523"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_REACH",
-   "measuredCellDistanceToWater": 1,
-   "note": "가장 가까운 물은 호수 칸(1칸)이고 江 구간까지는 5칸.",
-   "sourceRefs": [
-    "shiliao:sgz55-jianye"
-   ],
-   "reach": "jiang-ruxu-jianye",
-   "measuredCellDistanceToReach": 5
-  },
-  {
-   "stableKey": "jiangling",
-   "nameHan": "江陵县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "43676"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 2,
-   "note": "배 수백 척 집결 증거는 있으나 城 칸이 물에서 2칸.",
-   "sourceRefs": [
-    "shiliao:sgz36-jiangling"
-   ]
-  },
-  {
-   "stableKey": "xiakou-shaxian",
-   "nameHan": "沙羡县",
-   "siteRef": {
-    "kind": "CITY",
-    "id": "43421"
-   },
-   "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 2,
-   "note": "夏口(沙羡). 증거는 있으나 城 칸이 물에서 2칸.",
-   "sourceRefs": [
-    "shiliao:sgz-xiakou"
-   ]
-  },
-  {
    "stableKey": "guangling",
    "nameHan": "广陵县",
    "siteRef": {
@@ -1687,7 +1915,7 @@
     "id": "42687"
    },
    "reasonCode": "PORT_CELL_NOT_ADJACENT_TO_WATER",
-   "measuredCellDistanceToWater": 4,
+   "measuredCellDistanceToWater": 3,
    "note": "臨江 증거는 있으나 城 칸이 물에서 4칸.",
    "sourceRefs": [
     "shiliao:sgz-guangling"

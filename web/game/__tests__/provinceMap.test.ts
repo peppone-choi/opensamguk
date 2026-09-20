@@ -614,8 +614,9 @@ describe('province identity map', () => {
 
     expect(canonical.scenarios).toHaveLength(15);
     for (const scenario of canonical.scenarios) {
-      // 1,520 省 + 수·진·관 거점 省 73(배열 끝).
-      expect(scenario.assignments).toHaveLength(1_594);
+      // 지리 재분할(GH #806, 2026-09-18) 뒤: 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331.
+      // 앞 판은 1,520 + 73 + 平陰 1 = 1,594 였다.
+      expect(scenario.assignments).toHaveLength(1_331);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;

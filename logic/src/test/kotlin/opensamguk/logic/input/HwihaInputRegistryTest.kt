@@ -105,24 +105,72 @@ class HwihaInputRegistryTest {
         catalog.entries.forEach { assertEquals(it.kind, InputKind.ofPrefix(it.inputId.substringBefore('.'))) }
     }
 
+    private val sammo = CommandRegistry(GeneralActionPipeline())
+
+    // CommandRegistry.resolve 는 모르는 코드를 RestAction 으로 돌려준다 — 그 폴백에 걸리면 지어낸 코드다.
+    private fun isRealSammoCommand(code: String): Boolean = sammo.resolve(code) !== RestAction
+
+    /** 기존 명령 70개(장수 46 + 사령턴 24) — 재설계 §12 의 대응 대상. 두 목록에 함께 있는 「휴식」 때문에 고유 코드는 69다. */
+    private val legacy70Slots = (GameConst.availableGeneralCommand.values + GameConst.availableChiefCommand.values).flatten()
+    private val legacy70 = legacy70Slots.distinct()
+
+    private fun row(inputId: String, kind: String, legacy: String) =
+        """{"inputId":"$inputId","kind":"$kind","layer":1,"deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
+
+    private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[${rows.joinToString(",")}]}""")
+
     @Test
-    fun `replacesLegacy names only commands the SAMMO registry really has`() {
-        // CommandRegistry.resolve 는 모르는 코드를 RestAction 으로 돌려준다 — 그 폴백에 걸리면 지어낸 코드다.
-        val sammo = CommandRegistry(GeneralActionPipeline())
-        catalog.entries.flatMap { it.replacesLegacy }.forEach { code ->
-            assertTrue(sammo.resolve(code) !== RestAction, "원장의 replacesLegacy 가 없는 명령을 가리킨다: $code")
-        }
+    fun `legacyCommands names only commands the SAMMO registry really has`() {
+        assertEquals(emptyList(), catalog.unknownLegacyCommands(::isRealSammoCommand), "원장의 legacyCommands 가 없는 명령을 가리킨다")
+        assertTrue(catalog.legacyIndex.keys.all { it in legacy70 }, "역참조가 기존 명령 70개 밖을 가리킨다: ${catalog.legacyIndex.keys - legacy70.toSet()}")
+        assertEquals(70, legacy70Slots.size, "기존 명령 70개를 못 읽었다")
+        assertEquals(listOf("휴식"), legacy70Slots.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.toList())
+    }
+
+    @Test
+    fun `a legacy name that is not a real command fails the check`() {
+        // 적색 프로브: 검사가 살아 있으면 지어낸 이름이 반드시 걸린다. 진짜 명령은 같은 원장에서 통과해야 한다.
+        val fake = ledger(row("action.drill", "GENERAL_ACTION", "\"che_징병\",\"che_없는명령\""))
+        assertEquals(listOf("che_없는명령"), fake.unknownLegacyCommands(::isRealSammoCommand))
+        assertTrue(isRealSammoCommand("che_징병"))
+    }
+
+    @Test
+    fun `one legacy command may be referenced by a direct-action row and a delegation row`() {
+        // #837: 직접 행동(기존 이름 그대로)과 위임(방침)이 같은 기존 명령을 함께 가리킨다 — 다대일은 정상이다.
+        val manyToOne = ledger(
+            row("action.conscript", "GENERAL_ACTION", "\"che_징병\""),
+            row("policy.conscript", "POLICY", "\"che_징병\""),
+        )
+        assertEquals(listOf("action.conscript", "policy.conscript"), manyToOne.legacyIndex.getValue("che_징병").map { it.inputId })
+        assertEquals(emptyList(), manyToOne.unknownLegacyCommands(::isRealSammoCommand))
+        val uncovered = manyToOne.uncoveredLegacyCommands(legacy70)
+        assertTrue("che_징병" !in uncovered)
+        assertEquals(legacy70.size - 1, uncovered.size)
+    }
+
+    @Test
+    fun `legacy coverage is computed over the real 70 commands`() {
+        val covered = legacy70.size - catalog.uncoveredLegacyCommands(legacy70).size
+        assertEquals(catalog.legacyIndex.keys.size, covered)
+    }
+
+    @Test
+    fun `stale replacesLegacy field and in-row duplicates fail closed`() {
+        val stale = """{"schemaVersion":1,"inputs":[{"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
+        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(stale) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\",\"che_징병\"")) }
     }
 
     @Test
     fun `duplicate or unknown ledger fields fail closed`() {
         val dup = """{"schemaVersion":1,"inputs":[
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]},
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
+            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]},
+            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
         assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(dup) }
         val badState = dup.replace("\"PLANNED\"", "\"DONE\"")
         assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badState) }
-        val badKind = """{"schemaVersion":1,"inputs":[{"inputId":"policy.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
+        val badKind = """{"schemaVersion":1,"inputs":[{"inputId":"policy.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
         assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badKind) }
     }
 }

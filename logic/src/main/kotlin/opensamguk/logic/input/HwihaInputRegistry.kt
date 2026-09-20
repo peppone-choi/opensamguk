@@ -51,12 +51,29 @@ data class HwihaInputEntry(
     val kind: InputKind,
     val layer: Int,
     val deliveryState: InputDeliveryState,
-    val replacesLegacy: List<String>,
+    /**
+     * 기존(삼모) 명령 역참조(#837). 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고 위임 행(방침·배치·공사)도
+     * 같은 기존 명령을 가리킨다. 그래서 기존 명령 하나를 여러 행이 가리켜도 된다(다대일). 한 행 안의 중복만 금지한다.
+     */
+    val legacyCommands: List<String>,
 )
 
 class HwihaInputCatalog internal constructor(val entries: List<HwihaInputEntry>) {
     private val byId = entries.associateBy { it.inputId }
     operator fun get(inputId: String): HwihaInputEntry? = byId[inputId]
+
+    /** 기존 명령 → 그것을 가리키는 원장 행들(원장 순서). 다대일이므로 값은 목록이다. */
+    val legacyIndex: Map<String, List<HwihaInputEntry>> by lazy {
+        val index = linkedMapOf<String, MutableList<HwihaInputEntry>>()
+        entries.forEach { entry -> entry.legacyCommands.forEach { index.getOrPut(it) { mutableListOf() }.add(entry) } }
+        index
+    }
+
+    /** [legacy] 가운데 어느 행도 가리키지 않는 기존 명령(입력 순서 유지). 몇 행이 가리키든 하나 이상이면 대응된 것이다. */
+    fun uncoveredLegacyCommands(legacy: Iterable<String>): List<String> = legacy.filter { it !in legacyIndex }
+
+    /** 역참조 가운데 [isRealCommand] 가 아니라고 답한 이름(지어낸 명령). */
+    fun unknownLegacyCommands(isRealCommand: (String) -> Boolean): List<String> = legacyIndex.keys.filterNot(isRealCommand)
 
     companion object {
         private const val RESOURCE = "command-catalog/hwiha-input-catalog.json"
@@ -81,7 +98,11 @@ class HwihaInputCatalog internal constructor(val entries: List<HwihaInputEntry>)
                     kind = kind,
                     layer = row.getValue("layer").jsonPrimitive.int.also { require(it in 1..3) { "layer must be 1..3: $inputId" } },
                     deliveryState = enumValueOfOrFail(row.getValue("deliveryState").jsonPrimitive.content, inputId),
-                    replacesLegacy = row.getValue("replacesLegacy").jsonArray.map { it.jsonPrimitive.content },
+                    legacyCommands = requireNotNull(row["legacyCommands"]) {
+                        "missing legacyCommands for $inputId (replacesLegacy was renamed, #837)"
+                    }.jsonArray.map { it.jsonPrimitive.content }.also {
+                        require(it.toSet().size == it.size) { "duplicate legacyCommands within one row: $inputId" }
+                    },
                 )
             }
             require(entries.map { it.inputId }.toSet().size == entries.size) { "duplicate inputId in hwiha input catalog" }

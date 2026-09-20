@@ -1,27 +1,38 @@
 {
   "schemaVersion": 1,
-  "entries": [
+  "entries": [],
+  "retired": [
     {
       "scenarioCode": 1100,
       "effectiveYear": 225,
       "jurisdictionId": "45934",
-      "ownerNationIds": [1, 3],
+      "ownerNationIds": [
+        1,
+        3
+      ],
       "reason": "상용현은 위의 현치 직접 점유와 촉의 인접 추가 공간 프로빈스 통제가 병존한다.",
       "evidenceIds": [
         "S1100-N001-PLACEMENT-EVIDENCE",
         "S1100-N003-PLACEMENT-EVIDENCE"
-      ]
+      ],
+      "retiredAt": "2026-09-18",
+      "retiredBy": "GH #806 지리 재분할 — 上庸縣 관할이 省 하나(45934)가 되어 한 관할 안에 두 주인이 서는 공간 분할이 더는 관측되지 않는다. 蜀의 인접 공간 점유는 이웃 관할 省의 소유로만 남는다."
     },
     {
       "scenarioCode": 1110,
       "effectiveYear": 228,
       "jurisdictionId": "45934",
-      "ownerNationIds": [1, 3],
+      "ownerNationIds": [
+        1,
+        3
+      ],
       "reason": "228년 신성군 현치의 위 점유와 촉의 인접 현역 통제를 공간 점유로 분리한다.",
       "evidenceIds": [
         "S1110-N001-PLACEMENT-EVIDENCE",
         "S1110-N003-PLACEMENT-EVIDENCE"
-      ]
+      ],
+      "retiredAt": "2026-09-18",
+      "retiredBy": "GH #806 지리 재분할 — 上庸縣 관할이 省 하나(45934)가 되어 한 관할 안에 두 주인이 서는 공간 분할이 더는 관측되지 않는다. 蜀의 인접 공간 점유는 이웃 관할 省의 소유로만 남는다."
     }
   ]
 }
