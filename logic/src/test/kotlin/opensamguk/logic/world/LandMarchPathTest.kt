@@ -93,6 +93,18 @@ class LandMarchPathTest {
         val crossing=topology(listOf(edge("bridge","A","D",TraversalMode.BRIDGE)),listOf(barrier))
         assertEquals(listOf("bridge"),assertIs<LandMarchPathResult.Resolved>(resolve(crossing)).path.edgeIds)
     }
+    @Test fun `overflowing millimetre route or return candidate is explicitly denied`() {
+        val t=topology(listOf(edge("ab","A","B"),edge("bd","B","D")))
+        val huge=Long.MAX_VALUE / 2 + 1
+        assertEquals(PathDenialCode.TOPOLOGY_STATE_INVALID,assertIs<LandMarchPathResult.Denied>(
+            resolve(t,mapOf("ab" to huge,"bd" to huge))).code)
+        // An undirected return candidate can overflow before the destination is reached too.
+        assertEquals(PathDenialCode.TOPOLOGY_STATE_INVALID,assertIs<LandMarchPathResult.Denied>(
+            resolve(t,mapOf("ab" to huge,"bd" to 1L))).code)
+        assertEquals(20L,assertIs<LandMarchPathResult.Resolved>(resolve(t)).path.totalCostMm)
+        assertEquals(2L,assertIs<StrategicPathResult.Resolved>(StrategicPathResolver.resolve(t,
+            StrategicPathRequest(land("A"),land("D"),1),state(t))).path.totalCost)
+    }
     @Test fun `same land node has zero distance and still carries exact pins`() {
         val t=topology(emptyList());val metric=metrics(t)
         val found=assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(t,

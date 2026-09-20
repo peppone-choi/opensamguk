@@ -141,9 +141,13 @@ object StrategicPathResolver {
         if (request.from !is StrategicNodeRef.LandProvince || request.to !is StrategicNodeRef.LandProvince)
             return LandMarchPathResult.Denied(PathDenialCode.NO_LAND_CONNECTION)
         val graph = SearchGraph(topology, state, request.requiredCapacity)
-        val found = graph.findPath(request.from, request.to,
-            edgeAllowed = LandMarchMetricSnapshot::supports,
-            edgeCost = { metrics.edgesById.getValue(it.id).costMm })
+        val found = try {
+            graph.findPath(request.from, request.to,
+                edgeAllowed = LandMarchMetricSnapshot::supports,
+                edgeCost = { metrics.edgesById.getValue(it.id).costMm })
+        } catch (_: ArithmeticException) {
+            return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
+        }
         if (found != null) {
             val nodes = found.nodes.map(StrategicNodeRef::canonicalKey)
             val ids = found.edges.map(TraversalEdge::id)
