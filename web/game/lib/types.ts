@@ -20,6 +20,7 @@ export interface User {
 // emit all of them yet — GameInfo renders graceful fallbacks (no fabricated values) and the menu
 // flags default to falsy (the legacy filterMenu drops a condShow item whose flag is absent anyway).
 export interface FrontGlobalInfo {
+  ruleProfile?: 'SAMMO' | 'HWIHA' | null;
   year: number;
   month: number;
   turnPhase?: number | null;

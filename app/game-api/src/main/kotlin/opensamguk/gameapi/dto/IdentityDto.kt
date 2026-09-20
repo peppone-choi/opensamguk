@@ -53,6 +53,7 @@ data class ClaimResponse(
 // ── front-info (§3 GameInfo + identity envelope) ─────────────────────────────
 
 data class FrontGlobalInfo(
+    val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val year: Int,
     val month: Int,
     val turnPhase: Int? = null,
