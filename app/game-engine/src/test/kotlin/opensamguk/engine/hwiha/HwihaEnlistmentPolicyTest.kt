@@ -5,6 +5,9 @@ import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.world.GeneralPositionSnapshot
+import opensamguk.logic.world.GeneralPositionState
+import opensamguk.logic.world.StrategicNodeRef
 
 class HwihaEnlistmentPolicyTest {
     private val request = EnlistmentRequest(1, EnlistmentMode.NATION, 1)
@@ -18,10 +21,19 @@ class HwihaEnlistmentPolicyTest {
     private fun card(id: Int, master: Int, general: Int?) = Retainer(
         id, master, if (general == null) "RECRUITED" else "EXISTING", general, "C$id", "guest")
     private fun world(generals: List<TurnGeneral> = listOf(general(1), general(10, true)),
-                      cards: List<Retainer> = emptyList()) = InMemoryTurnWorld(WorldSnapshot(
-        worldId = WorldId(1), state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH,
-            config = mapOf("ruleProfile" to "HWIHA")), generals = generals, retainers = cards,
-    ))
+                      cards: List<Retainer> = emptyList()): InMemoryTurnWorld {
+        val hash = "b".repeat(64)
+        val positions = generals.fold(GeneralPositionSnapshot("fixture-r1", hash, setOf("fixture-p1"), emptySet())) { snapshot, general ->
+            snapshot.withState(GeneralPositionState("fixture-r1", hash, general.id,
+                StrategicNodeRef.LandProvince("fixture-p1"), 1))
+        }
+        return InMemoryTurnWorld(WorldSnapshot(
+            worldId = WorldId(1), state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH,
+                config = mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA")),
+            generals = generals, retainers = cards, generalPositionSnapshot = positions,
+            cityLandProvinceById = mapOf(1 to "fixture-p1"),
+        ))
+    }
     @Test fun `direct person costs refresh while descendants are not charged twice`() {
         val world = world(listOf(general(1), general(10, true), general(2), general(3)),
             listOf(card(1, 10, 2), card(2, 2, 3)))
