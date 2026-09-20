@@ -43,6 +43,8 @@ open class ReservedTurnRepository(
         val argJson: String,
         val brief: String = DEFAULT_TURN_ACTION,
         val requestId: String? = null,
+        /** False only for a missing database row; null requestId does not imply absence. */
+        val rowExists: Boolean = true,
     )
 
     /**
@@ -107,7 +109,7 @@ open class ReservedTurnRepository(
                     requestId = rs.getString("request_id"),
                 )
             }
-        return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG)
+        return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG, rowExists = false)
     }
 
     /**

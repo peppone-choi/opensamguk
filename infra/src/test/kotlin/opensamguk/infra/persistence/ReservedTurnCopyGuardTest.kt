@@ -46,4 +46,17 @@ class ReservedTurnCopyGuardTest {
         for (amount in listOf(0, ReservedTurnRepository.MAX_GENERAL_TURNS, -1)) repo.repeatGeneralTurn(WorldId(1), 10, amount)
         assertEquals(1, jdbc.reads)
     }
+    @Test fun `missing row differs from explicit rest and untracked reservations`() {
+        val jdbc = SourceJdbc(emptyList())
+        val repo = ReservedTurnRepository(jdbc)
+        assertFalse(repo.readReserved(WorldId(1), 10, 0).rowExists)
+        for (action in listOf("휴식", "action.enlist")) {
+            jdbc.actions = listOf(action)
+            val row = repo.readReserved(WorldId(1), 10, 0)
+            assertTrue(row.rowExists)
+            assertNull(row.requestId)
+            assertEquals(action, row.actionCode)
+        }
+    }
+
 }

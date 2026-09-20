@@ -36,16 +36,7 @@ class HwihaEnlistmentExecutor(
         }
         val generals = world.listGenerals()
         val nations = world.listNations().associateBy { it.id }
-        val projection = HwihaEnlistmentProjection(world.ruleProfile,
-            generals.map { general ->
-                val stats = general.stats
-                EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, stats.leadership,
-                    stats.strength, stats.intelligence, stats.politics, stats.charm, general.meta),
-                    general.name, general.officerLevel, general.npcState, general.userId)
-            },
-            world.listRetainers().map { EnlistmentCardRow(it.id, it.masterGeneralId, it.generalId, it.name) },
-            nations.keys,
-        )
+        val projection = world.enlistmentProjection()
         val policy = currentPolicy?.invoke(request)
         val assessment = if (policy == null) HwihaEnlistmentPrecheck.assess(request, projection)
             else HwihaEnlistmentPrecheck.assess(request, projection,
@@ -82,3 +73,15 @@ class HwihaEnlistmentExecutor(
         return EnlistmentExecution.Applied(plan, card.id)
     }
 }
+
+/** Shared current-world projection for NPC selection and execution revalidation. */
+internal fun InMemoryTurnWorld.enlistmentProjection() = HwihaEnlistmentProjection(ruleProfile,
+    listGenerals().map { general ->
+        val stats = general.stats
+        EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, stats.leadership,
+            stats.strength, stats.intelligence, stats.politics, stats.charm, general.meta),
+            general.name, general.officerLevel, general.npcState, general.userId)
+    },
+    listRetainers().map { EnlistmentCardRow(it.id, it.masterGeneralId, it.generalId, it.name) },
+    listNations().map { it.id }.toSet(),
+)

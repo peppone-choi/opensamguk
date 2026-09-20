@@ -119,8 +119,22 @@ class ReservedTurnRepositoryIT {
         assertEquals("휴식", reserved.actionCode)
         assertEquals("{}", reserved.argJson)
 
+        assertEquals(false, reserved.rowExists)
+
         // a default read must NOT have created a row.
         assertEquals(0, rowCount(worldId = worldId, generalId = 99, turnIdx = 7))
+    }
+
+    @Test
+    fun `explicit rest row without request id remains distinguishable from absence`() {
+        val generalId = 119
+        assertEquals(false, repo.readReserved(worldId, generalId, 0).rowExists)
+        repo.reserve(worldId, generalId, 0, "휴식", "{}")
+        val stored = repo.readReserved(worldId, generalId, 0)
+        assertEquals(true, stored.rowExists)
+        assertEquals(null, stored.requestId)
+        assertEquals("휴식", stored.actionCode)
+        assertEquals("{}", stored.argJson)
     }
 
     @Test
