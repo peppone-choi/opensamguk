@@ -1,0 +1,21 @@
+/* Hallmark · component: court form · existing field-headquarters tokens. */
+.court { display: grid; gap: 20px; min-width: 0; padding: 16px; color: var(--text); }
+.court section { min-width: 0; display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px; }
+.court h3 { font-family: var(--font-serif); font-style: normal; margin: 0; overflow-wrap: anywhere; }
+.court p { margin: 0; line-height: 1.65; overflow-wrap: anywhere; }
+.court label { display: grid; gap: 8px; min-width: 0; }
+.court select { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; border: 1px solid var(--line-2); padding: 8px; color: var(--text); background: var(--inset); }
+.court button { min-height: 44px; white-space: nowrap; width: fit-content; max-width: 100%; }
+.court button:disabled, .court select:disabled { border-style: dashed; cursor: not-allowed; }
+.court button:focus-visible, .court select:focus-visible, .court :global(.is-focus) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.court button:active:not(:disabled), .court :global(.is-active) { transform: translateY(1px); }
+@media (hover: hover) { .court select:hover:not(:disabled), .court :global(.is-hover) { background: var(--raised); color: var(--text); } }
+.guide { color: var(--text-2); font-size: 13px; }
+.order { display: grid; gap: 8px; min-width: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.order strong { overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.notice { border: 1px solid var(--line-2); padding: 12px; }
+.notice[data-state=error] { color: var(--rust-2); border-color: var(--rust); }
+.notice[data-state=success] { color: var(--moss-2); border-color: var(--moss); }
+.notice[data-state=waiting], .court[aria-busy=true] { cursor: progress; }
+@media(max-width: 375px) { .court { padding: 12px; gap: 16px; } }

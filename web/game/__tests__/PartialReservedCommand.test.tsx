@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import PartialReservedCommand from '@/components/game/PartialReservedCommand';
 
 const mocks = vi.hoisted(() => ({
     reservedCommands: vi.fn(),
+    modalProps: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -17,7 +18,7 @@ vi.mock('@/lib/api', () => ({
 }));
 
 vi.mock('@/components/CommandModal', () => ({
-    default: () => null,
+    default: (props: unknown) => { mocks.modalProps(props); return null; },
 }));
 
 describe('PartialReservedCommand', () => {
@@ -99,4 +100,12 @@ it('unknown profile disables reservation edits and legacy queues', async () => {
     render(<PartialReservedCommand ruleProfile={null} generalId={10} onToast={vi.fn()}/>);
     await waitFor(() => expect(screen.getByRole('button', {name:'명령 추가 · 편집'})).toBeDisabled());
     for (const button of screen.getAllByRole('button', {name:'적용'})) expect(button).toBeDisabled();
+});
+
+it('court entry does not select a personal reservation slot', async () => {
+    mocks.reservedCommands.mockResolvedValue({result:true,slots:[]});
+    render(<PartialReservedCommand ruleProfile="HWIHA" generalId={10} onToast={vi.fn()}/>);
+    fireEvent.click(screen.getByRole('button',{name:'발령·응답'}));
+    await waitFor(()=>expect(mocks.modalProps).toHaveBeenCalledWith(expect.objectContaining({courtMode:true,generalId:10})));
+    expect(mocks.modalProps.mock.calls.at(-1)?.[0].turnIdx).toBeUndefined();
 });

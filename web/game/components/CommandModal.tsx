@@ -37,12 +37,15 @@ import SelectCityField from './command/SelectCityField';
 import SelectGeneralField from './command/SelectGeneralField';
 import SelectNationField from './command/SelectNationField';
 import SelectAmountField from './command/SelectAmountField';
+import HwihaCourtForm from './command/HwihaCourtForm';
 import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
 
 interface CommandModalProps {
     ruleProfile?: string | null;
+    courtMode?: boolean;
+    refreshKey?: number;
     onClose: () => void;
     onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     /** The caller's own general id (front-info.general.generalId). Required by CommandController. */
@@ -371,6 +374,8 @@ function StructuredCommandForm({
 export default function CommandModal({
     onClose,
     ruleProfile,
+    courtMode = false,
+    refreshKey,
     onToast,
     generalId,
     nationId,
@@ -417,7 +422,7 @@ export default function CommandModal({
     const [pinnedCatalogError, setPinnedCatalogError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (profile !== 'SAMMO') return;
+        if (profile !== 'SAMMO' || courtMode) return;
         if (pinnedCommand) {
             if (!resolvePinnedFromCatalog) {
                 setResolvingPinnedCommand(false);
@@ -476,7 +481,7 @@ export default function CommandModal({
         return () => {
             on = false;
         };
-    }, [profile, generalId, pinnedCommand, resolvePinnedFromCatalog]);
+    }, [profile, courtMode, generalId, pinnedCommand, resolvePinnedFromCatalog]);
 
     const categories = useMemo(() => catalog.map((c) => c.category), [catalog]);
     const filtered = useMemo(() => catalog.find((c) => c.category === cat)?.values ?? [], [catalog, cat]);
@@ -497,7 +502,7 @@ export default function CommandModal({
     }
 
     async function submit(cmd: AvailableCommand, body: Record<string, unknown>) {
-        if (profile !== 'SAMMO') return;
+        if (profile !== 'SAMMO' || courtMode) return;
         setLoading(true);
         setBlockedReason(null);
         try {
@@ -565,7 +570,7 @@ export default function CommandModal({
 
     return (
         <Modal
-            ariaLabel={pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
+            ariaLabel={courtMode ? '발령·응답' : pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
             className="modal-content"
             overlayClassName="modal-overlay"
             onClose={onClose}
@@ -577,15 +582,15 @@ export default function CommandModal({
                         </div>
                     )}
                     <div className="cmd-header__text">
-                        <h2 className="os-serif">명령</h2>
-                        {hero?.name && <span className="cmd-header__who">{hero.name}{turnIdx != null ? ` · ${turnIdx + 1}순` : ''}</span>}
+                        <h2 className="os-serif">{courtMode ? '발령·응답' : '명령'}</h2>
+                        {hero?.name && <span className="cmd-header__who">{hero.name}{!courtMode && turnIdx != null ? ` · ${turnIdx + 1}순` : ''}</span>}
                     </div>
                     <button type="button" className="os-button os-button--ghost os-button--sm cmd-close" onClick={onClose} aria-label="닫기">×</button>
                 </div>
 
                 {loadError && <p className="cmd-flag">{loadError}</p>}
 
-                {profile === 'HWIHA' ? (
+                {courtMode ? (profile === 'HWIHA' ? <HwihaCourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
                     <HwihaEnlistmentForm generalId={generalId} turnIdx={turnIdx}
                         unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
                         onToast={onToast} onClose={onClose} onReserved={onReserved} />

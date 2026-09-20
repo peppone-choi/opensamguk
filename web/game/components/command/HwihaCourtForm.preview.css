@@ -1,0 +1,7 @@
+html, body { margin: 0; overflow-x: clip; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+* { box-sizing: border-box; }
+main { max-width: 680px; margin: 0 auto; padding: 16px; min-width: 0; }
+h1 { font-family: var(--font-serif); font-style: normal; font-size: 24px; overflow-wrap: anywhere; }
+h2 { font-size: 16px; color: var(--text-2); }
+.preview-state { margin: 24px 0; background: var(--panel); border: 1px solid var(--line); }
+.preview-state > h2 { padding: 12px 16px; margin: 0; border-bottom: 1px solid var(--line); }
