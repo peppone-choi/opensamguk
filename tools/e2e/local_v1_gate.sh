@@ -13,6 +13,15 @@ if [[ -z "${JWT_PRIVATE_KEY:-}" || -z "${JWT_PUBLIC_KEY:-}" ]]; then
   exit 2
 fi
 
+playwright_args=(--dir web/game test:e2e)
+if [[ -n "${E2E_TEST_SPEC:-}" ]]; then
+  if [[ ! "$E2E_TEST_SPEC" =~ ^e2e/[A-Za-z0-9][A-Za-z0-9._-]*\.spec\.ts$ || ! -f "$repo_root/web/game/$E2E_TEST_SPEC" ]]; then
+    echo "E2E_TEST_SPEC must name an existing e2e/<name>.spec.ts file" >&2
+    exit 2
+  fi
+  playwright_args+=("$E2E_TEST_SPEC")
+fi
+
 operational_smoke="${E2E_OPERATIONAL_SMOKE:-false}"
 qa_turnterm="${SCENARIO_QA_TURNTERM:-}"
 if [[ "$operational_smoke" == "true" && "$qa_turnterm" != "1" ]]; then
@@ -72,9 +81,25 @@ owned_volume_names=()
 cleanup_resources_file="$artifact_dir/cleanup-resources.txt"
 : >"$cleanup_resources_file"
 
+compose_files=(-f "$repo_root/docker-compose.yml")
 compose() {
-  docker compose --project-name "$compose_project_name" --env-file /dev/null "$@"
+  docker compose --project-name "$compose_project_name" --env-file /dev/null "${compose_files[@]}" "$@"
 }
+
+# container_name ignores Compose project scoping; override every configured service before up.
+# Only service names are queried, never a rendered configuration containing credentials.
+service_names="$(compose config --services)"
+[[ -n "$service_names" ]] || { echo "Compose returned no services" >&2; exit 2; }
+container_override="$artifact_dir/${compose_project_name}-containers.json"
+printf '{"services":{' >"$container_override"
+separator=""
+while IFS= read -r service; do
+  [[ "$service" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || { echo "Invalid Compose service name" >&2; exit 2; }
+  printf '%s"%s":{"container_name":"%s-%s"}' "$separator" "$service" "$compose_project_name" "$service" >>"$container_override"
+  separator=,
+done <<<"$service_names"
+printf '}}\n' >>"$container_override"
+compose_files+=(-f "$container_override")
 
 reserve_isolated_cleanup_resources() {
   local service
@@ -341,8 +366,10 @@ health_url() {
 
 container_health() {
   local name="$1"
-  local container="$2"
+  local container
   local output="$artifact_dir/health-${name}.container"
+  container="$(compose ps -q "$name")" || return 1
+  [[ "$container" =~ ^[0-9a-f]{12,64}$ ]] || return 1
   docker inspect --format '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}' "$container" >"$output" 2>&1
   grep -Eq '^running healthy$' "$output"
 }
@@ -350,8 +377,8 @@ container_health() {
 wait_for_health() {
   local deadline=$((SECONDS + ${E2E_HEALTH_TIMEOUT_SEC:-360}))
   while (( SECONDS < deadline )); do
-    if container_health postgres opensamguk-postgres \
-      && container_health redis opensamguk-redis \
+    if container_health postgres \
+      && container_health redis \
       && health_url gateway-api "http://localhost:${gateway_port}/actuator/health" \
       && health_url game-api "http://localhost:${game_api_port}/actuator/health" \
       && health_url game-engine "http://localhost:${game_engine_port}/actuator/health" \
@@ -400,6 +427,6 @@ E2E_PLAYWRIGHT_OUTPUT_DIR="$artifact_dir/playwright-output" \
 E2E_TEST_TIMEOUT_MS="$playwright_timeout_ms" \
 E2E_OPERATIONAL_SMOKE="$operational_smoke" \
 SCENARIO_QA_TURNTERM="$qa_turnterm" \
-pnpm --dir web/game test:e2e >"$artifact_dir/playwright.log" 2>&1
+pnpm "${playwright_args[@]}" >"$artifact_dir/playwright.log" 2>&1
 
 echo "local v1 gate passed; artifacts: $artifact_dir"
