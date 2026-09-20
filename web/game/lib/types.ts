@@ -830,3 +830,10 @@ export interface DispatchOptionsResponse {
     counties: Array<{countyId: number; label: string; available: boolean; code?: string | null; reason?: string | null}>;
     queued?: DispatchQueue | null;
 }
+
+export interface HwihaDeployOptions {
+    available: boolean; code?: string | null; reason?: string | null; maxReservedTurns: 12;
+    bugoks: {id:number;name:string;troops:number;available:boolean;reason?:string|null}[];
+    destinations: {provinceId:string;name:string}[];
+    order?: {orderId:string;destinationProvinceId:string;stop?:string|null}|null;
+}

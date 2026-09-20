@@ -38,6 +38,7 @@ import SelectGeneralField from './command/SelectGeneralField';
 import SelectNationField from './command/SelectNationField';
 import SelectAmountField from './command/SelectAmountField';
 import HwihaCourtForm from './command/HwihaCourtForm';
+import HwihaDeployForm from './command/HwihaDeployForm';
 import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
@@ -407,6 +408,7 @@ export default function CommandModal({
           }
         : null;
 
+    const [hwihaAction, setHwihaAction] = useState('action.enlist');
     const [catalog, setCatalog] = useState<AvailableCommandCategory[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [cat, setCat] = useState<string>('');
@@ -591,9 +593,14 @@ export default function CommandModal({
                 {loadError && <p className="cmd-flag">{loadError}</p>}
 
                 {courtMode ? (profile === 'HWIHA' ? <HwihaCourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
-                    <HwihaEnlistmentForm generalId={generalId} turnIdx={turnIdx}
-                        unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
-                        onToast={onToast} onClose={onClose} onReserved={onReserved} />
+                    <>
+                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option></select></label>}
+                        {(pinnedCommand || hwihaAction) === 'action.deploy' ?
+                            <HwihaDeployForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            <HwihaEnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx}
+                                unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
+                                onToast={onToast} onClose={onClose} onReserved={onReserved} />}
+                    </>
                 ) : profile !== 'SAMMO' ? <p role="status">서버 규칙을 확인하지 못해 명령을 예약할 수 없습니다.</p> : !selected ? (
                     <>
                         {categories.length > 0 && (

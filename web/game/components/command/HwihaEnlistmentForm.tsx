@@ -40,7 +40,7 @@ export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, o
         }).catch(() => { if (active) setReason('출사 정보를 불러오지 못했습니다.'); });
         return () => { active = false; };
     }, [generalId, unavailable, turnIdx]);
-    if (unavailable) return <p role="status">이 명령은 아직 제공하지 않습니다. 개인 출사만 한 건씩 예약할 수 있습니다.</p>;
+    if (unavailable) return <p role="status">이 명령은 아직 제공하지 않습니다. 개인 출사·출병을 한 건씩 예약할 수 있습니다.</p>;
     if (!Number.isInteger(turnIdx) || turnIdx < 0 || turnIdx >= 12) return <p role="status">출사는 1~12순에만 예약할 수 있습니다.</p>;
     const option = selection === '' ? undefined : data?.options[Number(selection)];
     async function reserve() {
@@ -59,7 +59,7 @@ export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, o
     const labels = { RANDOM: '무작위', NATION: '세력', GENERAL: '장수' };
     return <div className="cmd-form">
         <h3>출사</h3>
-        <p>현재 개인 명령은 출사만 제공합니다. 실행 시점에 조건을 다시 확인합니다.</p>
+        <p>개인 행동에서 출사 또는 출병을 선택할 수 있습니다. 실행 시점에 조건을 다시 확인합니다.</p>
         {!data && !reason && <p role="status">출사 후보를 불러오는 중입니다.</p>}
         {data && <label>출사 대상<select className="os-inset" aria-label="출사 대상" value={selection} onChange={event => setSelection(event.target.value)} disabled={busy}>
             <option value="">선택하세요</option>
