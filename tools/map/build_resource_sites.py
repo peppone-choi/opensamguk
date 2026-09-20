@@ -19,7 +19,8 @@
 - 못 붙인 항목도 사유와 함께 남긴다.
 
 두 번째 증인: administrative-units.json 의 ctext 繁體 인용문에서 郡별 「有鐵/出鐵」 개수를 세어
-위키소스 코퍼스 추출과 郡 단위로 맞춘다(출처가 다른 축).
+위키소스 코퍼스 추출과 郡 단위로 맞춘다(출처가 다른 축). 縣별 원문 신원과
+縣명부터 철 주기까지도 대조한다. 명시한 세 이문은 판정하지 않으며, S1 원문 검토를 대체하지 않는다.
 
 사용:
     python3 tools/map/build_resource_sites.py            # 원장 재생성
@@ -35,6 +36,7 @@ import hashlib
 import json
 import re
 import sys
+import unicodedata
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -424,6 +426,75 @@ def cross_witness_counts(units_doc: dict) -> dict[str, int]:
     return counts
 
 
+# Exact textual differences in the committed witnesses, scoped to one source unit.
+# These are comparison pairs, not an adjudication of which reading is correct.
+COUNTY_WITNESS_VARIANTS = {
+    "hhs:110:魯國:001": ("鲁国古奄国有大庭氏庫有铁", "鲁国奄国有大庭氏庫有铁"),
+    "hhs:111:下邳國:001": ("下邳本属东海有葛嶧山本嶧阳山有铁", "下邳本属东海葛嶧山本嶧阳山有铁"),
+    "hhs:112:廬江郡:008": ("皖有铁", "晥有铁"),
+}
+
+
+def validate_county_witnesses(extracts_doc: dict) -> list[str]:
+    """Check source identity and county-to-iron clauses, not historical correctness.
+
+    Only whitespace, punctuation and character forms are folded. The three exact
+    variant pairs remain explicitly unresolved readings; no county/place binding
+    is inferred here. Group totals alone cannot detect same-group reassignment.
+    """
+    norm = Normalizer(load_json(SIMPLIFICATION_PATH)["table"])
+
+    def text(value: str) -> str:
+        value = norm.chars(value).translate(str.maketrans("鐵殤韋", "铁殇韦"))
+        return "".join(c for c in value if not c.isspace()
+                       and not unicodedata.category(c).startswith("P"))
+
+    units = {}
+    for group in load_json(UNITS_PATH)["groups"]:
+        witness = text("".join(e["quote"] for e in group["evidence"]))
+        for unit in group["units"]:
+            uid = f"hhs:{unit['sourceVolume']}:{unit['canonicalGroup']}:{unit['ordinal']:03d}"
+            units[uid] = (unit, witness)
+    errors = []
+    consumed_markers = set()
+    for extract in extracts_doc["extracts"]:
+        if (extract["era"], extract["resource"], extract["level"]) != ("LATER_HAN", "IRON", "COUNTY"):
+            continue
+        uid = extract.get("administrativeUnitId")
+        if uid not in units:
+            errors.append(f"county identity: unknown administrativeUnitId {uid}")
+            continue
+        unit, witness = units[uid]
+        citation = unit["sourceCitation"]
+        expected = {
+            "sourceName": unit["sourceName"], "sourceCommandery": unit["canonicalGroup"],
+            "volumeNumber": unit["sourceVolume"], "extractId": uid + ":IRON",
+            "snapshotSha256": citation["snapshotSha256"], "url": citation["sourceUrl"],
+            "locator": {"corpusPath": citation["corpusPath"], "line": citation["line"]},
+        }
+        different = [key for key, value in expected.items() if extract.get(key) != value]
+        if different:
+            errors.append(f"county identity: {uid}: {', '.join(different)}")
+        quote = text(extract["quote"])
+        marker = IRON_MARK.search(quote)
+        if not marker or not quote.startswith(text(unit["sourceName"])):
+            errors.append(f"county witness: {uid}: missing county prefix or iron marker")
+            continue
+        if text(extract.get("marker") or "") != marker.group():
+            errors.append(f"county witness: {uid}: marker differs from quoted iron marker")
+        prefix = quote[:marker.end()]
+        variant = COUNTY_WITNESS_VARIANTS.get(uid)
+        comparison = variant[1] if variant and prefix == variant[0] else prefix
+        if witness.count(comparison) != 1:
+            errors.append(f"county witness: {uid}: county-to-iron clause must match once: {prefix}")
+        else:
+            position = (unit["canonicalGroup"], witness.index(comparison) + len(comparison))
+            if position in consumed_markers:
+                errors.append(f"county witness: {uid}: iron marker already attributed")
+            consumed_markers.add(position)
+    return errors
+
+
 def build_ledger(extracts_doc: dict) -> dict:
     norm = Normalizer(load_json(SIMPLIFICATION_PATH)["table"])
     tiles = load_json(TILES_PATH)
@@ -673,8 +744,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             args.extracts.write_text(text, encoding="utf-8")
 
-    ledger = build_ledger(load_json(args.extracts))
-    errors = validate_ledger(ledger)
+    extracts = load_json(args.extracts)
+    errors = validate_county_witnesses(extracts)
+    ledger = build_ledger(extracts)
+    errors.extend(validate_ledger(ledger))
     if errors:
         print("\n".join(f"ERROR {e}" for e in errors), file=sys.stderr)
         return 1

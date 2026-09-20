@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -103,6 +104,72 @@ class RedProbeTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.dir = Path(self.tmp.name)
+
+    def test_same_commandery_count_cannot_hide_wrong_county(self) -> None:
+        extracts = brs.load_json(brs.EXTRACTS_PATH)
+        target = next(e for e in extracts["extracts"] if e["sourceName"] == "泉州")
+        # Keep two iron sites in 漁陽郡 but fabricate one at 狐奴 instead of 泉州.
+        target.update(sourceName="狐奴", administrativeUnitId="hhs:113:漁陽郡:002",
+                      extractId="hhs:113:漁陽郡:002:IRON", quote="〖狐奴〗有铁。")
+        target["locator"]["line"] = 792
+        forged = self.dir / "extracts.json"
+        forged.write_text(brs.dump_json(extracts), encoding="utf-8")
+        output = self.dir / "forged-ledger.json"
+        code, message = run(["--extracts", str(forged), "--output", str(output)])
+        self.assertEqual(code, 1, message)
+        self.assertIn("county witness", message)
+        self.assertFalse(output.exists())
+
+    def test_source_identity_cannot_disagree_with_binding_id(self) -> None:
+        extracts = brs.load_json(brs.EXTRACTS_PATH)
+        target = next(e for e in extracts["extracts"] if e["sourceName"] == "泉州")
+        target["administrativeUnitId"] = "hhs:113:漁陽郡:002"
+        forged = self.dir / "extracts.json"
+        forged.write_text(brs.dump_json(extracts), encoding="utf-8")
+        code, message = run(["--extracts", str(forged), "--output", str(self.dir / "out.json")])
+        self.assertEqual(code, 1, message)
+        self.assertIn("county identity", message)
+
+    def test_county_witness_rejects_identity_and_quote_mutations(self) -> None:
+        for field, value in (
+            ("sourceName", "狐奴"), ("snapshotSha256", "0" * 64),
+            ("marker", "出鐵"),
+            ("quote", "〖狐奴〗有铁。"), ("quote", "〖泉州〗有盐。"),
+            ("locator", {"corpusPath": "data/corpus/hhs-113.txt", "line": 792}),
+        ):
+            with self.subTest(field=field):
+                extracts = brs.load_json(brs.EXTRACTS_PATH)
+                target = next(e for e in extracts["extracts"] if e["sourceName"] == "泉州")
+                target[field] = value
+                self.assertTrue(brs.validate_county_witnesses(extracts))
+
+    def test_witness_reassignment_preserves_counts_but_fails_county_check(self) -> None:
+        units = brs.load_json(brs.UNITS_PATH)
+        before = brs.cross_witness_counts(units)
+        group = next(g for g in units["groups"] if g["canonicalGroup"] == "漁陽郡")
+        for evidence in group["evidence"]:
+            evidence["quote"] = evidence["quote"].replace("泉\n州\n有鐵", "泉\n州")
+            evidence["quote"] = evidence["quote"].replace("狐奴", "狐奴有鐵")
+        self.assertEqual(before, brs.cross_witness_counts(units))
+        witness = self.dir / "units.json"
+        witness.write_text(brs.dump_json(units), encoding="utf-8")
+        with patch.object(brs, "UNITS_PATH", witness):
+            errors = brs.validate_county_witnesses(brs.load_json(brs.EXTRACTS_PATH))
+        self.assertTrue(any("hhs:113:漁陽郡:005" in e and "county witness" in e for e in errors), errors)
+
+    def test_variant_pairs_do_not_accept_additional_words(self) -> None:
+        for uid in brs.COUNTY_WITNESS_VARIANTS:
+            with self.subTest(uid=uid):
+                extracts = brs.load_json(brs.EXTRACTS_PATH)
+                target = next(e for e in extracts["extracts"] if e.get("administrativeUnitId") == uid)
+                target["quote"] = target["quote"].replace("有鐵", "古有鐵")
+                self.assertTrue(brs.validate_county_witnesses(extracts))
+
+    def test_two_extracts_cannot_consume_one_witness_marker(self) -> None:
+        extracts = brs.load_json(brs.EXTRACTS_PATH)
+        target = next(e for e in extracts["extracts"] if e["sourceName"] == "泉州")
+        extracts["extracts"].append(dict(target))
+        self.assertTrue(any("already attributed" in e for e in brs.validate_county_witnesses(extracts)))
 
     def test_hand_edited_ledger_goes_red(self) -> None:
         ledger = brs.load_json(brs.LEDGER_PATH)
