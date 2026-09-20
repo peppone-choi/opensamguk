@@ -235,6 +235,7 @@ class ReservedTurnHandler(
                 "exactly one legacy definition or HWIHA outcome required"
             }
             require(hwihaOutcome == null || !fellBack) { "HWIHA never falls back to legacy rest" }
+            require(hwihaOutcome != HwihaTurnOutcome.NoAction || requestId == null) { "An absent input cannot have a request result" }
         }
     }
 
@@ -263,6 +264,10 @@ class ReservedTurnHandler(
         val general = world.getGeneralById(generalId)
             ?: error("ReservedTurnHandler: general $generalId not in world")
         if (world.ruleProfile == RuleProfile.HWIHA || '.' in reserved.actionCode) {
+            if (world.ruleProfile == RuleProfile.HWIHA && opensamguk.engine.hwiha.HwihaPersonalTurn.hasNoInput(reserved)) {
+                return HandledTurn(generalId, null, false, null, emptyList(), emptyMap(),
+                    reservedActionCode = reserved.actionCode, hwihaOutcome = HwihaTurnOutcome.NoAction)
+            }
             var applied: HwihaTurnOutcome? = null
             val inputs = HwihaInputRegistry(hwihaCatalog, mapOf(
                 HwihaEnlistmentHandler.INPUT_ID to InputHandler {

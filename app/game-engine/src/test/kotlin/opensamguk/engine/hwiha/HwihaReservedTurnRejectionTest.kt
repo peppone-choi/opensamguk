@@ -25,6 +25,23 @@ class HwihaReservedTurnRejectionTest {
         cityLandProvinceById = mapOf(1 to "p1"),
     ))
 
+    @Test fun `only an actually absent input becomes no action without reviving rest`() {
+        val world = world("HWIHA")
+        val before = world.getGeneralById(1)
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
+            aiHook = { _, _ -> error("no legacy rest or AI") })
+        val absent = handler.handle(1, ReservedTurn("휴식", "{}", rowExists = false), 200, 1, "00:00")
+        assertEquals(HwihaTurnOutcome.NoAction, absent.hwihaOutcome)
+        assertNull(absent.denyReason); assertFalse(absent.fellBack)
+        assertEquals(before, world.getGeneralById(1)); assertFalse(handler.recorder.isDirty)
+        assertFailsWith<IllegalArgumentException> { absent.copy(requestId = "fabricated") }
+        for (reserved in listOf(ReservedTurn("휴식", "{}"),
+            ReservedTurn("휴식", "{}", requestId = "explicit", rowExists = false),
+            ReservedTurn("action.enlist", "{}", rowExists = false))) {
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(1, reserved, 200, 1, "00:00").hwihaOutcome)
+        }
+    }
+
     @Test fun `undelivered hwiha input cannot run rest or legacy AI`() {
         val world = world("HWIHA")
         val before = world.getGeneralById(1)

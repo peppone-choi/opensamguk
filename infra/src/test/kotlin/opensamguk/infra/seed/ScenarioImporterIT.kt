@@ -166,6 +166,9 @@ class ScenarioImporterIT {
         val topology = HanWorldArtifactsResolver(root).resolve(cityIds, emptyList()).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
+        val passageMeta = opensamguk.infra.persistence.MetaJson.decode(
+            jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
+        assertTrue(opensamguk.logic.input.HwihaLandPassageState.read(passageMeta, topology) != null)
         val reactionKey = opensamguk.logic.input.HwihaMarchReactions.META_KEY
         fun reactions() = opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
@@ -193,6 +196,7 @@ class ScenarioImporterIT {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'hwihaLord'", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'hwihaMarchReactions'", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'hwihaLandPassage'", Int::class.java))
     }
 
     @Test

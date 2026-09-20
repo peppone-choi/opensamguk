@@ -45,13 +45,15 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
-    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false): opensamguk.engine.run.TurnRunService {
+    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false, movement: Boolean = false): opensamguk.engine.run.TurnRunService {
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
         val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
         val handler = ReservedTurnHandler(active,
             opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200)
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
+            hwihaMovementOf = if (movement) opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(active, handler.recorder,
+                bundle.projection.topology, bundle.landMarchMetrics)::onTurn else { _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })
         val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
             override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()

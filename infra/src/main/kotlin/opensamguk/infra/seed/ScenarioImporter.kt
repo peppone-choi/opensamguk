@@ -514,6 +514,9 @@ class ScenarioImporter(
             """.trimIndent(),
             batch,
         )
+        check(jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], ?) WHERE id=?",
+            opensamguk.logic.input.HwihaLandPassageState.META_KEY,
+            jsonb(opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology)), worldId.value) == 1)
         return batch.size
     }
 

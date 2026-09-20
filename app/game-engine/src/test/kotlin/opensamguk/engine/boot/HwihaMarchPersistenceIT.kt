@@ -320,4 +320,129 @@ class HwihaMarchPersistenceIT {
         fail("fixture must reach a province within five phases")
     }
 
+    /** Explicit synthetic authority preconditions; this is not an inferred production clearance. */
+    private fun personalMarchFixture(id: Int, passage: Boolean = true, reactions: Boolean = true): InMemoryTurnWorld {
+        seed(id)
+        val authority = linkedMapOf<String, Any>()
+        if (passage) authority[HwihaLandPassageState.META_KEY] = HwihaLandPassageState.initialMetaValue(topology)
+        if (reactions) authority[HwihaMarchReactions.META_KEY] = HwihaMarchReactions.Empty.toMetaValue()
+        jdbc.update("UPDATE world_state SET meta=meta || ?::jsonb WHERE id=?",
+            com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(authority), id)
+        jdbc.update("UPDATE general SET turn_time='0300-01-01T00:00:00Z' WHERE world_id=? AND id<>1", id)
+        // Exclude seed enlistment/dispatch logs from the lifecycle observation window.
+        jdbc.update("DELETE FROM log_entry WHERE world_id=?", id)
+        return cold(id)
+    }
+
+    private fun personalMarchLogs(id: Int): List<String> = jdbc.queryForList(
+        "SELECT text FROM log_entry WHERE world_id=? AND general_id=1 AND scope='GENERAL' AND category='ACTION' ORDER BY id",
+        String::class.java, id)
+
+    @Test fun `empty personal input advances assignment through real lifecycle and cold reload only once per phase`() {
+        val id = 631; var world = personalMarchFixture(id)
+        val before = world.getGeneralById(1)!!
+        val units = world.listBugoks(); val cards = world.listRetainers()
+        val target = destination(world)
+        val published = mutableListOf<String>()
+        val due = java.time.Instant.parse("0200-01-02T00:00:00Z")
+        val first = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+            .runDueGeneralTurns(due).handled.single()
+        assertIs<HwihaTurnOutcome.NoAction>(first.hwihaOutcome)
+        assertNull(first.requestId)
+        world = cold(id)
+        val firstState = stored(world)
+        val traversed = firstState.path.edgeIds.take(firstState.cursor.edgeIndex).sumOf { metrics.edgesById.getValue(it).costMm }
+        assertEquals(30_000_000L, traversed + firstState.cursor.paidMm)
+        assertEquals(listOf("발령지로 행군하고 있습니다."), personalMarchLogs(id))
+        val afterFirst = world.getGeneralById(1)
+        assertTrue(fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+            .runDueGeneralTurns(due).handled.isEmpty())
+        assertEquals(afterFirst, cold(id).getGeneralById(1))
+        assertEquals(firstState.toMetaValue(), stored(cold(id)).toMetaValue())
+        assertEquals(1, personalMarchLogs(id).size)
+        repeat(5) {
+            if (stored(world).stop != LandMarchStop.ARRIVED) {
+                nextPhase(world)
+                val handled = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+                    .runDueGeneralTurns(due).handled.single()
+                assertIs<HwihaTurnOutcome.NoAction>(handled.hwihaOutcome)
+                world = cold(id)
+            }
+        }
+        assertEquals(LandMarchStop.ARRIVED, stored(world).stop)
+        assertEquals(target, world.positionOf(1))
+        val after = world.getGeneralById(1)!!
+        assertEquals(stored(world).assignment.countyId, after.cityId)
+        assertEquals(before.gold, after.gold); assertEquals(before.rice, after.rice); assertEquals(before.crew, after.crew)
+        assertEquals(cards, world.listRetainers()); assertEquals(units, world.listBugoks())
+        assertEquals(1, personalMarchLogs(id).count { it == "발령지에 도착했습니다." })
+        assertTrue(personalMarchLogs(id).none { "휴식" in it || "실패" in it })
+        assertTrue(published.isEmpty())
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=?", Int::class.java, id))
+    }
+
+    @Test fun `personal lifecycle missing passage or reaction authority stops and persists private explanation`() {
+        for ((id, passage) in listOf(632 to false, 633 to true)) {
+            var world = personalMarchFixture(id, passage = passage, reactions = false)
+            val position = world.positionOf(1); val units = world.listBugoks(); val cards = world.listRetainers()
+            val before = world.getGeneralById(1)!!
+            val published = mutableListOf<String>()
+            val due = java.time.Instant.parse("0200-01-02T00:00:00Z")
+            val result = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+                .runDueGeneralTurns(due).handled.single()
+            assertIs<HwihaTurnOutcome.NoAction>(result.hwihaOutcome)
+            world = cold(id)
+            assertEquals(position, world.positionOf(1))
+            val march = HwihaMarchState.read(world.getGeneralById(1)!!.meta, topology, metrics)
+            if (passage) {
+                assertNotNull(march)
+                assertEquals(LandMarchStop.ENCOUNTER_UNAVAILABLE, march.stop)
+                assertEquals(0, march.cursor.edgeIndex); assertEquals(0L, march.cursor.paidMm)
+            } else assertNull(march)
+            val expected = if (passage) "진입할 지역의 군사·반응 상태를 확인할 수 없어 부임 행군을 멈췄습니다."
+                else "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다."
+            assertEquals(listOf(expected), personalMarchLogs(id))
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM log_entry WHERE world_id=? AND scope<>'GENERAL'", Int::class.java, id))
+            assertEquals(before.gold, world.getGeneralById(1)!!.gold)
+            assertEquals(before.rice, world.getGeneralById(1)!!.rice)
+            assertEquals(units, world.listBugoks()); assertEquals(cards, world.listRetainers())
+            assertTrue(fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+                .runDueGeneralTurns(due).handled.isEmpty())
+            assertEquals(listOf(expected), personalMarchLogs(id))
+            assertTrue(published.isEmpty())
+        }
+    }
+
+    @Test fun `personal movement position conflict rolls back time phase progress and private log`() {
+        val id = 634; var world = personalMarchFixture(id)
+        val due = java.time.Instant.parse("0200-01-02T00:00:00Z")
+        val published = mutableListOf<String>()
+        fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true).runDueGeneralTurns(due)
+        world = cold(id)
+        repeat(5) {
+            val checkpoint = stored(world)
+            val nextCost = metrics.edgesById.getValue(checkpoint.path.edgeIds[checkpoint.cursor.edgeIndex]).costMm
+            val before = cold(id); val logsBefore = personalMarchLogs(id)
+            nextPhase(world)
+            if (nextCost - checkpoint.cursor.paidMm <= 30_000_000L) {
+                jdbc.update("UPDATE general_spatial_position SET revision=revision+1 WHERE world_id=? AND general_id=1", id)
+                assertFailsWith<opensamguk.infra.persistence.StaleGeneralPositionException> {
+                    fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
+                        .runDueGeneralTurns(due)
+                }
+                val restored = cold(id)
+                assertEquals(before.getGeneralById(1), restored.getGeneralById(1))
+                assertEquals(before.positionOf(1), restored.positionOf(1))
+                assertEquals(before.getState().currentPhase, restored.getState().currentPhase)
+                assertEquals(logsBefore, personalMarchLogs(id))
+                assertTrue(published.isEmpty())
+                return
+            }
+            fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true).runDueGeneralTurns(due)
+            world = cold(id)
+        }
+        fail("fixture must reach a province within five phases")
+    }
+
 }
