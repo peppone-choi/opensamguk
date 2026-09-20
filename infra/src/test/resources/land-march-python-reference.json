@@ -1,0 +1,42 @@
+{
+  "tilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99",
+  "reference": "tools/sim/march_tempo.py Graph.km; roughFactor=1.5; floor(km*1000000+0.5); dry non-barrier sample pairs",
+  "rows": [
+    {
+      "fromProvince": "200012",
+      "toProvince": "87283",
+      "distanceMm": 82262661,
+      "costMm": 82262661
+    },
+    {
+      "fromProvince": "200048",
+      "toProvince": "200050",
+      "distanceMm": 91636384,
+      "costMm": 109579187
+    },
+    {
+      "fromProvince": "200048",
+      "toProvince": "200433",
+      "distanceMm": 49974924,
+      "costMm": 71989326
+    },
+    {
+      "fromProvince": "200048",
+      "toProvince": "70983",
+      "distanceMm": 76851268,
+      "costMm": 91746598
+    },
+    {
+      "fromProvince": "200048",
+      "toProvince": "71057",
+      "distanceMm": 72920860,
+      "costMm": 105284612
+    },
+    {
+      "fromProvince": "200048",
+      "toProvince": "71101",
+      "distanceMm": 73237644,
+      "costMm": 92734111
+    }
+  ]
+}
