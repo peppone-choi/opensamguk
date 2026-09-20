@@ -79,6 +79,7 @@ class CommandReserveService(
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
+    private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
     private val hwihaAdmission: HwihaEnlistmentAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -164,6 +165,16 @@ class CommandReserveService(
         argJson: String?,
         ownerUserId: Int?,
     ): ReserveResult {
+        val config = worldStates.findProcessWorld()?.config
+            ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
+        val worldProfile = if ("ruleProfile" !in config) "SAMMO" else config["ruleProfile"]
+        if (worldProfile != "SAMMO" && worldProfile != "HWIHA") {
+            throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
+        }
+        if (worldProfile == "HWIHA" && actionCode != "action.enlist") {
+            throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
+                opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
+        }
         val canonicalArgs = if (actionCode == "action.enlist") {
             (hwihaAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)

@@ -25,6 +25,33 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
+        val repo = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+        `when`(repo.findProcessWorld()).thenReturn(config?.let { opensamguk.gameapi.read.WorldStateReadEntity(config = it) })
+        return repo
+    }
+    @Test fun `legacy direct reservation cannot enter hwiha slots and invalid world fails closed`() {
+        for (config in listOf(null, mapOf("ruleProfile" to null), mapOf("ruleProfile" to "unknown"),
+            mapOf("ruleProfile" to 1), mapOf("ruleProfile" to "HWIHA"))) {
+            val turns = RecordingReservedTurns()
+            val inbox = RecordingInbox()
+            val results = RecordingResults()
+            val redis = redis()
+            val service = CommandReserveService(turns, inbox, results, redis, CommandRegistry(GeneralActionPipeline()),
+                GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(config))
+            assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
+            assertEquals(0, turns.reserves.size)
+            assertEquals(0, inbox.accepted.size)
+            assertEquals(0, results.rows.size)
+            org.mockito.Mockito.verify(redis, org.mockito.Mockito.never()).opsForStream<Any, Any>()
+        }
+        val turns = RecordingReservedTurns()
+        val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(emptyMap()))
+        service.reserve(10, "che_농지개간", 29)
+        assertEquals(29, turns.reserves.single().turnIdx)
+    }
+
     @Test fun `hwiha direct reservation validates authority and stores canonical owned request`() {
         val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
         val precheck = mock(opensamguk.gameapi.precheck.HwihaEnlistmentPrecheckService::class.java)
@@ -58,7 +85,7 @@ class CommandReserveServiceTest {
         val inbox = RecordingInbox()
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
-            GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions,
+            GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
             hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog))
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
@@ -179,7 +206,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-brief" },
-            transactions = TestTransactions,
+            transactions = TestTransactions, worldStates = worlds(),
         )
 
         service.reserve(generalId = 10, actionCode = "che_견문", turnIdx = 0, argJson = null)
@@ -211,7 +238,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-immediate" },
-            transactions = TestTransactions,
+            transactions = TestTransactions, worldStates = worlds(),
         )
 
         val result = service.reserve(generalId = 10, actionCode = "sendMessage", turnIdx = 0, argJson = """{"msg":"x"}""")
@@ -239,7 +266,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-same" },
-            transactions = TestTransactions,
+            transactions = TestTransactions, worldStates = worlds(),
         )
 
         service.reserve(generalId = 10, actionCode = "che_견문", turnIdx = 0, argJson = null)
@@ -265,7 +292,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-conflict" },
-            transactions = TestTransactions,
+            transactions = TestTransactions, worldStates = worlds(),
         )
 
         service.reserve(generalId = 10, actionCode = "che_견문", turnIdx = 0, argJson = null)
