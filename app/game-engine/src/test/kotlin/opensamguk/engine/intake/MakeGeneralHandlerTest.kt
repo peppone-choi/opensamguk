@@ -21,6 +21,35 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class MakeGeneralHandlerTest {
+    @Test fun `HWIHA creation adds truthful policy without changing the five stat draw`() {
+        fun fresh(profile: String) = InMemoryTurnWorld(WorldSnapshot(
+            state = state().copy(config = mapOf("ruleProfile" to profile, "mapName" to "han-world-v3")),
+            worldId = opensamguk.common.world.WorldId(1),
+            cities = listOf(City(10, "낙양", 0, level = 5)),
+            generalPositionSnapshot = opensamguk.logic.world.GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet()),
+            cityLandProvinceById = mapOf(10 to "p"),
+        ))
+        val sammo = fresh("SAMMO"); val hwiha = fresh("HWIHA")
+        val recorder = ChangeRecorder()
+        val a = assertIs<MakeGeneralOk>(MakeGeneralHandler(sammo, ChangeRecorder(), nowProvider = { t0 }).handle(command()))
+        val b = assertIs<MakeGeneralOk>(MakeGeneralHandler(hwiha, recorder, nowProvider = { t0 }).handle(command()))
+        val legacy = sammo.getGeneralById(a.generalId)!!
+        val created = hwiha.getGeneralById(b.generalId)!!
+        assertEquals(legacy.stats, created.stats)
+        assertEquals(legacy.turnTime, created.turnTime)
+        assertEquals(legacy.role, created.role)
+        assertEquals(legacy.meta, created.meta - setOf("hwihaLord", "hwihaPersonPolicy"))
+        assertEquals(false, created.meta["hwihaLord"])
+        val policy = opensamguk.logic.input.HwihaPersonPolicyState.read(created.meta)!!
+        assertEquals(opensamguk.logic.input.HwihaPersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
+        val stats = created.stats
+        val expectedCost = ((listOf(stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm).sumOf { it.toLong() } + 49) / 50).toInt()
+        val budget = assertIs<opensamguk.engine.hwiha.HwihaEnlistmentPolicyResult.Ready>(
+            opensamguk.engine.hwiha.HwihaEnlistmentPolicy(hwiha).current(opensamguk.logic.input.EnlistmentRequest(b.generalId, opensamguk.logic.input.EnlistmentMode.RANDOM)))
+        assertEquals(expectedCost, budget.policy.actorCardCost)
+        assertTrue(DatabaseHooks.toFlushPayload(hwiha, recorder, hwiha.consumeDirtyState()).createdGenerals.isNotEmpty())
+    }
+
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
