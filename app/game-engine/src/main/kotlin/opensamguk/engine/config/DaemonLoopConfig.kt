@@ -267,7 +267,12 @@ class DaemonLoopConfig {
             scenarioCode = scenario,
             liveCityNations = { world.listCities().map { it.id to it.nationId } },
             loadNetwork = { mapName, scenarioCode, liveCities ->
-                hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
+                val network = hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
+                if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                    val artifacts = requireNotNull(supplyArtifacts) { "HWIHA military supply requires pinned Han artifacts" }
+                    opensamguk.engine.hwiha.HwihaMilitaryPresenceProvider(world, artifacts.projection.topology,
+                        artifacts.landMarchMetrics).withMilitarySupply(network)
+                } else network
             },
         )
 

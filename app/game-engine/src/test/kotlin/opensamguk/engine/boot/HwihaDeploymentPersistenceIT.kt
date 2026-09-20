@@ -92,6 +92,49 @@ class HwihaDeploymentPersistenceIT {
             executor(world,ChangeRecorder()).deploy("other",DeploymentRequest(1,null,listOf(7)))).reason)
     }
 
+    private fun military(world: InMemoryTurnWorld) =
+        HwihaMilitaryPresenceProvider(world,bundle.projection.topology,bundle.landMarchMetrics)
+
+    @Test fun `live deployed neutral corps blocks march and capital supply after cold reload`() {
+        val id=616;fixture.seed(id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7",id)
+        var world=cold(id);val recorder=ChangeRecorder()
+        val node=world.positionOf(10) as StrategicNodeRef.LandProvince
+        assertEquals(LandMarchEntry.CLEAR,military(world).entryAt(10,node,LandMarchEntry.CLEAR))
+        assertEquals(LandMarchEntry.UNAVAILABLE,military(world).entryAt(10,node,LandMarchEntry.UNAVAILABLE))
+        assertIs<DeploymentExecution.Applied>(executor(world,recorder).deploy("block-$id",DeploymentRequest(1,null,listOf(7))))
+        save(world,recorder);world=cold(id)
+        assertEquals(LandMarchEntry.ENCOUNTER,military(world).entryAt(10,node,LandMarchEntry.CLEAR))
+        val provinces=bundle.projection.topology.landProvinceIds.sorted()
+        val capital=world.getGeneralById(10)!!.cityId
+        val network=SpatialSupplyNetwork(IntArray(provinces.size) { 1 },List(provinces.size) { intArrayOf() },
+            mapOf(capital to provinces.indexOf(node.id)),strategicSupply=StrategicSupplyNetwork(bundle.projection.topology,provinces,null))
+        val evaluated=evaluateSupplyReachability(listOf(SupplyCity(capital,1)),listOf(SupplyCapital(capital,1)),
+            bundle.cityConst,military(world).withMilitarySupply(network))
+        assertTrue(evaluated.suppliedCityIds.isEmpty())
+        assertEquals(SupplyReachabilityVerdict.MILITARY_CUT,evaluated.rows.single().verdict)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=4 WHERE world_id=? AND id=7",id)
+        world=cold(id)
+        assertEquals(LandMarchEntry.UNAVAILABLE,military(world).entryAt(10,node,LandMarchEntry.CLEAR))
+        assertFailsWith<MilitarySupplyUnavailableException> { military(world).withMilitarySupply(network) }
+    }
+
+    @Test fun `live diplomacy grace does not intercept but actual war does`() {
+        val id=617;fixture.seed(id)
+        jdbc.update("INSERT INTO nation(world_id,id,name,color,gold) VALUES (?,2,'other','#ffffff',500)",id)
+        jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id IN (1,2)",id)
+        jdbc.update("UPDATE general SET nation_id=2 WHERE world_id=? AND id=10",id)
+        jdbc.update("INSERT INTO diplomacy(world_id,src_nation_id,dest_nation_id,state_code,term) VALUES (?,1,2,1,1)",id)
+        var world=cold(id);val recorder=ChangeRecorder()
+        assertIs<DeploymentExecution.Applied>(executor(world,recorder).deploy("war-$id",DeploymentRequest(1,4,listOf(7))))
+        save(world,recorder);world=cold(id)
+        val node=world.positionOf(10) as StrategicNodeRef.LandProvince
+        assertEquals(LandMarchEntry.CLEAR,military(world).entryAt(10,node,LandMarchEntry.CLEAR))
+        jdbc.update("UPDATE diplomacy SET state_code=0 WHERE world_id=?",id)
+        world=cold(id)
+        assertEquals(LandMarchEntry.ENCOUNTER,military(world).entryAt(10,node,LandMarchEntry.CLEAR))
+    }
+
     @Test fun `unresolved march encounter blocks both owner and deputy deployment after cold reload`() {
         for ((id, actorId) in listOf(614 to 1,615 to 2)) {
             fixture.seed(id);var world=cold(id);val recorder=ChangeRecorder()
