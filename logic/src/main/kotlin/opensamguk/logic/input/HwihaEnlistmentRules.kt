@@ -12,7 +12,7 @@ data class EnlistmentSnapshot(
     val profile: RuleProfile,
     val generals: List<EnlistmentGeneral>,
     val bonds: List<EnlistmentBond>,
-    /** Explicit sovereign event/seed state, not an officer-level heuristic. */
+    /** Current sovereign office projection, separate from each general's explicit lord status. */
     val sovereignByNation: Map<Int, Int>,
     val acceptingLordIds: Set<Int>,
     val freeRenownByLord: Map<Int, Int>,

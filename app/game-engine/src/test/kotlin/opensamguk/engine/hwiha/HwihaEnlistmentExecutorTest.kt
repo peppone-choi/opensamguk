@@ -12,7 +12,7 @@ import opensamguk.logic.world.StrategicNodeRef
 class HwihaEnlistmentExecutorTest {
     private fun general(id: Int, nation: Int = 0, lord: Boolean = false, human: Boolean = false) = TurnGeneral(
         id = id, name = "G$id", nationId = nation, cityId = 10, troopId = 0,
-        stats = GeneralStats(80, 70, 60), experience = 300, dedication = 400, officerLevel = 0,
+        stats = GeneralStats(80, 70, 60), experience = 300, dedication = 400, officerLevel = if (nation > 0 && lord) 12 else 0,
         npcState = if (human) 0 else 2, userId = if (human) "100" else null,
         gold = 1000, rice = 2000, crew = 300, turnTime = Instant.EPOCH,
         meta = mapOf("hwihaLord" to lord, "unrelated" to "preserve"),
@@ -29,8 +29,8 @@ class HwihaEnlistmentExecutorTest {
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH,
                 config = mapOf("mapName" to "han-world-v3", "ruleProfile" to profile)),
             worldId = WorldId(1), generals = generals,
-            nations = listOf(Nation(1, "N1", "#000", gold = 500, chiefGeneralId = 10, meta = mapOf("gennum" to 1, "keep" to 42)),
-                Nation(2, "N2", "#fff", gold = 600, chiefGeneralId = 20, meta = mapOf("gennum" to 1))),
+            nations = listOf(Nation(1, "N1", "#000", gold = 500, meta = mapOf("gennum" to 1, "keep" to 42)),
+                Nation(2, "N2", "#fff", gold = 600, meta = mapOf("gennum" to 1))),
             retainers = cards, bugoks = listOf(Bugok(7, 1, "personal", 100, 1, 50, 50, provisions = 200)),
             generalPositionSnapshot = positions, cityLandProvinceById = mapOf(10 to "p1"),
         ))
@@ -148,6 +148,28 @@ class HwihaEnlistmentExecutorTest {
         }
         assertEquals(20 to 1, run())
         assertEquals(run(), run())
+    }
+
+    @Test fun `missing or ambiguous sovereign office cannot select an arbitrary general`() {
+        for (duplicate in listOf(false, true)) {
+            val world = world()
+            if (duplicate) world.applyGeneralDirtyFree(world.getGeneralById(2)!!.copy(nationId = 1, officerLevel = 12))
+            else world.applyGeneralDirtyFree(world.getGeneralById(10)!!.copy(officerLevel = 1))
+            val recorder = ChangeRecorder()
+            assertEquals(EnlistmentFailure.TARGET_NOT_FOUND,
+                assertIs<EnlistmentExecution.Rejected>(HwihaEnlistmentExecutor(world, recorder) { policy() }
+                    .execute(request, noDraw)).reason)
+            assertTrue(world.listRetainers().isEmpty())
+            assertTrue(recorder.generalPatches().isEmpty())
+        }
+    }
+
+    @Test fun `explicit vassal lord can accept general mode without sovereign office`() {
+        val world = world()
+        world.applyGeneralDirtyFree(world.getGeneralById(10)!!.copy(officerLevel = 1))
+        val result = assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, ChangeRecorder()) { policy() }
+            .execute(EnlistmentRequest(1, EnlistmentMode.GENERAL, 10), noDraw))
+        assertEquals(10, result.plan.masterId)
     }
 
 }

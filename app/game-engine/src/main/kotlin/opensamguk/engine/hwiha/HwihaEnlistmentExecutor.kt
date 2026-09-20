@@ -47,9 +47,12 @@ class HwihaEnlistmentExecutor(
             bonds = world.listRetainers().mapNotNull { card ->
                 card.generalId?.let { EnlistmentBond(card.masterGeneralId, it) }
             },
-            sovereignByNation = nations.values.mapNotNull { nation ->
-                nation.chiefGeneralId?.let { nation.id to it }
-            }.toMap(),
+            // Sovereign office is persisted on the general, including succession/abdication.
+            // It selects the office-holder; assess still requires explicit event-owned lord status.
+            sovereignByNation = generals.filter { it.officerLevel == 12 && it.nationId in nations }
+                .groupBy { it.nationId }.mapNotNull { (nationId, candidates) ->
+                    candidates.singleOrNull()?.let { nationId to it.id }
+                }.toMap(),
             acceptingLordIds = policy.acceptingLordIds,
             freeRenownByLord = policy.freeRenownByLord,
             actorCardCost = policy.actorCardCost,
