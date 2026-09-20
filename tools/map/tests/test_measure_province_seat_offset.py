@@ -114,13 +114,13 @@ class MeasureTest(unittest.TestCase):
         self.assertIn("Q1: 1 / 1192", text)
 
     def test_committed_tiles_baseline(self):
-        """현행 커밋본의 실측 기준선. ★ 앞은 637 / 651 / 1,106 이었다(계획 §2) — 郡 축(1,106)은 ★ 가 안 건드린다."""
+        """현행 1,194 도시 기준선. 한반도·만주 추가 61곳은 각 공간 구획·관할·상위 구획 안에 있다."""
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
         self.assertEqual(len(rows), 1192)
-        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1075)
-        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1084)
-        self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1106)
+        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1136)
+        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1145)
+        self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1167)
 
 
 if __name__ == "__main__":
