@@ -13,6 +13,7 @@ class HwihaCorpsEncounterRecorder(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
+    private val cells: HanProvinceCellIndex,
 ) {
     fun defendersAt(actorId: Int, province: StrategicNodeRef.LandProvince): List<HwihaDeployedCorps>? {
         val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection() ?: return null
@@ -46,11 +47,14 @@ class HwihaCorpsEncounterRecorder(
             val general = requireNotNull(world.getGeneralById(corps.commanderGeneralId))
             require(world.positionOf(general.id) == encounter.province)
             require(HwihaCorpsEncounter.META_KEY !in general.meta)
+            require(HwihaEncounterDeployment.META_KEY !in general.meta)
         }
         val value = encounter.toMetaValue()
+        val deployment = HwihaEncounterDeployment.defaultMetaValue(encounter, cells)
         for (corps in participants) {
             val before = requireNotNull(world.getGeneralById(corps.commanderGeneralId))
-            val after = before.copy(meta = before.meta + (HwihaCorpsEncounter.META_KEY to value))
+            val after = before.copy(meta = before.meta + (HwihaCorpsEncounter.META_KEY to value) +
+                (HwihaEncounterDeployment.META_KEY to deployment))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {

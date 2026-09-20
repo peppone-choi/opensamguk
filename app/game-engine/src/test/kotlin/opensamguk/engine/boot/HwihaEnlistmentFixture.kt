@@ -56,7 +56,7 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
             hwihaMovementOf = if (movement) opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(active, handler.recorder,
-                bundle.projection.topology, bundle.landMarchMetrics)::onTurn else { _, _, _ -> },
+                bundle.projection.topology, bundle.landMarchMetrics, bundle.provinceCells)::onTurn else { _, _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })
         val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
             override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()

@@ -570,7 +570,7 @@ class HwihaMarchPersistenceIT {
         }
     }
 
-    private fun encounterFixture(id: Int): InMemoryTurnWorld {
+    private fun encounterFixture(id: Int, defenderIds: List<Int> = listOf(100, 101)): InMemoryTurnWorld {
         var world = personalDeploymentFixture(id)
         val source = world.positionOf(1)!!
         val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
@@ -578,7 +578,7 @@ class HwihaMarchPersistenceIT {
             HwihaLandPassageState.read(world.getState().meta, topology)!!, metrics)).path
         val province = path.nodeKeys[1].removePrefix("land:")
         assertTrue(metrics.edgesById.getValue(path.edgeIds.first()).costMm <= LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
-        for (enemyId in listOf(100, 101)) {
+        for (enemyId in defenderIds) {
             jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,
                 crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
                 SELECT world_id,?,'encounter-fixture',0,city_id,2,0,1000,2000,100,70,70,70,70,70,
@@ -591,7 +591,7 @@ class HwihaMarchPersistenceIT {
         }
         world = cold(id)
         val recorder = ChangeRecorder()
-        for (enemyId in listOf(100, 101)) {
+        for (enemyId in defenderIds) {
             val orderId = "enemy-$id-$enemyId"
             assertIs<DeploymentExecution.Applied>(HwihaDeploymentExecutor(world,recorder,topology,metrics)
                 .deploy(orderId,DeploymentRequest(enemyId,null,listOf(1000 + enemyId))))
@@ -618,12 +618,16 @@ class HwihaMarchPersistenceIT {
         val projection=assertNotNull(HwihaDeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection())
         for (commander in listOf(1,100,101)) {
             assertEquals(encounter.toMetaValue(),HwihaCorpsEncounter.read(world.getGeneralById(commander)!!.meta,topology)?.toMetaValue())
+            assertEquals(HwihaEncounterDeployment.Result.InsufficientDefenderCapacity,
+                HwihaEncounterDeployment.read(world.getGeneralById(commander)!!.meta, encounter, bundle.provinceCells))
+            assertEquals(HwihaEncounterDeployment.defaultMetaValue(encounter,bundle.provinceCells),
+                world.getGeneralById(commander)!!.meta[HwihaEncounterDeployment.META_KEY])
             assertEquals(encounter.province,world.positionOf(commander))
             assertTrue(projection.people.single { it.id==commander }.inBattle)
         }
         assertEquals(units,world.listBugoks())
         // A different friendly general cannot enroll the already locked hostile corps into another event.
-        assertNull(HwihaCorpsEncounterRecorder(world,ChangeRecorder(),topology,metrics).defendersAt(2,encounter.province))
+        assertNull(HwihaCorpsEncounterRecorder(world,ChangeRecorder(),topology,metrics,bundle.provinceCells).defendersAt(2,encounter.province))
         val before=world.listGenerals().associate { it.id to world.positionOf(it.id) }
         jdbc.update("UPDATE world_state SET current_phase=current_phase+1 WHERE id=?",id)
         jdbc.update("UPDATE general SET turn_time='0200-01-01T00:00:00Z' WHERE world_id=? AND id IN (100,101)",id)
@@ -633,6 +637,32 @@ class HwihaMarchPersistenceIT {
         assertEquals(listOf("encounter-$id"),published)
         jdbc.update("UPDATE general SET meta=meta-'hwihaCorpsEncounter' WHERE world_id=? AND id=100",id)
         assertNull(HwihaDeploymentExecutor(cold(id),ChangeRecorder(),topology,metrics).projection())
+    }
+
+    @Test fun `real personal entry seals occupied cells and detects stored placement tampering`() {
+        val id=649;var world=encounterFixture(id,listOf(100))
+        val units=world.listBugoks();val published=mutableListOf<String>()
+        reserveDeployment(id,world,"encounter-$id")
+        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        world=cold(id)
+        val encounter=assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta,topology))
+        val expected=HwihaEncounterDeployment.defaultMetaValue(encounter,bundle.provinceCells)
+        for (commander in listOf(1,100)) {
+            val meta=world.getGeneralById(commander)!!.meta
+            val deployment=assertIs<HwihaEncounterDeployment.Result.Ready>(
+                HwihaEncounterDeployment.read(meta,encounter,bundle.provinceCells)).deployment
+            assertEquals(expected,meta[HwihaEncounterDeployment.META_KEY])
+            assertEquals(listOf(7,1100),deployment.tokens.map { it.bugokId }.sorted())
+            assertEquals(2,deployment.tokens.mapNotNull { it.position }.distinct().size)
+        }
+        assertEquals(units,world.listBugoks())
+        assertEquals(listOf("encounter-$id"),published)
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
+            '{hwihaEncounterDeployment,tokens,0,position}','null'::jsonb) WHERE world_id=? AND id=1""",id)
+        world=cold(id)
+        assertFailsWith<IllegalArgumentException> {
+            HwihaEncounterDeployment.read(world.getGeneralById(1)!!.meta,encounter,bundle.provinceCells)
+        }
     }
 
     @Test fun `position conflict rolls back encounter records on every participant`() {

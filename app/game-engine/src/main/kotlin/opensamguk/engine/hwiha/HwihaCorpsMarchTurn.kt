@@ -6,7 +6,8 @@ import opensamguk.logic.world.*
 
 /** Returns whether a deployed corps owns this commander's movement stage. */
 class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot) {
+    private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot,
+    private val cells: HanProvinceCellIndex) {
     fun onTurn(commanderId: Int): Boolean {
         val actor = world.getGeneralById(commanderId) ?: return false
         val projection = HwihaDeploymentExecutor(world,recorder,topology,metrics).projection()
@@ -22,7 +23,7 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         val before = try { HwihaCorpsMarchState.read(actor.meta,topology,metrics) }
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
-        val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics)
+        val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics, cells)
         var defenders: List<HwihaDeployedCorps>? = null
         when (val result = HwihaCorpsMarchExecutor(world,recorder,topology,metrics,1)
             .advance(order.orderId,commanderId,order.destination,edges) { node ->
