@@ -53,6 +53,10 @@ class CountyCaptureTest(unittest.TestCase):
                           encircled={t:False for t in range(1,28)})
         self.assertEqual(out['taxByOwner'],{'2':0,'1':0})
 
+    def test_duplicate_garrison_order_does_not_cancel_capture(self):
+        out=self.run_case(recruitment_orders=[dict(id='guard',turn=t,troops=1,equipGrain=0) for t in (1,5)])
+        self.assertEqual(out,self.run_case())
+
     def test_invalid_or_failed_garrison_is_not_capture(self):
         for change in [dict(owner=1),dict(besieger=0),dict(people=0),
                        dict(recruitment_orders=[dict(id='late',turn=2,troops=1,equipGrain=0)])]:

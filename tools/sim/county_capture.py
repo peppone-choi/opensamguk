@@ -24,8 +24,6 @@ def settle_besieged_county(*, county_id: str, owner: int, besieger: int, initial
         raise ValueError('county identity required')
     if type(owner) is not int or owner < 0 or type(besieger) is not int or besieger <= 0 or owner == besieger:
         raise ValueError('distinct county owner and positive besieger required')
-    if any(order.get('turn') != 1 for order in recruitment_orders):
-        raise ValueError('reference supports initial garrison recruitment only')
     post_tax = tax_grain if post_capture_tax_grain is None else post_capture_tax_grain
     if not isinstance(post_tax, dict) or any(type(t) is not int or not 1 <= t <= horizon
             or type(v) is not int or v < 0 for t,v in post_tax.items()):
@@ -34,7 +32,10 @@ def settle_besieged_county(*, county_id: str, owner: int, besieger: int, initial
     before = settle_county(initial_grain=initial_grain, people=people, deliveries=deliveries,
         tax_grain=tax_grain, recruitment_orders=recruitment_orders,
         ration_per_soldier=ration_per_soldier, horizon=horizon)
-    if not before['recruitDecisions'] or any(d['status'] != 'APPLIED' for d in before['recruitDecisions']):
+    if (not any(d['status']=='APPLIED' for d in before['recruitDecisions'])
+            or not all((d['status']=='APPLIED' and d['turn']==1) or
+                       (d['status']=='DUPLICATE' and d['originalStatus']=='APPLIED')
+                       for d in before['recruitDecisions'])):
         raise ValueError('reference garrison must be recruited successfully')
     siege = resolve_siege(ledger=before['ledger'], encircled=encircled, policy=policy)
     event = siege['surrender']
