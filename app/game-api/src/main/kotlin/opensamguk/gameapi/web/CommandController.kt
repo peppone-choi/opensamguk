@@ -260,7 +260,7 @@ class CommandController(
         if (userId == null || userId <= 0) return false
         val owner = commandInbox.findRequestOwner(worldId, requestId) ?: return false
         val ownerUserId = owner.ownerUserId
-        if (ownerUserId != null && ownerUserId.toLong() == userId) return true
+        if (ownerUserId != null) return ownerUserId.toLong() == userId
         val callerGeneralId = resolver.resolveGeneralId(userId) ?: return false
         return owner.generalId != null && owner.generalId == callerGeneralId
     }

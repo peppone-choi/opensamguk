@@ -222,7 +222,11 @@ class CommandQueueService(
                     throw CommandQueueDenied("새 규칙 입력은 복사할 수 없습니다. 각 순에 직접 예약하세요.")
                 }
             }
-            reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
+            try {
+                reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
+            } catch (_: ReservedTurnRepository.UnsupportedInputCopy) {
+                throw CommandQueueDenied("새 규칙 입력은 복사할 수 없습니다. 각 순에 직접 예약하세요.")
+            }
         }
 
     // --- Nation: Push / Repeat ---------------------------------------------------------------------

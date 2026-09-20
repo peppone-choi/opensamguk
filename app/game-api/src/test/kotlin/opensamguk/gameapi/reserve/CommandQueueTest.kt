@@ -63,6 +63,19 @@ class CommandQueueTest {
         assertTrue(inbox.accepted.isEmpty())
     }
 
+    @Test fun `repository race rejection is mapped before accepting queue mutation`() {
+        val repo = mock(ReservedTurnRepository::class.java)
+        org.mockito.Mockito.doThrow(ReservedTurnRepository.UnsupportedInputCopy()).`when`(repo)
+            .repeatGeneralTurn(WorldId(1), 10, 1)
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val queue = CommandQueueService(repo, registry, inbox, results, TestTransactions,
+            GameApiProcessWorld(1), readGeneralAction = { _, _ -> "che_농지개간" })
+        assertFailsWith<CommandQueueService.CommandQueueDenied> { queue.repeatGeneral(10, 1) }
+        assertTrue(inbox.accepted.isEmpty())
+        assertTrue(results.rows.isEmpty())
+    }
+
     private object TestTransactions : TransactionOperations {
         override fun <T : Any?> execute(action: TransactionCallback<T>): T? =
             action.doInTransaction(SimpleTransactionStatus())

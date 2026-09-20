@@ -401,6 +401,22 @@ class CommandResultLookupTest {
     }
 
     @Test
+    fun `explicit submitter keeps result ownership after the general changes accounts`() {
+        val requestId = "req-transferred-general"
+        stubResolvedPayload(requestId)
+        `when`(commandInbox.findRequestOwner(WorldId(1), requestId))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = OWNER_USER_ID.toInt()))
+        `when`(resolver.resolveGeneralId(99L)).thenReturn(10)
+        `when`(resolver.resolveGeneralId(OWNER_USER_ID)).thenReturn(null)
+        mockMvc().perform(get("/api/command/result/{requestId}", requestId).with(principal(99L)))
+            .andExpect(status().isOk).andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.result").doesNotExist())
+        mockMvc().perform(get("/api/command/result/{requestId}", requestId).with(principal(OWNER_USER_ID)))
+            .andExpect(status().isOk).andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(true))
+    }
+
+    @Test
     fun `인증이 없으면 결과를 읽지 못한다`() {
         stubResolvedPayload("req-anon")
 

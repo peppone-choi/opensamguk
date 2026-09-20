@@ -202,6 +202,8 @@ open class ReservedTurnRepository(
      * 대상 인덱스 생성: PHP `Util::range($turnIdx+$turnCnt, MAX, $turnCnt)` = [start, MAX) step turnCnt
      * (range는 끝값 미포함 — turn_idx < MAX 인 슬롯만).
      */
+    class UnsupportedInputCopy : IllegalArgumentException("dotted inputs require individually tracked reservations")
+
     open fun repeatGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
         val reqTurn = if (turnCnt * 2 > MAX_GENERAL_TURNS) MAX_GENERAL_TURNS - turnCnt else turnCnt
@@ -224,6 +226,8 @@ open class ReservedTurnRepository(
                 brief = rs.getString("brief"),
             )
         }
+        // Validate the exact rows we will copy, not a separately read admission snapshot.
+        if (sources.any { '.' in it.actionCode }) throw UnsupportedInputCopy()
         for (src in sources) {
             val targets = rangeTargets(src.turnIdx + turnCnt, MAX_GENERAL_TURNS, turnCnt)
             if (targets.isEmpty()) continue
