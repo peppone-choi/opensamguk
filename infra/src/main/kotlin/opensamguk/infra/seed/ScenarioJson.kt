@@ -78,6 +78,7 @@ object ScenarioJson {
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
         // 입력 registry 계약 §2: 시나리오가 선언한다. 없으면 null(시드가 SAMMO 로 기록), 모르는 글자는 실패.
         val ruleProfile = strOrNull(root["ruleProfile"])?.let { opensamguk.logic.input.RuleProfile.fromWorldConfig(it) }
+        val personPolicies = HwihaScenarioPersonPolicies.decode(root, ruleProfile)
         val rawLords = root["hwihaLords"]
         require("hwihaLords" !in root || ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             "hwihaLords requires HWIHA ruleProfile"
@@ -122,7 +123,7 @@ object ScenarioJson {
                 val decoded = decodeGeneral(asList(it), nationIdsByToken, npcType = defaultNpcType)
                 val general = if (decoded.name in imperialGeneralNames) decoded.copy(npcType = 7) else decoded
                 if (ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-                    general.copy(hwihaLord = general.name in lordNames)
+                    general.copy(hwihaLord = general.name in lordNames, hwihaPersonPolicy = personPolicies[general.name]?.bind(general))
                 } else general
             }
         val baseGenerals = decodeRoster("general", defaultNpcType = 2)
@@ -132,6 +133,10 @@ object ScenarioJson {
         val roster = baseGenerals + generalEx + generalNeutral
         for (name in lordNames) {
             require(roster.count { it.name == name } == 1) { "hwihaLords name must identify exactly one general: $name" }
+        }
+
+        personPolicies.keys.forEach { name ->
+            require(roster.count { it.name == name } == 1) { "hwihaPersonPolicies name must identify exactly one general: $name" }
         }
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
@@ -462,6 +467,7 @@ data class ScenarioGeneral(
     val rawTuple: List<Any?> = emptyList(),
     /** Explicit HWIHA scenario declaration; null preserves SAMMO metadata byte-for-byte. */
     val hwihaLord: Boolean? = null,
+    val hwihaPersonPolicy: opensamguk.logic.input.HwihaPersonPolicyState? = null,
 )
 
 data class ScenarioDiplomacy(

@@ -147,7 +147,11 @@ HWIHA 입력과 다른 프로필에 들어온 새 형식 입력은 기존 AI·�
 
 인물 명망 비용의 순수 식과 신규 시작 상한은 상위 설계 §2.8/§6.6을 따른다. 저장된 명망·수락 여부·검증된 능력치 출처를 읽는 서버 정책은 클라이언트 인자로 대체할 수 없다.
 
-서버 예산의 공통 계산은 순수 `HwihaEnlistmentBudget.assess`에 있다. 엔진 `HwihaEnlistmentPolicy`는 현재 장수 5능력·meta와 전체 직접 카드 집합을 투영할 뿐이다. `meta.hwihaPersonPolicy`는 명망 상한·출사 수락 boolean·능력치 출처ID/개정/인물ID를 명시적으로 보존한다. 키 부재·오염을 시작 상한30이나 자동 수락으로 채우지 않는다. 출처 문자열의 저장 자체는 원본 검증이 아니며, 실제 시나리오의 검증된 identity·출처 공급은 아직 남아 있다.
+서버 예산의 공통 계산은 순수 `HwihaEnlistmentBudget.assess`에 있다. 엔진 `HwihaEnlistmentPolicy`는 현재 장수 5능력·meta와 전체 직접 카드 집합을 투영할 뿐이다. `meta.hwihaPersonPolicy`는 명망 상한·출사 수락 boolean·능력치 출처ID/개정/인물ID를 명시적으로 보존한다. 키 부재·오염을 시작 상한30이나 자동 수락으로 채우지 않는다. 출처 문자열의 저장 자체는 원본 검증이 아니며, 역사 시나리오의 검증된 identity·출처 공급은 아직 남아 있다.
+
+신규 창작 장수는 서버가 실제 생성한 다섯 능력치를 게임 생성 출처 `opensamguk:created-general` / `v1`로 구분하고 신규 상한30·출사 수락 false·주공 false로 시작한다. 인물ID는 생성된 장수ID다. 기존 장수를 빙의하거나 다시 불러올 때에는 이미 변한 상한과 정책을 보존한다.
+
+격리 QA 시나리오는 `hwihaPersonPolicies` 배열에 이름, `statSourceId`, `statSourceRevision`, `officerId`, `acceptsEnlistment`, `stats`(leadership·strength·intelligence·politics·charm)를 명시한다. 현재는 `synthetic-qa:` 출처만 허용한다. 이름은 로스터의 정확히 한 인물, 출처 인물ID는 유일해야 하며 5능력 모두 원본 tuple에 명시되고 선언과 일치해야 한다. importer 기본값을 출처로 인정하지 않는다. 시작 상한은30이며 입력으로 바꾸지 않는다. 이 합성 선언을 RTK14 원본 검증이나 역사 인물 검증 완료로 취급하지 않는다. 기존 시나리오에 이 배열이 없으면 정책을 만들어 넣지 않는다. 격리 브라우저 검사 준비용 예시는 `tools/e2e/fixtures/hwiha-court/scenario_990001.json`이며 운영 시나리오 목록에 등록하지 않는다. 이 파일의 시드 검사가 실제 인증 브라우저 검증을 대신하지 않는다.
 
 연결된 인물 카드만 현재 주인에게 합산하며 개인 휘하를 재귀 합산하지 않는다. 연결 없는 카드, 없는 인물, 중복 인물, 능력치 오염, 상한 초과는 대상별 계산 불가 사유로 남긴다. 실명 부대는 모델·비용 미지원이며 0원으로 간주하지 않는다. API 사전검사 projection은 이 공통 함수를 소비하도록 후속 연결한다.
 
