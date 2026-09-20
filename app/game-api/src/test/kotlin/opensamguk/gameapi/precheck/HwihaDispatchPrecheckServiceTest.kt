@@ -93,4 +93,77 @@ class HwihaDispatchPrecheckServiceTest {
         assertEquals(403, controller.pending(42,1).statusCode.value())
         assertEquals(200, controller.pending(41,1).statusCode.value())
     }
+    @Test fun `options expose only direct human targets and selected administrative own counties`() {
+        setup()
+        val initial = service.options(1,41)
+        assertTrue(initial.result)
+        assertEquals(listOf(2), initial.targets.map { it.generalId })
+        assertTrue(initial.counties.isEmpty())
+        val selected = service.options(1,41,2)
+        assertEquals(listOf(7), selected.counties.map { it.countyId })
+        assertTrue(selected.counties.single().available)
+        assertEquals(DispatchFailure.NOT_DIRECT_RETAINER,service.options(1,41,3).code)
+        assertTrue(service.options(1,41,3).targets.isEmpty())
+        assertEquals(DispatchFailure.NOT_LORD,service.options(2,42).code)
+    }
+    @Test fun `options share pending occupancy and live ownership refusal reasons with admission`() {
+        val people = setup(true)
+        val blocked = service.options(1,41,2).counties.single()
+        assertFalse(blocked.available)
+        assertEquals(DispatchFailure.ALREADY_PENDING,blocked.code)
+        assertEquals(blocked.code!!.message,blocked.reason)
+        people[1].meta = mapOf("hwihaLord" to false)
+        people[2].meta = mapOf("hwihaLord" to false, HwihaCountyAssignment.META_KEY to
+            HwihaCountyAssignment("other",1,1,7).toMetaValue())
+        assertEquals(DispatchFailure.COUNTY_OCCUPIED,service.options(1,41,2).counties.single().code)
+        val world = resolver.resolve()!!
+        world.cities.single { it.id == 7 }.nationId = 2
+        assertTrue(service.options(1,41,2).counties.isEmpty())
+    }
+    @Test fun `unowned foreign lord and duplicate binding targets are excluded`() {
+        val people = setup()
+        people[1].userId = null
+        assertTrue(service.options(1,41).targets.isEmpty())
+        people[1].userId = "42"
+        people[1].nationId = 2
+        assertTrue(service.options(1,41).targets.isEmpty())
+        people[1].nationId = 1
+        people[1].meta = mapOf("hwihaLord" to true)
+        assertTrue(service.options(1,41).targets.isEmpty())
+        people[1].meta = mapOf("hwihaLord" to false)
+        val card = retainers.findAll().single()
+        `when`(retainers.findAll()).thenReturn(listOf(card,GeneralRetainerReadEntity(worldId=1,id=6,masterGeneralId=1,generalId=2)))
+        assertTrue(service.options(1,41).targets.isEmpty())
+    }
+    @Test fun `queued request is visible only to submitting current owner and blocks all new county options`() {
+        val people = setup()
+        people[0].meta += HwihaQueuedDispatch.META_KEY to HwihaQueuedDispatch("q1",41,2,7).toMetaValue()
+        assertEquals("q1",service.pending(1,41).queued!!.requestId)
+        assertEquals("q1",service.options(1,41,2).queued!!.requestId)
+        assertEquals(DispatchFailure.ALREADY_QUEUED,service.options(1,41,2).counties.single().code)
+        assertNull(service.pending(2,42).queued)
+        people[0].userId = "44"
+        assertNull(service.pending(1,44).queued)
+        assertNull(service.options(1,44,2).queued)
+        assertFalse(service.options(1,44,2).counties.single().available)
+        assertFailsWith<DispatchReadForbidden> { service.options(1,41) }
+    }
+    @Test fun `options unavailable states stay explicit and corrupt queue never returns successful empty data`() {
+        val people = setup()
+        people[0].meta += HwihaQueuedDispatch.META_KEY to null
+        assertEquals(DispatchFailure.STATE_UNAVAILABLE,service.options(1,41).code)
+        assertFalse(service.pending(1,41).result)
+        `when`(resolver.resolve()).thenThrow(IllegalArgumentException("pin"))
+        assertFalse(service.options(1,41).result)
+        assertEquals(DispatchFailure.STATE_UNAVAILABLE.message,service.options(1,41).reason)
+    }
+    @Test fun `options controller checks identity before projection`() {
+        val controller = HwihaDispatchReadController(service)
+        assertEquals(401,controller.options(null,1,null).statusCode.value())
+        assertEquals(403,controller.options(0,1,null).statusCode.value())
+        verifyNoInteractions(resolver,retainers)
+        setup()
+        assertEquals(403,controller.options(42,1,2).statusCode.value())
+        assertEquals(200,controller.options(41,1,2).statusCode.value())
+    }
 }

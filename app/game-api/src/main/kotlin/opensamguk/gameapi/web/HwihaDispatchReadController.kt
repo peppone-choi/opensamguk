@@ -13,4 +13,11 @@ class HwihaDispatchReadController(private val service: HwihaDispatchPrecheckServ
         return try { ResponseEntity.ok(service.pending(generalId, userId)) }
         catch (_: DispatchReadForbidden) { ResponseEntity.status(403).build() }
     }
+    @GetMapping("/api/commands/dispatch-options")
+    fun options(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int,
+        @RequestParam(required = false) targetGeneralId: Int?): ResponseEntity<Any> {
+        if (userId == null) return ResponseEntity.status(401).build()
+        return try { ResponseEntity.ok(service.options(generalId, userId, targetGeneralId)) }
+        catch (_: DispatchReadForbidden) { ResponseEntity.status(403).build() }
+    }
 }
