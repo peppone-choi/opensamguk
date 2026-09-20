@@ -40,7 +40,7 @@
     },
     "tools/map/build_han_places.py": {
       "path": "tools/map/build_han_places.py",
-      "sha256": "6cdb13c3fa8232211e65804595f81c26ca7549d5a550a9f25f7b9d75e901eca1"
+      "sha256": "ef30ba1609751039f50508d8af1fa6bb9ccb701e2d34db23e30811da7b403f6b"
     }
   },
   "evidenceSources": [
