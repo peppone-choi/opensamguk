@@ -164,7 +164,7 @@ class NonPlayableRegionsTest(unittest.TestCase):
         excluded = terrain == 9
 
         self.assertEqual("OUT_OF_SCOPE", document["_meta"]["terrainLegend"]["9"])
-        self.assertEqual(110367, int(excluded.sum()))
+        self.assertEqual(252081, int(excluded.sum()))
         self.assertTrue(np.all(owner[excluded] == -1))
         self.assertTrue(np.all(parent_owner[excluded] == -1))
         self.assertFalse(any(

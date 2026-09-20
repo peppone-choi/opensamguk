@@ -7,10 +7,10 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 1133,
+    "routeNodeCount": 1194,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51,
-    "reviewedSourceClaimBindingCount": 284,
+    "reviewedSourceClaimBindingCount": 345,
     "vacatedCountyLocationClaimCount": 1
   },
   "forbiddenSelections": {
@@ -28,7 +28,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10"
+      "sha256": "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -41,7 +41,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "87770ff0afb87ccae43dff55743de2eb0521bf9d7b9779cd7022c060d3075da9"
+      "sha256": "24398bbbd3529b366349f6a4051239b9b4ab328029d88dc15a5953faf51565d7"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
@@ -53,7 +53,7 @@
     },
     "externalSettlementRouteClaims": {
       "path": "data/curated/han/route-node-external-settlement-claims-v1.json",
-      "sha256": "88a79549391484a4f4355fec09ba9b3cf30152d22808990273031e4ad1fbf576"
+      "sha256": "accc05af94e49654ca1c6d162ebb29e6d728107f2bcfff8c8933bc9a2a9a014e"
     }
   },
   "legacyAttributionCorrections": [
@@ -374,7 +374,7 @@
     {
       "batchId": "w5-external-settlement-route-claim",
       "criteria": "han-tiles EXTERNAL_SETTLEMENT jurisdiction without a route node, bound by an APPROVED route-node-external-settlement-claims-v1 ROUTE_NODE claim",
-      "expectedCount": 37,
+      "expectedCount": 98,
       "reviewState": "APPROVED",
       "selectionRationale": "郡國 밖 취락 관할에 城이 없어 그 省이 영원히 주인 없는 땅으로 남던 것을 사용자 결정(2026-09-17, 「절대 소속 없는 프로빈스가 있어선 안돼」)에 따라 경로 노드로 올린다. 근거는 external-places.json 의 비정 문장과 Wikidata 좌표다. 같은 縣이 두 번 선 城 두 곳의 번호는 키 재결속으로 이 batch 가 이어받는다.",
       "claimLedger": "data/curated/han/route-node-external-settlement-claims-v1.json"

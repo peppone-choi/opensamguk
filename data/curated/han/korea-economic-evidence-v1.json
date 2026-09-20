@@ -1,0 +1,574 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "korea-economic-evidence-v1",
+  "referenceYear": 220,
+  "sourceSnapshot": {
+    "path": "data/corpus/sgz-30.txt",
+    "sha256": "29d497b2de78b6d8890536af597f1f9891e41867fce9d4fc30b0267f4b23032d",
+    "committed": false
+  },
+  "policy": {
+    "reportedHouseholdsArePopulation": false,
+    "regionalTotalsArePerCityValues": false,
+    "missingValuesAreZero": false,
+    "productionAndTaxRates": "NOT_ATTESTED",
+    "runtimeBalance": "기존 등급별 게임 초기값은 추정 모델이며 아래 사료 수치와 별도이다.",
+    "unattestedNorthernGameRegions": "SONGHUA/AMUR/USSURI의 개별 호구·생산량 사료는 넣지 않는다. 운영 초기값은 보존 예산에서 배분한 게임 수치이다."
+  },
+  "groups": [
+    {
+      "id": "SGZ30-BUYEO",
+      "name": "부여",
+      "jurisdictionIds": [
+        "X036",
+        "X112",
+        "X114",
+        "X125"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 80000,
+        "upperValue": null,
+        "qualifier": "REPORTED_TOTAL",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "夫餘",
+          "quote": "戶八萬",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#夫餘"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "AGRICULTURE",
+          "label": "오곡 재배",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "夫餘",
+            "quote": "土地宜五穀，不生五果",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#夫餘"
+          }
+        },
+        {
+          "kind": "LIVESTOCK",
+          "label": "목축·명마",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "夫餘",
+            "quote": "其國善養牲，出名馬、赤玉、貂狖、美珠",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#夫餘"
+          }
+        },
+        {
+          "kind": "TRADE_GOODS",
+          "label": "적옥·담비 등 모피·구슬",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "夫餘",
+            "quote": "其國善養牲，出名馬、赤玉、貂狖、美珠",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#夫餘"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-GOGURYEO",
+      "name": "고구려",
+      "jurisdictionIds": [
+        "X028",
+        "X029",
+        "X065",
+        "X066",
+        "X067",
+        "X068",
+        "X069",
+        "X070",
+        "X071",
+        "X072",
+        "X110",
+        "X111"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 30000,
+        "upperValue": null,
+        "qualifier": "REPORTED_TOTAL",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "高句麗",
+          "quote": "戶三萬",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#高句麗"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "AGRICULTURAL_CONSTRAINT",
+          "label": "경작지 부족·곡물 부족",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "高句麗",
+            "quote": "無良田，雖力佃作，不足以實口腹",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#高句麗"
+          }
+        },
+        {
+          "kind": "REDISTRIBUTION",
+          "label": "곡물·어염 공급",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "高句麗",
+            "quote": "下戶遠擔米糧魚鹽供給之",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#高句麗"
+          }
+        },
+        {
+          "kind": "LIVESTOCK",
+          "label": "산지에 적응한 소형 말",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "高句麗",
+            "quote": "其馬皆小，便登山",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#高句麗"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-DONGOKJEO",
+      "name": "동옥저",
+      "jurisdictionIds": [
+        "X037"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 5000,
+        "upperValue": null,
+        "qualifier": "REPORTED_TOTAL",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "東沃沮",
+          "quote": "戶五千",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "AGRICULTURE",
+          "label": "오곡 재배",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "東沃沮",
+            "quote": "其土地肥美，背山向海，宜五穀，善田種",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+          }
+        },
+        {
+          "kind": "TRIBUTE",
+          "label": "맥포·어염·해산물의 고구려 공납",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "東沃沮",
+            "quote": "貊布、魚、鹽、海中食物，千里擔負致之",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+          }
+        },
+        {
+          "kind": "LIVESTOCK_CONSTRAINT",
+          "label": "소·말이 적음",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "東沃沮",
+            "quote": "少牛馬，便持矛步戰",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-NORTHOKJEO",
+      "name": "북옥저",
+      "jurisdictionIds": [
+        "X030",
+        "X109"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": null,
+      "activities": [
+        {
+          "kind": "FISHING",
+          "label": "선박 어로",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "東沃沮",
+            "quote": "國人嘗乘船捕魚",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+          }
+        },
+        {
+          "kind": "SEASONAL_CONSTRAINT",
+          "label": "여름 피난·겨울 취락 거주",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "東沃沮",
+            "quote": "冬月冰凍，船道不通，乃下居村落",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#東沃沮"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-YE",
+      "name": "동예",
+      "jurisdictionIds": [
+        "X038",
+        "X106",
+        "X107",
+        "X108"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 20000,
+        "upperValue": null,
+        "qualifier": "REPORTED_TOTAL",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "濊",
+          "quote": "戶二萬",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#濊"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "TEXTILES",
+          "label": "삼베·양잠",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "濊",
+            "quote": "有麻布，蠶桑作綿",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#濊"
+          }
+        },
+        {
+          "kind": "CRAFT",
+          "label": "단궁",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "濊",
+            "quote": "樂浪檀弓出其地",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#濊"
+          }
+        },
+        {
+          "kind": "TRADE_GOODS",
+          "label": "반어피·문표",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "濊",
+            "quote": "其海出班魚皮，土地饒文豹",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#濊"
+          }
+        },
+        {
+          "kind": "LIVESTOCK",
+          "label": "과하마",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "濊",
+            "quote": "又出果下馬",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#濊"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-MAHAN",
+      "name": "마한",
+      "jurisdictionIds": [
+        "X040",
+        "X041",
+        "X042",
+        "X073",
+        "X074",
+        "X075",
+        "X076",
+        "X077",
+        "X078",
+        "X079",
+        "X080",
+        "X081",
+        "X082",
+        "X083",
+        "X084",
+        "X085",
+        "X086",
+        "X087",
+        "X088",
+        "X089",
+        "X090",
+        "X091",
+        "X092",
+        "X093",
+        "X094",
+        "X095"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 100000,
+        "upperValue": null,
+        "qualifier": "MORE_THAN",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "韓",
+          "quote": "總十餘萬戶",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "AGRICULTURE",
+          "label": "농경·양잠·직물",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "其民土著，種植，知蠶桑，作綿布",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        },
+        {
+          "kind": "TRADE_GOODS",
+          "label": "큰 밤",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "出大栗，大如梨",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-JINBYEONHAN",
+      "name": "진·변한",
+      "jurisdictionIds": [
+        "X031",
+        "X032",
+        "X033",
+        "X034",
+        "X044",
+        "X045",
+        "X046",
+        "X047",
+        "X048",
+        "X049",
+        "X096",
+        "X097",
+        "X098",
+        "X099",
+        "X100",
+        "X101",
+        "X102",
+        "X103",
+        "X104",
+        "X105"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": {
+        "value": 40000,
+        "upperValue": 50000,
+        "qualifier": "RANGE",
+        "unit": "HOUSEHOLDS",
+        "evidence": {
+          "book": "三國志",
+          "volume": 30,
+          "section": "韓",
+          "quote": "總四五萬戶",
+          "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+        },
+        "scopeNote": "도시 인구가 아닌 권역 전체의 호수. 호당 인구 환산계수 없음."
+      },
+      "activities": [
+        {
+          "kind": "AGRICULTURE",
+          "label": "오곡·벼",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "土地肥美，宜種五穀及稻",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        },
+        {
+          "kind": "TEXTILES",
+          "label": "양잠·견포",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "曉蠶桑，作縑布",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        },
+        {
+          "kind": "LIVESTOCK",
+          "label": "소·말 이용",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "乘駕牛馬",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        },
+        {
+          "kind": "IRON_TRADE",
+          "label": "철 생산·교역 및 교환수단",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "國出鐵，韓、濊、倭皆從取之。諸巿買皆用鐵，如中國用錢，又以供給二郡",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          },
+          "scopeNote": "韓傳의 변진 문맥. 모든 진·변한 소국을 개별 철광산으로 지정하는 근거가 아님."
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-JUHO",
+      "name": "주호",
+      "jurisdictionIds": [
+        "X043"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": null,
+      "activities": [
+        {
+          "kind": "LIVESTOCK",
+          "label": "소·돼지 사육",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "好養牛及豬",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        },
+        {
+          "kind": "MARITIME_TRADE",
+          "label": "한 지역과 선박 교역",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "韓",
+            "quote": "乘船往來，巿買韓中",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#韓"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    },
+    {
+      "id": "SGZ30-YILOU",
+      "name": "읍루",
+      "jurisdictionIds": [
+        "X039",
+        "X113"
+      ],
+      "sourceScope": "POLITY_OR_REGION",
+      "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
+      "households": null,
+      "activities": [
+        {
+          "kind": "AGRICULTURE",
+          "label": "오곡·삼베",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "挹婁",
+            "quote": "有五穀、牛、馬、麻布",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#挹婁"
+          }
+        },
+        {
+          "kind": "LIVESTOCK",
+          "label": "돼지 사육",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "挹婁",
+            "quote": "其俗好養豬，食其肉，衣其皮",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#挹婁"
+          }
+        },
+        {
+          "kind": "TRADE_GOODS",
+          "label": "적옥·담비",
+          "evidence": {
+            "book": "三國志",
+            "volume": 30,
+            "section": "挹婁",
+            "quote": "出赤玉，好貂",
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30#挹婁"
+          }
+        }
+      ],
+      "perCityAllocation": null,
+      "allocationNote": "권역 총호수와 특산 기록. 개별 거점의 호수·생산량·세수로 복제하지 않는다."
+    }
+  ]
+}

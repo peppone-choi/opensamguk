@@ -259,7 +259,7 @@ class HanWorldV3Test(unittest.TestCase):
         # 2026-09-17(ADR-LITE-056): 安平口 거점 관할을 거점 원장의 anchorCounty(遼東郡 西安平縣)로 옮겼다.
         expected_reassigned.add(("curated:strategic-site-v1:ss-anpingkou", "卒本", "遼東郡"))
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(1133, len(actual))
+        self.assertEqual(1194, len(actual))
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -418,14 +418,25 @@ class HanWorldV3Test(unittest.TestCase):
             else:
                 self.assertIn(name, county_grades, city["name"])
                 counties += 1
-            self.assertEqual(maxes[name], city["max"], city["name"])
-            self.assertEqual(
-                dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name])),
-                city["initial"], city["name"],
-            )
+            expected_max = dict(maxes[name])
+            expected_initial = dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name]))
+            allocation = city["meta"].get("economyBasis")
+            if allocation:
+                tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+                donor = next(c for c in world['cities'] if tiles['provinceRecords'][c['spatialProvinceIndex']]['jurisdictionId']==allocation['fundingJurisdictionId'])
+                donor_level = levels[donor["level"] - 1]
+                group = [c for c in world["cities"] if c["meta"].get("economyBasis") == allocation]
+                for field in ("population", "agriculture", "commerce"):
+                    self.assertEqual(maxes[donor_level][field], sum(c["max"][field] for c in group))
+                    donor_initial = dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[donor_level]))
+                    self.assertEqual(donor_initial[field], sum(c["initial"][field] for c in group))
+                    expected_max[field] = city["max"][field]
+                    expected_initial[field] = city["initial"][field]
+            self.assertEqual(expected_max, city["max"], city["name"])
+            self.assertEqual(expected_initial, city["initial"], city["name"])
         # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
         self.assertEqual(99, seats)
-        self.assertEqual(37, settlements)
+        self.assertEqual(98, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
         # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
         self.assertEqual(924, counties)
@@ -462,7 +473,7 @@ class HanWorldV3Test(unittest.TestCase):
         )
         # 2026-09-15 거점 편입으로 郡 3 곳(卒本·宜都·蘄春)이 거점 城만 갖고 더해져 126 / 27 이다.
         # 2026-09-17: 郡國 밖 취락 37곳(w5)이 제 세력 이름 29개를 郡으로 더하고, 卒本·鮮卑가 치소 城을 받아 155 / 25 다.
-        self.assertEqual(155, len(by_parent))
+        self.assertEqual(159, len(by_parent))
         self.assertEqual(25, len(seatless))
         self.assertIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
@@ -559,9 +570,9 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(1133, len(world["cities"]))
+        self.assertEqual(1194, len(world["cities"]))
         # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-        self.assertEqual(1028, len(changed))
+        self.assertEqual(1030, len(changed))
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

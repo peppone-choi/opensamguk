@@ -852,6 +852,9 @@ def committed_area_problems(committed: dict) -> list[str]:
         allowed.update({row["placeId"]: row["carvedCellCount"] for row in stage["placements"]
                         if row["carvedCellCount"] < MIN_AREA})
     meta = committed["_meta"]
+    if meta["rows"] == 843:
+        extra=json.loads((ROOT / "data/curated/han/korea-spatial-area-exceptions-v1.json").read_text())
+        allowed.update({r['provinceId']:r['cells'] for r in extra['areaExceptions']})
     owner = expand(committed["owner"], meta["rows"], meta["cols"])
     areas = np.bincount(owner[owner >= 0], minlength=len(committed["provinceRecords"]))
     return [f"Q4 committed tiles: {row['id']} {row['nameCh']} area {int(areas[i])} has no exception"

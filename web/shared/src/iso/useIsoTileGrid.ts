@@ -6,7 +6,7 @@
 //   지형·소유·城  → /api/game/api/map/terrain (HanMapCanvas 와 같은 응답)
 //   높낮이        → /map/elevation/han-world-v3-levels.png (NOAA ETOPO1 파생, 정적)
 //
-// 둘을 384×334 타일 격자 하나로 합치는 계산은 전부 isoTileGrid.ts 에 있다.
+// 격자 크기에 맞춰 두 입력을 합치는 계산은 전부 isoTileGrid.ts 에 있다.
 // 여기서는 가져오고 디코드하는 일만 한다.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -26,6 +26,17 @@ import { applyCitySeedReseats } from './citySeedReseat';
 
 export const LEVEL_PNG_URL = '/map/elevation/han-world-v3-levels.png';
 export const ELEVATION_MANIFEST_URL = '/map/elevation/manifest.json';
+
+/** Older saved worlds retain their original terrain frame and DEM. */
+export function elevationAssetsForGrid(cols: number, rows: number) {
+  if (cols === 864 && rows === 843) {
+    return { levels: LEVEL_PNG_URL, manifest: ELEVATION_MANIFEST_URL };
+  }
+  if (cols === 768 && rows === 669) {
+    return { levels: '/map/elevation/han-world-v3-legacy-levels.png', manifest: '/map/elevation/manifest-legacy.json' };
+  }
+  throw new Error(`지원하지 않는 지도 격자: ${cols}×${rows}`);
+}
 
 export interface IsoCity {
   id: string;
@@ -266,18 +277,24 @@ export function useIsoTileGrid(terrainUrl: string): State {
   const scope = serverScope(terrainUrl);
   const key = JSON.stringify([scope, terrainUrl]);
   const [loaded, setLoaded] = useState<{ key: string; state: State }>({ key: '', state: LOADING });
-  const [elevation, setElevation] = useState<ElevationManifest | null>(null);
+  const [elevation, setElevation] = useState<{ url: string; value: ElevationManifest } | null>(null);
+  const attributionUrl = loaded.key === key && loaded.state.status === 'ready'
+    ? elevationAssetsForGrid(loaded.state.data.sourceCols, loaded.state.data.sourceRows).manifest
+    : null;
 
   useEffect(() => {
     setLoaded({ key, state: LOADING });
     if (!terrainUrl) return undefined;
     let active = true;
     const lease = requests.acquire(key, signal => prepared.load(scope, terrainUrl, signal, async response => {
-      const dem = levels.acquire(LEVEL_PNG_URL, s => decodeLevelPng(LEVEL_PNG_URL, s));
+      const tiles = await response.json() as HanTiles;
+      signal.throwIfAborted();
+      const assets = elevationAssetsForGrid(tiles._meta.cols, tiles._meta.rows);
+      const dem = levels.acquire(assets.levels, s => decodeLevelPng(assets.levels, s));
       const release = () => dem.release();
       signal.addEventListener('abort', release, { once: true });
       try {
-        const [tiles, image] = await Promise.all([response.json() as Promise<HanTiles>, dem.promise]);
+        const image = await dem.promise;
         signal.throwIfAborted();
         return prepareIsoMap(tiles, image);
       } finally { signal.removeEventListener('abort', release); release(); }
@@ -297,21 +314,21 @@ export function useIsoTileGrid(terrainUrl: string): State {
   }, [terrainUrl, scope, key]);
 
   useEffect(() => {
-    if (!terrainUrl) return undefined;
+    if (!attributionUrl) return undefined;
     let active = true;
-    const lease = attribution.acquire(ELEVATION_MANIFEST_URL, async signal => {
-      const response = await fetch(ELEVATION_MANIFEST_URL, { signal });
+    const lease = attribution.acquire(attributionUrl, async signal => {
+      const response = await fetch(attributionUrl, { signal });
       if (!response.ok) throw new Error('고도 출처를 못 불러왔다');
       return response.json() as Promise<ElevationManifest>;
     });
-    lease.promise.then(value => { if (active) setElevation(value); }, () => { /* Attribution is optional. */ });
+    lease.promise.then(value => { if (active) setElevation({ url: attributionUrl, value }); }, () => { /* Attribution is optional. */ });
     return () => { active = false; lease.release(); };
-  }, [terrainUrl]);
+  }, [attributionUrl]);
 
   return useMemo(() => {
     if (loaded.key !== key) return LOADING;
     return loaded.state.status === 'ready'
-      ? { ...loaded.state, data: { ...loaded.state.data, elevation } }
+      ? { ...loaded.state, data: { ...loaded.state.data, elevation: elevation?.url === attributionUrl ? elevation.value : null } }
       : loaded.state;
-  }, [loaded, key, elevation]);
+  }, [loaded, key, elevation, attributionUrl]);
 }

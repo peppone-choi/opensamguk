@@ -68,7 +68,7 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
         "w5-external-settlement-route-claim", "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
         "han-tiles-external-settlement:", "EXTERNAL_SETTLEMENT", frozenset({"SETTLEMENT_NODE"}),
         frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"EXTERNAL_PLACE_RECORD"}),
-        37, "externalSettlementRouteClaims", "data/curated/han/route-node-external-settlement-claims-v1.json",
+        98, "externalSettlementRouteClaims", "data/curated/han/route-node-external-settlement-claims-v1.json",
     ),
 )
 #: 같은 縣이 두 번 선 城의 번호를 다른 claim 이 이어받는 키 재결속 사유(registry row 의 rebinding).

@@ -2470,6 +2470,433 @@
       "physicalPlaceRef": "external:v1:X064",
       "routeNodeKey": "edafa4c3-52a0-427d-87eb-9ab7622ac5d1",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X064"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1134,
+      "physicalPlaceRef": "external:v1:X065",
+      "routeNodeKey": "a51ee01b-c80b-4c65-933d-0cfeab070be5",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X065"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1135,
+      "physicalPlaceRef": "external:v1:X066",
+      "routeNodeKey": "ae6c3dc0-1100-427e-97b6-3c6072046f5a",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X066"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1136,
+      "physicalPlaceRef": "external:v1:X067",
+      "routeNodeKey": "f23f1a9f-4311-4251-b8e7-98df64a53511",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X067"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1137,
+      "physicalPlaceRef": "external:v1:X068",
+      "routeNodeKey": "2f1090e4-4785-4cfd-8df5-bf86c5455a23",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1138,
+      "physicalPlaceRef": "external:v1:X069",
+      "routeNodeKey": "b5debc13-8123-4bf0-9524-3083bf21748d",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1139,
+      "physicalPlaceRef": "external:v1:X070",
+      "routeNodeKey": "332c651d-184b-4cd6-8c2f-45e9cfb45fe7",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1140,
+      "physicalPlaceRef": "external:v1:X071",
+      "routeNodeKey": "a8201d08-f08d-46d7-be26-a824101604e9",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1141,
+      "physicalPlaceRef": "external:v1:X072",
+      "routeNodeKey": "18d6a7cb-a582-4719-a9d7-9aa0c098aff8",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1142,
+      "physicalPlaceRef": "external:v1:X073",
+      "routeNodeKey": "dbc9351c-933d-462e-8f45-9ba4b2857153",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1143,
+      "physicalPlaceRef": "external:v1:X074",
+      "routeNodeKey": "b55e72af-aa40-41de-a885-b24e6c5ca8b2",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X074"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1144,
+      "physicalPlaceRef": "external:v1:X075",
+      "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1145,
+      "physicalPlaceRef": "external:v1:X076",
+      "routeNodeKey": "b90837d6-917e-47fd-b246-e4219c54ed0e",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1146,
+      "physicalPlaceRef": "external:v1:X077",
+      "routeNodeKey": "402d0581-1e13-4c54-8d55-de0643586c47",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1147,
+      "physicalPlaceRef": "external:v1:X078",
+      "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1148,
+      "physicalPlaceRef": "external:v1:X079",
+      "routeNodeKey": "aa5d6bfb-acae-4e10-a3b7-e6bd86d0db69",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X079"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1149,
+      "physicalPlaceRef": "external:v1:X080",
+      "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1150,
+      "physicalPlaceRef": "external:v1:X081",
+      "routeNodeKey": "04c6c835-44f8-401b-84e2-f946c1bbb7c0",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1151,
+      "physicalPlaceRef": "external:v1:X082",
+      "routeNodeKey": "0b8bef5a-bff0-4be6-868f-4226dec0156c",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1152,
+      "physicalPlaceRef": "external:v1:X083",
+      "routeNodeKey": "708ca542-adde-4bcf-bf04-9e43ebd255d4",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1153,
+      "physicalPlaceRef": "external:v1:X084",
+      "routeNodeKey": "94a0809d-c95e-4e2a-aa67-1396346d1166",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1154,
+      "physicalPlaceRef": "external:v1:X085",
+      "routeNodeKey": "737690ed-4d6d-43b6-9e3c-3d5ebd90a183",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1155,
+      "physicalPlaceRef": "external:v1:X086",
+      "routeNodeKey": "8e687c26-62b5-45ec-b28c-8ebce1f3e3db",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1156,
+      "physicalPlaceRef": "external:v1:X087",
+      "routeNodeKey": "f2ac429d-520f-4b94-88a2-800d270e8e11",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1157,
+      "physicalPlaceRef": "external:v1:X088",
+      "routeNodeKey": "18a1b6e2-1cee-4fe5-83a4-c5084a631c73",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X088"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1158,
+      "physicalPlaceRef": "external:v1:X089",
+      "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1159,
+      "physicalPlaceRef": "external:v1:X090",
+      "routeNodeKey": "8f9b1d6d-f9e1-4198-9e33-00e883a70169",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X090"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1160,
+      "physicalPlaceRef": "external:v1:X091",
+      "routeNodeKey": "cd9930e6-98e3-4895-b648-672d2757dc17",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X091"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1161,
+      "physicalPlaceRef": "external:v1:X092",
+      "routeNodeKey": "3dac383e-d53e-4683-9356-6eb02bdec97d",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X092"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1162,
+      "physicalPlaceRef": "external:v1:X093",
+      "routeNodeKey": "84e1f34c-57a6-4827-bc96-69ab8e27837b",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X093"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1163,
+      "physicalPlaceRef": "external:v1:X094",
+      "routeNodeKey": "11f22bc0-e93e-421d-904b-6bdea2526e3a",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X094"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1164,
+      "physicalPlaceRef": "external:v1:X095",
+      "routeNodeKey": "06d7cb17-e140-4c60-8862-378dd3baa3a9",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X095"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1165,
+      "physicalPlaceRef": "external:v1:X096",
+      "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1166,
+      "physicalPlaceRef": "external:v1:X097",
+      "routeNodeKey": "36bd58f3-5463-438a-a9af-71f394069844",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1167,
+      "physicalPlaceRef": "external:v1:X098",
+      "routeNodeKey": "99f64074-3eee-4b80-8bf3-859731ac6f2c",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1168,
+      "physicalPlaceRef": "external:v1:X099",
+      "routeNodeKey": "c87e9851-adff-4fca-9f7b-04e4d2154cc6",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1169,
+      "physicalPlaceRef": "external:v1:X100",
+      "routeNodeKey": "a25b91fc-3bbf-4c23-adfb-f43f4cc296ca",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1170,
+      "physicalPlaceRef": "external:v1:X101",
+      "routeNodeKey": "02c2b89a-ae59-43e0-967f-fd7a919b4766",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1171,
+      "physicalPlaceRef": "external:v1:X102",
+      "routeNodeKey": "683115df-cd7e-4dc4-896f-bc6619c64cfd",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1172,
+      "physicalPlaceRef": "external:v1:X103",
+      "routeNodeKey": "11aa3d58-0a48-4889-a32d-704a6b829a29",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1173,
+      "physicalPlaceRef": "external:v1:X104",
+      "routeNodeKey": "4e63fb72-70b9-4269-a432-a1878742d79e",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1174,
+      "physicalPlaceRef": "external:v1:X105",
+      "routeNodeKey": "d8505f47-79f9-41ca-9b7e-c83fb3468df9",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1175,
+      "physicalPlaceRef": "external:v1:X106",
+      "routeNodeKey": "241ef21b-c1ec-436c-b136-4d2b4f0eb341",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X106"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1176,
+      "physicalPlaceRef": "external:v1:X107",
+      "routeNodeKey": "12d3e33e-5191-48a3-92fe-b46ca7e3ba13",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1177,
+      "physicalPlaceRef": "external:v1:X108",
+      "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1178,
+      "physicalPlaceRef": "external:v1:X109",
+      "routeNodeKey": "4d8d34cf-fe5f-49d3-a42b-a59f05889b6b",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X109"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1179,
+      "physicalPlaceRef": "external:v1:X110",
+      "routeNodeKey": "946ea549-492b-479a-b440-da2a815cd360",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X110"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1180,
+      "physicalPlaceRef": "external:v1:X111",
+      "routeNodeKey": "0f1040f7-553a-4bbe-9303-cf441306d008",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X111"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1181,
+      "physicalPlaceRef": "external:v1:X112",
+      "routeNodeKey": "bd4e54b5-846c-4136-a143-e900765a3cd1",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X112"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1182,
+      "physicalPlaceRef": "external:v1:X113",
+      "routeNodeKey": "d9710873-4cb2-4b84-bc37-545efa782df3",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X113"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1183,
+      "physicalPlaceRef": "external:v1:X114",
+      "routeNodeKey": "e0c6e83f-3c88-40cb-a694-a1312ad0636b",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X114"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1184,
+      "physicalPlaceRef": "external:v1:X115",
+      "routeNodeKey": "7cc37a59-4d1d-4181-82d1-3bbb6f956aab",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X115"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1185,
+      "physicalPlaceRef": "external:v1:X116",
+      "routeNodeKey": "c46a8475-11c0-4823-bcb3-2a4472851634",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X116"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1186,
+      "physicalPlaceRef": "external:v1:X117",
+      "routeNodeKey": "55517d86-c1ba-49c0-8171-501c82b09cb5",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X117"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1187,
+      "physicalPlaceRef": "external:v1:X118",
+      "routeNodeKey": "01132fb4-4997-43e6-91b7-e4b9663a3895",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X118"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1188,
+      "physicalPlaceRef": "external:v1:X119",
+      "routeNodeKey": "092d4288-0243-4421-a55e-59bc30a83b21",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X119"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1189,
+      "physicalPlaceRef": "external:v1:X120",
+      "routeNodeKey": "cf04930d-2094-4b3e-ba91-d7788de18421",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X120"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1190,
+      "physicalPlaceRef": "external:v1:X121",
+      "routeNodeKey": "87207a51-c807-4aaf-ae3d-3cd76db3ca8c",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X121"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1191,
+      "physicalPlaceRef": "external:v1:X122",
+      "routeNodeKey": "224cd2f2-6e0d-403f-8d73-d2685bf62584",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X122"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1192,
+      "physicalPlaceRef": "external:v1:X123",
+      "routeNodeKey": "010c1fcc-d9f5-4e92-8668-3257518d0240",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X123"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1193,
+      "physicalPlaceRef": "external:v1:X124",
+      "routeNodeKey": "b09585e9-bfdd-464b-82f0-367bfa818b98",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X124"
+    },
+    {
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1194,
+      "physicalPlaceRef": "external:v1:X125",
+      "routeNodeKey": "859b778d-0d77-4718-be8f-381b7363fa54",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X125"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -7994,11 +8421,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10",
+  "sourceCandidateSha256": "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "696866fdf9af35236a1477c97993df2fb131d6de25a9e305ad15246e89112eb9",
+  "sourceSelectionSha256": "02deeba7ab4f1d3ef6d04a5c823981d89d0c42ddf17bdcfd6fa61c44b087edd5",
   "summary": {
-    "appendedIdentityCount": 353,
+    "appendedIdentityCount": 414,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

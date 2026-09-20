@@ -10,13 +10,13 @@
         "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
       "candidate": {
-        "sha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10"
+        "sha256": "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
       },
       "externalClaims": {
         "sha256": "ce02fe1abf2e48e9baec8ec83459a9df9a86bba84d5944a618e7b5af3b565e84"
       },
       "externalSettlementRouteClaims": {
-        "sha256": "88a79549391484a4f4355fec09ba9b3cf30152d22808990273031e4ad1fbf576"
+        "sha256": "accc05af94e49654ca1c6d162ebb29e6d728107f2bcfff8c8933bc9a2a9a014e"
       },
       "jurisdictionRouteClaims": {
         "sha256": "950f9bf315de9532ba4f32e650b00dd0979ed135adfb49ded7bbe66dae60478b"
@@ -31,10 +31,10 @@
         "sha256": "e8e1bd5c2881973ff38241a34c565e8a1a01c285454485d91a3b1af3d8657896"
       },
       "reviewPolicy": {
-        "sha256": "badb7a2f03c66c7c0729b6a0d5deda0e8e1e57b64f1f633c72e889cdde983b44"
+        "sha256": "094ecc91757708b68bc7fa56135448b4113688f8c09a43500122952e616a0ad4"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "87770ff0afb87ccae43dff55743de2eb0521bf9d7b9779cd7022c060d3075da9"
+        "sha256": "24398bbbd3529b366349f6a4051239b9b4ab328029d88dc15a5953faf51565d7"
       },
       "strategicSiteRouteClaims": {
         "sha256": "58759310ca6cfdebb58c1f75b03de716f599e31a9de70ec1315dc513d805ff99"
@@ -34130,12 +34130,12 @@
       },
       "nodeClass": "SETTLEMENT_NODE",
       "numericCityId": 1108,
-      "parentName": "北沃沮",
-      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "parentName": "挹婁",
+      "parentRef": "han-tiles-commandery:PARENT-0172",
       "physicalPlaceRef": "external:v1:X039",
       "reviewState": "APPROVED",
       "routeNodeKey": "38f5805e-1357-4d47-9806-5e7e3d83fbc0",
-      "seatRole": "NON_SEAT",
+      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w5-external-settlement-route-claim",
         "evidenceRefs": [
@@ -34847,6 +34847,1714 @@
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       },
       "sourceClaimId": "han-external-settlement-route-claim-v1-X064"
+    },
+    {
+      "canonicalName": "沸流",
+      "displayName": "沸流",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X065"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1134,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X065",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a51ee01b-c80b-4c65-933d-0cfeab070be5",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X065"
+    },
+    {
+      "canonicalName": "藻那",
+      "displayName": "藻那",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X066"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1135,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X066",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "ae6c3dc0-1100-427e-97b6-3c6072046f5a",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X066"
+    },
+    {
+      "canonicalName": "朱那",
+      "displayName": "朱那",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X067"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1136,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X067",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "f23f1a9f-4311-4251-b8e7-98df64a53511",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X067"
+    },
+    {
+      "canonicalName": "蓋馬",
+      "displayName": "蓋馬",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1137,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X068",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "2f1090e4-4785-4cfd-8df5-bf86c5455a23",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
+    },
+    {
+      "canonicalName": "句茶",
+      "displayName": "句茶",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1138,
+      "parentName": "東沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0143",
+      "physicalPlaceRef": "external:v1:X069",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b5debc13-8123-4bf0-9524-3083bf21748d",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
+    },
+    {
+      "canonicalName": "荇人",
+      "displayName": "荇人",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1139,
+      "parentName": "北沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "physicalPlaceRef": "external:v1:X070",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "332c651d-184b-4cd6-8c2f-45e9cfb45fe7",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
+    },
+    {
+      "canonicalName": "梁貊",
+      "displayName": "梁貊",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1140,
+      "parentName": "卒本",
+      "parentRef": "han-tiles-commandery:PARENT-0112",
+      "physicalPlaceRef": "external:v1:X071",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a8201d08-f08d-46d7-be26-a824101604e9",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
+    },
+    {
+      "canonicalName": "小水貊",
+      "displayName": "小水貊",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1141,
+      "parentName": "遼東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0094",
+      "physicalPlaceRef": "external:v1:X072",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "18d6a7cb-a582-4719-a9d7-9aa0c098aff8",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
+    },
+    {
+      "canonicalName": "古爰",
+      "displayName": "古爰",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1142,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X073",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "dbc9351c-933d-462e-8f45-9ba4b2857153",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
+    },
+    {
+      "canonicalName": "天安聚落",
+      "displayName": "天安聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X074"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1143,
+      "parentName": "伯濟國",
+      "parentRef": "han-tiles-commandery:PARENT-0109",
+      "physicalPlaceRef": "external:v1:X074",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b55e72af-aa40-41de-a885-b24e6c5ca8b2",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X074"
+    },
+    {
+      "canonicalName": "冉路",
+      "displayName": "冉路",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1144,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X075",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
+    },
+    {
+      "canonicalName": "監奚卑離",
+      "displayName": "監奚卑離",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1145,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X076",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b90837d6-917e-47fd-b246-e4219c54ed0e",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
+    },
+    {
+      "canonicalName": "致利鞠",
+      "displayName": "致利鞠",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1146,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X077",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "402d0581-1e13-4c54-8d55-de0643586c47",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
+    },
+    {
+      "canonicalName": "泰安聚落",
+      "displayName": "泰安聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1147,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X078",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
+    },
+    {
+      "canonicalName": "沿岸聚落",
+      "displayName": "沿岸聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X079"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1148,
+      "parentName": "伯濟國",
+      "parentRef": "han-tiles-commandery:PARENT-0109",
+      "physicalPlaceRef": "external:v1:X079",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "aa5d6bfb-acae-4e10-a3b7-e6bd86d0db69",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X079"
+    },
+    {
+      "canonicalName": "不雲",
+      "displayName": "不雲",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1149,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X080",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
+    },
+    {
+      "canonicalName": "支半",
+      "displayName": "支半",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1150,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X081",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "04c6c835-44f8-401b-84e2-f946c1bbb7c0",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
+    },
+    {
+      "canonicalName": "古臘",
+      "displayName": "古臘",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1151,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X082",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0b8bef5a-bff0-4be6-868f-4226dec0156c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
+    },
+    {
+      "canonicalName": "楚山塗卑離",
+      "displayName": "楚山塗卑離",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1152,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X083",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "708ca542-adde-4bcf-bf04-9e43ebd255d4",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
+    },
+    {
+      "canonicalName": "牟盧卑離",
+      "displayName": "牟盧卑離",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1153,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X084",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "94a0809d-c95e-4e2a-aa67-1396346d1166",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
+    },
+    {
+      "canonicalName": "不斯濆邪",
+      "displayName": "不斯濆邪",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1154,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X085",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "737690ed-4d6d-43b6-9e3c-3d5ebd90a183",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
+    },
+    {
+      "canonicalName": "萬盧",
+      "displayName": "萬盧",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1155,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X086",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8e687c26-62b5-45ec-b28c-8ebce1f3e3db",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
+    },
+    {
+      "canonicalName": "不彌",
+      "displayName": "不彌",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1156,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X087",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "f2ac429d-520f-4b94-88a2-800d270e8e11",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
+    },
+    {
+      "canonicalName": "務安聚落",
+      "displayName": "務安聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X088"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1157,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X088",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "18a1b6e2-1cee-4fe5-83a4-c5084a631c73",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X088"
+    },
+    {
+      "canonicalName": "忱彌多禮",
+      "displayName": "忱彌多禮",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1158,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X089",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
+    },
+    {
+      "canonicalName": "靈巖聚落",
+      "displayName": "靈巖聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X090"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1159,
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X090",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "8f9b1d6d-f9e1-4198-9e33-00e883a70169",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X090"
+    },
+    {
+      "canonicalName": "錦江聚落",
+      "displayName": "錦江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X091"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1160,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X091",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "cd9930e6-98e3-4895-b648-672d2757dc17",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X091"
+    },
+    {
+      "canonicalName": "熊川聚落",
+      "displayName": "熊川聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X092"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1161,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X092",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "3dac383e-d53e-4683-9356-6eb02bdec97d",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X092"
+    },
+    {
+      "canonicalName": "錦江河口",
+      "displayName": "錦江河口",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X093"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1162,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X093",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "84e1f34c-57a6-4827-bc96-69ab8e27837b",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X093"
+    },
+    {
+      "canonicalName": "西海聚落",
+      "displayName": "西海聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X094"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1163,
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X094",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "11f22bc0-e93e-421d-904b-6bdea2526e3a",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X094"
+    },
+    {
+      "canonicalName": "中原聚落",
+      "displayName": "中原聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X095"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1164,
+      "parentName": "古寧伽耶",
+      "parentRef": "han-tiles-commandery:PARENT-0115",
+      "physicalPlaceRef": "external:v1:X095",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "06d7cb17-e140-4c60-8862-378dd3baa3a9",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X095"
+    },
+    {
+      "canonicalName": "骨伐",
+      "displayName": "骨伐",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1165,
+      "parentName": "押督國",
+      "parentRef": "han-tiles-commandery:PARENT-0136",
+      "physicalPlaceRef": "external:v1:X096",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
+    },
+    {
+      "canonicalName": "伊西",
+      "displayName": "伊西",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1166,
+      "parentName": "押督國",
+      "parentRef": "han-tiles-commandery:PARENT-0136",
+      "physicalPlaceRef": "external:v1:X097",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "36bd58f3-5463-438a-a9af-71f394069844",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
+    },
+    {
+      "canonicalName": "甘文",
+      "displayName": "甘文",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1167,
+      "parentName": "星山伽耶",
+      "parentRef": "han-tiles-commandery:PARENT-0142",
+      "physicalPlaceRef": "external:v1:X098",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "99f64074-3eee-4b80-8bf3-859731ac6f2c",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
+    },
+    {
+      "canonicalName": "優由",
+      "displayName": "優由",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1168,
+      "parentName": "悉直國",
+      "parentRef": "han-tiles-commandery:PARENT-0135",
+      "physicalPlaceRef": "external:v1:X099",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "c87e9851-adff-4fca-9f7b-04e4d2154cc6",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
+    },
+    {
+      "canonicalName": "勤耆",
+      "displayName": "勤耆",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1169,
+      "parentName": "斯盧國",
+      "parentRef": "han-tiles-commandery:PARENT-0137",
+      "physicalPlaceRef": "external:v1:X100",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "a25b91fc-3bbf-4c23-adfb-f43f4cc296ca",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
+    },
+    {
+      "canonicalName": "于尸山",
+      "displayName": "于尸山",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1170,
+      "parentName": "斯盧國",
+      "parentRef": "han-tiles-commandery:PARENT-0137",
+      "physicalPlaceRef": "external:v1:X101",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "02c2b89a-ae59-43e0-967f-fd7a919b4766",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
+    },
+    {
+      "canonicalName": "彌離彌凍",
+      "displayName": "彌離彌凍",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1171,
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X102",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "683115df-cd7e-4dc4-896f-bc6619c64cfd",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
+    },
+    {
+      "canonicalName": "瀆盧",
+      "displayName": "瀆盧",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1172,
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X103",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "11aa3d58-0a48-4889-a32d-704a6b829a29",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
+    },
+    {
+      "canonicalName": "接塗",
+      "displayName": "接塗",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1173,
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X104",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "4e63fb72-70b9-4269-a432-a1878742d79e",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
+    },
+    {
+      "canonicalName": "多羅",
+      "displayName": "多羅",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1174,
+      "parentName": "大伽耶",
+      "parentRef": "han-tiles-commandery:PARENT-0121",
+      "physicalPlaceRef": "external:v1:X105",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "d8505f47-79f9-41ca-9b7e-c83fb3468df9",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
+    },
+    {
+      "canonicalName": "貊",
+      "displayName": "貊",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X106"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1175,
+      "parentName": "伯濟國",
+      "parentRef": "han-tiles-commandery:PARENT-0109",
+      "physicalPlaceRef": "external:v1:X106",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "241ef21b-c1ec-436c-b136-4d2b4f0eb341",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X106"
+    },
+    {
+      "canonicalName": "不耐",
+      "displayName": "不耐",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1176,
+      "parentName": "樂浪郡",
+      "parentRef": "han-tiles-commandery:PARENT-0096",
+      "physicalPlaceRef": "external:v1:X107",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "12d3e33e-5191-48a3-92fe-b46ca7e3ba13",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
+    },
+    {
+      "canonicalName": "華麗",
+      "displayName": "華麗",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1177,
+      "parentName": "樂浪郡",
+      "parentRef": "han-tiles-commandery:PARENT-0096",
+      "physicalPlaceRef": "external:v1:X108",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
+    },
+    {
+      "canonicalName": "海岸聚落",
+      "displayName": "海岸聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X109"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1178,
+      "parentName": "北沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "physicalPlaceRef": "external:v1:X109",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "4d8d34cf-fe5f-49d3-a42b-a59f05889b6b",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X109"
+    },
+    {
+      "canonicalName": "豆滿江聚落",
+      "displayName": "豆滿江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X110"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1179,
+      "parentName": "北沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "physicalPlaceRef": "external:v1:X110",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "946ea549-492b-479a-b440-da2a815cd360",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X110"
+    },
+    {
+      "canonicalName": "渾江聚落",
+      "displayName": "渾江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X111"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1180,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X111",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "0f1040f7-553a-4bbe-9303-cf441306d008",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X111"
+    },
+    {
+      "canonicalName": "敦化聚落",
+      "displayName": "敦化聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X112"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1181,
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X112",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "bd4e54b5-846c-4136-a143-e900765a3cd1",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X112"
+    },
+    {
+      "canonicalName": "牡丹江聚落",
+      "displayName": "牡丹江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X113"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1182,
+      "parentName": "挹婁",
+      "parentRef": "han-tiles-commandery:PARENT-0172",
+      "physicalPlaceRef": "external:v1:X113",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "d9710873-4cb2-4b84-bc37-545efa782df3",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X113"
+    },
+    {
+      "canonicalName": "伊通河聚落",
+      "displayName": "伊通河聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X114"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1183,
+      "parentName": "夫餘",
+      "parentRef": "han-tiles-commandery:PARENT-0122",
+      "physicalPlaceRef": "external:v1:X114",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "e0c6e83f-3c88-40cb-a694-a1312ad0636b",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X114"
+    },
+    {
+      "canonicalName": "松花江合流",
+      "displayName": "松花江合流",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X115"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1184,
+      "parentName": "松花江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0173",
+      "physicalPlaceRef": "external:v1:X115",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "7cc37a59-4d1d-4181-82d1-3bbb6f956aab",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X115"
+    },
+    {
+      "canonicalName": "松嫩平原",
+      "displayName": "松嫩平原",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X116"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1185,
+      "parentName": "松花江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0173",
+      "physicalPlaceRef": "external:v1:X116",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "c46a8475-11c0-4823-bcb3-2a4472851634",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X116"
+    },
+    {
+      "canonicalName": "黑龍江中流",
+      "displayName": "黑龍江中流",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X117"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1186,
+      "parentName": "黑龍江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0174",
+      "physicalPlaceRef": "external:v1:X117",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "55517d86-c1ba-49c0-8171-501c82b09cb5",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X117"
+    },
+    {
+      "canonicalName": "嫩江聚落",
+      "displayName": "嫩江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X118"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1187,
+      "parentName": "黑龍江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0174",
+      "physicalPlaceRef": "external:v1:X118",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "01132fb4-4997-43e6-91b7-e4b9663a3895",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X118"
+    },
+    {
+      "canonicalName": "黑龍江上流",
+      "displayName": "黑龍江上流",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X119"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1188,
+      "parentName": "黑龍江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0174",
+      "physicalPlaceRef": "external:v1:X119",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "092d4288-0243-4421-a55e-59bc30a83b21",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X119"
+    },
+    {
+      "canonicalName": "黑龍江南岸",
+      "displayName": "黑龍江南岸",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X120"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1189,
+      "parentName": "黑龍江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0174",
+      "physicalPlaceRef": "external:v1:X120",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "cf04930d-2094-4b3e-ba91-d7788de18421",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X120"
+    },
+    {
+      "canonicalName": "三江聚落",
+      "displayName": "三江聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X121"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1190,
+      "parentName": "烏蘇里江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0175",
+      "physicalPlaceRef": "external:v1:X121",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "87207a51-c807-4aaf-ae3d-3cd76db3ca8c",
+      "seatRole": "COMMANDERY_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X121"
+    },
+    {
+      "canonicalName": "松花江河口",
+      "displayName": "松花江河口",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X122"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1191,
+      "parentName": "烏蘇里江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0175",
+      "physicalPlaceRef": "external:v1:X122",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "224cd2f2-6e0d-403f-8d73-d2685bf62584",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X122"
+    },
+    {
+      "canonicalName": "烏蘇里北部",
+      "displayName": "烏蘇里北部",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X123"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1192,
+      "parentName": "烏蘇里江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0175",
+      "physicalPlaceRef": "external:v1:X123",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "010c1fcc-d9f5-4e92-8668-3257518d0240",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X123"
+    },
+    {
+      "canonicalName": "黑龍江東路",
+      "displayName": "黑龍江東路",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X124"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1193,
+      "parentName": "烏蘇里江聚落",
+      "parentRef": "han-tiles-commandery:PARENT-0175",
+      "physicalPlaceRef": "external:v1:X124",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "b09585e9-bfdd-464b-82f0-367bfa818b98",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X124"
+    },
+    {
+      "canonicalName": "農安聚落",
+      "displayName": "農安聚落",
+      "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
+      "locationAdjudication": {
+        "kind": "APPROVED_ROUTE_NODE_CLAIM",
+        "sourceClaimId": "han-external-settlement-route-claim-v1-X125"
+      },
+      "nodeClass": "SETTLEMENT_NODE",
+      "numericCityId": 1194,
+      "parentName": "夫餘",
+      "parentRef": "han-tiles-commandery:PARENT-0122",
+      "physicalPlaceRef": "external:v1:X125",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "859b778d-0d77-4718-be8f-381b7363fa54",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w5-external-settlement-route-claim",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w5-external-settlement-route-claim"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      },
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X125"
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -34969,98 +36677,98 @@
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "2dec2b98941c5215d43b946bb4776ae5c7dcfc39c0aa75049fa2a6726fa0bbca",
+        "sha256": "3afabe056313b4b9542349d3af0ad9f6ffc14aee5fcc83be0c398d6a420268c6",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "11dfa3ac50f8a3631b1356d18c6b2ad5063d0f60ff7b29d0fe703e9e5639378e",
+        "sha256": "1123916bedf4339110afe1537b4d53184a4af34ab909169c41b7b934a814670a",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "ad7addd7f4134510b12069f31995d797eeaa381bcbfba109f10e42d4d072f6a1",
+        "sha256": "0cead1db0d0a057ec6cc49efd9449aa95aed56ade3e6be5f02ed7ccefbd2b0d2",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "ff1d5870b843fc016014af84f8e7977c081194e64e0599cb901e4d61335081f6",
+        "sha256": "bda6fa99980166e674f4121254c06ebebef5f02a4f5ad81655b07ceb1440b70a",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "88c4912af2950f16430125183c0071ea08cac04abb8eb5d9195688d3d3ce368c",
+        "sha256": "de54f111d470706f5088e893ec3e7a7c6c60860cafbd849a30392506f5707941",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "89ed93e92f8050de183a03a10ca73e2b0136e018826fd8979d3f8eb2396f7d80",
+        "sha256": "170c7ca8d17490bcd40ecbd5f057f7c9f470403afbdf00b6d1b322c75e0de964",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "9488f1e9696ecd92dde7154232f172001ebfe70c08b5b04343c703bbc4773813",
+        "sha256": "4457ec78bf52a513b1596b1f3a368dc984174dc89fd86f60723051a5db94dbb9",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "5b888bf9b0f388f4405cbd42d19ccd7db5c586fcb54be0303d163ea3ee6cf206",
+        "sha256": "c106cfc7f93a6b360020125e31c8c903b04667f0c86e0cb029ba7fbb31a18717",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "39dcbdada7e5ead04922c14ecb7d0af243f884bc12b4f7cce319a66178c3af03",
+        "sha256": "19b2246df961838c72da0e30f7b36b0eccb925520199d8d1be3149104b6f17d7",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "0cd76ae30671456d4c049765c217911d876e0271fa3b5ce14ac919e781414e82",
+        "sha256": "d4617a65fb017e192b090adef2ed83e450b0ea8a1a57208e4534c3dad46b510e",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "472fdd5c86f83c5c152bb203cbebe79329b374f88cf49a1a491dcb5c602a57bf",
+        "sha256": "afe2c17e9ed24f79b83a4306ace1c38618f4e798ff0a2272eb3bd646a52444ce",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "e111c47b7e7ae0a5adffa5ac24716d15c9b2dc943195999a04353071cb9cfbfd",
+        "sha256": "35ef04fa5918101d8d1845b4a17d14fb6bcb312f2e5577959983ec79b38bd40b",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "40437cb862eb0bc20885525d50805b637f446a58c527f15c21fcb689add0682d",
+        "sha256": "71bc8c1c73ca8ac93863507a9950d580646920d5c9d4cc157f11955a7e70ef43",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "88ab666a54f76cce211d044eb5d4ec38260f4f995e5664199362fd9f8bb103f8",
+        "sha256": "390867530de285738ecde080fc20bb7d5c1af77b0365c360e3d54af3ec28127f",
         "startYear": 188
       },
       {
@@ -35075,10 +36783,10 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 1133,
+    "approvedCount": 1194,
     "historicalBindingCounts": {
       "HHS_ADMINISTRATIVE_UNIT": 849,
-      "REVIEWED_SOURCE_CLAIM": 284
+      "REVIEWED_SOURCE_CLAIM": 345
     }
   },
   "worldVersion": "han-world-v3"

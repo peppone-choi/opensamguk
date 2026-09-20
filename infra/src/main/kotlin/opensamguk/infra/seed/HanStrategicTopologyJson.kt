@@ -45,7 +45,7 @@ object HanStrategicTopologyJson {
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
     fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
-        loadVersion(mapName, 1133, readArtifact)
+        loadVersion(mapName, 1194, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
 
@@ -53,7 +53,7 @@ object HanStrategicTopologyJson {
      * 판마다의 省 수. 848 판까지는 1,520 省이다. 뒤 판은 수·진·관 거점 省을 縣 省에서 떼어
      * 배열 끝에 붙였다(tools/map/carve_strategic_site_provinces.py) — 앞 인덱스는 그대로다.
      */
-    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594, 1133 to 1331)
+    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594, 1133 to 1331, 1141 to 1336, 1341 to 1742, 1194 to 1558)
 
     /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
     private const val FIRST_STAND_IN_SEAT_ROSTER = 849

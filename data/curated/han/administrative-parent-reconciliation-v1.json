@@ -78,7 +78,7 @@
         }
       },
       "priorSummary": {
-        "approvedPhysicalPlaceIdAbsentCount": 125,
+        "approvedPhysicalPlaceIdAbsentCount": 186,
         "cityLinkedCellCount": 107155,
         "cityLinkedProvinceCount": 998,
         "coordinateFootprintMajorityMismatchCount": 0,
@@ -127,7 +127,7 @@
       }
     },
     "priorSummary": {
-      "approvedPhysicalPlaceIdAbsentCount": 74,
+      "approvedPhysicalPlaceIdAbsentCount": 135,
       "cityLinkedCellCount": 121603,
       "cityLinkedProvinceCount": 1057,
       "coordinateFootprintMajorityMismatchCount": 0,
@@ -224,15 +224,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "badb7a2f03c66c7c0729b6a0d5deda0e8e1e57b64f1f633c72e889cdde983b44"
+      "sha256": "094ecc91757708b68bc7fa56135448b4113688f8c09a43500122952e616a0ad4"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "e5014cdc058ecfe3d0996ee4b809aefa64e8c36cde664d174d3b813acfdc5b10"
+      "sha256": "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "696866fdf9af35236a1477c97993df2fb131d6de25a9e305ad15246e89112eb9"
+      "sha256": "02deeba7ab4f1d3ef6d04a5c823981d89d0c42ddf17bdcfd6fa61c44b087edd5"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -240,7 +240,7 @@
     },
     "data/map/external-places.json": {
       "path": "data/map/external-places.json",
-      "sha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62"
+      "sha256": "1a7ab925f8dcd11424d97fbbabd9dd2e5b3237fffa900c7e72261167c0787da4"
     },
     "data/map/han-780-v1-tiles.json": {
       "path": "data/map/han-780-v1-tiles.json",
@@ -252,12 +252,78 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
+      "sha256": "0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
       "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
     }
+  },
+  "koreaPlaceProjection": {
+    "addedPlaceIds": [
+      "X065",
+      "X066",
+      "X067",
+      "X068",
+      "X069",
+      "X070",
+      "X071",
+      "X072",
+      "X073",
+      "X074",
+      "X075",
+      "X076",
+      "X077",
+      "X078",
+      "X079",
+      "X080",
+      "X081",
+      "X082",
+      "X083",
+      "X084",
+      "X085",
+      "X086",
+      "X087",
+      "X088",
+      "X089",
+      "X090",
+      "X091",
+      "X092",
+      "X093",
+      "X094",
+      "X095",
+      "X096",
+      "X097",
+      "X098",
+      "X099",
+      "X100",
+      "X101",
+      "X102",
+      "X103",
+      "X104",
+      "X105",
+      "X106",
+      "X107",
+      "X108",
+      "X109",
+      "X110",
+      "X111",
+      "X112",
+      "X113",
+      "X114",
+      "X115",
+      "X116",
+      "X117",
+      "X118",
+      "X119",
+      "X120",
+      "X121",
+      "X122",
+      "X123",
+      "X124",
+      "X125"
+    ],
+    "inputTilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
   },
   "ledgerId": "han-administrative-parent-reconciliation-v1",
   "policy": {
@@ -45777,7 +45843,8 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0111"
+          "han-tiles-commandery:PARENT-0111",
+          "han-tiles-commandery:PARENT-0172"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 111,
@@ -46146,7 +46213,8 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "han-tiles-commandery:PARENT-0111"
+          "han-tiles-commandery:PARENT-0111",
+          "han-tiles-commandery:PARENT-0172"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 111,

@@ -403,7 +403,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         site_classes = {"FERRY_NODE", "FORT_NODE", "PASS_NODE"}
         for route_node in selection["routeNodes"]:
             terminal = route_node["physicalPlaceRef"].rsplit(":", 1)[-1]
-            if route_node.get("nodeClass") in site_classes:
+            if route_node.get("nodeClass") in site_classes or terminal in self.ledger.get("koreaPlaceProjection", {}).get("addedPlaceIds", []):
                 continue
             if route_node["reviewState"] == "APPROVED" and terminal in tile_city_ids:
                 expected[terminal] = {
@@ -798,6 +798,8 @@ class HanParentReconciliationTest(unittest.TestCase):
         reordered_cities = list(reversed(old_cities))
         new_index_by_id = {str(city["id"]): index for index, city in enumerate(reordered_cities)}
         tiles["cities"] = reordered_cities
+        for jun in tiles["juns"]:
+            jun["seat"] = new_index_by_id[str(old_cities[jun["seat"]]["id"])]
         for province in tiles["provinceRecords"]:
             old_index = province.get("cityIndex")
             if old_index is not None:
