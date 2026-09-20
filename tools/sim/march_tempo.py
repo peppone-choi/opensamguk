@@ -83,8 +83,10 @@ class Graph:
         lat = self.lat0 + ((y1 + y2) / 2) * self.dlat
         return math.hypot((x2 - x1) * self.dlon * 111.32 * math.cos(math.radians(lat)), (y2 - y1) * self.dlat * 110.57)
 
-    def shortest(self, src: int, dst: int, rough_factor: float):
+    def shortest(self, src: int, dst: int, rough_factor: float, *, allowed_provinces: set[int] | None = None):
         """(비용 km, 실제 km, 간선 수 — 경유 省 수는 +1). 비용 = km × (1 + (계수-1) × 두 省 험지 비율 평균)."""
+        if allowed_provinces is not None and (src not in allowed_provinces or dst not in allowed_provinces):
+            return None
         best = {src: (0.0, 0.0, 0)}
         heap = [(0.0, src)]
         while heap:
@@ -94,6 +96,8 @@ class Graph:
             if cost > best[u][0]:
                 continue
             for v in sorted(self.adj[u]):
+                if allowed_provinces is not None and v not in allowed_provinces:
+                    continue
                 d = self.km(u, v)
                 share = (self.rough_share[u] + self.rough_share[v]) / 2
                 c = cost + d * (1 + (rough_factor - 1) * share)
