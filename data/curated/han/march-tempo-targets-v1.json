@@ -54,5 +54,28 @@
   "uninterruptedTravelTurns": "CEIL_TOTAL_PATH_COST_OVER_SPEED",
   "encounterStopsMovement": true,
   "scope": "같은 행군의 省 경계에서 이동량을 버리지 않는다. 정적 경로의 중단 없는 이동 시간은 전체 비용을 합한 뒤 순 단위 올림한다. 조우 시 중단하며 재출발·강행 소모·운영 엔진 연결은 별도 검증한다."
+ },
+ "warGrainBudget": {
+  "status": "OWNER_DELEGATED_DECISION",
+  "decidedOn": "2026-09-20",
+  "decidedBy": "메인 에이전트",
+  "authorization": "사용자: 너가 판단해서 넣어.",
+  "minPercentOfPeriodNetGrainTax": 25,
+  "maxPercentOfPeriodNetGrainTax": 50,
+  "periodTurns": 36,
+  "numerator": "최초 모집 군량 + 모집한 기준 병력의36순 군량 수요(실제 소비로 대체하지 않음)",
+  "denominator": "동일36순의 평시 순곡물 세입(초기 비축·수송 수입 제외)",
+  "rationale": "전쟁 유지에 평시 세입의 절반 이하를 배정해 내정과 구원·손실 대응 여력을 남긴다. 기존 예주 실험의25명/100호·월200단위 후보는 약40.62%로 범위 안이며 평시36순 내 군량 부족이 없다.",
+  "referenceCalibration": {
+   "status": "SELECTED_BENCHMARK_NOT_RUNTIME_TAX_FORMULA",
+   "troopsPerHundredHouseholds": 25,
+   "monthlyNetGrainPerHousehold": 200,
+   "rationUnitsPerSoldierTurn": 100,
+   "musterGrainUnitsPerSoldier": 300,
+   "turnsPerMonth": 3,
+   "peoplePerHouseholdForExperiment": 5,
+   "initialStockMonthsOfTax": 6
+  },
+  "scope": "전쟁 군량 부담 목표와 이를 검증하는 기준 규모·단위 선택이다. 실제 세율·수확·모집 한도·금/철/목재/말 비용·손실·함락 공식이나 운영 월드 설정을 확정하지 않는다."
  }
 }

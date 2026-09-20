@@ -99,3 +99,38 @@ def settle_county(*, initial_grain: int, people: int, deliveries: dict[int, int]
     return {'status': 'EXPLORATORY',
             'assumptions': 'integer persons and abstract grain; transport arrivals -> recruitment by ID -> military ration -> monthly net tax; no death/capture inference',
             'ledger': ledger, 'recruitDecisions': decisions}
+
+
+def assess_war_grain_budget(settlement: dict, target: dict) -> dict:
+    """Compare one full-period experiment with the delegated grain-cost target.
+
+    Initial stores and imports are not tax. Unmet rations remain required cost.
+    A rejected muster or ration shortage cannot qualify a reference candidate.
+    This assesses grain burden only; it never grants the whole S2 gate.
+    """
+    if target.get('status') not in {'OWNER_APPROVED_TARGET', 'OWNER_DELEGATED_DECISION'}:
+        raise ValueError('war grain target requires an owner decision or delegation')
+    turns = target.get('periodTurns')
+    low, high = target.get('minPercentOfPeriodNetGrainTax'), target.get('maxPercentOfPeriodNetGrainTax')
+    if (type(turns) is not int or turns <= 0 or type(low) is not int
+            or type(high) is not int or not 0 <= low <= high):
+        raise ValueError('invalid period or percentage bounds')
+    rows = settlement['ledger']
+    if [r['turn'] for r in rows] != list(range(1, turns + 1)):
+        raise ValueError('settlement must cover the complete target period exactly once')
+    net_tax = sum(r['taxGrain'] for r in rows)
+    required = sum(r['equipmentConsumed'] + r['rationDemand'] for r in rows)
+    unmet = sum(r['unmetRation'] for r in rows)
+    decisions = settlement['recruitDecisions']
+    if any(d['status'] == 'APPLIED' and d['turn'] != 1 for d in decisions):
+        raise ValueError('full-period upkeep requires all initial recruitment at turn one')
+    applied = bool(decisions) and all(
+        d['status'] == 'APPLIED' or (d['status'] == 'DUPLICATE' and d['originalStatus'] == 'APPLIED')
+        for d in decisions)
+    within = net_tax > 0 and low * net_tax <= 100 * required <= high * net_tax
+    return {'status': 'GRAIN_BUDGET_ASSESSMENT', 'targetDecisionStatus': target['status'],
+            'requiredGrain': required, 'netGrainTax': net_tax,
+            'percentOfNetGrainTax': 100 * required / net_tax if net_tax else None,
+            'withinBudget': within, 'allRecruitmentsApplied': applied,
+            'fullySupplied': unmet == 0, 'unmetRation': unmet,
+            'eligibleReference': within and applied and unmet == 0, 's2GatePassed': False}
