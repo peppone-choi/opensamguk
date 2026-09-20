@@ -143,7 +143,7 @@ class ReservedDiplomacyDestTargetTest {
 
         // dest id가 ctx에 실리지 않으면 ExistsDestNation/ExistsDestGeneral가 id 0에 대해 Deny → 휴식 폴백한다.
         assertFalse(outcome.fellBack, "수락국 군주의 외교 수락은 폴백(휴식)이 아니라 실제로 실행되어야 한다: denyReason=${outcome.denyReason}")
-        assertEquals("che_불가침수락", outcome.definition.key)
+        assertEquals("che_불가침수락", outcome.definition!!.key)
 
         // PHP che_불가침수락.php:203-204,210 byte-exact:
         //   currentMonth = env.year*12 + env.month - 1, reqMonth = year*12 + month (−1 없음),
@@ -179,7 +179,7 @@ class ReservedDiplomacyDestTargetTest {
         val outcome = handler.handle(generalId = 10, reserved = reserved, year = YEAR, month = MONTH, date = "12:34")
 
         assertFalse(outcome.fellBack, "수락국 군주의 종전 수락은 폴백이 아니라 실제로 실행되어야 한다: denyReason=${outcome.denyReason}")
-        assertEquals("che_종전수락", outcome.definition.key)
+        assertEquals("che_종전수락", outcome.definition!!.key)
 
         val forward = world.getDiplomacy(ACCEPT_NATION, PROPOSER_NATION)!!
         val reverse = world.getDiplomacy(PROPOSER_NATION, ACCEPT_NATION)!!

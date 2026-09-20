@@ -174,7 +174,7 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(1012, "휴식", YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack, "an actual reserved 휴식 is not a command fallback")
-        assertEquals("휴식", outcome.definition.key)
+        assertEquals("휴식", outcome.definition!!.key)
         assertNull(outcome.denyReason)
         assertFalse(handler.recorder.isDirty, "cityless 휴식 must not invent a city delta")
     }
@@ -198,7 +198,7 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(42, "che_농지개간", YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack, "AVAILABLE general resolves the requested action, not the fallback")
-        assertEquals("che_농지개간", outcome.definition.key)
+        assertEquals("che_농지개간", outcome.definition!!.key)
         assertNull(outcome.denyReason)
         assertEquals(1, outcome.logs.size, "exactly one action log (no level cross in P1)")
 
@@ -259,7 +259,7 @@ class ReservedTurnHandlerTest {
         )
 
         assertTrue(outcome.fellBack)
-        assertEquals("휴식", outcome.definition.key)
+        assertEquals("휴식", outcome.definition!!.key)
         assertEquals("인자가 올바르지 않습니다.", outcome.denyReason)
         assertEquals(2_000, world.getGeneralById(42)!!.rice)
         assertEquals(0, world.getGeneralById(42)!!.gold)
@@ -658,7 +658,7 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(42, "che_농지개간", YEAR, MONTH, "12:34")
 
         assertTrue(outcome.fellBack, "denied turn falls back to 휴식")
-        assertEquals("휴식", outcome.definition.key)
+        assertEquals("휴식", outcome.definition!!.key)
         assertEquals("아국이 아닙니다.", outcome.denyReason, "OccupiedCity deny reason (PHP getFailString)")
 
         // no economic mutation
@@ -759,7 +759,7 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(42, "che_인재탐색", YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack)
-        assertEquals("che_인재탐색", outcome.definition.key)
+        assertEquals("che_인재탐색", outcome.definition!!.key)
         assertEquals(2, world.listGenerals().size, "the discovered NPC is visible in the live world")
         val created = world.listGenerals().single { it.id != 42 }
         assertEquals(3, created.npcState)

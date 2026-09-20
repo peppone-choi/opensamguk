@@ -277,7 +277,7 @@ class PrecheckFullCrossCallSiteTest {
 
         // SAME outcome CLASS: Allow -> AVAILABLE / not-fell-back
         assertFalse(outcome.fellBack, "game-engine full: Allow (resolved, did NOT fall back to 휴식)")
-        assertEquals(ACTION, outcome.definition.key, "the requested action resolved, not the fallback")
+        assertEquals(ACTION, outcome.definition!!.key, "the requested action resolved, not the fallback")
         assertEquals(null, outcome.denyReason, "no deny reason on an allowed turn")
     }
 
@@ -585,7 +585,7 @@ class PrecheckFullCrossCallSiteTest {
         val (handler, _) = engineHandler(fixture)
         val outcome = handler.handle(GENERAL_ID, ReservedTurn(action, argJson), YEAR, MONTH, "12:34")
         assertFalse(outcome.fellBack, "game-engine full: Allow — resolved, did NOT fall back ($action)")
-        assertEquals(action, outcome.definition.key, "the requested action resolved, not the fallback")
+        assertEquals(action, outcome.definition!!.key, "the requested action resolved, not the fallback")
         assertEquals(null, outcome.denyReason, "no deny reason on an allowed turn ($action)")
     }
 
@@ -611,7 +611,7 @@ class PrecheckFullCrossCallSiteTest {
         val (handler, _) = engineHandler(fixture)
         val outcome = handler.handle(GENERAL_ID, ReservedTurn(action, argJson), YEAR, MONTH, "12:34")
         assertTrue(outcome.fellBack, "game-engine full denies — falls back to 휴식 ($action)")
-        assertEquals("휴식", outcome.definition.key, "denied turn resolves to the fallback ($action)")
+        assertEquals("휴식", outcome.definition!!.key, "denied turn resolves to the fallback ($action)")
         assertEquals(reason, outcome.denyReason, "game-engine deny reason ($action)")
 
         // THE invariant: both REAL call sites returned the SAME class + the SAME byte-identical reason.
@@ -630,7 +630,7 @@ class PrecheckFullCrossCallSiteTest {
         val (handler, _) = engineHandler(fixture)
         val outcome = handler.handle(GENERAL_ID, ReservedTurn(RECRUIT_ACTION, argJson), YEAR, MONTH, "12:34")
         assertFalse(outcome.fellBack, "game-engine full: recruit Allow")
-        assertEquals(RECRUIT_ACTION, outcome.definition.key)
+        assertEquals(RECRUIT_ACTION, outcome.definition!!.key)
     }
 
     private fun assertRecruitDenyAgreement(

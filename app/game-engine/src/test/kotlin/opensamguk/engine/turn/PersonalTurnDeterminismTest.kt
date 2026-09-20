@@ -144,12 +144,10 @@ class PersonalTurnDeterminismTest {
     }
 
     @Test
-    fun `G2 the hwiha handler seeds differ across the three phases and across worlds`() {
+    fun `G2 world derived hwiha seeds differ across the three phases and across worlds`() {
         fun seedOf(worldId: Int, phase: Int): String {
-            val seeds = mutableListOf<String>()
-            handler(world(RuleProfile.HWIHA, listOf(gen(17)), worldId = worldId, phase = phase), seeds)
-                .handle(17, "휴식", 200, 6, "14:00")
-            return seeds.single()
+            return world(RuleProfile.HWIHA, listOf(gen(17)), worldId = worldId, phase = phase)
+                .personalTurnSeed(hidden, "generalCommand", 200, 6, 17, "휴식")
         }
         assertEquals(3, (1..3).map { seedOf(1, it) }.toSet().size)
         assertNotEquals(seedOf(1, 2), seedOf(2, 2))
@@ -158,4 +156,15 @@ class PersonalTurnDeterminismTest {
             seedOf(2, 3),
         )
     }
+    @Test
+    fun `undelivered and wrong profile inputs do not consume an action random stream`() {
+        for (code in listOf("휴식", "action.enlist")) {
+            val seeds = mutableListOf<String>()
+            val result = handler(world(RuleProfile.HWIHA, listOf(gen(17))), seeds)
+                .handle(17, code, 200, 6, "14:00")
+            kotlin.test.assertIs<opensamguk.engine.hwiha.HwihaTurnOutcome.Rejected>(result.hwihaOutcome)
+            assertEquals(emptyList(), seeds)
+        }
+    }
+
 }

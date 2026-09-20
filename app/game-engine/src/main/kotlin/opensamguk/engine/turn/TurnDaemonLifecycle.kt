@@ -169,6 +169,22 @@ class TurnDaemonLifecycle(
             val env = lifecycleEnvOf(state, date)
             var hasReservedTurn = false
             observeGeneralTurnStart(g.id)
+            if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA || '.' in dueGeneral.reserved.actionCode) {
+                // New inputs never enter legacy healing, blocking, AI, nation actions or rebirth.
+                // Even an undelivered reservation receives a terminal result and consumes one slot.
+                require(state.tickSeconds > 0) { "positive personal-turn interval required" }
+                val reserved = dueGeneral.reserved
+                val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
+                    .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
+                handled.add(result)
+                observeHandledTurn(result)
+                pullGeneralTurnOf(g.id)
+                val beforeAdvance = checkNotNull(world.getGeneralById(g.id))
+                val advanced = beforeAdvance.copy(turnTime = g.turnTime.plusSeconds(state.tickSeconds.toLong()))
+                handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeAdvance), PerTurnOverlay.toLogicGeneral(advanced))
+                world.applyGeneralDirtyFree(advanced)
+                continue
+            }
             handler.preprocessGeneral(g.id, state.currentYear, state.currentMonth)
             // The SINGLE processBlocked() gate (PHP `:299`): `block>=2` skips the WHOLE command block —
             // BOTH the nation pass AND the general pass (R-SEAM §2). The handler's processBlocked pushes
@@ -247,7 +263,8 @@ class TurnDaemonLifecycle(
                 // autorunMode는 PER-GENERAL 신호다(PHP `$autorunMode`, :333-336 — AI가 예약 명령을 다른 명령으로
                 // 교체했을 때만 true). handle()이 HandledTurn.autorunMode로 노출하므로, 틱-레벨 env를 그 값으로
                 // copy해 :159 autorun 분기가 정확히 동작하게 한다(틱 env의 autorunMode 기본 false는 비-AI/AI-동일예약).
-                val commandClassName = if (result.fellBack) reserved.actionCode else result.definition.name
+                val commandClassName = result.hwihaOutcome?.inputId
+                    ?: if (result.fellBack) reserved.actionCode else checkNotNull(result.definition).name
                 handler.applyKillturnDecrement(g.id, commandClassName, env.copy(autorunMode = result.autorunMode))
             }
 

@@ -57,10 +57,12 @@ class HwihaEnlistmentPersistenceIT {
         val binding = bundle.projection.bindingsByCityId.entries.sortedBy { it.key }.first { it.value.landProvinceId != null }
         jdbc.update("INSERT INTO nation(world_id,id,name,color,gold,capital_city_id,meta) VALUES (?,1,'주공국','#000000',500,?,'{\"gennum\":1,\"keep\":42}'::jsonb)", id, binding.key)
         for ((generalId, nation, npc) in listOf(Triple(1, 0, 0), Triple(2, 0, 2), Triple(10, 1, 2))) {
-            jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,turn_time,last_turn,meta)
-                VALUES (?,?,?,?,?,?,?,1000,2000,300,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,?::jsonb)""",
+            jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
+                VALUES (?,?,?,?,?,?,?,1000,2000,300,70,70,70,70,70,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,?::jsonb)""",
                 id, generalId, "G$generalId", nation, binding.key, npc, if (generalId == 10) 12 else 0,
-                "{\"hwihaLord\":${generalId != 2},\"keep\":\"unchanged\"}")
+                """{"hwihaLord":${generalId != 2},"keep":"unchanged","hwihaPersonPolicy":{
+                    "renownCapacity":30,"acceptsEnlistment":true,"statSourceId":"synthetic-storage-fixture",
+                    "statSourceRevision":"fixture-v1","officerId":$generalId}}""")
             val topology = bundle.projection.topology
             jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
                 VALUES (?,?,?,?,'LAND_PROVINCE',?,1)""", id, generalId, topology.topologyRevision, topology.contentHash, binding.value.landProvinceId)
@@ -76,7 +78,7 @@ class HwihaEnlistmentPersistenceIT {
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
     private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaEnlistmentExecutor(world, recorder) {
-        EnlistmentPolicy(setOf(10), mapOf(10 to (30 - world.retainersOf(10).size * 7)), 7)
+        assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(world).current(it)).policy
     }.execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
 
     private fun assertSameSnapshot(expected: WorldSnapshot, actual: WorldSnapshot) {
@@ -114,6 +116,13 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(3, after.nations.single().meta["gennum"])
         assertEquals(false, HwihaLordStatus.read(after.generals.single { it.id == 1 }.meta))
         val rebooted = InMemoryTurnWorld(after)
+        assertEquals(HwihaPersonPolicyState(30, true, "synthetic-storage-fixture", "fixture-v1", 1),
+            HwihaPersonPolicyState.read(rebooted.getGeneralById(1)!!.meta))
+        val coldPolicy = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(rebooted)
+            .current(EnlistmentRequest(1, EnlistmentMode.NATION, 1)))
+        assertEquals(7, coldPolicy.policy.actorCardCost)
+        assertEquals(23, coldPolicy.policy.freeRenownByLord[10])
+        assertEquals(30, HwihaPersonPolicyState.read(rebooted.getGeneralById(10)!!.meta)!!.renownCapacity)
         assertEquals(EnlistmentFailure.ALREADY_SERVING,
             assertIs<EnlistmentExecution.Rejected>(enlist(rebooted, ChangeRecorder())).reason)
         assertEquals(2, rebooted.listRetainers().size)
@@ -139,4 +148,56 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(world.listRetainers(), load(3).retainers)
         assertEquals(world.listNations(), load(3).nations)
     }
+    @Test fun `undelivered input result slot consumption and personal time commit together and survive restart`() {
+        seed(4)
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=4 AND id<>1")
+        val id = WorldId(4)
+        val named = NamedParameterJdbcTemplate(jdbc)
+        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(named)
+        reservations.reserve(id, 1, 0, "action.enlist", "{}", requestId = "undelivered-request")
+        reservations.reserve(id, 1, 1, "court.dispatch", "{}", requestId = "next-request")
+        val before = load(4)
+        val world = InMemoryTurnWorld(before)
+        val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
+        val published = mutableListOf<String>()
+        fun service(active: InMemoryTurnWorld): opensamguk.engine.run.TurnRunService {
+            val handler = ReservedTurnHandler(active,
+                opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200)
+            val lifecycle = TurnDaemonLifecycle(active, handler,
+                pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
+                reservedActionOf = { reservations.readReserved(id, it, 0) })
+            val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
+                override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
+            }
+            val publisher = object : opensamguk.engine.redis.RealtimePublisher(redis, "fixture", id) {
+                override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
+            }
+            return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher)
+        }
+        val at = java.time.Instant.parse("0200-01-01T00:00:01Z")
+        val result = service(world).runDueGeneralTurns(at).handled.single()
+        assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+        assertEquals(listOf("undelivered-request"), published)
+        assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
+        val after = load(4)
+        assertEquals(before.generals.map { if (it.id == 1) it.copy(
+            turnTime = it.turnTime.plusSeconds(3600),
+            initialTurns = it.initialTurns.drop(1) + GeneralTurnSeed("휴식", "{}", "휴식"),
+        ) else it }, after.generals)
+        assertEquals(before.retainers, after.retainers)
+        val payload = opensamguk.infra.persistence.CommandResultRepository(named).findResultPayload(id, "undelivered-request")!!
+        val envelope = opensamguk.common.wire.WireJson.decodeFromString(
+            opensamguk.common.wire.TurnDaemonEventEnvelope.serializer(), payload)
+        val stored = (envelope.event as opensamguk.common.wire.TurnDaemonEvent.CommandResult).result
+            as opensamguk.common.wire.CommandLifecycleResult
+        assertEquals("executionRejected", stored.type)
+        assertFalse(stored.ok)
+        assertEquals("NOT_DELIVERED", stored.code)
+        assertEquals("action.enlist", stored.actionCode)
+        assertTrue(service(InMemoryTurnWorld(after)).runDueGeneralTurns(at).handled.isEmpty())
+        assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=4 AND request_id='undelivered-request'", Int::class.java))
+        assertEquals(1, published.size)
+    }
+
 }

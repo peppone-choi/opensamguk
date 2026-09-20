@@ -189,7 +189,7 @@ class ScenarioBootIT {
         val handled = lifecycle.runTick(runTime)
         assertTrue(handled.isNotEmpty(), "the turn loop advanced at least one due general")
         // The seeded ring is all 휴식 → every advanced general resolves the rest action (no exception).
-        assertTrue(handled.all { it.definition.key == "휴식" }, "every advanced turn resolved 휴식")
+        assertTrue(handled.all { it.definition!!.key == "휴식" }, "every advanced turn resolved 휴식")
         assertEquals(2, world.listNations().size, "seeded nations survive the first due-turn tick")
 
         // 5. second seed is a no-op (emptiness gate).

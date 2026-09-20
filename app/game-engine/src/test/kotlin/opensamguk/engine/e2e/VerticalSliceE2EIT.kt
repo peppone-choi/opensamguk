@@ -306,7 +306,7 @@ class VerticalSliceE2EIT {
             assertEquals(1, result.handled.size, "exactly one due general drained in one pass")
             val handled = result.handled.single()
             assertFalse(handled.fellBack, "AVAILABLE general resolves che_상업투자, not the rest fallback")
-            assertEquals(action, handled.definition.key)
+            assertEquals(action, handled.definition!!.key)
             assertEquals(1, result.flushedGenerals)
             assertEquals(1, result.flushedCities)
             assertEquals(1, result.flushedLogs)

@@ -325,7 +325,7 @@ class ScenarioBlankPlayerCommandIT {
     }
 
     private fun assertAllowed(outcome: ReservedTurnHandler.HandledTurn) {
-        assertFalse(outcome.fellBack, "${outcome.definition.key} fell back: ${outcome.denyReason}")
+        assertFalse(outcome.fellBack, "${outcome.definition!!.key} fell back: ${outcome.denyReason}")
     }
 
     /**

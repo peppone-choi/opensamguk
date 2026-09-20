@@ -364,6 +364,35 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(listOf("executionApplied"), payloads.last().commandResults.map { it.resultType })
     }
 
+    @Test
+    fun `typed rejection without rest fallback commits a rejected result and retries identical payload`() {
+        val payloads = mutableListOf<FlushPayload>()
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                payloads.add(payload)
+                if (payloads.size == 1) throw QueryTimeoutException("rolled back")
+            }
+        }
+        val (service, world) = newFixture(flush, withDueGeneral = true,
+            reservedTurn = ReservedTurn("action.enlist", "{}", requestId = "hwiha-rejected"))
+        assertFailsWith<QueryTimeoutException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
+        val row = payloads.single().commandResults.single()
+        assertEquals("hwiha-rejected", row.requestId)
+        assertEquals("executionRejected", row.resultType)
+        assertFalse(row.ok)
+        val envelope = opensamguk.common.wire.WireJson.decodeFromString(
+            opensamguk.common.wire.TurnDaemonEventEnvelope.serializer(), row.envelopeJson)
+        val result = (envelope.event as opensamguk.common.wire.TurnDaemonEvent.CommandResult).result
+            as opensamguk.common.wire.CommandLifecycleResult
+        assertEquals("WRONG_RULE_PROFILE", result.code)
+        assertEquals("action.enlist", result.actionCode)
+        assertEquals(listOf(10), payloads.single().reservedGeneralTurnPulls.map { it.generalId })
+        val afterExecution = world.getGeneralById(10)
+        assertTrue(service.retryRetainedFlush())
+        assertSame(payloads.first(), payloads.last())
+        assertEquals(afterExecution, world.getGeneralById(10))
+    }
+
     private fun newFixture(
         flush: JdbcFlushExecutor,
         commandStream: RedisCommandStream? = null,

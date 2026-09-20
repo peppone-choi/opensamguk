@@ -199,6 +199,27 @@ class CommandResultLookupTest {
     }
 
     @Test
+    fun `typed hwiha rejection replaces pending admission and preserves reason code`() {
+        val requestId = "req-hwiha-rejected"
+        stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "reservationAccepted", ok = true, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0)))
+        stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0,
+            code = "NOT_DELIVERED", reason = "아직 제공되지 않는 입력입니다."), committedWorldVersion = 35))
+        readOwnResult(requestId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(false))
+            .andExpect(jsonPath("$.type").value("executionRejected"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(35))
+            .andExpect(jsonPath("$.result.actionCode").value("action.enlist"))
+            .andExpect(jsonPath("$.result.code").value("NOT_DELIVERED"))
+            .andExpect(jsonPath("$.reason").value("아직 제공되지 않는 입력입니다."))
+    }
+
+    @Test
     fun `queue mutation remains a resolved admission and is not presented as execution`() {
         val queueMutation = storedPayload(
             "req-queue",

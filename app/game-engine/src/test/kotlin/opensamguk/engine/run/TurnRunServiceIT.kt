@@ -200,7 +200,7 @@ class TurnRunServiceIT {
             assertEquals(1, result.handled.size, "exactly one due general drained in one pass")
             val handled = result.handled.single()
             assertFalse(handled.fellBack, "AVAILABLE general resolves che_농지개간, not the rest fallback")
-            assertEquals("che_농지개간", handled.definition.key)
+            assertEquals("che_농지개간", handled.definition!!.key)
             assertEquals(1, result.flushedGenerals)
             assertEquals(1, result.flushedCities)
             assertEquals(1, result.flushedLogs)

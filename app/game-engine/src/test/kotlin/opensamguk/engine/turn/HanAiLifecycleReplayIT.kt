@@ -231,7 +231,7 @@ class HanAiLifecycleReplayIT {
             },
             pullGeneralTurnOf = { adapter.drainGeneralPassDeltas(recorder) },
             observeHandledTurn = { handled ->
-                if (!handled.fellBack) resolvedGeneralActions += handled.definition.key
+                if (!handled.fellBack) resolvedGeneralActions += handled.definition!!.key
             },
             reservedActionOf = { ReservedTurn("휴식", "") },
         )

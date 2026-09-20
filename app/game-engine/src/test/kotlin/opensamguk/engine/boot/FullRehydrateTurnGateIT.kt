@@ -172,7 +172,7 @@ class FullRehydrateTurnGateIT {
 
     private fun assertResolved(result: TurnRunService.TickResult, actionCode: String) {
         assertEquals(1, result.handled.size, "one due general must run at this deterministic tick")
-        assertEquals(actionCode, result.handled.single().definition.key)
+        assertEquals(actionCode, result.handled.single().definition!!.key)
         assertFalse(result.handled.single().fellBack, "$actionCode must resolve rather than fall back")
     }
 }
