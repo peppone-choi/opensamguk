@@ -3,6 +3,13 @@
  "status": "OWNER_APPROVED_BASELINE",
  "approvedOn": "2026-09-17",
  "approvedBy": "사용자(기획 대화, 이슈 #778)",
+ "turnClock": {
+  "defaultRealMinutesPerTurn": 60,
+  "worldConfigurable": true,
+  "approvedOn": "2026-09-20",
+  "approvedBy": "사용자(제작 착수 대화: 1순 1시간, 예약 12순 반나절)",
+  "scope": "신규 HWIHA 기획 기본값. 기존 운영 월드의 설정을 변경하지 않는다."
+ },
  "baseSpeedKmPerTurn": 30,
  "roughTerrainFactor": 1.5,
  "roughTerrain": ["MOUNTAIN", "PLATEAU", "HILL", "DESERT"],
