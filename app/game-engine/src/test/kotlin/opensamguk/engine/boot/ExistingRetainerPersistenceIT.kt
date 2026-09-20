@@ -45,6 +45,31 @@ class ExistingRetainerPersistenceIT {
     private fun load() = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(1)), WorldId(1), snapshotValidator = {}).buildSnapshot()
     private fun flush(world: InMemoryTurnWorld, recorder: ChangeRecorder) = executor.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
 
+    @Test fun `lord metadata survives recorder flush and cold reload without replacing other fields`() {
+        // Storage contract only: this fixture does not activate a HWIHA gameplay handler.
+        val world = InMemoryTurnWorld(load())
+        val before = world.getGeneralById(10)!!
+        val marked = before.copy(meta = LinkedHashMap(before.meta).apply { put("hwihaLord", true) })
+        val recorder = ChangeRecorder()
+        world.applyGeneralDirtyFree(marked)
+        recorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(before),
+            opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(marked))
+        flush(world, recorder)
+        val rebooted = InMemoryTurnWorld(load())
+        val loaded = rebooted.getGeneralById(10)!!
+        assertEquals(marked, loaded)
+        assertTrue(opensamguk.logic.input.HwihaLordStatus.read(loaded.meta))
+        val released = loaded.copy(meta = opensamguk.logic.input.HwihaLordStatus.afterEnlistment(loaded.meta))
+        val releaseRecorder = ChangeRecorder()
+        rebooted.applyGeneralDirtyFree(released)
+        releaseRecorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(loaded),
+            opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(released))
+        flush(rebooted, releaseRecorder)
+        val after = InMemoryTurnWorld(load()).getGeneralById(10)!!
+        assertEquals(released, after)
+        assertEquals(false, opensamguk.logic.input.HwihaLordStatus.read(after.meta))
+    }
+
     @Test fun `intake flush and cold boot preserve linked identity and released id high water`() {
         val world = InMemoryTurnWorld(load())
         val npc = world.getGeneralById(20)!!

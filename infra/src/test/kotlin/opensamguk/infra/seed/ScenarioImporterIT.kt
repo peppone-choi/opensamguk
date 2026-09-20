@@ -126,7 +126,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         // 위치 권위 spec §2.2·§3-3: HWIHA 시드 = 전 장수 위치 행. 기존 1010 에 ruleProfile 만 얹는다.
         val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
-        val scenario = ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\"," + raw)
+        val scenario = ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\", \"hwihaLords\": [\"우길\"]," + raw)
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
         ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
 
@@ -134,6 +134,10 @@ class ScenarioImporterIT {
         val rows = jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java)!!
         assertEquals(generals, rows)
         assertTrue(generals > 100)
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta->>'hwihaLord' = 'true'", Int::class.java))
+        assertEquals(generals, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'hwihaLord'", Int::class.java))
+        val storedMeta = jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id = 1 AND meta->>'hwihaLord' = 'true'", String::class.java)!!
+        assertTrue(opensamguk.logic.input.HwihaLordStatus.read(opensamguk.infra.persistence.MetaJson.decode(storedMeta)))
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(config.contains("\"ruleProfile\": \"HWIHA\"") || config.contains("\"ruleProfile\":\"HWIHA\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
@@ -153,6 +157,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         newImporter().importAll(jdbc, canonicalWorldId)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'hwihaLord'", Int::class.java))
     }
 
     @Test
