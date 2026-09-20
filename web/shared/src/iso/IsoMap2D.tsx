@@ -532,8 +532,8 @@ export function IsoMap2D({
       });
       if (surface) {
         const b = surface.bounds;
-        // The surface is already rasterized at device resolution; avoid a second blur.
-        context.imageSmoothingEnabled = false;
+        // Smooth upscaled terrain only; native-density surfaces need no second filter.
+        context.imageSmoothingEnabled = surface.pixelRatio < dpr;
         context.drawImage(surface.canvas, b.x, b.y, b.width, b.height);
         context.imageSmoothingEnabled = view.scale < 1;
       }
