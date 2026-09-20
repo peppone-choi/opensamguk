@@ -165,7 +165,7 @@ class CommandReserveService(
         ownerUserId: Int?,
     ): ReserveResult {
         val canonicalArgs = if (actionCode == "action.enlist") {
-            (hwihaAdmission ?: throw HwihaAdmissionDenied("NOT_DELIVERED", "출사 접수 연결이 없습니다."))
+            (hwihaAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else argJson
         val requestId = requestIds()

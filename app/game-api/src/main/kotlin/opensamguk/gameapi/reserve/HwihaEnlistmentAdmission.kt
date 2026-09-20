@@ -23,11 +23,11 @@ class HwihaEnlistmentAdmission(
         }
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         val request = HwihaEnlistmentInput.parse(generalId, raw)
-            ?: deny("INVALID_REQUEST", "출사 입력이 올바르지 않습니다.")
+            ?: deny(EnlistmentFailure.INVALID_REQUEST.name, EnlistmentFailure.INVALID_REQUEST.message)
         val assessment = precheck.assess(request)
-        if (assessment is EnlistmentAssessment.Rejected) deny(assessment.reason.name, "출사할 수 없습니다: ${assessment.reason.name}")
+        if (assessment is EnlistmentAssessment.Rejected) deny(assessment.reason.name, assessment.reason.message)
         if (catalog["action.enlist"]?.deliveryState?.hasHandler != true) {
-            deny("NOT_DELIVERED", "아직 제공되지 않는 입력입니다.")
+            deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         }
         return HwihaEnlistmentInput.canonicalJson(request)
     }

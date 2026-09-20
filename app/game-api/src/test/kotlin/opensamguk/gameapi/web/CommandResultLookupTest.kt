@@ -228,7 +228,7 @@ class CommandResultLookupTest {
         stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
             type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
             actionCode = "action.enlist", generalId = 10, turnIdx = 0,
-            code = "TARGET_NOT_LORD", reason = "대상의 주공 지위가 변경되었습니다."), committedWorldVersion = 35))
+            code = opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.name, reason = opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.message), committedWorldVersion = 35))
         readOwnResult(requestId)
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
@@ -237,7 +237,7 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.committedWorldVersion").value(35))
             .andExpect(jsonPath("$.result.actionCode").value("action.enlist"))
             .andExpect(jsonPath("$.result.code").value("TARGET_NOT_LORD"))
-            .andExpect(jsonPath("$.reason").value("대상의 주공 지위가 변경되었습니다."))
+            .andExpect(jsonPath("$.reason").value(opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.message))
     }
 
     @Test

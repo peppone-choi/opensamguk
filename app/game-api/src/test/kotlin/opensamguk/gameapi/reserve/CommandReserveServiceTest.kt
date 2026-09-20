@@ -35,6 +35,18 @@ class CommandReserveServiceTest {
         val catalog = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
             {"inputId":"action.enlist","kind":"GENERAL_ACTION","layer":1,"deliveryState":"HANDLER_READY","legacyCommands":[]}
         ]}""")
+        val admission = HwihaEnlistmentAdmission(generals, precheck, catalog)
+        for (failure in opensamguk.logic.input.EnlistmentFailure.entries) {
+            `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Rejected(failure))
+            val denied = assertFailsWith<HwihaAdmissionDenied> {
+                admission.canonicalArguments(10, 42, 0, """{"mode":"NATION","targetId":3}""")
+            }
+            assertEquals(failure.name, denied.code)
+            assertEquals(failure.message, denied.message)
+        }
+        val malformed = assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(10, 42, 0, "{}") }
+        assertEquals(opensamguk.logic.input.EnlistmentFailure.INVALID_REQUEST.message, malformed.message)
+        `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
         val plannedCatalog = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
             {"inputId":"action.enlist","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}
         ]}""")
