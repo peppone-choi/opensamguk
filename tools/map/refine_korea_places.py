@@ -122,10 +122,24 @@ def diff(before, after):
     return patches
 
 def peel(document):
-    if not LEDGER.exists():
+    if not LEDGER.exists() or not document.get("cities"):
         return document, None
     ledger = json.loads(LEDGER.read_text())
     patches = ledger['patches']
+    order = ledger.get('cityOrder')
+    if order and [row['id'] for row in document['cities']] != order:
+        document = copy.deepcopy(document)
+        old = document['cities']
+        by_id = {row['id']: row for row in old}
+        if set(order) != set(by_id):
+            return document, None
+        index = {pid: i for i, pid in enumerate(order)}
+        for province in document['provinceRecords']:
+            if province.get('cityIndex') is not None:
+                province['cityIndex'] = index[old[province['cityIndex']]['id']]
+        for jun in document['juns']:
+            jun['seat'] = index[old[jun['seat']]['id']]
+        document['cities'] = [by_id[pid] for pid in order]
     # Recognize by all moved seats, not merely by the document's array order.
     city_patches = [p for p in patches if p.get('key') == 'cities']
     current = {r['id']: r for r in document['cities']}
@@ -152,7 +166,7 @@ def reapply(document, ledger):
 def build_stage(source, decisions):
     result = apply(source, decisions)
     ledger = dict(schemaVersion=1, inputSha256=digest(source), outputSha256=digest(result),
-                  decisions=decisions, patches=diff(source, result))
+                  decisions=decisions, cityOrder=[row['id'] for row in result['cities']], patches=diff(source, result))
     return result, ledger
 
 def restack(document, preceding_ledger, prepare=False):

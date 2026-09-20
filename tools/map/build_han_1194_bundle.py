@@ -27,7 +27,12 @@ def outputs():
     out = {}
     for entry in catalog['files']:
         data = (ROOT/entry['path']).read_bytes()
-        compressed = gzip.compress(data, compresslevel=9, mtime=0)
+        # Preserve verified frozen bytes: zlib streams/header OS bytes can differ across
+        # Python/platform versions. Content and catalog hash checks remain exact.
+        existing = BUNDLE / f'blobs/{sha(data)}.json.gz'
+        compressed = existing.read_bytes() if existing.exists() else gzip.compress(data, compresslevel=9, mtime=0)
+        if gzip.decompress(compressed) != data:
+            raise ValueError(f'corrupt frozen payload: {existing}')
         entry.update(sha256=sha(data), bytes=len(data), blob=f'blobs/{sha(data)}.json.gz', compressedSha256=sha(compressed))
         out[BUNDLE/entry['blob']] = compressed
     constants = json.loads((PREVIOUS/'runtime-constants.json').read_bytes())

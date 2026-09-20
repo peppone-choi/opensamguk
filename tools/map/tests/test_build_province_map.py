@@ -215,7 +215,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
 
         expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
         expected_commanderies = [value for value, count in source["parentOwner"] for _ in range(count)]
-        self.assertEqual((width, height), (768, 669))
+        self.assertEqual((width, height), (864, 843))
         self.assertEqual(provinces, expected_provinces)
         self.assertEqual(commanderies, expected_commanderies)
 

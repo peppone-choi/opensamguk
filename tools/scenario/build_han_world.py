@@ -703,6 +703,10 @@ def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
     id와 소속을 정본으로 삼는다.
     """
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
+    # Legacy gameplay stores its own owner raster in the original 768×669 frame.
+    # Reverse the later Korea expansion before combining its frozen city coordinates.
+    from tools.map import refine_korea_places
+    tiles, _ = refine_korea_places.peel(tiles)
     legacy_gameplay = tiles.get("legacyGameplay")
     if isinstance(legacy_gameplay, dict):
         tiles = {**tiles, **legacy_gameplay}
