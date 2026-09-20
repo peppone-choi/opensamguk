@@ -3,6 +3,8 @@
 All accepted convoys dispatch at boundary 1 from initial stock. Arrival is at
 1 + caller-provided travelTurns. ID order allocates contested initial stock.
 These are explicit experiment assumptions, not an automatic supply policy.
+Optional actual_arrivals comes from explicit path/state revalidation: omitted
+uses planned timing; an explicit None retains dispatched cargo in transit.
 Routes, permission, speed and capacity must be evaluated by the caller. None
 travelTurns means no route. No interception, loss, rerouting or capture is inferred.
 Compose stocksAfterDispatch and arrivals with county_economy.settle_county;
@@ -11,7 +13,7 @@ cumulative through that turn; arrivals[county][turn] is the per-turn receipt.
 """
 
 
-def schedule_convoys(*, stocks: dict[str, int], orders: list[dict], horizon: int) -> dict:
+def schedule_convoys(*, stocks: dict[str, int], orders: list[dict], horizon: int, actual_arrivals: dict[str, int | None] | None = None) -> dict:
     def integer(value, minimum, label):
         if type(value) is not int or value < minimum:
             raise ValueError(f'{label} must be an integer >= {minimum}')
@@ -39,6 +41,16 @@ def schedule_convoys(*, stocks: dict[str, int], orders: list[dict], horizon: int
             raise ValueError(f'conflicting payload for convoy {order["id"]}')
         payloads[order['id']] = payload
 
+    if actual_arrivals is not None:
+        if set(actual_arrivals) != set(payloads):
+            raise ValueError('actual arrival schedule must cover exactly the convoy IDs')
+        for oid, at in actual_arrivals.items():
+            planned = payloads[oid][3]
+            if at is not None:
+                integer(at, 2, 'actual arrival')
+                if planned is None or at < 1 + planned:
+                    raise ValueError('actual arrival cannot precede planned travel or invent a route')
+
     remaining = dict(sorted(stocks.items()))
     arrivals = {county: {} for county in remaining}
     decisions, dispatched, outcomes = [], [], {}
@@ -55,18 +67,18 @@ def schedule_convoys(*, stocks: dict[str, int], orders: list[dict], horizon: int
             else:
                 status = 'DISPATCHED'
                 remaining[src] -= amount
-                arrival_turn = 1 + turns
+                arrival_turn = 1 + turns if actual_arrivals is None else actual_arrivals[oid]
                 dispatched.append((arrival_turn, amount))
                 decision['arrivalTurn'] = arrival_turn
-                if arrival_turn <= horizon:
+                if arrival_turn is not None and arrival_turn <= horizon:
                     arrivals[dst][arrival_turn] = arrivals[dst].get(arrival_turn, 0) + amount
             outcomes[oid] = status
             decision['status'] = status
         decisions.append(decision)
     ledger = []
     for turn in range(1, horizon + 1):
-        arrived = sum(amount for at, amount in dispatched if at <= turn)
-        in_transit = sum(amount for at, amount in dispatched if at > turn)
+        arrived = sum(amount for at, amount in dispatched if at is not None and at <= turn)
+        in_transit = sum(amount for at, amount in dispatched if at is None or at > turn)
         assert sum(remaining.values()) + arrived + in_transit == sum(stocks.values())
         ledger.append({'turn': turn, 'arrived': arrived, 'inTransit': in_transit})
     return {'status': 'EXPLORATORY', 'dispatchTurn': 1, 'stocksAfterDispatch': remaining,

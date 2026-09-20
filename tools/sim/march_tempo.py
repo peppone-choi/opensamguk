@@ -84,10 +84,14 @@ class Graph:
         return math.hypot((x2 - x1) * self.dlon * 111.32 * math.cos(math.radians(lat)), (y2 - y1) * self.dlat * 110.57)
 
     def shortest(self, src: int, dst: int, rough_factor: float, *, allowed_provinces: set[int] | None = None):
+        route = self.shortest_path(src, dst, rough_factor, allowed_provinces=allowed_provinces)
+        return route[:3] if route is not None else None
+
+    def shortest_path(self, src: int, dst: int, rough_factor: float, *, allowed_provinces: set[int] | None = None):
         """(비용 km, 실제 km, 간선 수 — 경유 省 수는 +1). 비용 = km × (1 + (계수-1) × 두 省 험지 비율 평균)."""
         if allowed_provinces is not None and (src not in allowed_provinces or dst not in allowed_provinces):
             return None
-        best = {src: (0.0, 0.0, 0)}
+        best = {src: (0.0, 0.0, 0, [src])}
         heap = [(0.0, src)]
         while heap:
             cost, u = heapq.heappop(heap)
@@ -102,7 +106,7 @@ class Graph:
                 share = (self.rough_share[u] + self.rough_share[v]) / 2
                 c = cost + d * (1 + (rough_factor - 1) * share)
                 if v not in best or c < best[v][0]:
-                    best[v] = (c, best[u][1] + d, best[u][2] + 1)
+                    best[v] = (c, best[u][1] + d, best[u][2] + 1, best[u][3] + [v])
                     heapq.heappush(heap, (c, v))
         return None
 
