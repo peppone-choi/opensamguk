@@ -1419,6 +1419,8 @@ def build_ledger(
 ) -> dict:
     if set(documents) != set(INPUT_PATHS) or set(input_records) != set(INPUT_PATHS):
         raise ValueError("ledger build requires every pinned input")
+    # Reject invalid review metadata before expensive historical geometry restoration.
+    _validate_review_chain(documents, input_records)
     sys.path.insert(0, str(ROOT))
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import refine_korea_places as korea
@@ -1490,7 +1492,6 @@ def build_ledger(
             "changedCellCount": len(stage["ownerDelta"]),
         }
         return prior
-    _validate_review_chain(documents, input_records)
     tiles = _tile_context(documents["data/map/han-tiles.json"])
     selections = _selection_context(documents["data/curated/han/route-node-selection-v1.json"], tiles)
     temporal_adjudications = _temporal_adjudication_context(

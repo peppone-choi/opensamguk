@@ -764,7 +764,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         self.assertEqual(
             ledger["seatOwnerSha256"],
             hashlib.sha256(
-                json.dumps(tiles["seatOwner"], separators=(",", ":")).encode("utf-8")
+                json.dumps(prior["seatOwner"], separators=(",", ":")).encode("utf-8")
             ).hexdigest(),
         )
 
