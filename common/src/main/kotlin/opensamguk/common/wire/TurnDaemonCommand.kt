@@ -15,6 +15,18 @@ sealed class TurnDaemonCommand {
     abstract val type: String
 
     @Serializable
+    @SerialName("hwihaCourtInput")
+    data class HwihaCourtInput(
+        val requestId: String,
+        val generalId: Int,
+        val ownerUserId: Int,
+        val inputId: String,
+        val argJson: String,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "hwihaCourtInput"
+    }
+
+    @Serializable
     @SerialName("run")
     data class Run(
         val reason: RunReason,
