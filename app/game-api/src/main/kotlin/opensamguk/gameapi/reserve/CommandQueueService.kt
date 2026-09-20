@@ -47,6 +47,9 @@ class CommandQueueService(
     processWorld: GameApiProcessWorld,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
+    private val readGeneralAction: (Int, Int) -> String = { generalId, slot ->
+        reservedTurns.readReserved(processWorld.worldId, generalId, slot).actionCode
+    },
 ) {
     private val worldId: WorldId = processWorld.worldId
 
@@ -213,6 +216,12 @@ class CommandQueueService(
      */
     fun repeatGeneral(generalId: Int, amount: Int): QueueAccepted =
         queueMutation("repeatGeneral", generalId, null, null, amount) {
+            if (amount in 1 until MAX_GENERAL_TURNS) {
+                val sourceCount = minOf(amount, MAX_GENERAL_TURNS - amount)
+                if ((0 until sourceCount).any { '.' in readGeneralAction(generalId, it) }) {
+                    throw CommandQueueDenied("새 규칙 입력은 복사할 수 없습니다. 각 순에 직접 예약하세요.")
+                }
+            }
             reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
         }
 

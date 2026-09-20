@@ -79,6 +79,7 @@ class CommandReserveService(
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
+    private val hwihaAdmission: HwihaEnlistmentAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -163,6 +164,10 @@ class CommandReserveService(
         argJson: String?,
         ownerUserId: Int?,
     ): ReserveResult {
+        val canonicalArgs = if (actionCode == "action.enlist") {
+            (hwihaAdmission ?: throw HwihaAdmissionDenied("NOT_DELIVERED", "출사 접수 연결이 없습니다."))
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else argJson
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
         val v2Schema = opensamguk.logic.v2.command.V2CommandRegistry.resolve(actionCode)
@@ -189,7 +194,7 @@ class CommandReserveService(
                         worldId = worldId,
                         requestId = requestId,
                         commandKind = CommandKind.IMMEDIATE,
-                        intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, generalId, turnIdx, actionCode, argJson, ownerUserId),
+                        intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, generalId, turnIdx, actionCode, canonicalArgs, ownerUserId),
                         generalId = generalId,
                         turnIdx = turnIdx,
                         actionCode = actionCode,
@@ -211,7 +216,7 @@ class CommandReserveService(
             command = TurnDaemonCommand.Run(reason = RunReason.POKE),
         )
         val payload = encodeCommandPayload(envelope)
-        val fingerprint = intentFingerprint(CommandKind.RESERVED_TURN, generalId, turnIdx, actionCode, argJson, ownerUserId)
+        val fingerprint = intentFingerprint(CommandKind.RESERVED_TURN, generalId, turnIdx, actionCode, canonicalArgs, ownerUserId)
         var inserted = false
         transactions.executeWithoutResult {
             val result = commandInbox.insertAccepted(
@@ -235,8 +240,8 @@ class CommandReserveService(
                     generalId = generalId,
                     turnIdx = turnIdx,
                     actionCode = actionCode,
-                    argJson = argJson,
-                    brief = registry.resolve(actionCode).name,
+                    argJson = canonicalArgs,
+                    brief = if (actionCode == "action.enlist") "출사" else registry.resolve(actionCode).name,
                     requestId = requestId,
                 )
                 commandResults.insertTerminalResult(

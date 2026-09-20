@@ -109,6 +109,14 @@ class CommandController(
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
+        if (code == "action.enlist") {
+            if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            return try {
+                reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt())
+            } catch (denied: opensamguk.gameapi.reserve.HwihaAdmissionDenied) {
+                ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
+            }
+        }
         val v2Schema = V2CommandRegistry.resolve(code)
         if (v2Schema != null) {
             if (code == v2Schema.canonicalId) {

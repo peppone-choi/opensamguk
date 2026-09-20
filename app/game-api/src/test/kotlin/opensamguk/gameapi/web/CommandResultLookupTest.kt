@@ -203,10 +203,10 @@ class CommandResultLookupTest {
         val requestId = "req-hwiha-rejected"
         stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(
             type = "reservationAccepted", ok = true, commandKind = "RESERVED_TURN",
-            actionCode = "action.enlist", generalId = 10, turnIdx = 0)))
+            actionCode = "placement.assign", generalId = 10, turnIdx = 0)))
         stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
             type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
-            actionCode = "action.enlist", generalId = 10, turnIdx = 0,
+            actionCode = "placement.assign", generalId = 10, turnIdx = 0,
             code = "NOT_DELIVERED", reason = "아직 제공되지 않는 입력입니다."), committedWorldVersion = 35))
         readOwnResult(requestId)
             .andExpect(status().isOk)
@@ -214,9 +214,30 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.ok").value(false))
             .andExpect(jsonPath("$.type").value("executionRejected"))
             .andExpect(jsonPath("$.committedWorldVersion").value(35))
-            .andExpect(jsonPath("$.result.actionCode").value("action.enlist"))
+            .andExpect(jsonPath("$.result.actionCode").value("placement.assign"))
             .andExpect(jsonPath("$.result.code").value("NOT_DELIVERED"))
             .andExpect(jsonPath("$.reason").value("아직 제공되지 않는 입력입니다."))
+    }
+
+    @Test
+    fun `enlistment execution recheck rejection supersedes accepted reservation`() {
+        val requestId = "req-enlist-rechecked"
+        stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "reservationAccepted", ok = true, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0)))
+        stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0,
+            code = "TARGET_NOT_LORD", reason = "대상의 주공 지위가 변경되었습니다."), committedWorldVersion = 35))
+        readOwnResult(requestId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(false))
+            .andExpect(jsonPath("$.type").value("executionRejected"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(35))
+            .andExpect(jsonPath("$.result.actionCode").value("action.enlist"))
+            .andExpect(jsonPath("$.result.code").value("TARGET_NOT_LORD"))
+            .andExpect(jsonPath("$.reason").value("대상의 주공 지위가 변경되었습니다."))
     }
 
     @Test

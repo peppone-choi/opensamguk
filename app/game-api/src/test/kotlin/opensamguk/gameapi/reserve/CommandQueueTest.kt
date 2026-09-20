@@ -44,7 +44,24 @@ class CommandQueueTest {
         TestTransactions,
         GameApiProcessWorld(1),
         requestIds = { "queue-req" },
+        readGeneralAction = { _, _ -> "휴식" },
     )
+
+    @Test fun `repeat rejects dotted input before queue writes`() {
+        val repo = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val queue = CommandQueueService(repo, registry, inbox, results, TestTransactions,
+            GameApiProcessWorld(1), readGeneralAction = { _, _ -> "action.enlist" })
+        assertFailsWith<CommandQueueService.CommandQueueDenied> { queue.repeatGeneral(10, 1) }
+        assertTrue(inbox.accepted.isEmpty())
+        assertTrue(results.rows.isEmpty())
+        assertTrue(repo.repeatGeneral.isEmpty())
+        assertFailsWith<CommandQueueService.CommandQueueDenied> {
+            queue.reserveBulkGeneral(10, listOf(CommandQueueService.CommandBulkItem("action.enlist", listOf(0), null)))
+        }
+        assertTrue(inbox.accepted.isEmpty())
+    }
 
     private object TestTransactions : TransactionOperations {
         override fun <T : Any?> execute(action: TransactionCallback<T>): T? =
