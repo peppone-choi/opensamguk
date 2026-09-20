@@ -56,7 +56,7 @@ export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, o
         } catch (error) { setReason(error instanceof Error ? error.message : '출사 예약에 실패했습니다.'); }
         finally { setBusy(false); }
     }
-    const labels = { RANDOM: '무작위', NATION: '국가', GENERAL: '장수' };
+    const labels = { RANDOM: '무작위', NATION: '세력', GENERAL: '장수' };
     return <div className="cmd-form">
         <h3>출사</h3>
         <p>현재 개인 명령은 출사만 제공합니다. 실행 시점에 조건을 다시 확인합니다.</p>
