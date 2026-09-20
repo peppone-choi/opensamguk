@@ -28,7 +28,7 @@ sealed interface EnlistmentExecution {
 class HwihaEnlistmentExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val currentPolicy: (EnlistmentRequest) -> EnlistmentPolicy,
+    private val currentPolicy: ((EnlistmentRequest) -> EnlistmentPolicy)? = null,
 ) {
     fun execute(request: EnlistmentRequest, drawIndex: (Int) -> Int): EnlistmentExecution {
         if (world.ruleProfile != RuleProfile.HWIHA) {
@@ -36,31 +36,20 @@ class HwihaEnlistmentExecutor(
         }
         val generals = world.listGenerals()
         val nations = world.listNations().associateBy { it.id }
-        val policy = currentPolicy(request)
-        val state = EnlistmentSnapshot(
-            profile = world.ruleProfile,
-            generals = generals.map { general ->
-                EnlistmentGeneral(general.id, general.nationId, HwihaLordStatus.read(general.meta),
-                    general.npcState < 2 || (!general.userId.isNullOrBlank() &&
-                        general.userId.toLongOrNull()?.let { it <= 0 } != true))
+        val projection = HwihaEnlistmentProjection(world.ruleProfile,
+            generals.map { general ->
+                val stats = general.stats
+                EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, stats.leadership,
+                    stats.strength, stats.intelligence, stats.politics, stats.charm, general.meta),
+                    general.name, general.officerLevel, general.npcState, general.userId)
             },
-            bonds = world.listRetainers().mapNotNull { card ->
-                card.generalId?.let { EnlistmentBond(card.masterGeneralId, it) }
-            },
-            // Sovereign office is persisted on the general, including succession/abdication.
-            // It selects the office-holder; assess still requires explicit event-owned lord status.
-            sovereignByNation = generals.filter { it.officerLevel == 12 && it.nationId in nations }
-                .groupBy { it.nationId }.mapNotNull { (nationId, candidates) ->
-                    candidates.singleOrNull()?.let { nationId to it.id }
-                }.toMap(),
-            acceptingLordIds = policy.acceptingLordIds,
-            freeRenownByLord = policy.freeRenownByLord,
-            actorCardCost = policy.actorCardCost,
-            nameConflictingLordIds = world.listRetainers()
-                .filter { it.name == generals.firstOrNull { general -> general.id == request.actorId }?.name }
-                .map { it.masterGeneralId }.toSet(),
+            world.listRetainers().map { EnlistmentCardRow(it.id, it.masterGeneralId, it.generalId, it.name) },
+            nations.keys,
         )
-        val assessment = HwihaEnlistmentRules.assess(request, state)
+        val policy = currentPolicy?.invoke(request)
+        val assessment = if (policy == null) HwihaEnlistmentPrecheck.assess(request, projection)
+            else HwihaEnlistmentPrecheck.assess(request, projection,
+                RenownBudgetResult.Ready(policy.acceptingLordIds, policy.freeRenownByLord, policy.actorCardCost, emptyMap()))
         if (assessment is EnlistmentAssessment.Rejected) return EnlistmentExecution.Rejected(assessment.reason)
         val plan = HwihaEnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
         // GENERAL can select a lord whose corrupt nation reference has no state row.

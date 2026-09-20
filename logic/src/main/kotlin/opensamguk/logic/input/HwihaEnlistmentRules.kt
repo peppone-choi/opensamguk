@@ -20,13 +20,24 @@ data class EnlistmentSnapshot(
     val actorCardCost: Int,
     /** Includes unlinked recruited cards: storage requires unique names per master. */
     val nameConflictingLordIds: Set<Int> = emptySet(),
+    val unavailablePolicyLordIds: Set<Int> = emptySet(),
 )
 
-enum class EnlistmentFailure {
-    WRONG_RULE_PROFILE, INVALID_REQUEST, ACTOR_NOT_FOUND, ALREADY_SERVING,
-    ALREADY_BOUND, INVALID_RETINUE, HUMAN_RETAINER_REQUIRES_LORD,
-    TARGET_NOT_FOUND, TARGET_NOT_LORD, TARGET_NOT_ACCEPTING, INSUFFICIENT_RENOWN,
-    NO_ELIGIBLE_NATION, DUPLICATE_RETAINER_NAME,
+enum class EnlistmentFailure(val message: String) {
+    WRONG_RULE_PROFILE("이 월드의 규칙에서 사용할 수 없는 입력입니다."),
+    INVALID_REQUEST("출사 대상과 방식을 확인해 주세요."),
+    ACTOR_NOT_FOUND("출사할 장수를 찾을 수 없습니다."),
+    ALREADY_SERVING("이미 세력에 소속되어 있습니다."),
+    ALREADY_BOUND("이미 다른 장수의 휘하에 있습니다."),
+    INVALID_RETINUE("휘하 관계를 확인할 수 없어 출사할 수 없습니다."),
+    HUMAN_RETAINER_REQUIRES_LORD("플레이어 장수를 휘하에 둔 상태에서는 출사할 수 없습니다."),
+    TARGET_NOT_FOUND("출사 대상을 찾을 수 없습니다."),
+    TARGET_NOT_LORD("해당 대상에게 출사할 수 없습니다."),
+    TARGET_NOT_ACCEPTING("해당 주공은 출사를 받지 않습니다."),
+    INSUFFICIENT_RENOWN("해당 주공의 명망 수용량이 부족합니다."),
+    NO_ELIGIBLE_NATION("현재 출사할 수 있는 세력이 없습니다."),
+    DUPLICATE_RETAINER_NAME("해당 주공의 휘하에 같은 이름의 장수가 있습니다."),
+    POLICY_UNAVAILABLE("출사 조건을 확인할 수 없습니다."),
 }
 
 /** This is an intent, not a committed result. It contains no teleport or asset transfer. */
@@ -99,6 +110,7 @@ object HwihaEnlistmentRules {
             if (!master.isLord || master.nationId <= 0 || master.id in joining) {
                 return deny(EnlistmentFailure.TARGET_NOT_LORD)
             }
+            if (master.id in state.unavailablePolicyLordIds) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
             if (master.id !in state.acceptingLordIds) return deny(EnlistmentFailure.TARGET_NOT_ACCEPTING)
             if (master.id in state.nameConflictingLordIds) return deny(EnlistmentFailure.DUPLICATE_RETAINER_NAME)
             val budget = state.freeRenownByLord[master.id]

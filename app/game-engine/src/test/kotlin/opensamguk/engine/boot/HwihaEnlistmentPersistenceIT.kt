@@ -77,9 +77,7 @@ class HwihaEnlistmentPersistenceIT {
         hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
-    private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaEnlistmentExecutor(world, recorder) {
-        assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(world).current(it)).policy
-    }.execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
+    private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaEnlistmentExecutor(world, recorder).execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
 
     private fun assertSameSnapshot(expected: WorldSnapshot, actual: WorldSnapshot) {
         // Spatial snapshots are immutable classes without value equality; compare their contents.
