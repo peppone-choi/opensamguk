@@ -3,8 +3,11 @@
 All quantities and schedules are caller assumptions, not approved HWIHA rules.
 People are integer persons (no implicit household conversion). Grain is an integer
 abstract unit. equipGrain is the TOTAL one-time grain cost of an order.
-Arrivals and tax precede recruitment (ID order), then all recruited soldiers eat
-on that boundary. Shortfalls never infer death, capture, morale or desertion.
+Transport arrivals precede recruitment (ID order), then soldiers eat; monthly
+net tax arrives afterwards. The ration-before-tax ordering follows campaign
+spec section 5.2 (supply step 1, monthly income step 4). Recruitment placement
+and quantities remain experiment assumptions. Monthly salary/upkeep is absent.
+Shortfalls never infer death, capture, morale or desertion.
 No production, movement, storage capacity, civilian consumption or population
 recovery is inferred. Callers schedule net tax receipts and actual deliveries.
 """
@@ -60,7 +63,7 @@ def settle_county(*, initial_grain: int, people: int, deliveries: dict[int, int]
     for turn in range(1, horizon + 1):
         opening = grain
         delivered, tax = deliveries.get(turn, 0), tax_grain.get(turn, 0)
-        grain += delivered + tax
+        grain += delivered
         equipment, recruited = 0, 0
         for order in sorted(scheduled.get(turn, []), key=lambda x: x['id']):
             order_id = order['id']
@@ -85,6 +88,7 @@ def settle_county(*, initial_grain: int, people: int, deliveries: dict[int, int]
         demand = troops * ration_per_soldier
         consumed = min(grain, demand)
         grain -= consumed
+        grain += tax
         assert opening + delivered + tax == equipment + consumed + grain
         assert civilians + troops == people and min(civilians, troops, grain) >= 0
         ledger.append({'turn': turn, 'openingGrain': opening, 'delivered': delivered,
@@ -93,5 +97,5 @@ def settle_county(*, initial_grain: int, people: int, deliveries: dict[int, int]
                        'rationDemand': demand, 'rationConsumed': consumed,
                        'unmetRation': demand - consumed, 'closingGrain': grain})
     return {'status': 'EXPLORATORY',
-            'assumptions': 'integer persons and abstract grain; arrivals+tax -> recruitment by ID -> ration; no death/capture inference',
+            'assumptions': 'integer persons and abstract grain; transport arrivals -> recruitment by ID -> military ration -> monthly net tax; no death/capture inference',
             'ledger': ledger, 'recruitDecisions': decisions}

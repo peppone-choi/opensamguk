@@ -27,6 +27,20 @@ class CountyEconomyTest(unittest.TestCase):
         self.assertEqual(r['recruitDecisions'][0]['status'], 'REJECTED_GRAIN')
         self.assertEqual(r['ledger'][-1]['people'], 10)
 
+    def test_monthly_tax_arrives_after_this_boundary_military_rations(self):
+        r = self.run_case(tax_grain={1: 2}, recruitment_orders=[
+            dict(id='a', turn=1, troops=2, equipGrain=0)])
+        self.assertEqual([x['rationConsumed'] for x in r['ledger']], [0, 2, 0, 0])
+        self.assertEqual([x['closingGrain'] for x in r['ledger']], [2, 0, 0, 0])
+        self.assertEqual(r['ledger'][0]['unmetRation'], 2)
+
+    def test_same_boundary_monthly_tax_cannot_prepay_recruitment(self):
+        r = self.run_case(tax_grain={1: 10}, recruitment_orders=[
+            dict(id='a', turn=1, troops=2, equipGrain=5)])
+        self.assertEqual(r['recruitDecisions'][0]['status'], 'REJECTED_GRAIN')
+        self.assertEqual(r['ledger'][0]['closingGrain'], 10)
+        self.assertEqual(r['ledger'][0]['troops'], 0)
+
     def test_population_shortage_is_atomic(self):
         r = self.run_case(initial_grain=20,recruitment_orders=[dict(id='a',turn=1,troops=11,equipGrain=2)])
         self.assertEqual(r['recruitDecisions'][0]['status'], 'REJECTED_PEOPLE')
