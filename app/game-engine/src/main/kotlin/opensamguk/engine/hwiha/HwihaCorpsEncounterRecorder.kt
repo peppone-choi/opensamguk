@@ -48,13 +48,32 @@ class HwihaCorpsEncounterRecorder(
             require(world.positionOf(general.id) == encounter.province)
             require(HwihaCorpsEncounter.META_KEY !in general.meta)
             require(HwihaEncounterDeployment.META_KEY !in general.meta)
+            require(HwihaEncounterRelations.META_KEY !in general.meta)
+            require(HwihaEncounterForces.META_KEY !in general.meta)
         }
         val value = encounter.toMetaValue()
         val deployment = HwihaEncounterDeployment.defaultMetaValue(encounter, cells)
+        val projection = requireNotNull(HwihaDeploymentExecutor(world, recorder, topology, metrics).projection())
+        val relations = HwihaEncounterRelations.capture(encounter, projection,
+            world.listDiplomacy().filter { it.state == 0 }.mapTo(linkedSetOf()) { it.fromNationId to it.toNationId })
+        val liveUnits = world.listBugoks().associateBy { it.id }
+        val forces = HwihaEncounterForces(encounter.encounterId,
+            participants.flatMap { corps -> corps.bugokIds.map { id ->
+                val unit = requireNotNull(liveUnits[id])
+                EncounterUnitForce(unit.id, unit.masterGeneralId, corps.commanderGeneralId, unit.crewTypeId,
+                    unit.troops, unit.training, unit.morale, unit.fatigue, unit.provisions, unit.commanderRetainerId)
+            } }, participants.map { corps ->
+                val stats = requireNotNull(world.getGeneralById(corps.commanderGeneralId)).stats
+                EncounterCommanderForce(corps.commanderGeneralId, stats.leadership, stats.strength,
+                    stats.intelligence, stats.politics, stats.charm)
+            }).also { it.requireBinding(encounter) }
+        val sealedRelations = relations.toMetaValue()
+        val sealedForces = forces.toMetaValue()
         for (corps in participants) {
             val before = requireNotNull(world.getGeneralById(corps.commanderGeneralId))
             val after = before.copy(meta = before.meta + (HwihaCorpsEncounter.META_KEY to value) +
-                (HwihaEncounterDeployment.META_KEY to deployment))
+                (HwihaEncounterDeployment.META_KEY to deployment) +
+                (HwihaEncounterRelations.META_KEY to sealedRelations) + (HwihaEncounterForces.META_KEY to sealedForces))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {

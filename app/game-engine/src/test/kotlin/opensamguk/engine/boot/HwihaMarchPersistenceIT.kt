@@ -622,6 +622,21 @@ class HwihaMarchPersistenceIT {
                 HwihaEncounterDeployment.read(world.getGeneralById(commander)!!.meta, encounter, bundle.provinceCells))
             assertEquals(HwihaEncounterDeployment.defaultMetaValue(encounter,bundle.provinceCells),
                 world.getGeneralById(commander)!!.meta[HwihaEncounterDeployment.META_KEY])
+            val forces=assertNotNull(HwihaEncounterForces.read(world.getGeneralById(commander)!!.meta,encounter))
+            assertEquals(listOf(7,1100,1101),forces.units.map { it.bugokId })
+            for (unit in forces.units) {
+                val original=units.single { it.id==unit.bugokId }
+                assertEquals(listOf(original.troops,original.crewTypeId,original.training,original.morale,original.fatigue,original.provisions),
+                    listOf(unit.troops,unit.crewTypeId,unit.training,unit.morale,unit.fatigue,unit.provisions))
+                assertEquals(original.masterGeneralId,unit.ownerGeneralId)
+                assertEquals(original.commanderRetainerId,unit.commanderRetainerId)
+            }
+            assertEquals(listOf(1,100,101),forces.commanders.map { it.generalId })
+            val relations=assertNotNull(HwihaEncounterRelations.read(world.getGeneralById(commander)!!.meta,encounter))
+            assertEquals(3,relations.pairs.size)
+            assertTrue(relations.pairs.all { it.hostile })
+            assertEquals(world.getGeneralById(1)!!.meta[HwihaEncounterForces.META_KEY],forces.toMetaValue())
+            assertEquals(world.getGeneralById(1)!!.meta[HwihaEncounterRelations.META_KEY],relations.toMetaValue())
             assertEquals(encounter.province,world.positionOf(commander))
             assertTrue(projection.people.single { it.id==commander }.inBattle)
         }
@@ -657,6 +672,20 @@ class HwihaMarchPersistenceIT {
         }
         assertEquals(units,world.listBugoks())
         assertEquals(listOf("encounter-$id"),published)
+        val frozen=assertNotNull(HwihaEncounterForces.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
+        val relations=assertNotNull(HwihaEncounterRelations.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
+        jdbc.update("UPDATE general_bugok SET morale=morale-1,provisions=provisions+1 WHERE world_id=? AND id=7",id)
+        jdbc.update("UPDATE general SET leadership=leadership+1 WHERE world_id=? AND id=1",id)
+        world=cold(id)
+        val snapshot=assertNotNull(HwihaEncounterForces.read(world.getGeneralById(1)!!.meta,encounter))
+        assertEquals(frozen,snapshot.toMetaValue())
+        assertNotEquals(world.listBugoks().single { it.id==7 }.morale,snapshot.units.single { it.bugokId==7 }.morale)
+        assertNotEquals(world.getGeneralById(1)!!.stats.leadership,snapshot.commanders.single { it.generalId==1 }.leadership)
+        assertEquals(relations,HwihaEncounterRelations.read(world.getGeneralById(1)!!.meta,encounter)?.toMetaValue())
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
+            '{hwihaEncounterForces,units,0,troops}','1'::jsonb) WHERE world_id=? AND id=1""",id)
+        world=cold(id)
+        assertFailsWith<IllegalArgumentException> { HwihaEncounterForces.read(world.getGeneralById(1)!!.meta,encounter) }
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
             '{hwihaEncounterDeployment,tokens,0,position}','null'::jsonb) WHERE world_id=? AND id=1""",id)
         world=cold(id)
