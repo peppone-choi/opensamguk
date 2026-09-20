@@ -9,7 +9,8 @@ data class DispatchPendingResponse(val result: Boolean, val code: DispatchFailur
     val queued: DispatchQueuedItem? = null)
 data class DispatchPendingItem(val dispatchId: String, val issuerId: Int, val targetId: Int, val countyId: Int,
     val issuedAt: HwihaPhase, val dueAt: HwihaPhase, val status: DispatchStatus,
-    val currentFailure: DispatchFailure? = null)
+    val currentFailure: DispatchFailure? = null, val issuerLabel: String? = null,
+    val targetLabel: String? = null, val countyLabel: String? = null)
 
 data class DispatchQueuedItem(val requestId: String, val targetGeneralId: Int, val countyId: Int)
 data class DispatchTargetOption(val generalId: Int, val label: String)

@@ -63,6 +63,20 @@ class HwihaNpcDispatchSelectorTest {
             assertNull(select(world))
         }
     }
+    @Test fun `closed dispatch history and accepted assignment prevent automatic reissue`() {
+        for (status in listOf(DispatchStatus.REFUSED, DispatchStatus.CANCELLED, DispatchStatus.ACCEPTED)) {
+            val world = world()
+            val phase = HwihaPhase(200,1,1)
+            val first = world.getGeneralById(1)!!
+            world.applyGeneralDirtyFree(first.copy(meta = first.meta + (HwihaDispatchState.META_KEY to
+                HwihaDispatchState("old",10,1,1,1,phase,phase.plus(12),status).toMetaValue())))
+            val second = world.getGeneralById(2)!!
+            world.applyGeneralDirtyFree(second.copy(meta = second.meta + (HwihaCountyAssignment.META_KEY to
+                HwihaCountyAssignment("assigned",10,1,2).toMetaValue())))
+            assertNull(select(world), "automatic repeat after $status")
+        }
+    }
+
     @Test fun `non human and non direct targets are never selected`() {
         val world=world()
         for(id in listOf(1,2)) {

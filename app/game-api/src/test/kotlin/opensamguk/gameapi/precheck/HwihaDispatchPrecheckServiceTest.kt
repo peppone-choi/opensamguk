@@ -17,7 +17,7 @@ class HwihaDispatchPrecheckServiceTest {
     private val now = HwihaPhase(200, 1, 1)
     private val dispatch = HwihaDispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
     private fun person(id: Int, meta: Map<String, Any?> = emptyMap()) = GeneralReadEntity(
-        id = id, worldId = 1, nationId = 1, userId = (40 + id).toString(), npcState = 2,
+        id = id, name = "G$id", worldId = 1, nationId = 1, userId = (40 + id).toString(), npcState = 2,
         meta = mapOf("hwihaLord" to (id == 1)) + meta)
     private fun setup(pending: Boolean = false, phase: HwihaPhase = now): List<GeneralReadEntity> {
         val people = listOf(person(1), person(2, if (pending) mapOf(HwihaDispatchState.META_KEY to dispatch.toMetaValue()) else emptyMap()), person(3))
@@ -31,7 +31,7 @@ class HwihaDispatchPrecheckServiceTest {
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
             WorldStateReadEntity(id = 1, currentYear = phase.year, currentMonth = phase.month, currentPhase = phase.phase,
                 config = mapOf("ruleProfile" to "HWIHA")),
-            listOf(CityReadEntity(id = 7, worldId = 1, nationId = 1), CityReadEntity(id = 8, worldId = 1, nationId = 1)), artifacts))
+            listOf(CityReadEntity(id = 7, name = "C7", worldId = 1, nationId = 1), CityReadEntity(id = 8, worldId = 1, nationId = 1)), artifacts))
         return people
     }
     @Test fun `owner is checked before any world or roster read`() {
@@ -57,6 +57,10 @@ class HwihaDispatchPrecheckServiceTest {
         setup(true)
         assertEquals(listOf("d1"), service.pending(1,41).dispatches.map { it.dispatchId })
         assertEquals(listOf("d1"), service.pending(2,42).dispatches.map { it.dispatchId })
+        val row = service.pending(2,42).dispatches.single()
+        assertEquals("G1",row.issuerLabel)
+        assertEquals("G2",row.targetLabel)
+        assertEquals("C7",row.countyLabel)
         assertTrue(service.pending(3,43).dispatches.isEmpty())
         `when`(retainers.findAll()).thenReturn(listOf(GeneralRetainerReadEntity(worldId = 1,id = 5,masterGeneralId = 3,generalId = 2)))
         assertTrue(service.pending(1,41).dispatches.isEmpty())

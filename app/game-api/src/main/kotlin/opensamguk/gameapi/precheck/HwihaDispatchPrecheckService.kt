@@ -83,7 +83,8 @@ class HwihaDispatchPrecheckService(
                 val assessment = HwihaDispatchRules.assessReply(person.id, dispatch.dispatchId, state)
                 DispatchPendingItem(dispatch.dispatchId, dispatch.issuerId, dispatch.targetId,
                     dispatch.countyId, dispatch.issuedAt, dispatch.dueAt, dispatch.status,
-                    (assessment as? DispatchAssessment.Rejected)?.reason)
+                    (assessment as? DispatchAssessment.Rejected)?.reason, snapshot.personNames[dispatch.issuerId],
+                    snapshot.personNames[dispatch.targetId], snapshot.countyNames[dispatch.countyId])
             }.sortedBy { it.targetId }
             val queue = HwihaQueuedDispatch.read(state.people.single { it.id == actorId }.meta)
             DispatchPendingResponse(true, now = snapshot.now, dispatches = rows, queued = ownedQueue(queue, ownerUserId))
