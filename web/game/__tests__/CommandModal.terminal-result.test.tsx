@@ -30,7 +30,7 @@ function renderModal(isNationCommand = false) {
     const onToast = vi.fn();
 
     render(
-        <CommandModal
+        <CommandModal ruleProfile="SAMMO"
             generalId={7}
             turnIdx={2}
             onClose={onClose}

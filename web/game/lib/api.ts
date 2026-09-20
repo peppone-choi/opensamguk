@@ -438,6 +438,7 @@ export const api = {
     patch,
 
     // Identity envelope + server-driven menu/const (F2 Wave 1)
+    enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),
     gameConst: () => get<GameConstResponse>('/api/const'),

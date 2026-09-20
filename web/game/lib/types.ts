@@ -803,3 +803,11 @@ export type {
   MailMsgTarget,
   MailboxMessage,
 } from '../types/game';
+
+export interface EnlistmentOptionsResponse {
+    result: boolean;
+    inputId: 'action.enlist';
+    maxReservedTurns: 12;
+    options: Array<{ mode: 'RANDOM' | 'NATION' | 'GENERAL'; targetId?: number; label: string;
+        availability: { status: 'AVAILABLE' | 'BLOCKED'; code?: string; reason?: string } }>;
+}

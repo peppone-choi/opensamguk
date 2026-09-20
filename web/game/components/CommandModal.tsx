@@ -37,10 +37,12 @@ import SelectCityField from './command/SelectCityField';
 import SelectGeneralField from './command/SelectGeneralField';
 import SelectNationField from './command/SelectNationField';
 import SelectAmountField from './command/SelectAmountField';
+import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
 
 interface CommandModalProps {
+    ruleProfile?: string | null;
     onClose: () => void;
     onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     /** The caller's own general id (front-info.general.generalId). Required by CommandController. */
@@ -368,6 +370,7 @@ function StructuredCommandForm({
 
 export default function CommandModal({
     onClose,
+    ruleProfile,
     onToast,
     generalId,
     nationId,
@@ -384,6 +387,7 @@ export default function CommandModal({
     isNationCommand,
     hero = null,
 }: CommandModalProps) {
+    const profile = useRuleProfile(ruleProfile);
     // Pinned command (F4 C1): synthesize a fallback one-item command so the modal opens straight on
     // an arg sub-form. Opt-in catalog resolution replaces it with the authoritative server row.
     const pinned: AvailableCommand | null = pinnedCommand
@@ -413,6 +417,7 @@ export default function CommandModal({
     const [pinnedCatalogError, setPinnedCatalogError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (profile !== 'SAMMO') return;
         if (pinnedCommand) {
             if (!resolvePinnedFromCatalog) {
                 setResolvingPinnedCommand(false);
@@ -471,7 +476,7 @@ export default function CommandModal({
         return () => {
             on = false;
         };
-    }, [generalId, pinnedCommand, resolvePinnedFromCatalog]);
+    }, [profile, generalId, pinnedCommand, resolvePinnedFromCatalog]);
 
     const categories = useMemo(() => catalog.map((c) => c.category), [catalog]);
     const filtered = useMemo(() => catalog.find((c) => c.category === cat)?.values ?? [], [catalog, cat]);
@@ -492,6 +497,7 @@ export default function CommandModal({
     }
 
     async function submit(cmd: AvailableCommand, body: Record<string, unknown>) {
+        if (profile !== 'SAMMO') return;
         setLoading(true);
         setBlockedReason(null);
         try {
@@ -579,7 +585,11 @@ export default function CommandModal({
 
                 {loadError && <p className="cmd-flag">{loadError}</p>}
 
-                {!selected ? (
+                {profile === 'HWIHA' ? (
+                    <HwihaEnlistmentForm generalId={generalId} turnIdx={turnIdx}
+                        unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
+                        onToast={onToast} onClose={onClose} onReserved={onReserved} />
+                ) : profile !== 'SAMMO' ? <p role="status">서버 규칙을 확인하지 못해 명령을 예약할 수 없습니다.</p> : !selected ? (
                     <>
                         {categories.length > 0 && (
                             <div className="cmd-cats os-pill-tabs" role="tablist" aria-label="명령 분류">
