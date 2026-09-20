@@ -81,4 +81,21 @@ class HwihaNpcEnlistmentSelectorTest {
         }
         assertEquals(run(false), run(true))
     }
+    @Test fun `runtime recorder preserves sparse inputs and rejects invalid creation before mutation`() {
+        val valid = GeneralTurnSeed("action.enlist", """{"mode":"RANDOM"}""", "출사")
+        for (turns in listOf(emptyList(), listOf(valid), List(12) { valid })) {
+            val world = world()
+            val created = ChangeRecorder().recordGeneralCreate(world, person(99), turns)
+            assertEquals(turns, created.initialTurns)
+            assertNotNull(world.generalPositionSnapshot()!!.stateFor(99))
+        }
+        for (turns in listOf(List(13) { valid }, listOf(GeneralTurnSeed("휴식", "{}", "휴식")),
+            listOf(GeneralTurnSeed("action.enlist", """{"mode":"RANDOM","targetId":1}""", "출사")))) {
+            val world = world()
+            assertFailsWith<IllegalArgumentException> { ChangeRecorder().recordGeneralCreate(world, person(99), turns) }
+            assertNull(world.getGeneralById(99))
+            assertNull(world.generalPositionSnapshot()!!.stateFor(99))
+        }
+    }
+
 }

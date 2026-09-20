@@ -130,6 +130,7 @@ class ScenarioImporterIT {
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
         ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
 
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id = 1", Int::class.java))
         val generals = jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1", Int::class.java)!!
         val rows = jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java)!!
         assertEquals(generals, rows)

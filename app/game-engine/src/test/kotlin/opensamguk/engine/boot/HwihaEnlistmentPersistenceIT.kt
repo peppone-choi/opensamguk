@@ -136,7 +136,7 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(before.generals.map { if (it.id == 1) it.copy(
             turnTime = it.turnTime.plusSeconds(3600),
             meta = HwihaPersonalTurn.after(it.meta, world.getState()),
-            initialTurns = it.initialTurns.drop(1) + GeneralTurnSeed("휴식", "{}", "휴식"),
+            initialTurns = it.initialTurns.drop(1),
         ) else it }, after.generals)
         assertEquals(before.retainers, after.retainers)
         val payload = opensamguk.infra.persistence.CommandResultRepository(named).findResultPayload(id, "undelivered-request")!!
@@ -239,6 +239,50 @@ class HwihaEnlistmentPersistenceIT {
         assertTrue(service(id, cold, published).runDueGeneralTurns(late).handled.isEmpty())
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=6", Int::class.java))
         assertEquals(listOf("enlist-retry"), published)
+    }
+
+    @Test fun `unreserved NPC enlistment commits through normal flush and cannot repeat after cold restart`() {
+        seed(7)
+        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{hwihaLord}','false') WHERE world_id=7 AND id=1")
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=7 AND id<>1")
+        val id = WorldId(7)
+        val before = load(7)
+        val published = mutableListOf<String>()
+        val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
+        val world = InMemoryTurnWorld(before)
+        val handled = service(id, world, published).runDueGeneralTurns(late).handled.single()
+        assertIs<HwihaTurnOutcome.Applied>(handled.hwihaOutcome)
+        assertEquals("action.enlist", handled.reservedActionCode)
+        assertNull(handled.requestId)
+        val after = load(7)
+        assertEquals(1, after.generals.single { it.id == 1 }.nationId)
+        assertEquals(10, after.retainers.single { it.generalId == 1 }.masterGeneralId)
+        assertEquals(before.bugoks, after.bugoks)
+        assertEquals(before.generalPositionSnapshot!!.statesByGeneralId, after.generalPositionSnapshot!!.statesByGeneralId)
+        assertTrue(service(id, InMemoryTurnWorld(after), published).runDueGeneralTurns(late).handled.isEmpty())
+        assertEquals(2, load(7).retainers.size)
+        assertTrue(published.isEmpty())
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=7", Int::class.java))
+    }
+
+    @Test fun `explicit rest without request id suppresses NPC enlistment only for that reserved phase`() {
+        seed(8)
+        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{hwihaLord}','false') WHERE world_id=8 AND id=1")
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=8 AND id<>1")
+        val id = WorldId(8)
+        val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
+        reservations.reserve(id, 1, 0, "휴식", "{}")
+        val published = mutableListOf<String>()
+        val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
+        val handled = service(id, InMemoryTurnWorld(load(8)), published).runDueGeneralTurns(late).handled.single()
+        assertIs<HwihaTurnOutcome.Rejected>(handled.hwihaOutcome)
+        assertEquals(0, load(8).generals.single { it.id == 1 }.nationId)
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=8", Int::class.java))
+        val cold = InMemoryTurnWorld(load(8))
+        cold.setCurrentDate(200, 1, 2)
+        assertIs<HwihaTurnOutcome.Applied>(service(id, cold, published).runDueGeneralTurns(late).handled.single().hwihaOutcome)
+        assertEquals(10, load(8).retainers.single { it.generalId == 1 }.masterGeneralId)
+        assertTrue(published.isEmpty())
     }
 
 }
