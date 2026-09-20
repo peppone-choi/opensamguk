@@ -19,6 +19,10 @@ class ResolvedHanWorldArtifacts internal constructor(
         HanLandMarchMetricJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
+    val provinceCells: opensamguk.logic.world.HanProvinceCellIndex by lazy {
+        HanProvinceCellJson.load(projection.topology,
+            artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
+    }
     val cityConst get() = CityConstRegistry.hanWorld(variant)
     init {
         require(cityConst.all().keys == projection.bindingsByCityId.keys) { "Han runtime constants and topology roster differ" }

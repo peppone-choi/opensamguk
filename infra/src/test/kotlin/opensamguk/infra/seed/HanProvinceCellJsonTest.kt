@@ -71,7 +71,10 @@ class HanProvinceCellJsonTest {
     @Test fun `actual selected han bundle exposes a province cell inventory without current file fallback`() {
         val bundle = HanWorldArtifactsResolver(Path.of("..")).artifacts(HanWorldVariant.V3_1133)
         val bytes = bundle.artifactBytes(LandMarchMetricSnapshot.TILES_PATH)
-        val index = HanProvinceCellJson.load(bundle.projection.topology,bytes)
+        val index = bundle.provinceCells
+        assertSame(index,bundle.provinceCells)
+        bytes.fill(0)
+        assertEquals(index.tilesContentHash,hash(bundle.artifactBytes(LandMarchMetricSnapshot.TILES_PATH)))
         assertEquals(768,index.cols); assertEquals(669,index.rows)
         assertEquals(bundle.projection.topology.landProvinceIds,index.provinceIds)
         // Independently counted from this pinned source RLE, not a tactical-grid size choice.
@@ -79,6 +82,6 @@ class HanProvinceCellJsonTest {
         assertEquals(103,cells.size)
         assertEquals(HanProvinceCell(448,138,'1'),cells.first())
         assertEquals(HanProvinceCell(449,146,'1'),cells.last())
-        assertEquals(hash(bytes),index.tilesContentHash)
+        assertEquals(hash(bundle.artifactBytes(LandMarchMetricSnapshot.TILES_PATH)),index.tilesContentHash)
     }
 }
