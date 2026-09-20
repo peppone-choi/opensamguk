@@ -25,11 +25,32 @@ object HwihaMilitaryPresence {
             state.units.map { it.id }.distinct().size != state.units.size ||
             state.retainers.map { it.id }.distinct().size != state.retainers.size)
             return MilitaryPresenceAssessment.Unavailable
+        // Neutral allegiance follows explicit personal ownership, including non-deployed retainers.
+        // Never infer kinship from co-location; malformed relevant chains withhold authority.
+        fun root(personId: Int): Int? {
+            var current = personId
+            val seen = mutableSetOf<Int>()
+            while (seen.add(current)) {
+                val person = state.people.singleOrNull { it.id == current } ?: return null
+                val links = state.retainers.filter { it.generalId == current }
+                if (links.isEmpty()) return current
+                val link = links.singleOrNull() ?: return null
+                val master = state.people.singleOrNull { it.id == link.ownerId } ?: return null
+                if (master.nationId != person.nationId) return null
+                current = master.id
+            }
+            return null
+        }
+        val actorRoot = if (nationId == 0 && actorId != null) root(actorId)
+            ?: return MilitaryPresenceAssessment.Unavailable else null
         val hostile = mutableListOf<HwihaDeployedCorps>()
         val blocked = sortedSetOf<String>()
         for (corps in state.deployed.sortedWith(compareBy({ it.ownerGeneralId }, { it.commanderGeneralId }, { it.orderId }))) {
             val active = HwihaDeploymentRules.assessActive(corps, state) as? DeploymentAssessment.Eligible
                 ?: return MilitaryPresenceAssessment.Unavailable
+            val corpsRoot = if (corps.nationId == 0) root(corps.ownerGeneralId)
+                ?: return MilitaryPresenceAssessment.Unavailable else null
+            if (actorRoot != null && actorRoot == corpsRoot) continue
             if (corps.ownerGeneralId == actorId || corps.commanderGeneralId == actorId || (nationId > 0 && corps.nationId == nationId)) continue
             // An unaffiliated actor does not infer hostility toward positive nations.
             val blocks = corps.nationId == 0 || (nationId > 0 &&

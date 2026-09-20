@@ -71,4 +71,34 @@ class HwihaMilitaryPresenceTest {
         assertEquals(setOf("p3"),ready(s,actor=2).blockedProvinceIds)
     }
 
+    private fun neutralFamily(): DeploymentProjection = DeploymentProjection(RuleProfile.HWIHA,
+        (1..5).map { person(it,0) },
+        listOf(DeploymentUnit(20,1,100,12),DeploymentUnit(30,1,100,13),DeploymentUnit(3,3,10,null),DeploymentUnit(5,5,10,null)),
+        listOf(DeploymentRetainer(12,1,2,true),DeploymentRetainer(13,1,3,true),DeploymentRetainer(14,1,4,false)),
+        listOf(HwihaDeployedCorps("a",1,2,12,0,listOf(20),HwihaPhase(200,1,1)),
+            HwihaDeployedCorps("b",1,3,13,0,listOf(30),HwihaPhase(200,1,1)),corps(5,0)))
+
+    @Test fun `neutral siblings and nondeployed retainer share explicit ownership root`() {
+        val s=neutralFamily()
+        for(actor in 1..4) assertEquals(listOf(5),ready(s,actor=actor).hostileCorps.map { it.ownerGeneralId })
+        val nested=s.copy(retainers=s.retainers.map { if(it.generalId==4) it.copy(ownerId=3) else it })
+        assertEquals(listOf(5),ready(nested,actor=4).hostileCorps.map { it.ownerGeneralId })
+        // A deputy's independently owned personal unit belongs to the same family as well.
+        val personal=s.copy(deployed=listOf(s.deployed.first(),corps(3,0),corps(5,0)))
+        assertEquals(listOf(5),ready(personal,actor=2).hostileCorps.map { it.ownerGeneralId })
+        assertEquals(listOf(1,3),ready(personal,actor=5).hostileCorps.map { it.ownerGeneralId })
+    }
+
+    @Test fun `neutral ownership chains reject cycles ambiguous links missing masters and nation mismatch`() {
+        val s=neutralFamily()
+        for(links in listOf(s.retainers+DeploymentRetainer(15,4,1,false),
+            s.retainers+DeploymentRetainer(16,1,4,false),
+            s.retainers.map { if(it.generalId==4) it.copy(ownerId=99) else it })) {
+            assertEquals(MilitaryPresenceAssessment.Unavailable,HwihaMilitaryPresence.assess(4,s.copy(retainers=links),emptySet()))
+        }
+        val wrong=s.copy(people=s.people+person(6,2),
+            retainers=s.retainers.map { if(it.generalId==4) it.copy(ownerId=6) else it })
+        assertEquals(MilitaryPresenceAssessment.Unavailable,HwihaMilitaryPresence.assess(4,wrong,emptySet()))
+    }
+
 }
