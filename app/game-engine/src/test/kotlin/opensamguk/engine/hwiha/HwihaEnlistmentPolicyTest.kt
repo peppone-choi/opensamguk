@@ -1,0 +1,64 @@
+package opensamguk.engine.hwiha
+
+import java.time.Instant
+import kotlin.test.*
+import opensamguk.common.world.WorldId
+import opensamguk.engine.turn.*
+import opensamguk.logic.input.*
+
+class HwihaEnlistmentPolicyTest {
+    private val request = EnlistmentRequest(1, EnlistmentMode.NATION, 1)
+    private fun general(id: Int, lord: Boolean = false, capacity: Int = 30) = TurnGeneral(
+        id = id, name = "G$id", nationId = if (id == 1) 0 else 1, cityId = 1, troopId = 0,
+        stats = GeneralStats(50, 50, 50, 50, 50), experience = 0, dedication = 0,
+        officerLevel = 0, turnTime = Instant.EPOCH,
+        meta = mapOf("hwihaLord" to lord, HwihaPersonPolicyState.META_KEY to
+            HwihaPersonPolicyState(capacity, true, "fixture", "pin", id).toMetaValue()),
+    )
+    private fun card(id: Int, master: Int, general: Int?) = Retainer(
+        id, master, if (general == null) "RECRUITED" else "EXISTING", general, "C$id", "guest")
+    private fun world(generals: List<TurnGeneral> = listOf(general(1), general(10, true)),
+                      cards: List<Retainer> = emptyList()) = InMemoryTurnWorld(WorldSnapshot(
+        worldId = WorldId(1), state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH,
+            config = mapOf("ruleProfile" to "HWIHA")), generals = generals, retainers = cards,
+    ))
+    @Test fun `direct person costs refresh while descendants are not charged twice`() {
+        val world = world(listOf(general(1), general(10, true), general(2), general(3)),
+            listOf(card(1, 10, 2), card(2, 2, 3)))
+        val policy = HwihaEnlistmentPolicy(world)
+        val first = assertIs<HwihaEnlistmentPolicyResult.Ready>(policy.current(request))
+        assertEquals(25, first.policy.freeRenownByLord[10])
+        assertEquals(5, first.policy.actorCardCost)
+        world.createRetainer(card(3, 10, 3))
+        assertEquals(20, assertIs<HwihaEnlistmentPolicyResult.Ready>(policy.current(request)).policy.freeRenownByLord[10])
+    }
+    @Test fun `actor source policy and negative stats fail explicitly`() {
+        assertEquals(EnlistmentPolicyUnavailable.ACTOR_NOT_FOUND,
+            assertIs<HwihaEnlistmentPolicyResult.Unavailable>(HwihaEnlistmentPolicy(world()).current(request.copy(actorId = 99))).reason)
+        for ((actor, reason) in listOf(
+            general(1).copy(meta = emptyMap()) to EnlistmentPolicyUnavailable.MISSING_PERSON_POLICY,
+            general(1).copy(meta = mapOf(HwihaPersonPolicyState.META_KEY to null)) to EnlistmentPolicyUnavailable.INVALID_PERSON_POLICY,
+            general(1).copy(stats = GeneralStats(-1, 50, 50)) to EnlistmentPolicyUnavailable.INVALID_STATS,
+        )) assertEquals(reason, assertIs<HwihaEnlistmentPolicyResult.Unavailable>(
+            HwihaEnlistmentPolicy(world(listOf(actor, general(10, true)))).current(request)).reason)
+    }
+    @Test fun `unavailable target does not hide another valid lord or grant free capacity`() {
+        val world = world(listOf(general(1), general(10, true), general(20, true)), listOf(card(1, 10, null)))
+        val result = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(world).current(request))
+        assertEquals(mapOf(20 to 30), result.policy.freeRenownByLord)
+        assertEquals(mapOf(10 to EnlistmentPolicyUnavailable.UNSUPPORTED_UNLINKED_CARD), result.unavailableLordReasons)
+    }
+    @Test fun `overcapacity and overflowing direct cost totals cannot become positive budgets`() {
+        for (overflow in listOf(false, true)) {
+            val children = (2..12).map { general(it).copy(stats = if (overflow)
+                GeneralStats(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+                else GeneralStats(100, 100, 100, 100, 100)) }
+            val world = world(listOf(general(1), general(20, true)) + children,
+                children.map { card(it.id, 20, it.id) })
+            val result = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(world).current(request))
+            assertEquals(if (overflow) EnlistmentPolicyUnavailable.COST_OVERFLOW else EnlistmentPolicyUnavailable.CAPACITY_EXCEEDED,
+                result.unavailableLordReasons[20])
+            assertTrue(result.policy.freeRenownByLord.isEmpty())
+        }
+    }
+}
