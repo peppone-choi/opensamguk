@@ -277,12 +277,65 @@ restore_auth_fixture() {
   auth_restore_required=0
 }
 
+# Only this isolated project's IDs are inspected; raw diagnostics never touch disk.
+capture_startup_failure() {
+  python3 - "$compose_project_name" "$artifact_dir" "${compose_files[@]}" <<'PY_DIAGNOSTICS'
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+project, output, *compose_files = sys.argv[1:]
+secret_values = sorted({value for key, value in os.environ.items()
+    if value and re.search(r"password|passwd|secret|token|jwt|private.?key", key, re.I)}, key=len, reverse=True)
+
+def masked(text):
+    for value in secret_values:
+        text = text.replace(value, "[REDACTED]").replace(json.dumps(value)[1:-1], "[REDACTED]")
+    text = re.sub(r"-----BEGIN [^-]+-----.*?(?:-----END [^-]+-----|$)", "[REDACTED PEM]", text, flags=re.S)
+    text = re.sub(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[REDACTED JWT]", text)
+    # Suppress the whole line rather than guess where an unknown credential value ends.
+    text = "\n".join("[REDACTED CREDENTIAL LINE]" if re.search(
+        r"password|passwd|secret|token|authorization|cookie|private.?key|://[^/\s]+:[^/\s]+@", line, re.I)
+        else line for line in text.splitlines())
+    return text + "\n"
+
+def capture(args):
+    try:
+        result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, errors="replace", timeout=15, check=False)
+        return result.returncode, result.stdout
+    except subprocess.TimeoutExpired:
+        return 124, "Diagnostic command timed out; partial output omitted."
+    except OSError:
+        return 127, "Diagnostic command unavailable."
+
+code, ids = capture(["docker", "compose", "--project-name", project, "--env-file", "/dev/null",
+                     *compose_files, "ps", "-a", "-q"])
+if code:
+    Path(output, "startup-diagnostics-status.log").write_text("Project container discovery failed; no containers inspected.\n")
+else:
+    for container in ids.splitlines():
+        if not re.fullmatch(r"[0-9a-f]{12,64}", container):
+            continue
+        # Deliberately exclude Config, Env, healthcheck command, mounts and labels.
+        fmt = '{{.State.Status}} exit={{.State.ExitCode}} {{if .State.Health}}health={{.State.Health.Status}}{{range .State.Health.Log}}\n{{.End}} exit={{.ExitCode}} {{.Output}}{{end}}{{end}}'
+        _, status = capture(["docker", "inspect", "--format", fmt, container])
+        Path(output, "startup-" + container + "-health.log").write_text(masked(status))
+        _, logs = capture(["docker", "logs", "--tail", "100", "--timestamps", container])
+        Path(output, "startup-" + container + "-service.log").write_text(masked(logs))
+PY_DIAGNOSTICS
+}
+
 record_cleanup() {
   printf '%s\n' "$1" >>"$cleanup_resources_file"
 }
 
 cleanup() {
   local exit_code=$?
+  local original_exit_code=$exit_code
   local image_alias
   local service
   local volume
@@ -330,6 +383,8 @@ cleanup() {
       fi
     done
   fi
+  # Cleanup failures must not replace the original startup/test failure code.
+  if (( original_exit_code != 0 )); then exit "$original_exit_code"; fi
   exit "$exit_code"
 }
 trap cleanup EXIT
@@ -346,7 +401,13 @@ elif [[ "$build_mode" == "sequential" ]]; then
   build_services_sequentially
   compose_up_args=(-d --no-build)
 fi
-compose up "${compose_up_args[@]}" >"$artifact_dir/docker-compose-up.log" 2>&1
+if compose up "${compose_up_args[@]}" >"$artifact_dir/docker-compose-up.log" 2>&1; then
+  :
+else
+  compose_up_exit=$?
+  capture_startup_failure || echo "startup diagnostics unavailable" >&2
+  exit "$compose_up_exit"
+fi
 
 gateway_port="${GATEWAY_API_PORT:-8080}"
 game_api_port="${GAME_API_PORT:-8081}"
