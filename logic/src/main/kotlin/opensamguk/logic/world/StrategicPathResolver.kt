@@ -152,13 +152,10 @@ object StrategicPathResolver {
             val nodes = found.nodes.map(StrategicNodeRef::canonicalKey)
             val ids = found.edges.map(TraversalEdge::id)
             val modes = found.edges.map(TraversalEdge::mode)
-            val hashInput = CanonicalEncoding().apply {
-                token("land-march-mm-v1"); token(topology.topologyRevision); token(topology.contentHash)
-                token(metrics.contentHash); strings(nodes); strings(ids); strings(modes.map(TraversalMode::name))
-                token(found.cost.toString()); token(found.capacity.toString())
-            }.toString()
             return LandMarchPathResult.Resolved(ResolvedLandMarchPath(nodes, ids, modes, found.cost,
-                found.capacity, topology.topologyRevision, topology.contentHash, metrics.contentHash, sha256(hashInput)))
+                found.capacity, topology.topologyRevision, topology.contentHash, metrics.contentHash,
+                landMarchPathHash(nodes, ids, modes, found.cost, found.capacity,
+                    topology.topologyRevision, topology.contentHash, metrics.contentHash)))
         }
         // Diagnostic searches only classify failure. Their synthetic links never produce a march path.
         val denial = when {
