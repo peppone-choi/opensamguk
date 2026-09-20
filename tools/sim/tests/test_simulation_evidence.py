@@ -61,6 +61,22 @@ class EvidenceIntegrityTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'sources changed'):
             E.evidence(self.root, [self.path], before, {'value': 1})
 
+    def test_integer_schedule_keys_have_reloadable_canonical_hash(self):
+        before = E.snapshot(self.root, [self.path])
+        source = {'arrivals': {2: 7, 10: 9}, 'path': (2, 10)}
+        result = E.evidence(self.root, [self.path], before, source)
+        loaded = json.loads(json.dumps(result))
+        canonical = json.dumps(loaded['result'], ensure_ascii=False, sort_keys=True,
+                               separators=(',', ':'), allow_nan=False)
+        self.assertEqual(result['resultSha256'], hashlib.sha256(canonical.encode()).hexdigest())
+        self.assertEqual(result['result'], loaded['result'])
+        self.assertEqual(source, {'arrivals': {2: 7, 10: 9}, 'path': (2, 10)})
+
+    def test_colliding_encoded_keys_cannot_silently_drop_results(self):
+        before = E.snapshot(self.root, [self.path])
+        with self.assertRaisesRegex(ValueError, 'duplicate JSON key'):
+            E.evidence(self.root, [self.path], before, {'arrivals': {2: 7, '2': 9}})
+
     def test_missing_input_is_not_replaced_by_default(self):
         with self.assertRaises(FileNotFoundError):
             E.snapshot(self.root, [self.root / 'missing.json'])
