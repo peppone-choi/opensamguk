@@ -160,6 +160,56 @@ class HwihaDeploymentPersistenceIT {
         }
     }
 
+    @Test fun `corps encounter checkpoint survives flush and makes commander battle pending`() {
+        val id = 618; fixture.seed(id)
+        var world = cold(id); val recorder = ChangeRecorder()
+        val corps = assertIs<DeploymentExecution.Applied>(executor(world, recorder)
+            .deploy("march-$id", DeploymentRequest(1, 4, listOf(7)))).corps
+        val topology = bundle.projection.topology
+        val metrics = bundle.landMarchMetrics
+        val source = world.positionOf(2)!!
+        val edges = StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash, emptyMap())
+        val path = topology.landProvinceIds.sorted().asSequence().mapNotNull { province ->
+            if (StrategicNodeRef.LandProvince(province) == source) null else
+                (StrategicPathResolver.resolveLandMarch(topology,
+                    StrategicPathRequest(source, StrategicNodeRef.LandProvince(province), 1), edges, metrics)
+                    as? LandMarchPathResult.Resolved)?.path
+        }.first()
+        val destination = StrategicNodeRef.LandProvince(path.nodeKeys.last().removePrefix("land:"))
+        // Explicit persistence fixture: this does not stand in for runtime march or combat verification.
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 2, destination))
+        val checkpoint = HwihaMarchCheckpoint(path, LandMarchCursor(path.pathHash, path.edgeIds.size, 0),
+            corps.startedAt, LandMarchStop.ENCOUNTER)
+        val state = HwihaCorpsMarchState(corps.orderId, corps.ownerGeneralId, corps.commanderGeneralId, checkpoint)
+        val before = world.getGeneralById(2)!!
+        val after = before.copy(meta = before.meta + (HwihaCorpsMarchState.META_KEY to state.toMetaValue()))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
+        world.applyGeneralDirtyFree(after)
+        save(world, recorder); world = cold(id)
+        val restored = HwihaCorpsMarchState.read(world.getGeneralById(2)!!.meta, topology, metrics)!!
+        restored.requireBinding(corps, 2)
+        assertEquals(checkpoint.cursor, restored.checkpoint.cursor)
+        assertEquals(destination, world.positionOf(2))
+        val projection = executor(world, ChangeRecorder()).projection()!!
+        assertTrue(projection.people.single { it.id == 2 }.inBattle)
+        assertEquals(LandMarchStop.ENCOUNTER, restored.checkpoint.stop)
+
+        val good = world.getGeneralById(2)!!
+        val badStates = listOf(state.copy(deploymentOrderId = "unrelated"), state.copy(ownerGeneralId = 10),
+            state.copy(commanderGeneralId = 10),
+            state.copy(checkpoint = checkpoint.copy(cursor = LandMarchCursor(path.pathHash), stop = LandMarchStop.BUDGET_EXHAUSTED)))
+        for (bad in badStates) {
+            world.applyGeneralDirtyFree(good.copy(meta = good.meta + (HwihaCorpsMarchState.META_KEY to bad.toMetaValue())))
+            assertNull(executor(world, ChangeRecorder()).projection())
+        }
+        world.applyGeneralDirtyFree(good)
+        assertNotNull(executor(world, ChangeRecorder()).projection())
+        val assignment = HwihaMarchState(HwihaCountyAssignment("fixture", 10, 1, 1), path,
+            checkpoint.cursor, checkpoint.lastAdvancedAt, checkpoint.stop)
+        world.applyGeneralDirtyFree(good.copy(meta = good.meta + (HwihaMarchState.META_KEY to assignment.toMetaValue())))
+        assertNull(executor(world, ChangeRecorder()).projection())
+    }
+
     @Test fun `reservation assessment is rechecked before deployment after troop ownership changes`() {
         val id=613;fixture.seed(id)
         var world=cold(id);val request=DeploymentRequest(1,4,listOf(7))

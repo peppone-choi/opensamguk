@@ -55,8 +55,18 @@ class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val 
             val position = positions.stateFor(person.id)
             val march = HwihaMarchState.read(person.meta, topology, metrics)
             require(march == null || march.path.nodeKeys[march.cursor.edgeIndex] == position?.node?.canonicalKey)
+            val corpsMarch = HwihaCorpsMarchState.read(person.meta, topology, metrics)
+            if (corpsMarch != null) {
+                val deployed = corps.singleOrNull { it.commanderGeneralId == person.id }
+                    ?: throw IllegalArgumentException("Corps march has no deployment")
+                corpsMarch.requireBinding(deployed, person.id)
+                val checkpoint = corpsMarch.checkpoint
+                require(checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex] == position?.node?.canonicalKey)
+                require(march == null) { "Assignment and corps marches cannot own the same position" }
+            }
             DeploymentPerson(person.id, person.nationId, person.npcState == 2 && (person.userId.isNullOrBlank() || person.userId.toLongOrNull()?.let { it <= 0 } == true),
-                position?.node, position?.battlefield != null || march?.stop == LandMarchStop.ENCOUNTER)
+                position?.node, position?.battlefield != null || march?.stop == LandMarchStop.ENCOUNTER ||
+                    corpsMarch?.checkpoint?.stop == LandMarchStop.ENCOUNTER)
         }, world.listBugoks().map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },
             world.listRetainers().map { DeploymentRetainer(it.id, it.masterGeneralId, it.generalId,
                 it.relation == RetainerRules.RELATION_LIEUTENANT) }, corps)

@@ -17,6 +17,18 @@ class HwihaMarchStateTest {
         HwihaPhase(200,1,1),LandMarchStop.BUDGET_EXHAUSTED)
     private fun read(raw: Any?)=HwihaMarchState.read(mapOf(HwihaMarchState.META_KEY to raw),topology,metrics)
 
+    @Test fun `assignment wire remains flat version one`() {
+        val raw = state.toMetaValue()
+        assertEquals(setOf("version", "assignment", "path", "edgeIndex", "paidMm", "lastAdvancedAt", "stop"), raw.keys)
+        assertEquals(1, raw["version"])
+        assertEquals(state.assignment.toMetaValue(), raw["assignment"])
+        assertEquals(LandMarchPathCodec.toMetaValue(path), raw["path"])
+        assertEquals(0, raw["edgeIndex"])
+        assertEquals(30L, raw["paidMm"])
+        assertEquals(state.lastAdvancedAt.toMetaValue(), raw["lastAdvancedAt"])
+        assertEquals("BUDGET_EXHAUSTED", raw["stop"])
+    }
+
     @Test fun `stored partial progress accepts JSON integer widths without banking unused movement`() {
         for(paid in listOf<Any>(30,30L)) {
             val restored=read(state.toMetaValue()+("paidMm" to paid))!!

@@ -209,4 +209,115 @@ class HwihaMarchPersistenceIT {
         assertEquals(before,world.getGeneralById(1));assertEquals(beforePosition,world.positionOf(1))
     }
 
+    private fun corpsExecutor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
+        HwihaCorpsMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
+    private fun corpsState(world: InMemoryTurnWorld, commander: Int) =
+        HwihaCorpsMarchState.read(world.getGeneralById(commander)!!.meta, topology, metrics)!!
+    private fun destination(world: InMemoryTurnWorld) =
+        assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta)!!.countyId))
+    private fun deploy(world: InMemoryTurnWorld, recorder: ChangeRecorder, id: Int, deputy: Boolean = false) =
+        assertIs<DeploymentExecution.Applied>(HwihaDeploymentExecutor(world, recorder, topology, metrics)
+            .deploy("corps-$id", DeploymentRequest(1, if (deputy) 4 else null, listOf(7)))).corps
+
+    @Test fun `corps takes over assignment only next phase and retains partial progress across closure and reload`() {
+        val id = 606; seed(id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7", id)
+        var world = cold(id); var recorder = ChangeRecorder()
+        val target = destination(world); val assignment = HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta)
+        val units = world.listBugoks(); val personalTime = world.getGeneralById(1)!!.turnTime
+        assertIs<AssignmentMarchExecution.Applied>(executor(world, recorder).advance(1, edges()) { LandMarchEntry.CLEAR })
+        deploy(world, recorder, id)
+        assertIs<CorpsMarchExecution.AlreadyProcessed>(corpsExecutor(world, recorder)
+            .advance("corps-$id", 1, target, edges()) { error("one movement per phase") })
+        save(world, recorder); world = cold(id); nextPhase(world); recorder = ChangeRecorder()
+        val first = assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder)
+            .advance("corps-$id", 1, target, edges()) { LandMarchEntry.CLEAR })
+        assertEquals(30_000_000L, first.movement.spentMm)
+        assertEquals(assignment, HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta))
+        assertNull(HwihaMarchState.read(world.getGeneralById(1)!!.meta, topology, metrics))
+        assertEquals(AssignmentMarchFailure.CORPS_DEPLOYED, assertIs<AssignmentMarchExecution.Rejected>(
+            executor(world, recorder).advance(1, edges()) { error("corps owns movement") }).reason)
+        save(world, recorder); world = cold(id)
+        val resumed = corpsState(world, 1).checkpoint
+        assertEquals(first.state.checkpoint.cursor, resumed.cursor)
+        assertEquals(first.state.checkpoint.path.pathHash, resumed.path.pathHash)
+        assertIs<CorpsMarchExecution.AlreadyProcessed>(corpsExecutor(world, ChangeRecorder())
+            .advance("corps-$id", 1, target, edges()) { error("reload is not a new turn") })
+        nextPhase(world); recorder = ChangeRecorder()
+        val blocked = assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder).advance("corps-$id", 1, target,
+            edges(mapOf(resumed.path.edgeIds[resumed.cursor.edgeIndex] to StrategicEdgeState(blockaded = true)))) { error("closed") })
+        assertEquals(resumed.cursor, blocked.state.checkpoint.cursor)
+        assertEquals(LandMarchStop.EDGE_BLOCKED, blocked.state.checkpoint.stop)
+        assertEquals(0L, blocked.movement.spentMm)
+        save(world, recorder); world = cold(id)
+        repeat(5) {
+            if (corpsState(world, 1).checkpoint.stop != LandMarchStop.ARRIVED) {
+                nextPhase(world); recorder = ChangeRecorder()
+                assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder)
+                    .advance("corps-$id", 1, target, edges()) { LandMarchEntry.CLEAR })
+                save(world, recorder); world = cold(id)
+            }
+        }
+        assertEquals(LandMarchStop.ARRIVED, corpsState(world, 1).checkpoint.stop)
+        assertEquals(target, world.positionOf(1))
+        assertEquals(assignment!!.countyId, world.getGeneralById(1)!!.cityId)
+        assertEquals(personalTime, world.getGeneralById(1)!!.turnTime)
+        assertEquals(units, world.listBugoks())
+    }
+
+    @Test fun `deputy corps preserves owner position and pending encounter after reload and rechecks live cards`() {
+        val id = 607; var world = seed(id); var recorder = ChangeRecorder()
+        val ownerPosition = world.positionOf(1); val units = world.listBugoks(); val target = destination(world)
+        deploy(world, recorder, id, deputy = true)
+        val unknown = assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder)
+            .advance("corps-$id", 2, target, edges()) { LandMarchEntry.UNAVAILABLE })
+        assertEquals(LandMarchStop.ENCOUNTER_UNAVAILABLE, unknown.state.checkpoint.stop)
+        assertEquals(0L, unknown.movement.spentMm)
+        save(world, recorder); world = cold(id)
+        repeat(5) {
+            if (corpsState(world, 2).checkpoint.stop != LandMarchStop.ENCOUNTER) {
+                nextPhase(world); recorder = ChangeRecorder()
+                assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder)
+                    .advance("corps-$id", 2, target, edges()) { LandMarchEntry.ENCOUNTER })
+                save(world, recorder); world = cold(id)
+            }
+        }
+        assertEquals(LandMarchStop.ENCOUNTER, corpsState(world, 2).checkpoint.stop)
+        assertNotEquals(ownerPosition, world.positionOf(2))
+        assertEquals(ownerPosition, world.positionOf(1)); assertEquals(units, world.listBugoks())
+        nextPhase(world)
+        assertEquals(CorpsMarchFailure.BATTLE_PENDING, assertIs<CorpsMarchExecution.Rejected>(corpsExecutor(world, ChangeRecorder())
+            .advance("corps-$id", 2, target, edges()) { error("pending combat") }).reason)
+        assertEquals(CorpsMarchFailure.NO_DEPLOYMENT, assertIs<CorpsMarchExecution.Rejected>(corpsExecutor(world, ChangeRecorder())
+            .advance("other-order", 2, target, edges()) { error("wrong order") }).reason)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7", id)
+        world = cold(id)
+        assertEquals(CorpsMarchFailure.INVALID_DEPLOYMENT, assertIs<CorpsMarchExecution.Rejected>(corpsExecutor(world, ChangeRecorder())
+            .advance("corps-$id", 2, target, edges()) { error("changed commander") }).reason)
+    }
+
+    @Test fun `corps stale position flush rolls back progress and phase`() {
+        val id = 608; seed(id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7", id)
+        var world = cold(id); var recorder = ChangeRecorder()
+        deploy(world, recorder, id); save(world, recorder); world = cold(id)
+        val target = destination(world)
+        repeat(5) {
+            val before = cold(id); recorder = ChangeRecorder()
+            val result = assertIs<CorpsMarchExecution.Applied>(corpsExecutor(world, recorder)
+                .advance("corps-$id", 1, target, edges()) { LandMarchEntry.CLEAR })
+            if (result.movement.reachedNodes.isNotEmpty()) {
+                jdbc.update("UPDATE general_spatial_position SET revision=revision+1 WHERE world_id=? AND general_id=1", id)
+                assertFailsWith<opensamguk.infra.persistence.StaleGeneralPositionException> { save(world, recorder) }
+                val restored = cold(id)
+                assertEquals(before.getGeneralById(1), restored.getGeneralById(1))
+                assertEquals(before.positionOf(1), restored.positionOf(1))
+                assertEquals(before.getState().currentPhase, restored.getState().currentPhase)
+                return
+            }
+            save(world, recorder); world = cold(id); nextPhase(world)
+        }
+        fail("fixture must reach a province within five phases")
+    }
+
 }
