@@ -228,5 +228,35 @@ class ExtractionTest(unittest.TestCase):
         self.assertEqual(self.norm.commandery_base("齊郡"), self.norm.commandery_base("齊國"))
 
 
+
+
+class WoodProcurementTest(unittest.TestCase):
+    def test_procurement_keeps_event_scope_without_site_binding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "hhs-042.txt"
+            path.write_text("==中山簡王焉==\n立五十二年，{{YL|永元二年|90年}}薨。發常山、鉅鹿、涿郡柏黃腸雜木，<ref>黃腸，柏木黃心。</ref>三郡不能備\n")
+            records = brs.extract_wood_procurement(Path(tmp))
+            self.assertEqual([r["sourceName"] for r in records], ["常山", "鉅鹿", "涿郡"])
+            doc = brs.load_json(brs.EXTRACTS_PATH)
+            doc["extracts"] = [r for r in doc["extracts"] if r.get("attribution") != "EVENT_PROCUREMENT"] + records
+            entries = [r for r in brs.build_ledger(doc)["entries"] if r.get("countyAttribution") == "EVENT_PROCUREMENT"]
+            self.assertEqual(len(entries), 3)
+            for r in entries:
+                self.assertIsNone(r["jurisdictionId"])
+                self.assertIsNone(r["commanderyId"])
+                self.assertEqual(r["eventYear"], 90)
+                self.assertEqual(r["matchStatus"], "UNREVIEWED_EVENT_PROCUREMENT")
+                self.assertIn("지속 생산", r["claim"])
+                self.assertEqual(r["evidence"]["locator"]["line"], 2)
+
+    def test_missing_or_duplicate_procurement_clause_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "hhs-042.txt"
+            for body in ("no witness", "發常山、鉅鹿、涿郡柏黃腸雜木" * 2, "==中山簡王焉==\n永元二年|90年\n發常山、鉅鹿、涿郡柏黃腸雜木，三郡不能備", "==另一人==\n永元二年|90年 發常山、鉅鹿、涿郡柏黃腸雜木，三郡不能備"):
+                path.write_text(body)
+                with self.subTest(body=body), self.assertRaises(SystemExit):
+                    brs.extract_wood_procurement(Path(tmp))
+
+
 if __name__ == "__main__":
     unittest.main()

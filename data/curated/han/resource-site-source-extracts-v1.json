@@ -3070,6 +3070,72 @@
    "attribution": "CURATED_PASSAGE",
    "marker": null,
    "snapshotSha256": "9de321b6fd344270ce068881c24351ac9ee1375371af0ae40cec8f0f685446ff"
+  },
+  {
+   "extractId": "hhs:042:WOOD:procurement-90:常山",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "常山",
+   "sourceCommandery": "常山",
+   "book": "後漢書",
+   "volume": "卷042 光武十王列傳 中山簡王焉",
+   "volumeNumber": 42,
+   "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+   "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+   "attribution": "EVENT_PROCUREMENT",
+   "marker": null,
+   "eventYear": 90,
+   "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+   "locator": {
+    "corpusPath": "data/corpus/hhs-042.txt",
+    "line": 183
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다."
+  },
+  {
+   "extractId": "hhs:042:WOOD:procurement-90:鉅鹿",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "鉅鹿",
+   "sourceCommandery": "鉅鹿",
+   "book": "後漢書",
+   "volume": "卷042 光武十王列傳 中山簡王焉",
+   "volumeNumber": 42,
+   "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+   "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+   "attribution": "EVENT_PROCUREMENT",
+   "marker": null,
+   "eventYear": 90,
+   "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+   "locator": {
+    "corpusPath": "data/corpus/hhs-042.txt",
+    "line": 183
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다."
+  },
+  {
+   "extractId": "hhs:042:WOOD:procurement-90:涿郡",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "涿郡",
+   "sourceCommandery": "涿郡",
+   "book": "後漢書",
+   "volume": "卷042 光武十王列傳 中山簡王焉",
+   "volumeNumber": 42,
+   "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+   "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+   "attribution": "EVENT_PROCUREMENT",
+   "marker": null,
+   "eventYear": 90,
+   "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+   "locator": {
+    "corpusPath": "data/corpus/hhs-042.txt",
+    "line": 183
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다."
   }
  ]
 }

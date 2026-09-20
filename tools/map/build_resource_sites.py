@@ -8,6 +8,7 @@
    「鐵官·鹽官·馬官·木官」(漢書 地理志 上, 위키소스 顏師古註본 raw)을 뽑아
    `data/curated/han/resource-site-source-extracts-v1.json` 에 인용문째 적는다. 원문
    (`data/corpus/`, 위키소스 raw)은 저장소에 없다(gitignore) — 그래서 이 단계는 로컬에서만 돈다.
+   後漢書 卷42의 90년 장례 목재 조달3郡도 별도 사건 근거로 추출한다. 지속 생산지로 결속하지 않는다.
 2. **대조**(기본 동작): 커밋된 추출본을 `data/map/han-tiles.json` 의 jurisdictionRecords·
    commanderyRecords 에 붙여 `data/curated/han/resource-sites-v1.json` 을 만든다.
    `--check` 는 이 단계를 다시 돌려 커밋본과 바이트 단위로 비교한다 — 네트워크·원문 없이 돈다.
@@ -132,9 +133,9 @@ UNKNOWN_RECORDS = [
         "resource": "WOOD", "era": "LATER_HAN", "level": "REGION",
         "sourceName": None, "sourceCommandery": None, "jurisdictionId": None, "commanderyId": None,
         "matchStatus": "UNKNOWN_NO_SOURCE", "confidence": "UNKNOWN", "evidence": None,
-        "missing": "後漢 목재 산지를 縣·郡 단위로 적은 사료를 아직 못 찾았다. 郡國志 본문에 산림·木 주기가 없고, "
+        "missing": "後漢 縣 단위 벌채지·지속 생산량은 미확정이다. 卷42의 90년 장례 목재 조달3郡은 별도 사건 근거로 보존한다. "
                    "han-tiles terrainLegend 10종(SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·"
-                   "OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)이 유일한 문헌 근거다. 현대 식생을 "
+                   "OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)은 시대가 다른 근거다. 현대 식생을 "
                    "2~3세기 경관으로 단정하지 않는다(스펙 §9.3).",
     },
     {
@@ -379,6 +380,33 @@ def verify_horse_passages(hhs_dir: Path) -> dict[int, str]:
     return digests
 
 
+def extract_wood_procurement(hhs_dir: Path) -> list[dict]:
+    """Preserve the 90 CE procurement event without inferring production sites."""
+    raw = (hhs_dir / "hhs-042.txt").read_bytes()
+    text = raw.decode("utf-8")
+    quote = "發常山、鉅鹿、涿郡柏黃腸雜木"
+    if text.count(quote) != 1:
+        raise SystemExit("hhs-042.txt: unique wood procurement passage missing")
+    line = text[:text.index(quote)].count("\n") + 1
+    paragraph = text.splitlines()[line - 1]
+    headings = re.findall(r"^==([^=]+)==$", text[:text.index(quote)], re.MULTILINE)
+    if (not headings or headings[-1] != "中山簡王焉"
+            or "永元二年|90年" not in paragraph or "三郡不能備" not in paragraph):
+        raise SystemExit("hhs-042.txt: wood procurement event context missing")
+    return [{
+        "extractId": f"hhs:042:WOOD:procurement-90:{name}",
+        "resource": "WOOD", "era": "LATER_HAN", "level": "COMMANDERY",
+        "sourceName": name, "sourceCommandery": name,
+        "book": "後漢書", "volume": "卷042 光武十王列傳 中山簡王焉", "volumeNumber": 42,
+        "quote": quote, "url": HHS_URL.format(vol=42),
+        "attribution": "EVENT_PROCUREMENT", "marker": None, "eventYear": 90,
+        "snapshotSha256": sha256_bytes(raw),
+        "locator": {"corpusPath": "data/corpus/hhs-042.txt", "line": line},
+        "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. "
+                 "지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다.",
+    } for name in ("常山", "鉅鹿", "涿郡")]
+
+
 def build_extracts(hhs_dir: Path, dlz_raw: Path) -> dict:
     norm = Normalizer(load_json(SIMPLIFICATION_PATH)["table"])
     units_doc = load_json(UNITS_PATH)
@@ -409,7 +437,7 @@ def build_extracts(hhs_dir: Path, dlz_raw: Path) -> dict:
         "commanderySuccessions": [{k: v for k, v in c.items() if k != "needle"} | {
             "book": "後漢書", "volume": f"卷{c['volumeNumber']} 郡國志", "url": HHS_URL.format(vol=c["volumeNumber"])}
             for c in COMMANDERY_SUCCESSIONS],
-        "extracts": iron + offices + horses,
+        "extracts": iron + offices + horses + extract_wood_procurement(hhs_dir),
     }
 
 
@@ -541,6 +569,11 @@ def build_ledger(extracts_doc: dict) -> dict:
         }
         if "claim" in x:
             entry["claim"] = x["claim"]
+        if x["attribution"] == "EVENT_PROCUREMENT":
+            entry.update(eventYear=x["eventYear"], matchStatus="UNREVIEWED_EVENT_PROCUREMENT",
+                         confidence="LOW", matchReason="특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토")
+            entries.append(entry)
+            continue
         era, group = x["era"], x["sourceCommandery"]
         if x["level"] == "REGION":
             entry.update(matchStatus="REGION_ONLY", confidence="MEDIUM",
