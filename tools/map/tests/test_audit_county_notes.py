@@ -88,7 +88,7 @@ class CountyNoteAlignmentTest(unittest.TestCase):
         self.assertEqual(rows[0]["body"], "陽城有鐵")
 
     def test_body_markers_are_not_hidden_as_ordinary_mismatches_or_matches(self):
-        for body in ("酇有[D279]聚", "宋周名[C745]丘漢改為新[C745]", "祋祤永元九年夏[1111]", "酇有�聚"):
+        for body in ("酇有[D279]聚", "宋周名[C745]丘漢改為新[C745]", "祋祤永元九年夏[1111]", "酇有�聚", "雍丘本[_]國"):
             with self.subTest(body=body):
                 rows, _ = audit.align_note_bodies(
                     [{"sourceName": body[:1], "body": body}], body, {})

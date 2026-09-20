@@ -22,10 +22,10 @@
   },
   "counts": {
     "NAME_ONLY_REQUIRES_BOUNDARY_REVIEW": 633,
-    "NO_EXACT_CLAUSE": 145,
+    "NO_EXACT_CLAUSE": 141,
     "SOURCE_PLACEHOLDER": 3,
     "UNIQUE_CLAUSE_CANDIDATE": 378,
-    "UNRESOLVED_BODY_MARKER": 20,
+    "UNRESOLVED_BODY_MARKER": 24,
     "UNSUPPORTED_MARKUP": 1
   },
   "groups": [
@@ -6669,7 +6669,10 @@
           "body": "雍丘本[_]國。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[_]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"陳留郡\",5]",
@@ -8198,7 +8201,10 @@
           "body": "定陶本曹國，古陶，堯所居。有三[_]亭。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[_]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"濟陰郡\",2]",
@@ -9084,7 +9090,10 @@
           "body": "傅陽有[_]水。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[_]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[111,\"彭城國\",4]",
@@ -11763,7 +11772,10 @@
           "body": "鄧，有[_]聚。",
           "review": "UNREVIEWED",
           "candidates": [],
-          "comparison": "NO_EXACT_CLAUSE"
+          "bodyMarkers": [
+            "[_]"
+          ],
+          "comparison": "UNRESOLVED_BODY_MARKER"
         },
         {
           "memberId": "[112,\"南陽郡\",24]",

@@ -8,7 +8,7 @@ CText 원본 HTML은 다시 확보하지 못했다. 따라서 저장된 인용�
 
 ## 입력
 
-- 대조 묶음: `data/curated/han/junguozhi-county-note-collation-v1.json`, SHA256 `2500c7010179860dbbe1102778b811403ce010a41be8981485a1c273944b5aef`
+- 대조 묶음: `data/curated/han/junguozhi-county-note-collation-v1.json`, SHA256 `5ed7a04e46c37294d95657eb98412335b8bdf42311e0df876139700530ed7dab`
 - Wikisource `hhs-110.txt`: SHA256 `54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d`. 아래 행 번호는 이 원문 기준이다.
 - CText URL·스냅샷 해시·locator는 대조 묶음의 각 郡 citation에 보존돼 있다. 아래 CText 열은 저장된 인용을 縣별로 나눠 적었으며 문장부호·줄바꿈은 정리했다.
 
@@ -149,4 +149,4 @@ CText 원본 HTML은 다시 확보하지 못했다. 따라서 저장된 인용�
 
 - CText 원본 구조를 확보해 碭山/碭 및 魯國/魯의 이름·본문 경계를 확인한다. 현재 줄바꿈만으로 정답을 확정하지 않는다.
 - 酇의 [D279]와 宋의 [C745]는 두 인용의 대응을 기록했지만, 원문 문자 복원과 원장 변경을 승인한 것은 아니다.
-- 나머지 99郡 1,081행, 원본 HTML 재검증, 주석 자체의 대조 및 지도·인물 귀속 판정은 이 검토 범위 밖이다.
+- 이 문서의 범위는 예주99행이다. 후속 전수 본문대조는 `data/curated/han/junguozhi-county-note-text-review-v1.json`에 통합했다(1,180행). 원본 HTML 재검증, 주석 자체 대조 및 지도·인물 귀속 판정은 여전히 이 검토 범위 밖이다.
