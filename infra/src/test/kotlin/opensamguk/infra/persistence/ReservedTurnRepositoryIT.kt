@@ -62,7 +62,7 @@ class ReservedTurnRepositoryIT {
         repo = ReservedTurnRepository(jdbc)
         seedWorld(worldId)
         seedWorld(otherWorldId)
-        seedGenerals(worldId, 10, 11, 20, 99, 120, 121, 122, 501)
+        seedGenerals(worldId, 10, 11, 20, 99, 119, 120, 121, 122, 501)
         seedGenerals(otherWorldId, 501)
     }
 
