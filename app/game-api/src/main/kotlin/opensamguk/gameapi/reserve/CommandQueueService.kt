@@ -45,6 +45,7 @@ class CommandQueueService(
     private val commandResults: CommandResultRepository,
     private val transactions: TransactionOperations,
     processWorld: GameApiProcessWorld,
+    private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val readGeneralAction: (Int, Int) -> String = { generalId, slot ->
@@ -100,6 +101,7 @@ class CommandQueueService(
      *  4. setGeneralCommand 부분 실패 → 부분 결과 반환(errorIdx=idx).
      */
     fun reserveBulkGeneral(generalId: Int, commands: List<CommandBulkItem>): BulkReserveResult {
+        requireLegacyQueueProfile()
         val requestId = requestIds()
         return transactions.execute { status ->
             val briefList = ArrayList<String>(commands.size)
@@ -147,6 +149,7 @@ class CommandQueueService(
         officerLevel: Int,
         commands: List<CommandBulkItem>,
     ): BulkReserveResult {
+        requireLegacyQueueProfile()
         val requestId = requestIds()
         return transactions.execute { status ->
             val briefList = ArrayList<String>(commands.size)
@@ -361,6 +364,15 @@ class CommandQueueService(
      */
     private fun resolveBrief(command: String): String = registry.resolve(command).name
 
+    /** Profile is immutable for a world; mutable slot scans cannot enforce the 12-slot contract. */
+    private fun requireLegacyQueueProfile() {
+        val config = worldStates.findProcessWorld()?.config
+            ?: throw CommandQueueDenied("세계 규칙을 확인할 수 없습니다.")
+        val profile = if ("ruleProfile" !in config) "SAMMO" else config["ruleProfile"]
+        if (profile == "HWIHA") throw CommandQueueDenied("새 규칙에서는 순별 직접 예약만 제공됩니다.")
+        if (profile != "SAMMO") throw CommandQueueDenied("세계 규칙을 확인할 수 없습니다.")
+    }
+
     private fun queueMutation(
         operation: String,
         generalId: Int,
@@ -369,6 +381,7 @@ class CommandQueueService(
         amount: Int,
         mutate: () -> Unit,
     ): QueueAccepted {
+        requireLegacyQueueProfile()
         val requestId = requestIds()
         transactions.executeWithoutResult {
             mutate()
