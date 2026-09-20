@@ -21,6 +21,7 @@
 // 두른다. 띠 옆은 지형이 아니라 잉크라 어떤 땅 위에서도 색이 선다.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { acquireMapSprite } from './mapSprites';
 import { attachMapGestures } from './mapGestures';
 import type { SurfaceBounds } from './mapSurfaceCache';
 import { MapChunkCache, drawMapChunk } from './mapChunkCache';
@@ -141,16 +142,6 @@ export interface IsoMap2DProps {
   ariaLabel?: string;
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`${url} 를 못 불러왔다`));
-    image.src = url;
-  });
-}
-
 /**
  * 지도 밖 타일용 어두운 사본. 실루엣(알파)은 그대로 두고 색만 배경 쪽으로 눌러 둔다.
  *
@@ -198,8 +189,11 @@ export function IsoMap2D({
   const [sprites, setSprites] = useState<Map<string, HTMLImageElement> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const surfaceCache = useMemo(() => new MapChunkCache(),
-    [data, sprites, tintMode, tintStrength, nationColorByOwner]);
+  const surfaceCache = useMemo(() => new MapChunkCache(), [data.grid, sprites]);
+  // Equivalent ownership objects from a refresh do not invalidate political composites.
+  const colorKey = JSON.stringify(Object.entries(nationColorByOwner ?? {}).sort(([a], [b]) => Number(a) - Number(b)));
+  const politicalRevision = useMemo(() => ({}),
+    [data.owner, data.parentOwner, tintMode, tintStrength, colorKey]);
   useEffect(() => () => surfaceCache.dispose(), [surfaceCache]);
 
   // 실제로 쓰이는 (재질, 마스크) 짝만 받는다. 93장을 전부 받을 필요가 없다.
@@ -216,20 +210,21 @@ export function IsoMap2D({
     keys.add('skirts/skirt-right');
     for (const tier of BUILDING_TIERS) keys.add(`objects/${tier.file}`);
     return [...keys];
-  }, [data]);
+  }, [data.grid]);
 
   useEffect(() => {
     let cancelled = false;
     setSprites(null);
     setError(null);
-    Promise.all(needed.map(async (key) => [key, await loadImage(`${SPRITE_BASE}/${key}.png`)] as const))
+    const leases = needed.map(key => acquireMapSprite(`${SPRITE_BASE}/${key}.png`));
+    Promise.all(needed.map(async (key, index) => [key, await leases[index].promise] as const))
       .then((pairs) => {
         if (!cancelled) setSprites(new Map(pairs));
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : '스프라이트를 못 불러왔다');
       });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; for (const lease of leases) lease.release(); };
   }, [needed]);
 
   // 확대·이동은 씬을 다시 그리게 할 뿐 다시 짓게 하지는 않는다. 그런데 아래 effect 는
@@ -240,7 +235,7 @@ export function IsoMap2D({
   // 지형이 바뀌면 배율·위치는 뜻이 없다. 다시 맞춘다.
   useEffect(() => {
     viewRef.current = { scale: 1, minScale: 0.02, panX: 0, panY: 0, fitted: false };
-  }, [data]);
+  }, [data.grid]);
 
   // 캔버스 위 +/−/전체 단추가 쥐는 손잡이. 터치 핀치와 함께 쓸 수 있는 확대 수단이다.
   const zoomRef = useRef<{ by: (factor: number) => void; fit: () => void } | null>(null);
@@ -286,7 +281,7 @@ export function IsoMap2D({
       ];
     };
 
-    const drawSurface = (context: CanvasRenderingContext2D, bounds: SurfaceBounds, renderScale = view.scale) => {
+    const drawSurface = (context: CanvasRenderingContext2D, bounds: SurfaceBounds) => {
       const toCell = (x: number, y: number) => [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
       const corners = [toCell(bounds.x, bounds.y), toCell(bounds.x + bounds.width, bounds.y),
         toCell(bounds.x, bounds.y + bounds.height), toCell(bounds.x + bounds.width, bounds.y + bounds.height)];
@@ -332,6 +327,17 @@ export function IsoMap2D({
         }
       }
 
+      return drawn;
+    };
+
+    const drawPolitical = (context: CanvasRenderingContext2D, bounds: SurfaceBounds, renderScale = view.scale) => {
+      const toCell = (x: number, y: number) => [(x / HALF_W + y / HALF_H) / 2, (y / HALF_H - x / HALF_W) / 2];
+      const corners = [toCell(bounds.x, bounds.y), toCell(bounds.x + bounds.width, bounds.y),
+        toCell(bounds.x, bounds.y + bounds.height), toCell(bounds.x + bounds.width, bounds.y + bounds.height)];
+      const c0 = Math.max(0, Math.floor(Math.min(...corners.map(p => p[0]))) - 8);
+      const c1 = Math.min(cols - 1, Math.ceil(Math.max(...corners.map(p => p[0]))) + 8);
+      const r0 = Math.max(0, Math.floor(Math.min(...corners.map(p => p[1]))) - 8);
+      const r1 = Math.min(rows - 1, Math.ceil(Math.max(...corners.map(p => p[1]))) + 8);
       // 세력색 — 색상만 얹는다('color'). 휘도는 지형 것이 남아 산·강 음영이 살아 있고
       // 색이 짙게 깔리지 않는다. 곱하기였을 때 「너무 짙다」는 지적을 받았다(2026-09-09).
       if (tintMode !== 'none' && tintStrength > 0) {
@@ -477,7 +483,6 @@ export function IsoMap2D({
         context.restore();
       }
 
-      return drawn;
     };
 
     const draw = () => {
@@ -534,9 +539,19 @@ export function IsoMap2D({
         width: w / view.scale, height: h / view.scale,
       });
       if (chunkFrame) {
-        for (const chunk of chunkFrame.surfaces) drawMapChunk(context, chunk, view.scale * dpr);
+        for (const chunk of chunkFrame.surfaces) {
+          const composite = surfaceCache.decorate(chunk, politicalRevision, (ctx, bounds, scale) => {
+            drawPolitical(ctx, bounds, scale); return 0;
+          });
+          drawMapChunk(context, chunk, view.scale * dpr, composite ?? chunk.canvas,
+            composite ? undefined : ctx => drawPolitical(ctx, chunk.rasterBounds, chunk.scale));
+        }
         if (chunkFrame.pending) schedule();
       }
+      if (!chunkFrame) drawPolitical(context, {
+        x: -view.panX / view.scale, y: -view.panY / view.scale,
+        width: w / view.scale, height: h / view.scale,
+      });
       canvas.dataset.surfacePending = String(chunkFrame?.pending ?? false);
 
       // 城 건물 — 세계 좌표. 지형과 같은 배율로 서야 등급별 크기가 뜻을 갖는다.
@@ -812,7 +827,7 @@ export function IsoMap2D({
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('click', onClick);
     };
-  }, [data, sprites, surfaceCache, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
+  }, [data, sprites, surfaceCache, politicalRevision, tintMode, tintStrength, nationColorByOwner, cities, hideCityNames,
     currentCityId, selectedCityId, onPickTile, onPickCity, onHoverCity,
     battlefields, onPickBattlefield, seaRoutes]);
 
