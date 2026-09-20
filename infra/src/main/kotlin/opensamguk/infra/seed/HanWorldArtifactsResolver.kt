@@ -15,6 +15,10 @@ class ResolvedHanWorldArtifacts internal constructor(
     bytes: Map<String, ByteArray>,
 ) {
     private val artifacts = bytes.mapValues { it.value.copyOf() }
+    val landMarchMetrics: opensamguk.logic.world.LandMarchMetricSnapshot by lazy {
+        HanLandMarchMetricJson.load(projection.topology,
+            artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
+    }
     val cityConst get() = CityConstRegistry.hanWorld(variant)
     init {
         require(cityConst.all().keys == projection.bindingsByCityId.keys) { "Han runtime constants and topology roster differ" }
