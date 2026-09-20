@@ -315,6 +315,10 @@ class DaemonLoopConfig {
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
+        val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
+            artifacts.projection.topology to artifacts.landMarchMetrics
+        } else null
         val handler = ReservedTurnHandler(
             world = world,
             registry = registry,
@@ -328,6 +332,7 @@ class DaemonLoopConfig {
             recorder = recorder,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
+            hwihaDeploymentContext = deploymentContext,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -476,7 +481,7 @@ class DaemonLoopConfig {
                 val movement = opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(world, recorder,
                     artifacts.projection.topology, artifacts.landMarchMetrics)
                 movement::onTurn
-            } else { _, _ -> },
+            } else { _, _, _ -> },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
 

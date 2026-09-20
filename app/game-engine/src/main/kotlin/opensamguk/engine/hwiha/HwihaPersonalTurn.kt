@@ -5,7 +5,7 @@ import opensamguk.engine.turn.TurnWorldState
 /** Persisted with the same general patch as the action and time advancement. */
 internal object HwihaPersonalTurn {
     fun hasNoInput(reserved: opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn): Boolean =
-        !reserved.rowExists && reserved.requestId == null &&
+        !reserved.rowExists && reserved.requestId == null && reserved.reservationOwnerUserId == null &&
             reserved.actionCode == opensamguk.infra.persistence.ReservedTurnRepository.DEFAULT_TURN_ACTION &&
             reserved.argJson.trim() in setOf("", "{}")
 

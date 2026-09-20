@@ -193,12 +193,15 @@ class ReservedTurnHandler(
      * SAME recorder — P2 Risk #4 single-dirty-source).
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
+    private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
 
     private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
     val courtHandler by lazy { opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder) }
+    private val deployHandler by lazy { opensamguk.engine.hwiha.HwihaDeployHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -269,13 +272,17 @@ class ReservedTurnHandler(
                     reservedActionCode = reserved.actionCode, hwihaOutcome = HwihaTurnOutcome.NoAction)
             }
             var applied: HwihaTurnOutcome? = null
-            val inputs = HwihaInputRegistry(hwihaCatalog, mapOf(
+            val handlers = mutableMapOf(
                 HwihaEnlistmentHandler.INPUT_ID to InputHandler {
                     applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month)
                 },
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
-            ))
+            )
+            handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
+                applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
+            }
+            val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
                 is InputResolution.Rejected -> HwihaTurnOutcome.Rejected(
                     reserved.actionCode, resolution.reason.name, resolution.reason.message)

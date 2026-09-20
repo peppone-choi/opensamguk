@@ -445,4 +445,129 @@ class HwihaMarchPersistenceIT {
         fail("fixture must reach a province within five phases")
     }
 
+    private fun personalDeploymentFixture(id: Int): InMemoryTurnWorld {
+        personalMarchFixture(id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7", id)
+        return cold(id)
+    }
+    private fun reserveDeployment(id:Int, world:InMemoryTurnWorld, requestId:String) {
+        val envelope=opensamguk.common.wire.TurnDaemonCommandEnvelope(requestId,"0200-01-01T00:00:00Z",
+            opensamguk.common.wire.TurnDaemonCommand.Run(opensamguk.common.wire.RunReason.POKE))
+        opensamguk.infra.persistence.CommandInboxRepository(NamedParameterJdbcTemplate(jdbc)).insertAccepted(
+            opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand(
+                opensamguk.common.world.WorldId(id),requestId,commandKind=opensamguk.infra.persistence.CommandInboxRepository.CommandKind.RESERVED_TURN,
+                intentFingerprint="a".repeat(64),generalId=1,turnIdx=0,actionCode=HwihaDeployInput.INPUT_ID,
+                payloadJson=opensamguk.common.wire.encodeCommandPayload(envelope),ownerUserId=42))
+        opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc)).reserve(
+            opensamguk.common.world.WorldId(id),1,0,HwihaDeployInput.INPUT_ID,
+            HwihaDeployInput.canonicalJson(DeployInput(1,listOf(7),destination(world))),requestId=requestId)
+    }
+    private fun runDeploymentTurn(id:Int, world:InMemoryTurnWorld, published:MutableList<String>) =
+        fixture.service(opensamguk.common.world.WorldId(id),world,published,movement=true)
+            .runDueGeneralTurns(java.time.Instant.parse("0200-01-02T00:00:00Z"))
+
+    @Test fun `personal deployment reservation starts once pauses for other actions and persists through arrival`() {
+        val id=641;var world=personalDeploymentFixture(id)
+        val personal=world.getGeneralById(1)!!;val units=world.listBugoks();val target=destination(world)
+        val published=mutableListOf<String>()
+        reserveDeployment(id,world,"personal-deploy-641")
+        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        world=cold(id)
+        val order=assertNotNull(HwihaCorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
+        assertEquals("personal-deploy-641",order.orderId);assertEquals(target,order.destination)
+        var first=corpsState(world,1).checkpoint
+        val traveled=first.path.edgeIds.take(first.cursor.edgeIndex).sumOf { metrics.edgesById.getValue(it).costMm }+first.cursor.paidMm
+        assertEquals(30_000_000L,traveled)
+        assertNull(HwihaMarchState.read(world.getGeneralById(1)!!.meta,topology,metrics))
+        assertNotNull(HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta))
+        assertTrue(runDeploymentTurn(id,world,published).handled.isEmpty())
+        assertEquals(listOf("personal-deploy-641"),published)
+        val edgeId=first.path.edgeIds[first.cursor.edgeIndex]
+        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['hwihaLandPassage','edges',?,'blockaded'],'true'::jsonb) WHERE id=?",edgeId,id)
+        world=cold(id);nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
+        assertEquals(LandMarchStop.EDGE_BLOCKED,corpsState(world,1).checkpoint.stop)
+        assertEquals(first.cursor,corpsState(world,1).checkpoint.cursor)
+        assertEquals(order,HwihaCorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
+        first=corpsState(world,1).checkpoint
+        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['hwihaLandPassage','edges',?,'blockaded'],'false'::jsonb) WHERE id=?",edgeId,id)
+        world=cold(id)
+        opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc)).reserve(
+            opensamguk.common.world.WorldId(id),1,0,"placement.assign","{}",requestId="pause-641")
+        nextPhase(world)
+        assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        world=cold(id)
+        assertEquals(first.toMetaValue(),corpsState(world,1).checkpoint.toMetaValue())
+        reserveDeployment(id,world,"duplicate-deploy-641")
+        nextPhase(world)
+        assertEquals(DeploymentFailure.ALREADY_DEPLOYED.name,assertIs<HwihaTurnOutcome.Rejected>(
+            runDeploymentTurn(id,world,published).handled.single().hwihaOutcome).code)
+        world=cold(id)
+        assertEquals(first.toMetaValue(),corpsState(world,1).checkpoint.toMetaValue())
+        repeat(5) {
+            if(corpsState(world,1).checkpoint.stop!=LandMarchStop.ARRIVED) {
+                nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
+            }
+        }
+        assertEquals(LandMarchStop.ARRIVED,corpsState(world,1).checkpoint.stop)
+        assertEquals(target,world.positionOf(1));assertEquals(units,world.listBugoks())
+        assertEquals(personal.gold,world.getGeneralById(1)!!.gold);assertEquals(personal.rice,world.getGeneralById(1)!!.rice)
+        val deployed=assertNotNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta)).corps.single()
+        order.requireBinding(deployed,1)
+        assertEquals(1,personalMarchLogs(id).count { it=="출병 목적지에 도착했습니다." })
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=? AND request_id='personal-deploy-641'",Int::class.java,id))
+    }
+
+    @Test fun `changed commander rejects reserved departure without partial deployment or destination`() {
+        val id=642;var world=personalDeploymentFixture(id);val position=world.positionOf(1)
+        reserveDeployment(id,world,"changed-deploy-642")
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=4 WHERE world_id=? AND id=7",id)
+        world=cold(id)
+        val result=assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome)
+        assertEquals(DeploymentFailure.COMMANDER_CHANGED.name,result.code)
+        world=cold(id)
+        assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta))
+        assertNull(HwihaCorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
+        assertEquals(position,world.positionOf(1))
+    }
+
+    @Test fun `corrupt durable destination never resumes or replaces the active corps order`() {
+        val id=643;var world=personalDeploymentFixture(id);val published=mutableListOf<String>()
+        reserveDeployment(id,world,"bound-deploy-643");runDeploymentTurn(id,world,published)
+        world=cold(id);val position=world.positionOf(1);val checkpoint=corpsState(world,1).checkpoint.toMetaValue()
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaCorpsOrder,orderId}','\"wrong-order\"'::jsonb) WHERE world_id=? AND id=1",id)
+        world=cold(id);nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
+        assertEquals(position,world.positionOf(1));assertEquals(checkpoint,corpsState(world,1).checkpoint.toMetaValue())
+        assertTrue(personalMarchLogs(id).any { it=="출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다." })
+        assertEquals("wrong-order",HwihaCorpsOrder.read(world.getGeneralById(1)!!.meta,topology)!!.orderId)
+    }
+
+    @Test fun `new deployment position conflict rolls back corps order result and consumed reservation`() {
+        val id=644;var world=personalDeploymentFixture(id)
+        reserveDeployment(id,world,"rollback-deploy-644")
+        world=cold(id);val before=world.getGeneralById(1)
+        jdbc.update("UPDATE general_spatial_position SET revision=revision+1 WHERE world_id=? AND general_id=1",id)
+        val published=mutableListOf<String>()
+        assertFailsWith<opensamguk.infra.persistence.StaleGeneralPositionException> { runDeploymentTurn(id,world,published) }
+        val restored=cold(id)
+        assertEquals(before,restored.getGeneralById(1));assertEquals(world.getState().currentPhase,restored.getState().currentPhase)
+        assertTrue(personalMarchLogs(id).isEmpty());assertTrue(published.isEmpty())
+        assertEquals("rollback-deploy-644",opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
+            .readReserved(opensamguk.common.world.WorldId(id),1,0).requestId)
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?",Int::class.java,id))
+    }
+
+    @Test fun `reservation ownership transfer or missing original submitter denies departure`() {
+        for(id in listOf(645,646)) {
+            var world=personalDeploymentFixture(id);reserveDeployment(id,world,"owner-deploy-$id")
+            if(id==645) jdbc.update("UPDATE general SET user_id=99 WHERE world_id=? AND id=1",id)
+            else jdbc.update("UPDATE command_inbox SET owner_user_id=NULL WHERE world_id=?",id)
+            world=cold(id);val position=world.positionOf(1)
+            assertEquals("FORBIDDEN",assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome).code)
+            world=cold(id)
+            assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta))
+            assertNull(HwihaCorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
+            assertEquals(position,world.positionOf(1))
+        }
+    }
+
 }

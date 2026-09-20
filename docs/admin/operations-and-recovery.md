@@ -154,6 +154,14 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 
 키 누락·손상·토폴로지 불일치는 개인 기록에 정지 사유를 남기고 이동을 멈춘다. 기존 월드의 재기동 시 자동 보충하거나 핀만 교체하지 않는다. 별도 전환 검토 없이 운영 metadata를 덮어쓰지 않는다.
 
+### HWIHA 개인 출병 예약과 재개
+
+`action.deploy` 예약은 `bugokIds`와 `destinationProvinceId`만 받는다. 현재는 본인 지휘 부곡의 개인 행동이며 부장 배치는 별도 입력이다. 접수 뒤 실행 단계에서 원래 `command_inbox.owner_user_id`와 현재 장수 소유자를 다시 대조한다. 원장 결속이 없거나 소유자가 바뀌면 `FORBIDDEN`으로 거절한다. 슬롯 이동은 원래 제출자 결속을 유지한다.
+
+실행된 목적지는 지휘 장수의 `hwihaCorpsOrder`, 군단 진행은 `hwihaCorpsMarch`에 저장한다. `hwihaDeployment`와 명령 ID·소유자·지휘자·토폴로지 핀 및 경로 목적지가 일치해야 재개한다. 누락·불일치 상태를 임의 초기화하지 않는다. 통행 중단 뒤에도 원래 목적지와 진행량을 보존하며 도착이 군단 해산을 뜻하지 않는다.
+
+개인 행동 처리 뒤 단일 행군 단계가 같은 recorder와 flush 트랜잭션을 사용한다. 위치 revision 충돌은 명령 생성·행군·개인순·결과 기록을 함께 rollback한다. 재시작 진단은 저장된 원장·명령·진행·위치와 개인 결과를 대조하며, 재실행을 위해 순 stamp나 요청 ID를 지우지 않는다.
+
 ### Han V3 수역 상태와 보급 복구
 
 V49는 세계별 `water_zone_control` 빈 테이블을 추가합니다. V3 부팅은 실제 snapshot loader에서

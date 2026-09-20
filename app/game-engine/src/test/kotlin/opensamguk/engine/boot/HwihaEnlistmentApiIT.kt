@@ -120,6 +120,55 @@ class HwihaEnlistmentApiIT {
         mvc.perform(get("/api/commands/enlistment-options").param("generalId", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.options[0].availability.code").value("ALREADY_SERVING"))
+        // Explicit synthetic passage/reaction authority, using the actual pinned map.
+        val bundle = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+            .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
+        val topology = bundle.projection.topology
+        val authority = mapOf(
+            opensamguk.logic.input.HwihaLandPassageState.META_KEY to opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology),
+            opensamguk.logic.input.HwihaMarchReactions.META_KEY to opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue(),
+        )
+        jdbc.update("UPDATE world_state SET current_phase=2, meta=meta || ?::jsonb WHERE id=1", json.writeValueAsString(authority))
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=1 AND id=7")
+        val departure = InMemoryTurnWorld(fixture.load(1))
+        val sourceNode = checkNotNull(departure.positionOf(1))
+        val target = departure.administrativeCountyIds.sorted().firstNotNullOf { city ->
+            val node = departure.landNodeOfCity(city) as? opensamguk.logic.world.StrategicNodeRef.LandProvince ?: return@firstNotNullOf null
+            val path = opensamguk.logic.world.StrategicPathResolver.resolveLandMarch(topology,
+                opensamguk.logic.world.StrategicPathRequest(sourceNode,node,1),
+                opensamguk.logic.input.HwihaLandPassageState.read(departure.getState().meta,topology)!!,
+                bundle.landMarchMetrics) as? opensamguk.logic.world.LandMarchPathResult.Resolved
+            node.takeIf { path != null && path.path.totalCostMm in 30_000_001L..120_000_000L }
+        }
+        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.available").value(true))
+            .andExpect(jsonPath("$.bugoks[0].id").value(7))
+        val deployResponse = mvc.perform(post("/api/command/action.deploy").param("generalId","1").param("turnIdx","0")
+            .contentType("application/json").content(json.writeValueAsString(mapOf("bugokIds" to listOf(7),"destinationProvinceId" to target.id))))
+            .andExpect(status().isAccepted).andReturn().response.contentAsString
+        val deployId = json.readTree(deployResponse).get("requestId").asText()
+        assertEquals(42, reservations.readReserved(WorldId(1),1,0).reservationOwnerUserId)
+        val deploymentPublished = mutableListOf<String>()
+        val deployDue = Instant.parse("0200-01-01T05:00:00Z")
+        val deployWorld = InMemoryTurnWorld(fixture.load(1))
+        val deployed = fixture.service(WorldId(1),deployWorld,deploymentPublished,movement=true).runDueGeneralTurns(deployDue)
+        assertIs<HwihaTurnOutcome.Applied>(deployed.handled.single().hwihaOutcome)
+        val deployedCold = InMemoryTurnWorld(fixture.load(1))
+        val order = opensamguk.logic.input.HwihaCorpsOrder.read(deployedCold.getGeneralById(1)!!.meta,topology)
+        assertEquals(deployId,order?.orderId); assertEquals(target,order?.destination)
+        val march = assertNotNull(opensamguk.logic.input.HwihaCorpsMarchState.read(deployedCold.getGeneralById(1)!!.meta,topology,bundle.landMarchMetrics))
+        assertTrue(march.checkpoint.cursor.edgeIndex > 0 || march.checkpoint.cursor.paidMm > 0,
+            "the admitted deployment must make actual march progress")
+        assertEquals(listOf("reservationAccepted","executionApplied"),jdbc.queryForList(
+            "SELECT result_type FROM command_result WHERE world_id=1 AND request_id=? ORDER BY result_seq",String::class.java,deployId))
+        mvc.perform(get("/api/command/result/{requestId}",deployId)).andExpect(status().isOk)
+            .andExpect(jsonPath("$.type").value("executionApplied"))
+            .andExpect(jsonPath("$.result.actionCode").value("action.deploy"))
+        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.available").value(false))
+            .andExpect(jsonPath("$.order.orderId").value(deployId))
+        assertTrue(fixture.service(WorldId(1),deployedCold,deploymentPublished,movement=true).runDueGeneralTurns(deployDue).handled.isEmpty())
+        assertEquals(listOf(deployId,deployId),deploymentPublished)
         jdbc.update("UPDATE general SET user_id='43' WHERE world_id=1 AND id=1")
         SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(43L, null, emptyList())
         mvc.perform(get("/api/command/result/{requestId}", requestId))
