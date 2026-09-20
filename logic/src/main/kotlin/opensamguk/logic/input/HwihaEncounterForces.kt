@@ -90,6 +90,11 @@ class HwihaEncounterForces(
         val participants = listOf(encounter.attacker) + encounter.defenders
         require(units.map { it.bugokId }.toSet() == participants.flatMap { it.bugokIds }.toSet())
         require(commanders.map { it.generalId }.toSet() == participants.map { it.commanderGeneralId }.toSet())
+        for (participant in participants) {
+            val cards = units.filter { it.bugokId in participant.bugokIds }.map { it.commanderRetainerId }.distinct()
+            require(cards.size == 1 && (cards.single() == null) ==
+                (participant.ownerGeneralId == participant.commanderGeneralId)) { "Frozen commander card binding mismatch" }
+        }
         for (participant in participants) for (id in participant.bugokIds) {
             val unit = units.single { it.bugokId == id }
             require(unit.ownerGeneralId == participant.ownerGeneralId && unit.commanderGeneralId == participant.commanderGeneralId)

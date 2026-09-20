@@ -54,4 +54,24 @@ class HwihaEncounterForcesTest {
         assertFailsWith<IllegalArgumentException> { read(row+mapOf("commanders" to listOf(commanders[0].toMetaValue()+mapOf("extra" to 1),commanders[1].toMetaValue()))) }
         assertNotEquals(force().snapshotId,HwihaEncounterForces(encounter.encounterId,listOf(units[0].copy(provisions=601),units[1]),commanders).snapshotId)
     }
+    @Test fun `rehashed metadata cannot change self or deputy commander card binding`() {
+        val extended = encounter.copy(defenders=listOf(encounter.defenders.single().copy(bugokIds=listOf(22,23))))
+        val deputyUnits = listOf(units[1], units[1].copy(bugokId=23))
+        val invalidUnits = listOf(
+            listOf(units[0].copy(commanderRetainerId=9)) + deputyUnits,
+            listOf(units[0]) + deputyUnits.map { it.copy(commanderRetainerId=null) },
+            listOf(units[0], deputyUnits[0], deputyUnits[1].copy(commanderRetainerId=10)),
+        )
+        invalidUnits.forEach { observations ->
+            // Recompute the hash so rejection proves semantic binding, not hash tampering.
+            val raw = HwihaEncounterForces(extended.encounterId,observations,commanders).toMetaValue()
+            assertFailsWith<IllegalArgumentException> {
+                HwihaEncounterForces.read(mapOf(HwihaEncounterForces.META_KEY to raw),extended)
+            }
+        }
+        val valid = HwihaEncounterForces(extended.encounterId,listOf(units[0])+deputyUnits,commanders)
+        assertEquals(valid.toMetaValue(),HwihaEncounterForces.read(
+            mapOf(HwihaEncounterForces.META_KEY to valid.toMetaValue()),extended)!!.toMetaValue())
+    }
+
 }
