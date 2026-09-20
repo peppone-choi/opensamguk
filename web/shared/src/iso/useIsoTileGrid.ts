@@ -9,7 +9,9 @@
 // 격자 크기에 맞춰 두 입력을 합치는 계산은 전부 isoTileGrid.ts 에 있다.
 // 여기서는 가져오고 디코드하는 일만 한다.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { SharedResourceCache } from './mapResourceCache';
+import { ValidatedMapCache } from './validatedMapCache';
 import {
   RASTER_GROUP,
   buildIsoTileGrid,
@@ -196,115 +198,137 @@ export function buildProvinceSeatCells(tiles: HanTiles): ProvinceSeatCells {
   return { col, row, cityIndex, insideProvince };
 }
 
+/** Preparation is reused only after the response identity is revalidated. */
+function prepareIsoMap(tiles: HanTiles, image: ImageData): IsoMapData {
+  // 제 경위도에서 크게 밀려 앉은 城 을 제 영역 안으로 먼저 되돌린다 — 于山國이
+  // 울릉도 대신 오키 제도에 서 있었다(citySeedReseat.ts). 아래 모든 계산이 이
+  // col/row 를 읽으므로 여기서 한 번만 고친다.
+  applyCitySeedReseats(tiles.cities);
+
+  // 治所 좌표를 격자보다 먼저 편다 — buildIsoTileGrid 가 「城 이 선 칸은 뭍」을
+  // 적용하는 데 이 값을 쓴다(landUnderSeats).
+  const provinceSeatCell = buildProvinceSeatCells(tiles);
+  // 治所 아닌 아이콘(郡國 밖 세력·거점)은 씨앗 칸에 선다. 물길이 그 칸도 피해 가게 넘긴다.
+  const landmarks = {
+    col: Int32Array.from(tiles.cities, (city) => city.col),
+    row: Int32Array.from(tiles.cities, (city) => city.row),
+  };
+  const grid = buildIsoTileGrid(
+    tiles.terrain, image.data, image.width, image.height, RASTER_GROUP, provinceSeatCell, landmarks,
+  );
+  const srcCols = tiles._meta.cols;
+  const srcRows = tiles._meta.rows;
+  const cellCount = srcCols * srcRows;
+
+  // 다수결로 줄인 다음 治所 칸만 제 값으로 되돌린다 — 縣 경계에 붙어 선 城 이 남의
+  // 색 위에 서는 것을 막는다(stampSeatOwners 주석). 실측 162/773 → 44 이고,
+  // 남은 44 는 한 칸을 둘 이상이 나눠 써서 물리적으로 못 줄이는 몫이다.
+  const ownerSource = expandRunLength(tiles.owner, cellCount);
+  const owner = stampSeatOwners(
+    downsampleOwner(ownerSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
+    ownerSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
+  );
+  const parentSource = tiles.parentOwner
+    ? expandRunLength(tiles.parentOwner, cellCount)
+    : null;
+  const parentOwner = parentSource
+    ? stampSeatOwners(
+      downsampleOwner(parentSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
+      parentSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
+    )
+    : new Int32Array(grid.cols * grid.rows).fill(-1);
+
+  // provinceRecords[i].cityIndex → cities[i] 의 역색인. 郡國 밖 세력이 무슨 계통인지는
+  // 城 행이 아니라 그 城 을 가리키는 record 에만 적혀 있다(실측: 밖 세력 37 곳 전부
+  // 정확히 하나씩 가리켜진다). 여기서 한 번 펴 두면 렌더러가 매번 되짚지 않는다.
+  const systemByCity = new Map<number, string>();
+  for (const record of tiles.provinceRecords ?? []) {
+    const index = record.cityIndex;
+    const system = record.administrativeSystem;
+    if (index == null || !Number.isInteger(index) || !system) continue;
+    if (!systemByCity.has(index)) systemByCity.set(index, system);
+  }
+
+  const cities: IsoCity[] = tiles.cities.map((city, index) => {
+    const [col, row] = sourceCellToTile(city.col, city.row, RASTER_GROUP);
+    return { ...city, administrativeSystem: systemByCity.get(index), col, row };
+  });
+
+  return { grid, owner, parentOwner, cities, provinceSeatCell,
+    commanderyNames: (tiles.parentRegions ?? []).map(region => region.displayName),
+    sourceCols: srcCols, sourceRows: srcRows, projection: tiles._meta.projection,
+    year: tiles._meta.year, elevation: null };
+}
+
+const levels = new SharedResourceCache<ImageData>(1);
+const attribution = new SharedResourceCache<ElevationManifest>(1);
+const requests = new SharedResourceCache<IsoMapData>(0, false);
+const prepared = new ValidatedMapCache<IsoMapData>(2);
+const LOADING: State = { status: 'loading', data: null, error: null };
+
+function serverScope(url: string): string {
+  // Lobby URLs carry an explicit server; in-game requests use the selected-server cookie.
+  const explicit = new URL(url || '/', typeof location === 'undefined' ? 'http://local' : location.href).searchParams.get('server');
+  return explicit ?? (typeof document === 'undefined' ? '' :
+    document.cookie.split(';').map(value => value.trim()).find(value => value.startsWith('sam_server=')) ?? '');
+}
+
 export function useIsoTileGrid(terrainUrl: string): State {
-  const [state, setState] = useState<State>({ status: 'loading', data: null, error: null });
+  const scope = serverScope(terrainUrl);
+  const key = JSON.stringify([scope, terrainUrl]);
+  const [loaded, setLoaded] = useState<{ key: string; state: State }>({ key: '', state: LOADING });
+  const [elevation, setElevation] = useState<{ url: string; value: ElevationManifest } | null>(null);
+  const attributionUrl = loaded.key === key && loaded.state.status === 'ready'
+    ? elevationAssetsForGrid(loaded.state.data.sourceCols, loaded.state.data.sourceRows).manifest
+    : null;
 
   useEffect(() => {
-    setState({ status: 'loading', data: null, error: null });
-    // 주소가 아직 없다(맵 코드를 못 받았다). 빈 문자열로 fetch 하면 지금 페이지를
-    // 받아 와 JSON 파싱에서 엉뚱하게 터진다 — 그냥 기다린다.
+    setLoaded({ key, state: LOADING });
     if (!terrainUrl) return undefined;
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    (async () => {
-      const tilesResponse = await fetch(terrainUrl, { signal });
-      if (!tilesResponse.ok) throw new Error(`지형을 못 받았다: ${tilesResponse.status}`);
-      const tiles = (await tilesResponse.json()) as HanTiles;
+    let active = true;
+    const lease = requests.acquire(key, signal => prepared.load(scope, terrainUrl, signal, async response => {
+      const tiles = await response.json() as HanTiles;
+      signal.throwIfAborted();
       const assets = elevationAssetsForGrid(tiles._meta.cols, tiles._meta.rows);
-      const [image, manifestResponse] = await Promise.all([
-        decodeLevelPng(assets.levels, signal),
-        fetch(assets.manifest, { signal }).catch(() => null),
-      ]);
-
-      // 제 경위도에서 크게 밀려 앉은 城 을 제 영역 안으로 먼저 되돌린다 — 于山國이
-      // 울릉도 대신 오키 제도에 서 있었다(citySeedReseat.ts). 아래 모든 계산이 이
-      // col/row 를 읽으므로 여기서 한 번만 고친다.
-      applyCitySeedReseats(tiles.cities);
-
-      // 治所 좌표를 격자보다 먼저 편다 — buildIsoTileGrid 가 「城 이 선 칸은 뭍」을
-      // 적용하는 데 이 값을 쓴다(landUnderSeats).
-      const provinceSeatCell = buildProvinceSeatCells(tiles);
-      // 治所 아닌 아이콘(郡國 밖 세력·거점)은 씨앗 칸에 선다. 물길이 그 칸도 피해 가게 넘긴다.
-      const landmarks = {
-        col: Int32Array.from(tiles.cities, (city) => city.col),
-        row: Int32Array.from(tiles.cities, (city) => city.row),
-      };
-      const grid = buildIsoTileGrid(
-        tiles.terrain, image.data, image.width, image.height, RASTER_GROUP, provinceSeatCell, landmarks,
-      );
-      const srcCols = tiles._meta.cols;
-      const srcRows = tiles._meta.rows;
-      const cellCount = srcCols * srcRows;
-
-      // 다수결로 줄인 다음 治所 칸만 제 값으로 되돌린다 — 縣 경계에 붙어 선 城 이 남의
-      // 색 위에 서는 것을 막는다(stampSeatOwners 주석). 실측 162/773 → 44 이고,
-      // 남은 44 는 한 칸을 둘 이상이 나눠 써서 물리적으로 못 줄이는 몫이다.
-      const ownerSource = expandRunLength(tiles.owner, cellCount);
-      const owner = stampSeatOwners(
-        downsampleOwner(ownerSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
-        ownerSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
-      );
-      const parentSource = tiles.parentOwner
-        ? expandRunLength(tiles.parentOwner, cellCount)
-        : null;
-      const parentOwner = parentSource
-        ? stampSeatOwners(
-          downsampleOwner(parentSource, srcCols, grid.cols, grid.rows, RASTER_GROUP),
-          parentSource, srcCols, grid.cols, grid.rows, provinceSeatCell, RASTER_GROUP,
-        )
-        : new Int32Array(grid.cols * grid.rows).fill(-1);
-
-      // provinceRecords[i].cityIndex → cities[i] 의 역색인. 郡國 밖 세력이 무슨 계통인지는
-      // 城 행이 아니라 그 城 을 가리키는 record 에만 적혀 있다(실측: 밖 세력 37 곳 전부
-      // 정확히 하나씩 가리켜진다). 여기서 한 번 펴 두면 렌더러가 매번 되짚지 않는다.
-      const systemByCity = new Map<number, string>();
-      for (const record of tiles.provinceRecords ?? []) {
-        const index = record.cityIndex;
-        const system = record.administrativeSystem;
-        if (index == null || !Number.isInteger(index) || !system) continue;
-        if (!systemByCity.has(index)) systemByCity.set(index, system);
+      const dem = levels.acquire(assets.levels, s => decodeLevelPng(assets.levels, s));
+      const release = () => dem.release();
+      signal.addEventListener('abort', release, { once: true });
+      try {
+        const image = await dem.promise;
+        signal.throwIfAborted();
+        return prepareIsoMap(tiles, image);
+      } finally { signal.removeEventListener('abort', release); release(); }
+    }));
+    lease.promise.then(data => {
+      if (!active) return;
+      if (serverScope(terrainUrl) !== scope) {
+        setLoaded({ key, state: { status: 'error', data: null, error: '서버가 변경되었습니다. 지도를 다시 열어주세요.' } });
+        return;
       }
-
-      const cities: IsoCity[] = tiles.cities.map((city, index) => {
-        const [col, row] = sourceCellToTile(city.col, city.row, RASTER_GROUP);
-        return { ...city, administrativeSystem: systemByCity.get(index), col, row };
-      });
-
-      // 매니페스트는 곁들이다(출처·한계 표시용). 못 받아도, 몸통이 JSON 이 아니어도
-      // 지도는 그려야 한다 — 여기서 던지면 아래 catch 가 지도 전체를 error 로 내린다.
-      const elevation = manifestResponse?.ok
-        ? await manifestResponse.json().then((json) => json as ElevationManifest).catch(() => null)
-        : null;
-
-      setState({
-        status: 'ready',
-        error: null,
-        data: {
-          grid,
-          owner,
-          parentOwner,
-          cities,
-          provinceSeatCell,
-          commanderyNames: (tiles.parentRegions ?? []).map((region) => region.displayName),
-          sourceCols: srcCols,
-          sourceRows: srcRows,
-          projection: tiles._meta.projection,
-          year: tiles._meta.year,
-          elevation,
-        },
-      });
-    })().catch((error: unknown) => {
-      if (signal.aborted) return;
-      setState({
-        status: 'error',
-        data: null,
-        error: error instanceof Error ? error.message : '알 수 없는 오류',
-      });
+      setLoaded({ key, state: { status: 'ready', data, error: null } });
+    }, error => {
+      if (active) setLoaded({ key, state: { status: 'error', data: null,
+        error: error instanceof Error ? error.message : '알 수 없는 오류' } });
     });
+    return () => { active = false; lease.release(); };
+  }, [terrainUrl, scope, key]);
 
-    return () => controller.abort();
-  }, [terrainUrl]);
+  useEffect(() => {
+    if (!attributionUrl) return undefined;
+    let active = true;
+    const lease = attribution.acquire(attributionUrl, async signal => {
+      const response = await fetch(attributionUrl, { signal });
+      if (!response.ok) throw new Error('고도 출처를 못 불러왔다');
+      return response.json() as Promise<ElevationManifest>;
+    });
+    lease.promise.then(value => { if (active) setElevation({ url: attributionUrl, value }); }, () => { /* Attribution is optional. */ });
+    return () => { active = false; lease.release(); };
+  }, [attributionUrl]);
 
-  return state;
+  return useMemo(() => {
+    if (loaded.key !== key) return LOADING;
+    return loaded.state.status === 'ready'
+      ? { ...loaded.state, data: { ...loaded.state.data, elevation: elevation?.url === attributionUrl ? elevation.value : null } }
+      : loaded.state;
+  }, [loaded, key, elevation, attributionUrl]);
 }

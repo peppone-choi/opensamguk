@@ -1,9 +1,10 @@
 /** World-coordinate rectangle, including the surface's pixel-aligned edges. */
 export interface SurfaceBounds { x: number; y: number; width: number; height: number }
 interface View { width: number; height: number; panX: number; panY: number; scale: number; dpr: number }
-interface Surface { canvas: HTMLCanvasElement; bounds: SurfaceBounds; tiles: number }
+interface Surface { canvas: HTMLCanvasElement; bounds: SurfaceBounds; tiles: number; pixelRatio: number }
 const MAX_PIXELS = 4_194_304; // 16 MiB RGBA, one surface per mounted map.
 const MAX_SIDE = 4096;
+const OVERSCAN = 1.5;
 
 /** A bounded, viewport-sized terrain surface. Markers and hit targets stay live. */
 export class MapSurfaceCache {
@@ -13,13 +14,18 @@ export class MapSurfaceCache {
   constructor(private readonly createCanvas = () => document.createElement('canvas')) {}
 
   get(view: View, render: (context: CanvasRenderingContext2D, bounds: SurfaceBounds) => number): Surface | null {
-    const ratio = view.scale * view.dpr;
-    const left = -view.panX * view.dpr;
-    const top = -view.panY * view.dpr;
-    const width = Math.ceil(view.width * view.dpr);
-    const height = Math.ceil(view.height * view.dpr);
-    if (!(ratio > 0) || width <= 0 || height <= 0
-      || width * height > MAX_PIXELS || width > MAX_SIDE || height > MAX_SIDE) return null;
+    if (![view.width, view.height, view.scale, view.dpr].every(value => Number.isFinite(value) && value > 0)
+      || !Number.isFinite(view.panX) || !Number.isFinite(view.panY)) return null;
+    // Reserve panning space even on high-DPI displays. Lower terrain density
+    // rather than falling back to a full terrain redraw on every frame.
+    const pixelRatio = Math.min(view.dpr,
+      Math.sqrt(MAX_PIXELS / view.width / view.height) / OVERSCAN,
+      MAX_SIDE / view.width / OVERSCAN, MAX_SIDE / view.height / OVERSCAN);
+    const ratio = view.scale * pixelRatio;
+    const left = -view.panX * pixelRatio;
+    const top = -view.panY * pixelRatio;
+    const width = view.width * pixelRatio;
+    const height = view.height * pixelRatio;
     const old = this.surface;
     if (old && this.ratio === ratio && this.scale === view.scale) {
       const b = old.bounds;
@@ -27,12 +33,11 @@ export class MapSurfaceCache {
         && left + width <= (b.x + b.width) * ratio
         && top + height <= (b.y + b.height) * ratio) return old;
     }
-    const factor = Math.min(1.5, Math.sqrt(MAX_PIXELS / (width * height)), MAX_SIDE / width, MAX_SIDE / height);
-    const pixelWidth = Math.floor(width * factor);
-    const pixelHeight = Math.floor(height * factor);
+    const pixelWidth = Math.max(1, Math.floor(width * OVERSCAN));
+    const pixelHeight = Math.max(1, Math.floor(height * OVERSCAN));
     const bounds = {
-      x: (-view.panX * view.dpr - Math.floor((pixelWidth - width) / 2)) / ratio,
-      y: (-view.panY * view.dpr - Math.floor((pixelHeight - height) / 2)) / ratio,
+      x: (left - Math.floor((pixelWidth - width) / 2)) / ratio,
+      y: (top - Math.floor((pixelHeight - height) / 2)) / ratio,
       width: pixelWidth / ratio,
       height: pixelHeight / ratio,
     };
@@ -49,7 +54,7 @@ export class MapSurfaceCache {
     const tiles = render(context, bounds);
     this.ratio = ratio;
     this.scale = view.scale;
-    this.surface = { canvas, bounds, tiles };
+    this.surface = { canvas, bounds, tiles, pixelRatio };
     return this.surface;
   }
 
