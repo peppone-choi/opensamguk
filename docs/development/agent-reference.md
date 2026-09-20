@@ -180,4 +180,3 @@ docker compose -f docker-compose.production.yml up -d
 - 백엔드 이미지 멀티스테이지: `gradle:8.12-jdk21` 빌드 → `eclipse-temurin:21-jre` 런타임. 프론트: `node:22-alpine` 빌드(`next build`) → `node:22-alpine` standalone 런타임.
 - nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/board/`→web-gateway Next 프록시→board-api · `/api/game/`→web-gateway Next 프록시(httpOnly 쿠키→Bearer, 서버 선택) · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
 - CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → GCP VM의 `gcp-prod` self-hosted runner에서 공유 스택 동기화), 호환용 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
-
