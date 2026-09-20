@@ -7,6 +7,7 @@ data class HanStrategicRouteBinding(
     val routeNodeKey: String,
     val physicalPlaceRef: String,
     val landProvinceId: String?,
+    val isAdministrativeCounty: Boolean = false,
 ) {
     init {
         require(runtimeCityId > 0 && routeNodeKey.isNotBlank() && physicalPlaceRef.isNotBlank()) {
@@ -24,6 +25,8 @@ class HanStrategicRouteProjection(
     val presentation: StrategicMapPresentation? = null,
 ) {
     val activationBlockerCodes: Set<String> = Collections.unmodifiableSet(activationBlockerCodes.toSortedSet())
+    val administrativeCountyIds: Set<Int> = Collections.unmodifiableSet(
+        bindings.filter { it.isAdministrativeCounty }.mapTo(sortedSetOf()) { it.runtimeCityId })
     val bindingsByCityId: Map<Int, HanStrategicRouteBinding>
     val bindingsByRouteKey: Map<String, HanStrategicRouteBinding>
     val bindingsByPhysicalPlaceRef: Map<String, HanStrategicRouteBinding>

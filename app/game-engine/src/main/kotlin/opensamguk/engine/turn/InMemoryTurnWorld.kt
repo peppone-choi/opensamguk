@@ -42,8 +42,10 @@ data class WorldSnapshot(
     val generalPositionSnapshot: GeneralPositionSnapshot? = null,
     /** 城 id → 그 城이 선 省 id(부팅이 고른 변형의 `projection.bindingsByCityId`). 위치 권위 spec §3-7. */
     val cityLandProvinceById: Map<Int, String> = emptyMap(),
+    val administrativeCountyIds: Set<Int> = emptySet(),
 ) {
     init {
+        require(administrativeCountyIds.all { id -> cities.any { it.id == id } }) { "Unknown administrative county city" }
         require(state.id == worldId.value) {
             "WorldSnapshot state.id=${state.id} must equal worldId=${worldId.value}"
         }
@@ -168,6 +170,7 @@ class InMemoryTurnWorld(
     @Volatile private var waterControl: WaterControlSnapshot? = snapshot.waterControlSnapshot
     @Volatile private var provinceControl: ProvinceControlSnapshot? = snapshot.provinceControlSnapshot
     @Volatile private var generalPosition: GeneralPositionSnapshot? = snapshot.generalPositionSnapshot
+    val administrativeCountyIds: Set<Int> = java.util.Collections.unmodifiableSet(snapshot.administrativeCountyIds.toSortedSet())
     private val cityLandProvinceById: Map<Int, String> = snapshot.cityLandProvinceById
     private val serverId: String?
 

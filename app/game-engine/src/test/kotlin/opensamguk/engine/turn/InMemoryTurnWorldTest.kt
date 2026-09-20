@@ -35,6 +35,20 @@ class InMemoryTurnWorldTest {
     )
 
     @Test
+    fun `county capability is defensive immutable and rejects unknown city identities`() {
+        val ids = mutableSetOf(1)
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), worldId = WorldId(1),
+            cities = listOf(City(1, "county", 1, 1), City(2, "site", 1, 1)), administrativeCountyIds = ids))
+        ids.add(2)
+        assertEquals(setOf(1), world.administrativeCountyIds)
+        assertFailsWith<UnsupportedOperationException> { (world.administrativeCountyIds as MutableSet).add(2) }
+        assertFailsWith<IllegalArgumentException> {
+            WorldSnapshot(state = baseState(), worldId = WorldId(1), administrativeCountyIds = setOf(99))
+        }
+        assertTrue(InMemoryTurnWorld(WorldSnapshot(state = baseState(), worldId = WorldId(1))).administrativeCountyIds.isEmpty())
+    }
+
+    @Test
     fun `snapshot rejects a different configured world identity`() {
         assertFailsWith<IllegalArgumentException> {
             WorldSnapshot(state = baseState(), worldId = WorldId(2))

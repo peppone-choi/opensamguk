@@ -72,6 +72,9 @@ class WorldSnapshotLoader(
     private val waterTopologyLoader: (HanWorldVariant) -> StrategicTopologySnapshot = { historicalArtifacts.artifacts(it).projection.topology },
     private val hanVariantSelector: (Collection<Int>, Collection<HanWorldTopologyPin>) -> HanWorldVariant =
         { ids, pins -> historicalArtifacts.resolve(ids, pins).variant },
+    private val administrativeCountyIdsLoader: (HanWorldVariant) -> Set<Int> = { variant ->
+        historicalArtifacts.artifacts(variant).projection.administrativeCountyIds
+    },
     private val cityLandProvinceLoader: (HanWorldVariant) -> Map<Int, String> = { variant ->
         historicalArtifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap()
@@ -200,6 +203,8 @@ class WorldSnapshotLoader(
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
             generalPositionSnapshot = topology?.let(::loadGeneralPositionSnapshot),
             // SAMMO 는 바인딩을 읽지 않는다(무변경). HWIHA 만 읽고, 못 읽으면 여기서 실패한다.
+            administrativeCountyIds = if (topology != null && state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA)
+                java.util.Collections.unmodifiableSet(administrativeCountyIdsLoader(requireNotNull(state.hanWorldVariant)).toSortedSet()) else emptySet(),
             cityLandProvinceById = if (topology != null && state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) cityLandProvinceBindings(state) else emptyMap(),
         )
         snapshotValidator(snapshot)
