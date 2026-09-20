@@ -62,4 +62,13 @@ class HwihaMilitaryPresenceTest {
             state().copy(deployed=emptyList(),people=state().people+person(2,2))))
             assertEquals(MilitaryPresenceAssessment.Unavailable,HwihaMilitaryPresence.assess(1,s,emptySet()))
     }
+    @Test fun `neutral deputy does not encounter the corps they command`() {
+        val deployed=HwihaDeployedCorps("neutral-deputy",1,2,10,0,listOf(1),HwihaPhase(200,1,1))
+        val s=DeploymentProjection(RuleProfile.HWIHA,listOf(person(1,0),person(2,0),person(3,0)),
+            listOf(DeploymentUnit(1,1,100,10),DeploymentUnit(3,3,100,null)),
+            listOf(DeploymentRetainer(10,1,2,true)),listOf(deployed,corps(3,0)))
+        assertEquals(listOf(3),ready(s,actor=2).hostileCorps.map { it.ownerGeneralId })
+        assertEquals(setOf("p3"),ready(s,actor=2).blockedProvinceIds)
+    }
+
 }

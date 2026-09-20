@@ -18,7 +18,7 @@ object HwihaMilitaryPresence {
     fun assessNation(nationId: Int, state: DeploymentProjection, wars: Set<Pair<Int, Int>>): MilitaryPresenceAssessment =
         if (nationId <= 0) MilitaryPresenceAssessment.Unavailable else assessFor(nationId, null, state, wars)
 
-    private fun assessFor(nationId: Int, ownerId: Int?, state: DeploymentProjection,
+    private fun assessFor(nationId: Int, actorId: Int?, state: DeploymentProjection,
         wars: Set<Pair<Int, Int>>): MilitaryPresenceAssessment {
         if (state.profile != RuleProfile.HWIHA ||
             state.people.map { it.id }.distinct().size != state.people.size ||
@@ -30,7 +30,7 @@ object HwihaMilitaryPresence {
         for (corps in state.deployed.sortedWith(compareBy({ it.ownerGeneralId }, { it.commanderGeneralId }, { it.orderId }))) {
             val active = HwihaDeploymentRules.assessActive(corps, state) as? DeploymentAssessment.Eligible
                 ?: return MilitaryPresenceAssessment.Unavailable
-            if (corps.ownerGeneralId == ownerId || (nationId > 0 && corps.nationId == nationId)) continue
+            if (corps.ownerGeneralId == actorId || corps.commanderGeneralId == actorId || (nationId > 0 && corps.nationId == nationId)) continue
             // An unaffiliated actor does not infer hostility toward positive nations.
             val blocks = corps.nationId == 0 || (nationId > 0 &&
                 ((nationId to corps.nationId) in wars || (corps.nationId to nationId) in wars))
