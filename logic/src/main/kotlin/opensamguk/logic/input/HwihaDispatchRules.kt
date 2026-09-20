@@ -40,6 +40,16 @@ object HwihaDispatchRules {
         } catch (_: IllegalArgumentException) { reject(DispatchFailure.STATE_UNAVAILABLE) }
     }
 
+    /** Continuing an accepted assignment does not depend on a newer pending dispatch. */
+    fun assessAssignment(actorId: Int, assignment: HwihaCountyAssignment, state: HwihaDispatchProjection): DispatchAssessment {
+        val relation = relationship(assignment.issuerId, actorId, assignment.countyId, state)
+        if (relation !is DispatchAssessment.Eligible) return relation
+        if (relation.target.nationId != assignment.nationId) return reject(DispatchFailure.RELATION_CHANGED)
+        return try {
+            if (!countyAvailable(assignment.countyId, actorId, state)) reject(DispatchFailure.COUNTY_OCCUPIED) else relation
+        } catch (_: IllegalArgumentException) { reject(DispatchFailure.STATE_UNAVAILABLE) }
+    }
+
     /** Shared cost precheck: a refusal at the deadline is already an acceptance. */
     fun assessReply(request: DispatchReplyRequest, now: HwihaPhase, state: HwihaDispatchProjection): DispatchAssessment {
         val authority = assessReply(request.actorId, request.dispatchId, state)

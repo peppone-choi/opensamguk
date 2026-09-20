@@ -68,4 +68,16 @@ class HwihaDispatchRulesTest {
         assertEquals(DispatchFailure.ALREADY_RESOLVED,failure(HwihaDispatchRules.assessReply(reply,now,closed)))
     }
 
+    @Test fun `accepted assignment survives a newer pending order but rechecks current bond and county`() {
+        val assignment = HwihaCountyAssignment("accepted-old",1,1,10)
+        val pending = state(mapOf(HwihaDispatchState.META_KEY to order.toMetaValue()))
+        assertIs<DispatchAssessment.Eligible>(HwihaDispatchRules.assessAssignment(2,assignment,pending))
+        assertEquals(DispatchFailure.NOT_DIRECT_RETAINER,failure(HwihaDispatchRules.assessAssignment(2,assignment,
+            pending.copy(retainers=emptyList()))))
+        assertEquals(DispatchFailure.INVALID_COUNTY,failure(HwihaDispatchRules.assessAssignment(2,assignment,
+            pending.copy(counties=listOf(DispatchCounty(10,2))))))
+        assertEquals(DispatchFailure.RELATION_CHANGED,failure(HwihaDispatchRules.assessAssignment(2,
+            assignment.copy(nationId=2),pending)))
+    }
+
 }

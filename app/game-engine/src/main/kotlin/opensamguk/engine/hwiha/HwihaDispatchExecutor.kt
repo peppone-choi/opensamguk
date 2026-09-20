@@ -17,6 +17,10 @@ class HwihaDispatchExecutor(
     fun assess(request: DispatchRequest): DispatchAssessment = projection()?.let { HwihaDispatchRules.assess(request, it) }
         ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
 
+    fun assessAssignment(actorId: Int, assignment: HwihaCountyAssignment): DispatchAssessment = projection()?.let {
+        HwihaDispatchRules.assessAssignment(actorId, assignment, it)
+    } ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
+
     fun issue(dispatchId: String, request: DispatchRequest): DispatchExecution {
         val assessment = assess(request)
         if (assessment is DispatchAssessment.Rejected) return reject(assessment.reason)
