@@ -1,0 +1,594 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "hwiha-resource-production-v1",
+ "generator": "tools/map/build_hwiha_resource_production.py",
+ "note": "산지 위치는 resource-sites-v1 의 사료 근거, 산출량은 게임 설계 수치다. 목재·소금은 넣지 않는다.",
+ "era": "LATER_HAN",
+ "rates": {
+  "HORSE": 100,
+  "IRON": 1000
+ },
+ "source": {
+  "path": "data/curated/han/resource-sites-v1.json",
+  "catalogId": "resource-sites-v1"
+ },
+ "counts": {
+  "counties": 35,
+  "monthlyTotals": {
+   "HORSE": 600,
+   "IRON": 29000
+  },
+  "skipped": 7
+ },
+ "skipped": [
+  {
+   "id": "UNKNOWN:HORSE:PASTURE_SITES",
+   "resource": "HORSE",
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:004:HORSE:liangzhou-parks",
+   "resource": "HORSE",
+   "matchStatus": "REGION_ONLY",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:109:右扶風:011:IRON",
+   "resource": "IRON",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:110:常山國:003:IRON",
+   "resource": "IRON",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:113:漁陽郡:001:IRON",
+   "resource": "IRON",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:113:漁陽郡:005:IRON",
+   "resource": "IRON",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "reason": "no bound county"
+  },
+  {
+   "id": "hhs:113:越巂郡:008:IRON",
+   "resource": "IRON",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "reason": "no bound county"
+  }
+ ],
+ "counties": [
+  {
+   "jurisdictionId": "200197",
+   "sites": [
+    {
+     "id": "hhs:113:巴郡:002:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "宕渠",
+     "matchStatus": "MATCHED_PARENT_DIFFERS"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "200279",
+   "sites": [
+    {
+     "id": "hhs:113:越巂郡:004:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "台登",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "40556",
+   "sites": [
+    {
+     "id": "hhs:111:廣陵郡:010:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "堂邑",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "41850",
+   "sites": [
+    {
+     "id": "hhs:112:桂陽郡:003:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "耒陽",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "42777",
+   "sites": [
+    {
+     "id": "hhs:111:彭城國:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "彭城",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "42821",
+   "sites": [
+    {
+     "id": "hhs:111:下邳國:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "下邳",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "42869",
+   "sites": [
+    {
+     "id": "hhs:111:東海郡:004:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "朐",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "43000",
+   "sites": [
+    {
+     "id": "hhs:112:廬江郡:008:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "皖",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "44445",
+   "sites": [
+    {
+     "id": "hhs:113:蜀郡:006:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "临邛",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "45020",
+   "sites": [
+    {
+     "id": "hhs:112:濟南國:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "東平陵",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "45022",
+   "sites": [
+    {
+     "id": "hhs:112:濟南國:010:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "歷城",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "45180",
+   "sites": [
+    {
+     "id": "hhs:110:魯國:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "魯國",
+     "matchStatus": "MATCHED_REVIEWED_ALIAS"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "45445",
+   "sites": [
+    {
+     "id": "hhs:113:永昌郡:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "不韦",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "45514",
+   "sites": [
+    {
+     "id": "hhs:113:益州郡:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "滇池",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "70040",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:漢陽",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "漢陽",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "70110",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:隴西",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "隴西",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "70178",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:安定",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "安定",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "70203",
+   "sites": [
+    {
+     "id": "hhs:109:右扶風:014:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "漆",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "70418",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:上郡",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "上郡",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "70524",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:北地",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "北地",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "70614",
+   "sites": [
+    {
+     "id": "hhs:113:北地郡:003:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "弋居",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "71101",
+   "sites": [
+    {
+     "id": "hhs:113:漢中郡:005:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "沔阳",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "82216",
+   "sites": [
+    {
+     "id": "hhs:109:河內郡:018:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "林虑",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "82228",
+   "sites": [
+    {
+     "id": "hhs:110:魏郡:013:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "武安",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "82893",
+   "sites": [
+    {
+     "id": "hhs:110:潁川郡:015:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "陽城",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "83167",
+   "sites": [
+    {
+     "id": "hhs:110:汝南郡:003:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "西平",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "85619",
+   "sites": [
+    {
+     "id": "hhs:111:琅邪國:007:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "莒",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "85677",
+   "sites": [
+    {
+     "id": "hhs:111:泰山郡:005:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "嬴",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "87253",
+   "sites": [
+    {
+     "id": "hhs:110:中山國:002:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "北平",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "95230",
+   "sites": [
+    {
+     "id": "hhs:109:河東郡:009:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "皮氏",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "95291",
+   "sites": [
+    {
+     "id": "hhs:109:河東郡:001:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "安邑",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "95415",
+   "sites": [
+    {
+     "id": "hhs:109:河東郡:003:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "平阳",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "95604",
+   "sites": [
+    {
+     "id": "hhs:113:太原郡:013:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "大陵",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
+   "sites": [
+    {
+     "id": "hhs:115:HORSE:six-commanderies:西河",
+     "resource": "HORSE",
+     "basis": "COMMANDERY_SEAT",
+     "sourceName": "西河",
+     "matchStatus": "MATCHED_COMMANDERY"
+    }
+   ],
+   "monthly": {
+    "HORSE": 100
+   }
+  },
+  {
+   "jurisdictionId": "fc-liaodong-007",
+   "sites": [
+    {
+     "id": "hhs:113:遼東郡:007:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "平郭",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  }
+ ]
+}
