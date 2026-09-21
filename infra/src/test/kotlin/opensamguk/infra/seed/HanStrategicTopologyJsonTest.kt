@@ -30,7 +30,9 @@ class HanStrategicTopologyJsonTest {
         assertEquals(669, presentation.path("rows").asInt())
         // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
         // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
-        assertEquals("6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912",
+        // 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
+        // parentRegions 3 곳이 aliases 를 얻은 것뿐이고 물 기하·격자·좌표는 그대로다.
+        assertEquals("715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
