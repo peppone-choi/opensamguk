@@ -96,6 +96,14 @@ def apply(source, decisions):
                     doc['commanderyRecords'][i]['nameCh']=label['nameCh']
                 doc['parentRegions'][i]['displayName']=label['displayName']
                 doc['commanderyRecords'][i]['displayName']=label['displayName']
+                # 옛 이름(aliases)도 같이 싣는다. 표시명을 바꾸면 런타임 월드(han.json)가
+                # 아직 옛 이름을 meta.jun 으로 실어 보내므로, 이걸 안 내리면 소유권 바인딩이
+                # 그 郡 을 못 찾는다 — build_tile_grid.PARENT_TEMPORAL_ALIASES 와 같은 뜻이고
+                # provinceMap.buildProvinceAdministrativeIndex 가 parentRegions[].aliases 를 읽는다.
+                # 2026-09-21: 이 줄이 없어 고령가야·대가야·성산가야 3 곳이 안 풀렸다.
+                if label.get('aliases'):
+                    for record in (doc['parentRegions'][i], doc['commanderyRecords'][i]):
+                        record['aliases']=sorted(set(record.get('aliases',[])) | set(label['aliases']))
     doc['owner'] = _encode_runs(owner)
     doc['adjacency']['county'] = adjacency(owner, min_shared_edges=1)
     # Rejudge paths from the moved seats; unaffected pairs retain their verdicts.
