@@ -52,14 +52,15 @@ class HanStrategicSupplyProviderTest {
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
-        assertEquals(1558, network.provinceOwners.size)  // 2026-09-20 한반도·만주 확장
+        assertEquals(1374, network.provinceOwners.size)  // 2026-09-21 임시 거점 정리(#848): 1,558 → 1,374
         // 省 1,593(수·진·관 거점 省 73 포함) · 郡縣 인접 4,274(han-tiles adjacency.county 실측) 중 물을 건너는
         // 60 간선이 v3 에서 빠져 4,214 다. v2 는 그 걸러내기가 없어 아래에서 4,274 그대로다.
         // 2026-09-18 지리 재분할(GH #806) 실측: 縣 인접 3,551 중 물을 건너는 51 간선이 v3 에서 빠져 3,500 (앞 판 4,215).
         // 확장 후 전체 4,167개 중 물을 건너는 51개를 제외한 마른땅 연결 4,116개.
-        assertEquals(4116, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        // 2026-09-21 #848: 縣 인접 3,660 중 물을 건너는 51 간선을 뺀 마른땅 3,609.
+        assertEquals(3609, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         assertNotNull(network.strategicSupply)
-        assertEquals(4167, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)  // 2026-09-16 1098 과 같은 han-tiles
+        assertEquals(3660, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)  // v3 와 같은 han-tiles (물 걸러내기 없음)
         assertNull(provider.network("han-world-v2", 1020, emptyList()).strategicSupply)
     }
 
