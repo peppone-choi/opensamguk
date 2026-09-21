@@ -206,7 +206,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertTrue(all(row.claim_trace == ("BASE",) for row in rows))
         self.assertTrue(all(row.confidence == "EXPLICIT_UNOWNED" for row in rows))
 
-    def test_production_document_has_1520_rows_per_active_scenario(self):
+    def test_production_document_has_1374_rows_per_active_scenario(self):
         map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
@@ -235,8 +235,8 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(15, len(generated))
         # 1,520 省 + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594 省 × 활성 시나리오 15.
         # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,331, 15 시나리오 × 1,333 = 19,995 (앞은 23,910).
-        self.assertEqual(23_370, sum(len(rows) for rows in generated.values()))
-        self.assertTrue(all(len(rows) == 1_558 for rows in generated.values()))
+        self.assertEqual(20_610, sum(len(rows) for rows in generated.values()))
+        self.assertTrue(all(len(rows) == 1_374 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)

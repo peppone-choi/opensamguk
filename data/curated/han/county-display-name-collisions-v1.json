@@ -5,14 +5,14 @@
   "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
   "generator": "tools/map/build_county_display_name_collisions.py",
   "inputs": {
-    "hanTilesSha256": "0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85",
-    "hanWorldV3Sha256": "c5b30046420d3b70fb3ed6d07b5be7f3714c5c399be72927ce8fae668c13d805",
+    "hanTilesSha256": "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500",
+    "hanWorldV3Sha256": "14cce869fe40b0df56e69858f346fc72dde1a3c7a68801a61bbb818cdf64590e",
     "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
     "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
   },
   "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
   "summary": {
-    "jurisdictions": 1194,
+    "jurisdictions": 1168,
     "sameCommanderyCollisionGroups": 5,
     "sameCommanderyCollidingJurisdictions": 10,
     "commanderiesWithCollisions": 5,

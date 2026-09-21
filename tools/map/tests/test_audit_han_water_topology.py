@@ -25,7 +25,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         result = self.audit.audit_materialized()
 
         # 1,520 省 + 수·진·관 거점 省 73.
-        self.assertEqual(1_558, result["counts"]["landProvinceIds"])  # GH #806 지리 재분할(2026-09-18): 省 1,594 → 1,333
+        self.assertEqual(1_374, result["counts"]["landProvinceIds"])
         self.assertEqual(2, result["counts"]["waterZones"])
         self.assertEqual({"COASTAL_SEA": 1, "LAKE_BASIN": 1}, result["zoneKinds"])
         self.assertEqual({}, result["edgeModes"])

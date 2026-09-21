@@ -696,7 +696,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
         # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
         # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
-        self.assertEqual((1558, 1194, 176), (
+        self.assertEqual((1374, 1168, 173), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),

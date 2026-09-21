@@ -19,7 +19,7 @@ LON = (124.0, 131.0)
 LAT = (33.0, 43.0)
 
 # 비정이 갈리는 실체 (원장 conf=DISPUTED). 2026-09-17 城으로 섰지만 등급은 원장·claim 에 그대로 남는다.
-DISPUTED_KOREA_PLACES = frozenset(['X030', 'X065', 'X066', 'X067', 'X068', 'X069', 'X070', 'X071', 'X072', 'X073', 'X074', 'X075', 'X076', 'X077', 'X078', 'X079', 'X080', 'X081', 'X082', 'X083', 'X084', 'X085', 'X086', 'X087', 'X088', 'X089', 'X090', 'X091', 'X092', 'X093', 'X094', 'X095', 'X096', 'X097', 'X098', 'X099', 'X100', 'X101', 'X102', 'X103', 'X104', 'X105', 'X106', 'X107', 'X108', 'X109', 'X110', 'X111']) | frozenset({"X030", "X040", "X041", "X047", "X055"})
+DISPUTED_KOREA_PLACES = frozenset(['X030', 'X040', 'X041', 'X047', 'X055', 'X065', 'X066', 'X067', 'X068', 'X069', 'X070', 'X071', 'X072', 'X073', 'X075', 'X076', 'X077', 'X078', 'X080', 'X081', 'X082', 'X083', 'X084', 'X085', 'X086', 'X087', 'X089', 'X096', 'X097', 'X098', 'X099', 'X100', 'X101', 'X102', 'X103', 'X104', 'X105', 'X106', 'X107', 'X108'])
 
 # 도시가 물리 참조로 거는 외부 실체 (郡治 좌표). 720/X003 등 13곳. 새 연결이
 # 생기면 심사해야 풀린다(승격 기구 작업).
@@ -31,6 +31,9 @@ LINKED_COMMANDERY_EXTERNALS = frozenset({
     "X011", "X023", "X024", "X026", "X027",
 } | {f"X{index:03d}" for index in range(28, 126)})  # 2026-09-17 郡國 밖 취락 37곳(w5)
 
+
+# Retired place IDs remain reserved and are absent from the current linking surface.
+LINKED_COMMANDERY_EXTERNALS -= frozenset(['X074', 'X079', 'X088', 'X090', 'X091', 'X092', 'X093', 'X094', 'X095', 'X109', 'X110', 'X111', 'X112', 'X113', 'X114', 'X115', 'X116', 'X117', 'X118', 'X119', 'X120', 'X121', 'X122', 'X123', 'X124', 'X125'])
 
 def korea_externals():
     places = json.loads(PLACES.read_text(encoding="utf-8"))["places"]

@@ -73,6 +73,9 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
     Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",),
             _t("tools/map/audit_territory_disconnections.py", "--check"), None, slow=True),
+    Coupled("administrative-parent-reconciliation", ("data/curated/han/administrative-parent-reconciliation-v1.json",),
+            _t("tools/map/build_han_parent_reconciliation.py", "--check"),
+            _t("tools/map/build_han_parent_reconciliation.py", "--write"), slow=True),
     Coupled("province-city-attribution", ("data/curated/han/province-city-attribution-v1.json",),
             _t("tools/scenario/build_province_city_attribution.py", "--check"),
             _t("tools/scenario/build_province_city_attribution.py")),
@@ -154,8 +157,8 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/audit_korea_manchuria.py", "--check"),
             _t("tools/map/audit_korea_manchuria.py")),
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
-    Coupled("release-1194-bundle", ("data/map/han-world-v3-1194-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1194_bundle.py", "--check"), None),
+    Coupled("release-1168-bundle", ("data/map/han-world-v3-1168-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1168_bundle.py", "--check"), None),
 )
 
 

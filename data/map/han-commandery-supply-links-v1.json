@@ -12,9 +12,9 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 65,
-  "medianKm": 92.4,
-  "p90Km": 456.6,
+  "linkCount": 57,
+  "medianKm": 77.5,
+  "p90Km": 471.4,
   "maxKm": 1049.3
  },
  "links": [
@@ -272,18 +272,10 @@
   {
    "canonicalGroup": "國內城",
    "fromProvinceIndex": 1333,
-   "toProvinceIndex": 1336,
+   "toProvinceIndex": 1334,
    "fromCityName": "주나",
    "toCityName": "개마",
    "distanceKm": 137.5
-  },
-  {
-   "canonicalGroup": "國內城",
-   "fromProvinceIndex": 1335,
-   "toProvinceIndex": 1340,
-   "fromCityName": "돈화 취락",
-   "toCityName": "혼강 취락",
-   "distanceKm": 217.1
   },
   {
    "canonicalGroup": "太原郡",
@@ -292,14 +284,6 @@
    "fromCityName": "여사",
    "toCityName": "우(太原郡)",
    "distanceKm": 77.5
-  },
-  {
-   "canonicalGroup": "夫餘",
-   "fromProvinceIndex": 977,
-   "toProvinceIndex": 1209,
-   "fromCityName": "부여",
-   "toCityName": "이통하 취락",
-   "distanceKm": 99.2
   },
   {
    "canonicalGroup": "安定郡",
@@ -342,14 +326,6 @@
    "distanceKm": 87.2
   },
   {
-   "canonicalGroup": "挹婁",
-   "fromProvinceIndex": 980,
-   "toProvinceIndex": 1347,
-   "fromCityName": "읍루",
-   "toCityName": "목단강 취락",
-   "distanceKm": 206.4
-  },
-  {
    "canonicalGroup": "會稽郡",
    "fromProvinceIndex": 27,
    "toProvinceIndex": 43,
@@ -380,14 +356,6 @@
    "fromCityName": "돈구",
    "toCityName": "동무양",
    "distanceKm": 45.1
-  },
-  {
-   "canonicalGroup": "松花江聚落",
-   "fromProvinceIndex": 1400,
-   "toProvinceIndex": 1401,
-   "fromCityName": "송화강 합류",
-   "toCityName": "송눈 평원",
-   "distanceKm": 156.4
   },
   {
    "canonicalGroup": "桂陽郡",
@@ -444,14 +412,6 @@
    "fromCityName": "강",
    "toCityName": "성",
    "distanceKm": 30.3
-  },
-  {
-   "canonicalGroup": "烏蘇里江聚落",
-   "fromProvinceIndex": 1414,
-   "toProvinceIndex": 1416,
-   "fromCityName": "송화강 하구",
-   "toCityName": "흑룡강 하구길",
-   "distanceKm": 211.5
   },
   {
    "canonicalGroup": "犍為郡",
@@ -532,30 +492,6 @@
    "fromCityName": "노(魯國)",
    "toCityName": "번(魯國)",
    "distanceKm": 59.0
-  },
-  {
-   "canonicalGroup": "黑龍江聚落",
-   "fromProvinceIndex": 1402,
-   "toProvinceIndex": 1404,
-   "fromCityName": "눈강 취락",
-   "toCityName": "흑룡강 남안",
-   "distanceKm": 140.2
-  },
-  {
-   "canonicalGroup": "黑龍江聚落",
-   "fromProvinceIndex": 1402,
-   "toProvinceIndex": 1412,
-   "fromCityName": "눈강 취락",
-   "toCityName": "흑룡강 중류",
-   "distanceKm": 201.9
-  },
-  {
-   "canonicalGroup": "黑龍江聚落",
-   "fromProvinceIndex": 1403,
-   "toProvinceIndex": 1412,
-   "fromCityName": "흑룡강 상류",
-   "toCityName": "흑룡강 중류",
-   "distanceKm": 456.2
   }
  ]
 }

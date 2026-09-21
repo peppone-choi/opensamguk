@@ -8,10 +8,10 @@
     {
       "id": "GOGURYEO",
       "name": "고구려",
-      "cityCount": 12,
-      "landCells": 5161,
-      "cellsPerCity": 430.1,
-      "largestJurisdictionCells": 856,
+      "cityCount": 10,
+      "landCells": 5456,
+      "cellsPerCity": 545.6,
+      "largestJurisdictionCells": 1651,
       "members": [
         {
           "jurisdictionId": "X028",
@@ -44,9 +44,9 @@
           "nameCh": "沸流",
           "longitude": 125.94705,
           "latitude": 41.73015,
-          "landCells": 111,
+          "landCells": 293,
           "spatialProvinceCount": 2,
-          "connectionCount": 6,
+          "connectionCount": 5,
           "runtimeParentName": "國內城"
         },
         {
@@ -56,8 +56,8 @@
           "nameCh": "藻那",
           "longitude": 126.6414,
           "latitude": 41.4608,
-          "landCells": 100,
-          "spatialProvinceCount": 1,
+          "landCells": 180,
+          "spatialProvinceCount": 2,
           "connectionCount": 4,
           "runtimeParentName": "國內城"
         },
@@ -68,7 +68,7 @@
           "nameCh": "朱那",
           "longitude": 126.895,
           "latitude": 41.65472,
-          "landCells": 856,
+          "landCells": 1651,
           "spatialProvinceCount": 6,
           "connectionCount": 7,
           "runtimeParentName": "國內城"
@@ -82,7 +82,7 @@
           "latitude": 41.12278,
           "landCells": 471,
           "spatialProvinceCount": 2,
-          "connectionCount": 5,
+          "connectionCount": 3,
           "runtimeParentName": "國內城"
         },
         {
@@ -104,9 +104,9 @@
           "nameCh": "荇人",
           "longitude": 129.33889,
           "latitude": 42.07056,
-          "landCells": 271,
-          "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "landCells": 547,
+          "spatialProvinceCount": 2,
+          "connectionCount": 3,
           "runtimeParentName": "北沃沮"
         },
         {
@@ -118,7 +118,7 @@
           "latitude": 41.72873,
           "landCells": 531,
           "spatialProvinceCount": 2,
-          "connectionCount": 6,
+          "connectionCount": 5,
           "runtimeParentName": "卒本"
         },
         {
@@ -132,40 +132,16 @@
           "spatialProvinceCount": 2,
           "connectionCount": 8,
           "runtimeParentName": "遼東郡"
-        },
-        {
-          "jurisdictionId": "X110",
-          "cityId": 1179,
-          "name": "두만강 취락",
-          "nameCh": "豆滿江聚落",
-          "longitude": 129.5067,
-          "latitude": 42.9044,
-          "landCells": 704,
-          "spatialProvinceCount": 4,
-          "connectionCount": 6,
-          "runtimeParentName": "北沃沮"
-        },
-        {
-          "jurisdictionId": "X111",
-          "cityId": 1180,
-          "name": "혼강 취락",
-          "nameCh": "渾江聚落",
-          "longitude": 126.41794,
-          "latitude": 41.93771,
-          "landCells": 334,
-          "spatialProvinceCount": 2,
-          "connectionCount": 4,
-          "runtimeParentName": "國內城"
         }
       ]
     },
     {
       "id": "OKJEO",
       "name": "옥저",
-      "cityCount": 3,
-      "landCells": 974,
-      "cellsPerCity": 324.7,
-      "largestJurisdictionCells": 484,
+      "cityCount": 2,
+      "landCells": 1940,
+      "cellsPerCity": 970.0,
+      "largestJurisdictionCells": 1709,
       "members": [
         {
           "jurisdictionId": "X030",
@@ -174,8 +150,8 @@
           "nameCh": "北沃沮",
           "longitude": 130.35845,
           "latitude": 42.86788,
-          "landCells": 484,
-          "spatialProvinceCount": 3,
+          "landCells": 1709,
+          "spatialProvinceCount": 4,
           "connectionCount": 4,
           "runtimeParentName": "北沃沮"
         },
@@ -190,28 +166,16 @@
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "東沃沮"
-        },
-        {
-          "jurisdictionId": "X109",
-          "cityId": 1178,
-          "name": "해안 취락",
-          "nameCh": "海岸聚落",
-          "longitude": 129.78333333333333,
-          "latitude": 41.78333333333333,
-          "landCells": 259,
-          "spatialProvinceCount": 2,
-          "connectionCount": 4,
-          "runtimeParentName": "北沃沮"
         }
       ]
     },
     {
       "id": "YILOU",
       "name": "읍루",
-      "cityCount": 2,
-      "landCells": 5423,
-      "cellsPerCity": 2711.5,
-      "largestJurisdictionCells": 4885,
+      "cityCount": 1,
+      "landCells": 3823,
+      "cellsPerCity": 3823.0,
+      "largestJurisdictionCells": 3823,
       "members": [
         {
           "jurisdictionId": "X039",
@@ -220,21 +184,9 @@
           "nameCh": "挹婁",
           "longitude": 131.95,
           "latitude": 43.8,
-          "landCells": 4885,
-          "spatialProvinceCount": 12,
-          "connectionCount": 6,
-          "runtimeParentName": "挹婁"
-        },
-        {
-          "jurisdictionId": "X113",
-          "cityId": 1182,
-          "name": "목단강 취락",
-          "nameCh": "牡丹江聚落",
-          "longitude": 129.599722,
-          "latitude": 44.586111,
-          "landCells": 538,
-          "spatialProvinceCount": 2,
-          "connectionCount": 4,
+          "landCells": 3823,
+          "spatialProvinceCount": 7,
+          "connectionCount": 1,
           "runtimeParentName": "挹婁"
         }
       ]
@@ -242,10 +194,10 @@
     {
       "id": "BUYEO",
       "name": "부여",
-      "cityCount": 4,
-      "landCells": 5415,
-      "cellsPerCity": 1353.8,
-      "largestJurisdictionCells": 1846,
+      "cityCount": 1,
+      "landCells": 5590,
+      "cellsPerCity": 5590.0,
+      "largestJurisdictionCells": 5590,
       "members": [
         {
           "jurisdictionId": "X036",
@@ -254,45 +206,9 @@
           "nameCh": "夫餘",
           "longitude": 126.56157,
           "latitude": 43.8461,
-          "landCells": 1650,
-          "spatialProvinceCount": 5,
-          "connectionCount": 10,
-          "runtimeParentName": "夫餘"
-        },
-        {
-          "jurisdictionId": "X112",
-          "cityId": 1181,
-          "name": "돈화 취락",
-          "nameCh": "敦化聚落",
-          "longitude": 128.23333333333,
-          "latitude": 43.366666666667,
-          "landCells": 723,
-          "spatialProvinceCount": 4,
-          "connectionCount": 5,
-          "runtimeParentName": "國內城"
-        },
-        {
-          "jurisdictionId": "X114",
-          "cityId": 1183,
-          "name": "이통하 취락",
-          "nameCh": "伊通河聚落",
-          "longitude": 125.32277777778,
-          "latitude": 43.88,
-          "landCells": 1196,
-          "spatialProvinceCount": 5,
-          "connectionCount": 6,
-          "runtimeParentName": "夫餘"
-        },
-        {
-          "jurisdictionId": "X125",
-          "cityId": 1194,
-          "name": "농안 취락",
-          "nameCh": "農安聚落",
-          "longitude": 125.1604763546087,
-          "latitude": 44.496622395,
-          "landCells": 1846,
-          "spatialProvinceCount": 7,
-          "connectionCount": 5,
+          "landCells": 5590,
+          "spatialProvinceCount": 10,
+          "connectionCount": 8,
           "runtimeParentName": "夫餘"
         }
       ]
@@ -301,8 +217,8 @@
       "id": "YE",
       "name": "예",
       "cityCount": 4,
-      "landCells": 1119,
-      "cellsPerCity": 279.8,
+      "landCells": 1125,
+      "cellsPerCity": 281.2,
       "largestJurisdictionCells": 509,
       "members": [
         {
@@ -324,9 +240,9 @@
           "nameCh": "貊",
           "longitude": 127.73416666667,
           "latitude": 37.874722222222,
-          "landCells": 375,
+          "landCells": 381,
           "spatialProvinceCount": 2,
-          "connectionCount": 6,
+          "connectionCount": 4,
           "runtimeParentName": "伯濟國"
         },
         {
@@ -358,10 +274,10 @@
     {
       "id": "MAHAN",
       "name": "마한",
-      "cityCount": 26,
-      "landCells": 1671,
-      "cellsPerCity": 64.3,
-      "largestJurisdictionCells": 438,
+      "cityCount": 17,
+      "landCells": 1519,
+      "cellsPerCity": 89.4,
+      "largestJurisdictionCells": 575,
       "members": [
         {
           "jurisdictionId": "X040",
@@ -370,7 +286,7 @@
           "nameCh": "目支國",
           "longitude": 126.95444,
           "latitude": 35.94389,
-          "landCells": 66,
+          "landCells": 100,
           "spatialProvinceCount": 1,
           "connectionCount": 9,
           "runtimeParentName": "目支國"
@@ -394,9 +310,9 @@
           "nameCh": "伯濟國",
           "longitude": 126.99,
           "latitude": 37.56,
-          "landCells": 438,
+          "landCells": 575,
           "spatialProvinceCount": 2,
-          "connectionCount": 5,
+          "connectionCount": 9,
           "runtimeParentName": "伯濟國"
         },
         {
@@ -408,20 +324,8 @@
           "latitude": 36.679166666667,
           "landCells": 33,
           "spatialProvinceCount": 1,
-          "connectionCount": 5,
+          "connectionCount": 4,
           "runtimeParentName": "目支國"
-        },
-        {
-          "jurisdictionId": "X074",
-          "cityId": 1143,
-          "name": "천안 취락",
-          "nameCh": "天安聚落",
-          "longitude": 127.1475,
-          "latitude": 36.81,
-          "landCells": 116,
-          "spatialProvinceCount": 1,
-          "connectionCount": 6,
-          "runtimeParentName": "伯濟國"
         },
         {
           "jurisdictionId": "X075",
@@ -430,7 +334,7 @@
           "nameCh": "冉路",
           "longitude": 126.91666666667,
           "latitude": 36.35,
-          "landCells": 16,
+          "landCells": 53,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "目支國"
@@ -442,7 +346,7 @@
           "nameCh": "監奚卑離",
           "longitude": 126.66277777778,
           "latitude": 36.599444444444,
-          "landCells": 26,
+          "landCells": 31,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "目支國"
@@ -462,8 +366,8 @@
         {
           "jurisdictionId": "X078",
           "cityId": 1147,
-          "name": "태안 취락",
-          "nameCh": "泰安聚落",
+          "name": "신소도",
+          "nameCh": "臣蘇塗國",
           "longitude": 126.29777777778,
           "latitude": 36.756388888889,
           "landCells": 24,
@@ -472,25 +376,13 @@
           "runtimeParentName": "目支國"
         },
         {
-          "jurisdictionId": "X079",
-          "cityId": 1148,
-          "name": "연안 취락",
-          "nameCh": "沿岸聚落",
-          "longitude": 126.62972222222,
-          "latitude": 36.894444444444,
-          "landCells": 27,
-          "spatialProvinceCount": 1,
-          "connectionCount": 4,
-          "runtimeParentName": "伯濟國"
-        },
-        {
           "jurisdictionId": "X080",
           "cityId": 1149,
           "name": "불운",
           "nameCh": "不雲",
           "longitude": 127.12472222222,
           "latitude": 36.455555555556,
-          "landCells": 65,
+          "landCells": 93,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "目支國"
@@ -538,9 +430,9 @@
           "nameCh": "牟盧卑離",
           "longitude": 126.7,
           "latitude": 35.433333333333,
-          "landCells": 47,
+          "landCells": 53,
           "spatialProvinceCount": 1,
-          "connectionCount": 3,
+          "connectionCount": 2,
           "runtimeParentName": "辟卑離國"
         },
         {
@@ -562,7 +454,7 @@
           "nameCh": "萬盧",
           "longitude": 126.71138888889,
           "latitude": 35.978611111111,
-          "landCells": 8,
+          "landCells": 23,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "目支國"
@@ -574,21 +466,9 @@
           "nameCh": "不彌",
           "longitude": 126.7175,
           "latitude": 35.028333333333,
-          "landCells": 83,
+          "landCells": 144,
           "spatialProvinceCount": 1,
-          "connectionCount": 6,
-          "runtimeParentName": "辟卑離國"
-        },
-        {
-          "jurisdictionId": "X088",
-          "cityId": 1157,
-          "name": "무안 취락",
-          "nameCh": "務安聚落",
-          "longitude": 126.47138888889,
-          "latitude": 34.989722222222,
-          "landCells": 52,
-          "spatialProvinceCount": 2,
-          "connectionCount": 3,
+          "connectionCount": 5,
           "runtimeParentName": "辟卑離國"
         },
         {
@@ -598,82 +478,10 @@
           "nameCh": "忱彌多禮",
           "longitude": 126.5975,
           "latitude": 34.574166666667,
-          "landCells": 99,
-          "spatialProvinceCount": 1,
+          "landCells": 129,
+          "spatialProvinceCount": 2,
           "connectionCount": 2,
           "runtimeParentName": "辟卑離國"
-        },
-        {
-          "jurisdictionId": "X090",
-          "cityId": 1159,
-          "name": "영암 취락",
-          "nameCh": "靈巖聚落",
-          "longitude": 126.7,
-          "latitude": 34.798333333333,
-          "landCells": 45,
-          "spatialProvinceCount": 1,
-          "connectionCount": 4,
-          "runtimeParentName": "辟卑離國"
-        },
-        {
-          "jurisdictionId": "X091",
-          "cityId": 1160,
-          "name": "금강 취락",
-          "nameCh": "錦江聚落",
-          "longitude": 127.08472222222,
-          "latitude": 36.203888888889,
-          "landCells": 67,
-          "spatialProvinceCount": 1,
-          "connectionCount": 6,
-          "runtimeParentName": "目支國"
-        },
-        {
-          "jurisdictionId": "X092",
-          "cityId": 1161,
-          "name": "웅천 취락",
-          "nameCh": "熊川聚落",
-          "longitude": 126.9125,
-          "latitude": 36.281944444444,
-          "landCells": 16,
-          "spatialProvinceCount": 1,
-          "connectionCount": 5,
-          "runtimeParentName": "目支國"
-        },
-        {
-          "jurisdictionId": "X093",
-          "cityId": 1162,
-          "name": "금강 하구",
-          "nameCh": "錦江河口",
-          "longitude": 126.69138888889,
-          "latitude": 36.080277777778,
-          "landCells": 17,
-          "spatialProvinceCount": 1,
-          "connectionCount": 4,
-          "runtimeParentName": "目支國"
-        },
-        {
-          "jurisdictionId": "X094",
-          "cityId": 1163,
-          "name": "서해 취락",
-          "nameCh": "西海聚落",
-          "longitude": 126.61666666666666,
-          "latitude": 36.333333333333336,
-          "landCells": 19,
-          "spatialProvinceCount": 1,
-          "connectionCount": 4,
-          "runtimeParentName": "目支國"
-        },
-        {
-          "jurisdictionId": "X095",
-          "cityId": 1164,
-          "name": "중원 취락",
-          "nameCh": "中原聚落",
-          "longitude": 127.48972222222,
-          "latitude": 36.637222222222,
-          "landCells": 146,
-          "spatialProvinceCount": 1,
-          "connectionCount": 6,
-          "runtimeParentName": "古寧伽耶"
         }
       ]
     },
@@ -681,9 +489,9 @@
       "id": "JINHAN",
       "name": "진한",
       "cityCount": 11,
-      "landCells": 1092,
-      "cellsPerCity": 99.3,
-      "largestJurisdictionCells": 307,
+      "landCells": 1238,
+      "cellsPerCity": 112.5,
+      "largestJurisdictionCells": 453,
       "members": [
         {
           "jurisdictionId": "X032",
@@ -736,14 +544,14 @@
         {
           "jurisdictionId": "X049",
           "cityId": 1118,
-          "name": "함창 취락",
-          "nameCh": "古寧伽耶",
+          "name": "고동람",
+          "nameCh": "古冬攬",
           "longitude": 128.17955,
           "latitude": 36.57011,
-          "landCells": 307,
+          "landCells": 453,
           "spatialProvinceCount": 1,
-          "connectionCount": 7,
-          "runtimeParentName": "古寧伽耶"
+          "connectionCount": 9,
+          "runtimeParentName": "古冬攬"
         },
         {
           "jurisdictionId": "X096",
@@ -778,8 +586,8 @@
           "latitude": 36.119166666667,
           "landCells": 73,
           "spatialProvinceCount": 1,
-          "connectionCount": 6,
-          "runtimeParentName": "星山伽耶"
+          "connectionCount": 4,
+          "runtimeParentName": "本彼"
         },
         {
           "jurisdictionId": "X099",
@@ -860,7 +668,7 @@
           "latitude": 35.01478,
           "landCells": 248,
           "spatialProvinceCount": 2,
-          "connectionCount": 5,
+          "connectionCount": 4,
           "runtimeParentName": "古資彌凍國"
         },
         {
@@ -878,14 +686,14 @@
         {
           "jurisdictionId": "X048",
           "cityId": 1117,
-          "name": "성주 취락",
-          "nameCh": "星山伽耶",
+          "name": "본피",
+          "nameCh": "本彼",
           "longitude": 128.28583,
           "latitude": 35.91778,
           "landCells": 49,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
-          "runtimeParentName": "星山伽耶"
+          "runtimeParentName": "本彼"
         },
         {
           "jurisdictionId": "X102",
@@ -1022,156 +830,6 @@
           "spatialProvinceCount": 3,
           "connectionCount": 6,
           "runtimeParentName": "鮮卑"
-        }
-      ]
-    },
-    {
-      "id": "SONGHUA",
-      "name": "송화강 취락권",
-      "cityCount": 2,
-      "landCells": 7449,
-      "cellsPerCity": 3724.5,
-      "largestJurisdictionCells": 6234,
-      "members": [
-        {
-          "jurisdictionId": "X115",
-          "cityId": 1184,
-          "name": "송화강 합류",
-          "nameCh": "松花江合流",
-          "longitude": 126.63333333333,
-          "latitude": 45.75,
-          "landCells": 1215,
-          "spatialProvinceCount": 4,
-          "connectionCount": 5,
-          "runtimeParentName": "松花江聚落"
-        },
-        {
-          "jurisdictionId": "X116",
-          "cityId": 1185,
-          "name": "송눈 평원",
-          "nameCh": "松嫩平原",
-          "longitude": 125.00798,
-          "latitude": 46.59791,
-          "landCells": 6234,
-          "spatialProvinceCount": 15,
-          "connectionCount": 5,
-          "runtimeParentName": "松花江聚落"
-        }
-      ]
-    },
-    {
-      "id": "AMUR",
-      "name": "흑룡강 취락권",
-      "cityCount": 4,
-      "landCells": 28307,
-      "cellsPerCity": 7076.8,
-      "largestJurisdictionCells": 10473,
-      "members": [
-        {
-          "jurisdictionId": "X117",
-          "cityId": 1186,
-          "name": "흑룡강 중류",
-          "nameCh": "黑龍江中流",
-          "longitude": 127.488611,
-          "latitude": 50.245833,
-          "landCells": 9106,
-          "spatialProvinceCount": 19,
-          "connectionCount": 4,
-          "runtimeParentName": "黑龍江聚落"
-        },
-        {
-          "jurisdictionId": "X118",
-          "cityId": 1187,
-          "name": "눈강 취락",
-          "nameCh": "嫩江聚落",
-          "longitude": 125.21595,
-          "latitude": 49.17448,
-          "landCells": 6985,
-          "spatialProvinceCount": 17,
-          "connectionCount": 3,
-          "runtimeParentName": "黑龍江聚落"
-        },
-        {
-          "jurisdictionId": "X119",
-          "cityId": 1188,
-          "name": "흑룡강 상류",
-          "nameCh": "黑龍江上流",
-          "longitude": 122.53095,
-          "latitude": 52.96881,
-          "landCells": 10473,
-          "spatialProvinceCount": 24,
-          "connectionCount": 4,
-          "runtimeParentName": "黑龍江聚落"
-        },
-        {
-          "jurisdictionId": "X120",
-          "cityId": 1189,
-          "name": "흑룡강 남안",
-          "nameCh": "黑龍江南岸",
-          "longitude": 126.50368,
-          "latitude": 48.23952,
-          "landCells": 1743,
-          "spatialProvinceCount": 4,
-          "connectionCount": 6,
-          "runtimeParentName": "黑龍江聚落"
-        }
-      ]
-    },
-    {
-      "id": "USSURI",
-      "name": "우수리강 취락권",
-      "cityCount": 4,
-      "landCells": 30001,
-      "cellsPerCity": 7500.2,
-      "largestJurisdictionCells": 16059,
-      "members": [
-        {
-          "jurisdictionId": "X121",
-          "cityId": 1190,
-          "name": "삼강 취락",
-          "nameCh": "三江聚落",
-          "longitude": 132.03406,
-          "latitude": 47.24889,
-          "landCells": 2119,
-          "spatialProvinceCount": 7,
-          "connectionCount": 4,
-          "runtimeParentName": "烏蘇里江聚落"
-        },
-        {
-          "jurisdictionId": "X122",
-          "cityId": 1191,
-          "name": "송화강 하구",
-          "nameCh": "松花江河口",
-          "longitude": 132.50297,
-          "latitude": 47.65017,
-          "landCells": 5999,
-          "spatialProvinceCount": 15,
-          "connectionCount": 3,
-          "runtimeParentName": "烏蘇里江聚落"
-        },
-        {
-          "jurisdictionId": "X123",
-          "cityId": 1192,
-          "name": "우수리 북부",
-          "nameCh": "烏蘇里北部",
-          "longitude": 131.15452,
-          "latitude": 46.63883,
-          "landCells": 5824,
-          "spatialProvinceCount": 13,
-          "connectionCount": 5,
-          "runtimeParentName": "烏蘇里江聚落"
-        },
-        {
-          "jurisdictionId": "X124",
-          "cityId": 1193,
-          "name": "흑룡강 하구길",
-          "nameCh": "黑龍江東路",
-          "longitude": 135.06666666667,
-          "latitude": 48.483333333333,
-          "landCells": 16059,
-          "spatialProvinceCount": 34,
-          "connectionCount": 2,
-          "runtimeParentName": "烏蘇里江聚落"
         }
       ]
     },
@@ -1676,7 +1334,7 @@
           "latitude": 41.53247,
           "landCells": 1671,
           "spatialProvinceCount": 3,
-          "connectionCount": 9,
+          "connectionCount": 8,
           "runtimeParentName": "遼東屬國"
         },
         {

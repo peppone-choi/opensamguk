@@ -186,9 +186,9 @@ PLACES = [
     ("大伽耶", "EXTERNAL_PLACE", 4, "Goryeong County", KR, None, None,
      "『삼국유사』 五伽耶條 「大伽耶(今高靈)」. 고령 지산동 고분군. 韓傳 半路國을 여기로 "
      "보는 설이 있으나 성주설과 갈린다", None, 20),
-    ("星山伽耶", "EXTERNAL_PLACE", 4, "Seongju County", KR, None, None,
+    ("本彼", "EXTERNAL_PLACE", 4, "Seongju County", KR, None, None,
      "『삼국유사』 五伽耶條 「星山伽耶(今京山，一云碧珍)」. 성주 성산동 고분군", None, 20),
-    ("古寧伽耶", "EXTERNAL_PLACE", 4, "Hamchang", KR, None, None,
+    ("古冬攬", "EXTERNAL_PLACE", 4, "Hamchang", KR, None, None,
      "『삼국유사』 五伽耶條 「古寧伽耶(今咸寧)」. 상주 함창", None, 20),
     # 倭 여정. 東夷傳이 帶方에서 邪馬壹國까지 里程을 그대로 적어놨다 —
     #   「從郡至倭，循海岸水行，歷韓國，乍南乍東，到其北岸狗邪韓國，七千餘里，
@@ -255,6 +255,7 @@ PLACES = [
 
 # Reviewed historic regions + game-design locality anchors (user 2026-09-20).
 KOREA_SETTLEMENT_DECISIONS = json.loads((ROOT / "data/curated/han/korea-place-corrections-v1.json").read_text(encoding="utf-8"))["settlements"]
+PLACE_IDS = [f"X{i:03d}" for i in range(len(PLACES))] + [r["id"] for r in KOREA_SETTLEMENT_DECISIONS]
 PLACES.extend((r["nameCh"], "EXTERNAL_PLACE", 4, r["modern"], {"CN": CN, "KP": KP, "KR": KR, "RU": RU}[r["country"]],
                None, None, r["basis"], None, 30) for r in KOREA_SETTLEMENT_DECISIONS)
 
@@ -262,7 +263,7 @@ DISPUTED = {"夫餘", "目支國", "辟卑離國", "大伽耶", "北沃沮", "�
 # 도로 간선의 허브 — 郡國志에 없는 세력이라도 이곳들은 郡治급으로 승격해 오갈 수 있어야
 # 한다(build_terrain_grid.py). level 이 아니라 여기서만 표시한다.
 HUB = {"國內城", "卒本", "北沃沮", "安邪國", "悉直國", "押督國", "召文國", "于山國", "夫餘", "東沃沮", "濊", "目支國", "辟卑離國", "伯濟國", "州胡", "斯盧國",
-       "狗邪國", "古資彌凍國", "大伽耶", "星山伽耶", "古寧伽耶",
+       "狗邪國", "古資彌凍國", "大伽耶", "本彼", "古冬攬",
        "夷洲", "邪馬壹國", "流求", "西羌", "白馬氐", "哀牢", "山越", "烏桓", "鮮卑", "南匈奴"}
 FIELDS = ("nameFt", "kind", "level", "modern", "country", "jun", "prov", "basis", "adm", "tol")
 
@@ -297,7 +298,7 @@ def resolve():
     # 한 번에 다 물으면 504 가 난다. 20행씩 끊어 묻고 합친다.
     reviewed = json.loads((ROOT / "data/curated/han/korea-place-corrections-v1.json").read_text())
     pinned = {r['id']: r for r in reviewed['decisions'] + reviewed['settlements']}
-    live_places = [r for i,r in enumerate(PLACES) if f'X{i:03d}' not in pinned]
+    live_places = [r for i,r in enumerate(PLACES) if PLACE_IDS[i] not in pinned]
     rows = []
     for k in range(0, len(live_places), 20):
         values = " ".join(f'("{r[3]}"@en wd:{r[4]})' for r in live_places[k:k + 20])
@@ -333,7 +334,7 @@ SELECT ?label ?item WHERE {{
     out, unresolved = [], []
     for i, row in enumerate(PLACES):
         p = dict(zip(FIELDS, row))
-        pid = f"X{i:03d}"
+        pid = PLACE_IDS[i]
         if pid in pinned:
             d=pinned[pid]
             out.append({**authored_rows()[pid], **{key:d[key] for key in ('lon','lat','wikidata')}})
@@ -350,7 +351,7 @@ SELECT ?label ?item WHERE {{
         qid, lon, lat = cand[0]
         lon, lat = round(lon, 5), round(lat, 5)
         p.pop("adm"); p.pop("tol")
-        p.update(id=f"X{i:03d}", nameCh=p["nameFt"], namePy="", typeCh="",
+        p.update(id=PLACE_IDS[i], nameCh=p["nameFt"], namePy="", typeCh="",
                  lon=lon, lat=lat, wikidata=qid, begYr=-9999, endYr=9999,
                  conf="DISPUTED" if p["nameFt"] in DISPUTED else "IDENTIFIED",
                  hub=p["nameFt"] in HUB, presLoc=p.pop("modern"))
@@ -382,8 +383,8 @@ def authored_rows():
     rows = {}
     for i, row in enumerate(PLACES):
         p = dict(zip(FIELDS, row))
-        rows[f"X{i:03d}"] = {
-            "id": f"X{i:03d}", "nameFt": p["nameFt"], "nameCh": p["nameFt"], "namePy": "",
+        rows[PLACE_IDS[i]] = {
+            "id": PLACE_IDS[i], "nameFt": p["nameFt"], "nameCh": p["nameFt"], "namePy": "",
             "typeCh": "", "kind": p["kind"], "level": p["level"], "jun": p["jun"],
             "prov": p["prov"], "basis": p["basis"], "presLoc": p["modern"],
             "begYr": -9999, "endYr": 9999,

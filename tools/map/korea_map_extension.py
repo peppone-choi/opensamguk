@@ -1,7 +1,7 @@
 """Reviewed additive geographic frame; old cells retain their world coordinates.
 
-New terrain is a pinned Natural Earth raster. Northern river settlements are
-explicit game geography, never an assertion of Buyeo/Yilou sovereign borders.
+New terrain is a pinned Natural Earth raster. The current release keeps added
+terrain outside playable ownership; historical ledgers retain their old allocation.
 """
 import copy
 import hashlib
@@ -32,11 +32,12 @@ def apply(document, owner, decision):
     added[NORTH_ROWS:NORTH_ROWS+br,:bc]=False
     cols=np.arange(nc)
     lon=(cols*new['cell']+new['x0']-new['pad'])/new['k']
-    # Temporary allocation only; explicit settlement parent decisions below
-    # replace these donor-region labels on every newly playable province.
+    # Historical releases allocated the extension to settlement donors.
+    # The cleaned release preserves the terrain without inventing northern ownership.
     for jid,mask in [('X036',lon<127),('X039',lon>=127)]:
         pi=next(i for i,p in enumerate(document['provinceRecords']) if p['id']==jid)
-        result[added & np.broadcast_to(mask,result.shape)]=pi
+        if decision.get('playableExpansion', True):
+            result[added & np.broadcast_to(mask,result.shape)]=pi
     for key in ('cities','juns','regions'):
         for row in document[key]:row['row']+=NORTH_ROWS
     for edge in document['adjacency']['commandery']:

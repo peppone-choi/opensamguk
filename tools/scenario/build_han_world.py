@@ -82,7 +82,8 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
 # 2026-09-17: 같은 縣이 두 번 선 977·989 를 거두고 그 번호와 1099..1133 에 城 없던 郡國 밖 취락 관할 37 곳
 # (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
-V3_ROUTE_NODE_COUNT = 1194
+from tools.scenario.han_active_city_ids import active_numeric_ids
+V3_ROUTE_NODE_COUNT = 1168
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
 # 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.
@@ -143,6 +144,11 @@ FRONTIER: dict[str, tuple[str | None, int | None, str]] = {
     "夷洲": ("양주", None, "吳志 孫權傳 「浮海求夷洲」 — 戶數 기록 없음"),
     "流求": ("양주", None, "隋書 流求國傳 「當建安郡東」 — 戶數 기록 없음"),
 }
+
+# Renaming a place must not change its existing game economy/grade. These are
+# inherited game estimates, not attested local household counts.
+FRONTIER['本彼'] = (DONGYI, 650, 'GAME_DESIGN: 기존 성주 거점 등급 보존; 개별 호수 미상')
+FRONTIER['古冬攬'] = (DONGYI, 650, 'GAME_DESIGN: 기존 함창 거점 등급 보존; 개별 호수 미상')
 
 # Final-stage geographic groups: no attested local census; game budgets below.
 for _name in ('挹婁', '松花江聚落', '黑龍江聚落', '烏蘇里江聚落'):
@@ -500,7 +506,7 @@ GATE_PLACES: dict[str, list[str]] = {
     "夫餘": ["夫餘"],
     "挹婁": ["挹婁"],            # 治所가 아닌 城 — seatOwner 격자로 北沃沮에 붙는다.
     "馬韓": ["目支國", "伯濟國", "辟卑離國"],   # 마한 54국 중 지도에 있는 셋(맹주는 目支國).
-    "弁韓": ["狗邪國", "安邪國", "古資彌凍國", "大伽耶", "星山伽耶", "古寧伽耶"],
+    "弁韓": ["狗邪國", "安邪國", "古資彌凍國", "大伽耶", "星山伽耶", "古寧伽耶", "本彼", "古冬攬"],
     "辰韓": ["斯盧國", "悉直國", "押督國", "召文國"],
     "邪馬壹國": ["邪馬壹國"],
     "奴國": ["奴國"],            # 治所가 아닌 城 — seatOwner 격자로 邪馬壹國에 붙는다.
@@ -1243,8 +1249,8 @@ def build_v3() -> tuple[str, str, str, str]:
     legacy = json.loads(LEGACY_780_JSON.read_text(encoding="utf-8"))
     skeleton = build_gate_skeleton()
     nodes = sorted(selection["routeNodes"], key=lambda row: row["numericCityId"])
-    if [row["numericCityId"] for row in nodes] != list(range(1, V3_ROUTE_NODE_COUNT + 1)):
-        raise AssertionError(f"han-world-v3 selection must be the contiguous IDs 1..{V3_ROUTE_NODE_COUNT}")
+    if [row["numericCityId"] for row in nodes] != active_numeric_ids(V3_ROUTE_NODE_COUNT):
+        raise AssertionError(f"han-world-v3 selection must match the reviewed active roster; count={V3_ROUTE_NODE_COUNT}")
 
     cities_by_place = {str(row["id"]): row for row in tiles["cities"]}
     city_index_by_place = {str(row["id"]): index for index, row in enumerate(tiles["cities"])}

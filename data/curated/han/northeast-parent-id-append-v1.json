@@ -12,17 +12,17 @@
     {
       "identity": "松花江聚落",
       "commanderyId": "PARENT-0173",
-      "status": "ACTIVE"
+      "status": "RETIRED"
     },
     {
       "identity": "黑龍江聚落",
       "commanderyId": "PARENT-0174",
-      "status": "ACTIVE"
+      "status": "RETIRED"
     },
     {
       "identity": "烏蘇里江聚落",
       "commanderyId": "PARENT-0175",
-      "status": "ACTIVE"
+      "status": "RETIRED"
     }
   ]
 }

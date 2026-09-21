@@ -437,12 +437,12 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         # + 849–1024 城 없던 縣 관할 176 곳(w2-cityless-jurisdiction-route-claim)
         # + 1025–1097 수·진·관 거점 73 곳(w3-strategic-site-route-claim). 전부 append-only 다.
         # + 1098 河南尹 平陰(w4) + 2026-09-17 郡國 밖 취락 37곳(w5: 977·989 재결속 + 1099–1133), 同縣 중복 977·989 는 거두었다.
-        self.assertEqual(1194, report.approved_count)
+        self.assertEqual(1168, report.approved_count)
         append = documents.migration["appendedRows"]
-        self.assertEqual(414, len(append))
+        self.assertEqual(388, len(append))
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(1194, append[-1]["newCityId"])
-        self.assertEqual(345, sum(1 for row in append if "sourceClaimId" in row))
+        self.assertEqual(1177, append[-1]["newCityId"])
+        self.assertEqual(319, sum(1 for row in append if "sourceClaimId" in row))
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
         for mutate, pattern in (

@@ -78,7 +78,7 @@
         }
       },
       "priorSummary": {
-        "approvedPhysicalPlaceIdAbsentCount": 186,
+        "approvedPhysicalPlaceIdAbsentCount": 160,
         "cityLinkedCellCount": 107155,
         "cityLinkedProvinceCount": 998,
         "coordinateFootprintMajorityMismatchCount": 0,
@@ -127,7 +127,7 @@
       }
     },
     "priorSummary": {
-      "approvedPhysicalPlaceIdAbsentCount": 135,
+      "approvedPhysicalPlaceIdAbsentCount": 109,
       "cityLinkedCellCount": 121603,
       "cityLinkedProvinceCount": 1057,
       "coordinateFootprintMajorityMismatchCount": 0,
@@ -224,7 +224,7 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "094ecc91757708b68bc7fa56135448b4113688f8c09a43500122952e616a0ad4"
+      "sha256": "a7e94abb6acf0c443d0200e9ebcfd92713515660b4be7d1b17e52b27358e5efa"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
@@ -232,7 +232,7 @@
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "02deeba7ab4f1d3ef6d04a5c823981d89d0c42ddf17bdcfd6fa61c44b087edd5"
+      "sha256": "4c6732327b7377c81b1099468785bd2506f7cc03bb15cc0e7f572aa771532e1d"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -240,7 +240,7 @@
     },
     "data/map/external-places.json": {
       "path": "data/map/external-places.json",
-      "sha256": "1a7ab925f8dcd11424d97fbbabd9dd2e5b3237fffa900c7e72261167c0787da4"
+      "sha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06"
     },
     "data/map/han-780-v1-tiles.json": {
       "path": "data/map/han-780-v1-tiles.json",
@@ -252,7 +252,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85"
+      "sha256": "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -270,12 +270,10 @@
       "X071",
       "X072",
       "X073",
-      "X074",
       "X075",
       "X076",
       "X077",
       "X078",
-      "X079",
       "X080",
       "X081",
       "X082",
@@ -284,14 +282,7 @@
       "X085",
       "X086",
       "X087",
-      "X088",
       "X089",
-      "X090",
-      "X091",
-      "X092",
-      "X093",
-      "X094",
-      "X095",
       "X096",
       "X097",
       "X098",
@@ -304,24 +295,7 @@
       "X105",
       "X106",
       "X107",
-      "X108",
-      "X109",
-      "X110",
-      "X111",
-      "X112",
-      "X113",
-      "X114",
-      "X115",
-      "X116",
-      "X117",
-      "X118",
-      "X119",
-      "X120",
-      "X121",
-      "X122",
-      "X123",
-      "X124",
-      "X125"
+      "X108"
     ],
     "inputTilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
   },

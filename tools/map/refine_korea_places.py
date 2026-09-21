@@ -76,14 +76,24 @@ def apply(source, decisions):
     doc['_meta']['counts'].update(parentRegions=len(doc['parentRegions']),commanderies=len(doc['commanderyRecords']),seats=len(doc['juns']))
     for label in decisions.get('labelOverrides', []):
         for city in doc['cities']:
-            if city['id']==label['id']:city['name']=label['displayName']
+            if city['id']==label['id']:
+                city['name']=label['displayName']
+                if 'nameCh' in label:city['nameCh']=label['nameCh']
         for row in doc['jurisdictionRecords']:
-            if row['id']==label['id']:row['displayName']=label['displayName']
+            if row['id']==label['id']:
+                row['displayName']=label['displayName']
+                if 'nameCh' in label:row['nameCh']=label['nameCh']
         for row in doc['provinceRecords']:
-            if row['jurisdictionId']==label['id']:row['displayName']=label['displayName']
+            if row['jurisdictionId']==label['id']:
+                row['displayName']=label['displayName']
+                if 'nameCh' in label:row['nameCh']=label['nameCh']
         for i,jun in enumerate(doc['juns']):
             if doc['cities'][jun['seat']]['id']==label['id']:
                 jun['name']=label['displayName']
+                if 'nameCh' in label:
+                    jun['nameCh']=label['nameCh']
+                    doc['parentRegions'][i]['nameCh']=label['nameCh']
+                    doc['commanderyRecords'][i]['nameCh']=label['nameCh']
                 doc['parentRegions'][i]['displayName']=label['displayName']
                 doc['commanderyRecords'][i]['displayName']=label['displayName']
     doc['owner'] = _encode_runs(owner)
@@ -110,7 +120,8 @@ def diff(before, after):
         else:
             patches.append(dict(path=path, before=old, after=new))
     for key in before:
-        identity = 'id' if key in ('cities', 'provinceRecords', 'jurisdictionRecords', 'commanderyRecords') else 'nameCh' if key == 'juns' else None
+        # Labels can change; juns have no stable ID and must reverse by list position.
+        identity = 'id' if key in ('cities', 'provinceRecords', 'jurisdictionRecords', 'commanderyRecords') else None
         if identity:
             old = {r[identity]: r for r in before[key]}
             for row in after[key]:
@@ -194,10 +205,10 @@ def check(document, ledger):
         problems.append('corrections do not reproduce the current map')
     registry = json.loads((ROOT/'data/curated/han/northeast-parent-id-append-v1.json').read_text())
     expected = {(p['id'], p['nameCh']) for p in decisions['newParents']}
-    actual = {(p['commanderyId'], p['identity']) for p in registry['entries']}
-    if actual != expected or len(actual) != len(registry['entries']):
+    actual = {(p['commanderyId'], p['identity']) for p in registry['entries'] if p['status'] == 'ACTIVE'}
+    if actual != expected or len(actual) != sum(p['status'] == 'ACTIVE' for p in registry['entries']):
         problems.append('northeast parent append registry differs from reviewed parents')
-    if registry['nextOrdinal'] - registry['baseNextOrdinal'] != len(actual):
+    if registry['nextOrdinal'] - registry['baseNextOrdinal'] != len(registry['entries']):
         problems.append('northeast parent append registry ordinal range differs')
     retired = json.loads((ROOT/'data/curated/han/korea-retired-settlements-v1.json').read_text())
     retired_ids = {r['id'] for r in retired['places']}

@@ -3,17 +3,17 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "02deeba7ab4f1d3ef6d04a5c823981d89d0c42ddf17bdcfd6fa61c44b087edd5",
-    "migrationSha256": "67bbf6ecb1c876aa9e3d13579e590e67d6a9c9637f12be31fd261ad9029767d8",
-    "hanTilesSha256": "0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85",
-    "provinceCityAttributionSha256": "8a633023462a1721095318d17281b08956aa619a9eb9be13de743895a7c937e0",
+    "selectionSha256": "4c6732327b7377c81b1099468785bd2506f7cc03bb15cc0e7f572aa771532e1d",
+    "migrationSha256": "a8d88437b489a9cf52981a3f715067aac5fb025118c0d13a9b55e50d88aac910",
+    "hanTilesSha256": "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500",
+    "provinceCityAttributionSha256": "3e4223b5989ff11aa5c3b00c33dbc48100f30250a6d64b4972f2598447211838",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
-    "waterwayNetworkSha256": "47f9e5cad319bfaa5371d1b2e8c3aeb626360dc2e65cfbe6c9dee38a2d0e2a8a"
+    "waterwayNetworkSha256": "b3374dfa306800957dab1b13f4bf16e88fa9f3decb523fe07ceaa61a15ee5c24"
   },
   "outputs": {
-    "worldJsonSha256": "c5b30046420d3b70fb3ed6d07b5be7f3714c5c399be72927ce8fae668c13d805",
-    "cityConstSha256": "8e9eecbf0ae0c7650ddc0b9bf4cd79f376c5621362ab6626ca2bf5e473a0adac",
-    "gateIndexSha256": "03fb875e436f2371ca5991753bf137fab5abd094c854797266d302de5bc78774"
+    "worldJsonSha256": "14cce869fe40b0df56e69858f346fc72dde1a3c7a68801a61bbb818cdf64590e",
+    "cityConstSha256": "4ee5c406c101797f9078b96c4bdc3dc2a8527556d62af6203945086f8bad46fd",
+    "gateIndexSha256": "01c43182b24ed90cedae1f1025bc439205746d2985ad8c5c10ec1d7496b4a5a8"
   },
   "routeNodes": [
     {
@@ -5727,11 +5727,6 @@
       "physicalPlaceRef": "external:v1:X073"
     },
     {
-      "routeNodeKey": "b55e72af-aa40-41de-a885-b24e6c5ca8b2",
-      "numericCityId": 1143,
-      "physicalPlaceRef": "external:v1:X074"
-    },
-    {
       "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
       "numericCityId": 1144,
       "physicalPlaceRef": "external:v1:X075"
@@ -5750,11 +5745,6 @@
       "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
       "numericCityId": 1147,
       "physicalPlaceRef": "external:v1:X078"
-    },
-    {
-      "routeNodeKey": "aa5d6bfb-acae-4e10-a3b7-e6bd86d0db69",
-      "numericCityId": 1148,
-      "physicalPlaceRef": "external:v1:X079"
     },
     {
       "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
@@ -5797,44 +5787,9 @@
       "physicalPlaceRef": "external:v1:X087"
     },
     {
-      "routeNodeKey": "18a1b6e2-1cee-4fe5-83a4-c5084a631c73",
-      "numericCityId": 1157,
-      "physicalPlaceRef": "external:v1:X088"
-    },
-    {
       "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
       "numericCityId": 1158,
       "physicalPlaceRef": "external:v1:X089"
-    },
-    {
-      "routeNodeKey": "8f9b1d6d-f9e1-4198-9e33-00e883a70169",
-      "numericCityId": 1159,
-      "physicalPlaceRef": "external:v1:X090"
-    },
-    {
-      "routeNodeKey": "cd9930e6-98e3-4895-b648-672d2757dc17",
-      "numericCityId": 1160,
-      "physicalPlaceRef": "external:v1:X091"
-    },
-    {
-      "routeNodeKey": "3dac383e-d53e-4683-9356-6eb02bdec97d",
-      "numericCityId": 1161,
-      "physicalPlaceRef": "external:v1:X092"
-    },
-    {
-      "routeNodeKey": "84e1f34c-57a6-4827-bc96-69ab8e27837b",
-      "numericCityId": 1162,
-      "physicalPlaceRef": "external:v1:X093"
-    },
-    {
-      "routeNodeKey": "11f22bc0-e93e-421d-904b-6bdea2526e3a",
-      "numericCityId": 1163,
-      "physicalPlaceRef": "external:v1:X094"
-    },
-    {
-      "routeNodeKey": "06d7cb17-e140-4c60-8862-378dd3baa3a9",
-      "numericCityId": 1164,
-      "physicalPlaceRef": "external:v1:X095"
     },
     {
       "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
@@ -5900,91 +5855,6 @@
       "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
       "numericCityId": 1177,
       "physicalPlaceRef": "external:v1:X108"
-    },
-    {
-      "routeNodeKey": "4d8d34cf-fe5f-49d3-a42b-a59f05889b6b",
-      "numericCityId": 1178,
-      "physicalPlaceRef": "external:v1:X109"
-    },
-    {
-      "routeNodeKey": "946ea549-492b-479a-b440-da2a815cd360",
-      "numericCityId": 1179,
-      "physicalPlaceRef": "external:v1:X110"
-    },
-    {
-      "routeNodeKey": "0f1040f7-553a-4bbe-9303-cf441306d008",
-      "numericCityId": 1180,
-      "physicalPlaceRef": "external:v1:X111"
-    },
-    {
-      "routeNodeKey": "bd4e54b5-846c-4136-a143-e900765a3cd1",
-      "numericCityId": 1181,
-      "physicalPlaceRef": "external:v1:X112"
-    },
-    {
-      "routeNodeKey": "d9710873-4cb2-4b84-bc37-545efa782df3",
-      "numericCityId": 1182,
-      "physicalPlaceRef": "external:v1:X113"
-    },
-    {
-      "routeNodeKey": "e0c6e83f-3c88-40cb-a694-a1312ad0636b",
-      "numericCityId": 1183,
-      "physicalPlaceRef": "external:v1:X114"
-    },
-    {
-      "routeNodeKey": "7cc37a59-4d1d-4181-82d1-3bbb6f956aab",
-      "numericCityId": 1184,
-      "physicalPlaceRef": "external:v1:X115"
-    },
-    {
-      "routeNodeKey": "c46a8475-11c0-4823-bcb3-2a4472851634",
-      "numericCityId": 1185,
-      "physicalPlaceRef": "external:v1:X116"
-    },
-    {
-      "routeNodeKey": "55517d86-c1ba-49c0-8171-501c82b09cb5",
-      "numericCityId": 1186,
-      "physicalPlaceRef": "external:v1:X117"
-    },
-    {
-      "routeNodeKey": "01132fb4-4997-43e6-91b7-e4b9663a3895",
-      "numericCityId": 1187,
-      "physicalPlaceRef": "external:v1:X118"
-    },
-    {
-      "routeNodeKey": "092d4288-0243-4421-a55e-59bc30a83b21",
-      "numericCityId": 1188,
-      "physicalPlaceRef": "external:v1:X119"
-    },
-    {
-      "routeNodeKey": "cf04930d-2094-4b3e-ba91-d7788de18421",
-      "numericCityId": 1189,
-      "physicalPlaceRef": "external:v1:X120"
-    },
-    {
-      "routeNodeKey": "87207a51-c807-4aaf-ae3d-3cd76db3ca8c",
-      "numericCityId": 1190,
-      "physicalPlaceRef": "external:v1:X121"
-    },
-    {
-      "routeNodeKey": "224cd2f2-6e0d-403f-8d73-d2685bf62584",
-      "numericCityId": 1191,
-      "physicalPlaceRef": "external:v1:X122"
-    },
-    {
-      "routeNodeKey": "010c1fcc-d9f5-4e92-8668-3257518d0240",
-      "numericCityId": 1192,
-      "physicalPlaceRef": "external:v1:X123"
-    },
-    {
-      "routeNodeKey": "b09585e9-bfdd-464b-82f0-367bfa818b98",
-      "numericCityId": 1193,
-      "physicalPlaceRef": "external:v1:X124"
-    },
-    {
-      "routeNodeKey": "859b778d-0d77-4718-be8f-381b7363fa54",
-      "numericCityId": 1194,
-      "physicalPlaceRef": "external:v1:X125"
     }
   ],
   "countyAdjacency": [
@@ -19165,13 +19035,13 @@
     },
     {
       "a": 728,
-      "b": 1140,
-      "sharedBoundaryCells": 40
+      "b": 1105,
+      "sharedBoundaryCells": 11
     },
     {
       "a": 728,
-      "b": 1183,
-      "sharedBoundaryCells": 11
+      "b": 1140,
+      "sharedBoundaryCells": 40
     },
     {
       "a": 729,
@@ -19205,18 +19075,13 @@
     },
     {
       "a": 729,
+      "b": 1105,
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 729,
       "b": 1131,
       "sharedBoundaryCells": 30
-    },
-    {
-      "a": 729,
-      "b": 1183,
-      "sharedBoundaryCells": 5
-    },
-    {
-      "a": 729,
-      "b": 1194,
-      "sharedBoundaryCells": 3
     },
     {
       "a": 730,
@@ -19900,7 +19765,7 @@
     },
     {
       "a": 784,
-      "b": 1183,
+      "b": 1105,
       "sharedBoundaryCells": 71
     },
     {
@@ -21310,23 +21175,23 @@
     },
     {
       "a": 1099,
+      "b": 1105,
+      "sharedBoundaryCells": 32
+    },
+    {
+      "a": 1099,
       "b": 1108,
-      "sharedBoundaryCells": 44
+      "sharedBoundaryCells": 78
     },
     {
       "a": 1099,
-      "b": 1178,
-      "sharedBoundaryCells": 8
+      "b": 1136,
+      "sharedBoundaryCells": 35
     },
     {
       "a": 1099,
-      "b": 1179,
-      "sharedBoundaryCells": 31
-    },
-    {
-      "a": 1099,
-      "b": 1182,
-      "sharedBoundaryCells": 7
+      "b": 1139,
+      "sharedBoundaryCells": 33
     },
     {
       "a": 1100,
@@ -21431,52 +21296,22 @@
     {
       "a": 1105,
       "b": 1134,
+      "sharedBoundaryCells": 11
+    },
+    {
+      "a": 1105,
+      "b": 1135,
       "sharedBoundaryCells": 3
     },
     {
       "a": 1105,
       "b": 1136,
-      "sharedBoundaryCells": 5
+      "sharedBoundaryCells": 43
     },
     {
       "a": 1105,
       "b": 1140,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1105,
-      "b": 1179,
-      "sharedBoundaryCells": 8
-    },
-    {
-      "a": 1105,
-      "b": 1180,
-      "sharedBoundaryCells": 14
-    },
-    {
-      "a": 1105,
-      "b": 1181,
-      "sharedBoundaryCells": 35
-    },
-    {
-      "a": 1105,
-      "b": 1182,
-      "sharedBoundaryCells": 24
-    },
-    {
-      "a": 1105,
-      "b": 1183,
-      "sharedBoundaryCells": 31
-    },
-    {
-      "a": 1105,
-      "b": 1184,
-      "sharedBoundaryCells": 33
-    },
-    {
-      "a": 1105,
-      "b": 1194,
-      "sharedBoundaryCells": 17
+      "sharedBoundaryCells": 13
     },
     {
       "a": 1106,
@@ -21499,31 +21334,6 @@
       "sharedBoundaryCells": 4
     },
     {
-      "a": 1108,
-      "b": 1182,
-      "sharedBoundaryCells": 34
-    },
-    {
-      "a": 1108,
-      "b": 1190,
-      "sharedBoundaryCells": 11
-    },
-    {
-      "a": 1108,
-      "b": 1191,
-      "sharedBoundaryCells": 34
-    },
-    {
-      "a": 1108,
-      "b": 1192,
-      "sharedBoundaryCells": 58
-    },
-    {
-      "a": 1108,
-      "b": 1193,
-      "sharedBoundaryCells": 119
-    },
-    {
       "a": 1109,
       "b": 1110,
       "sharedBoundaryCells": 6
@@ -21540,33 +21350,33 @@
     },
     {
       "a": 1109,
+      "b": 1118,
+      "sharedBoundaryCells": 1
+    },
+    {
+      "a": 1109,
+      "b": 1144,
+      "sharedBoundaryCells": 6
+    },
+    {
+      "a": 1109,
+      "b": 1149,
+      "sharedBoundaryCells": 10
+    },
+    {
+      "a": 1109,
       "b": 1154,
       "sharedBoundaryCells": 10
     },
     {
       "a": 1109,
       "b": 1155,
-      "sharedBoundaryCells": 3
-    },
-    {
-      "a": 1109,
-      "b": 1160,
-      "sharedBoundaryCells": 16
-    },
-    {
-      "a": 1109,
-      "b": 1161,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1109,
-      "b": 1162,
-      "sharedBoundaryCells": 2
+      "sharedBoundaryCells": 4
     },
     {
       "a": 1109,
       "b": 1167,
-      "sharedBoundaryCells": 2
+      "sharedBoundaryCells": 4
     },
     {
       "a": 1110,
@@ -21590,13 +21400,33 @@
     },
     {
       "a": 1111,
-      "b": 1143,
-      "sharedBoundaryCells": 18
+      "b": 1118,
+      "sharedBoundaryCells": 13
+    },
+    {
+      "a": 1111,
+      "b": 1142,
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 1111,
+      "b": 1145,
+      "sharedBoundaryCells": 2
+    },
+    {
+      "a": 1111,
+      "b": 1146,
+      "sharedBoundaryCells": 8
+    },
+    {
+      "a": 1111,
+      "b": 1149,
+      "sharedBoundaryCells": 3
     },
     {
       "a": 1111,
       "b": 1175,
-      "sharedBoundaryCells": 40
+      "sharedBoundaryCells": 44
     },
     {
       "a": 1111,
@@ -21646,17 +21476,12 @@
     {
       "a": 1115,
       "b": 1156,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 10
     },
     {
       "a": 1115,
       "b": 1158,
-      "sharedBoundaryCells": 3
-    },
-    {
-      "a": 1115,
-      "b": 1159,
-      "sharedBoundaryCells": 5
+      "sharedBoundaryCells": 4
     },
     {
       "a": 1116,
@@ -21685,13 +21510,13 @@
     },
     {
       "a": 1118,
-      "b": 1164,
-      "sharedBoundaryCells": 24
+      "b": 1149,
+      "sharedBoundaryCells": 19
     },
     {
       "a": 1118,
       "b": 1167,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 16
     },
     {
       "a": 1118,
@@ -21701,7 +21526,7 @@
     {
       "a": 1118,
       "b": 1175,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 15
     },
     {
       "a": 1121,
@@ -21731,7 +21556,7 @@
     {
       "a": 1134,
       "b": 1135,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 36
     },
     {
       "a": 1134,
@@ -21739,24 +21564,14 @@
       "sharedBoundaryCells": 28
     },
     {
-      "a": 1134,
-      "b": 1180,
-      "sharedBoundaryCells": 32
-    },
-    {
       "a": 1135,
       "b": 1136,
-      "sharedBoundaryCells": 18
-    },
-    {
-      "a": 1135,
-      "b": 1180,
-      "sharedBoundaryCells": 10
+      "sharedBoundaryCells": 43
     },
     {
       "a": 1136,
       "b": 1137,
-      "sharedBoundaryCells": 45
+      "sharedBoundaryCells": 46
     },
     {
       "a": 1136,
@@ -21765,13 +21580,8 @@
     },
     {
       "a": 1136,
-      "b": 1180,
-      "sharedBoundaryCells": 28
-    },
-    {
-      "a": 1136,
-      "b": 1181,
-      "sharedBoundaryCells": 58
+      "b": 1139,
+      "sharedBoundaryCells": 15
     },
     {
       "a": 1137,
@@ -21781,42 +21591,7 @@
     {
       "a": 1137,
       "b": 1139,
-      "sharedBoundaryCells": 22
-    },
-    {
-      "a": 1137,
-      "b": 1178,
-      "sharedBoundaryCells": 10
-    },
-    {
-      "a": 1137,
-      "b": 1181,
-      "sharedBoundaryCells": 1
-    },
-    {
-      "a": 1139,
-      "b": 1178,
-      "sharedBoundaryCells": 38
-    },
-    {
-      "a": 1139,
-      "b": 1179,
-      "sharedBoundaryCells": 18
-    },
-    {
-      "a": 1139,
-      "b": 1181,
-      "sharedBoundaryCells": 14
-    },
-    {
-      "a": 1140,
-      "b": 1183,
-      "sharedBoundaryCells": 11
-    },
-    {
-      "a": 1142,
-      "b": 1143,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 32
     },
     {
       "a": 1142,
@@ -21830,53 +21605,23 @@
     },
     {
       "a": 1142,
-      "b": 1148,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1142,
       "b": 1149,
       "sharedBoundaryCells": 8
     },
     {
-      "a": 1143,
-      "b": 1148,
-      "sharedBoundaryCells": 3
-    },
-    {
-      "a": 1143,
-      "b": 1149,
-      "sharedBoundaryCells": 3
-    },
-    {
-      "a": 1143,
-      "b": 1164,
-      "sharedBoundaryCells": 17
-    },
-    {
-      "a": 1143,
-      "b": 1175,
-      "sharedBoundaryCells": 4
-    },
-    {
       "a": 1144,
-      "b": 1149,
-      "sharedBoundaryCells": 7
-    },
-    {
-      "a": 1144,
-      "b": 1160,
-      "sharedBoundaryCells": 1
-    },
-    {
-      "a": 1144,
-      "b": 1161,
+      "b": 1145,
       "sharedBoundaryCells": 5
     },
     {
       "a": 1144,
-      "b": 1163,
-      "sharedBoundaryCells": 3
+      "b": 1149,
+      "sharedBoundaryCells": 10
+    },
+    {
+      "a": 1144,
+      "b": 1155,
+      "sharedBoundaryCells": 7
     },
     {
       "a": 1145,
@@ -21884,34 +21629,9 @@
       "sharedBoundaryCells": 6
     },
     {
-      "a": 1145,
-      "b": 1148,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1145,
-      "b": 1163,
-      "sharedBoundaryCells": 5
-    },
-    {
       "a": 1146,
       "b": 1147,
       "sharedBoundaryCells": 6
-    },
-    {
-      "a": 1146,
-      "b": 1148,
-      "sharedBoundaryCells": 8
-    },
-    {
-      "a": 1149,
-      "b": 1160,
-      "sharedBoundaryCells": 8
-    },
-    {
-      "a": 1149,
-      "b": 1164,
-      "sharedBoundaryCells": 14
     },
     {
       "a": 1150,
@@ -21961,77 +21681,12 @@
     {
       "a": 1153,
       "b": 1156,
-      "sharedBoundaryCells": 6
-    },
-    {
-      "a": 1153,
-      "b": 1157,
-      "sharedBoundaryCells": 5
-    },
-    {
-      "a": 1155,
-      "b": 1162,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 10
     },
     {
       "a": 1156,
-      "b": 1157,
-      "sharedBoundaryCells": 7
-    },
-    {
-      "a": 1156,
-      "b": 1159,
-      "sharedBoundaryCells": 11
-    },
-    {
-      "a": 1157,
-      "b": 1159,
-      "sharedBoundaryCells": 4
-    },
-    {
-      "a": 1158,
-      "b": 1159,
+      "b": 1158,
       "sharedBoundaryCells": 13
-    },
-    {
-      "a": 1160,
-      "b": 1161,
-      "sharedBoundaryCells": 5
-    },
-    {
-      "a": 1160,
-      "b": 1164,
-      "sharedBoundaryCells": 6
-    },
-    {
-      "a": 1160,
-      "b": 1167,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1161,
-      "b": 1162,
-      "sharedBoundaryCells": 6
-    },
-    {
-      "a": 1161,
-      "b": 1163,
-      "sharedBoundaryCells": 2
-    },
-    {
-      "a": 1162,
-      "b": 1163,
-      "sharedBoundaryCells": 4
-    },
-    {
-      "a": 1164,
-      "b": 1167,
-      "sharedBoundaryCells": 4
-    },
-    {
-      "a": 1164,
-      "b": 1175,
-      "sharedBoundaryCells": 5
     },
     {
       "a": 1165,
@@ -22087,121 +21742,6 @@
       "a": 1176,
       "b": 1177,
       "sharedBoundaryCells": 12
-    },
-    {
-      "a": 1178,
-      "b": 1179,
-      "sharedBoundaryCells": 7
-    },
-    {
-      "a": 1179,
-      "b": 1181,
-      "sharedBoundaryCells": 36
-    },
-    {
-      "a": 1179,
-      "b": 1182,
-      "sharedBoundaryCells": 30
-    },
-    {
-      "a": 1183,
-      "b": 1194,
-      "sharedBoundaryCells": 75
-    },
-    {
-      "a": 1184,
-      "b": 1185,
-      "sharedBoundaryCells": 47
-    },
-    {
-      "a": 1184,
-      "b": 1189,
-      "sharedBoundaryCells": 15
-    },
-    {
-      "a": 1184,
-      "b": 1192,
-      "sharedBoundaryCells": 36
-    },
-    {
-      "a": 1184,
-      "b": 1194,
-      "sharedBoundaryCells": 32
-    },
-    {
-      "a": 1185,
-      "b": 1187,
-      "sharedBoundaryCells": 108
-    },
-    {
-      "a": 1185,
-      "b": 1188,
-      "sharedBoundaryCells": 38
-    },
-    {
-      "a": 1185,
-      "b": 1189,
-      "sharedBoundaryCells": 36
-    },
-    {
-      "a": 1185,
-      "b": 1194,
-      "sharedBoundaryCells": 54
-    },
-    {
-      "a": 1186,
-      "b": 1188,
-      "sharedBoundaryCells": 65
-    },
-    {
-      "a": 1186,
-      "b": 1189,
-      "sharedBoundaryCells": 43
-    },
-    {
-      "a": 1186,
-      "b": 1190,
-      "sharedBoundaryCells": 88
-    },
-    {
-      "a": 1186,
-      "b": 1192,
-      "sharedBoundaryCells": 142
-    },
-    {
-      "a": 1187,
-      "b": 1188,
-      "sharedBoundaryCells": 237
-    },
-    {
-      "a": 1187,
-      "b": 1189,
-      "sharedBoundaryCells": 85
-    },
-    {
-      "a": 1188,
-      "b": 1189,
-      "sharedBoundaryCells": 24
-    },
-    {
-      "a": 1189,
-      "b": 1192,
-      "sharedBoundaryCells": 37
-    },
-    {
-      "a": 1190,
-      "b": 1191,
-      "sharedBoundaryCells": 186
-    },
-    {
-      "a": 1190,
-      "b": 1192,
-      "sharedBoundaryCells": 108
-    },
-    {
-      "a": 1191,
-      "b": 1193,
-      "sharedBoundaryCells": 238
     }
   ]
 }

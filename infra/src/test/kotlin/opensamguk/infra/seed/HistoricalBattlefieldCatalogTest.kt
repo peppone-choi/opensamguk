@@ -10,10 +10,10 @@ class HistoricalBattlefieldCatalogTest {
     @Test
     fun `expanded settlements preserve their distinct physical province anchors`() {
         val anchors = HistoricalBattlefieldCatalog.cityAnchors()
-        for (id in 1134..1194) {
+        for (id in (1134..1177).filterNot { it in setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194) }) {
             assertIs<StrategicNodeRef.LandProvince>(anchors.getValue(id))
         }
-        assertEquals(61, (1134..1194).map { anchors.getValue(it) }.toSet().size)
+        assertEquals(35, ((1134..1177).filterNot { it in setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194) }).map { anchors.getValue(it) }.toSet().size)
     }
 
     @Test
