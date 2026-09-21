@@ -135,7 +135,9 @@ class HwihaEnlistmentPersistenceIT {
         val after = load(4)
         assertEquals(before.generals.map { if (it.id == 1) it.copy(
             turnTime = it.turnTime.plusSeconds(3600),
-            meta = HwihaPersonalTurn.after(it.meta, world.getState()),
+            meta = HwihaPersonalTurn.after(it.meta + ("hwihaStratagemHand" to mapOf(
+                "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
+                "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()),
             initialTurns = it.initialTurns.drop(1),
         ) else it }, after.generals)
         assertEquals(before.retainers, after.retainers)
@@ -255,6 +257,9 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals("action.enlist", handled.reservedActionCode)
         assertNull(handled.requestId)
         val after = load(7)
+        val hand=assertNotNull(opensamguk.logic.input.HwihaStratagemHand.read(after.generals.single { it.id==1 }.meta,1))
+        assertEquals(listOf(1,2),hand.hand)
+        assertEquals(listOf(3,4),hand.drawPile)
         assertEquals(1, after.generals.single { it.id == 1 }.nationId)
         assertEquals(10, after.retainers.single { it.generalId == 1 }.masterGeneralId)
         assertEquals(before.bugoks, after.bugoks)

@@ -180,6 +180,7 @@ class TurnDaemonLifecycle(
                 // New inputs never enter legacy healing, blocking, AI, nation actions or rebirth.
                 // Even an undelivered reservation receives a terminal result and consumes one slot.
                 require(state.tickSeconds > 0) { "positive personal-turn interval required" }
+                opensamguk.engine.hwiha.HwihaStratagemDraw(world, handler.recorder).onTurn(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
                 val reserved = opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
