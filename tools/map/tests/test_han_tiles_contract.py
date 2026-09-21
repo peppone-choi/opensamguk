@@ -727,10 +727,11 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
         self.assertEqual(
             # 2026-09-18 ★ 지리 재분할(partition_counties_by_location, GH #806) → 거점 → 접기 → 저지 재적층 뒤의 han-tiles.
             # 앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 단계 뒤 문서였다.
-            "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500",
+            # 2026-09-21: 북동 확장 프레임을 걷어내 격자가 843x864 → 669x768 로 돌아왔다(城·省 id 는 그대로).
+            "6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912",
             binding["sha256"],
         )
-        self.assertEqual((864, 843), (binding["cols"], binding["rows"]))
+        self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
         self.assertEqual(1_374, len(binding["landProvinceIds"]))
 
 

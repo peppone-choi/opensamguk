@@ -215,12 +215,14 @@ describe('connectRivers — han-world-v3 실측', () => {
     col: Int32Array.from(tiles.cities, (city) => city.col),
     row: Int32Array.from(tiles.cities, (city) => city.row),
   };
-  const dem = decodeGrayAsRgba(resolve(ROOT, 'web/game/public/map/elevation/han-world-v3-levels.png'));
+  // 2026-09-21: 북동 확장 프레임을 걷어내 han-tiles 가 669x768 로 돌아왔다 —
+  // 그 격자의 DEM 은 elevationAssetsForGrid() 가 고르는 legacy 판이다.
+  const dem = decodeGrayAsRgba(resolve(ROOT, 'web/game/public/map/elevation/han-world-v3-legacy-levels.png'));
   const built = buildIsoTileGrid(tiles.terrain, dem.rgba, dem.width, dem.height, RASTER_GROUP, seats, landmarks);
   const { code, cols, rows } = built;
   const at = (row: number, col: number) => row * cols + col;
-  // Historical reference cells keep their geographic position after 174 source rows are prepended.
-  const legacyAt = (row: number, col: number) => at(row + 87, col);
+  // 확장 프레임을 걷어낸 뒤로 기준 칸은 원래 자리 그대로다(앞서는 얹힌 174 행의 절반인 87 을 더했다).
+  const legacyAt = (row: number, col: number) => at(row, col);
 
   const inland = labelComponents(code, cols, rows, (v) => v === R || v === L, false);
   const water = labelComponents(code, cols, rows, isWater, false);

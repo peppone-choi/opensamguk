@@ -403,7 +403,7 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
         )
         coast["geometrySelector"] = {
             "kind": "CELL_RANGES", "terrainCode": 0,
-            "cellRuns": [{"row": 225, "startCol": 731, "endCol": 732}],
+            "cellRuns": [{"row": 51, "startCol": 731, "endCol": 732}],
             "expectedCellCount": 2,
         }
 

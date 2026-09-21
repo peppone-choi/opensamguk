@@ -81,13 +81,13 @@ class WaterwayNetworkTest(unittest.TestCase):
         ledger = self.mutated()
         crossing = self.node(ledger, "pubanjin")["crossing"]
         # 95495 also owns cells on the WEST bank (229,332): both banks west of 河.
-        crossing["bankB"] = {"landProvinceId": "95495", "row": 403, "col": 332}
+        crossing["bankB"] = {"landProvinceId": "95495", "row": 229, "col": 332}
         self.assertRed(ledger, "SAME bank")
 
     def test_crossing_banks_in_one_province_are_rejected(self):
         ledger = self.mutated()
         crossing = self.node(ledger, "pubanjin")["crossing"]
-        crossing["bankA"] = {"landProvinceId": "95495", "row": 403, "col": 332}
+        crossing["bankA"] = {"landProvinceId": "95495", "row": 229, "col": 332}
         self.assertRed(ledger, "both banks belong to one province")
 
     def test_bank_cell_must_be_owned_by_the_named_province(self):
@@ -126,7 +126,9 @@ class WaterwayNetworkTest(unittest.TestCase):
         anchor = next(s for s in self.strong["strongholds"] if s["id"] == "guandu")["tileAnchor"]
         ledger["nodes"].append({
             "stableKey": "guandu", "nameHan": "官渡", "siteRef": row["siteRef"],
-            "cell": {"row": anchor["row"] + 174, "col": anchor["col"]}, "reach": "he-mengjin",
+            # 거점 원장의 tileAnchor 는 원래 프레임 좌표다. 확장 프레임에서는 +174 로 옮겨 맞췄는데,
+            # 2026-09-21 프레임을 걷어낸 뒤로는 그대로 쓴다.
+            "cell": {"row": anchor["row"], "col": anchor["col"]}, "reach": "he-mengjin",
             "roles": ["PORT"], "sourceRefs": row["sourceRefs"], "crossing": None,
             "port": {"landProvinceId": "82879", "sourceRefs": row["sourceRefs"]}})
         self.assertRed(ledger, "no inland port")

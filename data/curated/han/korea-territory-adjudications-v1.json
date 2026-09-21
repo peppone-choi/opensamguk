@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "inputSha256": "cf00db47a8048f87aaf534b9c80e8fb9b205a00e7b5f26ed1ace2c882c488744",
-  "outputSha256": "5419c8f5e8d91d74d5818bb916aff21033d7299b3f3e6178cbf011022ccb86c6",
-  "rowOffset": 174,
+  "outputSha256": "000bbcbd660c13afe0c7e7c33d6db6566e5688e5726ebda718359395e809208a",
+  "rowOffset": 0,
   "replacedComponentKeys": [
-    "PARENT-0156@629:367",
-    "PARENT-0164@625:403",
-    "X040@629:367",
-    "X041@625:403"
+    "PARENT-0156@629:193",
+    "PARENT-0164@625:229",
+    "X040@629:193",
+    "X041@625:229"
   ],
   "adjudications": [
     {
@@ -22,14 +22,14 @@
         "臣蘇塗國"
       ],
       "holdsSeat": false,
-      "componentKey": "PARENT-0156@629:367",
+      "componentKey": "PARENT-0156@629:193",
       "verdict": "WATER_SEPARATED",
       "confidence": "HIGH",
       "effectiveFrom": null,
       "effectiveTo": null,
       "ifRule": "WATER_ROUTE_ONLY",
       "evidenceRefs": [
-        "map:data/map/han-tiles.json#PARENT-0156@629:367",
+        "map:data/map/han-tiles.json#PARENT-0156@629:193",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
       "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
@@ -61,14 +61,14 @@
         "忱彌多禮"
       ],
       "holdsSeat": false,
-      "componentKey": "PARENT-0164@625:403",
+      "componentKey": "PARENT-0164@625:229",
       "verdict": "WATER_SEPARATED",
       "confidence": "HIGH",
       "effectiveFrom": null,
       "effectiveTo": null,
       "ifRule": "WATER_ROUTE_ONLY",
       "evidenceRefs": [
-        "map:data/map/han-tiles.json#PARENT-0164@625:403",
+        "map:data/map/han-tiles.json#PARENT-0164@625:229",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
       "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
@@ -100,14 +100,14 @@
         "臣蘇塗國"
       ],
       "holdsSeat": false,
-      "componentKey": "X078@629:367",
+      "componentKey": "X078@629:193",
       "verdict": "WATER_SEPARATED",
       "confidence": "HIGH",
       "effectiveFrom": null,
       "effectiveTo": null,
       "ifRule": "WATER_ROUTE_ONLY",
       "evidenceRefs": [
-        "map:data/map/han-tiles.json#X078@629:367",
+        "map:data/map/han-tiles.json#X078@629:193",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
       "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
@@ -139,14 +139,14 @@
         "忱彌多禮"
       ],
       "holdsSeat": false,
-      "componentKey": "X089@625:403",
+      "componentKey": "X089@625:229",
       "verdict": "WATER_SEPARATED",
       "confidence": "HIGH",
       "effectiveFrom": null,
       "effectiveTo": null,
       "ifRule": "WATER_ROUTE_ONLY",
       "evidenceRefs": [
-        "map:data/map/han-tiles.json#X089@625:403",
+        "map:data/map/han-tiles.json#X089@625:229",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
       "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",

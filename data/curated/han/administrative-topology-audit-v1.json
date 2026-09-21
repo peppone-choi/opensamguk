@@ -3,8 +3,8 @@
   "auditId": "han-administrative-topology-audit-v1",
   "referenceYear": 220,
   "grid": {
-    "rows": 843,
-    "cols": 864,
+    "rows": 669,
+    "cols": 768,
     "connectivity": "FOUR_NEIGHBOR"
   },
   "policy": {
@@ -9102,7 +9102,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500"
+      "sha256": "6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

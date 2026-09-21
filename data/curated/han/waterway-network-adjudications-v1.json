@@ -7,7 +7,7 @@
  "base": {
   "hanTiles": {
    "path": "data/map/han-tiles.json",
-   "sha256": "086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500"
+   "sha256": "6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912"
   },
   "strongholds": {
    "path": "data/curated/han/strategic-strongholds-v1.json",
@@ -18,14 +18,14 @@
   {
    "stableKey": "changjiang",
    "nameHan": "長江 계통",
-   "seedRow": 493,
+   "seedRow": 319,
    "seedCol": 352,
    "expectedCellCount": 1661
   },
   {
    "stableKey": "huanghe",
    "nameHan": "黃河 계통",
-   "seedRow": 405,
+   "seedRow": 231,
    "seedCol": 379,
    "expectedCellCount": 707
   }
@@ -773,10 +773,10 @@
    "upstreamJunction": "江州",
    "downstreamJunction": "夷陵(峽口)",
    "selector": {
-    "seedRow": 486,
+    "seedRow": 312,
     "seedCol": 330,
-    "rowMin": 480,
-    "rowMax": 520,
+    "rowMin": 306,
+    "rowMax": 346,
     "colMin": 258,
     "colMax": 356,
     "expectedCellCount": 131
@@ -796,10 +796,10 @@
    "upstreamJunction": "夷陵(峽口)",
    "downstreamJunction": "夏口",
    "selector": {
-    "seedRow": 502,
+    "seedRow": 328,
     "seedCol": 357,
-    "rowMin": 498,
-    "rowMax": 526,
+    "rowMin": 324,
+    "rowMax": 352,
     "colMin": 357,
     "colMax": 416,
     "expectedCellCount": 97
@@ -820,10 +820,10 @@
    "upstreamJunction": "夏口",
    "downstreamJunction": "樊口",
    "selector": {
-    "seedRow": 496,
+    "seedRow": 322,
     "seedCol": 405,
-    "rowMin": 492,
-    "rowMax": 497,
+    "rowMin": 318,
+    "rowMax": 323,
     "colMin": 385,
     "colMax": 416,
     "expectedCellCount": 31
@@ -844,10 +844,10 @@
    "upstreamJunction": "樊口",
    "downstreamJunction": "彭蠡澤 湖口",
    "selector": {
-    "seedRow": 499,
+    "seedRow": 325,
     "seedCol": 419,
-    "rowMin": 492,
-    "rowMax": 513,
+    "rowMin": 318,
+    "rowMax": 339,
     "colMin": 417,
     "colMax": 446,
     "expectedCellCount": 42
@@ -866,10 +866,10 @@
    "upstreamJunction": "彭蠡澤 湖口",
    "downstreamJunction": "濡須口",
    "selector": {
-    "seedRow": 498,
+    "seedRow": 324,
     "seedCol": 459,
-    "rowMin": 483,
-    "rowMax": 513,
+    "rowMin": 309,
+    "rowMax": 339,
     "colMin": 447,
     "colMax": 476,
     "expectedCellCount": 48
@@ -889,10 +889,10 @@
    "upstreamJunction": "濡須口",
    "downstreamJunction": "建業 아래(격자 끝)",
    "selector": {
-    "seedRow": 474,
+    "seedRow": 300,
     "seedCol": 483,
-    "rowMin": 460,
-    "rowMax": 482,
+    "rowMin": 286,
+    "rowMax": 308,
     "colMin": 477,
     "colMax": 505,
     "expectedCellCount": 45
@@ -911,10 +911,10 @@
    "upstreamJunction": "격자 상단(미판정)",
    "downstreamJunction": "격자 하단(미판정)",
    "selector": {
-    "seedRow": 493,
+    "seedRow": 319,
     "seedCol": 376,
-    "rowMin": 474,
-    "rowMax": 512,
+    "rowMin": 300,
+    "rowMax": 338,
     "colMin": 370,
     "colMax": 384,
     "expectedCellCount": 34
@@ -932,10 +932,10 @@
    "upstreamJunction": "격자 컷(미판정)",
    "downstreamJunction": "河 굽이(潼關 쪽)",
    "selector": {
-    "seedRow": 405,
+    "seedRow": 231,
     "seedCol": 333,
-    "rowMin": 374,
-    "rowMax": 409,
+    "rowMin": 200,
+    "rowMax": 235,
     "colMin": 328,
     "colMax": 338,
     "expectedCellCount": 21
@@ -953,10 +953,10 @@
    "upstreamJunction": "河 굽이(潼關 쪽)",
    "downstreamJunction": "陝津 아래 격자 컷",
    "selector": {
-    "seedRow": 406,
+    "seedRow": 232,
     "seedCol": 349,
-    "rowMin": 403,
-    "rowMax": 410,
+    "rowMin": 229,
+    "rowMax": 236,
     "colMin": 339,
     "colMax": 362,
     "expectedCellCount": 24
@@ -975,10 +975,10 @@
    "upstreamJunction": "격자 컷(미판정)",
    "downstreamJunction": "격자 컷(미판정)",
    "selector": {
-    "seedRow": 405,
+    "seedRow": 231,
     "seedCol": 379,
-    "rowMin": 400,
-    "rowMax": 407,
+    "rowMin": 226,
+    "rowMax": 233,
     "colMin": 363,
     "colMax": 392,
     "expectedCellCount": 33
@@ -999,7 +999,7 @@
     "id": "mengjin"
    },
    "cell": {
-    "row": 405,
+    "row": 231,
     "col": 379
    },
    "reach": "he-mengjin",
@@ -1013,12 +1013,12 @@
     "mode": "FERRY",
     "bankA": {
      "landProvinceId": "ss-mengjin",
-     "row": 404,
+     "row": 230,
      "col": 379
     },
     "bankB": {
      "landProvinceId": "82879",
-     "row": 406,
+     "row": 232,
      "col": 378
     },
     "sourceRefs": [
@@ -1035,7 +1035,7 @@
     "id": "pubanjin"
    },
    "cell": {
-    "row": 405,
+    "row": 231,
     "col": 333
    },
    "reach": "he-puban",
@@ -1049,12 +1049,12 @@
     "mode": "FERRY",
     "bankA": {
      "landProvinceId": "70296",
-     "row": 402,
+     "row": 228,
      "col": 332
     },
     "bankB": {
      "landProvinceId": "95495",
-     "row": 403,
+     "row": 229,
      "col": 334
     },
     "sourceRefs": [
@@ -1071,7 +1071,7 @@
     "id": "doujin"
    },
    "cell": {
-    "row": 408,
+    "row": 234,
     "col": 345
    },
    "reach": "he-shan",
@@ -1085,12 +1085,12 @@
     "mode": "FERRY",
     "bankA": {
      "landProvinceId": "95285",
-     "row": 407,
+     "row": 233,
      "col": 345
     },
     "bankB": {
      "landProvinceId": "83053",
-     "row": 409,
+     "row": 235,
      "col": 345
     },
     "sourceRefs": [
@@ -1107,7 +1107,7 @@
     "id": "shanjin"
    },
    "cell": {
-    "row": 406,
+    "row": 232,
     "col": 349
    },
    "reach": "he-shan",
@@ -1121,12 +1121,12 @@
     "mode": "FERRY",
     "bankA": {
      "landProvinceId": "95280",
-     "row": 404,
+     "row": 230,
      "col": 349
     },
     "bankB": {
      "landProvinceId": "83046",
-     "row": 407,
+     "row": 233,
      "col": 349
     },
     "sourceRefs": [
@@ -1143,7 +1143,7 @@
     "id": "hanjin"
    },
    "cell": {
-    "row": 493,
+    "row": 319,
     "col": 376
    },
    "reach": "mian-hanjin",
@@ -1159,12 +1159,12 @@
     "mode": "FERRY",
     "bankA": {
      "landProvinceId": "45776",
-     "row": 493,
+     "row": 319,
      "col": 375
     },
     "bankB": {
      "landProvinceId": "ss-hanjin",
-     "row": 493,
+     "row": 319,
      "col": 377
     },
     "sourceRefs": [
@@ -1186,7 +1186,7 @@
     "id": "fankou"
    },
    "cell": {
-    "row": 499,
+    "row": 325,
     "col": 418
    },
    "reach": "jiang-wuchang-pengli",
@@ -1213,7 +1213,7 @@
     "id": "ruxukou"
    },
    "cell": {
-    "row": 483,
+    "row": 309,
     "col": 476
    },
    "reach": "jiang-pengli-ruxu",
@@ -1240,7 +1240,7 @@
     "id": "44662"
    },
    "cell": {
-    "row": 517,
+    "row": 343,
     "col": 265
    },
    "reach": "jiang-jiangzhou-yiling",
@@ -1266,7 +1266,7 @@
     "id": "45796"
    },
    "cell": {
-    "row": 493,
+    "row": 319,
     "col": 352
    },
    "reach": "jiang-jiangzhou-yiling",
@@ -1292,7 +1292,7 @@
     "id": "40523"
    },
    "cell": {
-    "row": 464,
+    "row": 290,
     "col": 490
    },
    "reach": "jiang-ruxu-jianye",
@@ -1319,7 +1319,7 @@
     "id": "43676"
    },
    "cell": {
-    "row": 501,
+    "row": 327,
     "col": 369
    },
    "reach": "jiang-yiling-xiakou",
@@ -1346,7 +1346,7 @@
     "id": "43421"
    },
    "cell": {
-    "row": 496,
+    "row": 322,
     "col": 408
    },
    "reach": "jiang-xiakou-wuchang",
