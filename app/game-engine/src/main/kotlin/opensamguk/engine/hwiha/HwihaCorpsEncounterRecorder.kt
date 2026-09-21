@@ -7,6 +7,8 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
 import opensamguk.logic.war.hwiha.HwihaBattlePlans
+import opensamguk.logic.war.hwiha.HwihaBattleJournal
+import opensamguk.logic.war.hwiha.HwihaBattlePlayback
 import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.logic.world.*
 
@@ -55,6 +57,7 @@ class HwihaCorpsEncounterRecorder(
             require(HwihaEncounterForces.META_KEY !in general.meta)
             require(HwihaEncounterCombatProfiles.META_KEY !in general.meta)
             require(HwihaBattlePlans.META_KEY !in general.meta)
+            require(HwihaBattleJournal.META_KEY !in general.meta)
         }
         val value = encounter.toMetaValue()
         val deployment = HwihaEncounterDeployment.defaultMetaValue(encounter, cells)
@@ -72,16 +75,24 @@ class HwihaCorpsEncounterRecorder(
                 EncounterCommanderForce(corps.commanderGeneralId, stats.leadership, stats.strength,
                     stats.intelligence, stats.politics, stats.charm)
             }).also { it.requireBinding(encounter) }
-        val battlePlans = HwihaBattlePlans.defaultFor(encounter).toMetaValue()
+        val plans = HwihaBattlePlans.defaultFor(encounter)
+        val battlePlans = plans.toMetaValue()
         val sealedRelations = relations.toMetaValue()
         val sealedForces = forces.toMetaValue()
-        val combatProfiles = HwihaEncounterCombatProfiles.capture(forces, HwihaUnitProfilesJson.loadDefault()).toMetaValue()
+        val combat = HwihaEncounterCombatProfiles.capture(forces, HwihaUnitProfilesJson.loadDefault())
+        val combatProfiles = combat.toMetaValue()
+        val ready = HwihaEncounterDeployment.read(mapOf(HwihaEncounterDeployment.META_KEY to deployment),encounter,cells)
+            as? HwihaEncounterDeployment.Result.Ready
+        val journal = if (ready != null && combat.ready)
+            HwihaBattlePlayback(encounter,forces,relations,combat,plans,ready.deployment).initialJournal().toMetaValue()
+            else null
         for (corps in participants) {
             val before = requireNotNull(world.getGeneralById(corps.commanderGeneralId))
             val after = before.copy(meta = before.meta + (HwihaCorpsEncounter.META_KEY to value) +
                 (HwihaEncounterDeployment.META_KEY to deployment) +
                 (HwihaEncounterRelations.META_KEY to sealedRelations) + (HwihaEncounterForces.META_KEY to sealedForces) +
-                (HwihaEncounterCombatProfiles.META_KEY to combatProfiles) + (HwihaBattlePlans.META_KEY to battlePlans))
+                (HwihaEncounterCombatProfiles.META_KEY to combatProfiles) + (HwihaBattlePlans.META_KEY to battlePlans) +
+                (journal?.let { mapOf(HwihaBattleJournal.META_KEY to it) } ?: emptyMap()))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {

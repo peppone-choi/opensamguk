@@ -5,6 +5,7 @@ import opensamguk.logic.world.HwihaBattlefieldLayout
 
 /** Center-to-center supercover visibility; units themselves do not obstruct this geometric query. */
 object HwihaGridReach {
+    const val RULE_VERSION = 1
     fun canStrike(layout: HwihaBattlefieldLayout, from: Position, to: Position, range: Int): Boolean {
         require(range > 0)
         fun allowed(p: Position): Boolean = p in layout.distancesFromEntry &&

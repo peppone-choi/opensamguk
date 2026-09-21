@@ -3,6 +3,8 @@ package opensamguk.engine.boot
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
+import opensamguk.logic.war.hwiha.HwihaBattleJournal
+import opensamguk.logic.war.hwiha.HwihaBattlePlayback
 import opensamguk.logic.war.hwiha.HwihaBattlePlans
 import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.engine.flush.DatabaseHooks
@@ -639,6 +641,7 @@ class HwihaMarchPersistenceIT {
                 HwihaBattlePlans.read(world.getGeneralById(commander)!!.meta,encounter)?.toMetaValue())
             val combat=assertNotNull(HwihaEncounterCombatProfiles.read(world.getGeneralById(commander)!!.meta,forces,HwihaUnitProfilesJson.loadDefault()))
             assertFalse(combat.ready)
+            assertNull(HwihaBattleJournal.read(world.getGeneralById(commander)!!.meta))
             assertTrue(combat.unavailable.any { it.crewTypeId==1 && it.reason==HwihaEncounterCombatProfiles.Reason.UNKNOWN_CREW_TYPE })
             val relations=assertNotNull(HwihaEncounterRelations.read(world.getGeneralById(commander)!!.meta,encounter))
             assertEquals(3,relations.pairs.size)
@@ -684,6 +687,16 @@ class HwihaMarchPersistenceIT {
             assertTrue(combat.ready)
             assertEquals(listOf(1100),combat.profiles.map { it.crewTypeId })
             assertEquals(world.getGeneralById(1)!!.meta[HwihaEncounterCombatProfiles.META_KEY],combat.toMetaValue())
+            val journal=assertNotNull(HwihaBattleJournal.read(meta))
+            val playback=HwihaBattlePlayback(encounter,forces,
+                assertNotNull(HwihaEncounterRelations.read(meta,encounter)),combat,
+                assertNotNull(HwihaBattlePlans.read(meta,encounter)),deployment)
+            val replay=playback.replay(journal)
+            assertEquals(0,replay.lastResolvedRound)
+            assertTrue(replay.frames.isEmpty())
+            assertEquals(HwihaBattlePlayback.Barrier.NONE,replay.barrier)
+            assertEquals(forces.units.associate { it.bugokId to it.troops },replay.units.associate { it.bugokId to it.troops })
+            assertEquals(world.getGeneralById(1)!!.meta[HwihaBattleJournal.META_KEY],journal.toMetaValue())
         }
         assertEquals(units,world.listBugoks())
         assertEquals(listOf("encounter-$id"),published)
