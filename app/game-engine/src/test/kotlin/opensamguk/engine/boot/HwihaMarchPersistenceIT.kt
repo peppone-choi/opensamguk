@@ -3,6 +3,7 @@ package opensamguk.engine.boot
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
+import opensamguk.logic.war.hwiha.HwihaBattlePlans
 import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
@@ -634,6 +635,8 @@ class HwihaMarchPersistenceIT {
                 assertEquals(original.commanderRetainerId,unit.commanderRetainerId)
             }
             assertEquals(listOf(1,100,101),forces.commanders.map { it.generalId })
+            assertEquals(HwihaBattlePlans.defaultFor(encounter).toMetaValue(),
+                HwihaBattlePlans.read(world.getGeneralById(commander)!!.meta,encounter)?.toMetaValue())
             val combat=assertNotNull(HwihaEncounterCombatProfiles.read(world.getGeneralById(commander)!!.meta,forces,HwihaUnitProfilesJson.loadDefault()))
             assertFalse(combat.ready)
             assertTrue(combat.unavailable.any { it.crewTypeId==1 && it.reason==HwihaEncounterCombatProfiles.Reason.UNKNOWN_CREW_TYPE })
@@ -684,6 +687,15 @@ class HwihaMarchPersistenceIT {
         }
         assertEquals(units,world.listBugoks())
         assertEquals(listOf("encounter-$id"),published)
+        val storedPlans=assertNotNull(HwihaBattlePlans.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
+        assertEquals(storedPlans,HwihaBattlePlans.read(world.getGeneralById(100)!!.meta,encounter)?.toMetaValue())
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
+            '{hwihaBattlePlans,plans,0,commands,0,threshold}','51'::jsonb) WHERE world_id=? AND id=1""",id)
+        world=cold(id)
+        assertFailsWith<IllegalArgumentException> { HwihaBattlePlans.read(world.getGeneralById(1)!!.meta,encounter) }
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaBattlePlans}',?::jsonb) WHERE world_id=? AND id=1",
+            com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(storedPlans),id)
+        world=cold(id)
         val storedCombat=world.getGeneralById(1)!!.meta[HwihaEncounterCombatProfiles.META_KEY]
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
             '{hwihaEncounterCombatProfiles,profiles,0,attackPower}','101'::jsonb) WHERE world_id=? AND id=1""",id)
