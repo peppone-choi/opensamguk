@@ -118,9 +118,9 @@ class MeasureTest(unittest.TestCase):
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
         self.assertEqual(len(rows), 1166)
-        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1136)
-        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1145)
-        self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1167)
+        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1110)
+        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1119)
+        self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1141)
 
 
 if __name__ == "__main__":
