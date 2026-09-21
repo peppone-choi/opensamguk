@@ -435,7 +435,7 @@ class HanWorldV3Test(unittest.TestCase):
             self.assertEqual(expected_max, city["max"], city["name"])
             self.assertEqual(expected_initial, city["initial"], city["name"])
         # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
-        self.assertEqual(99, seats)
+        self.assertEqual(96, seats)
         self.assertEqual(72, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
         # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.

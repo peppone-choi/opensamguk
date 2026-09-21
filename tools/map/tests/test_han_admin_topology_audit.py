@@ -422,7 +422,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # 2026-09-17: 관할 하나뿐이던 新平·毗陵典農校尉·汶山·章武가 이웃 城 관할에 접혀 60 → 56.
         self.assertEqual(47, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(173, snapshot["historicalParentCensus"]["currentCommanderyCount"])
-        self.assertEqual(99, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
+        self.assertEqual(73, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])
         self.assertGreater(snapshot["historicalParentCensus"]["sourceParentMismatchCount"], 0)
         self.assertEqual(

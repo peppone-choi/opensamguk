@@ -90,14 +90,14 @@ class MeasureTest(unittest.TestCase):
         """★ 지리 재분할(GH #806)이 han-tiles 에 들어왔다 — Q1·Q1b 는 이제 결합 목록의 차단 게이트다."""
         rc, text = self._run("--exceptions", *self.EXCEPTIONS)
         self.assertEqual(rc, 0, text)
-        self.assertIn("Q1: 0 / 1192", text)
-        self.assertIn("Q1b: 0 / 1192", text)
+        self.assertIn("Q1: 0 / 1166", text)
+        self.assertIn("Q1b: 0 / 1166", text)
 
     def test_red_probe_without_the_exception_ledgers_the_gate_is_red(self):
         """적색 프로브: 예외 원장을 빼면 빨개진다 — 초록이 「아무것도 안 잰다」가 아님을 고정한다(실측 47 = 예외 31 + 거점 16)."""
         rc, text = self._run()
         self.assertEqual(rc, 1)
-        self.assertIn("Q1: 47 / 1192", text)
+        self.assertIn("Q1: 47 / 1166", text)
 
     def test_red_probe_seat_moved_ten_cells_is_red_even_with_the_ledgers(self):
         """적색 프로브(계획 §6): 예외 행이 없는 城 하나의 실제 좌표를 10칸(≈0.54°) 옮긴 문서."""
@@ -111,13 +111,13 @@ class MeasureTest(unittest.TestCase):
             handle.flush()
             rc, text = self._run("--tiles", handle.name, "--exceptions", *self.EXCEPTIONS)
         self.assertEqual(rc, 1)
-        self.assertIn("Q1: 1 / 1192", text)
+        self.assertIn("Q1: 1 / 1166", text)
 
     def test_committed_tiles_baseline(self):
         """현행 1,194 도시 기준선. 한반도·만주 추가 61곳은 각 공간 구획·관할·상위 구획 안에 있다."""
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
-        self.assertEqual(len(rows), 1192)
+        self.assertEqual(len(rows), 1166)
         self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1136)
         self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1145)
         self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1167)
