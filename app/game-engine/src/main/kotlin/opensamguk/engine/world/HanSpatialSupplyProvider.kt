@@ -85,10 +85,6 @@ class HanSpatialSupplyProvider(
             require(waterControl == null && strategicProjection == null) { "Legacy supply cannot consume V3 water state" }
             null
         }
-        val baselineOwners = canonical.scenarioOwners[scenarioCode]
-            ?: error("No canonical province ownership for scenario $scenarioCode")
-        val owners = baselineOwners.clone()
-
         val cityByJurisdiction = linkedMapOf<String, SpatialSupplyCity>()
         for (city in liveCities.sortedBy { it.cityId }) {
             val jurisdictionId = canonical.provinceJurisdictions.getOrNull(city.provinceIndex)
@@ -103,6 +99,16 @@ class HanSpatialSupplyProvider(
             check(seatProvinceIndex == city.provinceIndex) {
                 "Runtime city ${city.cityId} province ${city.provinceIndex} is not seat province " +
                     "$seatProvinceIndex of jurisdiction $jurisdictionId"
+            }
+        }
+        // A custom scenario can supply the complete live ownership authority. Never infer
+        // missing jurisdictions as neutral or borrow another scenario's historical baseline.
+        val owners = canonical.scenarioOwners[scenarioCode]?.clone() ?: run {
+            check(cityByJurisdiction.keys == canonical.jurisdictionSeatProvince.keys) {
+                "No canonical province ownership for scenario $scenarioCode and incomplete live jurisdiction coverage"
+            }
+            IntArray(canonical.provinceIds.size) { index ->
+                cityByJurisdiction.getValue(canonical.provinceJurisdictions[index]).nationId
             }
         }
         // R1 (ADR-LITE-052) — 현 단위 소유권. 점령한 城의 縣 소속 프로빈스 전체가 함께
