@@ -15,6 +15,9 @@ COPY web/shared/ /src/web/shared/
 COPY web/game/ /src/web/game/
 RUN pnpm --dir shared verify:topology game
 WORKDIR /src/web/game
+# Next.js rewrites are captured during build, including server-only proxy destinations.
+ARG GATEWAY_WEB_URL=http://web-gateway:3000
+ENV GATEWAY_WEB_URL=$GATEWAY_WEB_URL
 ARG NEXT_PUBLIC_GATEWAY_URL=
 ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL
 # 공유 도메인 에셋 충돌 방지 — prod는 ASSET_PREFIX=/game(next.config assetPrefix가 빌드타임에 읽음).

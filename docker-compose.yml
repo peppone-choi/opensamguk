@@ -330,6 +330,8 @@ services:
       args:
         # NEXT_PUBLIC_* is inlined into the client bundle at BUILD time.
         NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:3000}
+        # Must match the server-only runtime destination: Next rewrites are built into the image.
+        GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}
     container_name: opensamguk-web-game
     restart: unless-stopped
     deploy:
