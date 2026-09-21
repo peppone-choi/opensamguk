@@ -13,6 +13,29 @@ class MapAdministrativeOwnershipTest {
     lateinit var tempDir: Path
 
     @Test
+    fun `custom scenario requires complete unique valid seats and uses actual owners`() {
+        val projection=fixtureProjection()
+        val cities=listOf(LiveCityOwnership(10,0,4),LiveCityOwnership(20,2,7))
+        val custom=projection.project("990001",cities)
+        assertEquals(projection.project("1010",cities),custom)
+        assertEquals(listOf(4,4,7,7),custom.provinceOccupancy.map { it.nationId })
+        for(bad in listOf(emptyList(),cities.dropLast(1),cities+cities.first(),
+            listOf(cities[0].copy(provinceIndex=1),cities[1]))) {
+            assertThrows<IllegalStateException> { projection.project("990001",bad) }
+        }
+    }
+
+    @Test
+    fun `selected 1133 custom scenario has exact live authority without current files`() {
+        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../..")).artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
+        val map=opensamguk.infra.seed.MapJson.loadMap(artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
+        val cities=map.cities.map { LiveCityOwnership(it.id,requireNotNull(it.provinceId),if(it.id%2==0) 7 else 0) }
+        val projection=MapAdministrativeOwnership(ObjectMapper(),"/missing/tiles","/missing/owners","/missing/allowlist")
+        assertEquals(projection.project("1020",cities,artifacts),projection.project("990001",cities,artifacts))
+        assertThrows<IllegalStateException> { projection.project("990001",cities.dropLast(1),artifacts) }
+    }
+
+    @Test
     fun `historical ownership survives absent runtime files and applies a live conquest`() {
         val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
         val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
