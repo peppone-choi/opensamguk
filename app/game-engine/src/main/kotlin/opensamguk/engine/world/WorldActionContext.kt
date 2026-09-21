@@ -373,7 +373,20 @@ class WorldActionContext(
             )
         }
 
+    /**
+     * HWIHA 는 국가·개인 재정을 쓰지 않는다 — 縣 창고(`HwihaCountyWarehouse`)가 유일한 재정이고
+     * 월세입은 `HwihaCountyIncome` 이 월 경계에서 그 창고에 넣는다. 기존 세입을 함께 켜면 이중
+     * 재정이 된다(HWIHA 시나리오는 모든 nation.gold/rice 가 0 이어야 한다는 계약과도 어긋난다).
+     *
+     * 끄는 것은 **재정 효과뿐**이다. 비재정 이벤트와 같은 이벤트 안의 비재정 부분(도시 성장,
+     * 전투 사상자 정산)은 그대로 적용한다 — 월간 이벤트를 통째로 끄는 우회를 쓰지 않는다.
+     */
+    private val skipsLegacyFinance: Boolean
+        get() = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA
+
     override fun applyIncome(result: ProcessIncomeResult) {
+        // 국가 재화·prev_income·개인 지급·전역 수입 기록이 전부 재정이다. HWIHA 에서는 하나도 남기지 않는다.
+        if (skipsLegacyFinance) return
         val resource = result.resource
         for (nu in result.nationUpdates) {
             val pre = world.getNationById(nu.nationId) ?: continue
@@ -502,7 +515,8 @@ class WorldActionContext(
         }
 
     override fun applyWarIncome(result: ProcessWarIncomeResult) {
-        for (add in result.nationGoldAdds) {
+        // 국가 금 가산만 재정이다. 아래 도시 인구·사상자 정산은 전투 결과라 HWIHA 에서도 적용한다.
+        for (add in if (skipsLegacyFinance) emptyList() else result.nationGoldAdds) {
             val pre = world.getNationById(add.nationId) ?: continue
             val preLogic = PerTurnOverlay.toLogicNation(pre)
             val postLogic = preLogic.copy(gold = add.newGold)
@@ -584,7 +598,9 @@ class WorldActionContext(
                 )
             )
         }
-        for (gu in result.generalUpkeep) {
+        // 위 도시 성장은 재정이 아니라 내정이다 — HWIHA 에서도 그대로 적용한다.
+        // 아래 개인·국가 유지비는 재정이라 HWIHA 에서 끈다.
+        for (gu in if (skipsLegacyFinance) emptyList() else result.generalUpkeep) {
             val pre = world.getGeneralById(gu.generalId) ?: continue
             val preLogic = PerTurnOverlay.toLogicGeneral(pre)
             val postLogic = if (resource == "gold") preLogic.copy(gold = gu.newResource) else preLogic.copy(rice = gu.newResource)
@@ -592,7 +608,7 @@ class WorldActionContext(
             recorder.diffGeneral(preLogic, postLogic)
             world.updateGeneral(postEngine)
         }
-        for (nu in result.nationUpkeep) {
+        for (nu in if (skipsLegacyFinance) emptyList() else result.nationUpkeep) {
             val pre = world.getNationById(nu.nationId) ?: continue
             val preLogic = PerTurnOverlay.toLogicNation(pre)
             val postLogic = if (resource == "gold") preLogic.copy(gold = nu.newResource) else preLogic.copy(rice = nu.newResource)

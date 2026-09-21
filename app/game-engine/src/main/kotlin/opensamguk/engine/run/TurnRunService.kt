@@ -368,7 +368,14 @@ open class TurnRunService(
                         },
                     )
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-                        boundaryDate(nextTurn).let { world.setCurrentDate(it.year, it.month, it.phase) }
+                        boundaryDate(nextTurn).let { date ->
+                            world.setCurrentDate(date.year, date.month, date.phase)
+                            // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
+                            // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
+                            // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
+                            opensamguk.engine.hwiha.HwihaMonthlyCountyIncome(world, handler.recorder)
+                                .credit(date.year, date.month)
+                        }
                         handler.courtHandler.expireDue()
                     }
                 },
