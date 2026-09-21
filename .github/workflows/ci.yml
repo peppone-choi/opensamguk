@@ -255,6 +255,9 @@ jobs:
         run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
       - name: Run ${{ matrix.test }}
         run: python3 -m unittest tools/map/tests/${{ matrix.test }}.py
+      - name: Verify regenerated parent reconciliation ledger
+        if: matrix.test == 'test_build_han_parent_reconciliation'
+        run: python3 tools/map/build_han_parent_reconciliation.py --check
 
   external-places-drift:
     permissions:

@@ -29,7 +29,6 @@ EXEMPT = {
     "tools/map/relocate_han_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
     "tools/map/materialize_province_jurisdictions.py": "main 에서 ValueError(parent seat inside another parent), GH #818 후속",
     "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
-    "tools/map/build_han_parent_reconciliation.py": "통과하지만 23초 — contracts 예산 밖, 미배선",
 }
 
 
