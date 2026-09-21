@@ -343,7 +343,10 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # build 만 돌 때 game 1m54s · gateway 1m39s 였다. vitest 를 더하면서 15 로 올린다
+    # (로컬 실측 game 707 건 47s · gateway 266 건 27s). 한도 초과는 실패 로그가 아니라
+    # 취소로 나타나 원인을 찾기 어렵다.
+    timeout-minutes: 15
     strategy:
       matrix:
         app: [gateway, game]
@@ -358,3 +361,39 @@ jobs:
         run: |
           corepack pnpm install --no-frozen-lockfile
           corepack pnpm build
+      # 2026-09-21: 이 잡은 여태 build 만 돌렸다. 두 앱 모두 "test": "vitest run" 을 갖고
+      # 있었는데 아무도 안 돌려서, web/game 은 지도 판이 바뀌는 동안 낡은 핀 4 건을 안고
+      # 빨간 채로 main 에 남아 있었다(web/shared 와 같은 원인 — 5b130608 · 2288e886).
+      # game 의 지도 테스트는 커밋된 정본(han-tiles.json · han.json)을 읽으므로 이것도
+      # 지도 데이터 커밋을 막는 게이트다.
+      - name: Test web/${{ matrix.app }} (vitest)
+        if: '!cancelled()'
+        working-directory: web/${{ matrix.app }}
+        run: corepack pnpm test
+
+  # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
+  # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리
+  # 기준이라 web/shared/src/__tests__/** 를 집지 않는다. 그 사이 지도 판이 세 번 바뀌며
+  # (4318dc64 → 5b130608 → 2288e886) 실측 핀 5 건이 낡은 채 main 에 남았다.
+  # 이 스위트는 커밋된 지도 정본(han-world-v3.json · han-tiles.json · han.json)을 읽어
+  # 표기 규칙과 省 도장 찍기를 검사하므로, 지도 데이터 커밋을 막는 게이트이기도 하다.
+  web-shared:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - name: Install web/shared
+        working-directory: web/shared
+        run: corepack pnpm install --no-frozen-lockfile
+      - name: Typecheck web/shared
+        if: '!cancelled()'
+        working-directory: web/shared
+        run: corepack pnpm typecheck
+      - name: Test web/shared (vitest)
+        if: '!cancelled()'
+        working-directory: web/shared
+        run: corepack pnpm test
