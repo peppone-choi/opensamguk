@@ -100,7 +100,7 @@ class CommanderyIdRegistryTest(unittest.TestCase):
         registry_document["nextOrdinal"] = extension["nextOrdinal"]
         mapping = self.load(roster, registry_document)
 
-        self.assertEqual(176, len(mapping))
+        self.assertEqual(173, len(mapping))
         self.assertEqual(
             [mapping[name] for name in roster],
             [row["id"] for row in tiles["parentRegions"]],

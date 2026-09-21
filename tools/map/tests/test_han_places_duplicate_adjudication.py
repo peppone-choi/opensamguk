@@ -66,7 +66,7 @@ class PresenceAndControlledSourceRedTest(unittest.TestCase):
                     builder.main()
             document = json.loads(out.read_text(encoding="utf-8"))
             indexed = {str(row["id"]): row for row in document["places"]}
-            self.assertEqual(1205, document["count"])
+            self.assertEqual(1179, document["count"])
             self.assertEqual(97, document["nudged"])
             self.assertEqual((436, 181), (indexed["85168"]["gx"], indexed["85168"]["gy"]))
             self.assertEqual((491, 230), (indexed["42901"]["gx"], indexed["42901"]["gy"]))

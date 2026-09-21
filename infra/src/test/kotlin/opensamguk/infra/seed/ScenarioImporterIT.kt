@@ -257,7 +257,8 @@ class ScenarioImporterIT {
         // 606 → 608 은 847 吳縣·848 毘陵이 공백지로 들어오면서다(1010 지배표에 없다).
         // 608 → 798 · 123 → 160 · 117 → 139 는 w2 176곳과 거점 73곳이 郡 귀속대로 들어오면서다(2026-09-15).
         // 798 → 833: 2026-09-17 同縣 중복 977·989(공백지)를 거두고 郡國 밖 취락 37곳이 공백지로 들어왔다(ADR-LITE-056).
-        assertEquals(894, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        // The 26 retired locality proxies were all neutral in scenario_1010.
+        assertEquals(868, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
         assertEquals(161, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))  // + 1098 平陰(河南尹, 후한)
         assertEquals(139, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
