@@ -154,8 +154,8 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/audit_korea_manchuria.py", "--check"),
             _t("tools/map/audit_korea_manchuria.py")),
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
-    Coupled("release-1194-bundle", ("data/map/han-world-v3-1194-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1194_bundle.py", "--check"), None),
+    Coupled("release-1168-bundle", ("data/map/han-world-v3-1168-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1168_bundle.py", "--check"), None),
 )
 
 

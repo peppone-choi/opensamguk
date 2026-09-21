@@ -29,7 +29,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(843, presentation.path("rows").asInt())
         // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
         // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
-        assertEquals("0d12c88f146171d8edd603c9a4eea96999201209592a9d8965c1205a34afec85",
+        assertEquals("086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
@@ -47,12 +47,12 @@ class HanStrategicTopologyJsonTest {
         val topology = loaded.topology
 
         // 지리 재분할(GH #806): 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331. 앞 판은 1,520 + 73 = 1,594 였다.
-        assertEquals(1558, topology.landProvinceIds.size)
+        assertEquals(1374, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(1194, loaded.bindingsByCityId.size)
+        assertEquals(1168, loaded.bindingsByCityId.size)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         // 대리 治所 관할의 省 id 는 재분할로 다시 발급됐다(관할 id + ':geo:' + 순번의 해시, DIRECT- 접두어 유지).
         assertEquals("DIRECT-PARENT-0086-a120c2e594e6", loaded.bindingsByCityId.getValue(833).landProvinceId)

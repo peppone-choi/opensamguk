@@ -7,10 +7,10 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 1194,
+    "routeNodeCount": 1168,
     "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51,
-    "reviewedSourceClaimBindingCount": 345,
+    "reviewedSourceClaimBindingCount": 319,
     "vacatedCountyLocationClaimCount": 1
   },
   "forbiddenSelections": {
@@ -41,7 +41,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "24398bbbd3529b366349f6a4051239b9b4ab328029d88dc15a5953faf51565d7"
+      "sha256": "c41e421d91d35e141853b0d8404c0fa2e31642943326e487b274bc3db143822a"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
@@ -53,7 +53,7 @@
     },
     "externalSettlementRouteClaims": {
       "path": "data/curated/han/route-node-external-settlement-claims-v1.json",
-      "sha256": "accc05af94e49654ca1c6d162ebb29e6d728107f2bcfff8c8933bc9a2a9a014e"
+      "sha256": "7e6fb6f7606a880157db33890a7607ad12bad288ec8645ea1da6eaf983514c8e"
     }
   },
   "legacyAttributionCorrections": [
@@ -374,7 +374,7 @@
     {
       "batchId": "w5-external-settlement-route-claim",
       "criteria": "han-tiles EXTERNAL_SETTLEMENT jurisdiction without a route node, bound by an APPROVED route-node-external-settlement-claims-v1 ROUTE_NODE claim",
-      "expectedCount": 98,
+      "expectedCount": 72,
       "reviewState": "APPROVED",
       "selectionRationale": "郡國 밖 취락 관할에 城이 없어 그 省이 영원히 주인 없는 땅으로 남던 것을 사용자 결정(2026-09-17, 「절대 소속 없는 프로빈스가 있어선 안돼」)에 따라 경로 노드로 올린다. 근거는 external-places.json 의 비정 문장과 Wikidata 좌표다. 같은 縣이 두 번 선 城 두 곳의 번호는 키 재결속으로 이 batch 가 이어받는다.",
       "claimLedger": "data/curated/han/route-node-external-settlement-claims-v1.json"

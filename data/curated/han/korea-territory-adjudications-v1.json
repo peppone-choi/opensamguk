@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inputSha256": "cf00db47a8048f87aaf534b9c80e8fb9b205a00e7b5f26ed1ace2c882c488744",
-  "outputSha256": "15d585177fd91e8a63a3525058fb65506bef4ffcd418f879cc323bc5cb25a9f1",
+  "outputSha256": "5419c8f5e8d91d74d5818bb916aff21033d7299b3f3e6178cbf011022ccb86c6",
   "rowOffset": 174,
   "replacedComponentKeys": [
     "PARENT-0156@629:367",
@@ -19,7 +19,7 @@
         "X078"
       ],
       "memberNamesCh": [
-        "泰安聚落"
+        "臣蘇塗國"
       ],
       "holdsSeat": false,
       "componentKey": "PARENT-0156@629:367",
@@ -32,7 +32,7 @@
         "map:data/map/han-tiles.json#PARENT-0156@629:367",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
-      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
       "review": {
         "state": "UPHELD",
         "votes": [
@@ -55,10 +55,10 @@
       "unitNameCh": "辟卑離國",
       "cellCount": 14,
       "memberIds": [
-        "X088"
+        "X089"
       ],
       "memberNamesCh": [
-        "務安聚落"
+        "忱彌多禮"
       ],
       "holdsSeat": false,
       "componentKey": "PARENT-0164@625:403",
@@ -71,7 +71,7 @@
         "map:data/map/han-tiles.json#PARENT-0164@625:403",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
-      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
       "review": {
         "state": "UPHELD",
         "votes": [
@@ -91,13 +91,13 @@
     {
       "unitKind": "JURISDICTION",
       "unitId": "X078",
-      "unitNameCh": "泰安聚落",
+      "unitNameCh": "臣蘇塗國",
       "cellCount": 9,
       "memberIds": [
         "SUB-X040-541a9c6ebb19"
       ],
       "memberNamesCh": [
-        "泰安聚落"
+        "臣蘇塗國"
       ],
       "holdsSeat": false,
       "componentKey": "X078@629:367",
@@ -110,7 +110,7 @@
         "map:data/map/han-tiles.json#X078@629:367",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
-      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
       "review": {
         "state": "UPHELD",
         "votes": [
@@ -129,27 +129,27 @@
     },
     {
       "unitKind": "JURISDICTION",
-      "unitId": "X088",
-      "unitNameCh": "務安聚落",
+      "unitId": "X089",
+      "unitNameCh": "忱彌多禮",
       "cellCount": 14,
       "memberIds": [
         "SUB-X041-17b9700aed53"
       ],
       "memberNamesCh": [
-        "務安聚落"
+        "忱彌多禮"
       ],
       "holdsSeat": false,
-      "componentKey": "X088@625:403",
+      "componentKey": "X089@625:403",
       "verdict": "WATER_SEPARATED",
       "confidence": "HIGH",
       "effectiveFrom": null,
       "effectiveTo": null,
       "ifRule": "WATER_ROUTE_ONLY",
       "evidenceRefs": [
-        "map:data/map/han-tiles.json#X088@625:403",
+        "map:data/map/han-tiles.json#X089@625:403",
         "repo:data/curated/han/korea-place-corrections-v1.json"
       ],
-      "rationale": "기존 서해 도서의 육지 셀을 그대로 보존했다. 새 취락에 관할을 배분하면서 구성원 ID만 변경되었다. 육지 이웃 0이며 모든 음수 경계가 SEA이므로 가상 육교를 만들지 않고 기존 항해 연결을 사용한다.",
+      "rationale": "보존된 서해 도서의 육지 셀은 동일하다. 임시 거점 제거·명칭 교체 후 신소도/침미다례 관할로 재배분했다. 실측 면적과 바다 경계 수가 이전 판과 같고 육지 이웃이 없어 가상 육교를 만들지 않는다.",
       "review": {
         "state": "UPHELD",
         "votes": [

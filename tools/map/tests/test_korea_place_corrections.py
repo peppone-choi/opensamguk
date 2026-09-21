@@ -28,13 +28,13 @@ class KoreaCorrectionsTest(unittest.TestCase):
         for old,new in zip(self.original['cities'],self.current['cities']):
             if old['id'] not in {'X030','X036'}:
                 self.assertEqual((old['col'],old['row']+NORTH_ROWS),(new['col'],new['row']))
-        self.assertEqual(176,len(self.current['parentRegions']))
+        self.assertEqual(173,len(self.current['parentRegions']))
 
     def test_new_settlements_own_their_real_cells(self):
         meta=self.current['_meta']
         owner=expand_rle(self.current['owner'],meta['rows'],meta['cols'])
         added=[c for c in self.current['cities'] if c['id'] in {d['id'] for d in self.ledger['decisions']['settlements']}]
-        self.assertEqual(61,len(added))
+        self.assertEqual(35,len(added))
         for city in added:
             province=self.current['provinceRecords'][owner[city['row'],city['col']]]
             self.assertEqual(city['id'],province['jurisdictionId'])
@@ -60,7 +60,7 @@ class KoreaCorrectionsTest(unittest.TestCase):
         import gzip
         retirement=json.loads((K.ROOT/'data/curated/han/korea-retired-settlements-v1.json').read_text())
         removed={r['id'] for r in retirement['places']}
-        self.assertEqual(147,len(removed))
+        self.assertEqual(173,len(removed))
         self.assertFalse(removed & {r['id'] for r in self.current['cities']})
         self.assertFalse(removed & {r['jurisdictionId'] for r in self.current['provinceRecords']})
         self.assertTrue(all(not any(c.isdigit() for c in r['name']) for r in self.ledger['decisions']['settlements']))
@@ -76,3 +76,35 @@ class KoreaCorrectionsTest(unittest.TestCase):
         for name in ('external-places.json',):
             places=json.loads((K.ROOT/'data/map'/name).read_text())['places']
             self.assertFalse(removed & {r['id'] for r in places})
+
+    def test_geographic_placeholders_are_not_active_places(self):
+        decisions = self.ledger['decisions']
+        names = [r['name'] for r in decisions['settlements']]
+        names += [r['displayName'] for r in decisions['labelOverrides']]
+        for name in names:
+            self.assertNotIn('취락', name)
+            self.assertNotIn(name, {'송화강 합류', '송눈 평원', '흑룡강 중류', '흑룡강 상류',
+                                    '흑룡강 남안', '송화강 하구', '우수리 북부', '흑룡강 하구길', '금강 하구'})
+        self.assertEqual({'X078': '신소도', 'X048': '본피', 'X049': '고동람'}, {
+            **{r['id']: r['name'] for r in decisions['settlements'] if r['id'] == 'X078'},
+            **{r['id']: r['displayName'] for r in decisions['labelOverrides'] if r['id'] in {'X048', 'X049'}},
+        })
+        self.assertFalse({'PARENT-0173', 'PARENT-0174', 'PARENT-0175'} &
+                         {r['id'] for r in self.current['parentRegions']})
+
+    def test_retirement_holes_are_preserved_in_the_runtime_roster(self):
+        from tools.scenario.han_active_city_ids import active_numeric_ids, RETIRED_CURRENT_CITY_IDS
+        retirement = json.loads((K.ROOT/'data/curated/han/korea-retired-settlements-v1.json').read_text())
+        self.assertEqual({n for n in retirement['numericIdsReserved'] if n <= 1194},
+                         set(RETIRED_CURRENT_CITY_IDS))
+        self.assertEqual(1168, len(active_numeric_ids(1168)))
+        self.assertIn(1177, active_numeric_ids(1168))
+        self.assertNotIn(1143, active_numeric_ids(1168))
+        self.assertEqual(list(range(1, 1195)), active_numeric_ids(1194))
+
+    def test_extended_northern_terrain_does_not_invent_playable_ownership(self):
+        from tools.map.korea_map_extension import NORTH_ROWS
+        meta = self.current['_meta']
+        owner = expand_rle(self.current['owner'], meta['rows'], meta['cols'])
+        self.assertTrue((owner[:NORTH_ROWS] == -1).all())
+        self.assertTrue((owner[:, 768:] == -1).all())

@@ -52,7 +52,9 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 1025..1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1194}
+from tools.scenario.han_active_city_ids import active_numeric_ids
+
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1168}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
@@ -78,7 +80,7 @@ SOURCE_CLAIM_BATCHES = {
     EXTERNAL_SETTLEMENT_CLAIM_BATCH: {
         "input": "externalSettlementRouteClaims", "subjectPrefix": "han-tiles-external-settlement:",
         "subjectType": "EXTERNAL_SETTLEMENT", "nodeClasses": frozenset({"SETTLEMENT_NODE"}),
-        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 98},
+        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 72},
     },
 }
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
@@ -145,11 +147,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "24398bbbd3529b366349f6a4051239b9b4ab328029d88dc15a5953faf51565d7"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "c41e421d91d35e141853b0d8404c0fa2e31642943326e487b274bc3db143822a"
 PINNED_SOURCE_WITNESS_SHA256 = "86f82f4deb4394667ef0c3d298ac0b743192515e6328c0bb2ca6ef670de80fa8"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
 PINNED_REVIEWED_CANDIDATE_SHA256 = "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
-PINNED_REVIEW_POLICY_SHA256 = "094ecc91757708b68bc7fa56135448b4113688f8c09a43500122952e616a0ad4"
+PINNED_REVIEW_POLICY_SHA256 = "a7e94abb6acf0c443d0200e9ebcfd92713515660b4be7d1b17e52b27358e5efa"
 PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -673,7 +675,7 @@ def _route_key_registry_index(
     appended = sorted(
         numeric_id for _, numeric_id in indexed.values() if numeric_id is not None
     )
-    if appended != list(range(LEGACY_COUNT + 1, expected_count + 1)):
+    if appended != [i for i in active_numeric_ids(expected_count) if i > LEGACY_COUNT]:
         _fail("route-node key registry append IDs must be the next never-issued sequence")
     return indexed
 
@@ -1850,7 +1852,7 @@ def _validate_migration(
             _fail("migration appended row must identify a new-world-only route node")
         used_keys.add(key)
         appended_ids.append(new_id)
-    if sorted(appended_ids) != list(range(LEGACY_COUNT + 1, expected_count + 1)):
+    if sorted(appended_ids) != [i for i in active_numeric_ids(expected_count) if i > LEGACY_COUNT]:
         _fail("migration appended numeric IDs must be the next never-issued sequence")
     if used_keys != set(by_key):
         _fail("migration does not cover every routeNodeKey exactly once")
@@ -2011,7 +2013,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
     legacy_ids = [
         _integer(node, "legacyCityId") for node in raw_nodes if "legacyCityId" in node
     ]
-    if sorted(ids) != list(range(1, expected_count + 1)):
+    if sorted(ids) != active_numeric_ids(expected_count):
         _fail(f"numericCityId values must be exact 1..{expected_count}")
     if sorted(legacy_ids) != list(range(1, LEGACY_COUNT + 1)):
         _fail("selection legacyCityId values must be exact 1..780")

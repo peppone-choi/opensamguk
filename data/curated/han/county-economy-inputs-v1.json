@@ -3,9 +3,9 @@
  "paramsStatus": "EXPLORATORY",
  "source": "後漢書 郡國志 郡 戶數 × 治所 위계·지형 가중; 三國志 東夷傳 권역 경제는 historicalEconomy로 별도 보존",
  "counts": {
-  "jurisdictions": 1194,
+  "jurisdictions": 1168,
   "withHouseholds": 1016,
-  "zeroArable": 145,
+  "zeroArable": 144,
   "commanderiesWithFewerCountiesThanSource": 56
  },
  "limitations": [
@@ -30,17 +30,14 @@
    "missingValuesAreZero": false,
    "productionAndTaxRates": "NOT_ATTESTED",
    "runtimeBalance": "기존 등급별 게임 초기값은 추정 모델이며 아래 사료 수치와 별도이다.",
-   "unattestedNorthernGameRegions": "SONGHUA/AMUR/USSURI의 개별 호구·생산량 사료는 넣지 않는다. 운영 초기값은 보존 예산에서 배분한 게임 수치이다."
+   "unattestedNorthernGameRegions": "SONGHUA/AMUR/USSURI 지리 대용 거점은 제거했다. 문헌상 지역 총량은 개별 도시 실측값으로 바꾸지 않는다."
   },
   "groups": [
    {
     "id": "SGZ30-BUYEO",
     "name": "부여",
     "jurisdictionIds": [
-     "X036",
-     "X112",
-     "X114",
-     "X125"
+     "X036"
     ],
     "sourceScope": "POLITY_OR_REGION",
     "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -109,9 +106,7 @@
      "X069",
      "X070",
      "X071",
-     "X072",
-     "X110",
-     "X111"
+     "X072"
     ],
     "sourceScope": "POLITY_OR_REGION",
     "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -231,8 +226,7 @@
     "id": "SGZ30-NORTHOKJEO",
     "name": "북옥저",
     "jurisdictionIds": [
-     "X030",
-     "X109"
+     "X030"
     ],
     "sourceScope": "POLITY_OR_REGION",
     "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -346,12 +340,10 @@
      "X041",
      "X042",
      "X073",
-     "X074",
      "X075",
      "X076",
      "X077",
      "X078",
-     "X079",
      "X080",
      "X081",
      "X082",
@@ -360,14 +352,7 @@
      "X085",
      "X086",
      "X087",
-     "X088",
-     "X089",
-     "X090",
-     "X091",
-     "X092",
-     "X093",
-     "X094",
-     "X095"
+     "X089"
     ],
     "sourceScope": "POLITY_OR_REGION",
     "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -543,8 +528,7 @@
     "id": "SGZ30-YILOU",
     "name": "읍루",
     "jurisdictionIds": [
-     "X039",
-     "X113"
+     "X039"
     ],
     "sourceScope": "POLITY_OR_REGION",
     "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -19435,7 +19419,7 @@
    "arableCells": 1652,
    "terrainScore": 1661.5,
    "wetAdjacentCells": 53,
-   "connections": 9,
+   "connections": 8,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS"
   },
@@ -19641,25 +19625,23 @@
      "X065",
      "X066",
      "X067",
-     "X068",
-     "X111",
-     "X112"
+     "X068"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 14286,
-     "agriculture": 143,
-     "commerce": 143,
+     "population": 20000,
+     "agriculture": 200,
+     "commerce": 200,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 41972,
-     "agriculture": 829,
-     "commerce": 850,
+     "population": 58760,
+     "agriculture": 1160,
+     "commerce": 1190,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -19726,14 +19708,14 @@
    "cityId": 1099,
    "cityLevel": 5,
    "isCommanderySeat": true,
-   "landCells": 484,
+   "landCells": 1709,
    "terrainCells": {
-    "MOUNTAIN": 121,
-    "PLAIN": 363
+    "MOUNTAIN": 274,
+    "PLAIN": 1435
    },
-   "arableCells": 363,
-   "terrainScore": 375.1,
-   "wetAdjacentCells": 27,
+   "arableCells": 1435,
+   "terrainScore": 1462.4,
+   "wetAdjacentCells": 28,
    "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
@@ -19742,26 +19724,23 @@
     "fundingJurisdictionId": "X030",
     "memberJurisdictionIds": [
      "X030",
-     "X070",
-     "X109",
-     "X110",
-     "X113"
+     "X070"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 20000,
-     "agriculture": 200,
-     "commerce": 200,
+     "population": 50000,
+     "agriculture": 500,
+     "commerce": 500,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 58760,
-     "agriculture": 1160,
-     "commerce": 1190,
+     "population": 146900,
+     "agriculture": 2900,
+     "commerce": 2975,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -19941,49 +19920,18 @@
    "cityId": 1105,
    "cityLevel": 6,
    "isCommanderySeat": true,
-   "landCells": 1650,
+   "landCells": 5590,
    "terrainCells": {
-    "PLAIN": 1650
+    "MOUNTAIN": 3,
+    "PLAIN": 5531,
+    "RIVER": 56
    },
-   "arableCells": 1650,
-   "terrainScore": 1650.0,
-   "wetAdjacentCells": 0,
-   "connections": 10,
+   "arableCells": 5531,
+   "terrainScore": 5559.3,
+   "wetAdjacentCells": 142,
+   "connections": 8,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 3000,
-     "wall": 3000
-    },
-    "capacity": {
-     "population": 49163,
-     "agriculture": 982,
-     "commerce": 1000,
-     "security": 6000,
-     "defence": 8100,
-     "wall": 8000
-    }
-   },
    "historicalEconomyRefs": [
     "SGZ30-BUYEO"
    ]
@@ -20067,48 +20015,17 @@
    "cityId": 1108,
    "cityLevel": 5,
    "isCommanderySeat": true,
-   "landCells": 4885,
+   "landCells": 3823,
    "terrainCells": {
-    "MOUNTAIN": 2153,
-    "PLAIN": 2732
+    "MOUNTAIN": 743,
+    "PLAIN": 3080
    },
-   "arableCells": 2732,
-   "terrainScore": 2947.3,
-   "wetAdjacentCells": 207,
-   "connections": 6,
+   "arableCells": 3080,
+   "terrainScore": 3154.3,
+   "wetAdjacentCells": 115,
+   "connections": 1,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16667,
-     "agriculture": 167,
-     "commerce": 167,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48967,
-     "agriculture": 967,
-     "commerce": 992,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
    "historicalEconomyRefs": [
     "SGZ30-YILOU"
    ]
@@ -20121,12 +20038,12 @@
    "cityId": 1109,
    "cityLevel": 5,
    "isCommanderySeat": true,
-   "landCells": 66,
+   "landCells": 100,
    "terrainCells": {
-    "PLAIN": 66
+    "PLAIN": 100
    },
-   "arableCells": 66,
-   "terrainScore": 66.0,
+   "arableCells": 100,
+   "terrainScore": 100.0,
    "wetAdjacentCells": 0,
    "connections": 9,
    "households": null,
@@ -20142,27 +20059,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8334,
-     "agriculture": 84,
-     "commerce": 84,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24484,
-     "agriculture": 484,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -20201,25 +20114,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -20237,14 +20148,14 @@
    "cityId": 1111,
    "cityLevel": 5,
    "isCommanderySeat": true,
-   "landCells": 438,
+   "landCells": 575,
    "terrainCells": {
-    "PLAIN": 438
+    "PLAIN": 575
    },
-   "arableCells": 438,
-   "terrainScore": 438.0,
-   "wetAdjacentCells": 22,
-   "connections": 5,
+   "arableCells": 575,
+   "terrainScore": 575.0,
+   "wetAdjacentCells": 38,
+   "connections": 9,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -20252,25 +20163,23 @@
     "fundingJurisdictionId": "X042",
     "memberJurisdictionIds": [
      "X042",
-     "X074",
-     "X079",
      "X106"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 25000,
-     "agriculture": 250,
-     "commerce": 250,
+     "population": 50000,
+     "agriculture": 500,
+     "commerce": 500,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 73450,
-     "agriculture": 1450,
-     "commerce": 1488,
+     "population": 146900,
+     "agriculture": 2900,
+     "commerce": 2975,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -20418,7 +20327,7 @@
    "arableCells": 248,
    "terrainScore": 248.0,
    "wetAdjacentCells": 79,
-   "connections": 5,
+   "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "historicalEconomyRefs": [
@@ -20476,9 +20385,9 @@
   },
   {
    "jurisdictionId": "X048",
-   "nameCh": "星山伽耶",
+   "nameCh": "本彼",
    "commanderyId": "PARENT-0142",
-   "commanderyNameCh": "星山伽耶",
+   "commanderyNameCh": "本彼",
    "cityId": 1117,
    "cityLevel": 5,
    "isCommanderySeat": true,
@@ -20525,49 +20434,22 @@
   },
   {
    "jurisdictionId": "X049",
-   "nameCh": "古寧伽耶",
+   "nameCh": "古冬攬",
    "commanderyId": "PARENT-0115",
-   "commanderyNameCh": "古寧伽耶",
+   "commanderyNameCh": "古冬攬",
    "cityId": 1118,
    "cityLevel": 5,
    "isCommanderySeat": true,
-   "landCells": 307,
+   "landCells": 453,
    "terrainCells": {
-    "PLAIN": 307
+    "PLAIN": 453
    },
-   "arableCells": 307,
-   "terrainScore": 307.0,
+   "arableCells": 453,
+   "terrainScore": 453.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
+   "connections": 9,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X049",
-    "memberJurisdictionIds": [
-     "X049",
-     "X095"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 50000,
-     "agriculture": 500,
-     "commerce": 500,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 146900,
-     "agriculture": 2900,
-     "commerce": 2975,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
    "historicalEconomyRefs": [
     "SGZ30-JINBYEONHAN"
    ]
@@ -20875,14 +20757,14 @@
    "cityId": 1134,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 111,
+   "landCells": 293,
    "terrainCells": {
-    "PLAIN": 111
+    "PLAIN": 293
    },
-   "arableCells": 111,
-   "terrainScore": 111.0,
+   "arableCells": 293,
+   "terrainScore": 293.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
+   "connections": 5,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -20893,25 +20775,23 @@
      "X065",
      "X066",
      "X067",
-     "X068",
-     "X111",
-     "X112"
+     "X068"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 14286,
-     "agriculture": 143,
-     "commerce": 143,
+     "population": 20000,
+     "agriculture": 200,
+     "commerce": 200,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 41972,
-     "agriculture": 829,
-     "commerce": 850,
+     "population": 58760,
+     "agriculture": 1160,
+     "commerce": 1190,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -20929,13 +20809,13 @@
    "cityId": 1135,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 100,
+   "landCells": 180,
    "terrainCells": {
     "MOUNTAIN": 20,
-    "PLAIN": 80
+    "PLAIN": 160
    },
-   "arableCells": 80,
-   "terrainScore": 82.0,
+   "arableCells": 160,
+   "terrainScore": 162.0,
    "wetAdjacentCells": 0,
    "connections": 4,
    "households": null,
@@ -20948,25 +20828,23 @@
      "X065",
      "X066",
      "X067",
-     "X068",
-     "X111",
-     "X112"
+     "X068"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 14286,
-     "agriculture": 143,
-     "commerce": 143,
+     "population": 20000,
+     "agriculture": 200,
+     "commerce": 200,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 41972,
-     "agriculture": 829,
-     "commerce": 850,
+     "population": 58760,
+     "agriculture": 1160,
+     "commerce": 1190,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -20984,13 +20862,13 @@
    "cityId": 1136,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 856,
+   "landCells": 1651,
    "terrainCells": {
-    "MOUNTAIN": 353,
-    "PLAIN": 503
+    "MOUNTAIN": 540,
+    "PLAIN": 1111
    },
-   "arableCells": 503,
-   "terrainScore": 538.3,
+   "arableCells": 1111,
+   "terrainScore": 1165.0,
    "wetAdjacentCells": 0,
    "connections": 7,
    "households": null,
@@ -21003,25 +20881,23 @@
      "X065",
      "X066",
      "X067",
-     "X068",
-     "X111",
-     "X112"
+     "X068"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 14286,
-     "agriculture": 143,
-     "commerce": 143,
+     "population": 20000,
+     "agriculture": 200,
+     "commerce": 200,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 41971,
-     "agriculture": 829,
-     "commerce": 850,
+     "population": 58760,
+     "agriculture": 1160,
+     "commerce": 1190,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21046,7 +20922,7 @@
    "arableCells": 0,
    "terrainScore": 47.1,
    "wetAdjacentCells": 0,
-   "connections": 5,
+   "connections": 3,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -21057,25 +20933,23 @@
      "X065",
      "X066",
      "X067",
-     "X068",
-     "X111",
-     "X112"
+     "X068"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 14286,
-     "agriculture": 143,
-     "commerce": 143,
+     "population": 20000,
+     "agriculture": 200,
+     "commerce": 200,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 41971,
-     "agriculture": 828,
-     "commerce": 850,
+     "population": 58760,
+     "agriculture": 1160,
+     "commerce": 1190,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21143,14 +21017,15 @@
    "cityId": 1139,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 271,
+   "landCells": 547,
    "terrainCells": {
-    "MOUNTAIN": 271
+    "MOUNTAIN": 535,
+    "PLAIN": 12
    },
-   "arableCells": 0,
-   "terrainScore": 27.1,
-   "wetAdjacentCells": 0,
-   "connections": 4,
+   "arableCells": 12,
+   "terrainScore": 65.5,
+   "wetAdjacentCells": 37,
+   "connections": 3,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -21158,26 +21033,23 @@
     "fundingJurisdictionId": "X030",
     "memberJurisdictionIds": [
      "X030",
-     "X070",
-     "X109",
-     "X110",
-     "X113"
+     "X070"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 20000,
-     "agriculture": 200,
-     "commerce": 200,
+     "population": 50000,
+     "agriculture": 500,
+     "commerce": 500,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 58760,
-     "agriculture": 1160,
-     "commerce": 1190,
+     "population": 146900,
+     "agriculture": 2900,
+     "commerce": 2975,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21202,7 +21074,7 @@
    "arableCells": 531,
    "terrainScore": 531.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
+   "connections": 5,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -21300,7 +21172,7 @@
    "arableCells": 33,
    "terrainScore": 33.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
+   "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -21314,78 +21186,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8334,
-     "agriculture": 84,
-     "commerce": 84,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24484,
-     "agriculture": 484,
-     "commerce": 496,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X074",
-   "nameCh": "天安聚落",
-   "commanderyId": "PARENT-0109",
-   "commanderyNameCh": "伯濟國",
-   "cityId": 1143,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 116,
-   "terrainCells": {
-    "PLAIN": 116
-   },
-   "arableCells": 116,
-   "terrainScore": 116.0,
-   "wetAdjacentCells": 6,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X042",
-    "memberJurisdictionIds": [
-     "X042",
-     "X074",
-     "X079",
-     "X106"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 25000,
-     "agriculture": 250,
-     "commerce": 250,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 73450,
-     "agriculture": 1450,
-     "commerce": 1488,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21403,13 +21220,13 @@
    "cityId": 1144,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 16,
+   "landCells": 53,
    "terrainCells": {
-    "PLAIN": 16
+    "PLAIN": 53
    },
-   "arableCells": 16,
-   "terrainScore": 16.0,
-   "wetAdjacentCells": 0,
+   "arableCells": 53,
+   "terrainScore": 53.0,
+   "wetAdjacentCells": 4,
    "connections": 5,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
@@ -21424,27 +21241,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8334,
-     "agriculture": 84,
-     "commerce": 84,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24484,
-     "agriculture": 484,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21462,13 +21275,13 @@
    "cityId": 1145,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 26,
+   "landCells": 31,
    "terrainCells": {
-    "PLAIN": 26
+    "PLAIN": 31
    },
-   "arableCells": 26,
-   "terrainScore": 26.0,
-   "wetAdjacentCells": 4,
+   "arableCells": 31,
+   "terrainScore": 31.0,
+   "wetAdjacentCells": 6,
    "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
@@ -21483,27 +21296,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8334,
-     "agriculture": 84,
-     "commerce": 84,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24484,
-     "agriculture": 484,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21542,27 +21351,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21574,7 +21379,7 @@
   },
   {
    "jurisdictionId": "X078",
-   "nameCh": "泰安聚落",
+   "nameCh": "臣蘇塗國",
    "commanderyId": "PARENT-0156",
    "commanderyNameCh": "目支國",
    "cityId": 1147,
@@ -21601,78 +21406,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X079",
-   "nameCh": "沿岸聚落",
-   "commanderyId": "PARENT-0109",
-   "commanderyNameCh": "伯濟國",
-   "cityId": 1148,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 27,
-   "terrainCells": {
-    "PLAIN": 27
-   },
-   "arableCells": 27,
-   "terrainScore": 27.0,
-   "wetAdjacentCells": 10,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X042",
-    "memberJurisdictionIds": [
-     "X042",
-     "X074",
-     "X079",
-     "X106"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 25000,
-     "agriculture": 250,
-     "commerce": 250,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 73450,
-     "agriculture": 1450,
-     "commerce": 1487,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21690,12 +21440,12 @@
    "cityId": 1149,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 65,
+   "landCells": 93,
    "terrainCells": {
-    "PLAIN": 65
+    "PLAIN": 93
    },
-   "arableCells": 65,
-   "terrainScore": 65.0,
+   "arableCells": 93,
+   "terrainScore": 93.0,
    "wetAdjacentCells": 0,
    "connections": 5,
    "households": null,
@@ -21711,27 +21461,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 743,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21770,25 +21516,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21827,25 +21571,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21884,25 +21626,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21920,14 +21660,14 @@
    "cityId": 1153,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 47,
+   "landCells": 53,
    "terrainCells": {
-    "PLAIN": 47
+    "PLAIN": 53
    },
-   "arableCells": 47,
-   "terrainScore": 47.0,
-   "wetAdjacentCells": 6,
-   "connections": 3,
+   "arableCells": 53,
+   "terrainScore": 53.0,
+   "wetAdjacentCells": 8,
+   "connections": 2,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -21941,25 +21681,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -21998,25 +21736,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 744,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -22034,13 +21770,13 @@
    "cityId": 1155,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 8,
+   "landCells": 23,
    "terrainCells": {
-    "PLAIN": 8
+    "PLAIN": 23
    },
-   "arableCells": 8,
-   "terrainScore": 8.0,
-   "wetAdjacentCells": 2,
+   "arableCells": 23,
+   "terrainScore": 23.0,
+   "wetAdjacentCells": 7,
    "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
@@ -22055,27 +21791,23 @@
      "X077",
      "X078",
      "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
+     "X086"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 743,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -22093,14 +21825,14 @@
    "cityId": 1156,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 83,
+   "landCells": 144,
    "terrainCells": {
-    "PLAIN": 83
+    "PLAIN": 144
    },
-   "arableCells": 83,
-   "terrainScore": 83.0,
-   "wetAdjacentCells": 0,
-   "connections": 6,
+   "arableCells": 144,
+   "terrainScore": 144.0,
+   "wetAdjacentCells": 9,
+   "connections": 5,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -22114,82 +21846,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X088",
-   "nameCh": "務安聚落",
-   "commanderyId": "PARENT-0164",
-   "commanderyNameCh": "辟卑離國",
-   "cityId": 1157,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 52,
-   "terrainCells": {
-    "PLAIN": 52
-   },
-   "arableCells": 52,
-   "terrainScore": 52.0,
-   "wetAdjacentCells": 21,
-   "connections": 3,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X041",
-    "memberJurisdictionIds": [
-     "X041",
-     "X081",
-     "X082",
-     "X083",
-     "X084",
-     "X085",
-     "X087",
-     "X088",
-     "X089",
-     "X090"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 743,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -22207,13 +21880,13 @@
    "cityId": 1158,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 99,
+   "landCells": 129,
    "terrainCells": {
-    "PLAIN": 99
+    "PLAIN": 129
    },
-   "arableCells": 99,
-   "terrainScore": 99.0,
-   "wetAdjacentCells": 36,
+   "arableCells": 129,
+   "terrainScore": 129.0,
+   "wetAdjacentCells": 48,
    "connections": 2,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
@@ -22228,367 +21901,23 @@
      "X084",
      "X085",
      "X087",
-     "X088",
-     "X089",
-     "X090"
+     "X089"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
+     "population": 12500,
+     "agriculture": 125,
+     "commerce": 125,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X090",
-   "nameCh": "靈巖聚落",
-   "commanderyId": "PARENT-0164",
-   "commanderyNameCh": "辟卑離國",
-   "cityId": 1159,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 45,
-   "terrainCells": {
-    "PLAIN": 45
-   },
-   "arableCells": 45,
-   "terrainScore": 45.0,
-   "wetAdjacentCells": 2,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X041",
-    "memberJurisdictionIds": [
-     "X041",
-     "X081",
-     "X082",
-     "X083",
-     "X084",
-     "X085",
-     "X087",
-     "X088",
-     "X089",
-     "X090"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 10000,
-     "agriculture": 100,
-     "commerce": 100,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 29380,
-     "agriculture": 580,
-     "commerce": 595,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X091",
-   "nameCh": "錦江聚落",
-   "commanderyId": "PARENT-0156",
-   "commanderyNameCh": "目支國",
-   "cityId": 1160,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 67,
-   "terrainCells": {
-    "PLAIN": 67
-   },
-   "arableCells": 67,
-   "terrainScore": 67.0,
-   "wetAdjacentCells": 0,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X040",
-    "memberJurisdictionIds": [
-     "X040",
-     "X073",
-     "X075",
-     "X076",
-     "X077",
-     "X078",
-     "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X092",
-   "nameCh": "熊川聚落",
-   "commanderyId": "PARENT-0156",
-   "commanderyNameCh": "目支國",
-   "cityId": 1161,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 16,
-   "terrainCells": {
-    "PLAIN": 16
-   },
-   "arableCells": 16,
-   "terrainScore": 16.0,
-   "wetAdjacentCells": 0,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X040",
-    "memberJurisdictionIds": [
-     "X040",
-     "X073",
-     "X075",
-     "X076",
-     "X077",
-     "X078",
-     "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 496,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X093",
-   "nameCh": "錦江河口",
-   "commanderyId": "PARENT-0156",
-   "commanderyNameCh": "目支國",
-   "cityId": 1162,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 17,
-   "terrainCells": {
-    "PLAIN": 17
-   },
-   "arableCells": 17,
-   "terrainScore": 17.0,
-   "wetAdjacentCells": 5,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X040",
-    "memberJurisdictionIds": [
-     "X040",
-     "X073",
-     "X075",
-     "X076",
-     "X077",
-     "X078",
-     "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 495,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X094",
-   "nameCh": "西海聚落",
-   "commanderyId": "PARENT-0156",
-   "commanderyNameCh": "目支國",
-   "cityId": 1163,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 19,
-   "terrainCells": {
-    "PLAIN": 19
-   },
-   "arableCells": 19,
-   "terrainScore": 19.0,
-   "wetAdjacentCells": 6,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X040",
-    "memberJurisdictionIds": [
-     "X040",
-     "X073",
-     "X075",
-     "X076",
-     "X077",
-     "X078",
-     "X080",
-     "X086",
-     "X091",
-     "X092",
-     "X093",
-     "X094"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 8333,
-     "agriculture": 83,
-     "commerce": 83,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 24483,
-     "agriculture": 483,
-     "commerce": 495,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-MAHAN"
-   ]
-  },
-  {
-   "jurisdictionId": "X095",
-   "nameCh": "中原聚落",
-   "commanderyId": "PARENT-0115",
-   "commanderyNameCh": "古寧伽耶",
-   "cityId": 1164,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 146,
-   "terrainCells": {
-    "PLAIN": 146
-   },
-   "arableCells": 146,
-   "terrainScore": 146.0,
-   "wetAdjacentCells": 0,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X049",
-    "memberJurisdictionIds": [
-     "X049",
-     "X095"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 50000,
-     "agriculture": 500,
-     "commerce": 500,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 146900,
-     "agriculture": 2900,
-     "commerce": 2975,
+     "population": 36725,
+     "agriculture": 725,
+     "commerce": 743,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -22702,7 +22031,7 @@
    "jurisdictionId": "X098",
    "nameCh": "甘文",
    "commanderyId": "PARENT-0142",
-   "commanderyNameCh": "星山伽耶",
+   "commanderyNameCh": "本彼",
    "cityId": 1167,
    "cityLevel": 5,
    "isCommanderySeat": false,
@@ -22713,7 +22042,7 @@
    "arableCells": 73,
    "terrainScore": 73.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
+   "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -23106,14 +22435,14 @@
    "cityId": 1175,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 375,
+   "landCells": 381,
    "terrainCells": {
-    "PLAIN": 375
+    "PLAIN": 381
    },
-   "arableCells": 375,
-   "terrainScore": 375.0,
+   "arableCells": 381,
+   "terrainScore": 381.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
+   "connections": 4,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
    "gameEconomy": {
@@ -23121,25 +22450,23 @@
     "fundingJurisdictionId": "X042",
     "memberJurisdictionIds": [
      "X042",
-     "X074",
-     "X079",
      "X106"
     ],
     "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
     "historicalCensus": false,
     "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
     "initial": {
-     "population": 25000,
-     "agriculture": 250,
-     "commerce": 250,
+     "population": 50000,
+     "agriculture": 500,
+     "commerce": 500,
      "security": 1000,
      "defence": 2000,
      "wall": 2000
     },
     "capacity": {
-     "population": 73450,
-     "agriculture": 1450,
-     "commerce": 1487,
+     "population": 146900,
+     "agriculture": 2900,
+     "commerce": 2975,
      "security": 4000,
      "defence": 6000,
      "wall": 5900
@@ -23246,912 +22573,6 @@
    },
    "historicalEconomyRefs": [
     "SGZ30-YE"
-   ]
-  },
-  {
-   "jurisdictionId": "X109",
-   "nameCh": "海岸聚落",
-   "commanderyId": "PARENT-0111",
-   "commanderyNameCh": "北沃沮",
-   "cityId": 1178,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 259,
-   "terrainCells": {
-    "MOUNTAIN": 247,
-    "PLAIN": 12
-   },
-   "arableCells": 12,
-   "terrainScore": 36.7,
-   "wetAdjacentCells": 38,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X030",
-    "memberJurisdictionIds": [
-     "X030",
-     "X070",
-     "X109",
-     "X110",
-     "X113"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 20000,
-     "agriculture": 200,
-     "commerce": 200,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 58760,
-     "agriculture": 1160,
-     "commerce": 1190,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-NORTHOKJEO"
-   ]
-  },
-  {
-   "jurisdictionId": "X110",
-   "nameCh": "豆滿江聚落",
-   "commanderyId": "PARENT-0111",
-   "commanderyNameCh": "北沃沮",
-   "cityId": 1179,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 704,
-   "terrainCells": {
-    "MOUNTAIN": 170,
-    "PLAIN": 534
-   },
-   "arableCells": 534,
-   "terrainScore": 551.0,
-   "wetAdjacentCells": 0,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X030",
-    "memberJurisdictionIds": [
-     "X030",
-     "X070",
-     "X109",
-     "X110",
-     "X113"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 20000,
-     "agriculture": 200,
-     "commerce": 200,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 58760,
-     "agriculture": 1160,
-     "commerce": 1190,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-GOGURYEO"
-   ]
-  },
-  {
-   "jurisdictionId": "X111",
-   "nameCh": "渾江聚落",
-   "commanderyId": "PARENT-0120",
-   "commanderyNameCh": "國內城",
-   "cityId": 1180,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 334,
-   "terrainCells": {
-    "PLAIN": 334
-   },
-   "arableCells": 334,
-   "terrainScore": 334.0,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X028",
-    "memberJurisdictionIds": [
-     "X028",
-     "X065",
-     "X066",
-     "X067",
-     "X068",
-     "X111",
-     "X112"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 14285,
-     "agriculture": 143,
-     "commerce": 143,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 41971,
-     "agriculture": 828,
-     "commerce": 850,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-GOGURYEO"
-   ]
-  },
-  {
-   "jurisdictionId": "X112",
-   "nameCh": "敦化聚落",
-   "commanderyId": "PARENT-0120",
-   "commanderyNameCh": "國內城",
-   "cityId": 1181,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 723,
-   "terrainCells": {
-    "MOUNTAIN": 187,
-    "PLAIN": 536
-   },
-   "arableCells": 536,
-   "terrainScore": 554.7,
-   "wetAdjacentCells": 0,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X028",
-    "memberJurisdictionIds": [
-     "X028",
-     "X065",
-     "X066",
-     "X067",
-     "X068",
-     "X111",
-     "X112"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 14285,
-     "agriculture": 142,
-     "commerce": 142,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 41971,
-     "agriculture": 828,
-     "commerce": 850,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-BUYEO"
-   ]
-  },
-  {
-   "jurisdictionId": "X113",
-   "nameCh": "牡丹江聚落",
-   "commanderyId": "PARENT-0172",
-   "commanderyNameCh": "挹婁",
-   "cityId": 1182,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 538,
-   "terrainCells": {
-    "PLAIN": 538
-   },
-   "arableCells": 538,
-   "terrainScore": 538.0,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X030",
-    "memberJurisdictionIds": [
-     "X030",
-     "X070",
-     "X109",
-     "X110",
-     "X113"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 20000,
-     "agriculture": 200,
-     "commerce": 200,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 58760,
-     "agriculture": 1160,
-     "commerce": 1190,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-YILOU"
-   ]
-  },
-  {
-   "jurisdictionId": "X114",
-   "nameCh": "伊通河聚落",
-   "commanderyId": "PARENT-0122",
-   "commanderyNameCh": "夫餘",
-   "cityId": 1183,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 1196,
-   "terrainCells": {
-    "PLAIN": 1182,
-    "RIVER": 14
-   },
-   "arableCells": 1182,
-   "terrainScore": 1189.0,
-   "wetAdjacentCells": 36,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49163,
-     "agriculture": 982,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-BUYEO"
-   ]
-  },
-  {
-   "jurisdictionId": "X115",
-   "nameCh": "松花江合流",
-   "commanderyId": "PARENT-0173",
-   "commanderyNameCh": "松花江聚落",
-   "cityId": 1184,
-   "cityLevel": 5,
-   "isCommanderySeat": true,
-   "landCells": 1215,
-   "terrainCells": {
-    "PLAIN": 1172,
-    "RIVER": 43
-   },
-   "arableCells": 1172,
-   "terrainScore": 1193.5,
-   "wetAdjacentCells": 103,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49163,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X116",
-   "nameCh": "松嫩平原",
-   "commanderyId": "PARENT-0173",
-   "commanderyNameCh": "松花江聚落",
-   "cityId": 1185,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 6234,
-   "terrainCells": {
-    "MOUNTAIN": 3513,
-    "PLAIN": 2718,
-    "RIVER": 3
-   },
-   "arableCells": 2718,
-   "terrainScore": 3070.8,
-   "wetAdjacentCells": 12,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49163,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X117",
-   "nameCh": "黑龍江中流",
-   "commanderyId": "PARENT-0174",
-   "commanderyNameCh": "黑龍江聚落",
-   "cityId": 1186,
-   "cityLevel": 5,
-   "isCommanderySeat": true,
-   "landCells": 9106,
-   "terrainCells": {
-    "MOUNTAIN": 1527,
-    "PLAIN": 7486,
-    "RIVER": 93
-   },
-   "arableCells": 7486,
-   "terrainScore": 7685.2,
-   "wetAdjacentCells": 239,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16667,
-     "agriculture": 167,
-     "commerce": 167,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48967,
-     "agriculture": 967,
-     "commerce": 992,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X118",
-   "nameCh": "嫩江聚落",
-   "commanderyId": "PARENT-0174",
-   "commanderyNameCh": "黑龍江聚落",
-   "cityId": 1187,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 6985,
-   "terrainCells": {
-    "MOUNTAIN": 5425,
-    "PLAIN": 1522,
-    "RIVER": 38
-   },
-   "arableCells": 1522,
-   "terrainScore": 2083.5,
-   "wetAdjacentCells": 104,
-   "connections": 3,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49162,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X119",
-   "nameCh": "黑龍江上流",
-   "commanderyId": "PARENT-0174",
-   "commanderyNameCh": "黑龍江聚落",
-   "cityId": 1188,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 10473,
-   "terrainCells": {
-    "MOUNTAIN": 5605,
-    "PLAIN": 4562,
-    "RIVER": 306
-   },
-   "arableCells": 4562,
-   "terrainScore": 5275.5,
-   "wetAdjacentCells": 808,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49162,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X120",
-   "nameCh": "黑龍江南岸",
-   "commanderyId": "PARENT-0174",
-   "commanderyNameCh": "黑龍江聚落",
-   "cityId": 1189,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 1743,
-   "terrainCells": {
-    "MOUNTAIN": 721,
-    "PLAIN": 1022
-   },
-   "arableCells": 1022,
-   "terrainScore": 1094.1,
-   "wetAdjacentCells": 0,
-   "connections": 6,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49162,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X121",
-   "nameCh": "三江聚落",
-   "commanderyId": "PARENT-0175",
-   "commanderyNameCh": "烏蘇里江聚落",
-   "cityId": 1190,
-   "cityLevel": 5,
-   "isCommanderySeat": true,
-   "landCells": 2119,
-   "terrainCells": {
-    "PLAIN": 2084,
-    "RIVER": 35
-   },
-   "arableCells": 2084,
-   "terrainScore": 2101.5,
-   "wetAdjacentCells": 99,
-   "connections": 4,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16667,
-     "agriculture": 167,
-     "commerce": 167,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48967,
-     "agriculture": 967,
-     "commerce": 992,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X122",
-   "nameCh": "松花江河口",
-   "commanderyId": "PARENT-0175",
-   "commanderyNameCh": "烏蘇里江聚落",
-   "cityId": 1191,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 5999,
-   "terrainCells": {
-    "MOUNTAIN": 366,
-    "PLAIN": 5590,
-    "RIVER": 43
-   },
-   "arableCells": 5590,
-   "terrainScore": 5648.1,
-   "wetAdjacentCells": 114,
-   "connections": 3,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16667,
-     "agriculture": 167,
-     "commerce": 167,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48967,
-     "agriculture": 967,
-     "commerce": 992,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X123",
-   "nameCh": "烏蘇里北部",
-   "commanderyId": "PARENT-0175",
-   "commanderyNameCh": "烏蘇里江聚落",
-   "cityId": 1192,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 5824,
-   "terrainCells": {
-    "MOUNTAIN": 1832,
-    "PLAIN": 3842,
-    "RIVER": 150
-   },
-   "arableCells": 3842,
-   "terrainScore": 4100.2,
-   "wetAdjacentCells": 396,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16666,
-     "agriculture": 166,
-     "commerce": 166,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48966,
-     "agriculture": 966,
-     "commerce": 991,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X124",
-   "nameCh": "黑龍江東路",
-   "commanderyId": "PARENT-0175",
-   "commanderyNameCh": "烏蘇里江聚落",
-   "cityId": 1193,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 16059,
-   "terrainCells": {
-    "MOUNTAIN": 5323,
-    "PLAIN": 10579,
-    "RIVER": 157
-   },
-   "arableCells": 10579,
-   "terrainScore": 11189.8,
-   "wetAdjacentCells": 470,
-   "connections": 2,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X039",
-    "memberJurisdictionIds": [
-     "X039",
-     "X117",
-     "X121",
-     "X122",
-     "X123",
-     "X124"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 16666,
-     "agriculture": 166,
-     "commerce": 166,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 48966,
-     "agriculture": 966,
-     "commerce": 991,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   }
-  },
-  {
-   "jurisdictionId": "X125",
-   "nameCh": "農安聚落",
-   "commanderyId": "PARENT-0122",
-   "commanderyNameCh": "夫餘",
-   "cityId": 1194,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 1846,
-   "terrainCells": {
-    "PLAIN": 1829,
-    "RIVER": 17
-   },
-   "arableCells": 1829,
-   "terrainScore": 1837.5,
-   "wetAdjacentCells": 41,
-   "connections": 5,
-   "households": null,
-   "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
-   "gameEconomy": {
-    "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-    "fundingJurisdictionId": "X036",
-    "memberJurisdictionIds": [
-     "X036",
-     "X114",
-     "X115",
-     "X116",
-     "X118",
-     "X119",
-     "X120",
-     "X125"
-    ],
-    "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-    "historicalCensus": false,
-    "decisionRef": "data/curated/han/korea-place-corrections-v1.json",
-    "initial": {
-     "population": 12500,
-     "agriculture": 125,
-     "commerce": 125,
-     "security": 1000,
-     "defence": 2000,
-     "wall": 2000
-    },
-    "capacity": {
-     "population": 49162,
-     "agriculture": 981,
-     "commerce": 1000,
-     "security": 4000,
-     "defence": 6000,
-     "wall": 5900
-    }
-   },
-   "historicalEconomyRefs": [
-    "SGZ30-BUYEO"
    ]
   },
   {

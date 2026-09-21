@@ -22,8 +22,8 @@ class KoreaSettlementEconomyTest(unittest.TestCase):
     def test_generated_world_has_all_reviewed_playable_connected_settlements(self):
         world=json.loads((ROOT/'infra/src/main/resources/map/han-world-v3.json').read_text())
         additions=[c for c in world['cities'] if c['id']>=1134]
-        self.assertEqual(61,len(additions))
-        self.assertEqual({f'external:v1:X{i:03}' for i in range(65,126)}, {c['physicalPlaceRef'] for c in additions})
+        self.assertEqual(35,len(additions))
+        self.assertEqual({'external:v1:'+r['id'] for r in json.loads((ROOT/'data/curated/han/korea-place-corrections-v1.json').read_text())['settlements']}, {c['physicalPlaceRef'] for c in additions})
         for city in additions:
             self.assertTrue(city['connections'])
             self.assertFalse(city['meta']['economyBasis']['historicalCensus'])

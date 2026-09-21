@@ -13,17 +13,14 @@
     "missingValuesAreZero": false,
     "productionAndTaxRates": "NOT_ATTESTED",
     "runtimeBalance": "기존 등급별 게임 초기값은 추정 모델이며 아래 사료 수치와 별도이다.",
-    "unattestedNorthernGameRegions": "SONGHUA/AMUR/USSURI의 개별 호구·생산량 사료는 넣지 않는다. 운영 초기값은 보존 예산에서 배분한 게임 수치이다."
+    "unattestedNorthernGameRegions": "SONGHUA/AMUR/USSURI 지리 대용 거점은 제거했다. 문헌상 지역 총량은 개별 도시 실측값으로 바꾸지 않는다."
   },
   "groups": [
     {
       "id": "SGZ30-BUYEO",
       "name": "부여",
       "jurisdictionIds": [
-        "X036",
-        "X112",
-        "X114",
-        "X125"
+        "X036"
       ],
       "sourceScope": "POLITY_OR_REGION",
       "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -92,9 +89,7 @@
         "X069",
         "X070",
         "X071",
-        "X072",
-        "X110",
-        "X111"
+        "X072"
       ],
       "sourceScope": "POLITY_OR_REGION",
       "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -214,8 +209,7 @@
       "id": "SGZ30-NORTHOKJEO",
       "name": "북옥저",
       "jurisdictionIds": [
-        "X030",
-        "X109"
+        "X030"
       ],
       "sourceScope": "POLITY_OR_REGION",
       "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -329,12 +323,10 @@
         "X041",
         "X042",
         "X073",
-        "X074",
         "X075",
         "X076",
         "X077",
         "X078",
-        "X079",
         "X080",
         "X081",
         "X082",
@@ -343,14 +335,7 @@
         "X085",
         "X086",
         "X087",
-        "X088",
-        "X089",
-        "X090",
-        "X091",
-        "X092",
-        "X093",
-        "X094",
-        "X095"
+        "X089"
       ],
       "sourceScope": "POLITY_OR_REGION",
       "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",
@@ -526,8 +511,7 @@
       "id": "SGZ30-YILOU",
       "name": "읍루",
       "jurisdictionIds": [
-        "X039",
-        "X113"
+        "X039"
       ],
       "sourceScope": "POLITY_OR_REGION",
       "observationDate": "한말~3세기 기사; 220년의 동시 인구조사 아님",

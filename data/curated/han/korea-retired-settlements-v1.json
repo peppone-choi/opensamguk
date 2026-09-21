@@ -1,11 +1,37 @@
 {
   "schemaVersion": 1,
-  "authority": "user-directive-remove-unsupported-numbered-settlements-2026-09-20",
+  "authority": "user-directive-remove-unsupported-geographic-placeholders-2026-09-21",
   "status": "REMOVED_FROM_ACTIVE_MAP",
-  "reason": "Density alone does not justify invented settlement anchors or numbered names.",
-  "previousRuntime": "han-world-v3-1341",
-  "replacementRuntime": "han-world-v3-1194",
+  "reason": "Density, modern locality proxies and river-direction descriptions do not establish named ancient settlements.",
+  "previousRuntime": "han-world-v3-1194",
+  "replacementRuntime": "han-world-v3-1168",
   "numericIdsReserved": [
+    1143,
+    1148,
+    1157,
+    1159,
+    1160,
+    1161,
+    1162,
+    1163,
+    1164,
+    1178,
+    1179,
+    1180,
+    1181,
+    1182,
+    1183,
+    1184,
+    1185,
+    1186,
+    1187,
+    1188,
+    1189,
+    1190,
+    1191,
+    1192,
+    1193,
+    1194,
     1195,
     1196,
     1197,
@@ -1036,6 +1062,162 @@
       "initialAdministrativeUnitId": "han-tiles-external-settlement:X272",
       "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
       "numericCityId": 1341
+    },
+    {
+      "routeNodeKey": "b55e72af-aa40-41de-a885-b24e6c5ca8b2",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X074",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1143
+    },
+    {
+      "routeNodeKey": "aa5d6bfb-acae-4e10-a3b7-e6bd86d0db69",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X079",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1148
+    },
+    {
+      "routeNodeKey": "18a1b6e2-1cee-4fe5-83a4-c5084a631c73",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X088",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1157
+    },
+    {
+      "routeNodeKey": "8f9b1d6d-f9e1-4198-9e33-00e883a70169",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X090",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1159
+    },
+    {
+      "routeNodeKey": "cd9930e6-98e3-4895-b648-672d2757dc17",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X091",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1160
+    },
+    {
+      "routeNodeKey": "3dac383e-d53e-4683-9356-6eb02bdec97d",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X092",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1161
+    },
+    {
+      "routeNodeKey": "84e1f34c-57a6-4827-bc96-69ab8e27837b",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X093",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1162
+    },
+    {
+      "routeNodeKey": "11f22bc0-e93e-421d-904b-6bdea2526e3a",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X094",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1163
+    },
+    {
+      "routeNodeKey": "06d7cb17-e140-4c60-8862-378dd3baa3a9",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X095",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1164
+    },
+    {
+      "routeNodeKey": "4d8d34cf-fe5f-49d3-a42b-a59f05889b6b",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X109",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1178
+    },
+    {
+      "routeNodeKey": "946ea549-492b-479a-b440-da2a815cd360",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X110",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1179
+    },
+    {
+      "routeNodeKey": "0f1040f7-553a-4bbe-9303-cf441306d008",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X111",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1180
+    },
+    {
+      "routeNodeKey": "bd4e54b5-846c-4136-a143-e900765a3cd1",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X112",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1181
+    },
+    {
+      "routeNodeKey": "d9710873-4cb2-4b84-bc37-545efa782df3",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X113",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1182
+    },
+    {
+      "routeNodeKey": "e0c6e83f-3c88-40cb-a694-a1312ad0636b",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X114",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1183
+    },
+    {
+      "routeNodeKey": "7cc37a59-4d1d-4181-82d1-3bbb6f956aab",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X115",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1184
+    },
+    {
+      "routeNodeKey": "c46a8475-11c0-4823-bcb3-2a4472851634",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X116",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1185
+    },
+    {
+      "routeNodeKey": "55517d86-c1ba-49c0-8171-501c82b09cb5",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X117",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1186
+    },
+    {
+      "routeNodeKey": "01132fb4-4997-43e6-91b7-e4b9663a3895",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X118",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1187
+    },
+    {
+      "routeNodeKey": "092d4288-0243-4421-a55e-59bc30a83b21",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X119",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1188
+    },
+    {
+      "routeNodeKey": "cf04930d-2094-4b3e-ba91-d7788de18421",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X120",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1189
+    },
+    {
+      "routeNodeKey": "87207a51-c807-4aaf-ae3d-3cd76db3ca8c",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X121",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1190
+    },
+    {
+      "routeNodeKey": "224cd2f2-6e0d-403f-8d73-d2685bf62584",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X122",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1191
+    },
+    {
+      "routeNodeKey": "010c1fcc-d9f5-4e92-8668-3257518d0240",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X123",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1192
+    },
+    {
+      "routeNodeKey": "b09585e9-bfdd-464b-82f0-367bfa818b98",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X124",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1193
+    },
+    {
+      "routeNodeKey": "859b778d-0d77-4718-be8f-381b7363fa54",
+      "initialAdministrativeUnitId": "han-tiles-external-settlement:X125",
+      "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
+      "numericCityId": 1194
     }
   ],
   "places": [
@@ -5048,6 +5230,709 @@
       "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
       "independentPolityAt220": false,
       "regionId": "MAHAN"
+    },
+    {
+      "id": "X074",
+      "name": "천안 취락",
+      "nameCh": "天安聚落",
+      "modern": "Cheonan",
+      "country": "KR",
+      "wikidata": "Q42146",
+      "revision": 2527158988,
+      "lon": 127.1475,
+      "lat": 36.81,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Cheonan 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X042",
+      "commanderyId": "PARENT-0109",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.1475,
+        "lat": 36.81
+      }
+    },
+    {
+      "id": "X079",
+      "name": "연안 취락",
+      "nameCh": "沿岸聚落",
+      "modern": "Dangjin",
+      "country": "KR",
+      "wikidata": "Q42089",
+      "revision": 2443518687,
+      "lon": 126.62972222222,
+      "lat": 36.894444444444,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Dangjin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X042",
+      "commanderyId": "PARENT-0109",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.62972222222,
+        "lat": 36.894444444444
+      }
+    },
+    {
+      "id": "X088",
+      "name": "무안 취락",
+      "nameCh": "務安聚落",
+      "modern": "Muan_County",
+      "country": "KR",
+      "wikidata": "Q50241",
+      "revision": 2537762802,
+      "lon": 126.47138888889,
+      "lat": 34.989722222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Muan_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.47138888889,
+        "lat": 34.989722222222
+      }
+    },
+    {
+      "id": "X090",
+      "name": "영암 취락",
+      "nameCh": "靈巖聚落",
+      "modern": "Yeongam_County",
+      "country": "KR",
+      "wikidata": "Q50262",
+      "revision": 2515062930,
+      "lon": 126.7,
+      "lat": 34.798333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yeongam_County 권역의 대표 거점. 사료명 사용과 현대 좌표 채택을 구분하며 고대 국읍 확정 비정으로 주장하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X041",
+      "commanderyId": "PARENT-0164",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.7,
+        "lat": 34.798333333333
+      }
+    },
+    {
+      "id": "X091",
+      "name": "금강 취락",
+      "nameCh": "錦江聚落",
+      "modern": "Nonsan",
+      "country": "KR",
+      "wikidata": "Q42088",
+      "revision": 2452113866,
+      "lon": 127.08472222222,
+      "lat": 36.203888888889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nonsan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.08472222222,
+        "lat": 36.203888888889
+      }
+    },
+    {
+      "id": "X092",
+      "name": "웅천 취락",
+      "nameCh": "熊川聚落",
+      "modern": "Buyeo_County",
+      "country": "KR",
+      "wikidata": "Q50247",
+      "revision": 2506791696,
+      "lon": 126.9125,
+      "lat": 36.281944444444,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Buyeo_County 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.9125,
+        "lat": 36.281944444444
+      }
+    },
+    {
+      "id": "X093",
+      "name": "금강 하구",
+      "nameCh": "錦江河口",
+      "modern": "Seocheon_County",
+      "country": "KR",
+      "wikidata": "Q50249",
+      "revision": 2400517043,
+      "lon": 126.69138888889,
+      "lat": 36.080277777778,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Seocheon_County 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.69138888889,
+        "lat": 36.080277777778
+      }
+    },
+    {
+      "id": "X094",
+      "name": "서해 취락",
+      "nameCh": "西海聚落",
+      "modern": "Boryeong",
+      "country": "KR",
+      "wikidata": "Q42098",
+      "revision": 2535590951,
+      "lon": 126.61666666666666,
+      "lat": 36.333333333333336,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Boryeong 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X040",
+      "commanderyId": "PARENT-0156",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 126.61666666666666,
+        "lat": 36.333333333333336
+      }
+    },
+    {
+      "id": "X095",
+      "name": "중원 취락",
+      "nameCh": "中原聚落",
+      "modern": "Cheongju",
+      "country": "KR",
+      "wikidata": "Q42147",
+      "revision": 2506107993,
+      "lon": 127.48972222222,
+      "lat": 36.637222222222,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Cheongju 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X049",
+      "commanderyId": "PARENT-0115",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "MAHAN",
+      "coordinateWitness": {
+        "lon": 127.48972222222,
+        "lat": 36.637222222222
+      }
+    },
+    {
+      "id": "X109",
+      "name": "해안 취락",
+      "nameCh": "海岸聚落",
+      "modern": "Chongjin",
+      "country": "KP",
+      "wikidata": "Q109336",
+      "revision": 2532329011,
+      "lon": 129.78333333333333,
+      "lat": 41.78333333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Chongjin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "OKJEO",
+      "coordinateWitness": {
+        "lon": 129.78333333333333,
+        "lat": 41.78333333333333
+      }
+    },
+    {
+      "id": "X110",
+      "name": "두만강 취락",
+      "nameCh": "豆滿江聚落",
+      "modern": "Yanji",
+      "country": "CN",
+      "wikidata": "Q713362",
+      "revision": 2540644536,
+      "lon": 129.5067,
+      "lat": 42.9044,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Yanji 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO",
+      "coordinateWitness": {
+        "lon": 129.5067,
+        "lat": 42.9044
+      }
+    },
+    {
+      "id": "X111",
+      "name": "혼강 취락",
+      "nameCh": "渾江聚落",
+      "modern": "Baishan",
+      "country": "CN",
+      "wikidata": "Q92348",
+      "revision": 2526615247,
+      "lon": 126.41794,
+      "lat": 41.93771,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Baishan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "GOGURYEO",
+      "coordinateWitness": {
+        "lon": 126.41794,
+        "lat": 41.93771
+      }
+    },
+    {
+      "id": "X112",
+      "name": "돈화 취락",
+      "nameCh": "敦化聚落",
+      "modern": "Dunhua",
+      "country": "CN",
+      "wikidata": "Q713307",
+      "revision": 2532200507,
+      "lon": 128.23333333333,
+      "lat": 43.366666666667,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Dunhua 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X028",
+      "commanderyId": "PARENT-0120",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 128.23333333333,
+        "lat": 43.366666666667
+      }
+    },
+    {
+      "id": "X113",
+      "name": "목단강 취락",
+      "nameCh": "牡丹江聚落",
+      "modern": "Mudanjiang",
+      "country": "CN",
+      "wikidata": "Q217646",
+      "revision": 2526608950,
+      "lon": 129.599722,
+      "lat": 44.586111,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Mudanjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X030",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "YILOU",
+      "coordinateWitness": {
+        "lon": 129.599722,
+        "lat": 44.586111
+      }
+    },
+    {
+      "id": "X114",
+      "name": "이통하 취락",
+      "nameCh": "伊通河聚落",
+      "modern": "Changchun",
+      "country": "CN",
+      "wikidata": "Q92161",
+      "revision": 2526615222,
+      "lon": 125.32277777778,
+      "lat": 43.88,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Changchun 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 125.32277777778,
+        "lat": 43.88
+      }
+    },
+    {
+      "id": "X115",
+      "name": "송화강 합류",
+      "nameCh": "松花江合流",
+      "modern": "Harbin",
+      "country": "CN",
+      "wikidata": "Q42956",
+      "revision": 2543422302,
+      "lon": 126.63333333333,
+      "lat": 45.75,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Harbin 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "SONGHUA",
+      "coordinateWitness": {
+        "lon": 126.63333333333,
+        "lat": 45.75
+      }
+    },
+    {
+      "id": "X116",
+      "name": "송눈 평원",
+      "nameCh": "松嫩平原",
+      "modern": "Daqing",
+      "country": "CN",
+      "wikidata": "Q304848",
+      "revision": 2526609677,
+      "lon": 125.00798,
+      "lat": 46.59791,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Daqing 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "SONGHUA",
+      "coordinateWitness": {
+        "lon": 125.00798,
+        "lat": 46.59791
+      }
+    },
+    {
+      "id": "X117",
+      "name": "흑룡강 중류",
+      "nameCh": "黑龍江中流",
+      "modern": "Heihe",
+      "country": "CN",
+      "wikidata": "Q349983",
+      "revision": 2526610453,
+      "lon": 127.488611,
+      "lat": 50.245833,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Heihe 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 127.488611,
+        "lat": 50.245833
+      }
+    },
+    {
+      "id": "X118",
+      "name": "눈강 취락",
+      "nameCh": "嫩江聚落",
+      "modern": "Nenjiang_City",
+      "country": "CN",
+      "wikidata": "Q1344863",
+      "revision": 2526581607,
+      "lon": 125.21595,
+      "lat": 49.17448,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nenjiang_City 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 125.21595,
+        "lat": 49.17448
+      }
+    },
+    {
+      "id": "X119",
+      "name": "흑룡강 상류",
+      "nameCh": "黑龍江上流",
+      "modern": "Mohe_City",
+      "country": "CN",
+      "wikidata": "Q163094",
+      "revision": 2526608127,
+      "lon": 122.53095,
+      "lat": 52.96881,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Mohe_City 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 122.53095,
+        "lat": 52.96881
+      }
+    },
+    {
+      "id": "X120",
+      "name": "흑룡강 남안",
+      "nameCh": "黑龍江南岸",
+      "modern": "Bei'an",
+      "country": "CN",
+      "wikidata": "Q814616",
+      "revision": 2526614913,
+      "lon": 126.50368,
+      "lat": 48.23952,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Bei'an 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "AMUR",
+      "coordinateWitness": {
+        "lon": 126.50368,
+        "lat": 48.23952
+      }
+    },
+    {
+      "id": "X121",
+      "name": "삼강 취락",
+      "nameCh": "三江聚落",
+      "modern": "Fujin,_Heilongjiang",
+      "country": "CN",
+      "wikidata": "Q614877",
+      "revision": 2526612998,
+      "lon": 132.03406,
+      "lat": 47.24889,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Fujin,_Heilongjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 132.03406,
+        "lat": 47.24889
+      }
+    },
+    {
+      "id": "X122",
+      "name": "송화강 하구",
+      "nameCh": "松花江河口",
+      "modern": "Tongjiang,_Heilongjiang",
+      "country": "CN",
+      "wikidata": "Q1022983",
+      "revision": 2526542025,
+      "lon": 132.50297,
+      "lat": 47.65017,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Tongjiang,_Heilongjiang 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 132.50297,
+        "lat": 47.65017
+      }
+    },
+    {
+      "id": "X123",
+      "name": "우수리 북부",
+      "nameCh": "烏蘇里北部",
+      "modern": "Shuangyashan",
+      "country": "CN",
+      "wikidata": "Q349973",
+      "revision": 2526610443,
+      "lon": 131.15452,
+      "lat": 46.63883,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Shuangyashan 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 131.15452,
+        "lat": 46.63883
+      }
+    },
+    {
+      "id": "X124",
+      "name": "흑룡강 하구길",
+      "nameCh": "黑龍江東路",
+      "modern": "Khabarovsk",
+      "country": "RU",
+      "wikidata": "Q4454",
+      "revision": 2532333969,
+      "lon": 135.06666666667,
+      "lat": 48.483333333333,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Khabarovsk 권역의 육지 대표점 채택. 전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X039",
+      "commanderyId": "PARENT-0111",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "USSURI",
+      "coordinateWitness": {
+        "lon": 135.06666666667,
+        "lat": 48.483333333333
+      }
+    },
+    {
+      "id": "X125",
+      "name": "농안 취락",
+      "nameCh": "農安聚落",
+      "modern": "Nong’an historical locality proxy",
+      "country": "CN",
+      "wikidata": "Q92277",
+      "revision": 0,
+      "lon": 125.1604763546087,
+      "lat": 44.496622395,
+      "confidence": "DISPUTED",
+      "basis": "[게임 기획] Nong’an historical locality proxy 권역의 육지 대표점 채택. 후기 부여 왕성 비정권; 220년에는 지방 취락으로 사용. 해당 구획은 이동·경제 배분 단위이며 고대 국읍 확정 좌표나 220년 독립국 존속을 뜻하지 않는다.",
+      "historicalEvidence": {
+        "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+        "claim": "후기 부여 왕성 비정권; 220년에는 지방 취락으로 사용"
+      },
+      "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+      "fundingJurisdictionId": "X036",
+      "commanderyId": "PARENT-0122",
+      "economicAllocation": "CONSERVE_DONOR_POPULATION_AGRICULTURE_COMMERCE",
+      "independentPolityAt220": false,
+      "regionId": "BUYEO",
+      "coordinateWitness": {
+        "lon": 125.17216,
+        "lat": 44.4309
+      },
+      "coordinateBasis": "PINNED_PRE_CORRECTION_MAP_POINT"
     }
   ]
 }

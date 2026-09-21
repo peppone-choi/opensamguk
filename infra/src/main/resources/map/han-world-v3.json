@@ -34150,8 +34150,8 @@
         792,
         793,
         794,
-        1140,
-        1183
+        1105,
+        1140
       ],
       "meta": {
         "jun": "현도군",
@@ -34199,9 +34199,8 @@
         810,
         811,
         813,
-        1131,
-        1183,
-        1194
+        1105,
+        1131
       ],
       "meta": {
         "jun": "요동속국",
@@ -36771,7 +36770,7 @@
         793,
         794,
         795,
-        1183
+        1105
       ],
       "meta": {
         "jun": "현도군",
@@ -45900,17 +45899,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 41972,
-        "agriculture": 829,
-        "commerce": 850,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 14286,
-        "agriculture": 143,
-        "commerce": 143,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -45953,9 +45952,7 @@
             "X065",
             "X066",
             "X067",
-            "X068",
-            "X111",
-            "X112"
+            "X068"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -51405,26 +51402,26 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 200,
-        "commerce": 200,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
+        1105,
         1108,
-        1178,
-        1179,
-        1182
+        1136,
+        1139
       ],
       "meta": {
         "jun": "북옥저",
@@ -51438,10 +51435,7 @@
           "fundingJurisdictionId": "X030",
           "memberJurisdictionIds": [
             "X030",
-            "X070",
-            "X109",
-            "X110",
-            "X113"
+            "X070"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -51719,32 +51713,30 @@
       "level": 6,
       "region": 14,
       "max": {
-        "population": 49163,
-        "agriculture": 982,
-        "commerce": 1000,
+        "population": 393300,
+        "agriculture": 7850,
+        "commerce": 8000,
         "security": 6000,
         "defence": 8100,
         "wall": 8000
       },
       "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
         "security": 1000,
         "defence": 3000,
         "wall": 3000
       },
       "connections": [
+        728,
+        729,
+        784,
+        1099,
         1134,
+        1135,
         1136,
-        1140,
-        1179,
-        1180,
-        1181,
-        1182,
-        1183,
-        1184,
-        1194
+        1140
       ],
       "meta": {
         "jun": "부여",
@@ -51766,6 +51758,23 @@
             },
             {
               "names": [
+                "고리국"
+              ],
+              "target": "X036",
+              "role": "UNLOCATED_TRADITION_REFERENCE",
+              "basis": "전승명 참조만 보존한다. 근거 없는 지역 대용점을 제거했으며 부여 중심지에 별도 국읍을 복제하지 않는다."
+            },
+            {
+              "names": [
+                "동부여",
+                "갈사국"
+              ],
+              "target": "X036",
+              "role": "UNLOCATED_TRADITION_REFERENCE",
+              "basis": "전승명 참조만 보존한다. 근거 없는 지역 대용점을 제거했으며 부여 중심지에 별도 국읍을 복제하지 않는다."
+            },
+            {
+              "names": [
                 "해두국",
                 "황룡국"
               ],
@@ -51774,23 +51783,6 @@
               "basis": "부여계 전승명. 사료의 구체적 위치를 확보하지 못해 중심지 이력에 보존; 새로운 확정 국가명으로 조작하지 않음"
             }
           ]
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
         },
         "displayName": "부여"
       },
@@ -51935,28 +51927,23 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 48967,
-        "agriculture": 967,
-        "commerce": 992,
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 16667,
-        "agriculture": 167,
-        "commerce": 167,
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1099,
-        1182,
-        1190,
-        1191,
-        1192,
-        1193
+        1099
       ],
       "meta": {
         "jun": "읍루",
@@ -51965,21 +51952,6 @@
         "seat": "읍루",
         "nameCh": "挹婁",
         "isSeat": true,
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
         "displayName": "읍루"
       },
       "provinceId": 980,
@@ -51997,17 +51969,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24484,
-        "agriculture": 484,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8334,
-        "agriculture": 84,
-        "commerce": 84,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -52016,11 +51988,11 @@
         1110,
         1116,
         1117,
+        1118,
+        1144,
+        1149,
         1154,
         1155,
-        1160,
-        1161,
-        1162,
         1167
       ],
       "meta": {
@@ -52045,11 +52017,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -52072,17 +52040,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -52113,9 +52081,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -52138,17 +52104,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 73450,
-        "agriculture": 1450,
-        "commerce": 1488,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 25000,
-        "agriculture": 250,
-        "commerce": 250,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -52156,7 +52122,11 @@
       "connections": [
         804,
         808,
-        1143,
+        1118,
+        1142,
+        1145,
+        1146,
+        1149,
         1175,
         1176
       ],
@@ -52172,8 +52142,6 @@
           "fundingJurisdictionId": "X042",
           "memberJurisdictionIds": [
             "X042",
-            "X074",
-            "X079",
             "X106"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
@@ -52378,8 +52346,7 @@
         1100,
         1151,
         1156,
-        1158,
-        1159
+        1158
       ],
       "meta": {
         "jun": "고자미동국",
@@ -52464,7 +52431,7 @@
     },
     {
       "id": 1117,
-      "name": "성주 취락",
+      "name": "본피",
       "x": 540,
       "y": 276,
       "level": 5,
@@ -52493,17 +52460,17 @@
         1167
       ],
       "meta": {
-        "jun": "성주 취락",
-        "junCh": "星山伽耶",
+        "jun": "본피",
+        "junCh": "本彼",
         "ju": "동이",
-        "seat": "성주 취락",
-        "nameCh": "星山伽耶",
+        "seat": "본피",
+        "nameCh": "本彼",
         "isSeat": true,
         "historicalPlace": {
           "aliases": [
             "성산가야"
           ],
-          "nameBasis": "성산가야는 후대 전승명. 220년 표시에는 지역 취락 명칭 사용",
+          "nameBasis": "三國史記 地理志의 본피현(성주). 후대 기록의 고지명을 게임 표기로 채택하며 220년 동명 국읍의 실재를 단정하지 않는다.",
           "independentPolityAtReferenceYear": false
         },
         "economyBasis": {
@@ -52517,7 +52484,7 @@
           "historicalCensus": false,
           "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
         },
-        "displayName": "성주 취락"
+        "displayName": "본피"
       },
       "provinceId": 989,
       "spatialProvinceId": "X048",
@@ -52528,23 +52495,23 @@
     },
     {
       "id": 1118,
-      "name": "함창 취락",
+      "name": "고동람",
       "x": 538,
       "y": 266,
       "level": 5,
       "region": 14,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
+        "population": 293800,
+        "agriculture": 5800,
+        "commerce": 5950,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 500,
-        "commerce": 500,
+        "population": 100000,
+        "agriculture": 1000,
+        "commerce": 1000,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -52553,37 +52520,28 @@
         1101,
         1103,
         1107,
-        1164,
+        1109,
+        1111,
+        1149,
         1167,
         1168,
         1175
       ],
       "meta": {
-        "jun": "함창 취락",
-        "junCh": "古寧伽耶",
+        "jun": "고동람",
+        "junCh": "古冬攬",
         "ju": "동이",
-        "seat": "함창 취락",
-        "nameCh": "古寧伽耶",
+        "seat": "고동람",
+        "nameCh": "古冬攬",
         "isSeat": true,
         "historicalPlace": {
           "aliases": [
             "고령가야"
           ],
-          "nameBasis": "고령가야 함창 비정 채택; 후대 전승명과 현재 취락 구분",
+          "nameBasis": "高麗史 地理志에 전하는 함창의 고동람. 후대 기록의 고지명을 게임 표기로 채택하며 220년 독립국 또는 동명 군현 존속을 주장하지 않는다.",
           "independentPolityAtReferenceYear": false
         },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X049",
-          "memberJurisdictionIds": [
-            "X049",
-            "X095"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "함창 취락"
+        "displayName": "고동람"
       },
       "provinceId": 990,
       "spatialProvinceId": "X049",
@@ -53274,17 +53232,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 41972,
-        "agriculture": 829,
-        "commerce": 850,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 14286,
-        "agriculture": 143,
-        "commerce": 143,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -53294,8 +53252,7 @@
         989,
         1105,
         1135,
-        1140,
-        1180
+        1140
       ],
       "meta": {
         "jun": "국내성",
@@ -53324,9 +53281,7 @@
             "X065",
             "X066",
             "X067",
-            "X068",
-            "X111",
-            "X112"
+            "X068"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53349,26 +53304,26 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 41972,
-        "agriculture": 829,
-        "commerce": 850,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 14286,
-        "agriculture": 143,
-        "commerce": 143,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         977,
+        1105,
         1134,
-        1136,
-        1180
+        1136
       ],
       "meta": {
         "jun": "국내성",
@@ -53397,9 +53352,7 @@
             "X065",
             "X066",
             "X067",
-            "X068",
-            "X111",
-            "X112"
+            "X068"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53422,29 +53375,29 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 41971,
-        "agriculture": 829,
-        "commerce": 850,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 14286,
-        "agriculture": 143,
-        "commerce": 143,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         977,
+        1099,
         1105,
         1135,
         1137,
         1138,
-        1180,
-        1181
+        1139
       ],
       "meta": {
         "jun": "국내성",
@@ -53473,9 +53426,7 @@
             "X065",
             "X066",
             "X067",
-            "X068",
-            "X111",
-            "X112"
+            "X068"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53498,17 +53449,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 41971,
-        "agriculture": 828,
-        "commerce": 850,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 14286,
-        "agriculture": 143,
-        "commerce": 143,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -53516,9 +53467,7 @@
       "connections": [
         1136,
         1138,
-        1139,
-        1178,
-        1181
+        1139
       ],
       "meta": {
         "jun": "국내성",
@@ -53547,9 +53496,7 @@
             "X065",
             "X066",
             "X067",
-            "X068",
-            "X111",
-            "X112"
+            "X068"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53557,9 +53504,9 @@
         },
         "displayName": "개마"
       },
-      "provinceId": 1336,
+      "provinceId": 1334,
       "spatialProvinceId": "KOR-X068-SUB-X028-7238a630ea3c",
-      "spatialProvinceIndex": 1336,
+      "spatialProvinceIndex": 1334,
       "routeNodeKey": "2f1090e4-4785-4cfd-8df5-bf86c5455a23",
       "physicalPlaceRef": "external:v1:X068",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
@@ -53625,9 +53572,9 @@
         },
         "displayName": "구다"
       },
-      "provinceId": 1344,
+      "provinceId": 1339,
       "spatialProvinceId": "KOR-X069-X037",
-      "spatialProvinceIndex": 1344,
+      "spatialProvinceIndex": 1339,
       "routeNodeKey": "b5debc13-8123-4bf0-9524-3083bf21748d",
       "physicalPlaceRef": "external:v1:X069",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
@@ -53640,26 +53587,25 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 200,
-        "commerce": 200,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1137,
-        1178,
-        1179,
-        1181
+        1099,
+        1136,
+        1137
       ],
       "meta": {
         "jun": "북옥저",
@@ -53685,10 +53631,7 @@
           "fundingJurisdictionId": "X030",
           "memberJurisdictionIds": [
             "X030",
-            "X070",
-            "X109",
-            "X110",
-            "X113"
+            "X070"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53696,9 +53639,9 @@
         },
         "displayName": "행인"
       },
-      "provinceId": 1350,
+      "provinceId": 1341,
       "spatialProvinceId": "KOR-X070-SUB-X030-b78cb489a20c",
-      "spatialProvinceIndex": 1350,
+      "spatialProvinceIndex": 1341,
       "routeNodeKey": "332c651d-184b-4cd6-8c2f-45e9cfb45fe7",
       "physicalPlaceRef": "external:v1:X070",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
@@ -53731,8 +53674,7 @@
         792,
         989,
         1105,
-        1134,
-        1183
+        1134
       ],
       "meta": {
         "jun": "졸본",
@@ -53766,9 +53708,9 @@
         },
         "displayName": "양맥"
       },
-      "provinceId": 1353,
+      "provinceId": 1342,
       "spatialProvinceId": "KOR-X071-X029",
-      "spatialProvinceIndex": 1353,
+      "spatialProvinceIndex": 1342,
       "routeNodeKey": "a8201d08-f08d-46d7-be26-a824101604e9",
       "physicalPlaceRef": "external:v1:X071",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
@@ -53838,9 +53780,9 @@
         },
         "displayName": "소수맥"
       },
-      "provinceId": 1356,
+      "provinceId": 1345,
       "spatialProvinceId": "KOR-X072-SUB-X029-f447e36b3ebd",
-      "spatialProvinceIndex": 1356,
+      "spatialProvinceIndex": 1345,
       "routeNodeKey": "18d6a7cb-a582-4719-a9d7-9aa0c098aff8",
       "physicalPlaceRef": "external:v1:X072",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
@@ -53853,26 +53795,25 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24484,
-        "agriculture": 484,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8334,
-        "agriculture": 84,
-        "commerce": 84,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1143,
+        1111,
         1144,
         1145,
-        1148,
         1149
       ],
       "meta": {
@@ -53905,11 +53846,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -53917,84 +53854,12 @@
         },
         "displayName": "고원"
       },
-      "provinceId": 1357,
+      "provinceId": 1346,
       "spatialProvinceId": "KOR-X073-X040",
-      "spatialProvinceIndex": 1357,
+      "spatialProvinceIndex": 1346,
       "routeNodeKey": "dbc9351c-933d-462e-8f45-9ba4b2857153",
       "physicalPlaceRef": "external:v1:X073",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
-    },
-    {
-      "id": 1143,
-      "name": "천안 취락",
-      "x": 523,
-      "y": 263,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 73450,
-        "agriculture": 1450,
-        "commerce": 1488,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 25000,
-        "agriculture": 250,
-        "commerce": 250,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1111,
-        1142,
-        1148,
-        1149,
-        1164,
-        1175
-      ],
-      "meta": {
-        "jun": "백제국",
-        "junCh": "伯濟國",
-        "ju": "동이",
-        "seat": "백제국",
-        "nameCh": "天安聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X074"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X042",
-          "memberJurisdictionIds": [
-            "X042",
-            "X074",
-            "X079",
-            "X106"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "천안 취락"
-      },
-      "provinceId": 1368,
-      "spatialProvinceId": "KOR-X074-X042",
-      "spatialProvinceIndex": 1368,
-      "routeNodeKey": "b55e72af-aa40-41de-a885-b24e6c5ca8b2",
-      "physicalPlaceRef": "external:v1:X074",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X074"
     },
     {
       "id": 1144,
@@ -54004,27 +53869,27 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24484,
-        "agriculture": 484,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8334,
-        "agriculture": 84,
-        "commerce": 84,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
+        1109,
         1142,
+        1145,
         1149,
-        1160,
-        1161,
-        1163
+        1155
       ],
       "meta": {
         "jun": "목지국",
@@ -54056,11 +53921,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54068,9 +53929,9 @@
         },
         "displayName": "염로"
       },
-      "provinceId": 1358,
+      "provinceId": 1347,
       "spatialProvinceId": "KOR-X075-X040",
-      "spatialProvinceIndex": 1358,
+      "spatialProvinceIndex": 1347,
       "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
       "physicalPlaceRef": "external:v1:X075",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
@@ -54083,26 +53944,26 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24484,
-        "agriculture": 484,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8334,
-        "agriculture": 84,
-        "commerce": 84,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
+        1111,
         1142,
-        1146,
-        1148,
-        1163
+        1144,
+        1146
       ],
       "meta": {
         "jun": "목지국",
@@ -54134,11 +53995,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54146,9 +54003,9 @@
         },
         "displayName": "감해비리"
       },
-      "provinceId": 1359,
+      "provinceId": 1348,
       "spatialProvinceId": "KOR-X076-X040",
-      "spatialProvinceIndex": 1359,
+      "spatialProvinceIndex": 1348,
       "routeNodeKey": "b90837d6-917e-47fd-b246-e4219c54ed0e",
       "physicalPlaceRef": "external:v1:X076",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
@@ -54161,25 +54018,25 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
+        1111,
         1145,
-        1147,
-        1148
+        1147
       ],
       "meta": {
         "jun": "목지국",
@@ -54211,11 +54068,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54223,32 +54076,32 @@
         },
         "displayName": "치리국"
       },
-      "provinceId": 1360,
+      "provinceId": 1349,
       "spatialProvinceId": "KOR-X077-X040",
-      "spatialProvinceIndex": 1360,
+      "spatialProvinceIndex": 1349,
       "routeNodeKey": "402d0581-1e13-4c54-8d55-de0643586c47",
       "physicalPlaceRef": "external:v1:X077",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
     },
     {
       "id": 1147,
-      "name": "태안 취락",
+      "name": "신소도",
       "x": 510,
       "y": 263,
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54261,16 +54114,17 @@
         "junCh": "目支國",
         "ju": "동이",
         "seat": "목지국",
-        "nameCh": "泰安聚落",
+        "nameCh": "臣蘇塗國",
         "isSeat": false,
         "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "placementBasis": "REVIEWED_HISTORICAL_NAME_WITH_DISPUTED_LOCATION",
           "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
           "confidence": "DISPUTED",
           "independentPolityAtReferenceYear": false,
           "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+            "url": "https://encykorea.aks.ac.kr/Article/E0033118",
+            "quote": "신소도국은 … 지금의 충청남도 태안으로 비정하기도 한다.",
+            "claim": "三國志 韓傳의 신소도국; 태안 비정설 채택. 경쟁 비정과 좌표 불확실성을 유지한다."
           },
           "regionId": "MAHAN",
           "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X078"
@@ -54286,94 +54140,20 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
           "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
         },
-        "displayName": "태안 취락"
+        "displayName": "신소도"
       },
-      "provinceId": 1361,
+      "provinceId": 1350,
       "spatialProvinceId": "KOR-X078-X040",
-      "spatialProvinceIndex": 1361,
+      "spatialProvinceIndex": 1350,
       "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
       "physicalPlaceRef": "external:v1:X078",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
-    },
-    {
-      "id": 1148,
-      "name": "연안 취락",
-      "x": 514,
-      "y": 261,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 73450,
-        "agriculture": 1450,
-        "commerce": 1487,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 25000,
-        "agriculture": 250,
-        "commerce": 250,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1142,
-        1143,
-        1145,
-        1146
-      ],
-      "meta": {
-        "jun": "백제국",
-        "junCh": "伯濟國",
-        "ju": "동이",
-        "seat": "백제국",
-        "nameCh": "沿岸聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X079"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X042",
-          "memberJurisdictionIds": [
-            "X042",
-            "X074",
-            "X079",
-            "X106"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "연안 취락"
-      },
-      "provinceId": 1369,
-      "spatialProvinceId": "KOR-X079-X042",
-      "spatialProvinceIndex": 1369,
-      "routeNodeKey": "aa5d6bfb-acae-4e10-a3b7-e6bd86d0db69",
-      "physicalPlaceRef": "external:v1:X079",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X079"
     },
     {
       "id": 1149,
@@ -54383,27 +54163,27 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
+        1109,
+        1111,
+        1118,
         1142,
-        1143,
-        1144,
-        1160,
-        1164
+        1144
       ],
       "meta": {
         "jun": "목지국",
@@ -54435,11 +54215,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54447,9 +54223,9 @@
         },
         "displayName": "불운"
       },
-      "provinceId": 1362,
+      "provinceId": 1351,
       "spatialProvinceId": "KOR-X080-X040",
-      "spatialProvinceIndex": 1362,
+      "spatialProvinceIndex": 1351,
       "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
       "physicalPlaceRef": "external:v1:X080",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
@@ -54462,17 +54238,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54512,9 +54288,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54522,9 +54296,9 @@
         },
         "displayName": "지반"
       },
-      "provinceId": 1372,
+      "provinceId": 1353,
       "spatialProvinceId": "KOR-X081-X041",
-      "spatialProvinceIndex": 1372,
+      "spatialProvinceIndex": 1353,
       "routeNodeKey": "04c6c835-44f8-401b-84e2-f946c1bbb7c0",
       "physicalPlaceRef": "external:v1:X081",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
@@ -54537,17 +54311,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54590,9 +54364,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54600,9 +54372,9 @@
         },
         "displayName": "고랍"
       },
-      "provinceId": 1373,
+      "provinceId": 1354,
       "spatialProvinceId": "KOR-X082-X041",
-      "spatialProvinceIndex": 1373,
+      "spatialProvinceIndex": 1354,
       "routeNodeKey": "0b8bef5a-bff0-4be6-868f-4226dec0156c",
       "physicalPlaceRef": "external:v1:X082",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
@@ -54615,17 +54387,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54668,9 +54440,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54678,9 +54448,9 @@
         },
         "displayName": "초산도비리"
       },
-      "provinceId": 1374,
+      "provinceId": 1355,
       "spatialProvinceId": "KOR-X083-X041",
-      "spatialProvinceIndex": 1374,
+      "spatialProvinceIndex": 1355,
       "routeNodeKey": "708ca542-adde-4bcf-bf04-9e43ebd255d4",
       "physicalPlaceRef": "external:v1:X083",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
@@ -54693,25 +54463,24 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         1152,
-        1156,
-        1157
+        1156
       ],
       "meta": {
         "jun": "벽비리국",
@@ -54743,9 +54512,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54753,9 +54520,9 @@
         },
         "displayName": "모로비리"
       },
-      "provinceId": 1375,
+      "provinceId": 1356,
       "spatialProvinceId": "KOR-X084-X041",
-      "spatialProvinceIndex": 1375,
+      "spatialProvinceIndex": 1356,
       "routeNodeKey": "94a0809d-c95e-4e2a-aa67-1396346d1166",
       "physicalPlaceRef": "external:v1:X084",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
@@ -54768,17 +54535,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54820,9 +54587,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54830,9 +54595,9 @@
         },
         "displayName": "불사분사"
       },
-      "provinceId": 1376,
+      "provinceId": 1357,
       "spatialProvinceId": "KOR-X085-X041",
-      "spatialProvinceIndex": 1376,
+      "spatialProvinceIndex": 1357,
       "routeNodeKey": "737690ed-4d6d-43b6-9e3c-3d5ebd90a183",
       "physicalPlaceRef": "external:v1:X085",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
@@ -54845,17 +54610,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54863,8 +54628,8 @@
       "connections": [
         1109,
         1110,
-        1150,
-        1162
+        1144,
+        1150
       ],
       "meta": {
         "jun": "목지국",
@@ -54896,11 +54661,7 @@
             "X077",
             "X078",
             "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
+            "X086"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54908,9 +54669,9 @@
         },
         "displayName": "만로"
       },
-      "provinceId": 1363,
+      "provinceId": 1352,
       "spatialProvinceId": "KOR-X086-X040",
-      "spatialProvinceIndex": 1363,
+      "spatialProvinceIndex": 1352,
       "routeNodeKey": "8e687c26-62b5-45ec-b28c-8ebce1f3e3db",
       "physicalPlaceRef": "external:v1:X086",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
@@ -54923,17 +54684,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -54943,8 +54704,7 @@
         1151,
         1152,
         1153,
-        1157,
-        1159
+        1158
       ],
       "meta": {
         "jun": "벽비리국",
@@ -54976,9 +54736,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -54986,87 +54744,12 @@
         },
         "displayName": "불미"
       },
-      "provinceId": 1377,
+      "provinceId": 1358,
       "spatialProvinceId": "KOR-X087-X041",
-      "spatialProvinceIndex": 1377,
+      "spatialProvinceIndex": 1358,
       "routeNodeKey": "f2ac429d-520f-4b94-88a2-800d270e8e11",
       "physicalPlaceRef": "external:v1:X087",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
-    },
-    {
-      "id": 1157,
-      "name": "무안 취락",
-      "x": 512,
-      "y": 291,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1153,
-        1156,
-        1159
-      ],
-      "meta": {
-        "jun": "벽비리국",
-        "junCh": "辟卑離國",
-        "ju": "동이",
-        "seat": "벽비리국",
-        "nameCh": "務安聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X088"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X041",
-          "memberJurisdictionIds": [
-            "X041",
-            "X081",
-            "X082",
-            "X083",
-            "X084",
-            "X085",
-            "X087",
-            "X088",
-            "X089",
-            "X090"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "무안 취락"
-      },
-      "provinceId": 1378,
-      "spatialProvinceId": "KOR-X088-X041",
-      "spatialProvinceIndex": 1378,
-      "routeNodeKey": "18a1b6e2-1cee-4fe5-83a4-c5084a631c73",
-      "physicalPlaceRef": "external:v1:X088",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X088"
     },
     {
       "id": 1158,
@@ -55076,24 +54759,24 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         1115,
-        1159
+        1156
       ],
       "meta": {
         "jun": "벽비리국",
@@ -55125,9 +54808,7 @@
             "X084",
             "X085",
             "X087",
-            "X088",
-            "X089",
-            "X090"
+            "X089"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
           "historicalCensus": false,
@@ -55135,473 +54816,12 @@
         },
         "displayName": "침미다례 권역"
       },
-      "provinceId": 1379,
+      "provinceId": 1359,
       "spatialProvinceId": "KOR-X089-X041",
-      "spatialProvinceIndex": 1379,
+      "spatialProvinceIndex": 1359,
       "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
       "physicalPlaceRef": "external:v1:X089",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
-    },
-    {
-      "id": 1159,
-      "name": "영암 취락",
-      "x": 515,
-      "y": 294,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 29380,
-        "agriculture": 580,
-        "commerce": 595,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 10000,
-        "agriculture": 100,
-        "commerce": 100,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1115,
-        1156,
-        1157,
-        1158
-      ],
-      "meta": {
-        "jun": "벽비리국",
-        "junCh": "辟卑離國",
-        "ju": "동이",
-        "seat": "벽비리국",
-        "nameCh": "靈巖聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X090"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X041",
-          "memberJurisdictionIds": [
-            "X041",
-            "X081",
-            "X082",
-            "X083",
-            "X084",
-            "X085",
-            "X087",
-            "X088",
-            "X089",
-            "X090"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "영암 취락"
-      },
-      "provinceId": 1380,
-      "spatialProvinceId": "KOR-X090-X041",
-      "spatialProvinceIndex": 1380,
-      "routeNodeKey": "8f9b1d6d-f9e1-4198-9e33-00e883a70169",
-      "physicalPlaceRef": "external:v1:X090",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X090"
-    },
-    {
-      "id": 1160,
-      "name": "금강 취락",
-      "x": 522,
-      "y": 272,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1109,
-        1144,
-        1149,
-        1161,
-        1164,
-        1167
-      ],
-      "meta": {
-        "jun": "목지국",
-        "junCh": "目支國",
-        "ju": "동이",
-        "seat": "목지국",
-        "nameCh": "錦江聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X091"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X040",
-          "memberJurisdictionIds": [
-            "X040",
-            "X073",
-            "X075",
-            "X076",
-            "X077",
-            "X078",
-            "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "금강 취락"
-      },
-      "provinceId": 1364,
-      "spatialProvinceId": "KOR-X091-X040",
-      "spatialProvinceIndex": 1364,
-      "routeNodeKey": "cd9930e6-98e3-4895-b648-672d2757dc17",
-      "physicalPlaceRef": "external:v1:X091",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X091"
-    },
-    {
-      "id": 1161,
-      "name": "웅천 취락",
-      "x": 519,
-      "y": 271,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 496,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1109,
-        1144,
-        1160,
-        1162,
-        1163
-      ],
-      "meta": {
-        "jun": "목지국",
-        "junCh": "目支國",
-        "ju": "동이",
-        "seat": "목지국",
-        "nameCh": "熊川聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X092"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X040",
-          "memberJurisdictionIds": [
-            "X040",
-            "X073",
-            "X075",
-            "X076",
-            "X077",
-            "X078",
-            "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "웅천 취락"
-      },
-      "provinceId": 1365,
-      "spatialProvinceId": "KOR-X092-X040",
-      "spatialProvinceIndex": 1365,
-      "routeNodeKey": "3dac383e-d53e-4683-9356-6eb02bdec97d",
-      "physicalPlaceRef": "external:v1:X092",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X092"
-    },
-    {
-      "id": 1162,
-      "name": "금강 하구",
-      "x": 515,
-      "y": 274,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 495,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1109,
-        1155,
-        1161,
-        1163
-      ],
-      "meta": {
-        "jun": "목지국",
-        "junCh": "目支國",
-        "ju": "동이",
-        "seat": "목지국",
-        "nameCh": "錦江河口",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X093"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X040",
-          "memberJurisdictionIds": [
-            "X040",
-            "X073",
-            "X075",
-            "X076",
-            "X077",
-            "X078",
-            "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "금강 하구"
-      },
-      "provinceId": 1366,
-      "spatialProvinceId": "KOR-X093-X040",
-      "spatialProvinceIndex": 1366,
-      "routeNodeKey": "84e1f34c-57a6-4827-bc96-69ab8e27837b",
-      "physicalPlaceRef": "external:v1:X093",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X093"
-    },
-    {
-      "id": 1163,
-      "name": "서해 취락",
-      "x": 514,
-      "y": 270,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 24483,
-        "agriculture": 483,
-        "commerce": 495,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 8333,
-        "agriculture": 83,
-        "commerce": 83,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1144,
-        1145,
-        1161,
-        1162
-      ],
-      "meta": {
-        "jun": "목지국",
-        "junCh": "目支國",
-        "ju": "동이",
-        "seat": "목지국",
-        "nameCh": "西海聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X094"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X040",
-          "memberJurisdictionIds": [
-            "X040",
-            "X073",
-            "X075",
-            "X076",
-            "X077",
-            "X078",
-            "X080",
-            "X086",
-            "X091",
-            "X092",
-            "X093",
-            "X094"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "서해 취락"
-      },
-      "provinceId": 1367,
-      "spatialProvinceId": "KOR-X094-X040",
-      "spatialProvinceIndex": 1367,
-      "routeNodeKey": "11f22bc0-e93e-421d-904b-6bdea2526e3a",
-      "physicalPlaceRef": "external:v1:X094",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X094"
-    },
-    {
-      "id": 1164,
-      "name": "중원 취락",
-      "x": 527,
-      "y": 266,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 50000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1118,
-        1143,
-        1149,
-        1160,
-        1167,
-        1175
-      ],
-      "meta": {
-        "jun": "함창 취락",
-        "junCh": "古寧伽耶",
-        "ju": "동이",
-        "seat": "함창 취락",
-        "nameCh": "中原聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "MAHAN",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X095"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X049",
-          "memberJurisdictionIds": [
-            "X049",
-            "X095"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "중원 취락"
-      },
-      "provinceId": 1381,
-      "spatialProvinceId": "KOR-X095-X049",
-      "spatialProvinceIndex": 1381,
-      "routeNodeKey": "06d7cb17-e140-4c60-8862-378dd3baa3a9",
-      "physicalPlaceRef": "external:v1:X095",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X095"
     },
     {
       "id": 1165,
@@ -55666,9 +54886,9 @@
         },
         "displayName": "골벌"
       },
-      "provinceId": 1382,
+      "provinceId": 1360,
       "spatialProvinceId": "KOR-X096-X033",
-      "spatialProvinceIndex": 1382,
+      "spatialProvinceIndex": 1360,
       "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
       "physicalPlaceRef": "external:v1:X096",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
@@ -55739,9 +54959,9 @@
         },
         "displayName": "이서"
       },
-      "provinceId": 1383,
+      "provinceId": 1361,
       "spatialProvinceId": "KOR-X097-X033",
-      "spatialProvinceIndex": 1383,
+      "spatialProvinceIndex": 1361,
       "routeNodeKey": "36bd58f3-5463-438a-a9af-71f394069844",
       "physicalPlaceRef": "external:v1:X097",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
@@ -55773,15 +54993,13 @@
         1103,
         1109,
         1117,
-        1118,
-        1160,
-        1164
+        1118
       ],
       "meta": {
-        "jun": "성주 취락",
-        "junCh": "星山伽耶",
+        "jun": "본피",
+        "junCh": "本彼",
         "ju": "동이",
-        "seat": "성주 취락",
+        "seat": "본피",
         "nameCh": "甘文",
         "isSeat": false,
         "historicalPlace": {
@@ -55809,9 +55027,9 @@
         },
         "displayName": "감문"
       },
-      "provinceId": 1384,
+      "provinceId": 1362,
       "spatialProvinceId": "KOR-X098-X048",
-      "spatialProvinceIndex": 1384,
+      "spatialProvinceIndex": 1362,
       "routeNodeKey": "99f64074-3eee-4b80-8bf3-859731ac6f2c",
       "physicalPlaceRef": "external:v1:X098",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
@@ -55876,9 +55094,9 @@
         },
         "displayName": "우유"
       },
-      "provinceId": 1385,
+      "provinceId": 1363,
       "spatialProvinceId": "KOR-X099-X032",
-      "spatialProvinceIndex": 1385,
+      "spatialProvinceIndex": 1363,
       "routeNodeKey": "c87e9851-adff-4fca-9f7b-04e4d2154cc6",
       "physicalPlaceRef": "external:v1:X099",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
@@ -55944,9 +55162,9 @@
         },
         "displayName": "근기"
       },
-      "provinceId": 1386,
+      "provinceId": 1364,
       "spatialProvinceId": "KOR-X100-X044",
-      "spatialProvinceIndex": 1386,
+      "spatialProvinceIndex": 1364,
       "routeNodeKey": "a25b91fc-3bbf-4c23-adfb-f43f4cc296ca",
       "physicalPlaceRef": "external:v1:X100",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
@@ -56013,9 +55231,9 @@
         },
         "displayName": "우시산"
       },
-      "provinceId": 1387,
+      "provinceId": 1365,
       "spatialProvinceId": "KOR-X101-X044",
-      "spatialProvinceIndex": 1387,
+      "spatialProvinceIndex": 1365,
       "routeNodeKey": "02c2b89a-ae59-43e0-967f-fd7a919b4766",
       "physicalPlaceRef": "external:v1:X101",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
@@ -56085,9 +55303,9 @@
         },
         "displayName": "미리미동"
       },
-      "provinceId": 1388,
+      "provinceId": 1366,
       "spatialProvinceId": "KOR-X102-X045",
-      "spatialProvinceIndex": 1388,
+      "spatialProvinceIndex": 1366,
       "routeNodeKey": "683115df-cd7e-4dc4-896f-bc6619c64cfd",
       "physicalPlaceRef": "external:v1:X102",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
@@ -56154,9 +55372,9 @@
         },
         "displayName": "독로"
       },
-      "provinceId": 1389,
+      "provinceId": 1367,
       "spatialProvinceId": "KOR-X103-X045",
-      "spatialProvinceIndex": 1389,
+      "spatialProvinceIndex": 1367,
       "routeNodeKey": "11aa3d58-0a48-4889-a32d-704a6b829a29",
       "physicalPlaceRef": "external:v1:X103",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
@@ -56223,9 +55441,9 @@
         },
         "displayName": "접도"
       },
-      "provinceId": 1390,
+      "provinceId": 1368,
       "spatialProvinceId": "KOR-X104-X045",
-      "spatialProvinceIndex": 1390,
+      "spatialProvinceIndex": 1368,
       "routeNodeKey": "4e63fb72-70b9-4269-a432-a1878742d79e",
       "physicalPlaceRef": "external:v1:X104",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
@@ -56291,9 +55509,9 @@
         },
         "displayName": "다라 권역"
       },
-      "provinceId": 1391,
+      "provinceId": 1369,
       "spatialProvinceId": "KOR-X105-X047",
-      "spatialProvinceIndex": 1391,
+      "spatialProvinceIndex": 1369,
       "routeNodeKey": "d8505f47-79f9-41ca-9b7e-c83fb3468df9",
       "physicalPlaceRef": "external:v1:X105",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
@@ -56306,17 +55524,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 73450,
-        "agriculture": 1450,
-        "commerce": 1487,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 25000,
-        "agriculture": 250,
-        "commerce": 250,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -56325,8 +55543,6 @@
         1107,
         1111,
         1118,
-        1143,
-        1164,
         1176
       ],
       "meta": {
@@ -56353,8 +55569,6 @@
           "fundingJurisdictionId": "X042",
           "memberJurisdictionIds": [
             "X042",
-            "X074",
-            "X079",
             "X106"
           ],
           "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
@@ -56433,9 +55647,9 @@
         },
         "displayName": "불내"
       },
-      "provinceId": 1392,
+      "provinceId": 1372,
       "spatialProvinceId": "KOR-X107-fc-lelang-015",
-      "spatialProvinceIndex": 1392,
+      "spatialProvinceIndex": 1372,
       "routeNodeKey": "12d3e33e-5191-48a3-92fe-b46ca7e3ba13",
       "physicalPlaceRef": "external:v1:X107",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
@@ -56511,1277 +55725,12 @@
         },
         "displayName": "화려"
       },
-      "provinceId": 1393,
+      "provinceId": 1373,
       "spatialProvinceId": "KOR-X108-fc-lelang-006",
-      "spatialProvinceIndex": 1393,
+      "spatialProvinceIndex": 1373,
       "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
       "physicalPlaceRef": "external:v1:X108",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
-    },
-    {
-      "id": 1178,
-      "name": "해안 취락",
-      "x": 561,
-      "y": 186,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 20000,
-        "agriculture": 200,
-        "commerce": 200,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1099,
-        1137,
-        1139,
-        1179
-      ],
-      "meta": {
-        "jun": "북옥저",
-        "junCh": "北沃沮",
-        "ju": "동이",
-        "seat": "북옥저",
-        "nameCh": "海岸聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "OKJEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X109"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X030",
-          "memberJurisdictionIds": [
-            "X030",
-            "X070",
-            "X109",
-            "X110",
-            "X113"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "해안 취락"
-      },
-      "provinceId": 1351,
-      "spatialProvinceId": "KOR-X109-SUB-X030-b78cb489a20c",
-      "spatialProvinceIndex": 1351,
-      "routeNodeKey": "4d8d34cf-fe5f-49d3-a42b-a59f05889b6b",
-      "physicalPlaceRef": "external:v1:X109",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X109"
-    },
-    {
-      "id": 1179,
-      "name": "두만강 취락",
-      "x": 557,
-      "y": 169,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 20000,
-        "agriculture": 200,
-        "commerce": 200,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1099,
-        1105,
-        1139,
-        1178,
-        1181,
-        1182
-      ],
-      "meta": {
-        "jun": "북옥저",
-        "junCh": "北沃沮",
-        "ju": "동이",
-        "seat": "북옥저",
-        "nameCh": "豆滿江聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "GOGURYEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X110"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X030",
-          "memberJurisdictionIds": [
-            "X030",
-            "X070",
-            "X109",
-            "X110",
-            "X113"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "두만강 취락"
-      },
-      "provinceId": 1346,
-      "spatialProvinceId": "KOR-X110-X030",
-      "spatialProvinceIndex": 1346,
-      "routeNodeKey": "946ea549-492b-479a-b440-da2a815cd360",
-      "physicalPlaceRef": "external:v1:X110",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X110"
-    },
-    {
-      "id": 1180,
-      "name": "혼강 취락",
-      "x": 511,
-      "y": 184,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 41971,
-        "agriculture": 828,
-        "commerce": 850,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 14285,
-        "agriculture": 143,
-        "commerce": 143,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1105,
-        1134,
-        1135,
-        1136
-      ],
-      "meta": {
-        "jun": "국내성",
-        "junCh": "國內城",
-        "ju": "동이",
-        "seat": "국내성",
-        "nameCh": "渾江聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "GOGURYEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X111"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X028",
-          "memberJurisdictionIds": [
-            "X028",
-            "X065",
-            "X066",
-            "X067",
-            "X068",
-            "X111",
-            "X112"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "혼강 취락"
-      },
-      "provinceId": 1340,
-      "spatialProvinceId": "KOR-X111-SUB-X028-f3fe8f1dec91",
-      "spatialProvinceIndex": 1340,
-      "routeNodeKey": "0f1040f7-553a-4bbe-9303-cf441306d008",
-      "physicalPlaceRef": "external:v1:X111",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X111"
-    },
-    {
-      "id": 1181,
-      "name": "돈화 취락",
-      "x": 539,
-      "y": 161,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 41971,
-        "agriculture": 828,
-        "commerce": 850,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 14285,
-        "agriculture": 142,
-        "commerce": 142,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1105,
-        1136,
-        1137,
-        1139,
-        1179
-      ],
-      "meta": {
-        "jun": "국내성",
-        "junCh": "國內城",
-        "ju": "동이",
-        "seat": "국내성",
-        "nameCh": "敦化聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "BUYEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X112",
-          "nameInterpretations": [
-            {
-              "names": [
-                "동부여",
-                "갈사국"
-              ],
-              "target": "X112",
-              "role": "DISPUTED_TRADITION",
-              "basis": "동방 부여계 전승을 돈화·두만강 연결권에 참조. 두 이름의 동일성·정확한 수도는 주장하지 않음"
-            }
-          ]
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X028",
-          "memberJurisdictionIds": [
-            "X028",
-            "X065",
-            "X066",
-            "X067",
-            "X068",
-            "X111",
-            "X112"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "돈화 취락"
-      },
-      "provinceId": 1335,
-      "spatialProvinceId": "KOR-X112-SUB-X028-10fc23deade6",
-      "spatialProvinceIndex": 1335,
-      "routeNodeKey": "bd4e54b5-846c-4136-a143-e900765a3cd1",
-      "physicalPlaceRef": "external:v1:X112",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X112"
-    },
-    {
-      "id": 1182,
-      "name": "목단강 취락",
-      "x": 559,
-      "y": 143,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 20000,
-        "agriculture": 200,
-        "commerce": 200,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1099,
-        1105,
-        1108,
-        1179
-      ],
-      "meta": {
-        "jun": "읍루",
-        "junCh": "挹婁",
-        "ju": "동이",
-        "seat": "읍루",
-        "nameCh": "牡丹江聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "YILOU",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X113"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X030",
-          "memberJurisdictionIds": [
-            "X030",
-            "X070",
-            "X109",
-            "X110",
-            "X113"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "목단강 취락"
-      },
-      "provinceId": 1347,
-      "spatialProvinceId": "KOR-X113-SUB-X030-08358a2fe5ab",
-      "spatialProvinceIndex": 1347,
-      "routeNodeKey": "d9710873-4cb2-4b84-bc37-545efa782df3",
-      "physicalPlaceRef": "external:v1:X113",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X113"
-    },
-    {
-      "id": 1183,
-      "name": "이통하 취락",
-      "x": 495,
-      "y": 153,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49163,
-        "agriculture": 982,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        728,
-        729,
-        784,
-        1105,
-        1140,
-        1194
-      ],
-      "meta": {
-        "jun": "부여",
-        "junCh": "夫餘",
-        "ju": "동이",
-        "seat": "부여",
-        "nameCh": "伊通河聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "BUYEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X114"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "이통하 취락"
-      },
-      "provinceId": 1209,
-      "spatialProvinceId": "SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1209,
-      "routeNodeKey": "e0c6e83f-3c88-40cb-a694-a1312ad0636b",
-      "physicalPlaceRef": "external:v1:X114",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X114"
-    },
-    {
-      "id": 1184,
-      "name": "송화강 합류",
-      "x": 514,
-      "y": 124,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49163,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1105,
-        1185,
-        1189,
-        1192,
-        1194
-      ],
-      "meta": {
-        "jun": "송화강 취락권",
-        "junCh": "松花江聚落",
-        "ju": "동이",
-        "seat": "송화강 합류",
-        "nameCh": "松花江合流",
-        "isSeat": true,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "SONGHUA",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X115"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "송화강 합류"
-      },
-      "provinceId": 1400,
-      "spatialProvinceId": "KOR-X115-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1400,
-      "routeNodeKey": "7cc37a59-4d1d-4181-82d1-3bbb6f956aab",
-      "physicalPlaceRef": "external:v1:X115",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X115"
-    },
-    {
-      "id": 1185,
-      "name": "송눈 평원",
-      "x": 490,
-      "y": 111,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49163,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1184,
-        1187,
-        1188,
-        1189,
-        1194
-      ],
-      "meta": {
-        "jun": "송화강 취락권",
-        "junCh": "松花江聚落",
-        "ju": "동이",
-        "seat": "송화강 합류",
-        "nameCh": "松嫩平原",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "SONGHUA",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X116"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "송눈 평원"
-      },
-      "provinceId": 1401,
-      "spatialProvinceId": "KOR-X116-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1401,
-      "routeNodeKey": "c46a8475-11c0-4823-bcb3-2a4472851634",
-      "physicalPlaceRef": "external:v1:X116",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X116"
-    },
-    {
-      "id": 1186,
-      "name": "흑룡강 중류",
-      "x": 527,
-      "y": 55,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 48967,
-        "agriculture": 967,
-        "commerce": 992,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 16667,
-        "agriculture": 167,
-        "commerce": 167,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1188,
-        1189,
-        1190,
-        1192
-      ],
-      "meta": {
-        "jun": "흑룡강 취락권",
-        "junCh": "黑龍江聚落",
-        "ju": "동이",
-        "seat": "흑룡강 중류",
-        "nameCh": "黑龍江中流",
-        "isSeat": true,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "AMUR",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X117"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "흑룡강 중류"
-      },
-      "provinceId": 1412,
-      "spatialProvinceId": "KOR-X117-X039",
-      "spatialProvinceIndex": 1412,
-      "routeNodeKey": "55517d86-c1ba-49c0-8171-501c82b09cb5",
-      "physicalPlaceRef": "external:v1:X117",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X117"
-    },
-    {
-      "id": 1187,
-      "name": "눈강 취락",
-      "x": 493,
-      "y": 72,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49162,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1185,
-        1188,
-        1189
-      ],
-      "meta": {
-        "jun": "흑룡강 취락권",
-        "junCh": "黑龍江聚落",
-        "ju": "동이",
-        "seat": "흑룡강 중류",
-        "nameCh": "嫩江聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "AMUR",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X118"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "눈강 취락"
-      },
-      "provinceId": 1402,
-      "spatialProvinceId": "KOR-X118-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1402,
-      "routeNodeKey": "01132fb4-4997-43e6-91b7-e4b9663a3895",
-      "physicalPlaceRef": "external:v1:X118",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X118"
-    },
-    {
-      "id": 1188,
-      "name": "흑룡강 상류",
-      "x": 453,
-      "y": 13,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49162,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1185,
-        1186,
-        1187,
-        1189
-      ],
-      "meta": {
-        "jun": "흑룡강 취락권",
-        "junCh": "黑龍江聚落",
-        "ju": "동이",
-        "seat": "흑룡강 중류",
-        "nameCh": "黑龍江上流",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "AMUR",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X119"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "흑룡강 상류"
-      },
-      "provinceId": 1403,
-      "spatialProvinceId": "KOR-X119-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1403,
-      "routeNodeKey": "092d4288-0243-4421-a55e-59bc30a83b21",
-      "physicalPlaceRef": "external:v1:X119",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X119"
-    },
-    {
-      "id": 1189,
-      "name": "흑룡강 남안",
-      "x": 513,
-      "y": 86,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49162,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1184,
-        1185,
-        1186,
-        1187,
-        1188,
-        1192
-      ],
-      "meta": {
-        "jun": "흑룡강 취락권",
-        "junCh": "黑龍江聚落",
-        "ju": "동이",
-        "seat": "흑룡강 중류",
-        "nameCh": "黑龍江南岸",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "AMUR",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X120"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "흑룡강 남안"
-      },
-      "provinceId": 1404,
-      "spatialProvinceId": "KOR-X120-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1404,
-      "routeNodeKey": "cf04930d-2094-4b3e-ba91-d7788de18421",
-      "physicalPlaceRef": "external:v1:X120",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X120"
-    },
-    {
-      "id": 1190,
-      "name": "삼강 취락",
-      "x": 595,
-      "y": 101,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 48967,
-        "agriculture": 967,
-        "commerce": 992,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 16667,
-        "agriculture": 167,
-        "commerce": 167,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1108,
-        1186,
-        1191,
-        1192
-      ],
-      "meta": {
-        "jun": "우수리강 취락권",
-        "junCh": "烏蘇里江聚落",
-        "ju": "동이",
-        "seat": "삼강 취락",
-        "nameCh": "三江聚落",
-        "isSeat": true,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "USSURI",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X121"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "삼강 취락"
-      },
-      "provinceId": 1413,
-      "spatialProvinceId": "KOR-X121-X039",
-      "spatialProvinceIndex": 1413,
-      "routeNodeKey": "87207a51-c807-4aaf-ae3d-3cd76db3ca8c",
-      "physicalPlaceRef": "external:v1:X121",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X121"
-    },
-    {
-      "id": 1191,
-      "name": "송화강 하구",
-      "x": 603,
-      "y": 96,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 48967,
-        "agriculture": 967,
-        "commerce": 992,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 16667,
-        "agriculture": 167,
-        "commerce": 167,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1108,
-        1190,
-        1193
-      ],
-      "meta": {
-        "jun": "우수리강 취락권",
-        "junCh": "烏蘇里江聚落",
-        "ju": "동이",
-        "seat": "삼강 취락",
-        "nameCh": "松花江河口",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "USSURI",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X122"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "송화강 하구"
-      },
-      "provinceId": 1414,
-      "spatialProvinceId": "KOR-X122-X039",
-      "spatialProvinceIndex": 1414,
-      "routeNodeKey": "224cd2f2-6e0d-403f-8d73-d2685bf62584",
-      "physicalPlaceRef": "external:v1:X122",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X122"
-    },
-    {
-      "id": 1192,
-      "name": "우수리 북부",
-      "x": 583,
-      "y": 111,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 48966,
-        "agriculture": 966,
-        "commerce": 991,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 16666,
-        "agriculture": 166,
-        "commerce": 166,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1108,
-        1184,
-        1186,
-        1189,
-        1190
-      ],
-      "meta": {
-        "jun": "우수리강 취락권",
-        "junCh": "烏蘇里江聚落",
-        "ju": "동이",
-        "seat": "삼강 취락",
-        "nameCh": "烏蘇里北部",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "USSURI",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X123"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "우수리 북부"
-      },
-      "provinceId": 1415,
-      "spatialProvinceId": "KOR-X123-X039",
-      "spatialProvinceIndex": 1415,
-      "routeNodeKey": "010c1fcc-d9f5-4e92-8668-3257518d0240",
-      "physicalPlaceRef": "external:v1:X123",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X123"
-    },
-    {
-      "id": 1193,
-      "name": "흑룡강 하구길",
-      "x": 641,
-      "y": 82,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 48966,
-        "agriculture": 966,
-        "commerce": 991,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 16666,
-        "agriculture": 166,
-        "commerce": 166,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        1108,
-        1191
-      ],
-      "meta": {
-        "jun": "우수리강 취락권",
-        "junCh": "烏蘇里江聚落",
-        "ju": "동이",
-        "seat": "삼강 취락",
-        "nameCh": "黑龍江東路",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
-          },
-          "regionId": "USSURI",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X124"
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X039",
-          "memberJurisdictionIds": [
-            "X039",
-            "X117",
-            "X121",
-            "X122",
-            "X123",
-            "X124"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "흑룡강 하구길"
-      },
-      "provinceId": 1416,
-      "spatialProvinceId": "KOR-X124-X039",
-      "spatialProvinceIndex": 1416,
-      "routeNodeKey": "b09585e9-bfdd-464b-82f0-367bfa818b98",
-      "physicalPlaceRef": "external:v1:X124",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X124"
-    },
-    {
-      "id": 1194,
-      "name": "농안 취락",
-      "x": 493,
-      "y": 144,
-      "level": 5,
-      "region": 14,
-      "max": {
-        "population": 49162,
-        "agriculture": 981,
-        "commerce": 1000,
-        "security": 4000,
-        "defence": 6000,
-        "wall": 5900
-      },
-      "initial": {
-        "population": 12500,
-        "agriculture": 125,
-        "commerce": 125,
-        "security": 1000,
-        "defence": 2000,
-        "wall": 2000
-      },
-      "connections": [
-        729,
-        1105,
-        1183,
-        1184,
-        1185
-      ],
-      "meta": {
-        "jun": "부여",
-        "junCh": "夫餘",
-        "ju": "동이",
-        "seat": "부여",
-        "nameCh": "農安聚落",
-        "isSeat": false,
-        "historicalPlace": {
-          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
-          "coordinateBasis": "PINNED_PRE_CORRECTION_MAP_POINT",
-          "confidence": "DISPUTED",
-          "independentPolityAtReferenceYear": false,
-          "evidence": {
-            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
-            "claim": "후기 부여 왕성 비정권; 220년에는 지방 취락으로 사용"
-          },
-          "regionId": "BUYEO",
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X125",
-          "nameInterpretations": [
-            {
-              "names": [
-                "고리국"
-              ],
-              "target": "X125",
-              "role": "FOUNDATION_TRADITION",
-              "basis": "부여 건국 전승의 북방 선행 집단. 농안권 게임 참조점이며 확정 국읍 비정 아님"
-            }
-          ]
-        },
-        "economyBasis": {
-          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
-          "fundingJurisdictionId": "X036",
-          "memberJurisdictionIds": [
-            "X036",
-            "X114",
-            "X115",
-            "X116",
-            "X118",
-            "X119",
-            "X120",
-            "X125"
-          ],
-          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
-          "historicalCensus": false,
-          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
-        },
-        "displayName": "농안 취락"
-      },
-      "provinceId": 1405,
-      "spatialProvinceId": "KOR-X125-SUB-X036-578c4df54077",
-      "spatialProvinceIndex": 1405,
-      "routeNodeKey": "859b778d-0d77-4718-be8f-381b7363fa54",
-      "physicalPlaceRef": "external:v1:X125",
-      "sourceClaimId": "han-external-settlement-route-claim-v1-X125"
     }
   ],
   "seaRoutes": [

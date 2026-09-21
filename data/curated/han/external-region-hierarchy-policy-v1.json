@@ -8,7 +8,7 @@
     "recruitmentEligibilitySeparate": true,
     "noPanEthnicKoreanPeninsulaUmbrella": true,
     "noDirectionalUmbrellaForNamedNorthernOrWesternPeoples": true,
-    "jurisdictionLabelsUseAttestedPolitySettlementOrPeopleNames": false,
+    "jurisdictionLabelsUseAttestedPolitySettlementOrPeopleNames": true,
     "gameGeographicLabelsRequireExplicitDecisionBasis": true
   },
   "macroRegions": [
@@ -36,9 +36,7 @@
         "X069",
         "X070",
         "X071",
-        "X072",
-        "X110",
-        "X111"
+        "X072"
       ]
     },
     {
@@ -48,8 +46,7 @@
       "geographicScope": "NORTHEAST_ASIA",
       "jurisdictionIds": [
         "X030",
-        "X037",
-        "X109"
+        "X037"
       ]
     },
     {
@@ -58,8 +55,7 @@
       "classification": "PEOPLE_REGION",
       "geographicScope": "NORTHEAST_ASIA",
       "jurisdictionIds": [
-        "X039",
-        "X113"
+        "X039"
       ]
     },
     {
@@ -68,10 +64,7 @@
       "classification": "POLITY",
       "geographicScope": "NORTHEAST_ASIA",
       "jurisdictionIds": [
-        "X036",
-        "X112",
-        "X114",
-        "X125"
+        "X036"
       ]
     },
     {
@@ -96,12 +89,10 @@
         "X041",
         "X042",
         "X073",
-        "X074",
         "X075",
         "X076",
         "X077",
         "X078",
-        "X079",
         "X080",
         "X081",
         "X082",
@@ -110,14 +101,7 @@
         "X085",
         "X086",
         "X087",
-        "X088",
-        "X089",
-        "X090",
-        "X091",
-        "X092",
-        "X093",
-        "X094",
-        "X095"
+        "X089"
       ]
     },
     {
@@ -267,40 +251,6 @@
       "geographicScope": "NORTHERN_FRONTIER",
       "jurisdictionIds": [
         "X064"
-      ]
-    },
-    {
-      "id": "SONGHUA",
-      "displayName": "송화강 취락권",
-      "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
-      "geographicScope": "NORTHEAST_ASIA",
-      "jurisdictionIds": [
-        "X115",
-        "X116"
-      ]
-    },
-    {
-      "id": "AMUR",
-      "displayName": "흑룡강 취락권",
-      "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
-      "geographicScope": "NORTHEAST_ASIA",
-      "jurisdictionIds": [
-        "X117",
-        "X118",
-        "X119",
-        "X120"
-      ]
-    },
-    {
-      "id": "USSURI",
-      "displayName": "우수리강 취락권",
-      "classification": "GAME_GEOGRAPHIC_SETTLEMENT_REGION",
-      "geographicScope": "NORTHEAST_ASIA",
-      "jurisdictionIds": [
-        "X121",
-        "X122",
-        "X123",
-        "X124"
       ]
     }
   ],
