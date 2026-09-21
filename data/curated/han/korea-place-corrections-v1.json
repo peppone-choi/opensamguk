@@ -969,11 +969,6 @@
     "capacityUnit": 1,
     "basis": "사료에 개별 거점 경제량이 없으므로 기존 관할의 게임 예산을 균등 분할한다. 사료 호구 총량과 동일시하지 않는다."
   },
-  "extension": {
-    "terrainSha256": "a8af80e0c9d794babdb6d52ddd8ffd80378f3437358daf9f28ff8ce852098f5a",
-    "policy": "GAME_DESIGN_ADDITIVE_FRAME; old cells preserved; northern geography is not a historical political frontier",
-    "playableExpansion": false
-  },
   "newParents": [
     {
       "id": "PARENT-0172",

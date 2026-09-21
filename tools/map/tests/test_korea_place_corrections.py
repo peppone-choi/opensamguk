@@ -19,15 +19,17 @@ class KoreaCorrectionsTest(unittest.TestCase):
         self.assertEqual([], K.check(self.current, self.ledger))
 
     def test_preserves_original_frame_terrain_and_stable_ids(self):
-        from tools.map.korea_map_extension import NORTH_ROWS
-        self.assertEqual(self.original['terrain'],[r[:768] for r in self.current['terrain'][NORTH_ROWS:]])
+        # 2026-09-21: 북동 확장 프레임을 걷어냈다. 이 단계는 이제 앞 단계의 격자를 그대로 쓴다 —
+        # 지형은 한 글자도 바뀌지 않고 城 좌표도 옮겨진 두 치소를 빼면 그대로다.
+        self.assertEqual(self.original['terrain'], self.current['terrain'])
         for key in ('cities', 'provinceRecords'):
             self.assertEqual([r['id'] for r in self.original[key]], [r['id'] for r in self.current[key]][:len(self.original[key])])
-        self.assertEqual(843,self.current['_meta']['rows'])
-        self.assertEqual(864,self.current['_meta']['cols'])
+        self.assertEqual(669,self.current['_meta']['rows'])
+        self.assertEqual(768,self.current['_meta']['cols'])
+        self.assertEqual(self.original['_meta']['projection'], self.current['_meta']['projection'])
         for old,new in zip(self.original['cities'],self.current['cities']):
             if old['id'] not in {'X030','X036'}:
-                self.assertEqual((old['col'],old['row']+NORTH_ROWS),(new['col'],new['row']))
+                self.assertEqual((old['col'],old['row']),(new['col'],new['row']))
         self.assertEqual(173,len(self.current['parentRegions']))
 
     def test_new_settlements_own_their_real_cells(self):
@@ -102,9 +104,20 @@ class KoreaCorrectionsTest(unittest.TestCase):
         self.assertNotIn(1143, active_numeric_ids(1168))
         self.assertEqual(list(range(1, 1195)), active_numeric_ids(1194))
 
-    def test_extended_northern_terrain_does_not_invent_playable_ownership(self):
-        from tools.map.korea_map_extension import NORTH_ROWS
+    def test_release_carries_no_northeast_extension_frame(self):
+        """확장 프레임은 귀속이 0 이라 그림만 남았다 — 2026-09-21 사용자 결정으로 걷어냈다.
+
+        확장 원장·래스터는 동결 843x864 판(1194·1341)의 증인으로 남기되, 이 단계가 다시 얹지 않는다.
+        """
+        self.assertNotIn('extension', self.ledger['decisions'])
         meta = self.current['_meta']
+        self.assertEqual((669, 768), (meta['rows'], meta['cols']))
         owner = expand_rle(self.current['owner'], meta['rows'], meta['cols'])
-        self.assertTrue((owner[:NORTH_ROWS] == -1).all())
-        self.assertTrue((owner[:, 768:] == -1).all())
+        # 귀속이 0 인 띠가 격자 가장자리에 남아 있으면 또 그림만 그리는 여백이다.
+        owned_rows = [r for r in range(meta['rows']) if (owner[r] >= 0).any()]
+        owned_cols = [c for c in range(meta['cols']) if (owner[:, c] >= 0).any()]
+        self.assertEqual(0, owned_rows[0], '북쪽에 무주 여백 띠가 남았다')
+        self.assertEqual(meta['rows'] - 1, owned_rows[-1], '남쪽에 무주 여백 띠가 남았다')
+        self.assertEqual(0, owned_cols[0], '서쪽에 무주 여백 띠가 남았다')
+        self.assertEqual(meta['cols'] - 1, owned_cols[-1], '동쪽에 무주 여백 띠가 남았다')
+        self.assertEqual(1_374, len(self.current['provinceRecords']))

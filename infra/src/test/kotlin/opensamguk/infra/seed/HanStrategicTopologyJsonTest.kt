@@ -25,18 +25,19 @@ class HanStrategicTopologyJsonTest {
         val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val json = mapper.valueToTree<JsonNode>(loaded)
         val presentation = json.path("presentation")
-        assertEquals(864, presentation.path("cols").asInt())
-        assertEquals(843, presentation.path("rows").asInt())
+        // 2026-09-21: 북동 확장 프레임을 걷어내 격자가 669x768 로 돌아왔다.
+        assertEquals(768, presentation.path("cols").asInt())
+        assertEquals(669, presentation.path("rows").asInt())
         // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
         // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
-        assertEquals("086bc7bf2257af9532c2d2879b5df1f354961289e79a3ef3fd0a2e97b456c500",
+        assertEquals("6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
             presentation.path("zoneConnections").fields().asSequence().map { it.value.asText() }.toList())
         val coast = presentation.path("geometries")[0].path("cellRuns")
         assertEquals(1, coast.size())
-        assertEquals(717, coast[0].path("row").asInt())
+        assertEquals(543, coast[0].path("row").asInt())
         assertEquals(305, coast[0].path("startCol").asInt())
         assertEquals(351, coast[0].path("endCol").asInt())
     }
@@ -238,8 +239,8 @@ class HanStrategicTopologyJsonTest {
         update(files, ADJUDICATIONS) {
             val zone = it["zoneAdjudications"].single { row -> row["kind"].asText() == "COASTAL_SEA" }
             val runs = (zone["geometrySelector"] as ObjectNode).putArray("cellRuns")
-            runs.addObject().put("row", 717).put("startCol", 328).put("endCol", 351)
-            runs.addObject().put("row", 717).put("startCol", 305).put("endCol", 327)
+            runs.addObject().put("row", 543).put("startCol", 328).put("endCol", 351)
+            runs.addObject().put("row", 543).put("startCol", 305).put("endCol", 327)
         }
         repinManifests(files)
         assertLuToLicheng(files)

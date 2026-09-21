@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "referenceYear": 220,
-  "gridNorthLatitude": 53.85510954,
+  "gridNorthLatitude": 45.69282,
   "areaUnit": "OWNED_GRID_CELLS_NOT_KM2",
   "groupSemantics": "Display regions and runtime administrative groups overlap; do not sum across groups. Sparse does not establish historical low population.",
   "regions": [

@@ -70,7 +70,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
 
         one_cell = copy.deepcopy(artifact)
         one_cell["geometryComponents"][0]["cellRuns"] = [
-            {"row": 717, "startCol": 305, "endCol": 305}
+            {"row": 543, "startCol": 305, "endCol": 305}
         ]
         one_cell["geometryComponents"][0]["cellCount"] = 1
         with self.assertRaisesRegex(ValueError, "minimum component|per-water-tile"):
@@ -78,8 +78,8 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
 
         disconnected = copy.deepcopy(artifact)
         disconnected["geometryComponents"][0]["cellRuns"] = [
-            {"row": 225, "startCol": 731, "endCol": 731},
-            {"row": 842, "startCol": 0, "endCol": 0},
+            {"row": 51, "startCol": 731, "endCol": 731},
+            {"row": 668, "startCol": 0, "endCol": 0},
         ]
         disconnected["geometryComponents"][0]["cellCount"] = 2
         with self.assertRaisesRegex(ValueError, "connected waterbody"):
@@ -87,7 +87,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
 
         open_sea = copy.deepcopy(artifact)
         open_sea["geometryComponents"][0]["cellRuns"] = [
-            {"row": 229, "startCol": 729, "endCol": 730}
+            {"row": 55, "startCol": 729, "endCol": 730}
         ]
         open_sea["geometryComponents"][0]["cellCount"] = 2
         with self.assertRaisesRegex(ValueError, "coastal.*owner boundary|shoreline"):
@@ -119,7 +119,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         geometry = next(
             row for row in artifact["geometryComponents"] if row["id"] == coast["geometryRef"]
         )
-        geometry["cellRuns"] = [{"row": 225, "startCol": 731, "endCol": 732}]
+        geometry["cellRuns"] = [{"row": 51, "startCol": 731, "endCol": 732}]
         geometry["cellCount"] = 2
 
         with self.assertRaisesRegex(ValueError, "source.*member.*boundary|cited.*boundary"):
