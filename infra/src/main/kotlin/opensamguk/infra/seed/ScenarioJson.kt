@@ -169,6 +169,7 @@ object ScenarioJson {
             ignoreDefaultEvents = ignoreDefaultEvents,
             ruleProfile = ruleProfile,
             seedContract = seedContract,
+            hwihaWarehouses = HwihaScenarioWarehouseSeeds.decode(root, ruleProfile),
         )
     }
 
@@ -377,6 +378,7 @@ data class Scenario(
     /** 월드 규칙 프로필. null = 시나리오가 선언하지 않음(시드 때 SAMMO 로 기록). */
     val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val seedContract: ScenarioSeedContract? = null,
+    val hwihaWarehouses: HwihaWarehouseSeed? = null,
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()

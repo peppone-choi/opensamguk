@@ -118,6 +118,7 @@ class ScenarioImporter(
         val startYear = scenario.startYear
         validateSeedGeneralLifecycles()
         validateSeedContract()
+        validateWarehouseSeed()
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
@@ -201,6 +202,13 @@ class ScenarioImporter(
         if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.HwihaMarchReactions.META_KEY] =
                 opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue()
+        }
+        scenario.hwihaWarehouses?.let { seed ->
+            meta["hwihaWarehouseSeed"] = linkedMapOf(
+                "version" to 1, "units" to "game-resource-v1", "source" to "GAME_DESIGN",
+                "topologyRevision" to seed.topologyRevision, "topologyHash" to seed.topologyHash,
+                "countyCount" to seed.warehouses.size,
+            )
         }
         val config = jsonObject(
             "startyear" to startYear,
@@ -367,6 +375,23 @@ class ScenarioImporter(
     private val cityOwnerById: Map<Int, Int> =
         scenario.nations.flatMap { n -> n.cities.mapNotNull { ref -> cityRefToId(ref)?.let { it to n.id } } }.toMap()
 
+    /** Explicit fresh-world inventory only. Never copy legacy treasuries or infer a missing county. */
+    internal fun validateWarehouseSeed() {
+        val seed = scenario.hwihaWarehouses ?: return
+        require(scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            "County warehouse seed requires HWIHA"
+        }
+        require(scenario.nations.all { it.gold == 0 && it.rice == 0 }) {
+            "Explicit county inventory requires zero legacy national gold/rice; declare all treasury stock in counties"
+        }
+        val projection = HanWorldArtifactsResolver(artifactsRoot).resolve(cities.map { it.id }, emptyList()).projection
+        require(seed.topologyRevision == projection.topology.topologyRevision &&
+            seed.topologyHash == projection.topology.contentHash) { "Warehouse seed topology pin mismatch" }
+        require(seed.warehouses.keys == projection.administrativeCountyIds) {
+            "Warehouse seed must explicitly cover every and only administrative county seat"
+        }
+    }
+
     private fun insertCities(jdbc: JdbcTemplate, worldId: WorldId): Int {
         var n = 0
         for (c in cities) {
@@ -394,7 +419,7 @@ class ScenarioImporter(
                 VALUES (?, ?, ?, ?, ?, 1, 0,
                         ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, 100, ?, ?, ?, ?, ?,
-                        0, 0, '{}'::jsonb, '{}'::jsonb)
+                        0, 0, '{}'::jsonb, ?)
                 """.trimIndent(),
                 // name 컬럼에는 **표기**를 넣는다("장안현"). 식별자 c.name("장안(京兆尹)")은
                 // 시나리오 소유 목록을 푸는 데만 쓰고(cityIdByName) DB 에는 남기지 않는다 —
@@ -402,6 +427,10 @@ class ScenarioImporter(
                 worldId.value, c.id, c.displayName ?: c.name, c.level, cityNationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
+                jsonb(scenario.hwihaWarehouses?.warehouses?.get(c.id)?.let { stock ->
+                    mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to
+                        opensamguk.logic.economy.HwihaCountyWarehouse(c.id, 0, stock).toMetaValue())
+                } ?: emptyMap<String, Any?>()),
             )
             n++
         }

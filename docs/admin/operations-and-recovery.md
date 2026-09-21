@@ -273,6 +273,12 @@ HWIHA 개인 턴은 행동 처리 전에 소유 장수의 `hwihaStratagemHand`�
 
 ### HWIHA 縣 창고 정산 저장 경계
 
-縣治 `city.meta.hwihaCountyWarehouse`는 전·곡·철·목재·말의 비음수 정수 게임 단위와 revision을 저장한다. 기존 도시 스냅샷·HotCold 등록·ChangeRecorder·JDBC flush 경로를 공유한다. 미설정 창고는 `NOT_READY`이며 조회·재기동으로 비축을 만들지 않는다. 국고·개인 재화를 복사하지 않는다. 초기 시나리오 재고와 실제 생산·보급·계책 소비자의 연결은 아직 남아 있다.
+縣治 `city.meta.hwihaCountyWarehouse`는 전·곡·철·목재·말의 비음수 정수 게임 단위와 revision을 저장한다. 기존 도시 스냅샷·HotCold 등록·ChangeRecorder·JDBC flush 경로를 공유한다. 미설정 창고는 `NOT_READY`이며 조회·재기동으로 비축을 만들지 않는다. 국고·개인 재화를 복사하지 않는다. 새 시나리오의 명시적 초기 재고 입력은 아래 계약으로 연결되며, 실제 생산·보급·계책 소비자 연결은 아직 남아 있다.
 
 내부 정산은 현재 縣 통제자와 예상 revision을 재확인하고 모든 비용을 낼 수 있을 때만 반영한다. 부족·오염·범위 초과는 부분 차감 없이 거절한다. 동일 엔진 writer에서 원래 revision을 재사용한 재전달은 차단되며, 이 계약은 작업 ID 멱등성이나 복수 writer의 DB CAS를 대신하지 않는다. 실패한 DB 트랜잭션 이후에는 기존 엔진 복구 경로로 상태를 다시 로드해야 한다.
+
+새 HWIHA 시나리오는 선택 항목 `hwihaWarehouses`로 최초 재고를 선언할 수 있다. 정확한 필드는 `version: 1`, `units: "game-resource-v1"`, `source: "GAME_DESIGN"`, 실제 지도의 `topologyRevision`·`topologyHash`, 그리고 `warehouses` 배열이다. 각 행은 `countyId`와 `stock`(money·grain·iron·timber·horses 전부 명시한 비음수 정수)만 담는다. 선택된 지도의 모든 행정 縣治를 정확히 한 번씩 선언해야 하며 다른 城·누락·중복·다른 지도 핀은 거절한다. 재고가 없는 縣도 다섯 항목을 명시적으로 0으로 적는다. 이 수량은 게임 기획 입력이며 역사 생산량으로 표시하지 않는다.
+
+이 항목을 사용하면 모든 `nation`의 기존 gold/rice는 0이어야 한다. 수도를 포함해 모든 재화는 명시된 縣 창고에만 넣고, 기존 국가 잔고를 복사하지 않는다. 입력 부재는 기존 시나리오 동작을 유지하며 창고를 추정 생성하지 않는다. `ScenarioSeedCoordinator`의 신규 월드 트랜잭션 안에서만 초기화하며, 뒤 단계가 실패하면 창고도 롤백된다. 기존 월드 재기동은 소비한 재고를 보충하지 않는다. 초기 입력의 단위·출처·지도 핀·縣 수는 `world_state.meta.hwihaWarehouseSeed`에 남긴다.
+
+창고 시드만으로 새 경제가 활성화되지는 않는다. 현재 HWIHA에서도 기본 월간 세입·전쟁 수입과 개인 재화 기반 유지비 경로가 남아 있다. 새 창고 생산을 연결할 때 이 재정 경로를 함께 전환해야 하며, 기존 세입과 창고 세입을 동시에 켜서는 안 된다. 현재 시드 검증은 최초 재고의 중복 방지를 증명하며 월 경계 경제 완성을 뜻하지 않는다.
