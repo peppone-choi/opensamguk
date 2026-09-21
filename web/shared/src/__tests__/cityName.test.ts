@@ -139,8 +139,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
       id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
     }))).toEqual([]);
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
-    // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136. 縣 은 여전히 98 이다.
-    expect(outside.length).toBe(197);
+    // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136.
+    // 2026-09-21: 조선반도·만주 취락 재검토로 197 → 171. 근거 없는 취락 26 곳을 거두었다(2288e886).
+    expect(outside.length).toBe(171);
     const rest = outside
       .filter((c) => c.id <= 1133 && !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
@@ -152,10 +153,14 @@ describe('han-world-v3 의 meta.nameCh', () => {
       '고자미동국', '구야국', '국내성', '남흉노', '노국', '대마국', '동옥저', '말로국',
       '목지국', '백마저', '백제국', '벽비리국', '부여', '북옥저', '사로국', '산월', '서강', '선비',
       '소문국', '실직국', '안야국', '압독국', '애뢰(哀牢)', '야마일국', '예', '오환', '우산국', '유구', '읍루',
-      '이도국', '이주', '일대국', '졸본', '주호', '후관', '함창 취락', '반로', '성주 취락',
+      '이도국', '이주', '일대국', '졸본', '주호', '후관', '반로',
+      // 2026-09-21: 「함창 취락」·「성주 취락」은 사료 표기(高麗史 地理志 古冬攬·三國史記 地理志 본피)로
+      // 이름이 바뀌었다 — 같은 城 이고 縣 이 아닌 것도 그대로다(korea-place-corrections-v1).
+      '고동람', '본피',
     ].sort());
     const added = world.cities.filter((c) => c.id > 1133);
-    expect(added).toHaveLength(61);
+    // 2026-09-21: 61 → 35. 거둔 취락 26 곳이 전부 이 구간(1134–)에 있었다.
+    expect(added).toHaveLength(35);
     expect(added.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
   });
 
@@ -187,9 +192,11 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 2026-09-15 w2 로 公國·國 꼬리 3곳(宋公国·卫国·舆国)이 더해졌다 — 생성기 display_name 도
     // 縣 으로 보지 않아 두 규칙이 같은 표기를 낸다(아래 displayName 전수 대조).
     // 2026-09-17 郡國 밖 취락 城 가운데 國 꼬리 17 곳이 더해졌다.
+    // 2026-09-21 조선반도 재검토로 馬韓 臣蘇塗國 이 더해져 22. 國 꼬리지만 縣 이 아니라는 판정은 그대로다.
     expect(sample.map((c) => c.meta.nameCh)).toEqual([
       '龜茲屬國', '宋公国', '卫国', '舆国', '安邪國', '悉直國', '押督國', '召文國', '于山國', '目支國',
       '辟卑離國', '伯濟國', '斯盧國', '狗邪國', '古資彌凍國', '對馬國', '一大國', '末盧國', '伊都國', '奴國', '邪馬壹國',
+      '臣蘇塗國',
     ]);
   });
 });
@@ -241,7 +248,8 @@ describe('han-world-v3 의 meta.displayName', () => {
       '1039 와구(九江郡): 와구(渦口)',
       '1080 와구(巴郡): 와구(瓦口)',
     ]);
-    expect(world.cities.length).toBe(1194);
+    // 2026-09-21: 1194 → 1168. 근거 없는 조선반도·만주 취락 26 곳을 거두었다(2288e886).
+    expect(world.cities.length).toBe(1168);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {

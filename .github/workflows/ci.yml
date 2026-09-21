@@ -358,3 +358,30 @@ jobs:
         run: |
           corepack pnpm install --no-frozen-lockfile
           corepack pnpm build
+
+  # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
+  # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리
+  # 기준이라 web/shared/src/__tests__/** 를 집지 않는다. 그 사이 지도 판이 세 번 바뀌며
+  # (4318dc64 → 5b130608 → 2288e886) 실측 핀 5 건이 낡은 채 main 에 남았다.
+  # 이 스위트는 커밋된 지도 정본(han-world-v3.json · han-tiles.json · han.json)을 읽어
+  # 표기 규칙과 省 도장 찍기를 검사하므로, 지도 데이터 커밋을 막는 게이트이기도 하다.
+  web-shared:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - name: Install web/shared
+        working-directory: web/shared
+        run: corepack pnpm install --no-frozen-lockfile
+      - name: Typecheck web/shared
+        if: '!cancelled()'
+        working-directory: web/shared
+        run: corepack pnpm typecheck
+      - name: Test web/shared (vitest)
+        if: '!cancelled()'
+        working-directory: web/shared
+        run: corepack pnpm test
