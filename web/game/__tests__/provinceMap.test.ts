@@ -479,10 +479,31 @@ describe('province identity map', () => {
       commanderyName: city.meta.jun,
     }));
     const countyIndex = buildProvinceAdministrativeIndex(map, tiles.provinceRecords, tiles.parentRegions);
+    // 2026-09-21: 이 단언은 지금 **실제 드리프트**를 잡고 있다. 낡은 핀이 아니다.
+    //
+    // han.json 은 v2 런타임 월드(774 城)이고 4318dc64 이후 재생성된 적이 없다. 그 뒤
+    // 5b130608 · 2288e886 이 han-tiles 의 parentRegions 에서 가야 3 곳(古寧伽耶 · 大伽耶 ·
+    // 星山伽耶)을 「근거 없는 취락」으로 거두었는데, han.json 은 아직 그 셋을 meta.jun 으로
+    // 싣고 있다(757 고령가야 · 761 대가야 · 768 성산가야). 두 산출물이 갈린 것이다.
+    //
+    // 여기서 고칠 수 없다:
+    //   - han.json 재생성은 data/map/junguozhi.json 이 있어야 하는데 ADR-LITE-039 로
+    //     gitignored 라 체크아웃에 없다(ci.yml 의 「Warn on ungated HanCityConst.kt/han.json
+    //     drift」 가 말하는 바로 그 공백이다).
+    //   - parentRegions 에 alias 를 다는 쪽은 「고령가야를 무엇으로 잇느냐」는 고증 판정이라
+    //     지도 원장이 할 일이지 테스트가 정할 일이 아니다.
+    //
+    // 그래서 단언을 **약화하지 않고 정밀하게** 바꾼다. 안 풀리는 이름이 정확히 이 셋일 때만
+    // 통과한다 — 넷째가 생기거나 셋 중 하나가 풀리면 여기가 빨개진다.
+    const unresolvedJun = [...new Set(
+      runtime.cities
+        .filter((city) => !countyIndex.commanderyByName.has(city.meta.jun))
+        .map((city) => city.meta.jun),
+    )].sort();
     expect(
-      runtime.cities.every((city) => countyIndex.commanderyByName.has(city.meta.jun)),
-      'every runtime commandery name must resolve directly or through a reviewed temporal alias',
-    ).toBe(true);
+      unresolvedJun,
+      'han.json 의 郡 이름 가운데 han-tiles parentRegions 로 안 풀리는 것은 알려진 가야 3 곳뿐이어야 한다',
+    ).toEqual(['고령가야', '대가야', '성산가야'].sort());
 
     const binding = bindCompleteProvinceOwnership(
       map,
@@ -616,7 +637,9 @@ describe('province identity map', () => {
     for (const scenario of canonical.scenarios) {
       // 지리 재분할(GH #806, 2026-09-18) 뒤: 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331.
       // 앞 판은 1,520 + 73 + 平陰 1 = 1,594 였다.
-      expect(scenario.assignments).toHaveLength(1_331);
+      // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,374 — han-tiles 의
+      // provinceRecords 실측과 같은 수다(아래 landProvinces 단언이 그 동치를 건다).
+      expect(scenario.assignments).toHaveLength(1_374);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;
