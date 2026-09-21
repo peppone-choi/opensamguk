@@ -14,7 +14,7 @@ object HwihaGridMovement {
     data class Intent(val bugokId: Int, val destination: Position) {
         init { require(bugokId > 0) }
     }
-    enum class Outcome { MOVED, HELD, RESERVE, OUTSIDE_COMBAT_AREA, NOT_ADJACENT, OCCUPIED, CONTESTED }
+    enum class Outcome { MOVED, HELD, INACTIVE, RESERVE, OUTSIDE_COMBAT_AREA, NOT_ADJACENT, OCCUPIED, CONTESTED }
     data class Step(val bugokId: Int, val from: Position?, val to: Position?, val outcome: Outcome)
 
     /** Invalid state/identities reject the batch; an impossible tactical request leaves its unit in place. */

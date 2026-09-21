@@ -41,14 +41,7 @@ class HwihaGridExchange(
     }
 
     fun resolve(units: List<UnitState>, intents: List<AttackIntent>): Result {
-        require(units.map { it.bugokId }.toSet() == original.keys && units.size == original.size)
-        require(units.all { it.troops in 0..original.getValue(it.bugokId).troops && it.morale in 0..100 &&
-            it.fatigue in 0..100 && (it.troops > 0 || it.position == null) &&
-            (it.position == null || it.position in deployment.layout.distancesFromEntry) })
-        val occupied = units.mapNotNull { it.position }
-        require(occupied.distinct().size == occupied.size)
-        require(intents.map { it.attackerId }.distinct().size == intents.size &&
-            intents.all { it.attackerId in original && it.targetId in original && it.attackerId != it.targetId })
+        validate(units, intents)
         val state = units.associateBy { it.bugokId }
         val attacks = intents.sortedBy { it.attackerId }.map { intent ->
             val attacker = state.getValue(intent.attackerId)
@@ -79,6 +72,66 @@ class HwihaGridExchange(
                 position=if (lost == unit.troops) null else unit.position)
         }
         return Result(after, attacks)
+    }
+
+    class MovementPlan(val bugokId: Int, path: List<Position>) {
+        val path: List<Position> = Collections.unmodifiableList(ArrayList(path))
+    }
+    data class RoundMove(val step: Int, val move: HwihaGridMovement.Step)
+    class RoundResult(movements: List<RoundMove>, val exchange: Result) {
+        val movements: List<RoundMove> = Collections.unmodifiableList(ArrayList(movements))
+    }
+
+    /** Explicit paths are bounded by sealed profiles; a blocked path stops for the rest of this round. */
+    fun resolveRound(units: List<UnitState>, movements: List<MovementPlan>, attacks: List<AttackIntent>): RoundResult {
+        // Validate the entire input before any calculation, including malformed later attack identities.
+        validate(units, attacks)
+        require(movements.map { it.bugokId }.distinct().size == movements.size)
+        require(movements.all { plan -> plan.bugokId in original && plan.path.size <=
+            profiles.getValue(original.getValue(plan.bugokId).crewTypeId).movementSteps })
+        var current = units.sortedBy { it.bugokId }
+        val stopped = hashSetOf<Int>()
+        val history = mutableListOf<RoundMove>()
+        for (step in 0 until (movements.maxOfOrNull { it.path.size } ?: 0)) {
+            val state = current.associateBy { it.bugokId }
+            val requests = movements.filter { it.path.size > step && it.bugokId !in stopped }.sortedBy { it.bugokId }
+            val eligible = requests.filter { plan ->
+                val unit = state.getValue(plan.bugokId)
+                val outcome = when {
+                    unit.troops == 0 || unit.morale == 0 -> HwihaGridMovement.Outcome.INACTIVE
+                    unit.position == null -> HwihaGridMovement.Outcome.RESERVE
+                    else -> null
+                }
+                if (outcome != null) {
+                    stopped.add(plan.bugokId)
+                    history.add(RoundMove(step + 1,HwihaGridMovement.Step(plan.bugokId,unit.position,unit.position,outcome)))
+                }
+                outcome == null
+            }
+            val result = HwihaGridMovement.resolve(deployment.layout, current.map { unit ->
+                HwihaGridMovement.UnitPosition(unit.bugokId,unit.position,
+                    profiles.getValue(original.getValue(unit.bugokId).crewTypeId).initiative)
+            },eligible.map { HwihaGridMovement.Intent(it.bugokId,it.path[step]) })
+            val requested = eligible.mapTo(hashSetOf()) { it.bugokId }
+            for (move in result.filter { it.bugokId in requested }) {
+                history.add(RoundMove(step + 1,move))
+                if (move.outcome != HwihaGridMovement.Outcome.MOVED) stopped.add(move.bugokId)
+            }
+            val positions = result.associate { it.bugokId to it.to }
+            current = current.map { it.copy(position=positions.getValue(it.bugokId)) }
+        }
+        return RoundResult(history.sortedWith(compareBy(RoundMove::step).thenBy { it.move.bugokId }), resolve(current,attacks))
+    }
+
+    private fun validate(units: List<UnitState>, intents: List<AttackIntent>) {
+        require(units.map { it.bugokId }.toSet() == original.keys && units.size == original.size)
+        require(units.all { it.troops in 0..original.getValue(it.bugokId).troops && it.morale in 0..100 &&
+            it.fatigue in 0..100 && (it.troops > 0 || it.position == null) &&
+            (it.position == null || it.position in deployment.layout.distancesFromEntry) })
+        val occupied = units.mapNotNull { it.position }
+        require(occupied.distinct().size == occupied.size)
+        require(intents.map { it.attackerId }.distinct().size == intents.size &&
+            intents.all { it.attackerId in original && it.targetId in original && it.attackerId != it.targetId })
     }
 
     private fun damage(attacker: UnitState, target: UnitState): Int {
