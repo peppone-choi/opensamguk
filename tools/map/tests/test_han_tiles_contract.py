@@ -728,7 +728,9 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
             # 2026-09-18 ★ 지리 재분할(partition_counties_by_location, GH #806) → 거점 → 접기 → 저지 재적층 뒤의 han-tiles.
             # 앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 단계 뒤 문서였다.
             # 2026-09-21: 북동 확장 프레임을 걷어내 격자가 843x864 → 669x768 로 돌아왔다(城·省 id 는 그대로).
-            "6c8cbe2e2128fb32f3bd9cf2a2955585bd42ac5125d5db861124b11cbb681912",
+            # 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
+            # parentRegions 3 곳(반로·본피·고동람)이 aliases 를 얻은 것뿐이라 아래 격자·투영 단언은 그대로 산다.
+            "715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620",
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
