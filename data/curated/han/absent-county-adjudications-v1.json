@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "absent-county-adjudications-v1",
+  "note": "junguozhi-county-gaps-v1 의 결손 후보 가운데 같은 郡에 근접 유사 이름이 있는 16 건을 사료로 심사한 결과다. 결손 후보는 판정이 아니다 — 이 원장이 그 판정을 적는다. 조회는 shiliao 색인(1,275 권)이고, 인용은 그대로 옮겼다.",
+  "method": "각 건마다 (1) 정본 카탈로그가 그 郡의 縣 목록에 유사 이름을 따로 싣는지 보고, (2) shiliao 색인에서 두 이름을 각각 조회했다. 유사 이름이 정본에 없고 사료가 같은 곳의 이문·개명임을 말하면 FALSE_ABSENCE, 둘 다 실재하는 다른 縣이면 REAL_GAP 이다. 사료가 말이 없으면 UNKNOWN 으로 두고 채우지 않는다.",
+  "totals": { "reviewed": 16, "FALSE_ABSENCE": 11, "REAL_GAP": 2, "UNKNOWN": 3 },
+  "adjudications": [
+    {
+      "commandery": "蜀郡", "canonName": "八陵", "mapName": "蚕陵", "verdict": "FALSE_ABSENCE",
+      "basis": "SOURCE_COLLATION_NOTE",
+      "evidence": "後漢書 卷113 郡國志 校勘記 — 「三五０九頁 二行 八陵 按：集解引錢大昕說，謂前志有蠶陵，無八陵，晉志亦作「蠶陵」」",
+      "reading": "정본이 실은 八陵 이 오자이고 蠶陵 이 옳다. 지도가 맞다."
+    },
+    {
+      "commandery": "上谷郡", "canonName": "下落", "mapName": "下洛", "verdict": "FALSE_ABSENCE",
+      "basis": "SOURCE_COLLATION_NOTE",
+      "evidence": "後漢書 卷113 郡國志 校勘記 — 「三五二八頁 六行 下落 按：惠棟補注本作「下洛」，王先謙漢書補注謂水經〈氵纍〉水注「落」作「洛」」",
+      "reading": "落·洛 이문이다. 지도의 下洛 은 다른 판본의 독법이다."
+    },
+    {
+      "commandery": "安平國", "canonName": "南深", "mapName": "南䜌", "verdict": "FALSE_ABSENCE",
+      "basis": "RECEIVED_TEXT",
+      "evidence": "後漢書 卷015 李王鄧來列傳 — 「十三年，更封南䜌侯」 / 漢書 卷015 王子侯表 — 「南䜌侯佗」{{師古曰：「䜌音力專反。」}}",
+      "reading": "南䜌 이 실재 표기다. 정본의 南深 은 䜌 을 잘못 읽은 것이다."
+    },
+    {
+      "commandery": "鉅鹿郡", "canonName": "陶", "mapName": "廮陶", "verdict": "FALSE_ABSENCE",
+      "basis": "RECEIVED_TEXT",
+      "evidence": "後漢書 卷110 郡國志 — 「鉅鹿之廮陶、曲〔周〕、南和、廣平、任」 / 元和郡縣圖志 卷17 — 「漢以為廮陶縣，屬钜鹿郡」",
+      "reading": "縣 이름은 廮陶 다. 정본의 「陶」 는 추출이 앞 글자를 잃은 것이다 — 코퍼스 줄도 「陶，有薄落亭。」 로 시작한다."
+    },
+    {
+      "commandery": "河東郡", "canonName": "绛", "mapName": "绛邑", "verdict": "FALSE_ABSENCE",
+      "basis": "RECEIVED_TEXT",
+      "evidence": "後漢書 卷109 郡國志 — 「〖绛〗邑。{{*|縣西有絳邑城，杜預曰故絳也。}}」 / 元和郡縣圖志 卷12 — 「即平陽絳邑縣也」",
+      "reading": "원문에서 〖绛〗 괄호가 이름을 갈랐고 뒤의 「邑」 이 이름의 일부다. 縣 이름은 絳邑."
+    },
+    {
+      "commandery": "梁國", "canonName": "碭山", "mapName": "砀", "verdict": "FALSE_ABSENCE",
+      "basis": "RECEIVED_TEXT",
+      "evidence": "後漢書 卷053 注 — 「梁國有碭縣」",
+      "reading": "縣 이름은 碭 이다. 「碭山」 은 현대 지명이라 정본 쪽 표기가 후대에 끌렸다."
+    },
+    {
+      "commandery": "東海郡", "canonName": "郯", "mapName": "郯城", "verdict": "FALSE_ABSENCE",
+      "basis": "RECEIVED_TEXT",
+      "evidence": "元和郡縣圖志 卷11 — 「漢改郯郡為東海郡，領三十七縣，理在郯縣，屬徐州」",
+      "reading": "縣 이름은 郯 이고 郯城 은 후대·현대 이름이다. 같은 곳."
+    },
+    {
+      "commandery": "京兆尹", "canonName": "霸陵", "mapName": "霸城", "verdict": "FALSE_ABSENCE",
+      "basis": "LATER_RENAME",
+      "evidence": "漢書 卷004 文帝紀 — 「霸陵山川因其故，無有所改」 / 後漢書 卷083 — 「乃共入霸陵山中」",
+      "reading": "後漢 이름은 霸陵 이다. 지도의 霸城 은 曹魏 개칭 이름이라 같은 곳이다."
+    },
+    {
+      "commandery": "左馮翊", "canonName": "高陵", "mapName": "高陆", "verdict": "FALSE_ABSENCE",
+      "basis": "LATER_RENAME",
+      "evidence": "晉書 卷040 — 「少以王官爲高陸令」 / 晉書 卷034 — 「預尚帝妹高陸公主」",
+      "reading": "晉 이후 표기가 高陸 이다. 後漢 이름 高陵 과 같은 곳."
+    },
+    {
+      "commandery": "魯國", "canonName": "魯國", "mapName": "鲁", "verdict": "FALSE_ABSENCE",
+      "basis": "CATALOG_ARTIFACT",
+      "evidence": "後漢書 卷110 郡國志 — 「魯國，古奄國。{{*|…應劭曰：「曲阜在魯城中…」}}」 (郡國 자체의 머리글)",
+      "reading": "정본 카탈로그가 郡國 머리글을 縣 1 번으로 센 것이다. 지도의 鲁 는 그 治所 縣 이다."
+    },
+    {
+      "commandery": "廣陵郡", "canonName": "輿", "mapName": "舆国", "verdict": "FALSE_ABSENCE",
+      "basis": "UNIT_TYPE_SUFFIX",
+      "evidence": "後漢書 卷111 郡國志 廣陵郡 輿 항목",
+      "reading": "같은 縣 에 侯國 접미가 붙은 표기 차이다. 이름 정규화가 國 을 떼지 않아 갈렸다."
+    },
+    {
+      "commandery": "安定郡", "canonName": "彭阳", "mapName": "泾阳", "verdict": "REAL_GAP",
+      "basis": "BOTH_ATTESTED_SEPARATELY",
+      "evidence": "後漢書 卷065 注 — 「彭陽，高平，並縣名，屬安定郡」 / 後漢書 卷008 注 — 「涇陽，縣名，屬安定，故城在今原州平涼縣南也」",
+      "reading": "彭陽 과 涇陽 은 둘 다 安定郡 의 실재 縣 이고 서로 다른 곳이다. 지도에 涇陽 만 있으니 彭陽 은 진짜 결손이다."
+    },
+    {
+      "commandery": "益州郡", "canonName": "毋棳", "mapName": "毋单", "verdict": "REAL_GAP",
+      "basis": "BOTH_ATTESTED_SEPARATELY",
+      "evidence": "後漢書 卷113 郡國志 益州郡 — 「〖毋棳〗」 / 漢書 卷028 地理志 牂柯郡 — 「…漏臥，平夷，同並，談指，宛溫，毋斂，夜郎，毋單，漏江…」 / 華陽國志 卷四 — 「毋單縣〔漢舊縣，屬牂柯郡〕」",
+      "reading": "毋棳 은 益州郡, 毋單 은 본래 牂柯郡 이다. 서로 다른 縣 이므로 毋棳 은 진짜 결손이다."
+    },
+    {
+      "commandery": "東海郡", "canonName": "合鄕", "mapName": "合城", "verdict": "UNKNOWN",
+      "basis": "INDEX_SILENT_ON_COUNTY_SENSE",
+      "evidence": "後漢書 卷111 郡國志 — 「〖合鄕〗{{*|漷水自此南至湖陸。}}」. 「合鄉」 조회는 三國志 卷51 「糾合鄉曲」, 晉書 卷063 「保合鄉宗」 처럼 전부 동사구였다 — 縣 용례를 따로 확인하지 못했다.",
+      "reading": "郡國志 표기는 合鄕 이다. 지도의 合城 이 어디서 왔는지 이 색인으로는 확인되지 않는다. 讀史方輿紀要·水經注 계열을 더 봐야 한다."
+    },
+    {
+      "commandery": "吳郡", "canonName": "安", "mapName": "永安", "verdict": "UNKNOWN",
+      "basis": "INDEX_SILENT_ON_THIS_COMMANDERY",
+      "evidence": "「永安縣」 조회는 元和郡縣圖志 卷12·13 의 河東郡·西河 사례만 나왔고 吳郡 용례가 없었다. 郡國志 원문은 「安，{{*|越絕曰…}}」 로 한 글자다.",
+      "reading": "정본의 「安」 이 절단인지 그대로인지 확정하지 못했다. 吳郡 永安 의 사료 근거를 더 찾아야 한다."
+    },
+    {
+      "commandery": "鴈門郡", "canonName": "汪陶", "mapName": "浧陶", "verdict": "UNKNOWN",
+      "basis": "MAP_NAME_UNEXPLAINED",
+      "evidence": "後漢書 卷113 郡國志 鴈門郡 — 「〖繁畤〗 〖楼烦〗 〖武州〗 〖汪陶〗 〖剧阳〗 〖崞〗 〖平城〗」",
+      "reading": "정본은 汪陶 다. 지도의 浧陶 가 어느 판본에서 왔는지 이 색인으로는 확인되지 않는다."
+    }
+  ]
+}
