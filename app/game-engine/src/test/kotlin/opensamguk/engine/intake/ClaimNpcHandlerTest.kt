@@ -18,6 +18,25 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class ClaimNpcHandlerTest {
+    @Test fun `possession preserves reduced renown instead of reseeding initial capacity`() {
+        val policy = opensamguk.logic.input.HwihaPersonPolicyState(29, false, "synthetic-claim-fixture", "v1", 10)
+        val meta = mapOf("hwihaLord" to false, "hwihaPersonPolicy" to policy.toMetaValue())
+        val positions = opensamguk.logic.world.GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet())
+            .withState(opensamguk.logic.world.GeneralPositionState("fixture", "a".repeat(64), 10,
+                opensamguk.logic.world.StrategicNodeRef.LandProvince("p"), 1))
+        val world = InMemoryTurnWorld(WorldSnapshot(
+            state = TurnWorldState(1, 200, 3, 3600, t0, config = mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA")),
+            worldId = opensamguk.common.world.WorldId(1), generals = listOf(npc(meta = meta)),
+            generalPositionSnapshot = positions, cityLandProvinceById = mapOf(5 to "p")))
+        val recorder = ChangeRecorder()
+        val result = ClaimNpcHandler(world, recorder, nowProvider = { t0 }).handle(
+            TurnDaemonCommand.ClaimNpc(generalId = 10, userId = 7L, userNick = "빙의"))
+        assertEquals(true, assertIs<GeneralBoolResult>(result).ok)
+        assertEquals(policy, opensamguk.logic.input.HwihaPersonPolicyState.read(world.getGeneralById(10)!!.meta))
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(policy, opensamguk.logic.input.HwihaPersonPolicyState.read(payload.updatedGenerals.single().meta))
+    }
+
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 

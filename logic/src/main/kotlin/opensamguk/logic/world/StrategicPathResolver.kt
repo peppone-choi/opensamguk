@@ -123,6 +123,51 @@ object StrategicPathResolver {
         return StrategicPathResult.Denied(denial)
     }
 
+    /** Physical land distance uses the same executable graph and filters as legacy traversal. */
+    fun resolveLandMarch(
+        topology: StrategicTopologySnapshot,
+        request: StrategicPathRequest,
+        state: StrategicEdgeStateSnapshot,
+        metrics: LandMarchMetricSnapshot,
+    ): LandMarchPathResult {
+        if (state.topologyRevision != topology.topologyRevision || state.topologyHash != topology.contentHash ||
+            metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash) {
+            return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_REVISION_STALE)
+        }
+        val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
+        if (state.edgeStates.keys.any { it !in edgeIds }) return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
+        if (!topology.containsNode(request.from) || !topology.containsNode(request.to))
+            return LandMarchPathResult.Denied(PathDenialCode.UNKNOWN_NODE)
+        if (request.from !is StrategicNodeRef.LandProvince || request.to !is StrategicNodeRef.LandProvince)
+            return LandMarchPathResult.Denied(PathDenialCode.NO_LAND_CONNECTION)
+        val graph = SearchGraph(topology, state, request.requiredCapacity)
+        val found = try {
+            graph.findPath(request.from, request.to,
+                edgeAllowed = LandMarchMetricSnapshot::supports,
+                edgeCost = { metrics.edgesById.getValue(it.id).costMm })
+        } catch (_: ArithmeticException) {
+            return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
+        }
+        if (found != null) {
+            val nodes = found.nodes.map(StrategicNodeRef::canonicalKey)
+            val ids = found.edges.map(TraversalEdge::id)
+            val modes = found.edges.map(TraversalEdge::mode)
+            return LandMarchPathResult.Resolved(ResolvedLandMarchPath(nodes, ids, modes, found.cost,
+                found.capacity, topology.topologyRevision, topology.contentHash, metrics.contentHash,
+                landMarchPathHash(nodes, ids, modes, found.cost, found.capacity,
+                    topology.topologyRevision, topology.contentHash, metrics.contentHash)))
+        }
+        // Diagnostic searches only classify failure. Their synthetic links never produce a march path.
+        val denial = when {
+            graph.findPath(request.from, request.to, SearchOptions(ignoreCapacity = true),
+                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.NO_TRANSPORT_CAPACITY
+            graph.findPath(request.from, request.to, SearchOptions(ignoreBarriers = true),
+                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.RIVER_CROSSING_REQUIRED
+            else -> PathDenialCode.NO_LAND_CONNECTION
+        }
+        return LandMarchPathResult.Denied(denial)
+    }
+
     private fun path(
         topology: StrategicTopologySnapshot,
         nodes: List<StrategicNodeRef>,
@@ -216,6 +261,8 @@ object StrategicPathResolver {
             from: StrategicNodeRef,
             to: StrategicNodeRef,
             options: SearchOptions = SearchOptions(),
+            edgeAllowed: (TraversalEdge) -> Boolean = { true },
+            edgeCost: (TraversalEdge) -> Long = { it.movementCost.toLong() },
         ): SearchState? {
             val queue = PriorityQueue<SearchState> { first, second ->
                 compareValues(first.cost, second.cost)
@@ -236,11 +283,11 @@ object StrategicPathResolver {
 
                 for (step in adjacency[current.node.canonicalKey].orEmpty()) {
                     if (step.diagnosticOnly && !options.ignoreBarriers) continue
-                    if (!isUsable(step.edge, options)) continue
+                    if (!edgeAllowed(step.edge) || !isUsable(step.edge, options)) continue
                     val available = availableCapacity(step.edge)
                     val candidate = SearchState(
                         node = step.to,
-                        cost = Math.addExact(current.cost, step.edge.movementCost.toLong()),
+                        cost = Math.addExact(current.cost, edgeCost(step.edge)),
                         edges = current.edges + step.edge,
                         nodes = current.nodes + step.to,
                         capacity = minOf(current.capacity, available),

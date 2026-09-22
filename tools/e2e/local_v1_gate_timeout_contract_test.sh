@@ -51,6 +51,15 @@ docker() {
     return 1
   fi
 
+  if [[ "${1:-}" == "compose" && " $* " == *" config --services "* ]]; then
+    printf '%s\n' postgres redis gateway-api board-api game-api game-engine web-gateway web-game nginx
+    return 0
+  fi
+  if [[ "${1:-}" == "compose" && ( " $* " == *" ps -q postgres "* || " $* " == *" ps -q redis "* ) ]]; then
+    printf '%s\n' aabbccddeeff00112233445566778899
+    return 0
+  fi
+
   case "${1:-}:${2:-}" in
     inspect:*)
       printf 'running healthy\n'
@@ -107,6 +116,7 @@ omo() {
 }
 
 pnpm() {
+  if [[ -n "${E2E_ARGS_CAPTURE_FILE:-}" ]]; then printf '%s\n' "$@" >"$E2E_ARGS_CAPTURE_FILE"; fi
   if [[ " $* " == *" test:e2e "* ]]; then
     printf '%s\n' "${E2E_TEST_TIMEOUT_MS:-}" >"$E2E_TIMEOUT_CAPTURE_FILE"
     if [[ -n "${E2E_OPERATIONAL_CAPTURE_FILE:-}" ]]; then
@@ -132,6 +142,7 @@ run_case() {
     unset E2E_TEST_TIMEOUT_MS
   fi
   export E2E_TIMEOUT_CAPTURE_FILE="$capture_file"
+  export E2E_ARGS_CAPTURE_FILE="$tmp_dir/${label}-args.txt"
 
   OPENSAMGUK_WORLD_ID=1 \
   JWT_PRIVATE_KEY=contract-test-private-key \
@@ -140,6 +151,8 @@ run_case() {
   E2E_ARTIFACT_DIR="$tmp_dir/${label}-artifacts" \
   "$gate"
 
+  [[ "$(wc -l < "$E2E_ARGS_CAPTURE_FILE" | tr -d ' ')" == 3 ]] || fail "$label changed default full-suite arguments"
+  unset E2E_ARGS_CAPTURE_FILE
   [[ -f "$capture_file" ]] || fail "$label did not invoke test:e2e"
   [[ "$(<"$capture_file")" == "$expected_timeout" ]] || {
     fail "$label timeout was $(<"$capture_file"), expected $expected_timeout"
@@ -155,7 +168,7 @@ assert_project_cleanup() {
   local docker_capture="$3"
   local source_prefix="$4"
   local cleanup_artifact="$artifact_dir/cleanup-resources.txt"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local volumes=(pgdata redisdata profile-icons)
   local service
   local volume
@@ -189,7 +202,7 @@ run_build_mode_contracts() {
   local sequential_docker_capture="$tmp_dir/sequential-docker.txt"
   local default_artifact_dir="$tmp_dir/default-build-mode-artifacts"
   local sequential_artifact_dir="$tmp_dir/sequential-build-mode-artifacts"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local builds=()
   local index
 
@@ -204,7 +217,7 @@ run_build_mode_contracts() {
   "$gate"
 
   grep -Fq ' up -d --build' "$default_capture" || fail "default build mode did not preserve compose up -d --build"
-  if grep -Eq ' build (gateway-api|game-api|game-engine|web-gateway|web-game)$' "$default_capture"; then
+  if grep -Eq ' build (gateway-api|board-api|game-api|game-engine|web-gateway|web-game)$' "$default_capture"; then
     fail "default build mode unexpectedly performed sequential service builds"
   fi
   assert_project_cleanup default-build "$default_artifact_dir" "$default_docker_capture" opensamguk
@@ -219,7 +232,7 @@ run_build_mode_contracts() {
   E2E_ARTIFACT_DIR="$sequential_artifact_dir" \
   "$gate"
 
-  mapfile -t builds < <(grep -E ' build (gateway-api|game-api|game-engine|web-gateway|web-game)$' "$sequential_capture")
+  mapfile -t builds < <(grep -E ' build (gateway-api|board-api|game-api|game-engine|web-gateway|web-game)$' "$sequential_capture")
   [[ "${#builds[@]}" == "${#services[@]}" ]] || fail "sequential build mode did not build each application service exactly once"
   for index in "${!services[@]}"; do
     [[ "${builds[$index]}" == *" build ${services[$index]}" ]] || {
@@ -246,7 +259,7 @@ run_prebuilt_image_contracts() {
   local invalid_output="$tmp_dir/invalid-prebuilt-prefix.log"
   local missing_output="$tmp_dir/missing-prebuilt-source.log"
   local existing_output="$tmp_dir/existing-prebuilt-target.log"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local service
 
   export E2E_IMAGE_CAPTURE_FILE="$default_capture"
@@ -335,7 +348,7 @@ run_failure_cleanup_contracts() {
   local cleanup_artifact_dir="$tmp_dir/cleanup-failure-artifacts"
   local playwright_docker_capture="$tmp_dir/playwright-failure-docker.txt"
   local cleanup_docker_capture="$tmp_dir/cleanup-failure-docker.txt"
-  local services=(gateway-api game-api game-engine web-gateway web-game)
+  local services=(gateway-api board-api game-api game-engine web-gateway web-game)
   local service
 
   export E2E_DOCKER_CAPTURE_FILE="$playwright_docker_capture"
@@ -452,3 +465,33 @@ run_operational_timeout_override_case
 unset SCENARIO_QA_TURNTERM
 
 printf 'local_v1_gate timeout contract: PASS\n'
+
+# Scoped names must cover config services (including optional board-api); health uses IDs.
+runner_artifacts="$tmp_dir/runner-isolation"
+export E2E_DOCKER_CAPTURE_FILE="$tmp_dir/runner-isolation-docker.txt"
+export E2E_ARGS_CAPTURE_FILE="$tmp_dir/runner-args.txt"
+export E2E_TIMEOUT_CAPTURE_FILE="$tmp_dir/runner-timeout.txt"
+OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture \
+ E2E_TEST_SPEC=e2e/v1-core-live.spec.ts E2E_ARTIFACT_DIR="$runner_artifacts" "$gate"
+python3 - "$runner_artifacts" <<'PYTEST'
+import json, pathlib, sys
+root=pathlib.Path(sys.argv[1])
+project=(root/'compose-project-name.txt').read_text().strip()
+services=json.loads((root/(project+'-containers.json')).read_text())['services']
+assert set(services)==set('postgres redis gateway-api board-api game-api game-engine web-gateway web-game nginx'.split())
+assert all(v=={'container_name':project+'-'+k} for k,v in services.items())
+PYTEST
+[[ "$(tail -n 1 "$E2E_ARGS_CAPTURE_FILE")" == 'e2e/v1-core-live.spec.ts' ]] || fail 'spec not passed as single argument'
+[[ "$(wc -l < "$E2E_ARGS_CAPTURE_FILE" | tr -d ' ')" == 4 ]] || fail 'spec arguments split or expanded'
+grep -Fq 'ps -q postgres' "$E2E_DOCKER_CAPTURE_FILE" || fail 'postgres health not project scoped'
+grep -Fq 'ps -q redis' "$E2E_DOCKER_CAPTURE_FILE" || fail 'redis health not project scoped'
+if grep -Eq 'inspect .*opensamguk-(postgres|redis)' "$E2E_DOCKER_CAPTURE_FILE"; then fail 'fixed container health remains'; fi
+for bad_spec in '--help' '../e2e/v1-core-live.spec.ts' 'e2e/missing.spec.ts' 'e2e/v1-core-live.spec.ts --workers=99' 'e2e/$(touch injected).spec.ts'; do
+  if OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture E2E_TEST_SPEC="$bad_spec" \
+    E2E_ARTIFACT_DIR="$tmp_dir/invalid-spec" "$gate" >"$tmp_dir/invalid-spec.log" 2>&1; then
+    fail 'unsafe or nonexistent spec accepted'
+  fi
+  grep -Fq 'E2E_TEST_SPEC must name' "$tmp_dir/invalid-spec.log" || fail 'unexpected spec rejection'
+done
+unset E2E_ARGS_CAPTURE_FILE E2E_DOCKER_CAPTURE_FILE E2E_TIMEOUT_CAPTURE_FILE
+printf 'local_v1_gate isolation and spec contract: PASS\n'

@@ -17,6 +17,10 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.logic.input.HwihaLordStatus
+import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.HwihaRenownRules
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.MakeGeneral
 import opensamguk.logic.world.SpecialityHelper
@@ -178,6 +182,15 @@ class MakeGeneralHandler(
             "betray" to 0,
             "penalty" to emptyMap<String, Any?>(),
         )
+        if (state.ruleProfile == RuleProfile.HWIHA) {
+            // The actual creation draw is the source, not a historical officer or default stats.
+            HwihaRenownRules.personCost(drawResult.leadership, drawResult.strength, drawResult.intel,
+                drawResult.politics, drawResult.charm)
+            generalMeta[HwihaLordStatus.META_KEY] = false
+            generalMeta[HwihaPersonPolicyState.META_KEY] = HwihaPersonPolicyState(
+                HwihaRenownRules.INITIAL_CAPACITY, false, "opensamguk:created-general", "v1", generalId,
+            ).toMetaValue()
+        }
         command.ownerName?.takeIf { it.isNotBlank() }?.let { generalMeta["owner_name"] = it }
         val turnGeneral = TurnGeneral(
             id = generalId,

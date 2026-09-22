@@ -442,6 +442,24 @@ class ScenarioImporter(
     }
 
     internal fun validateSeedContract() {
+        val selectedRoster = seedGenerals()
+        for (roster in listOf(scenario.generals, selectedRoster)) {
+            val policies = roster.filter { it.hwihaPersonPolicy != null }
+            require(policies.map { it.name }.distinct().size == policies.size) { "Duplicate person policy in roster" }
+            require(policies.map { it.hwihaPersonPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == policies.size) {
+                "Duplicate person source identity in roster"
+            }
+        }
+        val declaredPolicies = (scenario.generals + selectedRoster).distinct().filter { it.hwihaPersonPolicy != null }
+        require(declaredPolicies.isEmpty() || scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            "person policies require HWIHA"
+        }
+        require(declaredPolicies.map { it.name }.distinct().size == declaredPolicies.size) { "Duplicate person policy name" }
+        require(declaredPolicies.map { it.hwihaPersonPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == declaredPolicies.size) {
+            "Duplicate person source identity"
+        }
+        declaredPolicies.forEach(HwihaScenarioPersonPolicies::validate)
+
         val declaredLords = scenario.generals.filter { it.hwihaLord == true }
         require(declaredLords.isEmpty() || scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             "explicit lord declarations require HWIHA"
@@ -662,6 +680,7 @@ class ScenarioImporter(
         }
         if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.HwihaLordStatus.META_KEY] = general.hwihaLord ?: false
+            general.hwihaPersonPolicy?.let { meta[opensamguk.logic.input.HwihaPersonPolicyState.META_KEY] = it.toMetaValue() }
         }
         if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text

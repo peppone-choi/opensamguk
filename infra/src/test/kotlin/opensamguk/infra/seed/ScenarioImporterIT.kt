@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -119,6 +120,25 @@ class ScenarioImporterIT {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
         val cities = mapCitiesOf(scenario)
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
+    }
+
+    @Test
+    fun `explicit synthetic person policy survives actual seed and does not reset on repeated import`() {
+        assumeTrue(dockerAvailable, "Docker unavailable")
+        val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
+            java.nio.file.Path.of("../tools/e2e/fixtures/hwiha-court/scenario_990001.json")))
+        val importer = ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario),
+            scenarioCode = "scenario_990001", artifactsRoot = java.nio.file.Path.of(".."))
+        importer.importAll(jdbc, canonicalWorldId)
+        fun stored() = opensamguk.logic.input.HwihaPersonPolicyState.read(opensamguk.infra.persistence.MetaJson.decode(
+            jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id=1 AND id=1001", String::class.java)!!))!!
+        assertEquals(30, stored().renownCapacity)
+        assertEquals("synthetic-qa:court", stored().statSourceId)
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id=1", Int::class.java))
+        // A later in-game change must not be overwritten by the boot seed's idempotency path.
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaPersonPolicy,renownCapacity}','29') WHERE world_id=1")
+        assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) { importer }.seeded)
+        assertEquals(29, stored().renownCapacity)
     }
 
     @Test
