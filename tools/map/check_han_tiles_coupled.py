@@ -116,7 +116,9 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_resource_sites.py")),
     # 산지 위치는 위 근거 원장에서, 산출량은 게임 설계에서 온다. 郡 단위 말 산지를 治所 縣으로 옮기므로
     # han-tiles 의 commanderyRecords 를 읽는다 — 지도가 바뀌면 이 원장도 낡는다.
-    Coupled("hwiha-resource-production", ("data/curated/han/hwiha-resource-production-v1.json",),
+    Coupled("hwiha-resource-production",
+            ("data/curated/han/hwiha-resource-production-v1.json",
+             "infra/src/main/resources/hwiha/county-production-v1.json"),
             _t("tools/map/build_hwiha_resource_production.py", "--check"),
             _t("tools/map/build_hwiha_resource_production.py")),
     Coupled("officer-native-county", ("data/curated/han/officer-native-county-v1.json",),
