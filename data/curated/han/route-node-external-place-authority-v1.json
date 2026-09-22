@@ -441,6 +441,426 @@
       "recordId": "82879",
       "subjectKey": "hhs:109:河南尹:011",
       "wikidataId": null
+    },
+    {
+      "canonicalName": "居庸",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0090-005",
+      "recordId": "gc-g0090-005",
+      "subjectKey": "hhs:113:上谷郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "秣陵",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0049-011",
+      "recordId": "gc-g0049-011",
+      "subjectKey": "hhs:112:丹陽郡:011",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "陰陵",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-001",
+      "recordId": "gc-g0048-001",
+      "subjectKey": "hhs:112:九江郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "歷陽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-007",
+      "recordId": "gc-g0048-007",
+      "subjectKey": "hhs:112:九江郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "當塗",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-008",
+      "recordId": "gc-g0048-008",
+      "subjectKey": "hhs:112:九江郡:008",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "全椒",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-009",
+      "recordId": "gc-g0048-009",
+      "subjectKey": "hhs:112:九江郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "鍾離",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-010",
+      "recordId": "gc-g0048-010",
+      "subjectKey": "hhs:112:九江郡:010",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "阜陵",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0048-011",
+      "recordId": "gc-g0048-011",
+      "subjectKey": "hhs:112:九江郡:011",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "五原",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0082-002",
+      "recordId": "gc-g0082-002",
+      "subjectKey": "hhs:113:五原郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "高柳",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0089-001",
+      "recordId": "gc-g0089-001",
+      "subjectKey": "hhs:113:代郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "中宿",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0098-003",
+      "recordId": "gc-g0098-003",
+      "subjectKey": "hhs:113:南海郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "順陽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0041-032",
+      "recordId": "gc-g0041-032",
+      "subjectKey": "hhs:112:南陽郡:032",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "丹水",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0041-036",
+      "recordId": "gc-g0041-036",
+      "subjectKey": "hhs:112:南陽郡:036",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "美阳",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0006-013",
+      "recordId": "gc-g0006-013",
+      "subjectKey": "hhs:109:右扶風:013",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "兹氏",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0079-006",
+      "recordId": "gc-g0079-006",
+      "subjectKey": "hhs:113:太原郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "临泾",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0070-001",
+      "recordId": "gc-g0070-001",
+      "subjectKey": "hhs:113:安定郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "東緡",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0028-002",
+      "recordId": "gc-g0028-002",
+      "subjectKey": "hhs:111:山陽郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "衙",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0005-012",
+      "recordId": "gc-g0005-012",
+      "subjectKey": "hhs:109:左馮翊:012",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "欒城",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0015-007",
+      "recordId": "gc-g0015-007",
+      "subjectKey": "hhs:110:常山國:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "東陽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0033-006",
+      "recordId": "gc-g0033-006",
+      "subjectKey": "hhs:111:廣陵郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "舒",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0050-001",
+      "recordId": "gc-g0050-001",
+      "subjectKey": "hhs:112:廬江郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "臨湖",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0050-005",
+      "recordId": "gc-g0050-005",
+      "subjectKey": "hhs:112:廬江郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "龍舒",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0050-006",
+      "recordId": "gc-g0050-006",
+      "subjectKey": "hhs:112:廬江郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "襄安",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0050-007",
+      "recordId": "gc-g0050-007",
+      "subjectKey": "hhs:112:廬江郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "合鄕",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0030-010",
+      "recordId": "gc-g0030-010",
+      "subjectKey": "hhs:111:東海郡:010",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "穀熟",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0009-006",
+      "recordId": "gc-g0009-006",
+      "subjectKey": "hhs:110:梁國:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "薄",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0009-009",
+      "recordId": "gc-g0009-009",
+      "subjectKey": "hhs:110:梁國:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "姑臧",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0072-001",
+      "recordId": "gc-g0072-001",
+      "subjectKey": "hhs:113:武威郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "宣威",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0072-009",
+      "recordId": "gc-g0072-009",
+      "subjectKey": "hhs:113:武威郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "邪龙",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0062-005",
+      "recordId": "gc-g0062-005",
+      "subjectKey": "hhs:113:永昌郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "北宜春",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0008-009",
+      "recordId": "gc-g0008-009",
+      "subjectKey": "hhs:110:汝南郡:009",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "細陽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0008-016",
+      "recordId": "gc-g0008-016",
+      "subjectKey": "hhs:110:汝南郡:016",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "鮦陽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0008-019",
+      "recordId": "gc-g0008-019",
+      "subjectKey": "hhs:110:汝南郡:019",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "定潁",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0008-034",
+      "recordId": "gc-g0008-034",
+      "subjectKey": "hhs:110:汝南郡:034",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "固始",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0008-035",
+      "recordId": "gc-g0008-035",
+      "subjectKey": "hhs:110:汝南郡:035",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "向",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0010-017",
+      "recordId": "gc-g0010-017",
+      "subjectKey": "hhs:110:沛國:017",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "梁",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0000-003",
+      "recordId": "gc-g0000-003",
+      "subjectKey": "hhs:109:河南尹:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "新城",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0000-018",
+      "recordId": "gc-g0000-018",
+      "subjectKey": "hhs:109:河南尹:018",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "杨",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0002-002",
+      "recordId": "gc-g0002-002",
+      "subjectKey": "hhs:109:河東郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "易",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0018-003",
+      "recordId": "gc-g0018-003",
+      "subjectKey": "hhs:110:河閒國:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "狐奴",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0091-002",
+      "recordId": "gc-g0091-002",
+      "subjectKey": "hhs:113:漁陽郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "雍奴",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0091-004",
+      "recordId": "gc-g0091-004",
+      "subjectKey": "hhs:113:漁陽郡:004",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "安乐",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0091-007",
+      "recordId": "gc-g0091-007",
+      "subjectKey": "hhs:113:漁陽郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "成纪",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0067-006",
+      "recordId": "gc-g0067-006",
+      "subjectKey": "hhs:113:漢陽郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "上邽",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0067-012",
+      "recordId": "gc-g0067-012",
+      "subjectKey": "hhs:113:漢陽郡:012",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "俞元",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0061-003",
+      "recordId": "gc-g0061-003",
+      "subjectKey": "hhs:113:益州郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "中阳",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0081-005",
+      "recordId": "gc-g0081-005",
+      "subjectKey": "hhs:113:西河郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "廬陵",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0053-005",
+      "recordId": "gc-g0053-005",
+      "subjectKey": "hhs:112:豫章郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "卑水",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0060-006",
+      "recordId": "gc-g0060-006",
+      "subjectKey": "hhs:113:越巂郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "会无",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0060-008",
+      "recordId": "gc-g0060-008",
+      "subjectKey": "hhs:113:越巂郡:008",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "表氏",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0074-002",
+      "recordId": "gc-g0074-002",
+      "subjectKey": "hhs:113:酒泉郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "乐涫",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0074-003",
+      "recordId": "gc-g0074-003",
+      "subjectKey": "hhs:113:酒泉郡:003",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "会水",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0074-005",
+      "recordId": "gc-g0074-005",
+      "subjectKey": "hhs:113:酒泉郡:005",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "沙头",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0074-006",
+      "recordId": "gc-g0074-006",
+      "subjectKey": "hhs:113:酒泉郡:006",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "安弥",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0074-007",
+      "recordId": "gc-g0074-007",
+      "subjectKey": "hhs:113:酒泉郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "東昬",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0022-008",
+      "recordId": "gc-g0022-008",
+      "subjectKey": "hhs:111:陳留郡:008",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "阴馆",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0085-001",
+      "recordId": "gc-g0085-001",
+      "subjectKey": "hhs:113:鴈門郡:001",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "繁畤",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0085-002",
+      "recordId": "gc-g0085-002",
+      "subjectKey": "hhs:113:鴈門郡:002",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "崞",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0085-007",
+      "recordId": "gc-g0085-007",
+      "subjectKey": "hhs:113:鴈門郡:007",
+      "wikidataId": null
+    },
+    {
+      "canonicalName": "马邑",
+      "physicalPlaceId": "curated:gap-county-v1:gc-g0085-010",
+      "recordId": "gc-g0085-010",
+      "subjectKey": "hhs:113:鴈門郡:010",
+      "wikidataId": null
     }
   ],
   "schemaVersion": 1

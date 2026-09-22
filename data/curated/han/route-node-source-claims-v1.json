@@ -16,7 +16,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X000",
           "wikidataId": "Q33408"
         },
@@ -59,7 +59,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X001",
           "wikidataId": "Q36175"
         },
@@ -104,7 +104,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X002",
           "wikidataId": "Q36579"
         },
@@ -147,7 +147,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X003",
           "wikidataId": "Q18808"
         },
@@ -190,7 +190,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X005",
           "wikidataId": "Q75203"
         },
@@ -235,7 +235,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X006",
           "wikidataId": "Q75026"
         },
@@ -280,7 +280,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X007",
           "wikidataId": "Q1331458"
         },
@@ -325,7 +325,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X026",
           "wikidataId": "Q641396"
         },
@@ -377,7 +377,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-002",
           "wikidataId": null
         },
@@ -420,7 +420,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-003",
           "wikidataId": null
         },
@@ -463,7 +463,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-004",
           "wikidataId": null
         },
@@ -506,7 +506,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-006",
           "wikidataId": null
         },
@@ -549,7 +549,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-007",
           "wikidataId": null
         },
@@ -592,7 +592,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-008",
           "wikidataId": null
         },
@@ -635,7 +635,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-009",
           "wikidataId": null
         },
@@ -678,7 +678,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-010",
           "wikidataId": null
         },
@@ -721,7 +721,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-011",
           "wikidataId": null
         },
@@ -764,7 +764,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-xuantu-002",
           "wikidataId": null
         },
@@ -807,7 +807,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-xuantu-003",
           "wikidataId": null
         },
@@ -850,7 +850,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-xuantu-004",
           "wikidataId": null
         },
@@ -893,7 +893,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-xuantu-005",
           "wikidataId": null
         },
@@ -936,7 +936,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-xuantu-006",
           "wikidataId": null
         },
@@ -979,7 +979,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-003",
           "wikidataId": null
         },
@@ -1022,7 +1022,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-004",
           "wikidataId": null
         },
@@ -1065,7 +1065,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-005",
           "wikidataId": null
         },
@@ -1108,7 +1108,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-006",
           "wikidataId": null
         },
@@ -1151,7 +1151,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-007",
           "wikidataId": null
         },
@@ -1194,7 +1194,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-009",
           "wikidataId": null
         },
@@ -1237,7 +1237,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-010",
           "wikidataId": null
         },
@@ -1280,7 +1280,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-011",
           "wikidataId": null
         },
@@ -1323,7 +1323,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-012",
           "wikidataId": null
         },
@@ -1366,7 +1366,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-013",
           "wikidataId": null
         },
@@ -1409,7 +1409,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-014",
           "wikidataId": null
         },
@@ -1452,7 +1452,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-015",
           "wikidataId": null
         },
@@ -1495,7 +1495,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-016",
           "wikidataId": null
         },
@@ -1538,7 +1538,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-lelang-017",
           "wikidataId": null
         },
@@ -1581,7 +1581,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-shuguo-002",
           "wikidataId": null
         },
@@ -1624,7 +1624,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-shuguo-003",
           "wikidataId": null
         },
@@ -1667,7 +1667,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-shuguo-005",
           "wikidataId": null
         },
@@ -1710,7 +1710,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-liaodong-shuguo-006",
           "wikidataId": null
         },
@@ -1753,7 +1753,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-002",
           "wikidataId": null
         },
@@ -1796,7 +1796,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-003",
           "wikidataId": null
         },
@@ -1839,7 +1839,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-004",
           "wikidataId": null
         },
@@ -1882,7 +1882,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-005",
           "wikidataId": null
         },
@@ -1925,7 +1925,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-006",
           "wikidataId": null
         },
@@ -1968,7 +1968,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-007",
           "wikidataId": null
         },
@@ -2011,7 +2011,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-008",
           "wikidataId": null
         },
@@ -2054,7 +2054,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-009",
           "wikidataId": null
         },
@@ -2097,7 +2097,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-010",
           "wikidataId": null
         },
@@ -2140,7 +2140,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-011",
           "wikidataId": null
         },
@@ -2183,7 +2183,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiaozhi-012",
           "wikidataId": null
         },
@@ -2226,7 +2226,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiuzhen-002",
           "wikidataId": null
         },
@@ -2269,7 +2269,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiuzhen-003",
           "wikidataId": null
         },
@@ -2312,7 +2312,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiuzhen-004",
           "wikidataId": null
         },
@@ -2355,7 +2355,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-jiuzhen-005",
           "wikidataId": null
         },
@@ -2398,7 +2398,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-rinan-002",
           "wikidataId": null
         },
@@ -2441,7 +2441,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-rinan-003",
           "wikidataId": null
         },
@@ -2484,7 +2484,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-rinan-004",
           "wikidataId": null
         },
@@ -2527,7 +2527,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "fc-rinan-005",
           "wikidataId": null
         },
@@ -2570,7 +2570,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X011",
           "wikidataId": "Q1015883"
         },
@@ -2613,7 +2613,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X023",
           "wikidataId": "Q256594"
         },
@@ -2656,7 +2656,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "X024",
           "wikidataId": "Q1196894"
         },
@@ -2701,7 +2701,7 @@
       "locationResolution": {
         "coordinateDatasetRef": {
           "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
-          "datasetSha256": "59366f767681b0271535880e87b98256da02da4d96b34cbf945c175081118557",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
           "recordId": "82879",
           "wikidataId": null
         },
@@ -2730,13 +2730,2593 @@
       ],
       "subjectKey": "hhs:109:河南尹:011",
       "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "居庸",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 上谷郡 屬縣 居庸을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0090-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0090-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0090-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 780,
+          "lineStart": 780,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖居庸〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:上谷郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "秣陵",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 丹陽郡 屬縣 秣陵을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0049-011",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0049-011",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0049-011",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 492,
+          "lineStart": 492,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "秣陵，{{*|其地本名金陵，秦始皇改。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:丹陽郡:011",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "陰陵",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 陰陵을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 440,
+          "lineStart": 440,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "陰陵，",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "歷陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 歷陽을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 452,
+          "lineStart": 452,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "歷陽，侯國，刺史治。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "當塗",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 當塗을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-008",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-008",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-008",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 454,
+          "lineStart": 454,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "當塗，有馬丘聚，徐鳳反-{於}-此。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:008",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "全椒",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 全椒을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 456,
+          "lineStart": 456,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "全椒，",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "鍾離",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 鍾離을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 沛國 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 458,
+          "lineStart": 458,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "-{鍾}-離，侯國。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "阜陵",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 九江郡 屬縣 阜陵을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0048-011",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0048-011",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-011",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 460,
+          "lineStart": 460,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "阜陵，",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:九江郡:011",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "五原",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 五原郡 屬縣 五原을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0082-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0082-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0082-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 617,
+          "lineStart": 617,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖五原〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:五原郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "高柳",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 代郡 屬縣 高柳을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0089-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0089-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0089-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 748,
+          "lineStart": 748,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖高柳〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:代郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "中宿",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 南海郡 屬縣 中宿을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0098-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0098-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0098-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 929,
+          "lineStart": 929,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖中宿〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:南海郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "順陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 南陽郡 屬縣 順陽을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0041-032",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0041-032",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-032",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 236,
+          "lineStart": 236,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "順陽，侯國，故博山。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:南陽郡:032",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "丹水",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 南陽郡 屬縣 丹水을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 南鄉郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0041-036",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0041-036",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-036",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 244,
+          "lineStart": 244,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "丹水，故屬弘農。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:南陽郡:036",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "美阳",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 右扶風 屬縣 美阳을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0006-013",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0006-013",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0006-013",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-109.txt",
+          "lineEnd": 248,
+          "lineStart": 248,
+          "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "sourceBook": "後漢書",
+          "verbatim": "〖美阳〗",
+          "volume": 109
+        }
+      ],
+      "subjectKey": "hhs:109:右扶風:013",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "兹氏",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 太原郡 屬縣 兹氏을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0079-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0079-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0079-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 541,
+          "lineStart": 541,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖兹氏〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:太原郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "临泾",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 安定郡 屬縣 临泾을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0070-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0070-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0070-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 370,
+          "lineStart": 370,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖临泾〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:安定郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "東緡",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 山陽郡 屬縣 東緡을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0028-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0028-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0028-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-111.txt",
+          "lineEnd": 161,
+          "lineStart": 161,
+          "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "sourceBook": "後漢書",
+          "verbatim": "〖東緡〗",
+          "volume": 111
+        }
+      ],
+      "subjectKey": "hhs:111:山陽郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "衙",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 左馮翊 屬縣 衙을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0005-012",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0005-012",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0005-012",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-109.txt",
+          "lineEnd": 216,
+          "lineStart": 216,
+          "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "sourceBook": "後漢書",
+          "verbatim": "〖衙〗",
+          "volume": 109
+        }
+      ],
+      "subjectKey": "hhs:109:左馮翊:012",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "欒城",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 常山國 屬縣 欒城을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0015-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0015-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0015-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 322,
+          "lineStart": 322,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "欒城，{{*|〔在平棘〕縣西北四十里。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:常山國:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "東陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 廣陵郡 屬縣 東陽을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0033-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0033-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0033-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-111.txt",
+          "lineEnd": 303,
+          "lineStart": 303,
+          "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "sourceBook": "後漢書",
+          "verbatim": "〖東陽〗",
+          "volume": 111
+        }
+      ],
+      "subjectKey": "hhs:111:廣陵郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "舒",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 廬江郡 屬縣 舒을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0050-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0050-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 508,
+          "lineStart": 508,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "舒，有桐鄉。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:廬江郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "臨湖",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 廬江郡 屬縣 臨湖을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0050-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0050-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 516,
+          "lineStart": 516,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "臨湖，侯國。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:廬江郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "龍舒",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 廬江郡 屬縣 龍舒을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0050-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0050-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 518,
+          "lineStart": 518,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "龍舒，侯國。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:廬江郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "襄安",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 廬江郡 屬縣 襄安을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0050-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0050-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 520,
+          "lineStart": 520,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "襄安，",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:廬江郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "合鄕",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 東海郡 屬縣 合鄕을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0030-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0030-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-111.txt",
+          "lineEnd": 231,
+          "lineStart": 231,
+          "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "sourceBook": "後漢書",
+          "verbatim": "〖合鄕〗",
+          "volume": 111
+        }
+      ],
+      "subjectKey": "hhs:111:東海郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "穀熟",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 梁國 屬縣 穀熟을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0009-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0009-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 142,
+          "lineStart": 142,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "-{穀}-熟，有新城。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:梁國:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "薄",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 梁國 屬縣 薄을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0009-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0009-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 148,
+          "lineStart": 148,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "薄，故屬山陽，湯所都。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:梁國:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "姑臧",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 武威郡 屬縣 姑臧을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0072-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0072-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0072-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 402,
+          "lineStart": 402,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖姑臧〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:武威郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "宣威",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 武威郡 屬縣 宣威을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0072-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0072-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0072-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 418,
+          "lineStart": 418,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖宣威〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:武威郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "邪龙",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 永昌郡 屬縣 邪龙을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0062-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0062-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0062-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 243,
+          "lineStart": 243,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖邪龙〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:永昌郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "北宜春",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 汝南郡 屬縣 北宜春을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0008-009",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0008-009",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-009",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 70,
+          "lineStart": 70,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "北宜春，",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:汝南郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "細陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 汝南郡 屬縣 細陽을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0008-016",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0008-016",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-016",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 84,
+          "lineStart": 84,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "細陽，",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:汝南郡:016",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "鮦陽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 汝南郡 屬縣 鮦陽을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0008-019",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0008-019",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-019",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 90,
+          "lineStart": 90,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "鮦陽，侯國。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:汝南郡:019",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "定潁",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 汝南郡 屬縣 定潁을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0008-034",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0008-034",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-034",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 120,
+          "lineStart": 120,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "定潁，侯國。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:汝南郡:034",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "固始",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 汝南郡 屬縣 固始을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0008-035",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0008-035",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-035",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 122,
+          "lineStart": 122,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "固始，侯國。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:汝南郡:035",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "向",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 沛國 屬縣 向을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0010-017",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0010-017",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0010-017",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 186,
+          "lineStart": 186,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "向，本國。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:沛國:017",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "梁",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 河南尹 屬縣 梁을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 潁川郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0000-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0000-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-109.txt",
+          "lineEnd": 22,
+          "lineStart": 22,
+          "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "sourceBook": "後漢書",
+          "verbatim": "〖梁〗",
+          "volume": 109
+        }
+      ],
+      "subjectKey": "hhs:109:河南尹:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "新城",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 河南尹 屬縣 新城을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 弘農郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0000-018",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0000-018",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-018",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-109.txt",
+          "lineEnd": 52,
+          "lineStart": 52,
+          "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "sourceBook": "後漢書",
+          "verbatim": "〖新城{{*|左傳曰文十七年周敗戎于邥垂，杜預曰縣北有垂亭。史記秦遷西周公於{單心}狐，徐廣曰「與陽人聚相近，在雒陽南百五十里梁、新城之閒」。}}〗",
+          "volume": 109
+        }
+      ],
+      "subjectKey": "hhs:109:河南尹:018",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "杨",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 河東郡 屬縣 杨을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0002-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0002-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0002-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-109.txt",
+          "lineEnd": 106,
+          "lineStart": 106,
+          "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "sourceBook": "後漢書",
+          "verbatim": "〖杨〗",
+          "volume": 109
+        }
+      ],
+      "subjectKey": "hhs:109:河東郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "易",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 河閒國 屬縣 易을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 涿郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0018-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0018-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0018-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-110.txt",
+          "lineEnd": 402,
+          "lineStart": 402,
+          "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "sourceBook": "後漢書",
+          "verbatim": "易，故屬涿。",
+          "volume": 110
+        }
+      ],
+      "subjectKey": "hhs:110:河閒國:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "狐奴",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 漁陽郡 屬縣 狐奴을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0091-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0091-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 792,
+          "lineStart": 792,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖狐奴〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:漁陽郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "雍奴",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 漁陽郡 屬縣 雍奴을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0091-004",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0091-004",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-004",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 796,
+          "lineStart": 796,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖雍奴〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:漁陽郡:004",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "安乐",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 漁陽郡 屬縣 安乐을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0091-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0091-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 802,
+          "lineStart": 802,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖安乐〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:漁陽郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "成纪",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 漢陽郡 屬縣 成纪을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0067-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0067-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0067-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 314,
+          "lineStart": 314,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖成纪〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:漢陽郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "上邽",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 漢陽郡 屬縣 上邽을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0067-012",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0067-012",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0067-012",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 326,
+          "lineStart": 326,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖上邽〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:漢陽郡:012",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "俞元",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 益州郡 屬縣 俞元을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0061-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0061-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0061-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 203,
+          "lineStart": 203,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖俞元〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:益州郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "中阳",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 西河郡 屬縣 中阳을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 太原郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0081-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0081-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0081-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 595,
+          "lineStart": 595,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖中阳〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:西河郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "廬陵",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 豫章郡 屬縣 廬陵을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0053-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0053-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0053-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-112.txt",
+          "lineEnd": 610,
+          "lineStart": 610,
+          "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "sourceBook": "後漢書",
+          "verbatim": "廬陵，{{*|興平元年，孫策分立廬陵郡。",
+          "volume": 112
+        }
+      ],
+      "subjectKey": "hhs:112:豫章郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "卑水",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 越巂郡 屬縣 卑水을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0060-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0060-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0060-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 179,
+          "lineStart": 179,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖卑水〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:越巂郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "会无",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 越巂郡 屬縣 会无을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0060-008",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0060-008",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0060-008",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 183,
+          "lineStart": 183,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖会无〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:越巂郡:008",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "表氏",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 酒泉郡 屬縣 表氏을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. 투영 칸의 세계 소속 郡은 張掖郡 이다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0074-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0074-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 452,
+          "lineStart": 452,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖表氏〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:酒泉郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "乐涫",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 酒泉郡 屬縣 乐涫을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0074-003",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0074-003",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 454,
+          "lineStart": 454,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖乐涫〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:酒泉郡:003",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "会水",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 酒泉郡 屬縣 会水을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0074-005",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0074-005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 458,
+          "lineStart": 458,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖会水〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:酒泉郡:005",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "沙头",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 酒泉郡 屬縣 沙头을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0074-006",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0074-006",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 460,
+          "lineStart": 460,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖沙头〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:酒泉郡:006",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "安弥",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 酒泉郡 屬縣 安弥을 gap-counties-v1 검토 원장의 좌표(READY_NAMU, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0074-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0074-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 462,
+          "lineStart": 462,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖安弥〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:酒泉郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "東昬",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 陳留郡 屬縣 東昬을 gap-counties-v1 검토 원장의 좌표(READY_TGAZ, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0022-008",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0022-008",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0022-008",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-111.txt",
+          "lineEnd": 31,
+          "lineStart": 31,
+          "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "sourceBook": "後漢書",
+          "verbatim": "〖東昬〗",
+          "volume": 111
+        }
+      ],
+      "subjectKey": "hhs:111:陳留郡:008",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "阴馆",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 鴈門郡 屬縣 阴馆을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0085-001",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0085-001",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 673,
+          "lineStart": 673,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖阴馆〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:鴈門郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "繁畤",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 鴈門郡 屬縣 繁畤을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0085-002",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0085-002",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 675,
+          "lineStart": 675,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖繁畤〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:鴈門郡:002",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "崞",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 鴈門郡 屬縣 崞을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0085-007",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0085-007",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 685,
+          "lineStart": 685,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖崞〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:鴈門郡:007",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "马邑",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "郡國志 鴈門郡 屬縣 马邑을 gap-counties-v1 검토 원장의 좌표(READY_BOTH_SOURCES, APPROXIMATE)로 비정한 외부 좌표 보조 record다. 좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "2dda0140ae768a8f2e02eb73f58e90f3cc9a9850b8f036d41181aa9db95c8ffe",
+          "recordId": "gc-g0085-010",
+          "wikidataId": null
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "curated:gap-county-v1:gc-g0085-010",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-010",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 691,
+          "lineStart": 691,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖马邑〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:鴈門郡:010",
+      "subjectType": "ADMINISTRATIVE_PLACE"
     }
   ],
   "policy": {
     "coordinateFieldsCopiedIntoThisArtifact": 0,
     "externalHistoricalBindingCount": 0,
     "legacyInfiniteLifecycleAccepted": false,
-    "purpose": "CHGIS V6 county coverage 밖의 HHS administrative unit 에만 유한 W0 물리 anchor를 제공한다 — 변경 郡治 8건(OPENSAM-225)과 frontier-counties-v1 의 변경 屬縣 51건.",
+    "purpose": "CHGIS V6 county coverage 밖의 HHS administrative unit 에만 유한 W0 물리 anchor를 제공한다 — 변경 郡治 8건(OPENSAM-225)과 frontier-counties-v1 의 변경 屬縣 51건, gap-counties-v1 의 결손 屬縣 60건.",
     "selectionBasis": "HHS_ADMINISTRATIVE_UNIT"
   },
   "reviewAuthority": "user-blanket-approval-2026-08-22",

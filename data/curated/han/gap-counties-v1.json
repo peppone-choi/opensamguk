@@ -48,7 +48,22 @@
         "sourceName": "居庸",
         "declaredCities": 8
       },
-      "placeSlug": "g0090"
+      "placeSlug": "g0090",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·上谷郡 居庸",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 780,
+          "quote": "〖居庸〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:丹陽郡:011",
@@ -79,7 +94,22 @@
         "declaredCities": 16
       },
       "commanderyCentroidKm": 113,
-      "placeSlug": "g0049"
+      "placeSlug": "g0049",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·丹陽郡 秣陵",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 492,
+          "quote": "秣陵，{{*|其地本名金陵，秦始皇改。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:001",
@@ -110,7 +140,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 52,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 陰陵",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 440,
+          "quote": "陰陵，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:007",
@@ -141,7 +186,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 104,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 歷陽",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 452,
+          "quote": "歷陽，侯國，刺史治。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:008",
@@ -172,7 +232,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 79,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 當塗",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 454,
+          "quote": "當塗，有馬丘聚，徐鳳反-{於}-此。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:009",
@@ -203,7 +278,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 82,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 全椒",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 456,
+          "quote": "全椒，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:010",
@@ -234,7 +324,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 84,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 鍾離",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 458,
+          "quote": "-{鍾}-離，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:九江郡:011",
@@ -265,7 +370,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 92,
-      "placeSlug": "g0048"
+      "placeSlug": "g0048",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·九江郡 阜陵",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 460,
+          "quote": "阜陵，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:五原郡:002",
@@ -295,7 +415,22 @@
         "sourceName": "五原",
         "declaredCities": 10
       },
-      "placeSlug": "g0082"
+      "placeSlug": "g0082",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·五原郡 五原",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 617,
+          "quote": "〖五原〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:代郡:001",
@@ -326,7 +461,22 @@
         "declaredCities": 11
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0089"
+      "placeSlug": "g0089",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·代郡 高柳",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 748,
+          "quote": "〖高柳〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:南海郡:003",
@@ -357,7 +507,22 @@
         "declaredCities": 7
       },
       "commanderyCentroidKm": 146,
-      "placeSlug": "g0098"
+      "placeSlug": "g0098",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·南海郡 中宿",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 929,
+          "quote": "〖中宿〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:南陽郡:032",
@@ -388,7 +553,22 @@
         "declaredCities": 37
       },
       "commanderyCentroidKm": 89,
-      "placeSlug": "g0041"
+      "placeSlug": "g0041",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·南陽郡 順陽",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 236,
+          "quote": "順陽，侯國，故博山。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:南陽郡:036",
@@ -419,7 +599,22 @@
         "declaredCities": 37
       },
       "commanderyCentroidKm": 121,
-      "placeSlug": "g0041"
+      "placeSlug": "g0041",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·南陽郡 丹水",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 244,
+          "quote": "丹水，故屬弘農。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:109:右扶風:013",
@@ -449,7 +644,22 @@
         "sourceName": "美阳",
         "declaredCities": 15
       },
-      "placeSlug": "g0006"
+      "placeSlug": "g0006",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·右扶風 美阳",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 248,
+          "quote": "〖美阳〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:太原郡:006",
@@ -480,7 +690,22 @@
         "declaredCities": 16
       },
       "commanderyCentroidKm": 72,
-      "placeSlug": "g0079"
+      "placeSlug": "g0079",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·太原郡 兹氏",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 541,
+          "quote": "〖兹氏〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:安定郡:001",
@@ -510,7 +735,22 @@
         "sourceName": "临泾",
         "declaredCities": 8
       },
-      "placeSlug": "g0070"
+      "placeSlug": "g0070",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·安定郡 临泾",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 370,
+          "quote": "〖临泾〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:111:山陽郡:002",
@@ -541,7 +781,22 @@
         "declaredCities": 10
       },
       "commanderyCentroidKm": 30,
-      "placeSlug": "g0028"
+      "placeSlug": "g0028",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·山陽郡 東緡",
+          "volume": 111,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-111.txt",
+          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "line": 161,
+          "quote": "〖東緡〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:109:左馮翊:012",
@@ -572,7 +827,22 @@
         "declaredCities": 13
       },
       "commanderyCentroidKm": 52,
-      "placeSlug": "g0005"
+      "placeSlug": "g0005",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·左馮翊 衙",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 216,
+          "quote": "〖衙〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:常山國:007",
@@ -603,7 +873,22 @@
         "declaredCities": 13
       },
       "commanderyCentroidKm": 19,
-      "placeSlug": "g0015"
+      "placeSlug": "g0015",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·常山國 欒城",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 322,
+          "quote": "欒城，{{*|〔在平棘〕縣西北四十里。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:111:廣陵郡:006",
@@ -634,7 +919,22 @@
         "declaredCities": 11
       },
       "commanderyCentroidKm": 53,
-      "placeSlug": "g0033"
+      "placeSlug": "g0033",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·廣陵郡 東陽",
+          "volume": 111,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-111.txt",
+          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "line": 303,
+          "quote": "〖東陽〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:廬江郡:001",
@@ -665,7 +965,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 96,
-      "placeSlug": "g0050"
+      "placeSlug": "g0050",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·廬江郡 舒",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 508,
+          "quote": "舒，有桐鄉。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:廬江郡:005",
@@ -696,7 +1011,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 142,
-      "placeSlug": "g0050"
+      "placeSlug": "g0050",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·廬江郡 臨湖",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 516,
+          "quote": "臨湖，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:廬江郡:006",
@@ -727,7 +1057,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 46,
-      "placeSlug": "g0050"
+      "placeSlug": "g0050",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·廬江郡 龍舒",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 518,
+          "quote": "龍舒，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:廬江郡:007",
@@ -758,7 +1103,22 @@
         "declaredCities": 14
       },
       "commanderyCentroidKm": 150,
-      "placeSlug": "g0050"
+      "placeSlug": "g0050",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·廬江郡 襄安",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 520,
+          "quote": "襄安，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:111:東海郡:010",
@@ -789,7 +1149,22 @@
         "declaredCities": 13
       },
       "commanderyCentroidKm": 90,
-      "placeSlug": "g0030"
+      "placeSlug": "g0030",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·東海郡 合鄕",
+          "volume": 111,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-111.txt",
+          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "line": 231,
+          "quote": "〖合鄕〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:梁國:006",
@@ -820,7 +1195,22 @@
         "declaredCities": 9
       },
       "commanderyCentroidKm": 22,
-      "placeSlug": "g0009"
+      "placeSlug": "g0009",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·梁國 穀熟",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 142,
+          "quote": "-{穀}-熟，有新城。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:梁國:009",
@@ -851,7 +1241,22 @@
         "declaredCities": 9
       },
       "commanderyCentroidKm": 41,
-      "placeSlug": "g0009"
+      "placeSlug": "g0009",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·梁國 薄",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 148,
+          "quote": "薄，故屬山陽，湯所都。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:武威郡:001",
@@ -881,7 +1286,22 @@
         "sourceName": "姑臧",
         "declaredCities": 14
       },
-      "placeSlug": "g0072"
+      "placeSlug": "g0072",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·武威郡 姑臧",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 402,
+          "quote": "〖姑臧〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:武威郡:009",
@@ -911,7 +1331,22 @@
         "sourceName": "宣威",
         "declaredCities": 14
       },
-      "placeSlug": "g0072"
+      "placeSlug": "g0072",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·武威郡 宣威",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 418,
+          "quote": "〖宣威〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:永昌郡:005",
@@ -942,7 +1377,22 @@
         "declaredCities": 8
       },
       "commanderyCentroidKm": 92,
-      "placeSlug": "g0062"
+      "placeSlug": "g0062",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·永昌郡 邪龙",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 243,
+          "quote": "〖邪龙〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:汝南郡:009",
@@ -972,7 +1422,22 @@
         "sourceName": "北宜春",
         "declaredCities": 37
       },
-      "placeSlug": "g0008"
+      "placeSlug": "g0008",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·汝南郡 北宜春",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 70,
+          "quote": "北宜春，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:汝南郡:016",
@@ -1003,7 +1468,22 @@
         "declaredCities": 37
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0008"
+      "placeSlug": "g0008",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·汝南郡 細陽",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 84,
+          "quote": "細陽，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:汝南郡:019",
@@ -1034,7 +1514,22 @@
         "declaredCities": 37
       },
       "commanderyCentroidKm": 0,
-      "placeSlug": "g0008"
+      "placeSlug": "g0008",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·汝南郡 鮦陽",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 90,
+          "quote": "鮦陽，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:汝南郡:034",
@@ -1064,7 +1559,22 @@
         "sourceName": "定潁",
         "declaredCities": 37
       },
-      "placeSlug": "g0008"
+      "placeSlug": "g0008",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·汝南郡 定潁",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 120,
+          "quote": "定潁，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:汝南郡:035",
@@ -1095,7 +1605,22 @@
         "declaredCities": 37
       },
       "commanderyCentroidKm": 82,
-      "placeSlug": "g0008"
+      "placeSlug": "g0008",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·汝南郡 固始",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 122,
+          "quote": "固始，侯國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:沛國:017",
@@ -1126,7 +1651,22 @@
         "declaredCities": 21
       },
       "crossSourceKm": 1.2,
-      "placeSlug": "g0010"
+      "placeSlug": "g0010",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·沛國 向",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 186,
+          "quote": "向，本國。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:109:河南尹:003",
@@ -1156,7 +1696,22 @@
         "sourceName": "梁",
         "declaredCities": 21
       },
-      "placeSlug": "g0000"
+      "placeSlug": "g0000",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·河南尹 梁",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 22,
+          "quote": "〖梁〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:109:河南尹:018",
@@ -1186,7 +1741,22 @@
         "sourceName": "新城",
         "declaredCities": 21
       },
-      "placeSlug": "g0000"
+      "placeSlug": "g0000",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·河南尹 新城",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 52,
+          "quote": "〖新城{{*|左傳曰文十七年周敗戎于邥垂，杜預曰縣北有垂亭。史記秦遷西周公於{單心}狐，徐廣曰「與陽人聚相近，在雒陽南百五十里梁、新城之閒」。}}〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:109:河東郡:002",
@@ -1217,7 +1787,22 @@
         "declaredCities": 20
       },
       "commanderyCentroidKm": 97,
-      "placeSlug": "g0002"
+      "placeSlug": "g0002",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·河東郡 杨",
+          "volume": 109,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-109.txt",
+          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+          "line": 106,
+          "quote": "〖杨〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:110:河閒國:003",
@@ -1248,7 +1833,22 @@
         "declaredCities": 11
       },
       "commanderyCentroidKm": 70,
-      "placeSlug": "g0018"
+      "placeSlug": "g0018",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·河閒國 易",
+          "volume": 110,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-110.txt",
+          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+          "line": 402,
+          "quote": "易，故屬涿。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:漁陽郡:002",
@@ -1278,7 +1878,22 @@
         "sourceName": "狐奴",
         "declaredCities": 9
       },
-      "placeSlug": "g0091"
+      "placeSlug": "g0091",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·漁陽郡 狐奴",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 792,
+          "quote": "〖狐奴〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:漁陽郡:004",
@@ -1308,7 +1923,22 @@
         "sourceName": "雍奴",
         "declaredCities": 9
       },
-      "placeSlug": "g0091"
+      "placeSlug": "g0091",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·漁陽郡 雍奴",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 796,
+          "quote": "〖雍奴〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:漁陽郡:007",
@@ -1343,7 +1973,22 @@
         "hanjaOutput": "안악",
         "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
       },
-      "placeSlug": "g0091"
+      "placeSlug": "g0091",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·漁陽郡 安乐",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 802,
+          "quote": "〖安乐〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:漢陽郡:006",
@@ -1373,7 +2018,22 @@
         "sourceName": "成纪",
         "declaredCities": 13
       },
-      "placeSlug": "g0067"
+      "placeSlug": "g0067",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·漢陽郡 成纪",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 314,
+          "quote": "〖成纪〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:漢陽郡:012",
@@ -1403,7 +2063,22 @@
         "sourceName": "上邽",
         "declaredCities": 13
       },
-      "placeSlug": "g0067"
+      "placeSlug": "g0067",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·漢陽郡 上邽",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 326,
+          "quote": "〖上邽〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:益州郡:003",
@@ -1433,7 +2108,22 @@
         "sourceName": "俞元",
         "declaredCities": 17
       },
-      "placeSlug": "g0061"
+      "placeSlug": "g0061",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·益州郡 俞元",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 203,
+          "quote": "〖俞元〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:西河郡:005",
@@ -1464,7 +2154,22 @@
         "declaredCities": 13
       },
       "crossSourceKm": 86.9,
-      "placeSlug": "g0081"
+      "placeSlug": "g0081",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·西河郡 中阳",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 595,
+          "quote": "〖中阳〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:112:豫章郡:005",
@@ -1495,7 +2200,22 @@
         "declaredCities": 21
       },
       "commanderyCentroidKm": 130,
-      "placeSlug": "g0053"
+      "placeSlug": "g0053",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·豫章郡 廬陵",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 610,
+          "quote": "廬陵，{{*|興平元年，孫策分立廬陵郡。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:越巂郡:006",
@@ -1525,7 +2245,22 @@
         "sourceName": "卑水",
         "declaredCities": 14
       },
-      "placeSlug": "g0060"
+      "placeSlug": "g0060",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·越巂郡 卑水",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 179,
+          "quote": "〖卑水〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:越巂郡:008",
@@ -1555,7 +2290,22 @@
         "sourceName": "会无",
         "declaredCities": 14
       },
-      "placeSlug": "g0060"
+      "placeSlug": "g0060",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·越巂郡 会无",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 183,
+          "quote": "〖会无〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:酒泉郡:002",
@@ -1585,7 +2335,22 @@
         "sourceName": "表氏",
         "declaredCities": 9
       },
-      "placeSlug": "g0074"
+      "placeSlug": "g0074",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·酒泉郡 表氏",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 452,
+          "quote": "〖表氏〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:酒泉郡:003",
@@ -1620,7 +2385,22 @@
         "hanjaOutput": "악관",
         "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
       },
-      "placeSlug": "g0074"
+      "placeSlug": "g0074",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·酒泉郡 乐涫",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 454,
+          "quote": "〖乐涫〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:酒泉郡:005",
@@ -1650,7 +2430,22 @@
         "sourceName": "会水",
         "declaredCities": 9
       },
-      "placeSlug": "g0074"
+      "placeSlug": "g0074",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·酒泉郡 会水",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 458,
+          "quote": "〖会水〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:酒泉郡:006",
@@ -1680,7 +2475,22 @@
         "sourceName": "沙头",
         "declaredCities": 9
       },
-      "placeSlug": "g0074"
+      "placeSlug": "g0074",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·酒泉郡 沙头",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 460,
+          "quote": "〖沙头〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:酒泉郡:007",
@@ -1710,7 +2520,22 @@
         "sourceName": "安弥",
         "declaredCities": 9
       },
-      "placeSlug": "g0074"
+      "placeSlug": "g0074",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·酒泉郡 安弥",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 462,
+          "quote": "〖安弥〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:111:陳留郡:008",
@@ -1741,7 +2566,22 @@
         "declaredCities": 17
       },
       "commanderyCentroidKm": 40,
-      "placeSlug": "g0022"
+      "placeSlug": "g0022",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·陳留郡 東昬",
+          "volume": 111,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-111.txt",
+          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "line": 31,
+          "quote": "〖東昬〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:鴈門郡:001",
@@ -1772,7 +2612,22 @@
         "declaredCities": 14
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0085"
+      "placeSlug": "g0085",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·鴈門郡 阴馆",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 673,
+          "quote": "〖阴馆〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:鴈門郡:002",
@@ -1803,7 +2658,22 @@
         "declaredCities": 14
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0085"
+      "placeSlug": "g0085",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·鴈門郡 繁畤",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 675,
+          "quote": "〖繁畤〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:鴈門郡:007",
@@ -1834,7 +2704,22 @@
         "declaredCities": 14
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0085"
+      "placeSlug": "g0085",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·鴈門郡 崞",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 685,
+          "quote": "〖崞〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     },
     {
       "id": "hhs:113:鴈門郡:010",
@@ -1865,8 +2750,24 @@
         "declaredCities": 14
       },
       "crossSourceKm": 0.0,
-      "placeSlug": "g0085"
+      "placeSlug": "g0085",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·鴈門郡 马邑",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 691,
+          "quote": "〖马邑〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "COUNTY_EXISTS_IN_COMMANDERY"
+          ]
+        }
+      ]
     }
   ],
-  "placeIdBasis": "물리 지점 id 는 거점 분할 단계가 `gc-<placeSlug>-<郡國志 순번>` 으로 만든다. placeSlug 는 `g<parentRegions 番號>` 로 郡國志 소속 郡의 안정 id 꼬리다 — 지도의 220 년 경계가 다른 郡을 가리켜도(재배정) 물리 id 는 고정된다. 소속 郡은 배치 원장의 commanderyId 가 싣는다."
+  "placeIdBasis": "물리 지점 id 는 거점 분할 단계가 `gc-<placeSlug>-<郡國志 순번>` 으로 만든다. placeSlug 는 `g<parentRegions 番號>` 로 郡國志 소속 郡의 안정 id 꼬리다 — 지도의 220 년 경계가 다른 郡을 가리켜도(재배정) 물리 id 는 고정된다. 소속 郡은 배치 원장의 commanderyId 가 싣는다.",
+  "evidenceBasis": "primaryEvidence 는 續漢書 郡國志 본문의 표제 縣 줄이다. sha256 은 shiliao 코퍼스 index.db 에서 푼 권 본문의 해시다 — 卷113 값이 변경 縣 원장의 핀(55e8450051ffbca2…)과 같고 줄번호도 같아(新昌 834) 같은 저본임을 검산했다. 인용은 그 줄의 축자 원문이라 wikitext 의 繁簡 표기 마커가 그대로 들어오는 것이 있다(-{鍾}-離·-{穀}-熟). 권마다 표기가 갈려 〖이름〗·〖이름{{註}}·들여쓴 「　　이름，」 세 형태를 모두 받고, 마커는 글자마다 허용한다. 공용 정규화기는 앞뒤 공백을 strip 하므로 들여쓰기 매칭에는 글자 단위 접기를 쓴다."
 }

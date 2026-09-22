@@ -1,17 +1,18 @@
 {
   "expectedSelection": {
+    "routeNodeCount": 1228,
+    "hhsAdministrativeBindingCount": 909,
     "externalHistoricalBindingCount": 0,
-    "externalLocationClaimCount": 11,
-    "hhsAdministrativeBindingCount": 849,
     "overlayUniqueCount": 723,
+    "reviewedAmbiguousCount": 50,
+    "externalLocationClaimCount": 11,
+    "sourcePlaceholderCount": 0,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
-    "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 1168,
-    "sourcePlaceholderCount": 0,
     "frontierCountyClaimCount": 51,
-    "reviewedSourceClaimBindingCount": 319,
-    "vacatedCountyLocationClaimCount": 1
+    "gapCountyClaimCount": 60,
+    "vacatedCountyLocationClaimCount": 1,
+    "reviewedSourceClaimBindingCount": 319
   },
   "forbiddenSelections": {
     "canonicalNames": [
@@ -37,11 +38,11 @@
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "ce02fe1abf2e48e9baec8ec83459a9df9a86bba84d5944a618e7b5af3b565e84"
+      "sha256": "d80ba0f9dd3c417a89901c0e707fbc0b7670314c915b7c0dd31a0832b6c81d5e"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "c41e421d91d35e141853b0d8404c0fa2e31642943326e487b274bc3db143822a"
+      "sha256": "b7f9d36301debca7773bdf95c6eee54e4a2fa9ebb2a0739b3866555436ee28bf"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
@@ -378,6 +379,13 @@
       "reviewState": "APPROVED",
       "selectionRationale": "郡國 밖 취락 관할에 城이 없어 그 省이 영원히 주인 없는 땅으로 남던 것을 사용자 결정(2026-09-17, 「절대 소속 없는 프로빈스가 있어선 안돼」)에 따라 경로 노드로 올린다. 근거는 external-places.json 의 비정 문장과 Wikidata 좌표다. 같은 縣이 두 번 선 城 두 곳의 번호는 키 재결속으로 이 batch 가 이어받는다.",
       "claimLedger": "data/curated/han/route-node-external-settlement-claims-v1.json"
+    },
+    {
+      "batchId": "w1-gap-county-location",
+      "criteria": "HHS gap county identity (gap-counties-v1) with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
+      "expectedCount": 60,
+      "reviewState": "APPROVED",
+      "selectionRationale": "續漢書 郡國志가 적었는데 지도에 없던 縣 가운데 220 년 존속이 사료로 확정되고 좌표까지 확보된 60 곳이다(확정 실결손 110 중 60). 존속 판정은 晉書 地理志·讀史方輿紀要·宋書 州郡志·魏書 地形志 네 축의 여섯 원장에, 좌표 확보와 同名異地 기각은 gap-placement-readiness-v1 에 있다. 역사 binding 은 모두 HHS identity 다."
     }
   ],
   "status": "APPROVED",

@@ -54,9 +54,12 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 from tools.scenario.han_active_city_ids import active_numeric_ids
 
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1168}
+# 결손 縣 60 곳을 더해 han-world-v3 는 1168 → 1228. 명부 수와 같이 움직이는 실측 기준선이다.
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1228}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
+# 결손 縣 60 곳. 이 검증기는 선정 모듈과 **독립 사본**으로 상수를 들고 있으므로 여기에도 적는다.
+GAP_COUNTY_BATCH = "w1-gap-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 JURISDICTION_CLAIM_BATCH = "w2-cityless-jurisdiction-route-claim"
 STRATEGIC_SITE_CLAIM_BATCH = "w3-strategic-site-route-claim"
@@ -84,12 +87,13 @@ SOURCE_CLAIM_BATCHES = {
     },
 }
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
+GAP_COUNTY_PLACE_PREFIX = "curated:gap-county-v1:"
 # LOCATION_ONLY claim 수는 world 판에 따른다 — han-780-v1 은 邊郡 治所 8 곳, han-world-v3 는 거기에
 # 城 없던 郡治 3 곳(朔方·西河·定襄)과 변경 縣 51 곳이 더 붙는다. 어느 판인지는 selection.worldVersion
 # 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, VACATED_LOCATION_BATCH: 1},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 60, VACATED_LOCATION_BATCH: 1},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -109,7 +113,7 @@ AUTHORITY_EXACT_FIELDS = tuple(VALIDATION_CONTRACT["externalAuthorityExactFields
 REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 REVIEW_POLICY_PATH = PROVENANCE_DEPENDENCIES["reviewPolicy"].as_posix()
 REVIEW_BATCH_IDS = frozenset(
-    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, SCRIPT_VARIANT_BATCH,
+    {"w0b-overlay-unique-220", "w0c-reviewed-ambiguity", EXTERNAL_LOCATION_BATCH, FRONTIER_COUNTY_BATCH, GAP_COUNTY_BATCH, SCRIPT_VARIANT_BATCH,
      JURISDICTION_CLAIM_BATCH, STRATEGIC_SITE_CLAIM_BATCH, VACATED_LOCATION_BATCH, EXTERNAL_SETTLEMENT_CLAIM_BATCH}
 )
 GUZI_ADMIN_ID = "hhs:113:上郡:009"
@@ -147,11 +151,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "c41e421d91d35e141853b0d8404c0fa2e31642943326e487b274bc3db143822a"
-PINNED_SOURCE_WITNESS_SHA256 = "86f82f4deb4394667ef0c3d298ac0b743192515e6328c0bb2ca6ef670de80fa8"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "b7f9d36301debca7773bdf95c6eee54e4a2fa9ebb2a0739b3866555436ee28bf"
+PINNED_SOURCE_WITNESS_SHA256 = "a31ae11b4d61735572420b6fcfa9780c3c5a435a21ccbe9161b479fb3ae27f53"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
 PINNED_REVIEWED_CANDIDATE_SHA256 = "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
-PINNED_REVIEW_POLICY_SHA256 = "a7e94abb6acf0c443d0200e9ebcfd92713515660b4be7d1b17e52b27358e5efa"
+PINNED_REVIEW_POLICY_SHA256 = "19f3c3bcd21d50145189e05942c9ea416d3d879bccc5f1eeb9210b19e8c8ce3a"
 PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -968,7 +972,11 @@ def adjudications_or_empty(adjudications: dict[str, JsonObject] | None) -> dict[
 def _location_claim_batch(point_ref: str, subject_key: str | None = None) -> str:
     if subject_key in VACATED_LOCATION_UNITS:
         return VACATED_LOCATION_BATCH
-    return FRONTIER_COUNTY_BATCH if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX) else EXTERNAL_LOCATION_BATCH
+    if point_ref.startswith(FRONTIER_COUNTY_PLACE_PREFIX):
+        return FRONTIER_COUNTY_BATCH
+    if point_ref.startswith(GAP_COUNTY_PLACE_PREFIX):
+        return GAP_COUNTY_BATCH
+    return EXTERNAL_LOCATION_BATCH
 
 
 def _script_variant_members(source_root: Path) -> frozenset:
