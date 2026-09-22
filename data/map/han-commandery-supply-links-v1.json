@@ -12,7 +12,7 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 56,
+  "linkCount": 57,
   "medianKm": 77.5,
   "p90Km": 471.4,
   "maxKm": 1049.3
@@ -268,6 +268,14 @@
    "fromCityName": "서문",
    "toCityName": "합포",
    "distanceKm": 196.7
+  },
+  {
+   "canonicalGroup": "國內城",
+   "fromProvinceIndex": 1333,
+   "toProvinceIndex": 1334,
+   "fromCityName": "주나",
+   "toCityName": "개마",
+   "distanceKm": 137.5
   },
   {
    "canonicalGroup": "太原郡",

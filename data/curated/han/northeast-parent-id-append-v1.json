@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "baseRegistry": "commandery-id-registry-v1.json",
+  "baseNextOrdinal": 172,
+  "nextOrdinal": 176,
+  "entries": [
+    {
+      "identity": "挹婁",
+      "commanderyId": "PARENT-0172",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "松花江聚落",
+      "commanderyId": "PARENT-0173",
+      "status": "RETIRED"
+    },
+    {
+      "identity": "黑龍江聚落",
+      "commanderyId": "PARENT-0174",
+      "status": "RETIRED"
+    },
+    {
+      "identity": "烏蘇里江聚落",
+      "commanderyId": "PARENT-0175",
+      "status": "RETIRED"
+    }
+  ]
+}

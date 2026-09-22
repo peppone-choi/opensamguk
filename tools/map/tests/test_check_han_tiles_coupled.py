@@ -18,6 +18,10 @@ CHECK_FLAG_RE = re.compile(r"""add_argument\(\s*['"]--check['"]""")
 
 # han-tiles 를 읽고 --check 도 있지만 일괄 게이트에 못 넣는 도구와 그 사유(2026-09-18 origin/main 실측).
 EXEMPT = {
+    "tools/map/build_han_1194_bundle.py": "Deployed historical release remains frozen; active drift uses 1168.",
+    "tools/map/build_han_1341_bundle.py": "Withdrawn roster remains frozen for compatibility; current drift uses 1168.",
+    "tools/map/build_han_1141_bundle.py": "Frozen prior release, integrity checked by Kotlin tests; latest drift uses 1168.",
+    "tools/map/repin_han_1133_bundle.py": "Historical release repin utility; frozen integrity tested by Han1133ArtifactsIntegrityTest and HanRuntimeConstantsIntegrityTest. Latest drift uses 1168.",
     "tools/map/check_han_tiles_coupled.py": "이 도구 자신",
     "tools/map/build_tile_grid.py": "gitignored terrain-grid.json 이 필요해 CI checkout 에서 못 돈다",
     "tools/map/han_tiles_protected_orchestrator.py": "격리 빌드 오케스트레이터 — 필수 인자 없이는 안 돈다",
@@ -25,7 +29,6 @@ EXEMPT = {
     "tools/map/relocate_han_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
     "tools/map/materialize_province_jurisdictions.py": "main 에서 ValueError(parent seat inside another parent), GH #818 후속",
     "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
-    "tools/map/build_han_parent_reconciliation.py": "통과하지만 23초 — contracts 예산 밖, 미배선",
 }
 
 

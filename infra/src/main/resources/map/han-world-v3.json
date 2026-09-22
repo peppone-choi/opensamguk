@@ -33771,6 +33771,19 @@
         "seat": "조선현",
         "nameCh": "朝鮮縣",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "낙랑국",
+                "대방국"
+              ],
+              "target": "PARENT-0096",
+              "role": "DISPUTED_TRADITION_NOT_ADDITIONAL_STATE",
+              "basis": "낙랑·대방 군현과 다른 독립국의 별도 경계는 만들지 않음"
+            }
+          ]
+        },
         "displayName": "낙랑군 조선현"
       },
       "provinceId": 964,
@@ -34137,8 +34150,8 @@
         792,
         793,
         794,
-        989,
-        1105
+        1105,
+        1140
       ],
       "meta": {
         "jun": "현도군",
@@ -34230,12 +34243,12 @@
       },
       "connections": [
         782,
-        787,
         789,
         792,
         793,
         795,
-        812
+        812,
+        1141
       ],
       "meta": {
         "jun": "요동군",
@@ -36663,6 +36676,11 @@
         "seat": "양평현",
         "nameCh": "新昌縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 신창현"
       },
       "provinceId": 1035,
@@ -36709,6 +36727,11 @@
         "seat": "양평현",
         "nameCh": "無慮縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 무려현"
       },
       "provinceId": 1036,
@@ -36756,6 +36779,11 @@
         "seat": "고구려현",
         "nameCh": "望平縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 망평현"
       },
       "provinceId": 1037,
@@ -36804,6 +36832,11 @@
         "seat": "양평현",
         "nameCh": "安市縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 안시현"
       },
       "provinceId": 1038,
@@ -36850,6 +36883,11 @@
         "seat": "양평현",
         "nameCh": "平郭縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 평곽현"
       },
       "provinceId": 1039,
@@ -36867,33 +36905,29 @@
       "level": 11,
       "region": 12,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
         "security": 800,
         "defence": 1200,
         "wall": 1180
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
         "security": 500,
         "defence": 1000,
         "wall": 1000
       },
       "connections": [
-        730,
         789,
-        791,
-        792,
         796,
         800,
         801,
         977,
-        989,
         1027,
-        1053
+        1141
       ],
       "meta": {
         "jun": "요동군",
@@ -36902,6 +36936,22 @@
         "seat": "양평현",
         "nameCh": "西安平縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-liaodong-008",
+          "memberJurisdictionIds": [
+            "fc-liaodong-008",
+            "X072"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "요동군 서안평현"
       },
       "provinceId": 1040,
@@ -36947,6 +36997,11 @@
         "seat": "양평현",
         "nameCh": "汶縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 문현"
       },
       "provinceId": 1041,
@@ -36984,7 +37039,8 @@
         782,
         786,
         787,
-        788
+        788,
+        1141
       ],
       "meta": {
         "jun": "요동군",
@@ -36993,6 +37049,11 @@
         "seat": "양평현",
         "nameCh": "番汗縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 번한현"
       },
       "provinceId": 1042,
@@ -37038,6 +37099,11 @@
         "seat": "양평현",
         "nameCh": "沓氏縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 답씨현"
       },
       "provinceId": 1043,
@@ -37071,8 +37137,8 @@
         "wall": 1000
       },
       "connections": [
-        787,
-        792
+        792,
+        1141
       ],
       "meta": {
         "jun": "현도군",
@@ -37081,6 +37147,11 @@
         "seat": "고구려현",
         "nameCh": "西蓋馬縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 서개마현"
       },
       "provinceId": 1052,
@@ -37116,11 +37187,12 @@
       "connections": [
         728,
         730,
-        787,
         791,
         793,
         989,
-        1053
+        1053,
+        1140,
+        1141
       ],
       "meta": {
         "jun": "현도군",
@@ -37129,6 +37201,11 @@
         "seat": "고구려현",
         "nameCh": "上殷台縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 상은태현"
       },
       "provinceId": 1053,
@@ -37176,6 +37253,11 @@
         "seat": "고구려현",
         "nameCh": "高顯縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 고현"
       },
       "provinceId": 1054,
@@ -37220,6 +37302,11 @@
         "seat": "고구려현",
         "nameCh": "候城縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 후성현"
       },
       "provinceId": 1055,
@@ -37267,6 +37354,11 @@
         "seat": "고구려현",
         "nameCh": "遼陽縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "현도군 요양현"
       },
       "provinceId": 1056,
@@ -37313,6 +37405,11 @@
         "seat": "조선현",
         "nameCh": "浿水縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 패수현"
       },
       "provinceId": 1021,
@@ -37359,6 +37456,11 @@
         "seat": "대방현",
         "nameCh": "含資縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 함자현"
       },
       "provinceId": 1022,
@@ -37405,6 +37507,11 @@
         "seat": "조선현",
         "nameCh": "占蟬縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 점제현"
       },
       "provinceId": 1023,
@@ -37422,17 +37529,17 @@
       "level": 11,
       "region": 12,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
         "security": 800,
         "defence": 1200,
         "wall": 1180
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
         "security": 500,
         "defence": 1000,
         "wall": 1000
@@ -37441,7 +37548,8 @@
         720,
         801,
         807,
-        809
+        809,
+        1177
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37450,6 +37558,22 @@
         "seat": "조선현",
         "nameCh": "遂城縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-lelang-006",
+          "memberJurisdictionIds": [
+            "fc-lelang-006",
+            "X108"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "낙랑군 수성현"
       },
       "provinceId": 1024,
@@ -37495,6 +37619,11 @@
         "seat": "조선현",
         "nameCh": "增地縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 증지현"
       },
       "provinceId": 1025,
@@ -37542,6 +37671,11 @@
         "seat": "조선현",
         "nameCh": "駟望縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 사망현"
       },
       "provinceId": 1026,
@@ -37586,6 +37720,11 @@
         "seat": "대방현",
         "nameCh": "海冥縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 해명현"
       },
       "provinceId": 1027,
@@ -37631,6 +37770,11 @@
         "seat": "대방현",
         "nameCh": "列口縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 열구현"
       },
       "provinceId": 1028,
@@ -37678,6 +37822,11 @@
         "seat": "대방현",
         "nameCh": "長岑縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 장잠현"
       },
       "provinceId": 1029,
@@ -37725,6 +37874,11 @@
         "seat": "조선현",
         "nameCh": "屯有縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 둔유현"
       },
       "provinceId": 1030,
@@ -37771,6 +37925,11 @@
         "seat": "대방현",
         "nameCh": "昭明縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 소명현"
       },
       "provinceId": 1031,
@@ -37788,17 +37947,17 @@
       "level": 11,
       "region": 12,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
         "security": 800,
         "defence": 1200,
         "wall": 1180
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
         "security": 500,
         "defence": 1000,
         "wall": 1000
@@ -37808,8 +37967,7 @@
         799,
         805,
         808,
-        1107,
-        1111
+        1176
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37818,6 +37976,22 @@
         "seat": "조선현",
         "nameCh": "鏤方縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-lelang-015",
+          "memberJurisdictionIds": [
+            "fc-lelang-015",
+            "X107"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "낙랑군 누방현"
       },
       "provinceId": 1032,
@@ -37856,7 +38030,8 @@
         807,
         1002,
         1070,
-        1111
+        1111,
+        1176
       ],
       "meta": {
         "jun": "대방군",
@@ -37865,6 +38040,11 @@
         "seat": "대방현",
         "nameCh": "提奚縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "대방군 제해현"
       },
       "provinceId": 1033,
@@ -37902,7 +38082,8 @@
         799,
         800,
         801,
-        1106
+        1106,
+        1177
       ],
       "meta": {
         "jun": "낙랑군",
@@ -37911,6 +38092,11 @@
         "seat": "조선현",
         "nameCh": "渾彌縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "낙랑군 혼미현"
       },
       "provinceId": 1034,
@@ -37956,6 +38142,11 @@
         "seat": "창료현",
         "nameCh": "賓徒縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동속국 빈도현"
       },
       "provinceId": 1044,
@@ -38000,6 +38191,11 @@
         "seat": "창료현",
         "nameCh": "徒河縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동속국 도하현"
       },
       "provinceId": 1045,
@@ -38046,6 +38242,11 @@
         "seat": "양평현",
         "nameCh": "險瀆縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동군 험독현"
       },
       "provinceId": 1046,
@@ -38092,6 +38293,11 @@
         "seat": "창료현",
         "nameCh": "房縣",
         "isSeat": false,
+        "historicalPlace": {
+          "coordinateBasis": "REVIEWED_FRONTIER_COUNTY_PROXY",
+          "referenceYear": 220,
+          "modernProxyDoesNotProveAncientSeat": true
+        },
         "displayName": "요동속국 방현"
       },
       "provinceId": 1047,
@@ -42656,7 +42862,7 @@
     },
     {
       "id": 912,
-      "name": "고원",
+      "name": "고원(濟南國)",
       "x": 431,
       "y": 170,
       "level": 11,
@@ -45693,17 +45899,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -45712,9 +45918,12 @@
         787,
         796,
         989,
-        1099,
-        1105,
-        1106
+        1106,
+        1134,
+        1135,
+        1136,
+        1138,
+        1141
       ],
       "meta": {
         "jun": "국내성",
@@ -45723,6 +45932,32 @@
         "seat": "국내성",
         "nameCh": "國內城",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "대수맥"
+              ],
+              "target": "X028",
+              "role": "PEOPLE_REGION_ALIAS",
+              "basis": "압록강 본류 고구려권 주민집단을 지칭하는 맥락. 소수맥과 동일 급 독립국으로 중복하지 않음"
+            }
+          ]
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X028",
+          "memberJurisdictionIds": [
+            "X028",
+            "X065",
+            "X066",
+            "X067",
+            "X068"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "국내성"
       },
       "provinceId": 969,
@@ -46259,28 +46494,28 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        728,
-        787,
         792,
         977,
         1053,
-        1105
+        1134,
+        1140,
+        1141
       ],
       "meta": {
         "jun": "졸본",
@@ -46289,6 +46524,29 @@
         "seat": "졸본",
         "nameCh": "卒本",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "졸본부여"
+              ],
+              "target": "X029",
+              "role": "FOUNDATION_TRADITION",
+              "basis": "졸본과 동일 거점, 별도 국가 복제 없음"
+            }
+          ]
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X029",
+          "memberJurisdictionIds": [
+            "X029",
+            "X071"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "졸본"
       },
       "provinceId": 970,
@@ -46891,6 +47149,19 @@
         "seat": "대방현",
         "nameCh": "帶方縣",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "진번국",
+                "진번군"
+              ],
+              "target": "PARENT-0130",
+              "role": "FORMER_REGION_OVERLAY",
+              "basis": "황해도 방면 비정 채택. 대방권 옛 지역명 참조로 보존; 정확한 치소는 게임에서 별도 확정하지 않음"
+            }
+          ]
+        },
         "displayName": "대방군 대방현"
       },
       "provinceId": 965,
@@ -49169,9 +49440,9 @@
         "wall": 500
       },
       "connections": [
-        787,
         792,
-        989
+        989,
+        1141
       ],
       "meta": {
         "jun": "졸본",
@@ -51126,30 +51397,31 @@
     {
       "id": 1099,
       "name": "북옥저",
-      "x": 632,
-      "y": 63,
+      "x": 642,
+      "y": 55,
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        977,
         1105,
-        1108
+        1108,
+        1136,
+        1139
       ],
       "meta": {
         "jun": "북옥저",
@@ -51158,6 +51430,17 @@
         "seat": "북옥저",
         "nameCh": "北沃沮",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X030",
+          "memberJurisdictionIds": [
+            "X030",
+            "X070"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "북옥저"
       },
       "provinceId": 971,
@@ -51191,11 +51474,12 @@
         "wall": 2000
       },
       "connections": [
-        1102,
-        1110,
-        1114,
         1115,
-        1116
+        1151,
+        1166,
+        1171,
+        1173,
+        1174
       ],
       "meta": {
         "jun": "안야국",
@@ -51221,26 +51505,26 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1103,
         1104,
         1107,
-        1118
+        1118,
+        1168
       ],
       "meta": {
         "jun": "실직국",
@@ -51249,6 +51533,17 @@
         "seat": "실직국",
         "nameCh": "悉直國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X032",
+          "memberJurisdictionIds": [
+            "X032",
+            "X099"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "실직국"
       },
       "provinceId": 973,
@@ -51266,28 +51561,27 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 97934,
+        "agriculture": 1934,
+        "commerce": 1984,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 33334,
+        "agriculture": 334,
+        "commerce": 334,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1100,
         1103,
-        1113,
-        1114,
         1116,
-        1117
+        1117,
+        1165,
+        1166
       ],
       "meta": {
         "jun": "압독국",
@@ -51296,6 +51590,18 @@
         "seat": "압독국",
         "nameCh": "押督國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X033",
+          "memberJurisdictionIds": [
+            "X033",
+            "X096",
+            "X097"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "압독국"
       },
       "provinceId": 974,
@@ -51329,11 +51635,13 @@
         "wall": 2000
       },
       "connections": [
-        1101,
         1102,
-        1113,
         1117,
-        1118
+        1118,
+        1165,
+        1167,
+        1168,
+        1169
       ],
       "meta": {
         "jun": "소문국",
@@ -51384,6 +51692,10 @@
         "seat": "우산국",
         "nameCh": "于山國",
         "isSeat": true,
+        "historicalPlace": {
+          "nameBasis": "울릉도의 지역 거점. 512년 복속 기사가 220년 우산국 성립을 입증하는 것은 아님",
+          "referenceYear": 220
+        },
         "displayName": "우산국"
       },
       "provinceId": 976,
@@ -51396,8 +51708,8 @@
     {
       "id": 1105,
       "name": "부여",
-      "x": 554,
-      "y": 24,
+      "x": 578,
+      "y": 36,
       "level": 6,
       "region": 14,
       "max": {
@@ -51420,9 +51732,11 @@
         728,
         729,
         784,
-        977,
-        989,
-        1099
+        1099,
+        1134,
+        1135,
+        1136,
+        1140
       ],
       "meta": {
         "jun": "부여",
@@ -51431,6 +51745,45 @@
         "seat": "부여",
         "nameCh": "夫餘",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "북부여",
+                "부여"
+              ],
+              "target": "X036",
+              "role": "ALIAS",
+              "basis": "220년 길림 부여 대표점"
+            },
+            {
+              "names": [
+                "고리국"
+              ],
+              "target": "X036",
+              "role": "UNLOCATED_TRADITION_REFERENCE",
+              "basis": "전승명 참조만 보존한다. 근거 없는 지역 대용점을 제거했으며 부여 중심지에 별도 국읍을 복제하지 않는다."
+            },
+            {
+              "names": [
+                "동부여",
+                "갈사국"
+              ],
+              "target": "X036",
+              "role": "UNLOCATED_TRADITION_REFERENCE",
+              "basis": "전승명 참조만 보존한다. 근거 없는 지역 대용점을 제거했으며 부여 중심지에 별도 국읍을 복제하지 않는다."
+            },
+            {
+              "names": [
+                "해두국",
+                "황룡국"
+              ],
+              "target": "X036",
+              "role": "FOUNDATION_TRADITION_UNLOCATED",
+              "basis": "부여계 전승명. 사료의 구체적 위치를 확보하지 못해 중심지 이력에 보존; 새로운 확정 국가명으로 조작하지 않음"
+            }
+          ]
+        },
         "displayName": "부여"
       },
       "provinceId": 977,
@@ -51448,17 +51801,17 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -51466,7 +51819,8 @@
       "connections": [
         796,
         809,
-        977
+        977,
+        1138
       ],
       "meta": {
         "jun": "동옥저",
@@ -51475,6 +51829,30 @@
         "seat": "동옥저",
         "nameCh": "東沃沮",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "남옥저",
+                "동옥저"
+              ],
+              "target": "X037",
+              "role": "ALIAS",
+              "basis": "동일 계통 권역명으로 묶음"
+            }
+          ]
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X037",
+          "memberJurisdictionIds": [
+            "X037",
+            "X069"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "동옥저"
       },
       "provinceId": 978,
@@ -51508,10 +51886,10 @@
         "wall": 2000
       },
       "connections": [
-        807,
         1101,
-        1111,
-        1118
+        1118,
+        1175,
+        1176
       ],
       "meta": {
         "jun": "예",
@@ -51520,6 +51898,18 @@
         "seat": "예",
         "nameCh": "濊",
         "isSeat": true,
+        "historicalPlace": {
+          "nameInterpretations": [
+            {
+              "names": [
+                "북명"
+              ],
+              "target": "X038",
+              "role": "DISPUTED_ALIAS",
+              "basis": "강릉 비정 채택; 예 기존 대표점에 연결"
+            }
+          ]
+        },
         "displayName": "예"
       },
       "provinceId": 979,
@@ -51556,12 +51946,12 @@
         1099
       ],
       "meta": {
-        "jun": "북옥저",
-        "junCh": "北沃沮",
+        "jun": "읍루",
+        "junCh": "挹婁",
         "ju": "동이",
-        "seat": "북옥저",
+        "seat": "읍루",
         "nameCh": "挹婁",
-        "isSeat": false,
+        "isSeat": true,
         "displayName": "읍루"
       },
       "provinceId": 980,
@@ -51579,27 +51969,31 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         1110,
-        1111,
         1116,
         1117,
-        1118
+        1118,
+        1144,
+        1149,
+        1154,
+        1155,
+        1167
       ],
       "meta": {
         "jun": "목지국",
@@ -51608,6 +52002,27 @@
         "seat": "목지국",
         "nameCh": "目支國",
         "isSeat": true,
+        "historicalPlace": {
+          "nameBasis": "목지국 익산 비정 유지. 직산·아산만·예산 등 경쟁설 존재; 건마를 동일 익산 중심점에 중복 배치하지 않음",
+          "referenceYear": 220
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "목지국"
       },
       "provinceId": 981,
@@ -51625,27 +52040,28 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1100,
         1109,
         1112,
-        1115,
-        1116
+        1150,
+        1152,
+        1154,
+        1155
       ],
       "meta": {
         "jun": "벽비리국",
@@ -51654,6 +52070,23 @@
         "seat": "벽비리국",
         "nameCh": "辟卑離國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "벽비리국"
       },
       "provinceId": 982,
@@ -51671,28 +52104,31 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         804,
-        807,
         808,
-        1107,
-        1109,
-        1118
+        1118,
+        1142,
+        1145,
+        1146,
+        1149,
+        1175,
+        1176
       ],
       "meta": {
         "jun": "백제국",
@@ -51701,6 +52137,17 @@
         "seat": "백제국",
         "nameCh": "伯濟國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X042",
+          "memberJurisdictionIds": [
+            "X042",
+            "X106"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "백제국"
       },
       "provinceId": 983,
@@ -51743,6 +52190,10 @@
         "seat": "주호",
         "nameCh": "州胡",
         "isSeat": true,
+        "historicalPlace": {
+          "nameBasis": "주호=제주 비정 채택. 주호의 호수·정확한 국체는 별도 미상",
+          "referenceYear": 220
+        },
         "displayName": "주호"
       },
       "provinceId": 984,
@@ -51760,25 +52211,26 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 97934,
+        "agriculture": 1934,
+        "commerce": 1984,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 33334,
+        "agriculture": 334,
+        "commerce": 334,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1102,
-        1103,
-        1114
+        1165,
+        1166,
+        1169,
+        1170
       ],
       "meta": {
         "jun": "사로국",
@@ -51787,6 +52239,18 @@
         "seat": "사로국",
         "nameCh": "斯盧國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X044",
+          "memberJurisdictionIds": [
+            "X044",
+            "X100",
+            "X101"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "사로국"
       },
       "provinceId": 985,
@@ -51804,27 +52268,27 @@
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 73450,
+        "agriculture": 1450,
+        "commerce": 1488,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 25000,
+        "agriculture": 250,
+        "commerce": 250,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
         1002,
-        1100,
-        1102,
-        1113,
-        1119
+        1119,
+        1171,
+        1172,
+        1173
       ],
       "meta": {
         "jun": "구야국",
@@ -51833,6 +52297,19 @@
         "seat": "구야국",
         "nameCh": "狗邪國",
         "isSeat": true,
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X045",
+          "memberJurisdictionIds": [
+            "X045",
+            "X102",
+            "X103",
+            "X104"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
         "displayName": "구야국"
       },
       "provinceId": 986,
@@ -51867,7 +52344,9 @@
       },
       "connections": [
         1100,
-        1110
+        1151,
+        1156,
+        1158
       ],
       "meta": {
         "jun": "고자미동국",
@@ -51887,42 +52366,61 @@
     },
     {
       "id": 1116,
-      "name": "대가야",
+      "name": "반로",
       "x": 606,
       "y": 193,
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
       },
       "connections": [
-        1100,
         1102,
         1109,
-        1110,
-        1117
+        1117,
+        1154,
+        1166,
+        1174
       ],
       "meta": {
-        "jun": "대가야",
+        "jun": "반로",
         "junCh": "大伽耶",
         "ju": "동이",
-        "seat": "대가야",
+        "seat": "반로",
         "nameCh": "大伽耶",
         "isSeat": true,
-        "displayName": "대가야"
+        "historicalPlace": {
+          "aliases": [
+            "대가야"
+          ],
+          "nameBasis": "半路國의 고령 비정을 게임 대표지로 채택. 大伽耶는 후대 명칭으로 별도 보존",
+          "independentPolityAtReferenceYear": false
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X047",
+          "memberJurisdictionIds": [
+            "X047",
+            "X105"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "반로"
       },
       "provinceId": 988,
       "spatialProvinceId": "X047",
@@ -51933,23 +52431,23 @@
     },
     {
       "id": 1117,
-      "name": "성산가야",
+      "name": "본피",
       "x": 607,
       "y": 190,
       "level": 5,
       "region": 14,
       "max": {
-        "population": 293800,
-        "agriculture": 5800,
-        "commerce": 5950,
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
         "security": 4000,
         "defence": 6000,
         "wall": 5900
       },
       "initial": {
-        "population": 100000,
-        "agriculture": 1000,
-        "commerce": 1000,
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
         "security": 1000,
         "defence": 2000,
         "wall": 2000
@@ -51959,16 +52457,34 @@
         1103,
         1109,
         1116,
-        1118
+        1167
       ],
       "meta": {
-        "jun": "성산가야",
-        "junCh": "星山伽耶",
+        "jun": "본피",
+        "junCh": "本彼",
         "ju": "동이",
-        "seat": "성산가야",
-        "nameCh": "星山伽耶",
+        "seat": "본피",
+        "nameCh": "本彼",
         "isSeat": true,
-        "displayName": "성산가야"
+        "historicalPlace": {
+          "aliases": [
+            "성산가야"
+          ],
+          "nameBasis": "三國史記 地理志의 본피현(성주). 후대 기록의 고지명을 게임 표기로 채택하며 220년 동명 국읍의 실재를 단정하지 않는다.",
+          "independentPolityAtReferenceYear": false
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X048",
+          "memberJurisdictionIds": [
+            "X048",
+            "X098"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "본피"
       },
       "provinceId": 989,
       "spatialProvinceId": "X048",
@@ -51979,7 +52495,7 @@
     },
     {
       "id": 1118,
-      "name": "고령가야",
+      "name": "고동람",
       "x": 605,
       "y": 177,
       "level": 5,
@@ -52006,16 +52522,26 @@
         1107,
         1109,
         1111,
-        1117
+        1149,
+        1167,
+        1168,
+        1175
       ],
       "meta": {
-        "jun": "고령가야",
-        "junCh": "古寧伽耶",
+        "jun": "고동람",
+        "junCh": "古冬攬",
         "ju": "동이",
-        "seat": "고령가야",
-        "nameCh": "古寧伽耶",
+        "seat": "고동람",
+        "nameCh": "古冬攬",
         "isSeat": true,
-        "displayName": "고령가야"
+        "historicalPlace": {
+          "aliases": [
+            "고령가야"
+          ],
+          "nameBasis": "高麗史 地理志에 전하는 함창의 고동람. 후대 기록의 고지명을 게임 표기로 채택하며 220년 독립국 또는 동명 군현 존속을 주장하지 않는다.",
+          "independentPolityAtReferenceYear": false
+        },
+        "displayName": "고동람"
       },
       "provinceId": 990,
       "spatialProvinceId": "X049",
@@ -52697,6 +53223,2514 @@
       "routeNodeKey": "edafa4c3-52a0-427d-87eb-9ab7622ac5d1",
       "physicalPlaceRef": "external:v1:X064",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X064"
+    },
+    {
+      "id": 1134,
+      "name": "비류",
+      "x": 568,
+      "y": 77,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        977,
+        989,
+        1105,
+        1135,
+        1140
+      ],
+      "meta": {
+        "jun": "국내성",
+        "junCh": "國內城",
+        "ju": "동이",
+        "seat": "국내성",
+        "nameCh": "沸流",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://encykorea.aks.ac.kr/Article/E0025129",
+            "claim": "비류수(혼강) 상류의 비류국. 고구려 건국기 복속."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X065"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X028",
+          "memberJurisdictionIds": [
+            "X028",
+            "X065",
+            "X066",
+            "X067",
+            "X068"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "비류"
+      },
+      "provinceId": 1331,
+      "spatialProvinceId": "KOR-X065-X028",
+      "spatialProvinceIndex": 1331,
+      "routeNodeKey": "a51ee01b-c80b-4c65-933d-0cfeab070be5",
+      "physicalPlaceRef": "external:v1:X065",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X065"
+    },
+    {
+      "id": 1135,
+      "name": "조나(國內城)",
+      "x": 579,
+      "y": 82,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        977,
+        1105,
+        1134,
+        1136
+      ],
+      "meta": {
+        "jun": "국내성",
+        "junCh": "國內城",
+        "ju": "동이",
+        "seat": "국내성",
+        "nameCh": "藻那",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "압록강 중상류 나국. 태조왕 20년(72) 병합."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X066"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X028",
+          "memberJurisdictionIds": [
+            "X028",
+            "X065",
+            "X066",
+            "X067",
+            "X068"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "조나"
+      },
+      "provinceId": 1332,
+      "spatialProvinceId": "KOR-X066-X028",
+      "spatialProvinceIndex": 1332,
+      "routeNodeKey": "ae6c3dc0-1100-427e-97b6-3c6072046f5a",
+      "physicalPlaceRef": "external:v1:X066",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X066"
+    },
+    {
+      "id": 1136,
+      "name": "주나",
+      "x": 583,
+      "y": 78,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        977,
+        1099,
+        1105,
+        1135,
+        1137,
+        1138,
+        1139
+      ],
+      "meta": {
+        "jun": "국내성",
+        "junCh": "國內城",
+        "ju": "동이",
+        "seat": "국내성",
+        "nameCh": "朱那",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "압록강 중상류 나국. 태조왕 22년(74) 병합."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X067"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X028",
+          "memberJurisdictionIds": [
+            "X028",
+            "X065",
+            "X066",
+            "X067",
+            "X068"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "주나"
+      },
+      "provinceId": 1333,
+      "spatialProvinceId": "KOR-X067-X028",
+      "spatialProvinceIndex": 1333,
+      "routeNodeKey": "f23f1a9f-4311-4251-b8e7-98df64a53511",
+      "physicalPlaceRef": "external:v1:X067",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X067"
+    },
+    {
+      "id": 1137,
+      "name": "개마",
+      "x": 609,
+      "y": 88,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 200,
+        "commerce": 200,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1136,
+        1138,
+        1139
+      ],
+      "meta": {
+        "jun": "국내성",
+        "junCh": "國內城",
+        "ju": "동이",
+        "seat": "국내성",
+        "nameCh": "蓋馬",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "개마고원 일대 소국. 대무신왕 9년(26) 병합."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X068"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X028",
+          "memberJurisdictionIds": [
+            "X028",
+            "X065",
+            "X066",
+            "X067",
+            "X068"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "개마"
+      },
+      "provinceId": 1334,
+      "spatialProvinceId": "KOR-X068-SUB-X028-7238a630ea3c",
+      "spatialProvinceIndex": 1334,
+      "routeNodeKey": "2f1090e4-4785-4cfd-8df5-bf86c5455a23",
+      "physicalPlaceRef": "external:v1:X068",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
+    },
+    {
+      "id": 1138,
+      "name": "구다",
+      "x": 604,
+      "y": 96,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        977,
+        1106,
+        1136,
+        1137
+      ],
+      "meta": {
+        "jun": "동옥저",
+        "junCh": "東沃沮",
+        "ju": "동이",
+        "seat": "동옥저",
+        "nameCh": "句茶",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "개마 인근 소국. 대무신왕 9년(26) 항복."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X069"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X037",
+          "memberJurisdictionIds": [
+            "X037",
+            "X069"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "구다"
+      },
+      "provinceId": 1339,
+      "spatialProvinceId": "KOR-X069-X037",
+      "spatialProvinceIndex": 1339,
+      "routeNodeKey": "b5debc13-8123-4bf0-9524-3083bf21748d",
+      "physicalPlaceRef": "external:v1:X069",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
+    },
+    {
+      "id": 1139,
+      "name": "행인",
+      "x": 624,
+      "y": 70,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1099,
+        1136,
+        1137
+      ],
+      "meta": {
+        "jun": "북옥저",
+        "junCh": "北沃沮",
+        "ju": "동이",
+        "seat": "북옥저",
+        "nameCh": "荇人",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://encykorea.aks.ac.kr/Article/E0062831",
+            "claim": "태백산 동남의 소국. 동명왕 6년 정벌. 무산·함경북도 방면설 채택."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X070"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X030",
+          "memberJurisdictionIds": [
+            "X030",
+            "X070"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "행인"
+      },
+      "provinceId": 1341,
+      "spatialProvinceId": "KOR-X070-SUB-X030-b78cb489a20c",
+      "spatialProvinceIndex": 1341,
+      "routeNodeKey": "332c651d-184b-4cd6-8c2f-45e9cfb45fe7",
+      "physicalPlaceRef": "external:v1:X070",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
+    },
+    {
+      "id": 1140,
+      "name": "양맥",
+      "x": 552,
+      "y": 77,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        728,
+        792,
+        989,
+        1105,
+        1134
+      ],
+      "meta": {
+        "jun": "졸본",
+        "junCh": "卒本",
+        "ju": "동이",
+        "seat": "졸본",
+        "nameCh": "梁貊",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://contents.nahf.or.kr/item/level.do?levelId=gt.d_0002_0020_0010_0010",
+            "claim": "태자하 상류의 맥 집단. 정벌 기사와 직접 지배 시점의 해석은 구분."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X071"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X029",
+          "memberJurisdictionIds": [
+            "X029",
+            "X071"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "양맥"
+      },
+      "provinceId": 1342,
+      "spatialProvinceId": "KOR-X071-X029",
+      "spatialProvinceIndex": 1342,
+      "routeNodeKey": "a8201d08-f08d-46d7-be26-a824101604e9",
+      "physicalPlaceRef": "external:v1:X071",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
+    },
+    {
+      "id": 1141,
+      "name": "소수맥",
+      "x": 548,
+      "y": 96,
+      "level": 5,
+      "region": 12,
+      "max": {
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        730,
+        787,
+        789,
+        791,
+        792,
+        977,
+        989,
+        1053
+      ],
+      "meta": {
+        "jun": "요동군",
+        "junCh": "遼東郡",
+        "ju": "유주",
+        "seat": "양평현",
+        "nameCh": "小水貊",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://encykorea.aks.ac.kr/Article/E0018043",
+            "claim": "압록강 하류 북쪽 애하·포석하 유역의 주민집단. 맥궁 생산 기록."
+          },
+          "regionId": "GOGURYEO",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X072"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-liaodong-008",
+          "memberJurisdictionIds": [
+            "fc-liaodong-008",
+            "X072"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "소수맥"
+      },
+      "provinceId": 1345,
+      "spatialProvinceId": "KOR-X072-SUB-X029-f447e36b3ebd",
+      "spatialProvinceIndex": 1345,
+      "routeNodeKey": "18d6a7cb-a582-4719-a9d7-9aa0c098aff8",
+      "physicalPlaceRef": "external:v1:X072",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
+    },
+    {
+      "id": 1142,
+      "name": "고원(目支國)",
+      "x": 582,
+      "y": 175,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1111,
+        1144,
+        1145,
+        1149
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "古爰",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X073"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "고원"
+      },
+      "provinceId": 1346,
+      "spatialProvinceId": "KOR-X073-X040",
+      "spatialProvinceIndex": 1346,
+      "routeNodeKey": "dbc9351c-933d-462e-8f45-9ba4b2857153",
+      "physicalPlaceRef": "external:v1:X073",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
+    },
+    {
+      "id": 1144,
+      "name": "염로",
+      "x": 583,
+      "y": 181,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1109,
+        1142,
+        1145,
+        1149,
+        1155
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "冉路",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X075"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "염로"
+      },
+      "provinceId": 1347,
+      "spatialProvinceId": "KOR-X075-X040",
+      "spatialProvinceIndex": 1347,
+      "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
+      "physicalPlaceRef": "external:v1:X075",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
+    },
+    {
+      "id": 1145,
+      "name": "감해비리",
+      "x": 580,
+      "y": 176,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1111,
+        1142,
+        1144,
+        1146
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "監奚卑離",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X076"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "감해비리"
+      },
+      "provinceId": 1348,
+      "spatialProvinceId": "KOR-X076-X040",
+      "spatialProvinceIndex": 1348,
+      "routeNodeKey": "b90837d6-917e-47fd-b246-e4219c54ed0e",
+      "physicalPlaceRef": "external:v1:X076",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
+    },
+    {
+      "id": 1146,
+      "name": "치리국",
+      "x": 576,
+      "y": 172,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1111,
+        1145,
+        1147
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "致利鞠",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X077"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "치리국"
+      },
+      "provinceId": 1349,
+      "spatialProvinceId": "KOR-X077-X040",
+      "spatialProvinceIndex": 1349,
+      "routeNodeKey": "402d0581-1e13-4c54-8d55-de0643586c47",
+      "physicalPlaceRef": "external:v1:X077",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
+    },
+    {
+      "id": 1147,
+      "name": "신소도",
+      "x": 573,
+      "y": 173,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1146
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "臣蘇塗國",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "REVIEWED_HISTORICAL_NAME_WITH_DISPUTED_LOCATION",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://encykorea.aks.ac.kr/Article/E0033118",
+            "quote": "신소도국은 … 지금의 충청남도 태안으로 비정하기도 한다.",
+            "claim": "三國志 韓傳의 신소도국; 태안 비정설 채택. 경쟁 비정과 좌표 불확실성을 유지한다."
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X078"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "신소도"
+      },
+      "provinceId": 1350,
+      "spatialProvinceId": "KOR-X078-X040",
+      "spatialProvinceIndex": 1350,
+      "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
+      "physicalPlaceRef": "external:v1:X078",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
+    },
+    {
+      "id": 1149,
+      "name": "불운",
+      "x": 587,
+      "y": 179,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1109,
+        1111,
+        1118,
+        1142,
+        1144
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "不雲",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "三國志에 명칭 존재; 현대 비정은 경쟁설이 있어 지도상의 위치를 게임용으로 선택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X080"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "불운"
+      },
+      "provinceId": 1351,
+      "spatialProvinceId": "KOR-X080-X040",
+      "spatialProvinceIndex": 1351,
+      "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
+      "physicalPlaceRef": "external:v1:X080",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
+    },
+    {
+      "id": 1150,
+      "name": "지반",
+      "x": 581,
+      "y": 193,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1110,
+        1152,
+        1155
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "支半",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X081"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "지반"
+      },
+      "provinceId": 1353,
+      "spatialProvinceId": "KOR-X081-X041",
+      "spatialProvinceIndex": 1353,
+      "routeNodeKey": "04c6c835-44f8-401b-84e2-f946c1bbb7c0",
+      "physicalPlaceRef": "external:v1:X081",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
+    },
+    {
+      "id": 1151,
+      "name": "고랍",
+      "x": 592,
+      "y": 200,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1115,
+        1152,
+        1154,
+        1156,
+        1174
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "古臘",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X082"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "고랍"
+      },
+      "provinceId": 1354,
+      "spatialProvinceId": "KOR-X082-X041",
+      "spatialProvinceIndex": 1354,
+      "routeNodeKey": "0b8bef5a-bff0-4be6-868f-4226dec0156c",
+      "physicalPlaceRef": "external:v1:X082",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
+    },
+    {
+      "id": 1152,
+      "name": "초산도비리",
+      "x": 582,
+      "y": 196,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1110,
+        1150,
+        1151,
+        1153,
+        1154,
+        1156
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "楚山塗卑離",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X083"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "초산도비리"
+      },
+      "provinceId": 1355,
+      "spatialProvinceId": "KOR-X083-X041",
+      "spatialProvinceIndex": 1355,
+      "routeNodeKey": "708ca542-adde-4bcf-bf04-9e43ebd255d4",
+      "physicalPlaceRef": "external:v1:X083",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
+    },
+    {
+      "id": 1153,
+      "name": "모로비리",
+      "x": 580,
+      "y": 199,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1152,
+        1156
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "牟盧卑離",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X084"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "모로비리"
+      },
+      "provinceId": 1356,
+      "spatialProvinceId": "KOR-X084-X041",
+      "spatialProvinceIndex": 1356,
+      "routeNodeKey": "94a0809d-c95e-4e2a-aa67-1396346d1166",
+      "physicalPlaceRef": "external:v1:X084",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
+    },
+    {
+      "id": 1154,
+      "name": "불사분사",
+      "x": 588,
+      "y": 191,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 744,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1109,
+        1110,
+        1116,
+        1151,
+        1152
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "不斯濆邪",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X085"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "불사분사"
+      },
+      "provinceId": 1357,
+      "spatialProvinceId": "KOR-X085-X041",
+      "spatialProvinceIndex": 1357,
+      "routeNodeKey": "737690ed-4d6d-43b6-9e3c-3d5ebd90a183",
+      "physicalPlaceRef": "external:v1:X085",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
+    },
+    {
+      "id": 1155,
+      "name": "만로",
+      "x": 581,
+      "y": 189,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1109,
+        1110,
+        1144,
+        1150
+      ],
+      "meta": {
+        "jun": "목지국",
+        "junCh": "目支國",
+        "ju": "동이",
+        "seat": "목지국",
+        "nameCh": "萬盧",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X086"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X040",
+          "memberJurisdictionIds": [
+            "X040",
+            "X073",
+            "X075",
+            "X076",
+            "X077",
+            "X078",
+            "X080",
+            "X086"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "만로"
+      },
+      "provinceId": 1352,
+      "spatialProvinceId": "KOR-X086-X040",
+      "spatialProvinceIndex": 1352,
+      "routeNodeKey": "8e687c26-62b5-45ec-b28c-8ebce1f3e3db",
+      "physicalPlaceRef": "external:v1:X086",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
+    },
+    {
+      "id": 1156,
+      "name": "불미",
+      "x": 581,
+      "y": 207,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1115,
+        1151,
+        1152,
+        1153,
+        1158
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "不彌",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "권역의 취락을 표현하는 게임용 대표점. 국가 독립성·연대·국경을 확정하지 않는다."
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X087"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "불미"
+      },
+      "provinceId": 1358,
+      "spatialProvinceId": "KOR-X087-X041",
+      "spatialProvinceIndex": 1358,
+      "routeNodeKey": "f2ac429d-520f-4b94-88a2-800d270e8e11",
+      "physicalPlaceRef": "external:v1:X087",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
+    },
+    {
+      "id": 1158,
+      "name": "침미다례 권역",
+      "x": 579,
+      "y": 216,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 36725,
+        "agriculture": 725,
+        "commerce": 743,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 12500,
+        "agriculture": 125,
+        "commerce": 125,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1115,
+        1156
+      ],
+      "meta": {
+        "jun": "벽비리국",
+        "junCh": "辟卑離國",
+        "ju": "동이",
+        "seat": "벽비리국",
+        "nameCh": "忱彌多禮",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://www.iksan.go.kr/images/tour2/data/refdata4.pdf",
+            "claim": "후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음"
+          },
+          "regionId": "MAHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X089"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X041",
+          "memberJurisdictionIds": [
+            "X041",
+            "X081",
+            "X082",
+            "X083",
+            "X084",
+            "X085",
+            "X087",
+            "X089"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "침미다례 권역"
+      },
+      "provinceId": 1359,
+      "spatialProvinceId": "KOR-X089-X041",
+      "spatialProvinceIndex": 1359,
+      "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
+      "physicalPlaceRef": "external:v1:X089",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
+    },
+    {
+      "id": 1165,
+      "name": "골벌",
+      "x": 618,
+      "y": 189,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 97933,
+        "agriculture": 1933,
+        "commerce": 1983,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 33333,
+        "agriculture": 333,
+        "commerce": 333,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1102,
+        1103,
+        1113,
+        1166,
+        1169
+      ],
+      "meta": {
+        "jun": "압독국",
+        "junCh": "押督國",
+        "ju": "동이",
+        "seat": "압독국",
+        "nameCh": "骨伐",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X096"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X033",
+          "memberJurisdictionIds": [
+            "X033",
+            "X096",
+            "X097"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "골벌"
+      },
+      "provinceId": 1360,
+      "spatialProvinceId": "KOR-X096-X033",
+      "spatialProvinceIndex": 1360,
+      "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
+      "physicalPlaceRef": "external:v1:X096",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
+    },
+    {
+      "id": 1166,
+      "name": "이서",
+      "x": 614,
+      "y": 195,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 97933,
+        "agriculture": 1933,
+        "commerce": 1983,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 33333,
+        "agriculture": 333,
+        "commerce": 333,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1102,
+        1113,
+        1116,
+        1165,
+        1170,
+        1171,
+        1174
+      ],
+      "meta": {
+        "jun": "압독국",
+        "junCh": "押督國",
+        "ju": "동이",
+        "seat": "압독국",
+        "nameCh": "伊西",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "전승명 또는 현대 하천·지역명으로 구분한 취락 거점; 위치 배분은 게임 기획"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X097"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X033",
+          "memberJurisdictionIds": [
+            "X033",
+            "X096",
+            "X097"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "이서"
+      },
+      "provinceId": 1361,
+      "spatialProvinceId": "KOR-X097-X033",
+      "spatialProvinceIndex": 1361,
+      "routeNodeKey": "36bd58f3-5463-438a-a9af-71f394069844",
+      "physicalPlaceRef": "external:v1:X097",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
+    },
+    {
+      "id": 1167,
+      "name": "감문",
+      "x": 604,
+      "y": 186,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1103,
+        1109,
+        1117,
+        1118
+      ],
+      "meta": {
+        "jun": "본피",
+        "junCh": "本彼",
+        "ju": "동이",
+        "seat": "본피",
+        "nameCh": "甘文",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X098"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X048",
+          "memberJurisdictionIds": [
+            "X048",
+            "X098"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "감문"
+      },
+      "provinceId": 1362,
+      "spatialProvinceId": "KOR-X098-X048",
+      "spatialProvinceIndex": 1362,
+      "routeNodeKey": "99f64074-3eee-4b80-8bf3-859731ac6f2c",
+      "physicalPlaceRef": "external:v1:X098",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
+    },
+    {
+      "id": 1168,
+      "name": "우유",
+      "x": 625,
+      "y": 169,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1101,
+        1103,
+        1118
+      ],
+      "meta": {
+        "jun": "실직국",
+        "junCh": "悉直國",
+        "ju": "동이",
+        "seat": "실직국",
+        "nameCh": "優由",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X099"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X032",
+          "memberJurisdictionIds": [
+            "X032",
+            "X099"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "우유"
+      },
+      "provinceId": 1363,
+      "spatialProvinceId": "KOR-X099-X032",
+      "spatialProvinceIndex": 1363,
+      "routeNodeKey": "c87e9851-adff-4fca-9f7b-04e4d2154cc6",
+      "physicalPlaceRef": "external:v1:X099",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
+    },
+    {
+      "id": 1169,
+      "name": "근기",
+      "x": 625,
+      "y": 187,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 97933,
+        "agriculture": 1933,
+        "commerce": 1983,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 33333,
+        "agriculture": 333,
+        "commerce": 333,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1103,
+        1113,
+        1165
+      ],
+      "meta": {
+        "jun": "사로국",
+        "junCh": "斯盧國",
+        "ju": "동이",
+        "seat": "사로국",
+        "nameCh": "勤耆",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X100"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X044",
+          "memberJurisdictionIds": [
+            "X044",
+            "X100",
+            "X101"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "근기"
+      },
+      "provinceId": 1364,
+      "spatialProvinceId": "KOR-X100-X044",
+      "spatialProvinceIndex": 1364,
+      "routeNodeKey": "a25b91fc-3bbf-4c23-adfb-f43f4cc296ca",
+      "physicalPlaceRef": "external:v1:X100",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
+    },
+    {
+      "id": 1170,
+      "name": "우시산",
+      "x": 624,
+      "y": 197,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 97933,
+        "agriculture": 1933,
+        "commerce": 1983,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 33333,
+        "agriculture": 333,
+        "commerce": 333,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1113,
+        1166,
+        1171,
+        1172
+      ],
+      "meta": {
+        "jun": "사로국",
+        "junCh": "斯盧國",
+        "ju": "동이",
+        "seat": "사로국",
+        "nameCh": "于尸山",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "JINHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X101"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X044",
+          "memberJurisdictionIds": [
+            "X044",
+            "X100",
+            "X101"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "우시산"
+      },
+      "provinceId": 1365,
+      "spatialProvinceId": "KOR-X101-X044",
+      "spatialProvinceIndex": 1365,
+      "routeNodeKey": "02c2b89a-ae59-43e0-967f-fd7a919b4766",
+      "physicalPlaceRef": "external:v1:X101",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
+    },
+    {
+      "id": 1171,
+      "name": "미리미동",
+      "x": 614,
+      "y": 198,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 73450,
+        "agriculture": 1450,
+        "commerce": 1488,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 25000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1114,
+        1166,
+        1170,
+        1172,
+        1173
+      ],
+      "meta": {
+        "jun": "구야국",
+        "junCh": "狗邪國",
+        "ju": "동이",
+        "seat": "구야국",
+        "nameCh": "彌離彌凍",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "BYEONHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X102"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X045",
+          "memberJurisdictionIds": [
+            "X045",
+            "X102",
+            "X103",
+            "X104"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "미리미동"
+      },
+      "provinceId": 1366,
+      "spatialProvinceId": "KOR-X102-X045",
+      "spatialProvinceIndex": 1366,
+      "routeNodeKey": "683115df-cd7e-4dc4-896f-bc6619c64cfd",
+      "physicalPlaceRef": "external:v1:X102",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
+    },
+    {
+      "id": 1172,
+      "name": "독로",
+      "x": 620,
+      "y": 204,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 73450,
+        "agriculture": 1450,
+        "commerce": 1487,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 25000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1114,
+        1170,
+        1171
+      ],
+      "meta": {
+        "jun": "구야국",
+        "junCh": "狗邪國",
+        "ju": "동이",
+        "seat": "구야국",
+        "nameCh": "瀆盧",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "BYEONHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X103"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X045",
+          "memberJurisdictionIds": [
+            "X045",
+            "X102",
+            "X103",
+            "X104"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "독로"
+      },
+      "provinceId": 1367,
+      "spatialProvinceId": "KOR-X103-X045",
+      "spatialProvinceIndex": 1367,
+      "routeNodeKey": "11aa3d58-0a48-4889-a32d-704a6b829a29",
+      "physicalPlaceRef": "external:v1:X103",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
+    },
+    {
+      "id": 1173,
+      "name": "접도",
+      "x": 613,
+      "y": 203,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 73450,
+        "agriculture": 1450,
+        "commerce": 1487,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 25000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1114,
+        1171
+      ],
+      "meta": {
+        "jun": "구야국",
+        "junCh": "狗邪國",
+        "ju": "동이",
+        "seat": "구야국",
+        "nameCh": "接塗",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "BYEONHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X104"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X045",
+          "memberJurisdictionIds": [
+            "X045",
+            "X102",
+            "X103",
+            "X104"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "접도"
+      },
+      "provinceId": 1368,
+      "spatialProvinceId": "KOR-X104-X045",
+      "spatialProvinceIndex": 1368,
+      "routeNodeKey": "4e63fb72-70b9-4269-a432-a1878742d79e",
+      "physicalPlaceRef": "external:v1:X104",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
+    },
+    {
+      "id": 1174,
+      "name": "다라 권역",
+      "x": 604,
+      "y": 196,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1100,
+        1116,
+        1151,
+        1166
+      ],
+      "meta": {
+        "jun": "반로",
+        "junCh": "大伽耶",
+        "ju": "동이",
+        "seat": "반로",
+        "nameCh": "多羅",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://zh.wikisource.org/wiki/三國志/卷30",
+            "claim": "후대 사료의 지역명 참조; 220년 같은 국호·국체 존속을 주장하지 않음"
+          },
+          "regionId": "BYEONHAN",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X105"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X047",
+          "memberJurisdictionIds": [
+            "X047",
+            "X105"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "다라 권역"
+      },
+      "provinceId": 1369,
+      "spatialProvinceId": "KOR-X105-X047",
+      "spatialProvinceIndex": 1369,
+      "routeNodeKey": "d8505f47-79f9-41ca-9b7e-c83fb3468df9",
+      "physicalPlaceRef": "external:v1:X105",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
+    },
+    {
+      "id": 1175,
+      "name": "맥",
+      "x": 598,
+      "y": 151,
+      "level": 5,
+      "region": 14,
+      "max": {
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 50000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        1107,
+        1111,
+        1118,
+        1176
+      ],
+      "meta": {
+        "jun": "백제국",
+        "junCh": "伯濟國",
+        "ju": "동이",
+        "seat": "백제국",
+        "nameCh": "貊",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "YE",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X106"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "X042",
+          "memberJurisdictionIds": [
+            "X042",
+            "X106"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "맥"
+      },
+      "provinceId": 1371,
+      "spatialProvinceId": "KOR-X106-SUB-X042-1f00b3225ad9",
+      "spatialProvinceIndex": 1371,
+      "routeNodeKey": "241ef21b-c1ec-436c-b136-4d2b4f0eb341",
+      "physicalPlaceRef": "external:v1:X106",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X106"
+    },
+    {
+      "id": 1176,
+      "name": "불내",
+      "x": 594,
+      "y": 129,
+      "level": 5,
+      "region": 12,
+      "max": {
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        807,
+        808,
+        1107,
+        1111,
+        1175,
+        1177
+      ],
+      "meta": {
+        "jun": "낙랑군",
+        "junCh": "樂浪郡",
+        "ju": "유주",
+        "seat": "조선현",
+        "nameCh": "不耐",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "YE",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X107"
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-lelang-015",
+          "memberJurisdictionIds": [
+            "fc-lelang-015",
+            "X107"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "불내"
+      },
+      "provinceId": 1372,
+      "spatialProvinceId": "KOR-X107-fc-lelang-015",
+      "spatialProvinceIndex": 1372,
+      "routeNodeKey": "12d3e33e-5191-48a3-92fe-b46ca7e3ba13",
+      "physicalPlaceRef": "external:v1:X107",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
+    },
+    {
+      "id": 1177,
+      "name": "화려",
+      "x": 590,
+      "y": 119,
+      "level": 5,
+      "region": 12,
+      "max": {
+        "population": 29380,
+        "agriculture": 580,
+        "commerce": 595,
+        "security": 4000,
+        "defence": 6000,
+        "wall": 5900
+      },
+      "initial": {
+        "population": 10000,
+        "agriculture": 250,
+        "commerce": 250,
+        "security": 1000,
+        "defence": 2000,
+        "wall": 2000
+      },
+      "connections": [
+        799,
+        809,
+        1176
+      ],
+      "meta": {
+        "jun": "낙랑군",
+        "junCh": "樂浪郡",
+        "ju": "유주",
+        "seat": "조선현",
+        "nameCh": "華麗",
+        "isSeat": false,
+        "historicalPlace": {
+          "placementBasis": "GAME_DESIGN_LOCALITY_PROXY",
+          "coordinateBasis": "MODERN_WIKIDATA_PROXY_WITH_REVIEWED_GRID_SNAP",
+          "confidence": "DISPUTED",
+          "independentPolityAtReferenceYear": false,
+          "evidence": {
+            "url": "https://db.history.go.kr/id/sg_037r_0040_0010",
+            "claim": "사료 이름의 지역 비정 채택"
+          },
+          "regionId": "YE",
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json#X108",
+          "nameInterpretations": [
+            {
+              "names": [
+                "임둔국",
+                "임둔군"
+              ],
+              "target": "X108",
+              "role": "FORMER_REGION_OVERLAY",
+              "basis": "함경남도 영흥·금야 방면 비정 선택; 화려권의 전대 지역명"
+            }
+          ]
+        },
+        "economyBasis": {
+          "kind": "GAME_DESIGN_CONSERVED_BUDGET",
+          "fundingJurisdictionId": "fc-lelang-006",
+          "memberJurisdictionIds": [
+            "fc-lelang-006",
+            "X108"
+          ],
+          "allocation": "EQUAL_SHARES_STABLE_REMAINDER",
+          "historicalCensus": false,
+          "decisionRef": "data/curated/han/korea-place-corrections-v1.json"
+        },
+        "displayName": "화려"
+      },
+      "provinceId": 1373,
+      "spatialProvinceId": "KOR-X108-fc-lelang-006",
+      "spatialProvinceIndex": 1373,
+      "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
+      "physicalPlaceRef": "external:v1:X108",
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
     }
   ],
   "seaRoutes": [
