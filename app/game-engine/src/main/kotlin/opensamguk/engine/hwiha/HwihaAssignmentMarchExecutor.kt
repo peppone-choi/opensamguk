@@ -6,7 +6,7 @@ import opensamguk.logic.world.*
 
 enum class AssignmentMarchFailure {
     WRONG_RULE_PROFILE, UNKNOWN_ACTOR, INVALID_STATE, INVALID_ASSIGNMENT, POSITION_UNAVAILABLE,
-    STALE_PIN, NO_ROUTE, PROGRESS_REJECTED, BATTLE_PENDING,
+    STALE_PIN, NO_ROUTE, PROGRESS_REJECTED, BATTLE_PENDING, CORPS_DEPLOYED,
 }
 sealed interface AssignmentMarchExecution {
     data class Rejected(val reason: AssignmentMarchFailure) : AssignmentMarchExecution
@@ -51,6 +51,10 @@ class HwihaAssignmentMarchExecutor(
         if (old?.lastAdvancedAt == now) return AssignmentMarchExecution.AlreadyProcessed
         // Changing an order must never provide an escape from an unresolved encounter.
         if (old?.stop == LandMarchStop.ENCOUNTER) return reject(AssignmentMarchFailure.BATTLE_PENDING)
+        val deployments = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+            ?: return reject(AssignmentMarchFailure.INVALID_STATE)
+        if (deployments.deployed.any { it.commanderGeneralId == generalId })
+            return reject(AssignmentMarchFailure.CORPS_DEPLOYED)
         val destination = world.landNodeOfCity(assignment.countyId) ?: return reject(AssignmentMarchFailure.INVALID_ASSIGNMENT)
         val retained = old?.takeIf { it.assignment == assignment }
         val path = retained?.path ?: when (val result = StrategicPathResolver.resolveLandMarch(topology,

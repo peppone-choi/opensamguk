@@ -166,6 +166,22 @@ class ScenarioImporterIT {
         val topology = HanWorldArtifactsResolver(root).resolve(cityIds, emptyList()).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
+        val passageMeta = opensamguk.infra.persistence.MetaJson.decode(
+            jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
+        assertTrue(opensamguk.logic.input.HwihaLandPassageState.read(passageMeta, topology) != null)
+        val reactionKey = opensamguk.logic.input.HwihaMarchReactions.META_KEY
+        fun reactions() = opensamguk.infra.persistence.MetaJson.decode(
+            jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
+        assertEquals(opensamguk.logic.input.HwihaMarchReactions.Empty,
+            opensamguk.logic.input.HwihaMarchReactions.read(reactions()))
+        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], '{\"version\":99}'::jsonb) WHERE id=1", reactionKey)
+        assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) {
+            error("existing world must not rerun its seed")
+        }.seeded)
+        assertFailsWith<IllegalArgumentException> { opensamguk.logic.input.HwihaMarchReactions.read(reactions()) }
+        jdbc.update("UPDATE world_state SET meta=meta - ? WHERE id=1", reactionKey)
+        assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) { error("no backfill") }.seeded)
+        assertEquals(null, opensamguk.logic.input.HwihaMarchReactions.read(reactions()))
         // 각 행의 省 = 그 장수의 城이 선 省.
         val mismatched = jdbc.queryForObject(
             """SELECT count(*) FROM general g JOIN general_spatial_position p ON p.world_id = g.world_id AND p.general_id = g.id
@@ -179,6 +195,8 @@ class ScenarioImporterIT {
         newImporter().importAll(jdbc, canonicalWorldId)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'hwihaLord'", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'hwihaMarchReactions'", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'hwihaLandPassage'", Int::class.java))
     }
 
     @Test

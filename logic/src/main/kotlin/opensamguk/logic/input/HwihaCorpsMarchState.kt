@@ -1,0 +1,45 @@
+package opensamguk.logic.input
+
+import opensamguk.logic.world.*
+
+/** Stored on the commander; the deployment owner retains live corps composition and allegiance. */
+data class HwihaCorpsMarchState(
+    val deploymentOrderId: String,
+    val ownerGeneralId: Int,
+    val commanderGeneralId: Int,
+    val checkpoint: HwihaMarchCheckpoint,
+) {
+    init {
+        require(deploymentOrderId.isNotBlank() && deploymentOrderId.length <= 128)
+        require(ownerGeneralId > 0 && commanderGeneralId > 0)
+    }
+
+    /** A valid checkpoint cannot be attached to a different or newly issued deployment. */
+    fun requireBinding(corps: HwihaDeployedCorps, storedOnGeneralId: Int) {
+        require(storedOnGeneralId == commanderGeneralId && corps.commanderGeneralId == commanderGeneralId)
+        require(corps.orderId == deploymentOrderId && corps.ownerGeneralId == ownerGeneralId)
+        require(checkpoint.lastAdvancedAt >= corps.startedAt)
+    }
+
+    fun toMetaValue(): Map<String, Any> = linkedMapOf(
+        "version" to 1, "deploymentOrderId" to deploymentOrderId,
+        "ownerGeneralId" to ownerGeneralId, "commanderGeneralId" to commanderGeneralId,
+        "checkpoint" to checkpoint.toMetaValue(),
+    )
+
+    companion object {
+        const val META_KEY = "hwihaCorpsMarch"
+        private val fields = setOf("version", "deploymentOrderId", "ownerGeneralId", "commanderGeneralId", "checkpoint")
+
+        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): HwihaCorpsMarchState? {
+            if (META_KEY !in meta) return null
+            val value = meta[META_KEY] as? Map<*, *> ?: invalid()
+            require(value.keys == fields && value["version"] == 1) { "Invalid corps march metadata schema" }
+            return HwihaCorpsMarchState(value["deploymentOrderId"] as? String ?: invalid(),
+                value["ownerGeneralId"] as? Int ?: invalid(), value["commanderGeneralId"] as? Int ?: invalid(),
+                HwihaMarchCheckpoint.read(value["checkpoint"], topology, metrics))
+        }
+
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA corps march metadata")
+    }
+}

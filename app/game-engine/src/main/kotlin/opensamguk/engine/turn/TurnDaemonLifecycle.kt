@@ -75,6 +75,8 @@ class TurnDaemonLifecycle(
     private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
     private val observeGeneralTurnStart: (generalId: Int) -> Unit = { },
     private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
+    /** HWIHA movement stage, after political input and before the one-phase stamp/atomic flush. */
+    private val hwihaMovementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.hwiha.HwihaTurnOutcome?) -> Unit = { _, _, _ -> },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -182,6 +184,7 @@ class TurnDaemonLifecycle(
                 val reserved = opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
+                if (world.ruleProfile == RuleProfile.HWIHA) hwihaMovementOf(g.id, reserved, result.hwihaOutcome)
                 handled.add(result)
                 observeHandledTurn(result)
                 pullGeneralTurnOf(g.id)

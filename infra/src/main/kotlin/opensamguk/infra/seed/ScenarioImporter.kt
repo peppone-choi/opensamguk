@@ -183,7 +183,7 @@ class ScenarioImporter(
         val mapName = mapConfig["mapName"] as? String ?: "han"
         val unitSet = mapConfig["unitSet"] as? String ?: "han"
         // meta keys consumed by EngineEventConfig.monthlyPipeline: hiddenSeed/startYear/startTime.
-        val meta = jsonObject(
+        val meta = linkedMapOf<String, Any?>(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
             "startTime" to installTime.toString(),
@@ -198,6 +198,10 @@ class ScenarioImporter(
             "show_img_level" to showImageLevel,
             "extended_general" to extendedGeneral,
         )
+        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            meta[opensamguk.logic.input.HwihaMarchReactions.META_KEY] =
+                opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue()
+        }
         val config = jsonObject(
             "startyear" to startYear,
             "starttime" to installTime.toString(),
@@ -510,6 +514,9 @@ class ScenarioImporter(
             """.trimIndent(),
             batch,
         )
+        check(jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], ?) WHERE id=?",
+            opensamguk.logic.input.HwihaLandPassageState.META_KEY,
+            jsonb(opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology)), worldId.value) == 1)
         return batch.size
     }
 

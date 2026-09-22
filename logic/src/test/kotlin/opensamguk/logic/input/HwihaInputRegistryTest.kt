@@ -14,7 +14,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
-    private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist,
+    private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 

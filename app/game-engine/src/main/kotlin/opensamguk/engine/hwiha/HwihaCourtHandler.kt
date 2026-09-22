@@ -17,6 +17,8 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
         val registry = HwihaInputRegistry(HwihaInputCatalog.load(), mapOf(
             "action.enlist" to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "출사는 개인 행동 예약으로 입력해야 합니다.") },
+            HwihaDeployInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
+                "INVALID_INPUT_CHANNEL", "본인 출병은 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
         ))

@@ -445,6 +445,7 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/court/dispatch?generalId=${generalId}`, args),
     courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
+    deployOptions: (generalId: number) => get<import('./types').HwihaDeployOptions>(`/api/hwiha/deploy/options?generalId=${generalId}`),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),

@@ -45,6 +45,8 @@ open class ReservedTurnRepository(
         val requestId: String? = null,
         /** False only for a missing database row; null requestId does not imply absence. */
         val rowExists: Boolean = true,
+        /** Original authenticated submitter; null when the durable request binding is absent. */
+        val reservationOwnerUserId: Int? = null,
     )
 
     /**
@@ -96,9 +98,11 @@ open class ReservedTurnRepository(
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
-            SELECT action_code, arg::text AS arg, brief, request_id
-              FROM general_turn
-             WHERE world_id = :world_id AND general_id = :general_id AND turn_idx = :turn_idx
+            SELECT t.action_code, t.arg::text AS arg, t.brief, t.request_id, i.owner_user_id
+              FROM general_turn t
+              LEFT JOIN command_inbox i ON i.world_id=t.world_id AND i.request_id=t.request_id
+                AND i.general_id=t.general_id AND i.command_kind='RESERVED_TURN' AND i.action_code=t.action_code
+             WHERE t.world_id = :world_id AND t.general_id = :general_id AND t.turn_idx = :turn_idx
             """.trimIndent(),
             params,
         ) { rs, _ ->
@@ -107,6 +111,7 @@ open class ReservedTurnRepository(
                     argJson = normalizeArgs(rs.getString("arg")),
                     brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
                     requestId = rs.getString("request_id"),
+                    reservationOwnerUserId = rs.getObject("owner_user_id", Integer::class.java)?.toInt(),
                 )
             }
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG, rowExists = false)

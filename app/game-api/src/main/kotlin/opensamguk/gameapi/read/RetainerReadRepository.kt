@@ -58,6 +58,7 @@ interface GeneralRetainerReadRawRepository : SpringDataRepository<GeneralRetaine
 }
 
 interface GeneralBugokReadRawRepository : SpringDataRepository<GeneralBugokReadEntity, WorldRowId> {
+    fun findByWorldIdOrderByIdAsc(worldId: Int): List<GeneralBugokReadEntity>
     fun findByWorldIdAndMasterGeneralIdOrderByIdAsc(worldId: Int, masterGeneralId: Int): List<GeneralBugokReadEntity>
 }
 
@@ -77,6 +78,8 @@ class RetainerReadRepository(
 
     fun retainersOf(masterGeneralId: Int): List<GeneralRetainerReadEntity> =
         retainers.findByWorldIdAndMasterGeneralIdOrderByIdAsc(worldId.value, masterGeneralId)
+
+    fun allBugoks(): List<GeneralBugokReadEntity> = bugoks.findByWorldIdOrderByIdAsc(worldId.value)
 
     fun bugoksOf(masterGeneralId: Int): List<GeneralBugokReadEntity> =
         bugoks.findByWorldIdAndMasterGeneralIdOrderByIdAsc(worldId.value, masterGeneralId)

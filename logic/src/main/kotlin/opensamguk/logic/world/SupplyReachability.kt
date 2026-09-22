@@ -38,6 +38,7 @@ enum class SupplyReachabilityVerdict {
     BOTH_UNSUPPLIED_PROTECTED,
     BOTH_UNSUPPLIED,
     SPATIAL_CUT_UPHELD,
+    MILITARY_CUT,
 }
 
 data class SupplyReachabilityRow(
@@ -52,6 +53,9 @@ data class SupplyReachabilityEvaluation(
     val suppliedCityIds: Set<Int>,
     val rows: List<SupplyReachabilityRow>,
 )
+
+/** No destructive settlement may guess how a military blockade intersects missing geometry. */
+class MilitarySupplyUnavailableException(message: String) : IllegalStateException(message)
 
 /**
  * Evaluate the historical CityConst graph and projected spatial graph as independent evidence.
@@ -76,6 +80,12 @@ fun evaluateSupplyReachability(
         .filterTo(linkedSetOf()) { it !in mappedIds }
     val citySupplied = mappedCitySupplied + legacyCitySupplied
     val spatialSupplied = computeSpatiallySuppliedCities(cities, capitals, spatialNetwork)
+    val strategic = spatialNetwork.strategicSupply
+    val hasMilitaryBlocks = strategic?.militaryBlocksByNation?.values?.any { it.isNotEmpty() } == true
+    val beforeMilitary = if (hasMilitaryBlocks) computeSpatiallySuppliedCities(cities, capitals,
+        spatialNetwork.copy(strategicSupply = strategic!!.withMilitaryBlocks(emptyMap()))) else spatialSupplied
+    val nations = cities.associate { it.id to it.nationId }
+
 
     val rows = cities.asSequence()
         .filter { it.id in mappedIds }
@@ -92,7 +102,18 @@ fun evaluateSupplyReachability(
                 else -> null
             }
             val applicablePolicy = policy?.takeIf { it.expectedCurrentReachability == actualExpectation }
+            val blocked = strategic?.militaryBlocksByNation?.get(nations[cityId]).orEmpty()
+            val provinceIndex = spatialNetwork.cityProvinceIndices.getValue(cityId)
+            val directlyBlocked = strategic?.provinceIds?.get(provinceIndex) in blocked
+            val militaryCut = directlyBlocked || (cityId in beforeMilitary && !bySpatial)
+            val geometryProtected = (byCity && applicablePolicy?.upholdsSpatialCut != true) ||
+                applicablePolicy?.protectsDestructiveDisconnection == true
+            if (!militaryCut && !bySpatial && geometryProtected && blocked.any { province ->
+                    val index = strategic!!.provinceIds.indexOf(province)
+                    spatialNetwork.provinceOwners[index] == nations[cityId]
+                }) throw MilitarySupplyUnavailableException("Military supply impact is unavailable for city $cityId")
             val verdict = when {
+                militaryCut -> SupplyReachabilityVerdict.MILITARY_CUT
                 byCity && bySpatial -> SupplyReachabilityVerdict.BOTH_SUPPLIED
                 byCity && applicablePolicy?.upholdsSpatialCut == true -> SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD
                 byCity -> SupplyReachabilityVerdict.CITY_ONLY_PROTECTED
@@ -108,6 +129,7 @@ fun evaluateSupplyReachability(
     val destructive = setOf(
         SupplyReachabilityVerdict.BOTH_UNSUPPLIED,
         SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD,
+        SupplyReachabilityVerdict.MILITARY_CUT,
     )
     return SupplyReachabilityEvaluation(
         suppliedCityIds = rows.asSequence()

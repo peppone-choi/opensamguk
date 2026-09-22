@@ -95,6 +95,25 @@ class RetainerHandler(
         return RetainerActionResult(type, ok = true, generalId = c.generalId, id = id)
     }
 
+    /** Deployment metadata is authority, not a hint; corrupt rows must not look undeployed. */
+    private fun deploymentEditDeny(blocks: (opensamguk.logic.input.HwihaDeployedCorps) -> Boolean): String? {
+        if (world.ruleProfile != opensamguk.logic.input.RuleProfile.HWIHA) return null
+        val corps = try {
+            world.listGenerals().flatMap { owner ->
+                opensamguk.logic.input.HwihaDeploymentState.read(owner.meta)?.corps.orEmpty().also { rows ->
+                    require(rows.all { it.ownerGeneralId == owner.id })
+                }
+            }.also { rows ->
+                require(rows.map { it.orderId }.distinct().size == rows.size)
+                require(rows.map { it.commanderGeneralId }.distinct().size == rows.size)
+                require(rows.flatMap { it.bugokIds }.distinct().size == rows.sumOf { it.bugokIds.size })
+            }
+        } catch (_: IllegalArgumentException) {
+            return "출전 상태를 확인할 수 없어 변경할 수 없습니다."
+        }
+        return if (corps.any(blocks)) "출전 중인 부곡이나 지휘 부장은 변경할 수 없습니다." else null
+    }
+
     fun handleRelease(c: TurnDaemonCommand.RetainerRelease): TurnDaemonCommandResult {
         val type = "retainerRelease"
         val (me, denied) = preGate(type, c.generalId)
@@ -102,6 +121,7 @@ class RetainerHandler(
         val retainerId = c.retainerId ?: return fail(type, c.generalId, RetainerRules.REASON_INPUT)
         val r = world.getRetainerById(retainerId)
         if (r == null || r.masterGeneralId != me.id) return fail(type, c.generalId, RetainerRules.REASON_NO_RETAINER)
+        deploymentEditDeny { it.commanderRetainerId == retainerId }?.let { return fail(type, c.generalId, it) }
         world.removeRetainer(retainerId) // 지휘 중이던 부곡의 commander NULL UPDATE 는 world 가 함께 기록
         return RetainerActionResult(type, ok = true, generalId = c.generalId, id = retainerId)
     }
@@ -151,6 +171,7 @@ class RetainerHandler(
         val owned = b != null && b.masterGeneralId == me.id
         RetainerRules.bugokDisbandDeny(owned, b?.crewTypeId ?: -1, me.crewTypeId)?.let { return fail(type, c.generalId, it) }
         b!!
+        deploymentEditDeny { bugokId in it.bugokIds }?.let { return fail(type, c.generalId, it) }
         // 해산은 crew/rice 만 되돌린다 — train/atmos 는 바꾸지 않는다(지어낸 가중식 없음, spec S3).
         applyGeneral(me, me.copy(crew = me.crew + b.troops, rice = me.rice + b.provisions))
         world.removeBugok(bugokId)
@@ -169,6 +190,8 @@ class RetainerHandler(
         RetainerRules.assignCommanderDeny(bugokOwned, c.retainerId, retainerOwned, r?.relation)
             ?.let { return fail(type, c.generalId, it) }
         b!!
+        deploymentEditDeny { bugokId in it.bugokIds && b.commanderRetainerId != c.retainerId }
+            ?.let { return fail(type, c.generalId, it) }
         // 보너스는 부곡 생애에 한 번(S3): 첫 배정에만 +6, 해제→재배정·A→B→A 는 0.
         val grantBonus = c.retainerId != null && b.commanderRetainerId != c.retainerId && !b.commanderBonusApplied
         val morale = if (grantBonus) (b.morale + RetainerRules.COMMANDER_MORALE_BONUS).coerceAtMost(100) else b.morale

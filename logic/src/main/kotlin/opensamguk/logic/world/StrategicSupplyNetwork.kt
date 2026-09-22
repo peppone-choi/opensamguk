@@ -8,10 +8,13 @@ class StrategicSupplyNetwork(
     provinceIds: List<String>,
     val waterControl: WaterControlSnapshot?,
     edgeStatesByNation: Map<Int, StrategicEdgeStateSnapshot> = emptyMap(),
+    militaryBlocksByNation: Map<Int, Set<String>> = emptyMap(),
 ) {
     val provinceIds: List<String> = Collections.unmodifiableList(provinceIds.toList())
     private val provinceIndexById = this.provinceIds.withIndex().associate { it.value to it.index }
     private val edgeStatesByNation = Collections.unmodifiableMap(LinkedHashMap(edgeStatesByNation))
+    val militaryBlocksByNation: Map<Int, Set<String>> = Collections.unmodifiableMap(
+        militaryBlocksByNation.toSortedMap().mapValues { Collections.unmodifiableSet(it.value.toSortedSet()) })
     private val waterById = topology.waterZones.associateBy { it.id }
 
     init {
@@ -22,6 +25,7 @@ class StrategicSupplyNetwork(
             waterControl.topologyHash == topology.contentHash && waterControl.knownWaterZoneIds == waterById.keys)) {
             "Supply water control topology or zone inventory is stale"
         }
+        require(this.militaryBlocksByNation.all { (nation, provinces) -> nation > 0 && provinces.all { it in topology.landProvinceIds } })
         val edgeIds = topology.traversalEdges.mapTo(hashSetOf()) { it.id }
         this.edgeStatesByNation.forEach { (nationId, state) ->
             require(nationId > 0 && state.topologyRevision == topology.topologyRevision &&
@@ -30,6 +34,9 @@ class StrategicSupplyNetwork(
             }
         }
     }
+
+    fun withMilitaryBlocks(blocks: Map<Int, Set<String>>) =
+        StrategicSupplyNetwork(topology, provinceIds, waterControl, edgeStatesByNation, blocks)
 
     fun suppliedCities(
         cities: List<SupplyCity>,
@@ -46,11 +53,12 @@ class StrategicSupplyNetwork(
         for ((nationId, seeds) in seedsByNation) {
             val live = edgeStatesByNation[nationId] ?: StrategicEdgeStateSnapshot(
                 topology.topologyRevision, topology.contentHash, emptyMap())
+            val blocked = militaryBlocksByNation[nationId].orEmpty()
             val sources = seeds.mapNotNull { cityProvinceIndices[it.capitalCityId] }
-                .filter { provinceOwners[it] == nationId }
+                .filter { provinceOwners[it] == nationId && provinceIds[it] !in blocked }
                 .mapTo(linkedSetOf<StrategicNodeRef>()) { StrategicNodeRef.LandProvince(provinceIds[it]) }
             fun nodeAllowed(node: StrategicNodeRef): Boolean = when (node) {
-                is StrategicNodeRef.LandProvince -> provinceIndexById[node.id]?.let { provinceOwners[it] == nationId } == true
+                is StrategicNodeRef.LandProvince -> provinceIndexById[node.id]?.let { provinceOwners[it] == nationId && node.id !in blocked } == true
                 is StrategicNodeRef.WaterZone -> waterControl?.stateFor(node.id)?.let {
                     it.controllingNationId == nationId.toLong() && it.blockadeState == WaterBlockadeState.OPEN &&
                         it.contestingNationIds.isEmpty()

@@ -109,7 +109,7 @@ class CommandController(
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        if (code == "action.enlist") {
+        if (code == "action.enlist" || code == "action.deploy") {
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             return try {
                 reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt())

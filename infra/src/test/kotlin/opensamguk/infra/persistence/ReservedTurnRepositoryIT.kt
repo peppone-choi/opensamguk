@@ -72,6 +72,51 @@ class ReservedTurnRepositoryIT {
     }
 
     @Test
+    fun `original reservation owner survives slot shift and terminal inbox status`() {
+        seedGenerals(worldId, 750)
+        val requestId = "owner-shift-750"
+        insertOwnerInbox(worldId, requestId, 750)
+        repo.reserve(worldId, 750, 1, "action.deploy", "{}", requestId = requestId)
+        repo.pullGeneralTurn(worldId, 750)
+        jdbc.update("UPDATE command_inbox SET status='APPLIED' WHERE world_id=1 AND request_id=:request",
+            mapOf("request" to requestId))
+        assertEquals(42, repo.readReserved(worldId, 750, 0).reservationOwnerUserId)
+    }
+
+    @Test
+    fun `unrelated inbox headers cannot supply reservation ownership`() {
+        seedGenerals(worldId, 751)
+        val cases = listOf(
+            Triple(otherWorldId, 751, CommandInboxRepository.CommandKind.RESERVED_TURN),
+            Triple(worldId, 750, CommandInboxRepository.CommandKind.RESERVED_TURN),
+            Triple(worldId, 751, CommandInboxRepository.CommandKind.IMMEDIATE),
+        )
+        cases.forEachIndexed { index, (inboxWorld, general, kind) ->
+            val request = "wrong-owner-$index"
+            insertOwnerInbox(inboxWorld, request, general, kind)
+            repo.reserve(worldId, 751, 0, "action.deploy", "{}", requestId = request)
+            assertEquals(null, repo.readReserved(worldId, 751, 0).reservationOwnerUserId)
+        }
+        insertOwnerInbox(worldId, "wrong-action", 751, action = "action.enlist")
+        repo.reserve(worldId, 751, 0, "action.deploy", "{}", requestId = "wrong-action")
+        assertEquals(null, repo.readReserved(worldId, 751, 0).reservationOwnerUserId)
+    }
+
+    private fun insertOwnerInbox(
+        world: WorldId, request: String, general: Int,
+        kind: CommandInboxRepository.CommandKind = CommandInboxRepository.CommandKind.RESERVED_TURN,
+        action: String = "action.deploy",
+    ) {
+        val envelope = opensamguk.common.wire.TurnDaemonCommandEnvelope(request, "0200-01-01T00:00:00Z",
+            opensamguk.common.wire.TurnDaemonCommand.Run(opensamguk.common.wire.RunReason.POKE))
+        CommandInboxRepository(jdbc).insertAccepted(CommandInboxRepository.AcceptedCommand(
+            world, request, commandKind = kind, intentFingerprint = "a".repeat(64), generalId = general,
+            turnIdx = 1, actionCode = action, payloadJson = opensamguk.common.wire.encodeCommandPayload(envelope),
+            ownerUserId = 42,
+        ))
+    }
+
+    @Test
     fun `reserve writes turn_idx 0 and readReserved reads it back`() {
         repo.reserve(worldId = worldId, generalId = 10, turnIdx = 0, actionCode = "che_농지개간", argJson = """{"amount":100}""")
 

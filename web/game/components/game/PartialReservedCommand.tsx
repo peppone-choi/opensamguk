@@ -214,7 +214,7 @@ export default function PartialReservedCommand({
                     );
                 })}
             </div>
-            {profile !== 'SAMMO' && <p role="status">{profile === 'HWIHA' ? '출사는 12순 안에서 한 건씩 예약합니다. 대량 예약·당기기·미루기·반복은 아직 제공하지 않습니다.' : '서버 규칙을 확인하지 못해 예약을 변경할 수 없습니다.'}</p>}
+            {profile !== 'SAMMO' && <p role="status">{profile === 'HWIHA' ? '출사·출병은 12순 안에서 한 건씩 예약합니다. 대량 예약·당기기·미루기·반복은 아직 제공하지 않습니다.' : '서버 규칙을 확인하지 못해 예약을 변경할 수 없습니다.'}</p>}
             <div className="rcp-actions">
                 <span className="rcp-actions__group">
                     <span className="rcp-actions__label">당기기/미루기</span>
