@@ -30,6 +30,10 @@ class HanWorldArtifactsResolver(private val root: Path = Path.of(".")) {
         if (it == HanWorldVariant.V3_846) Han846Artifacts.load(root)
         else if (it == HanWorldVariant.V3_848) Han848Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1098) Han1098Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1168) Han1168Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1194) Han1194Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1341) Han1341Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1141) Han1141Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1133) Han1133Artifacts.load(root)
         else HanHistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
     }

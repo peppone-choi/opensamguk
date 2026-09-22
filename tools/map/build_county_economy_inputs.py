@@ -7,6 +7,7 @@
   infra/src/main/resources/map/han-world-v3.json 城 등급·연결
   data/curated/han/administrative-units.json    郡國志 郡 戶數(build_han_world.junguozhi_groups)
   data/curated/han/county-economy-params-v1.json 가중치(EXPLORATORY)
+  data/curated/han/korea-economic-evidence-v1.json 東夷傳 권역 호수·생업·교역
 출력: data/curated/han/county-economy-inputs-v1.json
 `--check` 는 커밋본이 재생성 결과와 같은지 본다.
 """
@@ -42,7 +43,7 @@ def largest_remainder(total: int, weights: list[float]) -> list[int]:
     return out
 
 
-def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
+def build(tiles: dict, world: dict, params: dict, households: dict, historical_economy: dict | None = None) -> dict:
     legend = {int(k): v for k, v in tiles["_meta"]["terrainLegend"].items()}
     cols = tiles["_meta"]["cols"]
     terrain = "".join(tiles["terrain"])
@@ -121,11 +122,27 @@ def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
         for r, h in zip(members, largest_remainder(int(stat["households"]), weights)):
             r["households"] = h
             r["householdsBasis"] = "JUNGUOZHI_COMMANDERY_SPLIT"
+    for jid, city in city_by_jur.items():
+        allocation = city.get("meta", {}).get("economyBasis")
+        if allocation:
+            rows[jid]["gameEconomy"] = dict(allocation, initial=city["initial"], capacity=city["max"])
+            if rows[jid]["households"] is not None:
+                rows[jid]["householdsBasis"] = "GAME_DESIGN_SHARE_OF_JUNGUOZHI_TOTAL_NOT_LOCAL_CENSUS"
+    historical_groups = (historical_economy or {}).get("groups", [])
+    seen = set()
+    for group in historical_groups:
+        if group["id"] in seen:
+            raise ValueError(f"duplicate historical economy group: {group['id']}")
+        seen.add(group["id"])
+        for jid in group["jurisdictionIds"]:
+            if jid not in rows:
+                raise ValueError(f"unknown historical economy jurisdiction: {jid}")
+            rows[jid].setdefault("historicalEconomyRefs", []).append(group["id"])
     ordered = [rows[k] for k in sorted(rows)]
     return {
         "schemaVersion": 1,
         "paramsStatus": params["status"],
-        "source": "後漢書 郡國志 郡 戶數(administrative-units.json) × 治所 위계·지형 가중",
+        "source": "後漢書 郡國志 郡 戶數 × 治所 위계·지형 가중; 三國志 東夷傳 권역 경제는 historicalEconomy로 별도 보존",
         "counts": {
             "jurisdictions": len(ordered),
             "withHouseholds": sum(1 for r in ordered if r["households"] is not None),
@@ -141,6 +158,7 @@ def build(tiles: dict, world: dict, params: dict, households: dict) -> dict:
             "landCells": "WATER 가 아닌 칸. RIVER 칸을 포함한다.",
             "wetAdjacentCells": "상하좌우에 물기 있는(WET = RIVER·LAKE·SEA) 이웃이 하나 이상인 뭍 칸의 수. RIVER 칸도 뭍 칸으로 센다.",
         },
+        "historicalEconomy": historical_economy,
         "jurisdictions": ordered,
     }
 
@@ -165,6 +183,7 @@ def main(argv: list[str] | None = None) -> int:
         json.loads(WORLD.read_text(encoding="utf-8")),
         json.loads(PARAMS.read_text(encoding="utf-8")),
         build_han_world.junguozhi_groups(),
+        json.loads((ROOT / "data/curated/han/korea-economic-evidence-v1.json").read_text(encoding="utf-8")),
     )
     text = render(doc)
     if args.check:

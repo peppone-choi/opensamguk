@@ -59,6 +59,8 @@ object CityConst {
          * 수 있다(tools/scenario/build_han_world.py display_name).
          */
         val displayName: String = name,
+        /** Exact game allocations use 1; legacy capacity tables use 100. */
+        val statScale: Int = 100,
     )
 
     /** The three generated maps produced by [generateCities] (mirrors CityConstBase::_generate). */
@@ -88,13 +90,14 @@ object CityConst {
         val constRegion = LinkedHashMap<Int, CityInitialDetail>()
 
         for (raw in rawRows) {
+            require(raw.statScale == 1 || raw.statScale == 100)
             val level = levelMap.getValue(raw.level) as Int
-            val population = raw.population * 100
-            val agriculture = raw.agriculture * 100
-            val commerce = raw.commerce * 100
-            val security = raw.security * 100
-            val defence = raw.defence * 100
-            val wall = raw.wall * 100
+            val population = raw.population * raw.statScale
+            val agriculture = raw.agriculture * raw.statScale
+            val commerce = raw.commerce * raw.statScale
+            val security = raw.security * raw.statScale
+            val defence = raw.defence * raw.statScale
+            val wall = raw.wall * raw.statScale
             val region = regionMap.getValue(raw.region) as Int
             val newPath = LinkedHashMap<Int, String>()
             for (pathName in raw.path) {

@@ -239,7 +239,11 @@ def assert_no_orphan_land(
         if value == -1:
             for _ in range(count):
                 y, x = divmod(cursor, cols)
-                if terrain_rows[y][x] in land_kinds and len(orphan_land) < 5:
+                # The v3-1168 extension deliberately retains northern/eastern
+                # terrain outside the playable ownership frame. Those cells are
+                # review-approved out-of-scope land, not missing jurisdictions.
+                outside_playable_extension = (len(terrain_rows) >= 843 and (y < 174 or x >= 768))
+                if terrain_rows[y][x] in land_kinds and not outside_playable_extension and len(orphan_land) < 5:
                     orphan_land.append((x, y))
                 cursor += 1
         else:

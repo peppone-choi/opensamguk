@@ -84,6 +84,12 @@ data/map/*
 !data/map/han-world-v3-848-artifacts-v1/
 !data/map/han-world-v3-1098-artifacts-v1/
 !data/map/han-world-v3-1133-artifacts-v1/
+# 2026-09-21: 아래 네 판은 예외 없이 -f 로 커밋돼 있었다. 그래서 릴리스를 다시 구울 때
+# 새 blob 이 조용히 빠지고 CI 에서만 NoSuchFileException 으로 터졌다(#851). 예외를 명시한다.
+!data/map/han-world-v3-1141-artifacts-v1/
+!data/map/han-world-v3-1168-artifacts-v1/
+!data/map/han-world-v3-1194-artifacts-v1/
+!data/map/han-world-v3-1341-artifacts-v1/
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
 # Reviewed 15-scenario ownership materialization; generated deterministically from committed claims.

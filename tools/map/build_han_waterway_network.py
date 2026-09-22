@@ -32,6 +32,7 @@ from collections import deque
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 TILES = ROOT / "data" / "map" / "han-tiles.json"
 STRONGHOLDS = ROOT / "data" / "curated" / "han" / "strategic-strongholds-v1.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "waterway-network-adjudications-v1.json"
@@ -223,7 +224,9 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
     def site_cell(ref: dict, where: str) -> tuple[int, int]:
         if ref["kind"] == "STRONGHOLD":
             site = ferries.get(ref["id"]) or fail(f"{where}: unknown FERRY stronghold {ref['id']}")
-            return site["tileAnchor"]["row"], site["tileAnchor"]["col"]
+            from tools.map.korea_map_extension import NORTH_ROWS
+            offset = NORTH_ROWS if tiles["_meta"]["rows"] == 843 else 0
+            return site["tileAnchor"]["row"] + offset, site["tileAnchor"]["col"]
         need(ref["kind"] == "CITY", f"{where}: unsupported site kind")
         city = cities.get(ref["id"]) or fail(f"{where}: unknown city {ref['id']}")
         return city["row"], city["col"]

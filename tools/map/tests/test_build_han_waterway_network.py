@@ -126,6 +126,8 @@ class WaterwayNetworkTest(unittest.TestCase):
         anchor = next(s for s in self.strong["strongholds"] if s["id"] == "guandu")["tileAnchor"]
         ledger["nodes"].append({
             "stableKey": "guandu", "nameHan": "官渡", "siteRef": row["siteRef"],
+            # 거점 원장의 tileAnchor 는 원래 프레임 좌표다. 확장 프레임에서는 +174 로 옮겨 맞췄는데,
+            # 2026-09-21 프레임을 걷어낸 뒤로는 그대로 쓴다.
             "cell": {"row": anchor["row"], "col": anchor["col"]}, "reach": "he-mengjin",
             "roles": ["PORT"], "sourceRefs": row["sourceRefs"], "crossing": None,
             "port": {"landProvinceId": "82879", "sourceRefs": row["sourceRefs"]}})

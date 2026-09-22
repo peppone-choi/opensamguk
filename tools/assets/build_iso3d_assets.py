@@ -515,7 +515,7 @@ def build_all() -> dict[str, str]:
             "城 은 등급 1:1 로 11 단이고 모두 타일 반폭 0.5 안에 선다(빌더가 검사한다)."
         ),
         "rasterGroup": RASTER_GROUP,
-        "tileGrid": {"cols": 768 // RASTER_GROUP, "rows": 669 // RASTER_GROUP},
+        "tileGrid": {k: json.loads((ROOT / "data/map/han-tiles.json").read_text())["_meta"][k] // RASTER_GROUP for k in ("cols", "rows")},
         "terrain": sorted(playable),
         "skirt": "terrain/skirt.gltf",
         "buildingTiers": {tier: {"cityLevelFrom": lv, "cityLevelTo": lv} for tier, lv in sorted(CITY_TIERS.items())},
