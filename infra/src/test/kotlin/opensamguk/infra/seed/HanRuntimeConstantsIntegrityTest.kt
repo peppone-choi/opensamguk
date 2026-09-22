@@ -93,6 +93,74 @@ class HanRuntimeConstantsIntegrityTest {
             assertEquals(entry.path("sourceSha256").asText(), sha(restored))
         }
     }
+    @Test fun `1141 frozen constants preserve approved snapshot and original source identity`() {
+        val root = Path.of("..").toAbsolutePath().normalize()
+        val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1141-artifacts-v1/runtime-constants.json"))
+        assertEquals("e984c04fe93a2c801634d6c7c4496c67b26588f811f59d5f91c11e3563199eff", sha(raw))
+        val files = ObjectMapper().readTree(raw).path("files").toList()
+        assertEquals(2, files.size)
+        for (entry in files) {
+            val path = Path.of(entry.path("snapshot").asText())
+            val bytes = Files.readAllBytes(root.resolve(path))
+            assertEquals(entry.path("snapshotSha256").asText(), sha(bytes))
+            val originalName = Path.of(entry.path("source").asText()).fileName.toString().removeSuffix(".kt")
+            val frozenName = path.fileName.toString().removeSuffix(".kt")
+            val restored = bytes.toString(Charsets.UTF_8).substringAfter("\n")
+                .replace(frozenName, originalName).toByteArray(Charsets.UTF_8)
+            assertEquals(entry.path("sourceSha256").asText(), sha(restored))
+        }
+    }
+    @Test fun `1341 frozen constants preserve approved snapshot and original source identity`() {
+        val root = Path.of("..").toAbsolutePath().normalize()
+        val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1341-artifacts-v1/runtime-constants.json"))
+        assertEquals("469640d26505b34b161eb25f3e5f2ce40fa4a7995164fec198d9b4f2beea0241", sha(raw))
+        val files = ObjectMapper().readTree(raw).path("files").toList()
+        assertEquals(2, files.size)
+        for (entry in files) {
+            val path = Path.of(entry.path("snapshot").asText())
+            val bytes = Files.readAllBytes(root.resolve(path))
+            assertEquals(entry.path("snapshotSha256").asText(), sha(bytes))
+            val originalName = Path.of(entry.path("source").asText()).fileName.toString().removeSuffix(".kt")
+            val frozenName = path.fileName.toString().removeSuffix(".kt")
+            val restored = bytes.toString(Charsets.UTF_8).substringAfter("\n")
+                .replace(frozenName, originalName).toByteArray(Charsets.UTF_8)
+            assertEquals(entry.path("sourceSha256").asText(), sha(restored))
+        }
+    }
+    @Test fun `1194 frozen constants preserve approved snapshot and original source identity`() {
+        val root = Path.of("..").toAbsolutePath().normalize()
+        val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1194-artifacts-v1/runtime-constants.json"))
+        assertEquals("a33e67fdd7623c0eadfdb1aefc2caf4092c7d49a3999757bfcc76920d8688a2b", sha(raw))
+        val files = ObjectMapper().readTree(raw).path("files").toList()
+        assertEquals(2, files.size)
+        for (entry in files) {
+            val path = Path.of(entry.path("snapshot").asText())
+            val bytes = Files.readAllBytes(root.resolve(path))
+            assertEquals(entry.path("snapshotSha256").asText(), sha(bytes))
+            val originalName = Path.of(entry.path("source").asText()).fileName.toString().removeSuffix(".kt")
+            val frozenName = path.fileName.toString().removeSuffix(".kt")
+            val restored = bytes.toString(Charsets.UTF_8).substringAfter("\n")
+                .replace(frozenName, originalName).toByteArray(Charsets.UTF_8)
+            assertEquals(entry.path("sourceSha256").asText(), sha(restored))
+        }
+    }
+    @Test fun `1168 frozen constants preserve approved snapshot and original source identity`() {
+        val root = Path.of("..").toAbsolutePath().normalize()
+        val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1168-artifacts-v1/runtime-constants.json"))
+        assertEquals("825b6fe1722699424b18cde3f7fff9ac6449521ba089a2d1be171cc5d684230c", sha(raw))
+        val files = ObjectMapper().readTree(raw).path("files").toList()
+        assertEquals(2, files.size)
+        for (entry in files) {
+            val path = Path.of(entry.path("snapshot").asText())
+            val bytes = Files.readAllBytes(root.resolve(path))
+            assertEquals(entry.path("snapshotSha256").asText(), sha(bytes))
+            val originalName = Path.of(entry.path("source").asText()).fileName.toString().removeSuffix(".kt")
+            val frozenName = path.fileName.toString().removeSuffix(".kt")
+            val restored = bytes.toString(Charsets.UTF_8).substringAfter("\n")
+                .replace(frozenName, originalName).toByteArray(Charsets.UTF_8)
+            assertEquals(entry.path("sourceSha256").asText(), sha(restored))
+        }
+    }
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)
         .joinToString("") { "%02x".format(it) }
 }

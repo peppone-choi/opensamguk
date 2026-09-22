@@ -164,6 +164,8 @@ class NonPlayableRegionsTest(unittest.TestCase):
         excluded = terrain == 9
 
         self.assertEqual("OUT_OF_SCOPE", document["_meta"]["terrainLegend"]["9"])
+        # 2026-09-21 북동 확장 프레임을 걷어낸 뒤 실측. 확장 전(5b130608^) 문서와 정확히 같은 수다
+        # — 크롭이 원래 프레임을 한 칸도 바꾸지 않았다는 독립 대조다(SEA 174,997 도 동일).
         self.assertEqual(110367, int(excluded.sum()))
         self.assertTrue(np.all(owner[excluded] == -1))
         self.assertTrue(np.all(parent_owner[excluded] == -1))

@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1133, `general`=230,
+ * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1168, `general`=230,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -220,7 +220,7 @@ class ScenarioImporterIT {
         // 833–835: 城 없던 郡 3곳의 治所가 neutral 로 +3. 836–846: w1 11곳이 郡 귀속 세력에 +4,
         // 나머지는 공백지로 +7. 847 吳縣·848 毘陵: 1010 지배표에 없어 공백지로 +2.
         // 849–1024 城 없던 縣 관할 176곳 · 1025–1097 수·진·관 거점 73곳 · 1098 河南尹 平陰: 郡 귀속대로 후한 161 · 황건적 139 · 공백지 798.)
-        assertEquals(1133, counts.city)
+        assertEquals(1168, counts.city)
         assertEquals(230, counts.general)
         assertEquals(230 * 30, counts.generalTurn)
         assertEquals(230 * 37, counts.rankData)
@@ -269,8 +269,8 @@ class ScenarioImporterIT {
             ),
         )
         assertEquals(2, count("nation"))
-        assertEquals(1133, count("city"))
-        assertEquals((1..1133).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
+        assertEquals(1168, count("city"))
+        assertEquals((1..1194).filterNot { it in setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194) }, jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
         // name 컬럼은 **표기**다("제남국 역성현"). 식별자 "역성"(ScenarioCity.name)은 시나리오
         // 소유 목록을 푸는 데만 쓰고 DB 에는 남지 않는다 — 로그·목록·지도가 한 이름을 쓰게 한
         // 지점이 ScenarioImporter.insertCities 다(2026-09-11). 郡을 앞에 세우는 것은
@@ -283,7 +283,8 @@ class ScenarioImporterIT {
         // 606 → 608 은 847 吳縣·848 毘陵이 공백지로 들어오면서다(1010 지배표에 없다).
         // 608 → 798 · 123 → 160 · 117 → 139 는 w2 176곳과 거점 73곳이 郡 귀속대로 들어오면서다(2026-09-15).
         // 798 → 833: 2026-09-17 同縣 중복 977·989(공백지)를 거두고 郡國 밖 취락 37곳이 공백지로 들어왔다(ADR-LITE-056).
-        assertEquals(833, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        // The 26 retired locality proxies were all neutral in scenario_1010.
+        assertEquals(868, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
         assertEquals(161, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))  // + 1098 平陰(河南尹, 후한)
         assertEquals(139, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
@@ -1674,14 +1675,14 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(1133, counts.city)            // Versioned Han V3 catalog, owned and neutral cities.
+        assertEquals(1168, counts.city)            // Versioned Han V3 catalog, owned and neutral cities.
         assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
 
         assertEquals(21, count("nation"))
-        assertEquals(1133, count("city"))
+        assertEquals(1168, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
 
         // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──

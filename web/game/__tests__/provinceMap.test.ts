@@ -479,6 +479,11 @@ describe('province identity map', () => {
       commanderyName: city.meta.jun,
     }));
     const countyIndex = buildProvinceAdministrativeIndex(map, tiles.provinceRecords, tiles.parentRegions);
+    // 2026-09-21: 한때 이 단언이 실제 드리프트를 잡고 있었다 — han.json 이 meta.jun 으로 싣는
+    // 가야 3 곳(고령가야·대가야·성산가야)이 han-tiles parentRegions 로 안 풀렸다. 원인은
+    // refine_korea_places.py 가 korea-place-corrections-v1 의 labelOverrides 를 적용하면서
+    // displayName·nameCh 만 내리고 aliases 를 안 내린 것이었다(반로·본피·고동람). 생성기를
+    // 고치고 재생성해 해소했으므로 원래의 엄격한 형태로 되돌린다.
     expect(
       runtime.cities.every((city) => countyIndex.commanderyByName.has(city.meta.jun)),
       'every runtime commandery name must resolve directly or through a reviewed temporal alias',
@@ -616,7 +621,9 @@ describe('province identity map', () => {
     for (const scenario of canonical.scenarios) {
       // 지리 재분할(GH #806, 2026-09-18) 뒤: 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331.
       // 앞 판은 1,520 + 73 + 平陰 1 = 1,594 였다.
-      expect(scenario.assignments).toHaveLength(1_331);
+      // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,374 — han-tiles 의
+      // provinceRecords 실측과 같은 수다(아래 landProvinces 단언이 그 동치를 건다).
+      expect(scenario.assignments).toHaveLength(1_374);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;

@@ -21,6 +21,10 @@ REQUIRED_DIRS = {
     "data/map/han-world-v3-848-artifacts-v1",
     "data/map/han-world-v3-1098-artifacts-v1",
     "data/map/han-world-v3-1133-artifacts-v1",
+    "data/map/han-world-v3-1141-artifacts-v1",
+    "data/map/han-world-v3-1341-artifacts-v1",
+    "data/map/han-world-v3-1194-artifacts-v1",
+    "data/map/han-world-v3-1168-artifacts-v1",
 }
 
 

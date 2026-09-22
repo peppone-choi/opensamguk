@@ -105,6 +105,9 @@ class CommittedLowlandStageTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.document = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        # Verify this stage alone; the Korean seat stage intentionally changes non-terrain fields later.
+        from tools.map import refine_korea_places as korea
+        cls.document, _ = korea.peel(cls.document)
         cls.ledger = json.loads(lowland.LEDGER.read_text(encoding="utf-8"))
         cls.before, peeled = lowland.peel(cls.document)
         assert peeled is not None
