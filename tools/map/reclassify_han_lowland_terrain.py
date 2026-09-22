@@ -225,17 +225,24 @@ def restore_document(document: dict, ledger: dict) -> dict:
 
 def peel(document: dict) -> tuple[dict, dict | None]:
     """이 단계가 얹혀 있으면 벗긴 문서와 원장을, 아니면 (문서, None) 을 준다."""
+    from tools.map import refine_korea_places as korea
+    document, korea_ledger = korea.peel(document)
     if not LEDGER.is_file():
         return document, None
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     if stage_for(document, ledger) is None:
         return document, None
+    if korea_ledger is not None:
+        ledger["_koreaStage"] = korea_ledger
     return restore_document(document, ledger), ledger
 
 
 def reapply(document: dict, ledger: dict) -> dict:
     decisions = {key: ledger[key] for key in ("criterion", "elevation", "units")}
     rebuilt, _ = apply_reclassification(document, decisions, _load_inputs(decisions, document["_meta"]))
+    if ledger.get("_koreaStage"):
+        from tools.map import refine_korea_places as korea
+        rebuilt = korea.reapply(rebuilt, ledger["_koreaStage"])
     return rebuilt
 
 
@@ -257,6 +264,8 @@ def build_stage(source: dict, decisions: dict) -> tuple[dict, dict]:
 
 
 def check(document: dict, ledger: dict) -> list[str]:
+    from tools.map import refine_korea_places as korea
+    document, _ = korea.peel(document)
     stage = stage_for(document, ledger)
     if stage is None or digest(document) != stage["outputDocumentSha256"]:
         return ["han-tiles.json is not the reviewed lowland-terrain reclassification output"]
@@ -375,6 +384,8 @@ def main() -> int:
     document, ledger = build_stage(peeled, decisions)
     if args.prepare:
         LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    from tools.map import refine_korea_places as korea
+    document = korea.restack(document, peeled_ledger, args.prepare)
     if args.output:
         args.output.write_text(json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n",
                                encoding="utf-8")

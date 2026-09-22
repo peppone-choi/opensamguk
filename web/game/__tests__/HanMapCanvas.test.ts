@@ -435,8 +435,10 @@ describe('지도 아이콘 배율과 앵커', () => {
         // 2026-09-15: 수·진·관 거점 73 곳이 제 관할(STRATEGIC_SITE)을 받아 1,143 이다.
         // 2026-09-16: 河南尹 平陰縣(82879) 관할이 더해져 1,144 다.
         // 2026-09-17: 城 없던 관할 11 곳을 같은 실체 城 관할에 접어(fold_cityless_jurisdictions) 1,133 — 城 수와 같다.
-        expect(jurisdictions).toHaveLength(1_133);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_133);
+        // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,168. 「관할 수 = 城 수」는 그대로다
+        //   — han-world-v3 의 城 도 1,168 이다(web/shared cityName.test.ts 가 그쪽 축을 건다).
+        expect(jurisdictions).toHaveLength(1_168);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_168);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',
@@ -455,8 +457,10 @@ describe('지도 아이콘 배율과 앵커', () => {
         );
         // 2026-09-17: 관할을 모두 이웃 城 관할에 접은 郡國志 뒤의 郡 4 곳(新平·毗陵典農校尉·汶山·章武)은 省이 없어
         // 표식을 세우지 않는다 — 172 − 4 = 168.
-        expect(commanderies).toHaveLength(168);
-        expect(new Set(commanderies.map((city) => city.name)).size).toBe(168);
+        // 2026-09-21: parentRegions 가 172 → 173 이 되어(5b130608 에서 176, 2288e886 에서 173)
+        // 173 − 4 = 169. 省 없는 郡 은 여전히 같은 4 곳이다 — 빼는 수가 아니라 전체가 늘었다.
+        expect(commanderies).toHaveLength(169);
+        expect(new Set(commanderies.map((city) => city.name)).size).toBe(169);
     });
 
     it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {

@@ -516,6 +516,23 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
     """
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from tools.map import refine_korea_places as korea
+    before, korean_stage = korea.peel(document)
+    if korean_stage is not None:
+        prior_rows, projection = _reviewed_rows(before, ledger, rows)
+        prior = _check_rows(before, prior_rows, projection)
+        if prior['errors']:
+            raise ValueError('prior territory review fails before Korea extension: '+repr(prior['errors']))
+        reviewed=json.loads((ROOT/'data/curated/han/korea-territory-adjudications-v1.json').read_text())
+        if (reviewed['inputSha256']!=korean_stage['inputSha256'] or reviewed['outputSha256']!=korean_stage['outputSha256']):
+            raise ValueError('Korea territory review stage pin drift')
+        translated=[]
+        for row in prior_rows:
+            row=dict(row)
+            row['componentKey']=re.sub(r':(\d+)$',lambda m:':'+str(int(m[1])+reviewed['rowOffset']),row['componentKey'])
+            if row['componentKey'] not in reviewed['replacedComponentKeys']:translated.append(row)
+        additions=validate_ledger({**ledger,'adjudications':reviewed['adjudications']})
+        return translated+additions, {'koreaExtensionStage':korean_stage['outputSha256'],'priorProjection':projection}
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
@@ -619,8 +636,12 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
 
 def check(document: Mapping, ledger: Mapping) -> dict:
     rows = validate_ledger(ledger)
-    components = inventory(document)
     rows, projection = _reviewed_rows(document, ledger, rows)
+    return _check_rows(document, rows, projection)
+
+
+def _check_rows(document: Mapping, rows: list[dict], projection: object) -> dict:
+    components = inventory(document)
     by_key = {c["componentKey"]: c for c in components}
     errors: list[str] = []
     covered: set[str] = set()

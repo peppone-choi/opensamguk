@@ -48,7 +48,8 @@ REFERENCE_YEAR = 220
 # 2026-09-17: w2 중 같은 縣이 두 번 선 977·989 를 거두어 174곳, 그 두 번호와 1099–1133 에
 # 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
-EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 37
+# 2026-09-21: retire 26 unsupported locality proxies from the 98-row release.
+EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 72
 CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 174
 JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
                                   + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
@@ -1419,8 +1420,27 @@ def build_ledger(
 ) -> dict:
     if set(documents) != set(INPUT_PATHS) or set(input_records) != set(INPUT_PATHS):
         raise ValueError("ledger build requires every pinned input")
+    # Reject invalid review metadata before expensive historical geometry restoration.
+    _validate_review_chain(documents, input_records)
     sys.path.insert(0, str(ROOT))
     from tools.map import carve_strategic_site_provinces as carving
+    from tools.map import refine_korea_places as korea
+    korea_peeled, korea_stage = korea.peel(documents["data/map/han-tiles.json"])
+    if korea_stage is not None:
+        # Validate the live hierarchy before reversing the reviewed geometry stage.
+        _tile_context(documents["data/map/han-tiles.json"])
+        added_ids = frozenset(row["id"] for row in documents["data/map/han-tiles.json"]["cities"]) - frozenset(row["id"] for row in korea_peeled["cities"])
+        prior_records = copy.deepcopy(input_records)
+        prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
+            (json.dumps(korea_peeled, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+        ).hexdigest()
+        prior = build_ledger({**documents, "data/map/han-tiles.json": korea_peeled}, prior_records,
+                             expected_absent_terminal_ids=expected_absent_terminal_ids | added_ids)
+        prior["inputs"] = {path: dict(input_records[path]) for path in sorted(input_records)}
+        prior["approvedPhysicalPlaceIdsAbsentFromTiles"] = [row for row in prior["approvedPhysicalPlaceIdsAbsentFromTiles"] if row["terminalPhysicalPlaceId"] not in added_ids]
+        prior["summary"]["approvedPhysicalPlaceIdAbsentCount"] = len(prior["approvedPhysicalPlaceIdsAbsentFromTiles"])
+        prior["koreaPlaceProjection"] = {"inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"], "addedPlaceIds": sorted(added_ids)}
+        return prior
     from tools.map import fold_cityless_jurisdictions as folding
     fold_peeled, folded = folding.peel(documents["data/map/han-tiles.json"])
     if folded is not None:
@@ -1473,7 +1493,6 @@ def build_ledger(
             "changedCellCount": len(stage["ownerDelta"]),
         }
         return prior
-    _validate_review_chain(documents, input_records)
     tiles = _tile_context(documents["data/map/han-tiles.json"])
     selections = _selection_context(documents["data/curated/han/route-node-selection-v1.json"], tiles)
     temporal_adjudications = _temporal_adjudication_context(

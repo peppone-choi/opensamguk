@@ -377,6 +377,8 @@ def main() -> int:
         document, relaid = lowland.build_stage(document, decisions)
         if args.prepare:
             lowland.LEDGER.write_text(json.dumps(relaid, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    from tools.map import refine_korea_places as korea
+    document = korea.restack(document, lowland_ledger, args.prepare)
     if args.output:
         args.output.write_text(json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n",
                                encoding="utf-8")

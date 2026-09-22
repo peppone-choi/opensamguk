@@ -48,7 +48,7 @@ class TileKindSanityTest(unittest.TestCase):
         self.assertEqual(
             # 2026-09-16 1098: 河南尹 平陰縣(82879) 점이 더해졌다.
             {"COUNTY": 1013, "COMMANDERY": 120, "KINGDOM": 17,
-             "EXTERNAL_PLACE": 37, "PROVINCE": 3, "STRATEGIC_SITE": 73},
+             "EXTERNAL_PLACE": 72, "PROVINCE": 3, "STRATEGIC_SITE": 73},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",
         )
