@@ -356,6 +356,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
+    private val hwihaCourt = opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)
@@ -382,6 +383,7 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
+        is TurnDaemonCommand.HwihaCourtInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
@@ -504,6 +506,11 @@ class TurnDaemonCommandDispatcher(
         envelopes: List<TurnDaemonCommandEnvelope>,
     ): List<Pair<String, TurnDaemonCommandResult>> =
         envelopes.mapNotNull { env ->
+            val court = env.command as? TurnDaemonCommand.HwihaCourtInput
+            if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
+                type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
+                generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
+
             val sentAt = try {
                 Instant.parse(env.sentAt)
             } catch (_: DateTimeParseException) {

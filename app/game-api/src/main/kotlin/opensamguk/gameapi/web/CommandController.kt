@@ -245,7 +245,7 @@ class CommandController(
 
     private fun isPendingReservation(result: opensamguk.common.wire.TurnDaemonCommandResult?): Boolean =
         result is CommandLifecycleResult &&
-            result.commandKind == "RESERVED_TURN" &&
+            result.commandKind in setOf("RESERVED_TURN", "COURT_DECISION") &&
             result.type != "executionApplied" &&
             result.type != "executionRejected"
 

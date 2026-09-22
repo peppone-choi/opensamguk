@@ -14,7 +14,9 @@ import opensamguk.logic.stats.GeneralActionPipeline
 class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
-    private val registry = HwihaInputRegistry(catalog, handlers = mapOf("action.enlist" to InputHandler { enlistCalls++ }))
+    private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist,
+        "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {})
+    private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
     private fun repoRoot(): java.nio.file.Path {
@@ -72,7 +74,7 @@ class HwihaInputRegistryTest {
     fun `input with a registered handler resolves`() {
         var called = false
         val handler = InputHandler { called = true }
-        val wired = HwihaInputRegistry(catalog, mapOf("action.enlist" to handler))
+        val wired = HwihaInputRegistry(catalog, handlers(handler))
         val resolved = assertIs<InputResolution.Resolved>(wired.resolve(RuleProfile.HWIHA, "action.enlist"))
         assertEquals(InputKind.GENERAL_ACTION, resolved.entry.kind)
         assertTrue(resolved.handler === handler)

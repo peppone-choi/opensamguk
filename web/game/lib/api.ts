@@ -438,6 +438,13 @@ export const api = {
     patch,
 
     // Identity envelope + server-driven menu/const (F2 Wave 1)
+    dispatchOptions: (generalId: number, targetGeneralId?: number) =>
+        get<import('./types').DispatchOptionsResponse>(`/api/commands/dispatch-options?generalId=${generalId}${targetGeneralId == null ? '' : `&targetGeneralId=${targetGeneralId}`}`),
+    dispatchPending: (generalId: number) => get<import('./types').DispatchPendingResponse>(`/api/commands/dispatches?generalId=${generalId}`),
+    courtDispatch: (generalId: number, args: {targetGeneralId: number; countyId: number}) =>
+        post<IntakeOutcome>(`/api/commands/court/dispatch?generalId=${generalId}`, args),
+    courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
+        post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),

@@ -235,6 +235,24 @@ object HanStrategicTopologyJson {
         return result
     }
 
+    /** Missing legacy evidence grants no county capability; malformed present evidence fails closed. */
+    internal fun administrativeCountySeats(tiles: JsonNode, physicalIds: Set<String>): Map<String, Boolean>? {
+        if (!tiles.has("jurisdictionRecords")) return null
+        val rows = tiles.array("jurisdictionRecords")
+        uniqueBy(rows, "id")
+        val result = linkedMapOf<String, Boolean>()
+        for (row in rows) {
+            val seat = row.text("seatPlaceId")
+            val kind = row.text("kind")
+            require(seat in physicalIds) { "Unknown jurisdiction seat $seat" }
+            require(kind in setOf("COUNTY", "MARQUISATE", "STRATEGIC_SITE", "EXTERNAL_SETTLEMENT")) {
+                "Unknown jurisdiction kind $kind"
+            }
+            require(result.put(seat, kind == "COUNTY") == null) { "Duplicate jurisdiction seat $seat" }
+        }
+        return result
+    }
+
     private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>,
         cityCount: Int, standInSeatProvinces: Map<Int, Int> = emptyMap()): List<HanStrategicRouteBinding> {
         val world = docs.getValue(WORLD)
@@ -272,6 +290,7 @@ object HanStrategicTopologyJson {
                 require(provinceByCity.put(cityIndex.intValue(), index) == null) { "Physical place has ambiguous canonical province" }
             }
         }
+        val countySeats = administrativeCountySeats(docs.getValue(TILES), physicalIndex.keys)
         return runtime.map { city ->
             val physical = city.text("physicalPlaceRef")
             val placeId = when {
@@ -297,7 +316,9 @@ object HanStrategicTopologyJson {
                 require(city.integer("provinceId") == provinceIndex && city.integer("spatialProvinceIndex") == provinceIndex &&
                     city.text("spatialProvinceId") == landIds[provinceIndex]) { "Runtime physical-to-province identity drift" }
             }
-            HanStrategicRouteBinding(city.integer("id"), city.text("routeNodeKey"), physical, provinceIndex?.let(landIds::get))
+            require(countySeats == null || placeId in countySeats) { "Missing jurisdiction for runtime place $placeId" }
+            HanStrategicRouteBinding(city.integer("id"), city.text("routeNodeKey"), physical,
+                provinceIndex?.let(landIds::get), countySeats?.get(placeId) == true)
         }
     }
 

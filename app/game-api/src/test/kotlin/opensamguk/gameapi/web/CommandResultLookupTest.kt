@@ -199,6 +199,27 @@ class CommandResultLookupTest {
     }
 
     @Test
+    fun `court queue admission stays pending and stale cache yields to durable execution`() {
+        val requestId = "req-court"
+        val accepted = storedPayload(requestId, CommandLifecycleResult(
+            type = "reservationAccepted", ok = true, commandKind = "COURT_DECISION",
+            actionCode = "court.dispatch", generalId = 10))
+        stubKey(requestId, accepted)
+        stubDurable(requestId, accepted)
+        readOwnResult(requestId)
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.phase").value("reservationAccepted"))
+            .andExpect(jsonPath("$.ok").doesNotExist())
+        stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "executionApplied", ok = true, commandKind = "COURT_DECISION",
+            actionCode = "court.dispatch", generalId = 10), committedWorldVersion = 36))
+        readOwnResult(requestId)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.type").value("executionApplied"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(36))
+    }
+
+    @Test
     fun `typed hwiha rejection replaces pending admission and preserves reason code`() {
         val requestId = "req-hwiha-rejected"
         stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(

@@ -265,6 +265,7 @@ open class TurnRunService(
         commandOutboxRelay?.publishPending()
         val claimed = claimExecutableEnvelopes(commandBlockMs)
         val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
+        handler.courtHandler.expireDue()
         val cohort = lifecycle.snapshotGeneralDrainCohort()
         val handled = lifecycle.runTick(executionAsOf, cohort)
         val state = world.getState()
@@ -273,7 +274,8 @@ open class TurnRunService(
         val committedWorldVersion = state.worldVersion + 1
         val commandResults =
             intakeResults.toCommandResultRows(committedWorldVersion) +
-                handled.toExecutionCommandResultRows(committedWorldVersion)
+                handled.toExecutionCommandResultRows(committedWorldVersion) +
+                handler.courtHandler.takeExecutions().toCourtExecutionRows(committedWorldVersion)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
         flushWithGeneration(payload)
         acknowledgeClaimedWakes(claimed)
@@ -298,7 +300,13 @@ open class TurnRunService(
         //    general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository), NOT on this
         //    stream.
         val claimed = claimExecutableEnvelopes(commandBlockMs)
-        val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
+        // Court inputs observe the committed phase reached by this tick, never its stale starting phase.
+        // Enqueue after personal turns: an already processed issuer turn is not retroactively reused.
+        val (courtInputs, immediateInputs) = claimed.map { it.envelope }.partition {
+            world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
+                it.command is opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+        }
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(immediateInputs).orEmpty().toMutableList()
 
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>
@@ -359,11 +367,16 @@ open class TurnRunService(
                             }
                         },
                     )
+                    if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                        boundaryDate(nextTurn).let { world.setCurrentDate(it.year, it.month, it.phase) }
+                        handler.courtHandler.expireDue()
+                    }
                 },
                 runMonthWhen = { nextTurn -> boundaryDate(nextTurn).phase == 1 },
                 advanceNonMonthlyBoundary = { nextTurn ->
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
+                        handler.courtHandler.expireDue()
                     }
                 },
             )
@@ -393,6 +406,11 @@ open class TurnRunService(
         val startTime = Instant.parse(preState.meta["startTime"] as? String ?: Instant.now().toString())
         val turnTerm = preState.tickSeconds / 60
         val newDate = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
+        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            world.setCurrentDate(newDate.year, newDate.month, newDate.phase)
+            handler.courtHandler.expireDue()
+        }
+        intakeResults += commandDispatcher?.dispatchEnvelopes(courtInputs).orEmpty()
         val base = buildFlushPayload()
         val worldState = base.worldStateUpdate.toMutableMap()
         worldState["id"] = preState.id
@@ -412,7 +430,8 @@ open class TurnRunService(
         val committedWorldVersion = preState.worldVersion + 1
         val commandResults =
             intakeResults.toCommandResultRows(committedWorldVersion) +
-                handled.toExecutionCommandResultRows(committedWorldVersion)
+                handled.toExecutionCommandResultRows(committedWorldVersion) +
+                handler.courtHandler.takeExecutions().toCourtExecutionRows(committedWorldVersion)
         val payload = base.copy(
             worldStateUpdate = worldState,
             commandResults = commandResults,
@@ -658,6 +677,19 @@ open class TurnRunService(
             sentAt = sentAt,
             terminalizeInbox = false,
         )
+    }
+
+    private fun List<opensamguk.engine.hwiha.HwihaCourtExecution>.toCourtExecutionRows(
+        committedWorldVersion: Long,
+    ): List<CommandResultRow> = map { execution ->
+        val sentAt = Instant.now()
+        val envelope = TurnDaemonEventEnvelope(execution.requestId, sentAt.toString(),
+            TurnDaemonEvent.CommandResult(execution.result), committedWorldVersion = committedWorldVersion)
+        CommandResultRow(requestId = execution.requestId, resultSeq = EXECUTION_RESULT_SEQ,
+            eventId = "command-result:${world.worldId.value}:${execution.requestId}:$EXECUTION_RESULT_SEQ",
+            resultType = execution.result.type, ok = execution.result.ok, committedWorldVersion = committedWorldVersion,
+            payloadSchemaVersion = 1, envelopeJson = WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
+            sentAt = sentAt, terminalizeInbox = false)
     }
 
     private data class ClaimedWake(

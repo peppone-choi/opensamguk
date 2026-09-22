@@ -81,6 +81,7 @@ class CommandReserveService(
     private val transactions: TransactionOperations,
     private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
     private val hwihaAdmission: HwihaEnlistmentAdmission? = null,
+    private val hwihaCourtAdmission: HwihaCourtAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -290,10 +291,17 @@ class CommandReserveService(
 
     fun publishImmediate(command: TurnDaemonCommand, ownerUserId: Int?): ReserveResult {
         val requestId = requestIds()
+        val boundCommand = if (command is TurnDaemonCommand.HwihaCourtInput) {
+            val owner = ownerUserId?.takeIf { it > 0 }
+                ?: throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            val admission = hwihaCourtAdmission ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
+            command.copy(requestId = requestId, ownerUserId = owner,
+                argJson = admission.canonicalArguments(command.generalId, owner, command.inputId, command.argJson))
+        } else command
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
             sentAt = Instant.now(clock).toString(),
-            command = command,
+            command = boundCommand,
         )
         val payload = encodeCommandPayload(envelope)
         transactions.executeWithoutResult {
@@ -302,7 +310,10 @@ class CommandReserveService(
                     worldId = worldId,
                     requestId = requestId,
                     commandKind = CommandKind.IMMEDIATE,
-                    intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
+                    intentFingerprint = if (boundCommand is TurnDaemonCommand.HwihaCourtInput) {
+                        intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
+                            boundCommand.inputId, boundCommand.argJson, boundCommand.ownerUserId)
+                    } else intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
                     generalId = null,
                     turnIdx = 0,
                     actionCode = command::class.simpleName,

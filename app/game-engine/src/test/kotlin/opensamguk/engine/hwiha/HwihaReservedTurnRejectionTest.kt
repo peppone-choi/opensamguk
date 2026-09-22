@@ -38,6 +38,20 @@ class HwihaReservedTurnRejectionTest {
         assertFalse(handler.recorder.isDirty)
     }
 
+    @Test fun `delivered court inputs reject personal reservation channel without effects`() {
+        for (input in listOf("court.dispatch", "court.dispatchReply")) {
+            val world = world("HWIHA")
+            val before = world.getGeneralById(1)
+            val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
+                aiHook = { _, _ -> error("legacy AI") }, actionRngFactory = { error("court RNG") })
+            val result = handler.handle(1, ReservedTurn(input, "{}"), 200, 1, "00:00")
+            assertEquals("INVALID_INPUT_CHANNEL", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+            assertEquals(before, world.getGeneralById(1))
+            assertFalse(handler.recorder.isDirty)
+            assertNull(result.definition)
+        }
+    }
+
     @Test fun `cross profile and unknown hwiha codes never resolve legacy definitions`() {
         for ((profile, code, reason) in listOf(
             Triple("HWIHA", "che_임관", "이 월드의 규칙에서 사용할 수 없는 입력입니다."),

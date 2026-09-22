@@ -59,6 +59,7 @@ export default function PartialReservedCommand({
 }: PartialReservedCommandProps) {
     const profile = useRuleProfile(ruleProfile);
     const total = profile === 'HWIHA' ? 12 : Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
+    const [courtOpen, setCourtOpen] = useState(false);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
     const [slots, setSlots] = useState<ReservedSlot[]>([]);
     const [meta, setMeta] = useState<{
@@ -281,6 +282,10 @@ export default function PartialReservedCommand({
                     명령 추가 · 편집
                 </button>
             </div>
+            {profile === 'HWIHA' && <button type="button" className="os-button os-button--ghost" onClick={() => setCourtOpen(true)}>발령·응답</button>}
+            {courtOpen && <CommandModal courtMode refreshKey={externalRefreshKey + refreshKey} ruleProfile={profile} generalId={generalId} nationId={nationId}
+                hero={hero} onClose={() => setCourtOpen(false)} onToast={onToast}
+                onReserved={() => { setRefreshKey(k => k + 1); onReserved?.(); }} />}
             {editTurnIdx != null && (
                 <CommandModal
                     onClose={() => setEditTurnIdx(null)}

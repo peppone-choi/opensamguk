@@ -811,3 +811,22 @@ export interface EnlistmentOptionsResponse {
     options: Array<{ mode: 'RANDOM' | 'NATION' | 'GENERAL'; targetId?: number; label: string;
         availability: { status: 'AVAILABLE' | 'BLOCKED'; code?: string; reason?: string } }>;
 }
+
+export interface HwihaPhase { year: number; month: number; phase: number }
+export interface DispatchQueue { requestId: string; targetGeneralId: number; countyId: number }
+export interface DispatchPendingItem {
+    dispatchId: string; issuerId: number; targetId: number; countyId: number;
+    issuerLabel?: string | null; targetLabel?: string | null; countyLabel?: string | null;
+    issuedAt: HwihaPhase; dueAt: HwihaPhase;
+    status: 'PENDING' | 'ACCEPTED' | 'REFUSED' | 'CANCELLED'; currentFailure?: string | null;
+}
+export interface DispatchPendingResponse {
+    result: boolean; code?: string | null; now?: HwihaPhase | null;
+    dispatches: DispatchPendingItem[]; queued?: DispatchQueue | null;
+}
+export interface DispatchOptionsResponse {
+    result: boolean; code?: string | null; reason?: string | null; now?: HwihaPhase | null;
+    targets: Array<{generalId: number; label: string}>;
+    counties: Array<{countyId: number; label: string; available: boolean; code?: string | null; reason?: string | null}>;
+    queued?: DispatchQueue | null;
+}
