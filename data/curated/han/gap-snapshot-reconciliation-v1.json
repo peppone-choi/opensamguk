@@ -2538,6 +2538,6 @@
     "SURVIVED_TO_220": "10 건 심사는 survived-county-adjudications-v1 에 있다 (실결손 8, 좌표 없는 실결손 1, 오판정 1).",
     "OTHER_ERA_HOMONYM_ONLY": "57 건 중 22 건이 晉書에 토큰으로 있고 jinshu-token-adjudications-v1 에서 심사했다. 나머지 35 건 미심사.",
     "NOT_IN_TGAZ": "144 건 중 28 건이 晉書에 토큰으로 있고 jinshu-token-adjudications-v1 에서 심사했다. 나머지 116 건 미심사.",
-    "_summary": "네 원장 누적 — 확정 실결손 104(좌표 없는 1·자리 옮긴 1 포함), 220 년 전 폐지 6, 오판정·同名異地 기각 23, 경계 판정불가 3, 미해결 14. 후보 282 중 132 는 아직 어느 축에도 걸리지 않았다. 심사 원장: survived-county-adjudications-v1 · abolished-verdict-corrections-v1 · jinshu-token-adjudications-v1 · dushi-disposition-adjudications-v1."
+    "_summary": "다섯 원장 누적 — 확정 실결손 107, 220 년 전 폐지 6, 기각·오판정 27, 경계 판정불가 4, 미해결 18. 별도로 naming-artifact-false-absences-v1 이 **지도에 다른 표기로 이미 있는 8 건**을 걷어냈고 그 과정에서 앞선 원장 4 건(碭山·陶·霸陵·穀熟)을 정정했다. 심사 원장: survived-county-adjudications-v1 · abolished-verdict-corrections-v1 · jinshu-token-adjudications-v1 · dushi-disposition-adjudications-v1 · songshu-provenance-adjudications-v1 · naming-artifact-false-absences-v1."
   }
 }

@@ -15,22 +15,24 @@
       "coverageLimit": "그러나 양성 5 건 중 3 건(鮦陽·中陽·邪龍)이 **0 건**이고 楊은 유일한 히트가 사천 萇楊縣(허위)이었다. 이 축의 커버리지는 절반 이하다 — 처분 문구가 없는 132 건과 UNRESOLVED 14 건은 판정되지 않은 것이지 폐지가 아니다.",
       "homonymPressure": "白水로 통제했을 때 「白水縣」 히트 8 건이 전부 섬서 白水縣(左馮翊 계열)이고 廣漢 白水는 하나도 없었다. 이 축은 同名異地 압력이 특히 높다 — 문구를 읽지 않고 히트 수로 판정하면 틀린다."
     },
-    "controlVerdict": "조회는 살아 있으나 커버리지가 낮다. 걸린 것은 쓰고, 안 걸린 것은 다음 축으로 넘긴다."
+    "controlVerdict": "조회는 살아 있으나 커버리지가 낮다. 걸린 것은 쓰고, 안 걸린 것은 다음 축으로 넘긴다.",
+    "correction": "碭山·陶·霸陵 3 건을 FALSE_ABSENCE 로 정정했다. 이 축은 「그 縣이 220 년에 있었나」 를 잘 재지만 「지도에 없나」 를 재지 않는다 — 두 질문을 따로 확인해야 하고, 카탈로그 절단 이름은 교정된 이름으로 지도를 다시 봐야 한다."
   },
   "totals": {
-    "BOUNDARY_UNCERTAIN": 3,
+    "FALSE_ABSENCE": 3,
     "HOMONYM_REJECTED": 13,
     "UNRESOLVED": 14,
-    "REAL_GAP": 30,
+    "REAL_GAP": 28,
+    "BOUNDARY_UNCERTAIN": 2,
     "ABOLISHED_140_TO_220": 6
   },
   "adjudications": [
     {
       "commandery": "京兆尹",
       "name": "霸陵",
-      "verdict": "BOUNDARY_UNCERTAIN",
+      "verdict": "FALSE_ABSENCE",
       "evidence": "讀史 卷053 — 「後漢仍爲霸陵縣。興平二年李傕等作亂…曹魏景初元年…留之霸城。晉曰霸城縣，屬京兆郡」",
-      "reading": "後漢까지 霸陵이고 曹魏 景初元年(237) 서술에는 이미 「霸城」 이다. 개명 시점이 220 을 사이에 두고 특정되지 않는다.",
+      "reading": "**정정**: 지도가 이 縣을 후대 이름 霸城으로 싣고 있어 결손이 아니다. naming-artifact-false-absences-v1 을 보라.",
       "priorVerdict": "ABOLISHED_BEFORE_220",
       "jinshu": "ABSENT"
     },
@@ -120,10 +122,9 @@
     {
       "commandery": "梁國",
       "name": "碭山",
-      "verdict": "REAL_GAP",
+      "verdict": "FALSE_ABSENCE",
       "evidence": "讀史 卷029 — 「漢改郡曰梁國，碭縣屬焉。晉省入下邑」",
-      "confidence": "STRONG",
-      "reading": "정본 「碭山」은 절단이고 縣명은 碭이다(absent-county-adjudications-v1).",
+      "reading": "**정정**: 지도에 교정된 이름(砀 / 廮陶)으로 이미 있으므로 결손이 아니다. 讀史의 晉代 처분 문구는 縣의 존속을 보여 주지만 지도 부재의 전제가 틀렸다. naming-artifact-false-absences-v1 을 보라.",
       "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
       "jinshu": "ABSENT"
     },
@@ -169,10 +170,9 @@
     {
       "commandery": "鉅鹿郡",
       "name": "陶",
-      "verdict": "REAL_GAP",
+      "verdict": "FALSE_ABSENCE",
       "evidence": "讀史 卷014 — 「漢爲楊氏縣，屬鉅鹿郡。後漢因之。晉省入癭陶縣，屬鉅鹿國」",
-      "confidence": "STRONG",
-      "reading": "정본 「陶」는 廮陶의 절단이다(absent-county-adjudications-v1). 癭陶=廮陶 가 晉까지 있었다.",
+      "reading": "**정정**: 지도에 교정된 이름(砀 / 廮陶)으로 이미 있으므로 결손이 아니다. 讀史의 晉代 처분 문구는 縣의 존속을 보여 주지만 지도 부재의 전제가 틀렸다. naming-artifact-false-absences-v1 을 보라.",
       "priorVerdict": "NOT_IN_TGAZ",
       "jinshu": "ABSENT"
     },
