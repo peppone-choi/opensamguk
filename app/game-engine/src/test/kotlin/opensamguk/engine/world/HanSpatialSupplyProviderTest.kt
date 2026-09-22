@@ -48,8 +48,10 @@ class HanSpatialSupplyProviderTest {
         assertEquals(known.provinceOwners.toList(),custom.provinceOwners.toList())
         assertTrue(custom.provinceOwners.any { it==77 })
         assertTrue(custom.provinceOwners.all { it==0 || it==77 })
-        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../..")).artifacts(
-            opensamguk.logic.world.HanWorldVariant.V3_1133)
+        // 판을 박아 두면 지도 릴리스마다 살아 있는 城 집합과 어긋난다(2026-09-21 실측: 1,168 판에서
+        // 城 1134 identity 불일치). 런타임이 하는 그대로 살아 있는 城 id 로 판을 고른다.
+        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../.."))
+            .resolve(cities.map { it.cityId }, emptyList())
         val selected=provider().network("han-world-v3",990001,cities,artifacts=artifacts)
         assertEquals(custom.provinceOwners.toList(),selected.provinceOwners.toList())
         assertFailsWith<IllegalArgumentException> {
