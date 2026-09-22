@@ -1,0 +1,93 @@
+// 휘하(HWIHA) 화면 등록부 — 새 시대 화면의 단일 출처.
+//
+// 정본은 시안 아트보드 `docs/opensamguk/ui-new-screens-2026-09-18/project/<Name>.dc.html` 이고,
+// 제목과 탭(`on`)은 그 시안에서 그대로 옮겼다. 라벨을 새로 만들지 않는다.
+//
+// 탭 여섯은 정본 설계 §4 「입력 여섯 가지」다. 시안 헤더의 탭 바가 곧 그 여섯이며, 화면이 어느
+// 입력에 속하는지는 시안의 `head(title, on)` 두 번째 인자가 정한다. 시안이 탭을 지정하지 않은
+// 화면(공성·포로·지도 레이어 등)은 맥락에서 들어가는 화면이므로 `tab: null` 로 둔다 — 없는 배정을
+// 지어내면 그것이 스펙으로 굳는다.
+
+/** 정본 설계 §4 입력 여섯 가지. 시안 헤더 탭 바와 같은 순서·같은 라벨이다. */
+export const HWIHA_INPUT_TABS = [
+    '장수 행동',
+    '배치',
+    '방침',
+    '공사',
+    '계책',
+    '조정 결정',
+] as const;
+
+export type HwihaInputTab = (typeof HWIHA_INPUT_TABS)[number];
+
+export interface HwihaScreen {
+    /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
+    readonly board: string;
+    /** URL 조각. `/hwiha/<slug>`. 목 데이터 단계라 인증 게이트(/game/**) 밖에 둔다. */
+    readonly slug: string;
+    /** 시안 제목 그대로. */
+    readonly title: string;
+    /** 속한 입력 탭. 시안이 지정하지 않았으면 null. */
+    readonly tab: HwihaInputTab | null;
+    /** 작전실 허브에서 바로 갈 수 있는 화면인지. */
+    readonly onHub: boolean;
+}
+
+/** 작전실 — 허브. 다른 화면의 「← 작전실」이 여기로 돌아온다. */
+export const HWIHA_HUB_SLUG = 'war-room';
+
+export const HWIHA_SCREENS: readonly HwihaScreen[] = [
+    { board: 'WarRoom', slug: 'war-room', title: '작전실', tab: null, onHub: false },
+    { board: 'Command', slug: 'command', title: '이번 순에 할 일', tab: null, onHub: true },
+
+    // 장수 행동
+    { board: 'Yuedan', slug: 'yuedan', title: '월단평', tab: '장수 행동', onHub: true },
+    { board: 'Reveal', slug: 'reveal', title: '조우 공개 · 격자 리플레이', tab: '장수 행동', onHub: false },
+
+    // 배치
+    { board: 'Posts', slug: 'posts', title: '배치 · 방침 · 공사', tab: '배치', onHub: true },
+    { board: 'Main', slug: 'retinue', title: '휘하 편성', tab: '배치', onHub: true },
+    { board: 'Supply', slug: 'supply', title: '보급망 · 창고', tab: '배치', onHub: true },
+
+    // 방침
+    { board: 'Commandery', slug: 'commandery', title: '군 내정 현황', tab: '방침', onHub: true },
+    { board: 'County', slug: 'county', title: '현 내정 상세', tab: '방침', onHub: false },
+    { board: 'Defense', slug: 'defense', title: '방어 대비', tab: '방침', onHub: false },
+    { board: 'Plan', slug: 'plan', title: '전투 계획 봉인', tab: '방침', onHub: false },
+
+    // 계책
+    { board: 'Hand', slug: 'hand', title: '계책 손패', tab: '계책', onHub: true },
+
+    // 조정 결정
+    { board: 'Court', slug: 'court', title: '조정 — 관직 · 외교 · 천도', tab: '조정 결정', onHub: true },
+    { board: 'Orders', slug: 'orders', title: '발령 · 포상', tab: '조정 결정', onHub: true },
+    { board: 'Unification', slug: 'unification', title: '천하 형세 — 통일 판정', tab: '조정 결정', onHub: false },
+
+    // 시안이 탭을 지정하지 않은 화면 — 맥락에서 들어간다.
+    { board: 'Siege', slug: 'siege', title: '공성', tab: null, onHub: false },
+    { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: null, onHub: false },
+    { board: 'CommandMap', slug: 'command-map', title: '옛 명령 → 새 자리', tab: null, onHub: false },
+    { board: 'MapLayers', slug: 'map-layers', title: '천하 지도 — 레이어', tab: null, onHub: false },
+
+    // 입장 흐름 — 작전실 밖이다.
+    { board: 'Create', slug: 'create', title: '장수 생성', tab: null, onHub: false },
+    { board: 'Join', slug: 'join', title: '난세 개막 — 서버 입장', tab: null, onHub: false },
+];
+
+export function hwihaHref(slug: string): string {
+    return `/hwiha/${slug}`;
+}
+
+export function hwihaScreenOf(slug: string): HwihaScreen | undefined {
+    return HWIHA_SCREENS.find((s) => s.slug === slug);
+}
+
+/** 한 입력 탭에 속한 화면들 — 시안 순서를 지킨다. */
+export function hwihaScreensOfTab(tab: HwihaInputTab): readonly HwihaScreen[] {
+    return HWIHA_SCREENS.filter((s) => s.tab === tab);
+}
+
+/** 탭을 눌렀을 때 갈 첫 화면. 그 탭에 화면이 없으면 undefined. */
+export function hwihaTabLanding(tab: HwihaInputTab): HwihaScreen | undefined {
+    return hwihaScreensOfTab(tab)[0];
+}
