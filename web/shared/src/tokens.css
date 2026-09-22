@@ -77,9 +77,9 @@
   --space-xl: 2rem;
 
   /* ---- 타이포 (S1) ---- */
-  --font-serif: var(--font-serif-next, 'Noto Serif KR'), 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+  --font-serif: 'Noto Serif KR Variable', 'Noto Serif KR', 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
   --font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', system-ui, sans-serif;
-  --font-mono: var(--font-mono-next, 'JetBrains Mono'), ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;

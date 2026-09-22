@@ -1298,3 +1298,12 @@
 - 대가: 운영 월드 리셋 1회. 846/848/1098 번들은 바이트 불변.
 - 뒤집기: 城 id 집합 대신 콘텐츠 해시로 릴리스를 고르는 리졸버로 바꾸면 새 식별자가 가능해진다(별 작업).
 
+
+## ADR-LITE-064 — web 폰트는 npm 동봉 woff2 로 self-host 하고 `next/font/google` 은 쓰지 않는다 (2026-09-22)
+
+- 맥락: `web/gateway`·`web/game` 의 `app/layout.tsx` 가 `next/font/google` 로 Noto Serif KR·JetBrains Mono 를 받아왔다. 이 로더는 **빌드 시점에** `fonts.gstatic.com` 에 접속하고, 실패하면 3회 재시도 후 `An error occurred in next/font.` → `TypeError: Cannot read properties of null (reading '1')` → `Build failed because of webpack errors` 로 죽는다. 2026-09-22 하루에 3회 관측(PR #856 `web (game)`, main CI run `35692139026` `web (gateway)`, 배포 run `35692139028` `build-web (game)`). fail-fast 매트릭스라 형제 잡은 `cancelled` 로 함께 떨어진다. 즉 CI·배포 성공이 우리 코드가 아니라 Google CDN 가용성에 달려 있었다.
+- 결정: 세 폰트 모두 **npm 패키지가 동봉한 woff2 + unicode-range 분할 CSS** 를 `layout.tsx` 에서 CSS import 한다 — `@fontsource-variable/noto-serif-kr`, `@fontsource-variable/jetbrains-mono/wght.css`, 그리고 기존 `pretendard`. `next/font` 의존은 web 에서 완전히 제거한다(vitest 스텁 2개와 `web/game/vitest.config.ts` 의 `next/font/google` 별칭도 삭제). 폰트 패밀리는 CSS 변수 주입(`--font-serif-next`) 대신 `web/shared/src/tokens.css` 에서 `'Noto Serif KR Variable'`·`'JetBrains Mono Variable'` 로 직접 지정한다. 출처·라이선스(3종 모두 OFL-1.1)와 고지 원문은 `web/licenses/` 에 커밋한다.
+- 기각: (1) woff2 를 저장소에 넣고 `next/font/local` — `next/font/local` 의 `declarations` 는 `src` 배열 전체에 동일하게 붙어 호출 한 번으로 조각별 `unicode-range` 를 만들 수 없다(`@next/font/dist/local/loader.js` 확인). 한글은 통짜 woff2 한 장이 되어 모든 방문자가 첫 화면에서 수 MB 를 받는다. (2) woff2 124장(6.3 MB)을 커밋하고 `@font-face` CSS 를 생성 — 조각 로딩은 살지만 저장소에 6.3 MB 바이너리와 생성기 유지보수가 남는다. npm 패키지가 같은 결과를 의존성 두 줄로 준다(Pretendard 가 이미 쓰는 방식).
+- 대가: 폰트 바이트가 `node_modules`(= npm 레지스트리)에 남는다. `pnpm install` 은 빌드 전에 이미 필요하고 lockfile 로 버전이 고정되니 새 의존이 아니다. 패밀리명이 `... Variable` 로 바뀌어 tokens.css 를 함께 고쳐야 했다. 가변 폰트라 700/900 고정 대신 200–900(serif)·100–800(mono) 전 구간을 쓸 수 있다.
+- 검증(적색 프로브): CI·배포와 같은 `docker/web-*.Dockerfile` 의 build 스테이지를 `RUN pnpm build` 직전까지 이미지로 굽고, `docker run --network none` 으로 `pnpm build` 를 돌린다. 수정 전에는 이 프로브가 gstatic 실패로 **빨갛고**, 수정 후에는 두 앱 모두 통과해야 한다.
+- 뒤집기: `layout.tsx` 의 CSS import 3줄을 `next/font/google` 호출로 되돌리고 tokens.css 의 패밀리명을 변수 주입으로 되돌리면 된다. 되돌리면 빌드가 다시 Google CDN 에 의존한다.
