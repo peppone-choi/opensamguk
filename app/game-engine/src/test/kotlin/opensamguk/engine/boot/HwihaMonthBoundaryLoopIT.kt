@@ -1,0 +1,188 @@
+package opensamguk.engine.boot
+
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
+import opensamguk.engine.run.TurnRunService
+import opensamguk.engine.turn.InMemoryTurnWorld
+import java.nio.file.Path
+import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.MetaJson
+import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.HwihaResources
+import org.flywaydb.core.Flyway
+import org.junit.jupiter.api.AfterAll
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.springframework.transaction.support.TransactionTemplate
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+
+/**
+ * 월 경계 징세가 **프로덕션 배선을 거쳐** 스스로 도는지 본다.
+ *
+ * 기존 HWIHA 테스트는 전부 [HwihaMonthlyCountyIncome] 을 직접 부른다. 그런데 실제 호출처는
+ * TurnRunService 의 월 경계 블록이고, 그 블록은 `pipeline != null && eventDispatcher != null`
+ * 일 때만 돈다 — HwihaEnlistmentFixture.service() 는 둘 다 넘기지 않으므로 그 경로를 한 번도
+ * 지나지 않았다. 즉 배선 자체가 미검증이었다. 여기서는 엔진 Spring 컨텍스트를 띄워
+ * `@Bean TurnRunService`(파이프라인·이벤트 디스패처가 실제로 물린 것)를 받아 runTick 으로
+ * 월 경계를 넘긴다. 관리자 개입은 縣 하나에 창고를 두는 것뿐이고, 징세는 루프가 스스로 한다.
+ *
+ * 정본 설계 §15.2 S3 관문의 「징세」 고리에 해당한다.
+ */
+@Testcontainers(disabledWithoutDocker = true)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.NONE,
+    properties = [
+        "spring.autoconfigure.exclude=" +
+            "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration," +
+            "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
+    ],
+)
+class HwihaMonthBoundaryLoopIT {
+    @Autowired lateinit var world: InMemoryTurnWorld
+    @Autowired lateinit var service: TurnRunService
+
+    @Test
+    fun `루프가 월 경계를 넘으며 스스로 縣 창고에 세입을 넣고 같은 달을 두 번 넣지 않는다`() {
+        // 시드가 이 縣 을 세력 수도로 두고 창고를 얹었다(companion). 여기서는 루프만 돈다.
+        val county = requireNotNull(seededCounty) { "시드가 縣 을 고르지 않았다" }
+        val before = assertNotNull(
+            HwihaCountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
+            "시드한 창고가 스냅샷에 실렸다",
+        )
+        assertEquals(HwihaResources(), before.stock, "시작 재고는 비어 있다")
+        assertNull(
+            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            "아직 어떤 달도 징세되지 않았다",
+        )
+
+        // 한 달 = phasesPerMonth(3)순, 1순 = tick_seconds/60 = 60분. 3순 뒤가 200년 2월 상순이다.
+        service.runTick(Instant.parse("0200-01-01T03:00:00Z"))
+
+        assertEquals(
+            HwihaMonthlyCountyIncome.stampOf(200, 2),
+            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            "루프가 월 경계를 넘으며 스스로 징세 도장을 찍었다",
+        )
+        val city = assertNotNull(world.getCityById(county))
+        assertTrue(city.supplyState != 0, "월간 보급 BFS 가 이 縣 을 보급 안에 두었다")
+        val credited = assertNotNull(HwihaCountyWarehouse.read(city.meta, county), "창고가 그대로 있다")
+        assertTrue(credited.stock.grain > 0, "곡이 들어왔다: ${credited.stock}")
+        assertEquals(1, credited.revision, "정확히 한 번 적립됐다")
+
+        // 같은 달 안에서 또 tick 해도 도장에 막혀 두 번 들어가지 않는다.
+        service.runTick(Instant.parse("0200-01-01T04:00:00Z"))
+        assertEquals(
+            credited,
+            HwihaCountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
+            "같은 달을 두 번 적립하지 않는다",
+        )
+    }
+
+    companion object {
+        private const val WORLD = 17
+
+        @JvmStatic
+        private var seededCounty: Int? = null
+
+        /**
+         * Gradle 은 이 모듈의 테스트를 한 JVM 에서 돌린다. 루트 프로퍼티를 남기면 뒤따르는
+         * 테스트의 기본 산출물 루트까지 바뀌므로 이 클래스가 끝날 때 되돌린다.
+         */
+        @JvmStatic
+        @AfterAll
+        fun clearArtifactsRoot() {
+            System.clearProperty("opensamguk.artifacts.root")
+        }
+
+        @Container @JvmStatic
+        val postgres = PostgreSQLContainer("postgres:16-alpine")
+
+        @Container @JvmStatic
+        val redis: GenericContainer<*> = GenericContainer("redis:7-alpine").withExposedPorts(6379)
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun properties(registry: DynamicPropertyRegistry) {
+            // Gradle 은 app/game-engine 에서 JVM 을 띄우지만 엔진은 저장소 루트에서 도는 것을
+            // 전제로 지도 산출물을 `.` 아래에서 찾는다. 루트를 가리켜 준다.
+            System.setProperty("opensamguk.artifacts.root", "../..")
+
+            // 컨텍스트가 뜨기 전에 월드를 심는다 — BootstrapConfig 의 InMemoryTurnWorld 빈이
+            // 부팅 시점의 DB 를 읽으므로, 부팅 뒤에 넣으면 루프가 빈 월드를 돈다.
+            val source = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
+            Flyway.configure().dataSource(source).locations("classpath:db/migration")
+                .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+            val jdbc = JdbcTemplate(source)
+            HwihaEnlistmentFixture(
+                jdbc,
+                JdbcFlushExecutor(
+                    NamedParameterJdbcTemplate(source),
+                    TransactionTemplate(DataSourceTransactionManager(source)),
+                ),
+            ).seed(WORLD)
+            // startYear·startTime 이 없으면 boundaryDate 가 startTime 기본값 Instant.now() 로
+            // 떨어져 날짜가 실행 시각마다 달라진다. 결정적으로 고정한다.
+            jdbc.update(
+                """UPDATE world_state
+                   SET meta = meta || '{"startYear":200,"startTime":"0200-01-01T00:00:00Z"}'::jsonb
+                   WHERE id=?""",
+                WORLD,
+            )
+
+            // 세입은 소유·보급된 縣 에만 들어간다. 그런데 보급 상태는 월간 파이프라인의
+            // UpdateCitySupply 가 수도에서 BFS 로 다시 계산하므로, 시드에서 supply_state 를
+            // 1 로 박아도 경계에서 덮인다. 그래서 이 縣 을 세력 수도로 만든다.
+            val county = HanWorldArtifactsResolver(Path.of("../.."))
+                .artifacts(HanWorldVariant.V3_1133).projection.administrativeCountyIds.min()
+            seededCounty = county
+            jdbc.update(
+                "UPDATE city SET nation_id=1, supply_state=1, meta=?::jsonb WHERE world_id=? AND id=?",
+                MetaJson.encode(
+                    mapOf(
+                        "keep" to "unchanged",
+                        HwihaCountyWarehouse.META_KEY to
+                            HwihaCountyWarehouse(county, 0, HwihaResources()).toMetaValue(),
+                    ),
+                ),
+                WORLD, county,
+            )
+            // 보급 BFS 는 `level > 0` 인 세력의 수도만 씨앗으로 쓴다(WorldActionContext.capitals).
+            // 픽스처의 nation 은 level 기본값 0 이라 그대로면 어떤 縣 도 보급되지 않는다.
+            jdbc.update(
+                "UPDATE nation SET capital_city_id=?, level=1 WHERE world_id=? AND id=1",
+                county, WORLD,
+            )
+
+            registry.add("spring.datasource.url", postgres::getJdbcUrl)
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
+            registry.add("spring.data.redis.host", redis::getHost)
+            registry.add("spring.data.redis.port") { redis.getMappedPort(6379) }
+            registry.add("management.health.redis.enabled") { "false" }
+            registry.add("OPENSAMGUK_WORLD_ID") { "$WORLD" }
+            registry.add("SCENARIO_SEED_ENABLED") { "false" }
+            // 데몬 스레드가 같은 월드를 동시에 돌면 이 테스트의 tick 과 경쟁한다. 직접 몬다.
+            registry.add("opensamguk.daemon.enabled") { "false" }
+        }
+    }
+}
