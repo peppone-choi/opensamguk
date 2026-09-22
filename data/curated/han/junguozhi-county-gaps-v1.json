@@ -4,11 +4,11 @@
  "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다.",
  "totals": {
   "counties": 1180,
-  "ABSENT": 282,
-  "IN_OTHER_COMMANDERY": 26,
-  "IN_OWN_COMMANDERY": 872,
+  "ABSENT": 222,
+  "IN_OTHER_COMMANDERY": 33,
+  "IN_OWN_COMMANDERY": 925,
   "absentWithNearMatch": 16,
-  "commanderiesWithAbsentFirstCounty": 20
+  "commanderiesWithAbsentFirstCounty": 14
  },
  "commanderies": [
   {
@@ -16,7 +16,7 @@
    "commandery": "河南尹",
    "inTiles": true,
    "declaredCounties": 21,
-   "absent": 4,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "雒阳",
     "status": "IN_OWN_COMMANDERY"
@@ -39,7 +39,10 @@
     {
      "ordinal": 3,
      "sourceName": "梁",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "潁川郡"
+     ]
     },
     {
      "ordinal": 4,
@@ -141,7 +144,10 @@
     {
      "ordinal": 18,
      "sourceName": "新城",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "弘農郡"
+     ]
     },
     {
      "ordinal": 19,
@@ -311,7 +317,7 @@
    "commandery": "河東郡",
    "inTiles": true,
    "declaredCounties": 20,
-   "absent": 3,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "安邑",
     "status": "IN_OWN_COMMANDERY"
@@ -327,7 +333,9 @@
     {
      "ordinal": 2,
      "sourceName": "杨",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0002-002"
     },
     {
      "ordinal": 3,
@@ -619,7 +627,7 @@
    "commandery": "左馮翊",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 5,
+   "absent": 4,
    "firstListedCounty": {
     "sourceName": "高陵",
     "status": "ABSENT"
@@ -700,7 +708,9 @@
     {
      "ordinal": 12,
      "sourceName": "衙",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0005-012"
     },
     {
      "ordinal": 13,
@@ -716,7 +726,7 @@
    "commandery": "右扶風",
    "inTiles": true,
    "declaredCounties": 15,
-   "absent": 7,
+   "absent": 6,
    "firstListedCounty": {
     "sourceName": "槐里",
     "status": "IN_OWN_COMMANDERY"
@@ -799,7 +809,9 @@
     {
      "ordinal": 13,
      "sourceName": "美阳",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0006-013"
     },
     {
      "ordinal": 14,
@@ -948,7 +960,7 @@
    "commandery": "汝南郡",
    "inTiles": true,
    "declaredCounties": 37,
-   "absent": 11,
+   "absent": 6,
    "firstListedCounty": {
     "sourceName": "平輿",
     "status": "IN_OWN_COMMANDERY"
@@ -1011,7 +1023,9 @@
     {
      "ordinal": 9,
      "sourceName": "北宜春",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0008-009"
     },
     {
      "ordinal": 10,
@@ -1057,7 +1071,9 @@
     {
      "ordinal": 16,
      "sourceName": "細陽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0008-016"
     },
     {
      "ordinal": 17,
@@ -1076,7 +1092,9 @@
     {
      "ordinal": 19,
      "sourceName": "鮦陽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0008-019"
     },
     {
      "ordinal": 20,
@@ -1176,12 +1194,16 @@
     {
      "ordinal": 34,
      "sourceName": "定潁",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0008-034"
     },
     {
      "ordinal": 35,
      "sourceName": "固始",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0008-035"
     },
     {
      "ordinal": 36,
@@ -1204,7 +1226,7 @@
    "commandery": "梁國",
    "inTiles": true,
    "declaredCounties": 9,
-   "absent": 4,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "下邑",
     "status": "IN_OWN_COMMANDERY"
@@ -1249,7 +1271,9 @@
     {
      "ordinal": 6,
      "sourceName": "穀熟",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0009-006"
     },
     {
      "ordinal": 7,
@@ -1266,7 +1290,9 @@
     {
      "ordinal": 9,
      "sourceName": "薄",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0009-009"
     }
    ]
   },
@@ -1275,7 +1301,7 @@
    "commandery": "沛國",
    "inTiles": true,
    "declaredCounties": 21,
-   "absent": 4,
+   "absent": 3,
    "firstListedCounty": {
     "sourceName": "相",
     "status": "IN_OWN_COMMANDERY"
@@ -1395,7 +1421,9 @@
     {
      "ordinal": 17,
      "sourceName": "向",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0010-017"
     },
     {
      "ordinal": 18,
@@ -1800,7 +1828,7 @@
    "commandery": "常山國",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 2,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "元氏",
     "status": "IN_OWN_COMMANDERY"
@@ -1849,7 +1877,9 @@
     {
      "ordinal": 7,
      "sourceName": "欒城",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0015-007"
     },
     {
      "ordinal": 8,
@@ -2110,7 +2140,7 @@
    "commandery": "河閒國",
    "inTiles": true,
    "declaredCounties": 11,
-   "absent": 1,
+   "absent": 0,
    "firstListedCounty": {
     "sourceName": "樂成",
     "status": "IN_OWN_COMMANDERY"
@@ -2133,7 +2163,10 @@
     {
      "ordinal": 3,
      "sourceName": "易",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "涿郡"
+     ]
     },
     {
      "ordinal": 4,
@@ -2382,7 +2415,7 @@
    "commandery": "陳留郡",
    "inTiles": true,
    "declaredCounties": 17,
-   "absent": 3,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "陳留",
     "status": "IN_OWN_COMMANDERY"
@@ -2440,7 +2473,9 @@
     {
      "ordinal": 8,
      "sourceName": "東昬",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0022-008"
     },
     {
      "ordinal": 9,
@@ -2863,7 +2898,7 @@
    "commandery": "山陽郡",
    "inTiles": true,
    "declaredCounties": 10,
-   "absent": 2,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "昌邑",
     "status": "IN_OWN_COMMANDERY"
@@ -2879,7 +2914,9 @@
     {
      "ordinal": 2,
      "sourceName": "東緡",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0028-002"
     },
     {
      "ordinal": 3,
@@ -3036,7 +3073,7 @@
    "commandery": "東海郡",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 3,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "郯",
     "status": "ABSENT"
@@ -3110,10 +3147,9 @@
     {
      "ordinal": 10,
      "sourceName": "合鄕",
-     "status": "ABSENT",
-     "nearMatchInOwnCommandery": [
-      "合城"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0030-010"
     },
     {
      "ordinal": 11,
@@ -3313,7 +3349,7 @@
    "commandery": "廣陵郡",
    "inTiles": true,
    "declaredCounties": 11,
-   "absent": 2,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "廣陵",
     "status": "IN_OWN_COMMANDERY"
@@ -3357,7 +3393,9 @@
     {
      "ordinal": 6,
      "sourceName": "東陽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0033-006"
     },
     {
      "ordinal": 7,
@@ -4048,7 +4086,7 @@
    "commandery": "南陽郡",
    "inTiles": true,
    "declaredCounties": 37,
-   "absent": 3,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "宛",
     "status": "IN_OWN_COMMANDERY"
@@ -4281,7 +4319,9 @@
     {
      "ordinal": 32,
      "sourceName": "順陽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0041-032"
     },
     {
      "ordinal": 33,
@@ -4309,7 +4349,10 @@
     {
      "ordinal": 36,
      "sourceName": "丹水",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "南鄉郡"
+     ]
     },
     {
      "ordinal": 37,
@@ -4973,16 +5016,18 @@
    "commandery": "九江郡",
    "inTiles": true,
    "declaredCounties": 14,
-   "absent": 7,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "陰陵",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "陰陵",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-001"
     },
     {
      "ordinal": 2,
@@ -5020,27 +5065,38 @@
     {
      "ordinal": 7,
      "sourceName": "歷陽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-007"
     },
     {
      "ordinal": 8,
      "sourceName": "當塗",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-008"
     },
     {
      "ordinal": 9,
      "sourceName": "全椒",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-009"
     },
     {
      "ordinal": 10,
      "sourceName": "鍾離",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "沛國"
+     ]
     },
     {
      "ordinal": 11,
      "sourceName": "阜陵",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-011"
     },
     {
      "ordinal": 12,
@@ -5073,7 +5129,7 @@
    "commandery": "丹陽郡",
    "inTiles": true,
    "declaredCounties": 16,
-   "absent": 1,
+   "absent": 0,
    "firstListedCounty": {
     "sourceName": "宛陵",
     "status": "IN_OWN_COMMANDERY"
@@ -5152,7 +5208,9 @@
     {
      "ordinal": 11,
      "sourceName": "秣陵",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0049-011"
     },
     {
      "ordinal": 12,
@@ -5196,16 +5254,18 @@
    "commandery": "廬江郡",
    "inTiles": true,
    "declaredCounties": 14,
-   "absent": 5,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "舒",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "舒",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0050-001"
     },
     {
      "ordinal": 2,
@@ -5229,17 +5289,23 @@
     {
      "ordinal": 5,
      "sourceName": "臨湖",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0050-005"
     },
     {
      "ordinal": 6,
      "sourceName": "龍舒",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0050-006"
     },
     {
      "ordinal": 7,
      "sourceName": "襄安",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0050-007"
     },
     {
      "ordinal": 8,
@@ -5511,7 +5577,7 @@
    "commandery": "豫章郡",
    "inTiles": true,
    "declaredCounties": 21,
-   "absent": 1,
+   "absent": 0,
    "firstListedCounty": {
     "sourceName": "南昌",
     "status": "IN_OWN_COMMANDERY"
@@ -5548,7 +5614,9 @@
     {
      "ordinal": 5,
      "sourceName": "廬陵",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0053-005"
     },
     {
      "ordinal": 6,
@@ -6259,7 +6327,7 @@
    "commandery": "越巂郡",
    "inTiles": true,
    "declaredCounties": 14,
-   "absent": 7,
+   "absent": 5,
    "firstListedCounty": {
     "sourceName": "邛都",
     "status": "IN_OWN_COMMANDERY"
@@ -6301,7 +6369,9 @@
     {
      "ordinal": 6,
      "sourceName": "卑水",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0060-006"
     },
     {
      "ordinal": 7,
@@ -6311,7 +6381,9 @@
     {
      "ordinal": 8,
      "sourceName": "会无",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0060-008"
     },
     {
      "ordinal": 9,
@@ -6356,7 +6428,7 @@
    "commandery": "益州郡",
    "inTiles": true,
    "declaredCounties": 17,
-   "absent": 6,
+   "absent": 5,
    "firstListedCounty": {
     "sourceName": "滇池",
     "status": "IN_OWN_COMMANDERY"
@@ -6377,7 +6449,9 @@
     {
      "ordinal": 3,
      "sourceName": "俞元",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0061-003"
     },
     {
      "ordinal": 4,
@@ -6479,7 +6553,7 @@
    "commandery": "永昌郡",
    "inTiles": true,
    "declaredCounties": 8,
-   "absent": 1,
+   "absent": 0,
    "firstListedCounty": {
     "sourceName": "不韦",
     "status": "IN_OWN_COMMANDERY"
@@ -6516,7 +6590,9 @@
     {
      "ordinal": 5,
      "sourceName": "邪龙",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0062-005"
     },
     {
      "ordinal": 6,
@@ -6720,7 +6796,7 @@
    "commandery": "漢陽郡",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 11,
+   "absent": 9,
    "firstListedCounty": {
     "sourceName": "冀",
     "status": "IN_OWN_COMMANDERY"
@@ -6756,7 +6832,9 @@
     {
      "ordinal": 6,
      "sourceName": "成纪",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0067-006"
     },
     {
      "ordinal": 7,
@@ -6786,7 +6864,9 @@
     {
      "ordinal": 12,
      "sourceName": "上邽",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0067-012"
     },
     {
      "ordinal": 13,
@@ -6927,16 +7007,18 @@
    "commandery": "安定郡",
    "inTiles": true,
    "declaredCounties": 8,
-   "absent": 5,
+   "absent": 4,
    "firstListedCounty": {
     "sourceName": "临泾",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "临泾",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0070-001"
     },
     {
      "ordinal": 2,
@@ -7043,16 +7125,18 @@
    "commandery": "武威郡",
    "inTiles": true,
    "declaredCounties": 14,
-   "absent": 13,
+   "absent": 11,
    "firstListedCounty": {
     "sourceName": "姑臧",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "姑臧",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0072-001"
     },
     {
      "ordinal": 2,
@@ -7092,7 +7176,9 @@
     {
      "ordinal": 9,
      "sourceName": "宣威",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0072-009"
     },
     {
      "ordinal": 10,
@@ -7197,7 +7283,7 @@
    "commandery": "酒泉郡",
    "inTiles": true,
    "declaredCounties": 9,
-   "absent": 7,
+   "absent": 2,
    "firstListedCounty": {
     "sourceName": "福禄",
     "status": "ABSENT"
@@ -7211,12 +7297,17 @@
     {
      "ordinal": 2,
      "sourceName": "表氏",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "張掖郡"
+     ]
     },
     {
      "ordinal": 3,
      "sourceName": "乐涫",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0074-003"
     },
     {
      "ordinal": 4,
@@ -7228,17 +7319,23 @@
     {
      "ordinal": 5,
      "sourceName": "会水",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0074-005"
     },
     {
      "ordinal": 6,
      "sourceName": "沙头",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0074-006"
     },
     {
      "ordinal": 7,
      "sourceName": "安弥",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0074-007"
     },
     {
      "ordinal": 8,
@@ -7475,7 +7572,7 @@
    "commandery": "太原郡",
    "inTiles": true,
    "declaredCounties": 16,
-   "absent": 4,
+   "absent": 3,
    "firstListedCounty": {
     "sourceName": "晋阳",
     "status": "ABSENT"
@@ -7484,7 +7581,10 @@
     {
      "ordinal": 1,
      "sourceName": "晋阳",
-     "status": "ABSENT"
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "中阳"
+     ]
     },
     {
      "ordinal": 2,
@@ -7515,7 +7615,9 @@
     {
      "ordinal": 6,
      "sourceName": "兹氏",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0079-006"
     },
     {
      "ordinal": 7,
@@ -7667,7 +7769,7 @@
    "commandery": "西河郡",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 12,
+   "absent": 11,
    "firstListedCounty": {
     "sourceName": "离石",
     "status": "IN_OWN_COMMANDERY"
@@ -7698,7 +7800,10 @@
     {
      "ordinal": 5,
      "sourceName": "中阳",
-     "status": "ABSENT"
+     "status": "IN_OTHER_COMMANDERY",
+     "foundIn": [
+      "太原郡"
+     ]
     },
     {
      "ordinal": 6,
@@ -7747,7 +7852,7 @@
    "commandery": "五原郡",
    "inTiles": true,
    "declaredCounties": 10,
-   "absent": 8,
+   "absent": 7,
    "firstListedCounty": {
     "sourceName": "九原",
     "status": "IN_OWN_COMMANDERY"
@@ -7763,7 +7868,9 @@
     {
      "ordinal": 2,
      "sourceName": "五原",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0082-002"
     },
     {
      "ordinal": 3,
@@ -7926,21 +8033,25 @@
    "commandery": "鴈門郡",
    "inTiles": true,
    "declaredCounties": 14,
-   "absent": 9,
+   "absent": 5,
    "firstListedCounty": {
     "sourceName": "阴馆",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "阴馆",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0085-001"
     },
     {
      "ordinal": 2,
      "sourceName": "繁畤",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0085-002"
     },
     {
      "ordinal": 3,
@@ -7970,7 +8081,9 @@
     {
      "ordinal": 7,
      "sourceName": "崞",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0085-007"
     },
     {
      "ordinal": 8,
@@ -7987,7 +8100,9 @@
     {
      "ordinal": 10,
      "sourceName": "马邑",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0085-010"
     },
     {
      "ordinal": 11,
@@ -8170,16 +8285,18 @@
    "commandery": "代郡",
    "inTiles": true,
    "declaredCounties": 11,
-   "absent": 5,
+   "absent": 4,
    "firstListedCounty": {
     "sourceName": "高柳",
-    "status": "ABSENT"
+    "status": "IN_OWN_COMMANDERY"
    },
    "counties": [
     {
      "ordinal": 1,
      "sourceName": "高柳",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0089-001"
     },
     {
      "ordinal": 2,
@@ -8251,7 +8368,7 @@
    "commandery": "上谷郡",
    "inTiles": true,
    "declaredCounties": 8,
-   "absent": 4,
+   "absent": 3,
    "firstListedCounty": {
     "sourceName": "沮阳",
     "status": "IN_OWN_COMMANDERY"
@@ -8287,7 +8404,9 @@
     {
      "ordinal": 5,
      "sourceName": "居庸",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0090-005"
     },
     {
      "ordinal": 6,
@@ -8316,7 +8435,7 @@
    "commandery": "漁陽郡",
    "inTiles": true,
    "declaredCounties": 9,
-   "absent": 8,
+   "absent": 5,
    "firstListedCounty": {
     "sourceName": "渔阳",
     "status": "ABSENT"
@@ -8330,7 +8449,9 @@
     {
      "ordinal": 2,
      "sourceName": "狐奴",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0091-002"
     },
     {
      "ordinal": 3,
@@ -8342,7 +8463,9 @@
     {
      "ordinal": 4,
      "sourceName": "雍奴",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0091-004"
     },
     {
      "ordinal": 5,
@@ -8357,7 +8480,9 @@
     {
      "ordinal": 7,
      "sourceName": "安乐",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0091-007"
     },
     {
      "ordinal": 8,
@@ -8804,7 +8929,7 @@
    "commandery": "南海郡",
    "inTiles": true,
    "declaredCounties": 7,
-   "absent": 1,
+   "absent": 0,
    "firstListedCounty": {
     "sourceName": "番禺",
     "status": "IN_OWN_COMMANDERY"
@@ -8827,7 +8952,9 @@
     {
      "ordinal": 3,
      "sourceName": "中宿",
-     "status": "ABSENT"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0098-003"
     },
     {
      "ordinal": 4,

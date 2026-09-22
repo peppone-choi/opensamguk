@@ -13,7 +13,7 @@
     },
     "gapCounties": {
       "path": "data/curated/han/gap-counties-v1.json",
-      "sha256": "4df18513795b1919a215d0bff7e222a33f03b31d5dc539e41b58ecea3a7735ea"
+      "sha256": "acb68fa139fe797d64711ac2e9b1f046ee1384c7065f5b33e0a2c0afa4c09b0b"
     }
   },
   "rule": {

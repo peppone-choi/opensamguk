@@ -12,9 +12,9 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 57,
-  "medianKm": 77.5,
-  "p90Km": 471.4,
+  "linkCount": 61,
+  "medianKm": 74.8,
+  "p90Km": 456.6,
   "maxKm": 1049.3
  },
  "links": [
@@ -271,8 +271,8 @@
   },
   {
    "canonicalGroup": "國內城",
-   "fromProvinceIndex": 1333,
-   "toProvinceIndex": 1334,
+   "fromProvinceIndex": 1393,
+   "toProvinceIndex": 1394,
    "fromCityName": "주나",
    "toCityName": "개마",
    "distanceKm": 137.5
@@ -287,11 +287,11 @@
   },
   {
    "canonicalGroup": "安定郡",
-   "fromProvinceIndex": 465,
-   "toProvinceIndex": 514,
-   "fromCityName": "경양",
-   "toCityName": "음반",
-   "distanceKm": 283.0
+   "fromProvinceIndex": 514,
+   "toProvinceIndex": 1370,
+   "fromCityName": "음반",
+   "toCityName": "임경",
+   "distanceKm": 215.5
   },
   {
    "canonicalGroup": "巴西郡",
@@ -319,11 +319,11 @@
   },
   {
    "canonicalGroup": "廣陵郡",
-   "fromProvinceIndex": 203,
-   "toProvinceIndex": 223,
-   "fromCityName": "평안",
-   "toCityName": "능",
-   "distanceKm": 87.2
+   "fromProvinceIndex": 223,
+   "toProvinceIndex": 1349,
+   "fromCityName": "능",
+   "toCityName": "동양(廣陵郡)",
+   "distanceKm": 86.0
   },
   {
    "canonicalGroup": "會稽郡",
@@ -372,6 +372,14 @@
    "fromCityName": "불위",
    "toCityName": "애뢰",
    "distanceKm": 141.9
+  },
+  {
+   "canonicalGroup": "汝南郡",
+   "fromProvinceIndex": 536,
+   "toProvinceIndex": 1340,
+   "fromCityName": "여양(汝南郡)",
+   "toCityName": "고시",
+   "distanceKm": 36.1
   },
   {
    "canonicalGroup": "沛國",
@@ -452,6 +460,30 @@
    "fromCityName": "여한",
    "toCityName": "광창(鄱陽郡)",
    "distanceKm": 98.8
+  },
+  {
+   "canonicalGroup": "酒泉郡",
+   "fromProvinceIndex": 1330,
+   "toProvinceIndex": 1377,
+   "fromCityName": "좌성",
+   "toCityName": "안미",
+   "distanceKm": 32.8
+  },
+  {
+   "canonicalGroup": "酒泉郡",
+   "fromProvinceIndex": 1374,
+   "toProvinceIndex": 1377,
+   "fromCityName": "낙관",
+   "toCityName": "안미",
+   "distanceKm": 22.6
+  },
+  {
+   "canonicalGroup": "酒泉郡",
+   "fromProvinceIndex": 1375,
+   "toProvinceIndex": 1377,
+   "fromCityName": "회수",
+   "toCityName": "안미",
+   "distanceKm": 49.2
   },
   {
    "canonicalGroup": "鉅鹿郡",

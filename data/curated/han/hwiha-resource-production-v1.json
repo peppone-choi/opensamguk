@@ -13,12 +13,12 @@
   "catalogId": "resource-sites-v1"
  },
  "counts": {
-  "counties": 35,
+  "counties": 36,
   "monthlyTotals": {
    "HORSE": 600,
-   "IRON": 29000
+   "IRON": 30000
   },
-  "skipped": 7
+  "skipped": 6
  },
  "skipped": [
   {
@@ -53,12 +53,6 @@
   },
   {
    "id": "hhs:113:漁陽郡:005:IRON",
-   "resource": "IRON",
-   "matchStatus": "UNMATCHED_NO_JURISDICTION",
-   "reason": "no bound county"
-  },
-  {
-   "id": "hhs:113:越巂郡:008:IRON",
    "resource": "IRON",
    "matchStatus": "UNMATCHED_NO_JURISDICTION",
    "reason": "no bound county"
@@ -583,6 +577,21 @@
      "resource": "IRON",
      "basis": "SOURCE_COUNTY",
      "sourceName": "平郭",
+     "matchStatus": "MATCHED"
+    }
+   ],
+   "monthly": {
+    "IRON": 1000
+   }
+  },
+  {
+   "jurisdictionId": "gc-g0060-008",
+   "sites": [
+    {
+     "id": "hhs:113:越巂郡:008:IRON",
+     "resource": "IRON",
+     "basis": "SOURCE_COUNTY",
+     "sourceName": "会无",
      "matchStatus": "MATCHED"
     }
    ],
