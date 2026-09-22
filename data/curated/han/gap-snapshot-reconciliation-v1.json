@@ -2536,7 +2536,7 @@
   "supersededVerdicts": {
     "ABOLISHED_BEFORE_220": "71 건 중 24 건이 晉書 地理志 축에서 걸렸고 20 건은 실제로 220 년 이후까지 살아 있다 — abolished-verdict-corrections-v1 을 보라. 이 원장의 tgazSpan 은 이름만 맞춰 붙인 것이므로 폐지 판정의 근거로 쓰지 말 것.",
     "SURVIVED_TO_220": "10 건 심사는 survived-county-adjudications-v1 에 있다 (실결손 8, 좌표 없는 실결손 1, 오판정 1).",
-    "OTHER_ERA_HOMONYM_ONLY": "57 건 중 22 건이 晉書에 토큰으로 있다 — jinshu-survival-sweep-v1 을 보라. 미심사다.",
-    "NOT_IN_TGAZ": "144 건 중 28 건이 晉書에 토큰으로 있다 — jinshu-survival-sweep-v1 을 보라. 미심사다."
+    "OTHER_ERA_HOMONYM_ONLY": "57 건 중 22 건이 晉書에 토큰으로 있고 jinshu-token-adjudications-v1 에서 심사했다. 나머지 35 건 미심사.",
+    "NOT_IN_TGAZ": "144 건 중 28 건이 晉書에 토큰으로 있고 jinshu-token-adjudications-v1 에서 심사했다. 나머지 116 건 미심사."
   }
 }
