@@ -6,20 +6,28 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import opensamguk.engine.config.EngineProcessWorld
+import opensamguk.engine.hwiha.HwihaMonthlyAssessment
 import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
+import java.nio.file.Files
 import java.nio.file.Path
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.HwihaRenownAssessment
+import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -50,6 +58,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
     properties = [
+        "spring.main.allow-bean-definition-overriding=true",
         "spring.autoconfigure.exclude=" +
             "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration," +
             "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration," +
@@ -89,6 +98,35 @@ class HwihaMonthBoundaryLoopIT {
         assertTrue(credited.stock.grain > 0, "곡이 들어왔다: ${credited.stock}")
         assertEquals(1, credited.revision, "정확히 한 번 적립됐다")
 
+        // ── 월단평: 같은 월 경계에서 명망이 갱신되고 순위가 발표됐다 ──────────────────────────
+        assertEquals(
+            HwihaMonthlyAssessment.stampOf(200, 2),
+            world.getState().meta[HwihaMonthlyAssessment.STAMP_KEY],
+            "루프가 월단평도 스스로 돌렸다",
+        )
+        val lord = assertNotNull(world.getGeneralById(1))
+        assertEquals(
+            HwihaRenownRules.INITIAL_CAPACITY + 2 * HwihaRenownAssessment.CANON.warMerit,
+            assertNotNull(HwihaPersonPolicyState.read(lord.meta)).renownCapacity,
+            "전공 2건이 명망을 올렸다",
+        )
+        assertNull(
+            lord.meta[HwihaMonthlyAssessment.TALLY_META_KEY],
+            "적용한 집계는 비워야 한다 — 남기면 다음 달에 또 적용된다",
+        )
+        val peer = assertNotNull(world.getGeneralById(2))
+        assertEquals(
+            HwihaRenownRules.INITIAL_CAPACITY,
+            assertNotNull(HwihaPersonPolicyState.read(peer.meta)).renownCapacity,
+            "사건이 없는 장수는 명망을 보존한다 — 월단평은 초기화하지 않는다",
+        )
+        @Suppress("UNCHECKED_CAST")
+        val ranking = world.getState().meta[HwihaMonthlyAssessment.RANKING_KEY] as? List<Int>
+        assertEquals(
+            1, assertNotNull(ranking, "순위가 발표됐다").first(),
+            "명망이 가장 높은 장수가 1 위다",
+        )
+
         // 같은 달 안에서 또 tick 해도 도장에 막혀 두 번 들어가지 않는다.
         service.runTick(Instant.parse("0200-01-01T04:00:00Z"))
         assertEquals(
@@ -96,6 +134,39 @@ class HwihaMonthBoundaryLoopIT {
             HwihaCountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
             "같은 달을 두 번 적립하지 않는다",
         )
+        assertEquals(
+            HwihaRenownRules.INITIAL_CAPACITY + 2 * HwihaRenownAssessment.CANON.warMerit,
+            assertNotNull(HwihaPersonPolicyState.read(assertNotNull(world.getGeneralById(1)).meta)).renownCapacity,
+            "월단평도 같은 달을 두 번 적용하지 않는다",
+        )
+    }
+
+    /**
+     * `WorldSnapshotLoader` 의 산출물 resolver 는 `private companion object` 의 val 이라 그 클래스가
+     * 처음 로드될 때 루트가 박힌다. 이 모듈의 테스트는 한 JVM 에서 1200건 넘게 돌므로 다른 테스트가
+     * 먼저 클래스를 로드하면 루트가 `.` 으로 굳어 시스템 프로퍼티가 늦는다(CI 에서만 빨개졌다).
+     * 그래서 프로퍼티에 기대지 않고 빈을 덮어 저장소 루트를 명시적으로 넘긴다.
+     */
+    @TestConfiguration
+    class ArtifactsRootConfig {
+        @Bean
+        fun worldSnapshotLoader(
+            jdbc: JdbcTemplate,
+            seedBootstrap: SeedBootstrap,
+            processWorld: EngineProcessWorld,
+        ): WorldSnapshotLoader {
+            val artifacts = HanWorldArtifactsResolver(repoRoot())
+            return WorldSnapshotLoader(
+                jdbc, seedBootstrap, processWorld.worldId,
+                waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+                administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
+                cityLandProvinceLoader = { variant ->
+                    artifacts.artifacts(variant).projection.bindingsByCityId
+                        .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap()
+                },
+            )
+        }
     }
 
     companion object {
@@ -103,6 +174,14 @@ class HwihaMonthBoundaryLoopIT {
 
         @JvmStatic
         private var seededCounty: Int? = null
+
+        /** 작업 디렉터리가 어디든 `data/map` 을 가진 저장소 루트를 찾아 절대경로로 돌려준다. */
+        private fun repoRoot(): Path {
+            val from = Path.of("").toAbsolutePath()
+            var at: Path? = from
+            while (at != null && !Files.isDirectory(at.resolve("data/map"))) at = at.parent
+            return requireNotNull(at) { "data/map 을 가진 저장소 루트를 $from 위에서 찾지 못했다" }
+        }
 
         /**
          * Gradle 은 이 모듈의 테스트를 한 JVM 에서 돌린다. 루트 프로퍼티를 남기면 뒤따르는
@@ -123,9 +202,10 @@ class HwihaMonthBoundaryLoopIT {
         @JvmStatic
         @DynamicPropertySource
         fun properties(registry: DynamicPropertyRegistry) {
-            // Gradle 은 app/game-engine 에서 JVM 을 띄우지만 엔진은 저장소 루트에서 도는 것을
-            // 전제로 지도 산출물을 `.` 아래에서 찾는다. 루트를 가리켜 준다.
-            System.setProperty("opensamguk.artifacts.root", "../..")
+            // 엔진은 저장소 루트에서 도는 것을 전제로 지도 산출물을 `.` 아래에서 찾는다. Gradle 의
+            // 테스트 작업 디렉터리는 그 전제와 다를 수 있고(로컬은 app/game-engine, CI 는 또 달랐다)
+            // 상대경로를 박으면 한쪽에서만 맞는다. data/map 이 보일 때까지 올라가 절대경로로 못박는다.
+            System.setProperty("opensamguk.artifacts.root", repoRoot().toString())
 
             // 컨텍스트가 뜨기 전에 월드를 심는다 — BootstrapConfig 의 InMemoryTurnWorld 빈이
             // 부팅 시점의 DB 를 읽으므로, 부팅 뒤에 넣으면 루프가 빈 월드를 돈다.
@@ -171,6 +251,14 @@ class HwihaMonthBoundaryLoopIT {
             jdbc.update(
                 "UPDATE nation SET capital_city_id=?, level=1 WHERE world_id=? AND id=1",
                 county, WORLD,
+            )
+
+            // 월단평 집계를 장수 1 에 얹는다. 사건을 기록하는 쪽이 아직 없으므로, 게이트가 갱신
+            // 기계 전체를 지나게 하려면 집계를 직접 심어야 한다. 전공 2건 → CANON 에서 +3*2.
+            jdbc.update(
+                """UPDATE general SET meta = meta || '{"hwihaRenownTally":{"warMerit":2}}'::jsonb
+                   WHERE world_id=? AND id=1""",
+                WORLD,
             )
 
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
