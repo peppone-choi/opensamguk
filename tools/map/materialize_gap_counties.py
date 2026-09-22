@@ -72,7 +72,9 @@ def place_id(county: dict, parent_id: str) -> str:
     return f"{PLACE_ID_PREFIX}{parent_id.rsplit('-', 1)[-1]}-{ordinal}"
 
 
-def strip_gap_counties(document: dict) -> dict:
+def strip_gap_counties(document: dict, *, counts_before: dict | None = None) -> dict:
+    """`gc-` 행을 걷어낸다. counts_before 를 주면 `_meta.counts` 도 되돌린다 — 앞 단계의 지문이
+    counts 를 포함하므로 그것까지 되돌려야 원복이 성립한다."""
     stripped = dict(document)
     stripped["cities"] = [r for r in document["cities"]
                           if not str(r["id"]).startswith(PLACE_ID_PREFIX)]
@@ -85,6 +87,10 @@ def strip_gap_counties(document: dict) -> dict:
                                  if not str(i).startswith(PLACE_ID_PREFIX)])
         for r in document["commanderyRecords"]
     ]
+    if counts_before is not None:
+        meta = dict(document["_meta"])
+        meta["counts"] = dict(counts_before)
+        stripped["_meta"] = meta
     return stripped
 
 
@@ -163,7 +169,9 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
 
     cities = [dict(row) for row in document["cities"]]
     provinces = [dict(row) for row in document["provinceRecords"]]
-    jurisdictions = {row["id"]: dict(row) for row in document["jurisdictionRecords"]}
+    # **정렬하지 않는다.** 입력 배열 순서가 앞 단계들의 지문 입력이다 — pre-★ 문서의 관할 배열은
+    # id 순이 아니다(끝이 fc-xuantu-006, 82879). 전역 정렬을 걸었다가 걷어내도 원복이 안 됐다.
+    jurisdictions = [dict(row) for row in document["jurisdictionRecords"]]
     commanderies = {row["id"]: dict(row) for row in document["commanderyRecords"]}
     for placement in placements:
         county = counties_by_id[placement["id"]]
@@ -196,7 +204,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
             "assignmentBasis": "HISTORICAL_SEAT",
             "assignmentConfidence": "IDENTIFIED",
         })
-        jurisdictions[placement["physicalPlaceId"]] = {
+        jurisdictions.append({
             "id": placement["physicalPlaceId"],
             "displayName": f"{county['nameKo']}현",
             "nameCh": f"{county['nameHan']}{suffix}",
@@ -204,7 +212,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
             "commanderyId": parent_id,
             "seatPlaceId": placement["physicalPlaceId"],
             "provinceIds": [placement["physicalPlaceId"]],
-        }
+        })
         commandery = commanderies[parent_id]
         commandery["jurisdictionIds"] = sorted({
             *commandery["jurisdictionIds"], placement["physicalPlaceId"],
@@ -213,7 +221,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
     updated = dict(document)
     updated["cities"] = cities
     updated["provinceRecords"] = provinces
-    updated["jurisdictionRecords"] = sorted(jurisdictions.values(), key=lambda r: r["id"])
+    updated["jurisdictionRecords"] = jurisdictions
     updated["commanderyRecords"] = [commanderies[r["id"]] for r in document["commanderyRecords"]]
     meta = dict(document["_meta"])
     counts = dict(meta["counts"])
@@ -236,6 +244,12 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
         "inputs": {
             "gapCountyLedger": {"path": "data/curated/han/gap-counties-v1.json"},
             "projection": dict(projection_of(document["_meta"])),
+        },
+        "priorStage": {
+            "countsBefore": dict(document["_meta"]["counts"]),
+            "jurisdictionCountBefore": len(document["jurisdictionRecords"]),
+            "cityCountBefore": len(document["cities"]),
+            "provinceCountBefore": len(document["provinceRecords"]),
         },
         "summary": {
             "placedCount": len(placements),
@@ -267,9 +281,14 @@ def main() -> int:
 
     if args.check:
         problems: list[str] = []
-        cities = {r["id"]: r for r in document["cities"]}
-        jurisdictions = {r["id"]: r for r in document["jurisdictionRecords"]}
-        parents_by_id = {r["id"]: r for r in document["parentRegions"]}
+        # 이 단계의 출력은 ★ 의 **입력**이다. 커밋본을 그대로 보면 안 된다 — 뒤 단계가 城 칸을
+        # 정당하게 옮긴다(기존 城과 겹친 6 건이 1 칸씩 밀렸다). ★ 의 stage_input 으로 이 단계
+        # 자리의 문서까지 벗겨서 대조한다.
+        from partition_counties_by_location import stage_input  # noqa: E402
+        staged = stage_input(document)
+        cities = {r["id"]: r for r in staged["cities"]}
+        jurisdictions = {r["id"]: r for r in staged["jurisdictionRecords"]}
+        parents_by_id = {r["id"]: r for r in staged["parentRegions"]}
         if not PLACEMENTS.exists():
             print(f"STALE {PLACEMENTS} (없다)")
             return 1

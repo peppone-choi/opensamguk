@@ -120,22 +120,22 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "1dbc2cbb97905f1295f145d3e82f04fc11b87d9311e83fc006fa3b395419975c",
-        "outputDocumentSha256": "4502de9b3c9973c7c6beedc7dee317f425af18cdd11f6df6c17c442334499011",
+        "inputDocumentSha256": "c209ff975502ca8277ebc1bc0bbae672a52ecb0f83d6888617c6e9e6cab0900c",
+        "outputDocumentSha256": "44de00726634907fbf60ab2c234b3bc209bc62545a0b38e64e4bfd060470dd18",
         "inputCounts": {
-          "cities": 1263,
+          "cities": 1323,
           "seats": 172,
           "regions": 38,
-          "adjCounty": 3551,
+          "adjCounty": 3704,
           "adjCommandery": 410,
-          "COUNTY": 1013,
+          "COUNTY": 1073,
           "EXTERNAL_PLACE": 37,
           "COMMANDERY": 120,
           "KINGDOM": 17,
           "PROVINCE": 3,
-          "provinces": 1331,
+          "provinces": 1384,
           "parentRegions": 172,
-          "jurisdictions": 1144,
+          "jurisdictions": 1204,
           "commanderies": 172,
           "STRATEGIC_SITE": 73
         },
@@ -1330,6 +1330,66 @@
           "fc-rinan-004",
           "fc-rinan-005",
           "82879",
+          "gc-0090-005",
+          "gc-0049-011",
+          "gc-0048-001",
+          "gc-0048-007",
+          "gc-0048-008",
+          "gc-0048-009",
+          "gc-0010-010",
+          "gc-0048-011",
+          "gc-0082-002",
+          "gc-0089-001",
+          "gc-0098-003",
+          "gc-0041-032",
+          "gc-0113-036",
+          "gc-0006-013",
+          "gc-0079-006",
+          "gc-0070-001",
+          "gc-0028-002",
+          "gc-0005-012",
+          "gc-0015-007",
+          "gc-0033-006",
+          "gc-0050-001",
+          "gc-0050-005",
+          "gc-0050-006",
+          "gc-0050-007",
+          "gc-0030-010",
+          "gc-0009-006",
+          "gc-0009-009",
+          "gc-0072-001",
+          "gc-0072-009",
+          "gc-0062-005",
+          "gc-0008-009",
+          "gc-0008-016",
+          "gc-0008-019",
+          "gc-0008-034",
+          "gc-0008-035",
+          "gc-0010-017",
+          "gc-0007-003",
+          "gc-0003-018",
+          "gc-0002-002",
+          "gc-0087-003",
+          "gc-0091-002",
+          "gc-0091-004",
+          "gc-0091-007",
+          "gc-0067-006",
+          "gc-0067-012",
+          "gc-0061-003",
+          "gc-0079-005",
+          "gc-0053-005",
+          "gc-0060-006",
+          "gc-0060-008",
+          "gc-0073-002",
+          "gc-0074-003",
+          "gc-0074-005",
+          "gc-0074-006",
+          "gc-0074-007",
+          "gc-0022-008",
+          "gc-0085-001",
+          "gc-0085-002",
+          "gc-0085-007",
+          "gc-0085-010",
           "ss-ancheng",
           "ss-anfengjin",
           "ss-anpingkou",
@@ -6818,7 +6878,7 @@
             }
           },
           {
-            "index": 672,
+            "index": 673,
             "record": {
               "id": "85064",
               "displayName": "견량현",
@@ -6832,7 +6892,7 @@
             }
           },
           {
-            "index": 703,
+            "index": 704,
             "record": {
               "id": "85281",
               "displayName": "익도현",
@@ -6846,7 +6906,7 @@
             }
           },
           {
-            "index": 714,
+            "index": 715,
             "record": {
               "id": "85377",
               "displayName": "견현",
@@ -6874,7 +6934,7 @@
             }
           },
           {
-            "index": 971,
+            "index": 972,
             "record": {
               "id": "JURISDICTION-PARENT-0140-SEAT",
               "displayName": "칠현",
@@ -6888,7 +6948,7 @@
             }
           },
           {
-            "index": 971,
+            "index": 972,
             "record": {
               "id": "JURISDICTION-PARENT-0145-SEAT",
               "displayName": "비릉현",
@@ -6902,7 +6962,7 @@
             }
           },
           {
-            "index": 971,
+            "index": 972,
             "record": {
               "id": "JURISDICTION-PARENT-0148-SEAT",
               "displayName": "문산현",
@@ -6916,7 +6976,7 @@
             }
           },
           {
-            "index": 972,
+            "index": 973,
             "record": {
               "id": "JURISDICTION-PARENT-0157-SEAT",
               "displayName": "동평서현",
@@ -7077,7 +7137,8 @@
               "82783",
               "82811",
               "82971",
-              "82975"
+              "82975",
+              "gc-0041-032"
             ]
           },
           {

@@ -43,6 +43,16 @@
       "class": "BELOW_MIN",
       "reason": "NEIGHBOURS_AT_FLOOR",
       "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
+    },
+    {
+      "provinceId": "gc-0008-035",
+      "nameCh": "固始縣",
+      "cells": 6,
+      "class": "BELOW_MIN",
+      "reason": "NEIGHBOURS_AT_FLOOR",
+      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다.",
+      "measurement": "같은 郡의 인접 省이 陳縣 하나뿐이고 정확히 8칸(하한)이다. 나머지 세 면은 陳國(长平 27·阳夏 36·新平 55)이라 郡 안에서 빌릴 곳이 없다 — county-location-partition-v1.minAreaBorrowed 가 borrowedCells 0 · donors {} · satisfied false 로 적는다.",
+      "addedBy": "결손 縣 60건 실체화(gap-counties-v1) 로 새로 생긴 縣이다."
     }
   ],
   "mechanicalRules": [
