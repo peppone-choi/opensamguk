@@ -1,0 +1,1811 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "gap-counties-v1",
+  "scope": "COUNTY_IDENTITY_AND_APPROXIMATE_POSITION",
+  "note": "여섯 심사 원장이 220 년 존속을 확정하고 좌표까지 확보한 결손 縣이다. materialize_frontier_counties 와 같은 입력 규약을 쓰되 변경 7 郡이 아니라 내지·邊郡 전역을 덮는다.",
+  "positionBasis": "좌표는 전부 APPROXIMATE 다. 출처는 namu-place-locations-v1 또는 TGAZ 이름 조인이며 gap-placement-readiness-v1 이 그 확보 상태와 同名異地 검사를 싣는다. 두 출처가 겹치는 縣 21 건 중 16 건이 소수점 5 자리까지 같으므로 **둘은 독립 출처가 아니다** — CHGIS 를 공유한다.",
+  "nameBasis": "nameHan 은 정본 카탈로그의 sourceName 을 그대로 싣는다. 卷113 저본이 簡體라 11 건이 簡體이고 그 행은 countySuffix 를 县 으로 둔다 — 繁簡 변환을 발명하지 않는다. 繁→簡 표(han-name-simplification-v1)를 역전해서 繁體를 만들면 안 된다: 그 표는 정본 표기를 CHGIS 표준형으로 접는 것이라 異體字 쌍(髙→高)이 섞여 있고, 역전하면 高柳가 髙柳로 뒤집힌다.",
+  "readingBasis": "nameKo 는 hanja 패키지(substitution)의 출력이다. build_readings.py 와 같은 도구이고 OVERRIDES 는 이민족·소국명 전용이라 이 60 건과 겹치지 않는다. 지명에서 hanja 가 틀리는 2 건만 지도 자신의 용례를 근거로 재정의했고 nameKoBasis 에 적었다. 검증: 60/60 에 한자 잔존 0, 지도 유래 글자표와 불일치는 그 2 건뿐이었다.",
+  "totals": {
+    "counties": 60,
+    "byCoordinateBasis": {
+      "READY_NAMU": 23,
+      "READY_TGAZ": 29,
+      "READY_BOTH_SOURCES": 8
+    },
+    "byNameScript": {
+      "TRADITIONAL": 44,
+      "SIMPLIFIED_IN_SOURCE": 16
+    },
+    "commanderies": 33
+  },
+  "counties": [
+    {
+      "id": "hhs:113:上谷郡:005",
+      "nameHan": "居庸",
+      "nameKo": "거용",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "上谷郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.459,
+        "longitude": 115.9783
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "베이징시 옌칭구 옌칭진",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 上谷郡 표제 縣",
+        "reading": "晉書 地理志 上谷郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 5,
+        "sourceName": "居庸",
+        "declaredCities": 8
+      }
+    },
+    {
+      "id": "hhs:112:丹陽郡:011",
+      "nameHan": "秣陵",
+      "nameKo": "말릉",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "丹陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.84265,
+        "longitude": 118.82727
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷111 丹陽郡 표제 縣",
+        "reading": "폐지가 아니라 개명이다 — 孫氏가 秣陵을 建業으로 고쳤다. 220년 단면에서는 秣陵이 맞다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 11,
+        "sourceName": "秣陵",
+        "declaredCities": 16
+      },
+      "commanderyCentroidKm": 113
+    },
+    {
+      "id": "hhs:112:九江郡:001",
+      "nameHan": "陰陵",
+      "nameKo": "음릉",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.63618,
+        "longitude": 117.44382
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 1,
+        "sourceName": "陰陵",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 52
+    },
+    {
+      "id": "hhs:112:九江郡:007",
+      "nameHan": "歷陽",
+      "nameKo": "역양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.71422,
+        "longitude": 118.36112
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 7,
+        "sourceName": "歷陽",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 104
+    },
+    {
+      "id": "hhs:112:九江郡:008",
+      "nameHan": "當塗",
+      "nameKo": "당도",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.86466,
+        "longitude": 117.205
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 8,
+        "sourceName": "當塗",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 79
+    },
+    {
+      "id": "hhs:112:九江郡:009",
+      "nameHan": "全椒",
+      "nameKo": "전초",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.09835,
+        "longitude": 118.26437
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 9,
+        "sourceName": "全椒",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 82
+    },
+    {
+      "id": "hhs:112:九江郡:010",
+      "nameHan": "鍾離",
+      "nameKo": "종리",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.90163,
+        "longitude": 117.64022
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 10,
+        "sourceName": "鍾離",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 84
+    },
+    {
+      "id": "hhs:112:九江郡:011",
+      "nameHan": "阜陵",
+      "nameKo": "부릉",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "九江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.68121,
+        "longitude": 118.18547
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 九江郡 표제 縣",
+        "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 11,
+        "sourceName": "阜陵",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 92
+    },
+    {
+      "id": "hhs:113:五原郡:002",
+      "nameHan": "五原",
+      "nameKo": "오원",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "五原郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.70569,
+        "longitude": 109.65046
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "내몽골 바오터우시 쿤두룬구",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷061 — 「西漢置五原縣，屬五原郡。後漢因之。永和五年以南匈奴叛亂，徙朔方郡治五原…晉縣廢」",
+        "reading": "永和五年 = 140 년, 郡國志 단면 바로 그 해의 용례다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 2,
+        "sourceName": "五原",
+        "declaredCities": 10
+      }
+    },
+    {
+      "id": "hhs:113:代郡:001",
+      "nameHan": "高柳",
+      "nameKo": "고류",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "代郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.3537,
+        "longitude": 113.75209
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 다퉁시 양가오현",
+      "survivalVerdict": {
+        "ledger": "weishu-affiliation-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "魏書 卷106A 地形志 — 「高柳{{*|二漢屬代郡，晉罷，後復屬。}}」",
+        "reading": "「二漢屬代郡」 이 前漢·後漢 모두 代郡 소속임을 직접 적고 폐지 주체는 晉이다 — 220 년엔 있었다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 1,
+        "sourceName": "高柳",
+        "declaredCities": 11
+      },
+      "crossSourceKm": 0.0
+    },
+    {
+      "id": "hhs:113:南海郡:003",
+      "nameHan": "中宿",
+      "nameKo": "중숙",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "南海郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 23.90139,
+        "longitude": 112.89028
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 南海郡 표제 縣",
+        "reading": "始興郡은 南海 북부에서 갈라진 郡이다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 3,
+        "sourceName": "中宿",
+        "declaredCities": 7
+      },
+      "commanderyCentroidKm": 146
+    },
+    {
+      "id": "hhs:112:南陽郡:032",
+      "nameHan": "順陽",
+      "nameKo": "순양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "南陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.74889,
+        "longitude": 111.53245
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 郡國志 南陽郡(三十七城) — 「　　順陽，侯國，故博山。有須聚。」",
+        "reading": "140년 侯國이고 이름이 그대로 晉 順陽郡의 郡名·縣名이 된다. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 32,
+        "sourceName": "順陽",
+        "declaredCities": 37
+      },
+      "commanderyCentroidKm": 89
+    },
+    {
+      "id": "hhs:112:南陽郡:036",
+      "nameHan": "丹水",
+      "nameKo": "단수",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "南陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.08096,
+        "longitude": 111.22923
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 郡國志 南陽郡 — 「　　丹水，故屬弘農。有章密鄉。有三戸亭。」",
+        "reading": "140년 표제 縣이고 晉 順陽郡까지 이어진다. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 36,
+        "sourceName": "丹水",
+        "declaredCities": 37
+      },
+      "commanderyCentroidKm": 121
+    },
+    {
+      "id": "hhs:109:右扶風:013",
+      "nameHan": "美阳",
+      "nameKo": "미양",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "右扶風",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.3378,
+        "longitude": 108.0614
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "산시성 셴양시 우궁현 우궁진",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 右扶風 표제 縣",
+        "reading": "晉書 卷014 — 「漢武帝以爲主爵都尉，太初中更名右扶風」. 右扶風 그 자체다. 속현 「池陽　郿　雍　汧　陳倉　美陽」"
+      },
+      "catalogRef": {
+        "sourceVolume": 109,
+        "ordinal": 13,
+        "sourceName": "美阳",
+        "declaredCities": 15
+      }
+    },
+    {
+      "id": "hhs:113:太原郡:006",
+      "nameHan": "兹氏",
+      "nameKo": "자씨",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "太原郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 37.20595,
+        "longitude": 111.81372
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 郡國志 太原郡(十六城) — 「〖兹氏〗」",
+        "reading": "晉書 地理志에 茲氏가 0건인 것은 폐지가 아니라 개명이다 — 晉이 茲氏를 隰城으로 고쳤고 晉 西河國 속현은 隰城으로 실린다. 黃初二年(221) 西河郡 설치가 이 縣 자리이므로 220년 시점에는 太原郡 茲氏가 맞다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 6,
+        "sourceName": "兹氏",
+        "declaredCities": 16
+      },
+      "commanderyCentroidKm": 72
+    },
+    {
+      "id": "hhs:113:安定郡:001",
+      "nameHan": "临泾",
+      "nameKo": "임경",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "安定郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.53933,
+        "longitude": 107.34059
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 칭양시 전위안현 슈광향",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 安定郡 표제 縣",
+        "reading": "晉書 地理志 安定郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 1,
+        "sourceName": "临泾",
+        "declaredCities": 8
+      }
+    },
+    {
+      "id": "hhs:111:山陽郡:002",
+      "nameHan": "東緡",
+      "nameKo": "동민",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "山陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.06816,
+        "longitude": 116.30453
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷032 — 「漢置東緡縣，屬山陽郡…晉省縣入金鄉」; 「興平二年呂布屯於東緡，與曹操戰」",
+        "reading": "興平二年(195) 용례까지 있다."
+      },
+      "catalogRef": {
+        "sourceVolume": 111,
+        "ordinal": 2,
+        "sourceName": "東緡",
+        "declaredCities": 10
+      },
+      "commanderyCentroidKm": 30
+    },
+    {
+      "id": "hhs:109:左馮翊:012",
+      "nameHan": "衙",
+      "nameKo": "아",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "左馮翊",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.32087,
+        "longitude": 109.65974
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷054 — 「漢爲衙縣地，亦爲粟邑縣地。晉省衙縣入粟邑」",
+        "reading": "晉이 粟邑에 합쳤으니 220 년엔 있었다."
+      },
+      "catalogRef": {
+        "sourceVolume": 109,
+        "ordinal": 12,
+        "sourceName": "衙",
+        "declaredCities": 13
+      },
+      "commanderyCentroidKm": 52
+    },
+    {
+      "id": "hhs:110:常山國:007",
+      "nameHan": "欒城",
+      "nameKo": "난성",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "常山國",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 37.91348,
+        "longitude": 114.62434
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "MODERATE",
+        "evidence": "讀史 卷014 — 「漢置關縣，屬常山郡。後漢改置欒城縣。三國魏廢」",
+        "reading": "後漢에 關→欒城 개명이 郡國志 표제와 맞는다. 폐지 주체는 魏다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 7,
+        "sourceName": "欒城",
+        "declaredCities": 13
+      },
+      "commanderyCentroidKm": 19
+    },
+    {
+      "id": "hhs:111:廣陵郡:006",
+      "nameHan": "東陽",
+      "nameKo": "동양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "廣陵郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.96185,
+        "longitude": 118.83847
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷111 廣陵郡 표제 縣",
+        "reading": "臨淮郡은 廣陵 서북에 접한다. 다만 東陽은 흔한 이름이라 이 건은 郡 인접에 기댄 판정이다."
+      },
+      "catalogRef": {
+        "sourceVolume": 111,
+        "ordinal": 6,
+        "sourceName": "東陽",
+        "declaredCities": 11
+      },
+      "commanderyCentroidKm": 53
+    },
+    {
+      "id": "hhs:112:廬江郡:001",
+      "nameHan": "舒",
+      "nameKo": "서",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "廬江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.18897,
+        "longitude": 117.17437
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 廬江郡 표제 縣",
+        "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 1,
+        "sourceName": "舒",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 96
+    },
+    {
+      "id": "hhs:112:廬江郡:005",
+      "nameHan": "臨湖",
+      "nameKo": "임호",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "廬江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.14534,
+        "longitude": 117.6963
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 廬江郡 표제 縣",
+        "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 5,
+        "sourceName": "臨湖",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 142
+    },
+    {
+      "id": "hhs:112:廬江郡:006",
+      "nameHan": "龍舒",
+      "nameKo": "용서",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "廬江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.34139,
+        "longitude": 116.62608
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 廬江郡 표제 縣",
+        "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 6,
+        "sourceName": "龍舒",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 46
+    },
+    {
+      "id": "hhs:112:廬江郡:007",
+      "nameHan": "襄安",
+      "nameKo": "양안",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "廬江郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 31.15731,
+        "longitude": 117.79866
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷112 廬江郡 표제 縣",
+        "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 7,
+        "sourceName": "襄安",
+        "declaredCities": 14
+      },
+      "commanderyCentroidKm": 150
+    },
+    {
+      "id": "hhs:111:東海郡:010",
+      "nameHan": "合鄕",
+      "nameKo": "합향",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "東海郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.09516,
+        "longitude": 117.21945
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷111 東海郡 표제 縣",
+        "reading": "郡 이름이 그대로다."
+      },
+      "catalogRef": {
+        "sourceVolume": 111,
+        "ordinal": 10,
+        "sourceName": "合鄕",
+        "declaredCities": 13
+      },
+      "commanderyCentroidKm": 90
+    },
+    {
+      "id": "hhs:110:梁國:006",
+      "nameHan": "穀熟",
+      "nameKo": "곡숙",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "梁國",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.27525,
+        "longitude": 115.77325
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "songshu-provenance-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "宋書 卷035 — 「穀熟令，前漢無，後漢、晉屬梁。永初郡國、何、徐志並屬南梁」; 卷036 — 「穀熟令，漢舊名」",
+        "reading": "後漢·晉 모두 梁國 소속임을 직접 적는다. **앞선 abolished-verdict-corrections-v1 에서 이 縣을 「판정은 맞고 구간만 틀림(220 년 전 폐지 유지)」 으로 남긴 것은 틀렸다** — TGAZ 37~219 가 또 오도했다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 6,
+        "sourceName": "穀熟",
+        "declaredCities": 9
+      },
+      "commanderyCentroidKm": 22
+    },
+    {
+      "id": "hhs:110:梁國:009",
+      "nameHan": "薄",
+      "nameKo": "박",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "梁國",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.72515,
+        "longitude": 115.5415
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷050 — 「漢置薄縣，屬山陽郡。後漢改屬梁國。晉省」",
+        "reading": "後漢에 梁國으로 이관됐다는 서술이 郡國志 소속과 맞는다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 9,
+        "sourceName": "薄",
+        "declaredCities": 9
+      },
+      "commanderyCentroidKm": 41
+    },
+    {
+      "id": "hhs:113:武威郡:001",
+      "nameHan": "姑臧",
+      "nameKo": "고장",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "武威郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 37.92692,
+        "longitude": 102.6347
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 우웨이시",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 武威郡 표제 縣",
+        "reading": "晉書 地理志 武威郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 1,
+        "sourceName": "姑臧",
+        "declaredCities": 14
+      }
+    },
+    {
+      "id": "hhs:113:武威郡:009",
+      "nameHan": "宣威",
+      "nameKo": "선위",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "武威郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 38.4959,
+        "longitude": 102.9854
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 우웨이시 민친현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 武威郡 표제 縣",
+        "reading": "晉書 地理志 武威郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 9,
+        "sourceName": "宣威",
+        "declaredCities": 14
+      }
+    },
+    {
+      "id": "hhs:113:永昌郡:005",
+      "nameHan": "邪龙",
+      "nameKo": "사룡",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "永昌郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 25.23003,
+        "longitude": 100.30888
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 郡國志 永昌郡(八城) — 「〖邪龙〗」",
+        "reading": "140년 표제 縣이고 蜀이 세운 雲南郡으로 이관돼 존속. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 5,
+        "sourceName": "邪龙",
+        "declaredCities": 8
+      },
+      "commanderyCentroidKm": 92
+    },
+    {
+      "id": "hhs:110:汝南郡:009",
+      "nameHan": "北宜春",
+      "nameKo": "북의춘",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "汝南郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 32.8244,
+        "longitude": 114.26909
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "허난성 주마뎬시 루난현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 汝南郡 표제 縣",
+        "reading": "晉書 地理志 汝南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 9,
+        "sourceName": "北宜春",
+        "declaredCities": 37
+      }
+    },
+    {
+      "id": "hhs:110:汝南郡:016",
+      "nameHan": "細陽",
+      "nameKo": "세양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "汝南郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.18829,
+        "longitude": 115.74445
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "안후이성 푸양시 타이허현",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷021 — 「漢置細陽縣，屬汝南郡。光武封岑彭子遵爲侯邑。晉縣廢」",
+        "reading": null
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 16,
+        "sourceName": "細陽",
+        "declaredCities": 37
+      },
+      "crossSourceKm": 0.0
+    },
+    {
+      "id": "hhs:110:汝南郡:019",
+      "nameHan": "鮦陽",
+      "nameKo": "동양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "汝南郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.0823,
+        "longitude": 114.96882
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷110 郡國志 汝南郡(三十七城) — 「　　鮦陽，侯國。」",
+        "reading": "140년 侯國이고 晉 汝陰郡으로 이관돼 존속. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 19,
+        "sourceName": "鮦陽",
+        "declaredCities": 37
+      },
+      "commanderyCentroidKm": 0
+    },
+    {
+      "id": "hhs:110:汝南郡:034",
+      "nameHan": "定潁",
+      "nameKo": "정영",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "汝南郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.3986,
+        "longitude": 114.0718
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "허난성 주마뎬시 시핑현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 汝南郡 표제 縣",
+        "reading": "晉書 地理志 汝南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 34,
+        "sourceName": "定潁",
+        "declaredCities": 37
+      }
+    },
+    {
+      "id": "hhs:110:汝南郡:035",
+      "nameHan": "固始",
+      "nameKo": "고시",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "汝南郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.80199,
+        "longitude": 114.76242
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷110 汝南郡 — 「固始，侯國。故寢也，光武中興更名。有寢丘。」",
+        "reading": "같은 汝陰郡 목록에 이미 실결손으로 판정된 鮦陽 과 나란히 있다. 汝南 동부가 晉 汝陰郡 으로 갈린 것이다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 35,
+        "sourceName": "固始",
+        "declaredCities": 37
+      },
+      "commanderyCentroidKm": 82
+    },
+    {
+      "id": "hhs:110:沛國:017",
+      "nameHan": "向",
+      "nameKo": "향",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "沛國",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 33.08128,
+        "longitude": 117.14322
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "안후이성 벙부시 화이위안현",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "MODERATE",
+        "evidence": "讀史 卷021 — 「漢置向縣，屬沛郡。後漢因之。魏廢」",
+        "reading": "폐지 주체가 魏이니 魏가 선 220 년에는 있었다. 다만 연도가 적히지 않았다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 17,
+        "sourceName": "向",
+        "declaredCities": 21
+      },
+      "crossSourceKm": 1.2
+    },
+    {
+      "id": "hhs:109:河南尹:003",
+      "nameHan": "梁",
+      "nameKo": "양",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "河南尹",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.16553,
+        "longitude": 112.74347
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "허난성 핑딩산시 루저우시",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 河南尹 표제 縣",
+        "reading": "晉書 地理志 河南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 109,
+        "ordinal": 3,
+        "sourceName": "梁",
+        "declaredCities": 21
+      }
+    },
+    {
+      "id": "hhs:109:河南尹:018",
+      "nameHan": "新城",
+      "nameKo": "신성",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "河南尹",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.39771,
+        "longitude": 112.39502
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "허난성 뤄양시 이촨현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 河南尹 표제 縣",
+        "reading": "晉書 地理志 河南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 109,
+        "ordinal": 18,
+        "sourceName": "新城",
+        "declaredCities": 21
+      }
+    },
+    {
+      "id": "hhs:109:河東郡:002",
+      "nameHan": "杨",
+      "nameKo": "양",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "河東郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 36.22077,
+        "longitude": 111.71672
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷109 郡國志 河東郡(二十城) — 「〖杨〗有高梁亭。」",
+        "reading": "140년 河東郡 표제 縣이고 晉 平陽郡까지 이어진다. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 109,
+        "ordinal": 2,
+        "sourceName": "杨",
+        "declaredCities": 20
+      },
+      "commanderyCentroidKm": 97
+    },
+    {
+      "id": "hhs:110:河閒國:003",
+      "nameHan": "易",
+      "nameKo": "역",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "河閒國",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 38.9959,
+        "longitude": 116.06742
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷012 — 「漢易縣地，屬涿郡。後漢屬河間國。晉曰易城縣」",
+        "reading": "後漢 河間國 소속이 郡國志와 맞는다. 晉의 처분은 개명이다."
+      },
+      "catalogRef": {
+        "sourceVolume": 110,
+        "ordinal": 3,
+        "sourceName": "易",
+        "declaredCities": 11
+      },
+      "commanderyCentroidKm": 70
+    },
+    {
+      "id": "hhs:113:漁陽郡:002",
+      "nameHan": "狐奴",
+      "nameKo": "호노",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "漁陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.1946,
+        "longitude": 116.754
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "베이징시 순이구",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷011 — 「晉仍爲狐奴縣，屬燕國。後魏廢」",
+        "reading": null
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 2,
+        "sourceName": "狐奴",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:113:漁陽郡:004",
+      "nameHan": "雍奴",
+      "nameKo": "옹노",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "漁陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.5932,
+        "longitude": 117.0303
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "톈진시 우칭구",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷011 — 「漢置雍奴縣，隸漁陽郡。後漢因之。晉屬燕國」",
+        "reading": null
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 4,
+        "sourceName": "雍奴",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:113:漁陽郡:007",
+      "nameHan": "安乐",
+      "nameKo": "안락",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "漁陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.17,
+        "longitude": 116.6065
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "베이징시 순이구",
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷011 — 「後漢仍屬…晉亦曰安樂縣，屬燕國。北魏太平真君七年廢入潞縣」",
+        "reading": null
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 7,
+        "sourceName": "安乐",
+        "declaredCities": 9
+      },
+      "nameKoBasis": {
+        "override": "안락",
+        "hanjaOutput": "안악",
+        "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
+      }
+    },
+    {
+      "id": "hhs:113:漢陽郡:006",
+      "nameHan": "成纪",
+      "nameKo": "성기",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "漢陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.2415,
+        "longitude": 105.68042
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 핑량시 징닝현 즈핑향",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 漢陽郡 표제 縣",
+        "reading": "晉書 卷014 — 「漢武置，孝明改爲漢陽，晉復爲天水」. 漢陽郡 그 자체다. 속현 「上邽　冀　始昌　新陽　顯新　成紀」"
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 6,
+        "sourceName": "成纪",
+        "declaredCities": 13
+      }
+    },
+    {
+      "id": "hhs:113:漢陽郡:012",
+      "nameHan": "上邽",
+      "nameKo": "상규",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "漢陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.5853,
+        "longitude": 105.7258
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 톈수이시 시내",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 漢陽郡 표제 縣",
+        "reading": "晉書 卷014 — 「漢武置，孝明改爲漢陽，晉復爲天水」. 漢陽郡 그 자체다. 속현 「上邽　冀　始昌　新陽　顯新　成紀」"
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 12,
+        "sourceName": "上邽",
+        "declaredCities": 13
+      }
+    },
+    {
+      "id": "hhs:113:益州郡:003",
+      "nameHan": "俞元",
+      "nameKo": "유원",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "益州郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 24.67462,
+        "longitude": 102.90431
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "윈난성 청장시",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 益州郡 표제 縣",
+        "reading": "晉書 卷014 — 「蜀置。統縣十七」. 蜀이 益州郡을 建寧郡으로 고쳤다"
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 3,
+        "sourceName": "俞元",
+        "declaredCities": 17
+      }
+    },
+    {
+      "id": "hhs:113:西河郡:005",
+      "nameHan": "中阳",
+      "nameKo": "중양",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "西河郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 37.1419,
+        "longitude": 111.78615
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 샤오이시",
+      "survivalVerdict": {
+        "ledger": "survived-county-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 郡國志 西河郡(十三城) — 「〖中阳〗」",
+        "reading": "140년 표제 縣이고 曹魏가 옮겨 세운 기록이 있으며 晉 西河國까지 이어진다. 220년 존속."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 5,
+        "sourceName": "中阳",
+        "declaredCities": 13
+      },
+      "crossSourceKm": 86.9
+    },
+    {
+      "id": "hhs:112:豫章郡:005",
+      "nameHan": "廬陵",
+      "nameKo": "여릉",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "豫章郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 26.93722,
+        "longitude": 114.83273
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "STRONG",
+        "evidence": "讀史 卷002 — 「建安四年孫策分豫章置，治廬陵縣」",
+        "reading": "建安四年(199)에 廬陵郡 治所가 됐다. 220 년엔 廬陵郡 소속이다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 5,
+        "sourceName": "廬陵",
+        "declaredCities": 21
+      },
+      "commanderyCentroidKm": 130
+    },
+    {
+      "id": "hhs:113:越巂郡:006",
+      "nameHan": "卑水",
+      "nameKo": "비수",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "越巂郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 28.29495,
+        "longitude": 102.86078
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "쓰촨성 자오줴현 쩌푸향",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 越巂郡 표제 縣",
+        "reading": "晉書 地理志 越巂郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 6,
+        "sourceName": "卑水",
+        "declaredCities": 14
+      }
+    },
+    {
+      "id": "hhs:113:越巂郡:008",
+      "nameHan": "会无",
+      "nameKo": "회무",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "越巂郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 26.65907,
+        "longitude": 102.24429
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "쓰촨성 후이리현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 越巂郡 표제 縣",
+        "reading": "晉書 地理志 越巂郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 8,
+        "sourceName": "会无",
+        "declaredCities": 14
+      }
+    },
+    {
+      "id": "hhs:113:酒泉郡:002",
+      "nameHan": "表氏",
+      "nameKo": "표씨",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "酒泉郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.39404,
+        "longitude": 99.61737
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 장예시 가오타이현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 酒泉郡 표제 縣",
+        "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 2,
+        "sourceName": "表氏",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:113:酒泉郡:003",
+      "nameHan": "乐涫",
+      "nameKo": "낙관",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "酒泉郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.5309,
+        "longitude": 98.9421
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 주취안시 쑤저우구",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 酒泉郡 표제 縣",
+        "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 3,
+        "sourceName": "乐涫",
+        "declaredCities": 9
+      },
+      "nameKoBasis": {
+        "override": "낙관",
+        "hanjaOutput": "악관",
+        "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
+      }
+    },
+    {
+      "id": "hhs:113:酒泉郡:005",
+      "nameHan": "会水",
+      "nameKo": "회수",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "酒泉郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.8688,
+        "longitude": 99.37496
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 장예시 가오타이현",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 酒泉郡 표제 縣",
+        "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 5,
+        "sourceName": "会水",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:113:酒泉郡:006",
+      "nameHan": "沙头",
+      "nameKo": "사두",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "酒泉郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 40.4282,
+        "longitude": 96.9849
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 주취안시 위먼시",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 酒泉郡 표제 縣",
+        "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 6,
+        "sourceName": "沙头",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:113:酒泉郡:007",
+      "nameHan": "安弥",
+      "nameKo": "안미",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "酒泉郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.71654,
+        "longitude": 98.83275
+      },
+      "coordinateBasis": "READY_NAMU",
+      "modernLocation": "간쑤성 주취안시 쑤저우구",
+      "survivalVerdict": {
+        "ledger": "jinshu-token-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 郡國志 酒泉郡 표제 縣",
+        "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 7,
+        "sourceName": "安弥",
+        "declaredCities": 9
+      }
+    },
+    {
+      "id": "hhs:111:陳留郡:008",
+      "nameHan": "東昬",
+      "nameKo": "동혼",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "陳留郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 34.92438,
+        "longitude": 114.85936
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "modernLocation": null,
+      "survivalVerdict": {
+        "ledger": "dushi-disposition-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": "MODERATE",
+        "evidence": "讀史 卷047 — 「漢東昏縣地，屬陳留郡。三國魏廢縣爲鎮」",
+        "reading": "폐지 주체가 魏다. 연도는 없다."
+      },
+      "catalogRef": {
+        "sourceVolume": 111,
+        "ordinal": 8,
+        "sourceName": "東昬",
+        "declaredCities": 17
+      },
+      "commanderyCentroidKm": 40
+    },
+    {
+      "id": "hhs:113:鴈門郡:001",
+      "nameHan": "阴馆",
+      "nameKo": "음관",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "鴈門郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.24229,
+        "longitude": 112.72729
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 숴저우시",
+      "survivalVerdict": {
+        "ledger": "songshu-provenance-adjudications-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "宋書 卷035 — 「雁門郡{{*|漢舊郡。}}領樓煩、陰館{{*|前漢作「觀」，後漢、晉作「館」也。}}、廣武、崞、馬邑」",
+        "reading": "판본 대조 서술이 「後漢、晉作館」 이라 後漢·晉 양쪽 志에 이 縣이 있음을 가리킨다. 다만 이 목록 자체는 江左 僑置 雁門郡의 속현이므로 위치의 연속은 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 1,
+        "sourceName": "阴馆",
+        "declaredCities": 14
+      },
+      "crossSourceKm": 0.0
+    },
+    {
+      "id": "hhs:113:鴈門郡:002",
+      "nameHan": "繁畤",
+      "nameKo": "번치",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "鴈門郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.56155,
+        "longitude": 113.24369
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 잉현 동측",
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 鴈門郡 표제 縣",
+        "reading": "郡 이 그대로 이어지고 이름도 그대로다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 2,
+        "sourceName": "繁畤",
+        "declaredCities": 14
+      },
+      "crossSourceKm": 0.0
+    },
+    {
+      "id": "hhs:113:鴈門郡:007",
+      "nameHan": "崞",
+      "nameKo": "곽",
+      "nameScript": "TRADITIONAL",
+      "countySuffix": "縣",
+      "commanderyHan": "鴈門郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.70704,
+        "longitude": 113.56726
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 훈위안현",
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 鴈門郡 표제 縣",
+        "reading": "한 글자 이름이지만 구분된 목록의 토큰 일치라 부분일치가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 7,
+        "sourceName": "崞",
+        "declaredCities": 14
+      },
+      "crossSourceKm": 0.0
+    },
+    {
+      "id": "hhs:113:鴈門郡:010",
+      "nameHan": "马邑",
+      "nameKo": "마읍",
+      "nameScript": "SIMPLIFIED_IN_SOURCE",
+      "countySuffix": "县",
+      "commanderyHan": "鴈門郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.30807,
+        "longitude": 112.42152
+      },
+      "coordinateBasis": "READY_BOTH_SOURCES",
+      "modernLocation": "산시성 숴저우시",
+      "survivalVerdict": {
+        "ledger": "abolished-verdict-corrections-v1",
+        "verdict": "REAL_GAP",
+        "confidence": null,
+        "evidence": "後漢書 卷113 鴈門郡 표제 縣",
+        "reading": "郡 이 그대로 이어진다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 10,
+        "sourceName": "马邑",
+        "declaredCities": 14
+      },
+      "crossSourceKm": 0.0
+    }
+  ]
+}
