@@ -124,7 +124,7 @@ class AiTurnAdapterCureThresholdTest {
 
         val handled = handler.handle(1, ReservedTurn("휴식", ""), year = 200, month = 1, date = "12:34")
 
-        assertEquals("che_요양", handled.definition.key)
+        assertEquals("che_요양", handled.definition!!.key)
         assertTrue(handled.autorunMode)
         assertFalse(handled.fellBack)
         assertEquals(0, world.getGeneralById(1)!!.injury)
@@ -155,7 +155,7 @@ class AiTurnAdapterCureThresholdTest {
         val handled = lifecycle.runTick(turnTime.plusSeconds(1))
 
         assertEquals(2, preAiInjury)
-        assertNotEquals("che_요양", handled.single().definition.key)
+        assertNotEquals("che_요양", handled.single().definition!!.key)
     }
 
     @Test
@@ -193,7 +193,7 @@ class AiTurnAdapterCureThresholdTest {
         val handled = lifecycle.runTick(turnTime.plusSeconds(1))
 
         assertEquals(0, preAiInjury)
-        assertNotEquals("che_요양", handled.single().definition.key)
+        assertNotEquals("che_요양", handled.single().definition!!.key)
     }
 
     @Test

@@ -235,6 +235,9 @@ class VerticalSliceE2EIT {
         // === STEP 2: game-api reserve → general_turn ring row + daemon poke on the command stream ==
         val reservedRepo = ReservedTurnRepository(jdbc)
         val reserveService = CommandReserveService(
+            worldStates = WorldStateReadRepository(
+                JpaRepositoryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))
+                    .getRepository(WorldStateReadRawRepository::class.java), GameApiProcessWorld(1)),
             reservedTurns = reservedRepo,
             commandInbox = opensamguk.infra.persistence.CommandInboxRepository(jdbc),
             commandResults = opensamguk.infra.persistence.CommandResultRepository(jdbc),
@@ -306,7 +309,7 @@ class VerticalSliceE2EIT {
             assertEquals(1, result.handled.size, "exactly one due general drained in one pass")
             val handled = result.handled.single()
             assertFalse(handled.fellBack, "AVAILABLE general resolves che_상업투자, not the rest fallback")
-            assertEquals(action, handled.definition.key)
+            assertEquals(action, handled.definition!!.key)
             assertEquals(1, result.flushedGenerals)
             assertEquals(1, result.flushedCities)
             assertEquals(1, result.flushedLogs)

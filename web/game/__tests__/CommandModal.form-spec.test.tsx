@@ -97,7 +97,7 @@ describe('CommandModal ordered form specs', () => {
         });
 
         render(
-            <CommandModal
+            <CommandModal ruleProfile="SAMMO"
                 generalId={7}
                 nationId={1}
                 pinnedCommand="che_불가침제의"
@@ -132,7 +132,7 @@ describe('CommandModal ordered form specs', () => {
         mocks.availableCommands.mockRejectedValueOnce(new Error('unavailable'));
 
         render(
-            <CommandModal
+            <CommandModal ruleProfile="SAMMO"
                 generalId={7}
                 nationId={1}
                 pinnedCommand="che_불가침제의"
@@ -160,7 +160,7 @@ describe('CommandModal ordered form specs', () => {
         });
 
         render(
-            <CommandModal
+            <CommandModal ruleProfile="SAMMO"
                 generalId={7}
                 nationId={1}
                 pinnedCommand="che_불가침제의"
@@ -195,7 +195,7 @@ describe('CommandModal ordered form specs', () => {
         });
 
         render(
-            <CommandModal
+            <CommandModal ruleProfile="SAMMO"
                 generalId={7}
                 nationId={1}
                 pinnedCommand="che_불가침제의"
@@ -256,7 +256,7 @@ describe('CommandModal ordered form specs', () => {
             result: {},
         });
 
-        render(<CommandModal generalId={7} turnIdx={3} onClose={vi.fn()} onToast={vi.fn()} />);
+        render(<CommandModal ruleProfile="SAMMO" generalId={7} turnIdx={3} onClose={vi.fn()} onToast={vi.fn()} />);
 
         fireEvent.click(await screen.findByRole('button', { name: '헌납' }));
         fireEvent.click(screen.getByRole('checkbox', { name: '금 사용' }));
@@ -306,7 +306,7 @@ describe('CommandModal ordered form specs', () => {
             }],
         });
 
-        render(<CommandModal generalId={7} onClose={vi.fn()} onToast={vi.fn()} />);
+        render(<CommandModal ruleProfile="SAMMO" generalId={7} onClose={vi.fn()} onToast={vi.fn()} />);
 
         fireEvent.click(await screen.findByRole('button', { name: '숙련전환' }));
         fireEvent.click(screen.getByRole('button', { name: '예약' }));

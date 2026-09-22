@@ -1031,12 +1031,24 @@ open class JdbcFlushExecutor(
      * `ScenarioImporter.insertGenerals`/`insertGeneralTurns`/`insertRankData`와 byte-faithful 일치:
      *  1. `general` 행 — V1+V6 컬럼 38개. `id`는 명시(integer PK, NOT serial). jsonb 컬럼
      *     (`last_turn`/`meta`/`penalty`)은 [PGobject]로 바인딩. `affinity`는 nullable.
-     *  2. `general_turn` 30행 — turn_idx 0..29, 모두 action_code/brief='휴식', arg='{}'
-     *     (ScenarioImporter.MAX_GENERAL_TURNS = 30 ring buffer 풀시드).
+     *  2. `general_turn` — SAMMO retains its 30-slot ring; HWIHA stores only explicit inputs
+     *     (at most 12 slots, with an empty list creating no reservation rows).
      *  3. `rank_data` 37행 — RANK_COLUMNS 전체, value=0, nation_id=0 (장수 생성 시 미리 시드 →
      *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
      */
     private fun generalCreateMany(worldId: WorldId, rows: List<GeneralCreateRow>) {
+        val hwiha = jdbc.queryForObject(
+            "SELECT config->>'ruleProfile' FROM world_state WHERE id = :world_id",
+            MapSqlParameterSource("world_id", worldId.value), String::class.java,
+        ) == "HWIHA"
+        if (hwiha) rows.forEach { row ->
+            require(row.initialTurns.size <= 12) { "HWIHA initial reservations exceed twelve phases" }
+            val actorId = (row.columns["id"] as Number).toInt()
+            require(row.initialTurns.all { it.actionCode == "action.enlist" &&
+                opensamguk.logic.input.HwihaEnlistmentInput.parse(actorId, it.argJson) != null }) {
+                "unsupported HWIHA initial reservation"
+            }
+        }
         // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
         val generalBatch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
@@ -1118,10 +1130,10 @@ open class JdbcFlushExecutor(
         val turnBatch = ArrayList<SqlParameterSource>(rows.size * ring)
         for (r in rows) {
             val id = r.columns["id"]
-            require(r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
+            require(hwiha || r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
                 "created general $id initial turn ring must contain exactly $ring slots"
             }
-            val slots = r.initialTurns.ifEmpty {
+            val slots = if (hwiha) r.initialTurns else r.initialTurns.ifEmpty {
                 List(ring) { InitialGeneralTurnRow("휴식", "{}", "휴식") }
             }
             for ((idx, slot) in slots.withIndex()) {
@@ -1144,7 +1156,7 @@ open class JdbcFlushExecutor(
             turnBatch.toTypedArray(),
         )
         requireExactlyOneAffected("general_turn INSERT", generalTurnAffected)
-        lastOps.add(FlushExecOp("general_turn", FlushVerb.CREATE_MANY, rows.size * ring))
+        lastOps.add(FlushExecOp("general_turn", FlushVerb.CREATE_MANY, turnBatch.size))
 
         // 3. rank_data 37행/장수 — RANK_COLUMNS 전체, value=0, nation_id=0 (insertRankData verbatim).
         val rankColumns = ScenarioImporter.RANK_COLUMNS
@@ -2798,6 +2810,17 @@ open class JdbcFlushExecutor(
                 .addValue("offset", ReservedTurnRepository.MAX_GENERAL_TURNS * 2)
                 .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS)
                 .addValue("turn_cnt", row.turnCnt)
+            // HWIHA consumes reservations instead of converting them into phantom rest inputs.
+            // The immutable world profile keeps SAMMO's existing thirty-slot ring unchanged.
+            if (row.turnCnt > 0) jdbc.update(
+                """
+                DELETE FROM general_turn t USING world_state w
+                 WHERE t.world_id = :world_id AND t.general_id = :general_id
+                   AND w.id = t.world_id AND w.config->>'ruleProfile' = 'HWIHA'
+                   AND t.turn_idx < :turn_cnt
+                """.trimIndent(),
+                params,
+            )
             jdbc.update(
                 """
                 UPDATE general_turn

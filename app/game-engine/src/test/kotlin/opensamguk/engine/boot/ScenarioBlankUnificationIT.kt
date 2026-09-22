@@ -767,7 +767,7 @@ class ScenarioBlankUnificationIT {
     private fun assertAllowed(outcome: ReservedTurnHandler.HandledTurn, context: String = "") {
         assertFalse(
             outcome.fellBack,
-            listOf(context, "${outcome.definition.key} fell back: ${outcome.denyReason}").filter { it.isNotBlank() }.joinToString(" "),
+            listOf(context, "${outcome.definition!!.key} fell back: ${outcome.denyReason}").filter { it.isNotBlank() }.joinToString(" "),
         )
     }
 

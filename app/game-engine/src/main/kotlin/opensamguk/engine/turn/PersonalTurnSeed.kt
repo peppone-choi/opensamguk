@@ -12,7 +12,7 @@ import opensamguk.logic.input.RuleProfile
  *   시드에서 출발하는 것과 모든 월드가 같은 hiddenSeed 를 쓰는 것을 시드가 직접 가른다.
  *   선례: V59 전장 진입 시드(`BattlefieldTurnHandler`).
  *
- * `year·month·phase` 는 호출부가 넘긴다. 현재는 세계 시계다(계약 미결 Q2).
+ * `year·month·phase` 는 호출부가 넘긴다. HWIHA는 현재 세계 순이며 같은 순 중복 소비는 영속 표식으로 막는다(계약 Q2, 2026-09-21).
  */
 internal fun personalTurnSeed(
     profile: RuleProfile,

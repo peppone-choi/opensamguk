@@ -51,6 +51,7 @@ class GeneralBugokReadEntity(
 )
 
 interface GeneralRetainerReadRawRepository : SpringDataRepository<GeneralRetainerReadEntity, WorldRowId> {
+    fun findByWorldIdOrderByIdAsc(worldId: Int): List<GeneralRetainerReadEntity>
     fun findByWorldIdAndMasterGeneralIdOrderByIdAsc(worldId: Int, masterGeneralId: Int): List<GeneralRetainerReadEntity>
     fun findByWorldIdAndGeneralIdIsNotNull(worldId: Int): List<GeneralRetainerReadEntity>
     fun existsByWorldIdAndGeneralId(worldId: Int, generalId: Int): Boolean
@@ -67,6 +68,8 @@ class RetainerReadRepository(
     processWorld: GameApiProcessWorld,
 ) {
     private val worldId: WorldId = processWorld.worldId
+
+    fun findAll(): List<GeneralRetainerReadEntity> = retainers.findByWorldIdOrderByIdAsc(worldId.value)
 
     fun boundGeneralIds(): Set<Int> = retainers.findByWorldIdAndGeneralIdIsNotNull(worldId.value).mapNotNull { it.generalId }.toSet()
 

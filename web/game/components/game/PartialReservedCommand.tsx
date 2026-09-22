@@ -12,6 +12,7 @@ import { api } from '../../lib/api';
 import { formatYearMonthPhase, TURN_PHASE_LABELS } from '../../lib/format';
 import type { ReservedSlot } from '../../lib/types';
 import type { MyBattlePlansResponse } from '../../types/game';
+import { useRuleProfile } from '../command/HwihaEnlistmentForm';
 import CommandModal from '../CommandModal';
 
 const DEFAULT_VIEW_TURNS = 36;
@@ -25,6 +26,7 @@ function errorMessage(e: unknown): string {
 }
 
 export interface PartialReservedCommandProps {
+    ruleProfile?: string | null;
     /** Caller's own general id (front-info.general.generalId) — required to reserve. */
     generalId: number;
     /** Caller's own nation id — scopes the nation picker. */
@@ -45,6 +47,7 @@ export interface PartialReservedCommandProps {
 
 export default function PartialReservedCommand({
     generalId,
+    ruleProfile,
     nationId,
     maxTurn,
     refreshKey: externalRefreshKey = 0,
@@ -54,7 +57,8 @@ export default function PartialReservedCommand({
     battlePlanHref,
     autorunNotice = false,
 }: PartialReservedCommandProps) {
-    const total = Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
+    const profile = useRuleProfile(ruleProfile);
+    const total = profile === 'HWIHA' ? 12 : Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
     const [slots, setSlots] = useState<ReservedSlot[]>([]);
     const [meta, setMeta] = useState<{
@@ -199,6 +203,7 @@ export default function PartialReservedCommand({
                                     type="button"
                                     className="rcp-edit-btn os-button os-button--ghost os-button--sm"
                                     aria-label={`${turnIdx + 1}턴 명령 편집`}
+                                    disabled={!profile}
                                     onClick={() => setEditTurnIdx(turnIdx)}
                                 >
                                     편집
@@ -208,6 +213,7 @@ export default function PartialReservedCommand({
                     );
                 })}
             </div>
+            {profile !== 'SAMMO' && <p role="status">{profile === 'HWIHA' ? '출사는 12순 안에서 한 건씩 예약합니다. 대량 예약·당기기·미루기·반복은 아직 제공하지 않습니다.' : '서버 규칙을 확인하지 못해 예약을 변경할 수 없습니다.'}</p>}
             <div className="rcp-actions">
                 <span className="rcp-actions__group">
                     <span className="rcp-actions__label">당기기/미루기</span>
@@ -221,7 +227,9 @@ export default function PartialReservedCommand({
                     <button
                         type="button"
                         className="os-button os-button--ghost os-button--sm"
+                        disabled={profile !== 'SAMMO'}
                         onClick={async () => {
+                            if (profile !== 'SAMMO') return;
                             try {
                                 const out = await api.commandQueue.push(generalId, pushAmount);
                                 if (out.status === 'AVAILABLE') {
@@ -249,7 +257,9 @@ export default function PartialReservedCommand({
                     <button
                         type="button"
                         className="os-button os-button--ghost os-button--sm"
+                        disabled={profile !== 'SAMMO'}
                         onClick={async () => {
+                            if (profile !== 'SAMMO') return;
                             try {
                                 const out = await api.commandQueue.repeat(generalId, repeatAmount);
                                 if (out.status === 'AVAILABLE') {
@@ -267,7 +277,7 @@ export default function PartialReservedCommand({
                         적용
                     </button>
                 </span>
-                <button type="button" className="os-button os-button--primary rcp-add" onClick={() => setEditTurnIdx(nowIdx)}>
+                <button type="button" className="os-button os-button--primary rcp-add" disabled={!profile} onClick={() => setEditTurnIdx(profile === 'HWIHA' ? Math.min(nowIdx, 11) : nowIdx)}>
                     명령 추가 · 편집
                 </button>
             </div>
@@ -275,6 +285,7 @@ export default function PartialReservedCommand({
                 <CommandModal
                     onClose={() => setEditTurnIdx(null)}
                     onToast={onToast}
+                    ruleProfile={profile}
                     generalId={generalId}
                     nationId={nationId}
                     turnIdx={editTurnIdx}

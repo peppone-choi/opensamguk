@@ -4,7 +4,7 @@
   "status": "DRAFT",
   "note": "「장수·휘하」 월드(ruleProfile=HWIHA)의 입력 원장. 계약: docs/superpowers/specs/2026-09-17-input-registry-contract.md. deliveryState PLANNED 는 핸들러가 아직 없다는 뜻이며, 그런 입력은 registry 가 NOT_DELIVERED 로 거절한다(휴식·성공으로 떨어지지 않는다).",
   "inputs": [
-    {"inputId": "action.enlist", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": ["che_임관", "che_랜덤임관", "che_장수대상임관"]},
+    {"inputId": "action.enlist", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_임관", "che_랜덤임관", "che_장수대상임관"]},
     {"inputId": "court.dispatch", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": ["che_발령"]},
     {"inputId": "court.dispatchReply", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},
     {"inputId": "placement.assign", "kind": "PLACEMENT", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},

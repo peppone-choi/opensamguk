@@ -38,7 +38,7 @@ class HumanAutorunLifecycleTest {
         val outcome = fixture.handler.handle(42, ReservedTurn("휴식", ""), year, month, "12:34")
 
         assertTrue(hookCalled, "strictly future autorun_limit creates PHP's GeneralAI for a human")
-        assertEquals("che_농지개간", outcome.definition.key, "the shared AI gate replaces the general reservation")
+        assertEquals("che_농지개간", outcome.definition!!.key, "the shared AI gate replaces the general reservation")
     }
 
     @Test
@@ -55,7 +55,7 @@ class HumanAutorunLifecycleTest {
         val outcome = fixture.handler.handle(42, ReservedTurn("휴식", ""), year, month, "12:34")
 
         assertFalse(hookCalled, "PHP uses strict currentYM < autorun_limit, never <=")
-        assertEquals("휴식", outcome.definition.key)
+        assertEquals("휴식", outcome.definition!!.key)
     }
 
     @Test

@@ -187,7 +187,7 @@ class HanExpandedCityCommandRoundTripIT {
             val handled = handler.handle(actor.id, ReservedTurn(command, "{\"destCityID\":$destination}"),
                 year = world.getState().currentYear + 5, month = 1, date = "12:00")
             assertFalse(handled.fellBack, "$command destination=$destination")
-            assertEquals(command, handled.definition.key)
+            assertEquals(command, handled.definition!!.key)
             assertEquals(destination, world.getGeneralById(actor.id)!!.cityId, "$command movement destination=$destination")
             assertEquals(nationId, world.getCityById(destination)!!.nationId, "$command owner destination=$destination")
             val afterOwners = owners(world.listCities())

@@ -1,5 +1,12 @@
 package opensamguk.engine.turn
 
+import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.HwihaEnlistmentHandler
+import opensamguk.logic.input.InputHandler
+import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.HwihaInputRegistry
+import opensamguk.logic.input.InputResolution
+import opensamguk.logic.input.RuleProfile
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.josa.JosaUtil
@@ -190,11 +197,14 @@ class ReservedTurnHandler(
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
 
+    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
+    private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
+
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
         val generalId: Int,
-        /** Resolved definition (the requested action, or [CommandRegistry.fallback] when denied). */
-        val definition: GeneralActionDefinition,
+        /** SAMMO definition; HWIHA outcomes must never fabricate a legacy rest definition. */
+        val definition: GeneralActionDefinition?,
         /** True when constraints denied/unknown and the turn fell back to 휴식. */
         val fellBack: Boolean,
         /** The deny reason (PHP `getFailString()`), or null on an allowed turn. */
@@ -217,7 +227,15 @@ class ReservedTurnHandler(
         val autorunMode: Boolean = false,
         val requestId: String? = null,
         val reservedActionCode: String? = null,
-    )
+        val hwihaOutcome: HwihaTurnOutcome? = null,
+    ) {
+        init {
+            require((definition == null) == (hwihaOutcome != null)) {
+                "exactly one legacy definition or HWIHA outcome required"
+            }
+            require(hwihaOutcome == null || !fellBack) { "HWIHA never falls back to legacy rest" }
+        }
+    }
 
     /**
      * Handle ONE reserved turn for [generalId] (the FLAT-action-code overload — kept for the P1–P4
@@ -243,6 +261,25 @@ class ReservedTurnHandler(
     fun handle(generalId: Int, reserved: ReservedTurn, year: Int, month: Int, date: String): HandledTurn {
         val general = world.getGeneralById(generalId)
             ?: error("ReservedTurnHandler: general $generalId not in world")
+        if (world.ruleProfile == RuleProfile.HWIHA || '.' in reserved.actionCode) {
+            var applied: HwihaTurnOutcome? = null
+            val inputs = HwihaInputRegistry(hwihaCatalog, mapOf(
+                HwihaEnlistmentHandler.INPUT_ID to InputHandler {
+                    applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month)
+                },
+            ))
+            val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
+                is InputResolution.Rejected -> HwihaTurnOutcome.Rejected(
+                    reserved.actionCode, resolution.reason.name, resolution.reason.message)
+                is InputResolution.Resolved -> {
+                    resolution.handler.handle()
+                    checkNotNull(applied) { "HWIHA handler must produce an execution outcome" }
+                }
+            }
+            return HandledTurn(generalId, null, false, (outcome as? HwihaTurnOutcome.Rejected)?.reason,
+                emptyList(), emptyMap(), requestId = reserved.requestId,
+                reservedActionCode = reserved.actionCode, hwihaOutcome = outcome)
+        }
         val cityId = general.cityId
         val nationId = general.nationId
         val baseRegistry = pipelineBuilder?.registryFor(general) ?: registry

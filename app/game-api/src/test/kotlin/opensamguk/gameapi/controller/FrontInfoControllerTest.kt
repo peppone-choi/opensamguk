@@ -253,6 +253,26 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `global exposes immutable world profile and leaves unavailable profiles unknown`() {
+        for (profile in listOf("SAMMO", "HWIHA")) {
+            seedWorld(config = mapOf("ruleProfile" to profile))
+            mockMvc().perform(get("/api/front-info"))
+                .andExpect(status().isOk).andExpect(jsonPath("$.global.ruleProfile").value(profile))
+        }
+        seedWorld()
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(jsonPath("$.global.ruleProfile").value("SAMMO"))
+        for (invalid in listOf(null, "unknown", 1)) {
+            seedWorld(config = mapOf("ruleProfile" to invalid))
+            mockMvc().perform(get("/api/front-info"))
+                .andExpect(jsonPath("$.global.ruleProfile").doesNotExist())
+        }
+        `when`(world.findAll()).thenReturn(emptyList())
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(jsonPath("$.global.ruleProfile").doesNotExist())
+    }
+
+    @Test
     fun `global exposes the current ten-day phase from world state`() {
         seedWorld(phase = 2)
 

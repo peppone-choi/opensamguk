@@ -370,4 +370,99 @@ class GeneralCreateFlushIT {
             ),
         )
     }
+    private fun seedHwihaWorld(id: Int) {
+        jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config)
+            VALUES (:id,'hwiha-create-fixture',200,1,3600,'{"ruleProfile":"HWIHA"}'::jsonb)""",
+            MapSqlParameterSource("id", id))
+    }
+
+    private fun hwihaGeneral(id: Int) = linkedMapOf<String, Any?>(
+            "id" to id,
+            "user_id" to null,
+            "name" to "부대장",
+            "nation_id" to 0,
+            "city_id" to 5,
+            "troop_id" to 0,
+            "npc_state" to 2,
+            "affinity" to 75,
+            "born_year" to 180,
+            "dead_year" to 300,
+            "picture" to "default.jpg",
+            "image_server" to 0,
+            "leadership" to 70,
+            "strength" to 65,
+            "intel" to 60,
+            "politics" to 50,
+            "charm" to 50,
+            "injury" to 0,
+            "experience" to 0,
+            "dedication" to 0,
+            "officer_level" to 1,
+            "gold" to 1_000,
+            "rice" to 1_000,
+            "crew" to 0,
+            "crew_type_id" to 1_100,
+            "train" to 0,
+            "atmos" to 0,
+            "weapon_code" to "None",
+            "book_code" to "None",
+            "horse_code" to "None",
+            "item_code" to "None",
+            "turn_time" to "2026-06-07T12:00:00Z",
+            "age" to 20,
+            "start_age" to 20,
+            "personal_code" to "None",
+            "special_code" to "None",
+            "special2_code" to "None",
+            "officer_city" to 0,
+            "last_turn" to "{}",
+            "meta" to "{}",
+            "penalty" to "{}",
+        )
+
+    @Test
+    fun `HWIHA runtime creation preserves empty and explicit sparse queues per world`() {
+        for ((world, turns) in listOf(
+            21 to emptyList(),
+            22 to listOf(InitialGeneralTurnRow("action.enlist", """{"mode":"RANDOM"}""", "출사")),
+        )) {
+            seedHwihaWorld(world)
+            executor.flush(FlushPayload(worldId = WorldId(world),
+                worldStateUpdate = linkedMapOf("id" to world, "current_year" to 200, "current_month" to 1),
+                createdGenerals = listOf(GeneralCreateRow(hwihaGeneral(9200), turns))))
+            val params = MapSqlParameterSource("world", world)
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id=:world AND id=9200", params, Int::class.java))
+            assertEquals(turns.size, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=:world AND general_id=9200", params, Int::class.java))
+            assertEquals(ScenarioImporter.RANK_COLUMNS.size, jdbc.queryForObject("SELECT count(*) FROM rank_data WHERE world_id=:world AND general_id=9200", params, Int::class.java))
+            if (turns.isNotEmpty()) {
+                val reserved = ReservedTurnRepository(jdbc).readReserved(WorldId(world), 9200, 0)
+                assertEquals(true, reserved.rowExists)
+                assertEquals("action.enlist", reserved.actionCode)
+                assertEquals("출사", reserved.brief)
+                assertEquals(false, ReservedTurnRepository(jdbc).readReserved(WorldId(world), 9200, 1).rowExists)
+            }
+        }
+    }
+
+    @Test
+    fun `HWIHA oversized legacy and malformed initial commands reject with full rollback`() {
+        val valid = InitialGeneralTurnRow("action.enlist", """{"mode":"RANDOM"}""", "출사")
+        val cases = listOf(List(13) { valid }, listOf(InitialGeneralTurnRow("휴식", "{}", "휴식")),
+            listOf(InitialGeneralTurnRow("action.enlist", """{"mode":"NATION","targetId":1.5}""", "출사")))
+        for ((index, turns) in cases.withIndex()) {
+            val world = 23 + index
+            seedHwihaWorld(world)
+            assertFailsWith<IllegalArgumentException> {
+                executor.flush(FlushPayload(worldId = WorldId(world),
+                    worldStateUpdate = linkedMapOf("id" to world, "current_year" to 200, "current_month" to 2),
+                    createdGenerals = listOf(GeneralCreateRow(hwihaGeneral(9201), turns))))
+            }
+            val params = MapSqlParameterSource("world", world)
+            assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id=:world", params, Int::class.java))
+            for (table in listOf("general", "general_turn", "rank_data")) {
+                assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id=:world", params, Int::class.java), table)
+            }
+        }
+    }
+
 }

@@ -205,6 +205,9 @@ class CommandReserveServiceIT {
         redisTemplate = StringRedisTemplate(connectionFactory)
         redisTemplate.afterPropertiesSet()
 
+        val worldReads = org.mockito.Mockito.mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+        org.mockito.Mockito.`when`(worldReads.findProcessWorld()).thenReturn(
+            opensamguk.gameapi.read.WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
         // deterministic clock + requestId so the assertions are byte-stable.
         service = CommandReserveService(
             reservedTurns = ReservedTurnRepository(jdbc),
@@ -214,6 +217,7 @@ class CommandReserveServiceIT {
             registry = CommandRegistry(GeneralActionPipeline()),
             processWorld = GameApiProcessWorld(1),
             profile = profile,
+            worldStates = worldReads,
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },
             transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),

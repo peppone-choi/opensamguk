@@ -78,6 +78,16 @@ object ScenarioJson {
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
         // 입력 registry 계약 §2: 시나리오가 선언한다. 없으면 null(시드가 SAMMO 로 기록), 모르는 글자는 실패.
         val ruleProfile = strOrNull(root["ruleProfile"])?.let { opensamguk.logic.input.RuleProfile.fromWorldConfig(it) }
+        val rawLords = root["hwihaLords"]
+        require("hwihaLords" !in root || ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            "hwihaLords requires HWIHA ruleProfile"
+        }
+        require("hwihaLords" !in root || rawLords is List<*>) { "hwihaLords must be an array of names" }
+        val lordNames = (rawLords as? List<*>).orEmpty().map {
+            require(it is String && it.isNotBlank()) { "hwihaLords requires nonempty names" }
+            it
+        }
+        require(lordNames.distinct().size == lordNames.size) { "duplicate hwihaLords name" }
         val seedContract = root["seedContract"]?.let(::decodeSeedContract)
         val imperialGeneralNames = arr(root["imperialGenerals"]).map(::strOf).toSet()
 
@@ -110,11 +120,19 @@ object ScenarioJson {
         fun decodeRoster(key: String, defaultNpcType: Int): List<ScenarioGeneral> =
             arr(root[key]).map {
                 val decoded = decodeGeneral(asList(it), nationIdsByToken, npcType = defaultNpcType)
-                if (decoded.name in imperialGeneralNames) decoded.copy(npcType = 7) else decoded
+                val general = if (decoded.name in imperialGeneralNames) decoded.copy(npcType = 7) else decoded
+                if (ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                    general.copy(hwihaLord = general.name in lordNames)
+                } else general
             }
         val baseGenerals = decodeRoster("general", defaultNpcType = 2)
         val generalEx = decodeRoster("general_ex", defaultNpcType = 2)
         val generalNeutral = decodeRoster("general_neutral", defaultNpcType = 6)
+
+        val roster = baseGenerals + generalEx + generalNeutral
+        for (name in lordNames) {
+            require(roster.count { it.name == name } == 1) { "hwihaLords name must identify exactly one general: $name" }
+        }
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -442,6 +460,8 @@ data class ScenarioGeneral(
     val legacyActiveAtStart: Boolean? = null,
     val npcType: Int = 2,
     val rawTuple: List<Any?> = emptyList(),
+    /** Explicit HWIHA scenario declaration; null preserves SAMMO metadata byte-for-byte. */
+    val hwihaLord: Boolean? = null,
 )
 
 data class ScenarioDiplomacy(

@@ -57,7 +57,7 @@ class OperationAdminZeroSimTest {
         // 2) 예약 명령 실경로: che_출병 → 전투 → 점령(ConquerCity) → 수비국 멸망 캐스케이드.
         val handled = handler.handle(100, ReservedTurn("che_출병", """{"destCityID":31}"""), year = 200, month = 1, date = "12:00")
         assertFalse(handled.fellBack)
-        assertEquals("che_출병", handled.definition.key)
+        assertEquals("che_출병", handled.definition!!.key)
         assertEquals(1, world.getCityById(31)!!.nationId, "목표 도시가 점령돼야 한다")
         assertEquals(31, world.getGeneralById(100)!!.cityId, "공격 장수가 목표 도시로 이동해야 한다")
         assertTrue(2 in recorder.deletedNationIds(), "수비국이 멸망해야 한다")

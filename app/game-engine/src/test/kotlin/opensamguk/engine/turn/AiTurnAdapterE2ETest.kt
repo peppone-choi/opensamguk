@@ -109,7 +109,7 @@ class AiTurnAdapterE2ETest {
         )
         val outcome = handler.handle(42, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
-        assertEquals(chosen.actionCode, outcome.definition.key, "the AI-chosen command resolved end-to-end")
+        assertEquals(chosen.actionCode, outcome.definition!!.key, "the AI-chosen command resolved end-to-end")
         assertTrue(outcome.autorunMode, "autorunMode set because the AI replaced the reserved 휴식")
     }
 
@@ -176,7 +176,7 @@ class AiTurnAdapterE2ETest {
         val outcome = handler.handle(10, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack, "AI-selected che_건국 must pass the live FULL gate")
-        assertEquals("che_건국", outcome.definition.key)
+        assertEquals("che_건국", outcome.definition!!.key)
         assertEquals(1, world.getNationById(10)!!.level, "resolved founding raises the wandering nation")
         assertEquals(10, world.getCityById(17)!!.nationId, "resolved founding claims the neutral city")
     }
@@ -204,7 +204,7 @@ class AiTurnAdapterE2ETest {
         val outcome = handler.handle(1334, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack)
-        assertEquals("휴식", outcome.definition.key)
+        assertEquals("휴식", outcome.definition!!.key)
         assertNull(outcome.denyReason)
     }
 
@@ -285,12 +285,12 @@ class AiTurnAdapterE2ETest {
                 val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, month, "12:34")
                 assertFalse(outcome.fellBack)
                 if (month == 1) {
-                    assertTrue(outcome.definition.key in setOf("che_징병", "che_모병"),
-                        "a ruler short of assault troops must recruit instead of disbanding: ${outcome.definition.key}")
+                    assertTrue(outcome.definition!!.key in setOf("che_징병", "che_모병"),
+                        "a ruler short of assault troops must recruit instead of disbanding: ${outcome.definition!!.key}")
                     assertTrue(world.getGeneralById(20)!!.crew >= 4000)
                     assertEquals(0, world.getNationById(20)!!.level)
                 }
-                outcome.definition.key
+                outcome.definition!!.key
             }
             assertEquals("che_건국", actions.last())
             assertEquals(1, world.getNationById(20)!!.level)
@@ -307,7 +307,7 @@ class AiTurnAdapterE2ETest {
             aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
         val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
         assertFalse(outcome.fellBack)
-        assertEquals("che_인재탐색", outcome.definition.key)
+        assertEquals("che_인재탐색", outcome.definition!!.key)
         assertEquals(0, world.getNationById(20)!!.level)
         assertEquals(20, world.getGeneralById(20)!!.nationId)
     }
@@ -326,7 +326,7 @@ class AiTurnAdapterE2ETest {
                 aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
             val recruit = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
             assertFalse(recruit.fellBack)
-            assertTrue(recruit.definition.key in setOf("che_징병", "che_모병"))
+            assertTrue(recruit.definition!!.key in setOf("che_징병", "che_모병"))
             assertTrue(world.getGeneralById(20)!!.crew >= 3002)
             if (crewType == availableType) {
                 assertEquals(crewType, world.getGeneralById(20)!!.crewTypeId)
@@ -339,7 +339,7 @@ class AiTurnAdapterE2ETest {
             adapter.beginGeneralTurn(20)
             val found = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
             assertFalse(found.fellBack)
-            assertEquals("che_건국", found.definition.key)
+            assertEquals("che_건국", found.definition!!.key)
             assertEquals(beforeFound - 3002, world.getGeneralById(20)!!.crew)
         }
     }
@@ -353,7 +353,7 @@ class AiTurnAdapterE2ETest {
             val reservedHandler = ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR)
             val uprising = reservedHandler.handle(20, ReservedTurn("che_거병", ""), YEAR, MONTH, "12:34")
             assertFalse(uprising.fellBack)
-            assertEquals("che_거병", uprising.definition.key)
+            assertEquals("che_거병", uprising.definition!!.key)
             val nationId = world.getGeneralById(20)!!.nationId
             assertTrue(nationId != 0)
             assertEquals(0, world.getNationById(nationId)!!.level)
@@ -362,7 +362,7 @@ class AiTurnAdapterE2ETest {
                 aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
             val recruit = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
             assertFalse(recruit.fellBack)
-            assertTrue(recruit.definition.key in setOf("che_징병", "che_모병"), recruit.definition.key)
+            assertTrue(recruit.definition!!.key in setOf("che_징병", "che_모병"), recruit.definition!!.key)
             assertTrue(world.getGeneralById(20)!!.gold < 1000)
             val join = reservedHandler.handle(21, ReservedTurn("che_임관", "{\"destNationID\":$nationId}"), YEAR, MONTH, "12:34")
             assertFalse(join.fellBack)
@@ -370,7 +370,7 @@ class AiTurnAdapterE2ETest {
             adapter.beginGeneralTurn(20)
             val found = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
             assertFalse(found.fellBack)
-            assertEquals("che_건국", found.definition.key)
+            assertEquals("che_건국", found.definition!!.key)
             assertEquals(1, world.getNationById(nationId)!!.level)
             return listOf(world.listGenerals(), world.listNations(), world.listCities(), world.peekLogs())
         }
@@ -405,7 +405,7 @@ class AiTurnAdapterE2ETest {
             aiHook = { id, reserved -> adapter.chooseGeneralTurn(id, reserved) })
         val outcome = handler.handle(20, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
         assertFalse(outcome.fellBack)
-        assertTrue(outcome.definition.key in setOf("che_징병", "che_모병"), outcome.definition.key)
+        assertTrue(outcome.definition!!.key in setOf("che_징병", "che_모병"), outcome.definition!!.key)
         assertTrue(world.getGeneralById(20)!!.crew >= 4000)
     }
 
@@ -488,7 +488,7 @@ class AiTurnAdapterE2ETest {
         val outcome = handler.handle(42, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
         assertFalse(outcome.fellBack, "AI-selected che_출병 must pass the live FULL gate and resolve")
-        assertEquals("che_출병", outcome.definition.key)
+        assertEquals("che_출병", outcome.definition!!.key)
         assertEquals(43, world.getCityById(31)!!.state, "resolved sortie marks the target city as in battle")
         assertEquals(0, world.getCityById(31)!!.term, "a conquered city resets the PHP city term")
         val cityPatch = handler.recorder.cityPatches().single { it.id == 31 }

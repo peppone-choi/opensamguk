@@ -36,7 +36,7 @@ class ReservedTurnWarDrainTest {
         )
 
         assertFalse(handled.fellBack)
-        assertEquals("che_출병", handled.definition.key)
+        assertEquals("che_출병", handled.definition!!.key)
         assertTrue(world.getGeneralById(100)!!.crew < 50_000)
         assertEquals(1100, world.getGeneralById(201)!!.crewTypeId)
         assertEquals(1200, world.getGeneralById(202)!!.crewTypeId)

@@ -27,8 +27,10 @@ import kotlin.test.assertTrue
     CityReadRepository::class,
     GeneralTurnReadRepository::class,
     NationTurnReadRepository::class,
+    RetainerReadRepository::class,
 )
 class WorldScopedReadRepositoryIT {
+    @Autowired lateinit var retainers: RetainerReadRepository
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var nations: NationReadRepository
@@ -95,6 +97,25 @@ class WorldScopedReadRepositoryIT {
         insertGeneral(id = 61, worldId = 2, nationId = 0, cityId = 0, userId = "7", npcState = 0)
 
         assertEquals(52, generals.findByUserId("7")?.id)
+    }
+
+    @Test
+    fun `enlistment projection includes unlinked cards only from process world in id order`() {
+        for (world in 1..2) {
+            seedWorld(world)
+            insertGeneral(id = 51, worldId = world, nationId = 0, cityId = 0)
+            insertGeneral(id = 52, worldId = world, nationId = 0, cityId = 0)
+            jdbc.update("""
+                INSERT INTO general_retainers
+                    (world_id,id,master_general_id,origin,general_id,name,relation,release_policy)
+                VALUES (?,2,51,'EXISTING',52,'linked','guest','MUTUAL'),
+                       (?,1,51,'RECRUITED',NULL,'unlinked','guest','MASTER_ONLY')
+            """.trimIndent(), world, world)
+        }
+        val rows = retainers.findAll()
+        assertEquals(listOf(1, 2), rows.map { it.id })
+        assertEquals(listOf(1, 1), rows.map { it.worldId })
+        assertEquals(listOf(null, 52), rows.map { it.generalId })
     }
 
     private fun seedWorld(id: Int) {

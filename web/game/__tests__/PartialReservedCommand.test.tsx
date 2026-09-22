@@ -35,7 +35,7 @@ describe('PartialReservedCommand', () => {
             date: '2026-06-22 07:12:00',
         });
 
-        render(<PartialReservedCommand generalId={10} nationId={1} maxTurn={4} onToast={vi.fn()} />);
+        render(<PartialReservedCommand ruleProfile="SAMMO" generalId={10} nationId={1} maxTurn={4} onToast={vi.fn()} />);
 
         await waitFor(() => expect(mocks.reservedCommands).toHaveBeenCalledWith(10));
 
@@ -73,16 +73,30 @@ describe('PartialReservedCommand', () => {
             });
 
         const { rerender } = render(
-            <PartialReservedCommand generalId={10} nationId={1} maxTurn={4} refreshKey={0} onToast={vi.fn()} />,
+            <PartialReservedCommand ruleProfile="SAMMO" generalId={10} nationId={1} maxTurn={4} refreshKey={0} onToast={vi.fn()} />,
         );
 
         await waitFor(() => expect(screen.getByText('농지개간')).toBeInTheDocument());
 
         rerender(
-            <PartialReservedCommand generalId={10} nationId={1} maxTurn={4} refreshKey={1} onToast={vi.fn()} />,
+            <PartialReservedCommand ruleProfile="SAMMO" generalId={10} nationId={1} maxTurn={4} refreshKey={1} onToast={vi.fn()} />,
         );
 
         await waitFor(() => expect(screen.getByText('상업투자')).toBeInTheDocument());
         expect(mocks.reservedCommands).toHaveBeenCalledTimes(2);
     });
+});
+
+it('HWIHA exposes exactly twelve slots and disables legacy queue operations', async () => {
+    mocks.reservedCommands.mockResolvedValue({result:true,slots:[]});
+    render(<PartialReservedCommand ruleProfile="HWIHA" generalId={10} maxTurn={36} onToast={vi.fn()}/>);
+    await waitFor(() => expect(document.querySelectorAll('.rcp-row')).toHaveLength(12));
+    for (const button of screen.getAllByRole('button', {name:'적용'})) expect(button).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('한 건씩 예약');
+});
+it('unknown profile disables reservation edits and legacy queues', async () => {
+    mocks.reservedCommands.mockResolvedValue({result:true,slots:[]});
+    render(<PartialReservedCommand ruleProfile={null} generalId={10} onToast={vi.fn()}/>);
+    await waitFor(() => expect(screen.getByRole('button', {name:'명령 추가 · 편집'})).toBeDisabled());
+    for (const button of screen.getAllByRole('button', {name:'적용'})) expect(button).toBeDisabled();
 });

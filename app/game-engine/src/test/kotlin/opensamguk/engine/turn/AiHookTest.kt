@@ -129,7 +129,7 @@ class AiHookTest {
 
         val outcome = handler.handle(42, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
-        assertEquals("che_농지개간", outcome.definition.key, "the AI-chosen command replaced the reserved 휴식")
+        assertEquals("che_농지개간", outcome.definition!!.key, "the AI-chosen command replaced the reserved 휴식")
         assertTrue(outcome.autorunMode, "autorunMode set because cmd changed (R-SEAM §2 :333-336)")
         assertFalse(outcome.fellBack, "the AI-chosen command resolved (not a fallback)")
     }
@@ -142,7 +142,7 @@ class AiHookTest {
 
         val outcome = handler.handle(42, ReservedTurn("che_농지개간", ""), YEAR, MONTH, "12:34")
 
-        assertEquals("che_농지개간", outcome.definition.key)
+        assertEquals("che_농지개간", outcome.definition!!.key)
         assertFalse(outcome.autorunMode, "autorunMode stays false when the AI returns the reserved command unchanged")
     }
 
@@ -158,7 +158,7 @@ class AiHookTest {
         val outcome = handler.handle(42, ReservedTurn("che_농지개간", ""), YEAR, MONTH, "12:34")
 
         assertFalse(hookCalled, "the AI hook never fires for a non-AI (npc==0) general")
-        assertEquals("che_농지개간", outcome.definition.key, "the human's reserved command resolves unchanged")
+        assertEquals("che_농지개간", outcome.definition!!.key, "the human's reserved command resolves unchanged")
         assertFalse(outcome.autorunMode, "a human turn is never autorunMode")
     }
 

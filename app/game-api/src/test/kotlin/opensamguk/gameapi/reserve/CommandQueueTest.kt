@@ -31,6 +31,43 @@ import kotlin.test.assertTrue
  */
 class CommandQueueTest {
 
+    private fun worldState(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
+        val repo = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+        org.mockito.Mockito.`when`(repo.findProcessWorld()).thenReturn(config?.let {
+            opensamguk.gameapi.read.WorldStateReadEntity(config = it)
+        })
+        return repo
+    }
+
+    @Test fun `hwiha missing and corrupt world profiles block all six queue mutations`() {
+        for (config in listOf(null, mapOf("ruleProfile" to "HWIHA"), mapOf("ruleProfile" to null),
+            mapOf("ruleProfile" to 1), mapOf("ruleProfile" to "unknown"))) {
+            val repo = mock(ReservedTurnRepository::class.java)
+            val inbox = RecordingInbox()
+            val results = RecordingResults()
+            val queue = CommandQueueService(repo, registry, inbox, results, TestTransactions,
+                GameApiProcessWorld(1), worldState(config))
+            val calls: List<() -> Any> = listOf(
+                { queue.reserveBulkGeneral(10, emptyList()) },
+                { queue.reserveBulkNation(10, 1, 12, emptyList()) },
+                { queue.pushGeneral(10, 1) }, { queue.repeatGeneral(10, 1) },
+                { queue.pushNation(10, 1, 12, 1) }, { queue.repeatNation(10, 1, 12, 1) },
+            )
+            for (call in calls) assertFailsWith<CommandQueueService.CommandQueueDenied> { call() }
+            org.mockito.Mockito.verifyNoInteractions(repo)
+            assertTrue(inbox.accepted.isEmpty())
+            assertTrue(results.rows.isEmpty())
+        }
+    }
+
+    @Test fun `absent profile retains legacy thirty slot queue behavior`() {
+        val repo = RecordingReservedTurns()
+        val queue = CommandQueueService(repo, registry, RecordingInbox(), RecordingResults(), TestTransactions,
+            GameApiProcessWorld(1), worldState(emptyMap()))
+        queue.pushGeneral(10, 12)
+        assertEquals(12, repo.pushGeneral.single().cnt)
+    }
+
     private val registry = CommandRegistry(GeneralActionPipeline())
     private fun service(
         repo: ReservedTurnRepository,
@@ -42,9 +79,39 @@ class CommandQueueTest {
         inbox,
         results,
         TestTransactions,
-        GameApiProcessWorld(1),
+        GameApiProcessWorld(1), worldStates = worldState(),
         requestIds = { "queue-req" },
+        readGeneralAction = { _, _ -> "휴식" },
     )
+
+    @Test fun `repeat rejects dotted input before queue writes`() {
+        val repo = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val queue = CommandQueueService(repo, registry, inbox, results, TestTransactions,
+            GameApiProcessWorld(1), worldState(), readGeneralAction = { _, _ -> "action.enlist" })
+        assertFailsWith<CommandQueueService.CommandQueueDenied> { queue.repeatGeneral(10, 1) }
+        assertTrue(inbox.accepted.isEmpty())
+        assertTrue(results.rows.isEmpty())
+        assertTrue(repo.repeatGeneral.isEmpty())
+        assertFailsWith<CommandQueueService.CommandQueueDenied> {
+            queue.reserveBulkGeneral(10, listOf(CommandQueueService.CommandBulkItem("action.enlist", listOf(0), null)))
+        }
+        assertTrue(inbox.accepted.isEmpty())
+    }
+
+    @Test fun `repository race rejection is mapped before accepting queue mutation`() {
+        val repo = mock(ReservedTurnRepository::class.java)
+        org.mockito.Mockito.doThrow(ReservedTurnRepository.UnsupportedInputCopy()).`when`(repo)
+            .repeatGeneralTurn(WorldId(1), 10, 1)
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val queue = CommandQueueService(repo, registry, inbox, results, TestTransactions,
+            GameApiProcessWorld(1), worldState(), readGeneralAction = { _, _ -> "che_농지개간" })
+        assertFailsWith<CommandQueueService.CommandQueueDenied> { queue.repeatGeneral(10, 1) }
+        assertTrue(inbox.accepted.isEmpty())
+        assertTrue(results.rows.isEmpty())
+    }
 
     private object TestTransactions : TransactionOperations {
         override fun <T : Any?> execute(action: TransactionCallback<T>): T? =

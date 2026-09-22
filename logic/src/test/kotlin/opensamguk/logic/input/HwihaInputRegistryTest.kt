@@ -13,7 +13,8 @@ import opensamguk.logic.stats.GeneralActionPipeline
 /** 계약: docs/superpowers/specs/2026-09-17-input-registry-contract.md §2·§5·§8. */
 class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
-    private val registry = HwihaInputRegistry(catalog, handlers = emptyMap())
+    private var enlistCalls = 0
+    private val registry = HwihaInputRegistry(catalog, handlers = mapOf("action.enlist" to InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
     private fun repoRoot(): java.nio.file.Path {
@@ -64,16 +65,20 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `catalogued input without a handler is NOT_DELIVERED, not success`() {
-        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, "action.enlist"))
+        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, "placement.assign"))
     }
 
     @Test
     fun `input with a registered handler resolves`() {
-        val handler = InputHandler { }
-        val wired = HwihaInputRegistry.forWiringTest(catalog, mapOf("action.enlist" to handler))
+        var called = false
+        val handler = InputHandler { called = true }
+        val wired = HwihaInputRegistry(catalog, mapOf("action.enlist" to handler))
         val resolved = assertIs<InputResolution.Resolved>(wired.resolve(RuleProfile.HWIHA, "action.enlist"))
         assertEquals(InputKind.GENERAL_ACTION, resolved.entry.kind)
         assertTrue(resolved.handler === handler)
+        resolved.handler.handle()
+        assertTrue(called)
+        assertEquals(InputDeliveryState.HANDLER_READY, resolved.entry.deliveryState)
     }
 
     @Test
@@ -87,7 +92,7 @@ class HwihaInputRegistryTest {
     fun `ledger delivery state and handler wiring must agree`() {
         // PLANNED 인데 핸들러가 있으면(또는 그 반대면) 원장과 코드가 어긋난 것이다.
         assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry(catalog, mapOf("action.enlist" to InputHandler { }))
+            HwihaInputRegistry(catalog, emptyMap())
         }
     }
 

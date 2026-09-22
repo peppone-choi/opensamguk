@@ -72,6 +72,10 @@ class WorldSnapshotLoader(
     private val waterTopologyLoader: (HanWorldVariant) -> StrategicTopologySnapshot = { historicalArtifacts.artifacts(it).projection.topology },
     private val hanVariantSelector: (Collection<Int>, Collection<HanWorldTopologyPin>) -> HanWorldVariant =
         { ids, pins -> historicalArtifacts.resolve(ids, pins).variant },
+    private val cityLandProvinceLoader: (HanWorldVariant) -> Map<Int, String> = { variant ->
+        historicalArtifacts.artifacts(variant).projection.bindingsByCityId
+            .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap()
+    },
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -204,8 +208,7 @@ class WorldSnapshotLoader(
 
     /** 城 → 省 (부팅이 고른 변형의 projection). 외부 거점처럼 省 없는 城은 빠진다 — HWIHA 부팅 검사가 잡는다. */
     private fun cityLandProvinceBindings(state: TurnWorldState): Map<Int, String> =
-        historicalArtifacts.artifacts(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
-            .projection.bindingsByCityId.mapNotNull { (city, b) -> b.landProvinceId?.let { city to it } }.toMap()
+        cityLandProvinceLoader(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
 
     private fun spatialTopologyFor(state: TurnWorldState): StrategicTopologySnapshot? {
         // Small historical test snapshots may omit map identity; the production map validator still rejects them.

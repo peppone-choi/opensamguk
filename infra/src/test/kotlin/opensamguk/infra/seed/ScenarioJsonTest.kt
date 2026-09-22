@@ -10,6 +10,50 @@ import kotlin.test.assertTrue
 class ScenarioJsonTest {
 
     @Test
+    fun `hwiha lord declarations are explicit unique and profile scoped`() {
+        val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
+        val old = ScenarioJson.loadScenario("{" + raw)
+        val name = old.baseGenerals.first().name
+        fun parse(declaration: String, profile: String = "HWIHA") =
+            ScenarioJson.loadScenario("{\"ruleProfile\":\"$profile\",\"hwihaLords\":$declaration," + raw)
+        val encoded = opensamguk.infra.persistence.MetaJson.encode(listOf(name))
+        val declared = parse(encoded)
+        assertTrue(declared.generals.single { it.name == name }.hwihaLord == true)
+        assertTrue(declared.generals.filter { it.name != name }.all { it.hwihaLord == false })
+        assertTrue(old.generals.all { it.hwihaLord == null })
+        for (bad in listOf("null", "42", "[42]", "[\"\"]", "[\"no-such-general\"]",
+            opensamguk.infra.persistence.MetaJson.encode(listOf(name, name)))) {
+            assertFailsWith<IllegalArgumentException> { parse(bad) }
+        }
+        assertFailsWith<IllegalArgumentException> { parse(encoded, "SAMMO") }
+        assertFailsWith<IllegalArgumentException> { parse("null", "SAMMO") }
+        val duplicate = opensamguk.infra.persistence.MetaJson.decode("{" + raw).toMutableMap()
+        duplicate["ruleProfile"] = "HWIHA"
+        duplicate["hwihaLords"] = listOf(name)
+        duplicate["general_ex"] = listOf((duplicate["general"] as List<*>).first())
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(duplicate))
+        }
+        val deferred = declared.copy(
+            generals = declared.generals.map { if (it.name == name) it.copy(appearanceYear = declared.startYear + 1, deadYear = declared.startYear + 20) else it },
+            baseGenerals = declared.baseGenerals.map { if (it.name == name) it.copy(appearanceYear = declared.startYear + 1, deadYear = declared.startYear + 20) else it },
+        )
+        val deferredError = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(scenario = deferred, cities = emptyList()).validateSeedContract()
+        }
+        assertTrue(deferredError.message!!.contains("declared HWIHA lord"))
+        val lord = declared.baseGenerals.first()
+        val excluded = declared.copy(
+            baseGenerals = declared.baseGenerals.drop(1),
+            generalEx = declared.generalEx + lord,
+        )
+        val excludedError = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(scenario = excluded, cities = emptyList(), extendedGeneral = false).validateSeedContract()
+        }
+        assertTrue(excludedError.message!!.contains("declared HWIHA lord"))
+    }
+
+    @Test
     fun `scenario_1 uses the canonical Han world contract`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1.json"))
 

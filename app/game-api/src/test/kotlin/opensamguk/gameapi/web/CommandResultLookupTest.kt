@@ -199,6 +199,48 @@ class CommandResultLookupTest {
     }
 
     @Test
+    fun `typed hwiha rejection replaces pending admission and preserves reason code`() {
+        val requestId = "req-hwiha-rejected"
+        stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "reservationAccepted", ok = true, commandKind = "RESERVED_TURN",
+            actionCode = "placement.assign", generalId = 10, turnIdx = 0)))
+        stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
+            actionCode = "placement.assign", generalId = 10, turnIdx = 0,
+            code = "NOT_DELIVERED", reason = "아직 제공되지 않는 입력입니다."), committedWorldVersion = 35))
+        readOwnResult(requestId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(false))
+            .andExpect(jsonPath("$.type").value("executionRejected"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(35))
+            .andExpect(jsonPath("$.result.actionCode").value("placement.assign"))
+            .andExpect(jsonPath("$.result.code").value("NOT_DELIVERED"))
+            .andExpect(jsonPath("$.reason").value("아직 제공되지 않는 입력입니다."))
+    }
+
+    @Test
+    fun `enlistment execution recheck rejection supersedes accepted reservation`() {
+        val requestId = "req-enlist-rechecked"
+        stubKey(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "reservationAccepted", ok = true, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0)))
+        stubDurable(requestId, storedPayload(requestId, CommandLifecycleResult(
+            type = "executionRejected", ok = false, commandKind = "RESERVED_TURN",
+            actionCode = "action.enlist", generalId = 10, turnIdx = 0,
+            code = opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.name, reason = opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.message), committedWorldVersion = 35))
+        readOwnResult(requestId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(false))
+            .andExpect(jsonPath("$.type").value("executionRejected"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(35))
+            .andExpect(jsonPath("$.result.actionCode").value("action.enlist"))
+            .andExpect(jsonPath("$.result.code").value("TARGET_NOT_LORD"))
+            .andExpect(jsonPath("$.reason").value(opensamguk.logic.input.EnlistmentFailure.TARGET_NOT_LORD.message))
+    }
+
+    @Test
     fun `queue mutation remains a resolved admission and is not presented as execution`() {
         val queueMutation = storedPayload(
             "req-queue",
@@ -356,6 +398,22 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.requestId").value("req-other"))
             .andExpect(jsonPath("$.ok").doesNotExist())
             .andExpect(jsonPath("$.result").doesNotExist())
+    }
+
+    @Test
+    fun `explicit submitter keeps result ownership after the general changes accounts`() {
+        val requestId = "req-transferred-general"
+        stubResolvedPayload(requestId)
+        `when`(commandInbox.findRequestOwner(WorldId(1), requestId))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = OWNER_USER_ID.toInt()))
+        `when`(resolver.resolveGeneralId(99L)).thenReturn(10)
+        `when`(resolver.resolveGeneralId(OWNER_USER_ID)).thenReturn(null)
+        mockMvc().perform(get("/api/command/result/{requestId}", requestId).with(principal(99L)))
+            .andExpect(status().isOk).andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.result").doesNotExist())
+        mockMvc().perform(get("/api/command/result/{requestId}", requestId).with(principal(OWNER_USER_ID)))
+            .andExpect(status().isOk).andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(true))
     }
 
     @Test

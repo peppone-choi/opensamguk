@@ -122,7 +122,12 @@ internal fun parseInputId(raw: String): Pair<InputKind, String>? {
     return kind to raw.substring(dot + 1)
 }
 
-enum class InputRejection { MALFORMED_INPUT_ID, WRONG_RULE_PROFILE, UNKNOWN_INPUT, NOT_DELIVERED }
+enum class InputRejection(val message: String) {
+    MALFORMED_INPUT_ID("입력 식별자가 올바르지 않습니다."),
+    WRONG_RULE_PROFILE("이 월드의 규칙에서 사용할 수 없는 입력입니다."),
+    UNKNOWN_INPUT("등록되지 않은 입력입니다."),
+    NOT_DELIVERED("아직 제공되지 않는 입력입니다."),
+}
 
 /** 핸들러의 실제 시그니처는 엔진 배선 단계에서 정한다(계약 §6). 여기서는 등록 여부만 다룬다. */
 fun interface InputHandler {

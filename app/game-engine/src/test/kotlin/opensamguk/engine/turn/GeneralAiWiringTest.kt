@@ -158,7 +158,7 @@ class GeneralAiWiringTest {
 
         val outcome = handler.handle(42, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
 
-        assertEquals("che_상업투자", outcome.definition.key, "the AI-chosen command replaced the reserved 휴식")
+        assertEquals("che_상업투자", outcome.definition!!.key, "the AI-chosen command replaced the reserved 휴식")
         assertTrue(outcome.autorunMode, "autorunMode set because the AI changed the command (R-SEAM §2)")
         assertFalse(outcome.fellBack, "the AI-chosen command resolved (not a fallback)")
     }

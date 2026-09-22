@@ -80,6 +80,22 @@ class CommandControllerSecurityTest {
     @AfterEach
     fun clearAuth() = SecurityContextHolder.clearContext()
 
+    @Test fun `hwiha enlistment checks ownership and preserves typed admission denial`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        val body = """{"mode":"RANDOM"}"""
+        mockMvc().perform(post("/api/command/action.enlist").param("generalId", "999")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden)
+        verifyNoInteractions(reserve)
+        `when`(reserve.reserveForOwner(10, "action.enlist", 0, body, 7))
+            .thenThrow(opensamguk.gameapi.reserve.HwihaAdmissionDenied("POLICY_UNAVAILABLE", "정책 미확인"))
+        mockMvc().perform(post("/api/command/action.enlist").param("generalId", "10")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk).andExpect(jsonPath("$.code").value("POLICY_UNAVAILABLE"))
+            .andExpect(jsonPath("$.reason").value("정책 미확인"))
+        verify(reserve).reserveForOwner(10, "action.enlist", 0, body, 7)
+    }
+
     @Test
     fun `anonymous battlefield single reservation is rejected before any service call`() {
         mockMvc().perform(post("/api/command/che_전장이동").param("generalId", "10")

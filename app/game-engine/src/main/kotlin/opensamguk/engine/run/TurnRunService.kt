@@ -626,15 +626,18 @@ open class TurnRunService(
         committedWorldVersion: Long,
     ): List<CommandResultRow> = mapNotNull { handled ->
         val requestId = handled.requestId ?: return@mapNotNull null
-        val ok = !handled.fellBack
+        val hwiha = handled.hwihaOutcome
+        val rejected = hwiha as? opensamguk.engine.hwiha.HwihaTurnOutcome.Rejected
+        val ok = if (hwiha != null) hwiha is opensamguk.engine.hwiha.HwihaTurnOutcome.Applied else !handled.fellBack
         val result = CommandLifecycleResult(
             type = if (ok) "executionApplied" else "executionRejected",
             ok = ok,
             commandKind = CommandInboxRepository.CommandKind.RESERVED_TURN.name,
-            actionCode = handled.reservedActionCode ?: handled.definition.key,
+            actionCode = hwiha?.inputId ?: handled.reservedActionCode ?: checkNotNull(handled.definition).key,
             generalId = handled.generalId,
             turnIdx = 0,
-            reason = handled.denyReason,
+            reason = rejected?.reason ?: handled.denyReason,
+            code = rejected?.code,
         )
         val sentAt = Instant.now()
         val envelope = TurnDaemonEventEnvelope(

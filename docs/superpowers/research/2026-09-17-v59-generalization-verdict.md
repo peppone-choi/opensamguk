@@ -1,15 +1,27 @@
 # V59 일반화 판정 — 3단계(한 州 슬라이스) 착수 조건
 
 > 작성일: 2026-09-17 · 기준 커밋: origin/main `11fcef63`
-> 상태: **판정 문서(코드 변경 없음).** 포트폴리오 계획 `docs/superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md:200` 의 3단계 착수 조건 넷 가운데 「V59 일반화 판정」이다(같은 계획 69행의 판정 항목).
+> 상태: **2026-09-20 위임 범위 판정 반영(코드 변경 없음).** 포트폴리오 계획 `docs/superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md:200` 의 3단계 착수 조건 넷 가운데 「V59 일반화 판정」이다(같은 계획 69행의 판정 항목).
 > 물음: 재설계 spec(`docs/superpowers/specs/2026-09-17-general-and-retinue-campaign-redesign.md`, 아래 「spec」) §10·§13.1 이 S3 전에 판정하라고 남긴 것 — V59 전장(및 V49/V50·V55–V58)을 새 설계 1층에 **그대로 쓰는가 / 일반화하는가 / 버리는가.**
 > 방법: 마이그레이션 SQL 과 main 소스만 읽었다. 테스트는 돌리지 않았다. 확인하지 못한 것은 §5 UNKNOWN 에 적었다. 이 문서의 어떤 숫자도 게이트 임계값이 아니다.
 
 경로 약어: `MIG/` = `infra/src/main/resources/db/migration/`, `ENG/` = `app/game-engine/src/main/kotlin/opensamguk/engine/`, `API/` = `app/game-api/src/main/kotlin/opensamguk/gameapi/`, `LOGIC/` = `logic/src/main/kotlin/opensamguk/logic/`, `INFRA/` = `infra/src/main/kotlin/opensamguk/infra/`, `WIRE` = `common/src/main/kotlin/opensamguk/common/wire/TurnDaemonCommand.kt`, `FLUSH` = `INFRA/persistence/JdbcFlushExecutor.kt`, `REC` = `ENG/turn/ChangeRecorder.kt`, `HCC` = `LOGIC/memory/HotColdCatalog.kt`.
 
+## 2026-09-20 현재 판정
+
+사용자 “그런 결정은 너가 판단해도 돼”의 게임 기획 위임으로 아래 재사용 범위를 확정한다. 검토 기준은 `2b04c881`과 재설계 §5.1.1의2026-09-18 격자 승인이다. 최초 조사의 표·행 번호는2026-09-17 스냅샷이며 현재 구현 완료 목록이 아니다.
+
+- V59의 장판·관도 카탈로그, 귀환 城, 점 전투는 기존 SAMMO 경로로 보존한다. HWIHA 격자 조우를 이 커널로 대신하지 않는다.
+- 省 정체성, 위상·카탈로그 핀 검증 방식, 위치 CAS, `ChangeRecorder → JdbcFlushExecutor` 저장 경로와 도시 행동 차단 지점은 재사용한다. 기존 `general_spatial_position`은 장수 위치이며 독립 부대 카드의 식별자를 장수 ID로 위장해 저장하지 않는다.
+- HWIHA는 실제 省 칸에서 파생한 격자·패·배치·회차·조건부 명령 및 해당 리플레이를 구현한다. 격자 세부 수치는 후속 계약에서 결정하고 독립 검토한다. 이름 있는 V59 전장을 별도 격자 프리셋으로 승격하는 것은 첫 절편에 포함하지 않는다.
+- V57 城 강공 기록은 보존한다. 새 야전 기록을 수용하려고 기존 열의 NULL 제약을 푸는 방안을 여기서 확정하지 않는다.
+- 현재 위치 기반은 `ScenarioImporter.insertGeneralPositions`, `InMemoryTurnWorld.isGeneralAtCity`, `ChangeRecorder.moveGeneral`에 이미 있으므로 §4.3-1을 새로 복제하지 않는다. 이후 작업은 실제 빠진 행군·군단·입력 연결을 소비자로 추가한다.
+
+이 판정은 S3 착수의 V59 재사용 범위를 해소하며 격자 전투나 S3 전체의 완료 증거는 아니다.
+
 ## 0. 한 줄 판정
 
-**저장·동시성 뼈대는 그대로 쓰고, V59 의 「이름 붙은 전장」 의미층은 省 단위 조우의 선례로만 남기며 일반화의 출발점으로 삼지 않는다.** 일반화가 필요한 것은 V59 자체가 아니라 그 밑의 V50 `general_spatial_position` 을 「전장에 들어간 장수만 갖는 선택 행」에서 「모든 군단의 정본 위치」로 올리는 일이다. 버릴 표는 없다.
+**저장·동시성 뼈대는 그대로 쓰고, V59 의 「이름 붙은 전장」 의미층은 省 단위 조우의 선례로만 남기며 일반화의 출발점으로 삼지 않는다.** V50 장수 위치의 HWIHA 정본화 기반은 이미 구현되어 있다. 독립 부대 카드의 위치와 군사 점유는 장수 위치와 구분해 연결한다. 버릴 표는 없다.
 
 ## 1. 마이그레이션별 표·제약과 코드 경로
 
@@ -55,10 +67,10 @@ V59 의 부수 경로(전장 주둔이 다른 코드에 미치는 곳): 도시 �
 | R2 | 모든 군단이 省 위에 서 있다(§5.1 4단계 「경로를 이동량만큼 진행」, §6.2 「위치 省」) | 위치 행을 **만드는 곳은 전장 진입뿐**이다. 시나리오 시드도, 일반 이동도 행을 만들지 않는다. 도시 이동은 **이미 행이 있을 때만** 따라 고친다 | **일반화 필요** | 쓰기 호출자 전수: `ENG/war/BattlefieldTurnHandler.kt:80-82`, `ENG/turn/BattlefieldCityMembership.kt:22,27,29`(행이 없으면 17행에서 건너뜀). 표 참조 전수(§1.2)에 시드 경로 없음. → S3 월드 개시 때 전 장수 위치 행을 시드하고, 위치의 정본을 `general.city_id` 에서 이 표로 옮기는 결정이 선행돼야 한다 |
 | R3 | 縣 단위 행군: 거리×지형 계수, 강·도로·관문(§7), 여러 순에 걸친 부임 이동(§2.4, §4 배치) | 省 그래프와 경로 탐색은 있다(`StrategicPathResolver.resolve`·`reachableNodes`). 그러나 육지 간선 비용은 전부 `movementCost = 1` 이고, 엔진에서 이 경로 탐색을 **행군**에 쓰는 호출자는 없다. 호출자는 보급 도달성, game-api 읽기·v2 사전검사, 그리고 **엔진의 v2 도시 간 수송**(`V2CityTransportHandler` → `resolveImmediateCityTransportRoute` → `projection.resolve`) 넷이다 — 마지막 것이 省 행군이 재사용할 가장 가까운 선례다(교차 비평 정정: 처음엔 `StrategicPathResolver` 이름으로만 grep 해 래퍼의 호출자를 놓쳤다). 「진행 중인 경로」를 담을 열이 없다 | **일반화 필요(새 코드 + 새 열/표)** | `LOGIC/world/HanStrategicRouteProjection.kt:100-110`(비용 1), `:44-59`, 호출자 `LOGIC/world/StrategicSupplyNetwork.kt:59`, `API/read/StrategicTopologyReadSource.kt`, `API/v2/V2CommandPrecheckService.kt:39`, `ENG/v2/V2CityTransportHandler.kt:81`, `LOGIC/v2/command/V2CityTransportRoutes.kt:13-20`. 전장 이동 규칙 자체가 「Same-node deployment only. Cross-province … need separately reviewed movement」라고 적는다 (`LOGIC/world/BattlefieldMovementRules.kt:26`) |
 | R4 | 조우: 적 군단이 있는 省 진입·설치 계책 省·요격 범위(§5.1 4단계, §5.2 기본값) | 조우 판정 단위가 省이 아니라 **카탈로그 전장 id** 다. 같은 省에 있어도 같은 `siteId` 에 주둔한 장수만 상대가 된다. 카탈로그는 장판·관도 2곳 | **폐기(조우 트리거로서)** — 선례로만 보존 | `BattlefieldTurnHandler.kt:47-50`(occupants = 같은 siteId), `infra/src/main/resources/map/han-world-v3-battlefields.json`(sites 2건: changban·guandu), `INFRA/seed/HistoricalBattlefieldCatalog.kt:49-59` |
-| R5 | 야전 전투 해결: 결정론, 城 보정 없음(§5.1 5단계) | `processFieldWar` 는 장수 대 장수, 城 미구성·도시 보너스 없음·정산 없음, 시드는 (hiddenSeed, world, 연, 월, **순**, 장수, site, 카탈로그 해시, revision) | **재사용(전투 커널)** + 시드 입력만 교체 | `LOGIC/war/ProcessFieldWar.kt:28-60`, 시드 `BattlefieldTurnHandler.kt:73-74` — `site.id`·`catalog.contentHash` 자리를 省 id·위상 해시로 바꾸면 된다 |
-| R6 | 조우 전투에 지형·결속·사기·보급 보정(§5.1 5단계, §7) | 야전 커널에 지형·보급 입력이 없다(`cityLevel = 0`, 입력은 장수·병종·기술·파이프라인뿐) | **일반화 필요(새 입력)** | `ProcessFieldWar.kt:11-16,43-46`. spec §0 표도 「전투·명령 코드에서 terrain 참조 0건」이라 적는다 |
+| R5 | 격자 조우의 결정론 해결(§5.1.1) | `processFieldWar`는 칸 없는 장수 대 장수 점 전투다 | **SAMMO 보존, HWIHA 해결기로 재사용하지 않음** | 시드 구성·핀 검증 방식만 참고하며 격자·패·회차를 새로 구현한다 |
+| R6 | 지형·결속·사기·보급과 격자 위치 관계 | 기존 커널에는 칸·배치·측면·도하 관계가 없다 | **새 격자 해결 경로 필요** | 지형·보급 인자만 덧붙여 격자 전투로 표시하지 않는다 |
 | R7 | 공격 봉인 계획 + 방어 대응·진형을 함께 공개(§5.1 5단계), 「야전 조우·방어 대응·진형은 새 스키마」(§5.1 거리 절) | `battle_plan` 은 공격자·`target_city_id NOT NULL`·stance 2종·퇴각 2조건. 전장 핸들러는 계획을 **전혀 읽지 않는다** | **재사용(城 강공 한정) + 신규** | `MIG/V57:9,26-27`, `LOGIC/war/plan/BattlePlanRules.kt:16-18,84-91`; `BattlefieldTurnHandler.kt` 에 `battlePlan` 참조 없음. spec 판단과 일치 — 야전 계획은 새 표로 |
-| R8 | 리플레이(§5.1 8단계), 「V57 리플레이 형식 재사용」 | `battle_replay` 는 `defender_city_id`·`defender_city_name` NOT NULL, 공격자 1인. **야전 전투는 리플레이를 쓰지 않고** 시드의 SHA-256 지문을 로그 문자열에만 남긴다 | **일반화 필요** | `MIG/V57:45-46`, `BattlefieldTurnHandler.kt:98,104`. 야전 기록을 넣으려면 `defender_city_*` 를 NULL 허용으로 풀고 省 id·방어측 장수 목록 열(또는 JSON)을 더해야 한다. 계획 #166·#199 가 이 일이다(포트폴리오 계획 72·77행) |
+| R8 | 격자 리플레이(§5.1.1·§17) | V57은 城 강공 기록이며 V59는 시드 지문 로그만 남긴다 | **기존 보존 + 새 기록 계약** | 핀·파생 격자·배치·회차별 위치·조건 발동을 기록한다. V57 NULL 제약 변경은 선결하지 않는다 |
 | R9 | 진 쪽은 **온 쪽으로** 물러난다(§5.1 5단계) | 패한 수비는 `battlefield_return_city_id` 로, 즉 **진입했던 城** 으로 귀환한다. 城 하나가 전장마다 고정(`ingressCityId`)이고 진입·이탈 모두 그 城에 있어야 한다 | **폐기(귀환 城 모델)** | `MIG/V59:5,12`, `LOGIC/world/GeneralPositionState.kt:6-16`(「the city's identity is only a return origin」), `BattlefieldMovementRules.kt:49-51,67-68`. 省 행군에서는 「직전 省」이 물러날 곳이며 城이 아니다 |
 | R10 | 공성: 방어군 없는 적 城 앞이면 강공 또는 포위 유지, 포위 누적은 순 경계(§5.1 6단계, §5.2 2단계) | 강공은 삼모 출병 경로(`CheChulbyeong`)에 있고 V57 이 거기 훅으로 붙는다. **포위 상태를 담는 표·열은 V49–V59 에 없다** | **재사용(강공) + 신규(포위)** | `LOGIC/actions/war/CheChulbyeong.kt:289-291`; §1.1 표 전체에 siege 열 없음 |
 | R11 | 작전: 여러 장수 군단의 합류(§10 「V56 작전으로 합류」, §13.1 「보존 → 세력 작전」) | 목표 = 城(`target_city_id NOT NULL`), 소유 = 국가, 진척 = **월 정산**에서 `general.cityId` 와 城 인접으로 재계산, 기한은 상순 고정, 선언 권한은 수뇌부 | **일반화 필요** | `MIG/V56:8,10,35`, `LOGIC/operation/OperationRules.kt:152-185`(UnitView 가 cityId), `ENG/operation/OperationMonthlyService.kt:42-46`(`CalcCityDistance.nearCity`), `ENG/intake/OperationHandler.kt:56-59`. 省 위치로 도착·출발을 판정하도록 입력을 바꿔야 하고, 예약 3종(`secure_route`·`pass_through`·`blockade`)은 코드가 스스로 「강역·수역·장수 위치 생산자가 붙을 때」라 적어 뒀다(`OperationRules.kt:10,34`) |
@@ -100,22 +112,22 @@ V59 의 부수 경로(전장 주둔이 다른 코드에 미치는 곳): 도시 �
 | V55 가신·부곡 | 재사용 + 의미 일반화 | 표는 맞다. 위치·자리·전투 참여·NPC 허용이 빠져 있다(A10·A11) |
 | V56 작전 | **일반화** | 城 키·월 정산·`general.cityId` 이정표(A1·A6). 국가 키는 1층에서 유지 |
 | V57 `battle_plan` | 재사용(城 강공 한정) | spec §5.1 과 같은 결론. 야전·방어 대응은 새 표 |
-| V57 `battle_replay` | **일반화** | `defender_city_*` NOT NULL 을 풀고 省·방어측 열 추가(R8) |
+| V57 `battle_replay` | 城 강공 기록 보존 | HWIHA 격자 기록 계약을 별도로 확정하며 기존 제약 완화를 먼저 결정하지 않는다 |
 | V58 | 그대로 | 유일 카드 원칙과 동일 |
 | V59 열 3개 + 전장 카탈로그 + `che_전장이동` | **일반화하지 않는다 — 장판·관도 선례로 동결.** 새 조우는 이 위에 짓지 않는다 | 조우 단위가 siteId(A9), 귀환이 城(R9), 진입점이 삼모 명령(A3). 세 가지 모두 새 설계와 방향이 반대다 |
-| V59 가 끌어온 **재사용 자산** | 재사용 | `processFieldWar` 커널, `applyGeneralPositionAssessment` CAS 경로, 「주둔 중 도시 행동 차단」 배선 지점 목록(§1.2 끝) — 새 「행군 중」 상태가 막아야 할 곳의 지도다 |
+| V59 가 끌어온 **재사용 자산** | 재사용 | 省 정체성·핀 검증 방식·위치 CAS·레코더/flush·도시 행동 차단 연결 지점. 점 전투 커널은 제외 |
 
 버리는 표·열은 없다. V59 열은 NULL 로 남겨 두면 새 경로에 간섭하지 않는다(`MIG/V59:6-8` CHECK 가 전부 NULL 을 허용).
 
-### 4.2 선행 리팩터가 필요한가 — 필요하다, 하나
+### 4.2 최초 조사의 선행 기반 — 현재는 구현 재사용
 
-**위치의 정본을 정하는 일**이 다른 모든 1층 전쟁 작업 앞에 온다. 지금은 `general.city_id` 가 정본이고 공간 위치가 그것을 따라간다(A8). 행군·조우·省 보급 차단·작전 이정표(R2·R3·R4·R11·R12)가 전부 「장수가 어느 省에 있는가」를 읽으므로, 이 방향이 정해지기 전에 나머지를 지으면 두 위치가 어긋난다. 이것은 Tier-0 기반 작업이며(저장소 규칙 「Foundation-first」) 병렬 레인으로 쪼갤 수 없다.
+**위치의 정본을 정하는 일**이 다른 모든 1층 전쟁 작업 앞에 온다. 최초 조사에서는 `general.city_id`가 정본이고 공간 위치가 그것을 따라갔다(A8). 현재 HWIHA에는 위치 정본화 기반이 구현돼 있으므로 새로 만들지 않고 소비 경로를 검증한다. 행군·조우·省 보급 차단·작전 이정표(R2·R3·R4·R11·R12)가 전부 「장수가 어느 省에 있는가」를 읽으므로, 이 방향이 정해지기 전에 나머지를 지으면 두 위치가 어긋난다. 이것은 Tier-0 기반 작업이며(저장소 규칙 「Foundation-first」) 병렬 레인으로 쪼갤 수 없다.
 
 ### 4.3 제안 순서(S3 첫 묶음)
 
-1. **위치 정본화.** 월드 개시 때 전 장수 위치 행 시드, 城 ↔ 省 동기 방향 확정, 省 없는 城의 처리 결정(코드 분기는 `HistoricalBattlefieldCatalog.kt:25-30` 에 있으나 동봉 1133 리소스에서는 해당 城 0건 — §5-7). 기존 CAS·flush·부팅 검증은 그대로 쓴다.
+1. **기존 위치 정본화 소비.** HWIHA 전 장수 위치 시드·기준 城·`isGeneralAtCity`·`moveGeneral`·CAS·flush·부팅 검증을 재사용한다. 행군 소비자가 필요한 누락만 보완하며 기존 기반을 복제하지 않는다.
 2. **省 행군.** `StrategicPathResolver` 재사용 + 간선 비용에 거리·지형(지금은 1 고정) + 진행 중 경로 저장. 템포 값은 `data/curated/han/march-tempo-targets-v1.json`(승인 기준선)과 S2 시뮬레이션에서 온다 — 이 문서는 값을 정하지 않는다.
-3. **省 조우 + 야전 기록.** `processFieldWar` 를 省 진입 트리거에 연결, 시드 입력을 省·위상 해시로, 패자는 직전 省으로. `battle_replay` 일반화(R8)를 같은 묶음에 넣어야 야전이 처음부터 리플레이를 남긴다.
+3. **省 조우 + 격자 기록.** 격자·배치·조건부 명령 계약을 확정하고 독립 검토한 뒤 새 해결기를 省 조우에 연결한다. 점 전투를 임시 성공 경로로 사용하지 않는다. 파생 격자와 핀·회차별 위치를 실제 결과와 함께 기록한다.
 4. **작전 일반화.** 이정표 입력을 省 위치로, 정산을 순 경계로. 1–3 이 있어야 의미가 있다.
 5. **省 점유·보급 차단.** `province_control` 생산자와 `StrategicSupplyNetwork` 입력 추가(R12).
 6. 휘하의 전투 참여·NPC 허용(R13·R15), 포위 상태 신규 스키마(R10), 야전 계획·방어 대응 신규 스키마(R7)는 3 뒤 어느 순서로든 붙일 수 있다.
@@ -124,7 +136,7 @@ V59 의 부수 경로(전장 주둔이 다른 코드에 미치는 곳): 도시 �
 
 ### 4.4 회귀 기준선에 주는 영향
 
-이 판정대로라면 V59·V57 의 기존 테스트(`BattlefieldTurnHandlerTest`, `BattlefieldMovementRulesTest`, `ProcessFieldWarTest`, `ReservedTurnBattlePlanTest`, `SpatialStatePersistenceIT` 등)는 손대지 않는다. `battle_replay` 열 제약을 푸는 마이그레이션만 `BattlePlanReplayFlushIT` 에 닿는다 — 기존 행은 전부 城 방어 기록이라 NULL 허용으로 바꿔도 값이 변하지 않는다(추론이며 실행 확인은 §5).
+기존 SAMMO V59·V57 테스트는 보존한다. 새 격자 경로는 별도 검증하고, 저장 스키마를 결정한 뒤 영향을 받는 flush·콜드 재로드·리플레이 검사를 추가한다. 이 판정 자체는 기존 테이블 제약을 변경하지 않는다.
 
 ## 5. UNKNOWN
 

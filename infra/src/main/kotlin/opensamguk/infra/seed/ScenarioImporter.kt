@@ -442,6 +442,14 @@ class ScenarioImporter(
     }
 
     internal fun validateSeedContract() {
+        val declaredLords = scenario.generals.filter { it.hwihaLord == true }
+        require(declaredLords.isEmpty() || scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            "explicit lord declarations require HWIHA"
+        }
+        val active = buildGenerals(scenario.startYear).map { it.src }
+        require(declaredLords.all { lord -> active.count { it.name == lord.name && it.hwihaLord == true } == 1 }) {
+            "declared HWIHA lord must be uniquely included and active at start; deferred lord events are not implemented"
+        }
         val contract = scenario.seedContract?.activeGenerals
         if (contract == null) {
             require(scenarioMapConfig()["mapName"] !in setOf("han-world-v2", "han-world-v3")) {
@@ -652,6 +660,9 @@ class ScenarioImporter(
             meta["rtk14_total"] = general.total
             meta["rtk14_ideology"] = general.ideology
         }
+        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            meta[opensamguk.logic.input.HwihaLordStatus.META_KEY] = general.hwihaLord ?: false
+        }
         if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text
         return meta
@@ -790,9 +801,11 @@ class ScenarioImporter(
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    // 4f general_turn — full 30-row ring, all 휴식
+    // 4f general_turn — SAMMO full rest ring; HWIHA empty sparse queue
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private fun insertGeneralTurns(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
+        // HWIHA has a sparse twelve-phase queue: no row means no player reservation.
+        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) return 0
         val rows = ArrayList<Array<Any?>>(generals.size * MAX_GENERAL_TURNS)
         for (bg in generals) {
             for (idx in 0 until MAX_GENERAL_TURNS) {
