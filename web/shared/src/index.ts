@@ -225,6 +225,11 @@ export {
   type CityNameInput,
 } from './iso/cityName';
 export {
+  cityFootprintBlock,
+  cityFootprintSpan,
+  type CellBlock,
+} from './iso/cityFootprint';
+export {
   countyGlossForJurisdiction,
   splitCountyGloss,
   PlaceNameWithGloss,

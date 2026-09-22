@@ -115,6 +115,7 @@ export default function WarRoomPage() {
                                 currentCityId={focus.seat}
                                 initialFocus="current-commandery"
                                 showCellGrid
+                                showCityFootprint
                                 commanderyVisibility={visibility}
                                 fogMode="dim"
                                 ariaLabel={`천하 형세 — ${focus.name}`}

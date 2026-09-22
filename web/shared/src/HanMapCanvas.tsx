@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { cityFootprintBlock } from './iso/cityFootprint';
 import {
   cellToScreen,
   clampView,
@@ -272,6 +273,10 @@ const CELL_GRID_MIN_SCALE = 8;
 /** 칸 경계선 색 — 지형 위에 얹히므로 아주 옅게. */
 const CELL_GRID_STROKE = 'rgba(12,15,14,0.35)';
 
+/** 성내 — 城 이 차지한 칸. 격자보다 진하게 둘러 한 칸씩이 아니라 한 덩어리로 읽히게 한다. */
+const CITY_FOOTPRINT_STROKE = 'rgba(233,214,160,0.85)';
+const CITY_FOOTPRINT_FILL = 'rgba(201,166,86,0.16)';
+
 /**
  * 전장의 안개 덮개.
  *
@@ -303,6 +308,8 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   initialFocus?: InitialFocusProfile;
   /** 칸 경계선을 그린다. 칸이 단위인 화면에서 켠다 — 충분히 당겼을 때만 실제로 보인다. */
   showCellGrid?: boolean;
+  /** 성내(城 이 차지한 칸)를 둘러 보여준다. 칸 경계선과 함께 켠다. */
+  showCityFootprint?: boolean;
   /**
    * 전장의 안개 — **군국 번호 → 시야 단계**다. 표에 없는 군국은 `FOG` 로 본다.
    *
@@ -1249,6 +1256,7 @@ function drawScene(
   strategic: { scene: StrategicMapScene; controls: ReadonlyMap<string, StrategicWaterControl>;
     visible: boolean; route: readonly { col: number; row: number }[] | null } | null,
   showCellGrid: boolean,
+  showCityFootprint: boolean,
   fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
@@ -1309,6 +1317,21 @@ function drawScene(
       context.lineTo(span.col1 + 0.5, row - 0.5);
     }
     context.stroke();
+  }
+  // 성내 — 城 이 차지한 칸. 등급이 높을수록 넓다(경 5 · 특 4 · 대 3 · 중 2 · 나머지 1).
+  // 한 칸인 城 은 격자와 겹쳐 보이므로 그리지 않는다 — 선이 두 번 겹쳐 지저분해진다.
+  if (showCityFootprint && scale >= CELL_GRID_MIN_SCALE) {
+    const blocks = new Path2D();
+    for (const city of scene.cities) {
+      const block = cityFootprintBlock(city.level, Math.round(city.col), Math.round(city.row));
+      if (block.span < 2) continue;
+      blocks.rect(block.col0 - 0.5, block.row0 - 0.5, block.span, block.span);
+    }
+    context.fillStyle = CITY_FOOTPRINT_FILL;
+    context.fill(blocks);
+    context.strokeStyle = CITY_FOOTPRINT_STROKE;
+    context.lineWidth = 1.4 * dpr / scale;
+    context.stroke(blocks);
   }
   if (strategic?.visible) {
     for (const shape of strategic.scene.zones) {
@@ -1541,6 +1564,7 @@ export function HanMapCanvas({
   sourceSize = DEFAULT_SOURCE,
   initialFocus,
   showCellGrid = false,
+  showCityFootprint = false,
   commanderyVisibility = null,
   fogMode = 'dim',
   currentCityId,
@@ -1886,6 +1910,7 @@ export function HanMapCanvas({
       administrativeLayer,
       strategicRef.current,
       showCellGrid,
+      showCityFootprint,
       commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
     );
     battlefieldHits.current = [];
