@@ -47,7 +47,8 @@
         "ordinal": 5,
         "sourceName": "居庸",
         "declaredCities": 8
-      }
+      },
+      "placeSlug": "g0090"
     },
     {
       "id": "hhs:112:丹陽郡:011",
@@ -77,7 +78,8 @@
         "sourceName": "秣陵",
         "declaredCities": 16
       },
-      "commanderyCentroidKm": 113
+      "commanderyCentroidKm": 113,
+      "placeSlug": "g0049"
     },
     {
       "id": "hhs:112:九江郡:001",
@@ -107,7 +109,8 @@
         "sourceName": "陰陵",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 52
+      "commanderyCentroidKm": 52,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:112:九江郡:007",
@@ -137,7 +140,8 @@
         "sourceName": "歷陽",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 104
+      "commanderyCentroidKm": 104,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:112:九江郡:008",
@@ -167,7 +171,8 @@
         "sourceName": "當塗",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 79
+      "commanderyCentroidKm": 79,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:112:九江郡:009",
@@ -197,7 +202,8 @@
         "sourceName": "全椒",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 82
+      "commanderyCentroidKm": 82,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:112:九江郡:010",
@@ -227,7 +233,8 @@
         "sourceName": "鍾離",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 84
+      "commanderyCentroidKm": 84,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:112:九江郡:011",
@@ -257,7 +264,8 @@
         "sourceName": "阜陵",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 92
+      "commanderyCentroidKm": 92,
+      "placeSlug": "g0048"
     },
     {
       "id": "hhs:113:五原郡:002",
@@ -286,7 +294,8 @@
         "ordinal": 2,
         "sourceName": "五原",
         "declaredCities": 10
-      }
+      },
+      "placeSlug": "g0082"
     },
     {
       "id": "hhs:113:代郡:001",
@@ -316,7 +325,8 @@
         "sourceName": "高柳",
         "declaredCities": 11
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0089"
     },
     {
       "id": "hhs:113:南海郡:003",
@@ -346,7 +356,8 @@
         "sourceName": "中宿",
         "declaredCities": 7
       },
-      "commanderyCentroidKm": 146
+      "commanderyCentroidKm": 146,
+      "placeSlug": "g0098"
     },
     {
       "id": "hhs:112:南陽郡:032",
@@ -376,7 +387,8 @@
         "sourceName": "順陽",
         "declaredCities": 37
       },
-      "commanderyCentroidKm": 89
+      "commanderyCentroidKm": 89,
+      "placeSlug": "g0041"
     },
     {
       "id": "hhs:112:南陽郡:036",
@@ -406,7 +418,8 @@
         "sourceName": "丹水",
         "declaredCities": 37
       },
-      "commanderyCentroidKm": 121
+      "commanderyCentroidKm": 121,
+      "placeSlug": "g0041"
     },
     {
       "id": "hhs:109:右扶風:013",
@@ -435,7 +448,8 @@
         "ordinal": 13,
         "sourceName": "美阳",
         "declaredCities": 15
-      }
+      },
+      "placeSlug": "g0006"
     },
     {
       "id": "hhs:113:太原郡:006",
@@ -465,7 +479,8 @@
         "sourceName": "兹氏",
         "declaredCities": 16
       },
-      "commanderyCentroidKm": 72
+      "commanderyCentroidKm": 72,
+      "placeSlug": "g0079"
     },
     {
       "id": "hhs:113:安定郡:001",
@@ -494,7 +509,8 @@
         "ordinal": 1,
         "sourceName": "临泾",
         "declaredCities": 8
-      }
+      },
+      "placeSlug": "g0070"
     },
     {
       "id": "hhs:111:山陽郡:002",
@@ -524,7 +540,8 @@
         "sourceName": "東緡",
         "declaredCities": 10
       },
-      "commanderyCentroidKm": 30
+      "commanderyCentroidKm": 30,
+      "placeSlug": "g0028"
     },
     {
       "id": "hhs:109:左馮翊:012",
@@ -554,7 +571,8 @@
         "sourceName": "衙",
         "declaredCities": 13
       },
-      "commanderyCentroidKm": 52
+      "commanderyCentroidKm": 52,
+      "placeSlug": "g0005"
     },
     {
       "id": "hhs:110:常山國:007",
@@ -584,7 +602,8 @@
         "sourceName": "欒城",
         "declaredCities": 13
       },
-      "commanderyCentroidKm": 19
+      "commanderyCentroidKm": 19,
+      "placeSlug": "g0015"
     },
     {
       "id": "hhs:111:廣陵郡:006",
@@ -614,7 +633,8 @@
         "sourceName": "東陽",
         "declaredCities": 11
       },
-      "commanderyCentroidKm": 53
+      "commanderyCentroidKm": 53,
+      "placeSlug": "g0033"
     },
     {
       "id": "hhs:112:廬江郡:001",
@@ -644,7 +664,8 @@
         "sourceName": "舒",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 96
+      "commanderyCentroidKm": 96,
+      "placeSlug": "g0050"
     },
     {
       "id": "hhs:112:廬江郡:005",
@@ -674,7 +695,8 @@
         "sourceName": "臨湖",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 142
+      "commanderyCentroidKm": 142,
+      "placeSlug": "g0050"
     },
     {
       "id": "hhs:112:廬江郡:006",
@@ -704,7 +726,8 @@
         "sourceName": "龍舒",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 46
+      "commanderyCentroidKm": 46,
+      "placeSlug": "g0050"
     },
     {
       "id": "hhs:112:廬江郡:007",
@@ -734,7 +757,8 @@
         "sourceName": "襄安",
         "declaredCities": 14
       },
-      "commanderyCentroidKm": 150
+      "commanderyCentroidKm": 150,
+      "placeSlug": "g0050"
     },
     {
       "id": "hhs:111:東海郡:010",
@@ -764,7 +788,8 @@
         "sourceName": "合鄕",
         "declaredCities": 13
       },
-      "commanderyCentroidKm": 90
+      "commanderyCentroidKm": 90,
+      "placeSlug": "g0030"
     },
     {
       "id": "hhs:110:梁國:006",
@@ -794,7 +819,8 @@
         "sourceName": "穀熟",
         "declaredCities": 9
       },
-      "commanderyCentroidKm": 22
+      "commanderyCentroidKm": 22,
+      "placeSlug": "g0009"
     },
     {
       "id": "hhs:110:梁國:009",
@@ -824,7 +850,8 @@
         "sourceName": "薄",
         "declaredCities": 9
       },
-      "commanderyCentroidKm": 41
+      "commanderyCentroidKm": 41,
+      "placeSlug": "g0009"
     },
     {
       "id": "hhs:113:武威郡:001",
@@ -853,7 +880,8 @@
         "ordinal": 1,
         "sourceName": "姑臧",
         "declaredCities": 14
-      }
+      },
+      "placeSlug": "g0072"
     },
     {
       "id": "hhs:113:武威郡:009",
@@ -882,7 +910,8 @@
         "ordinal": 9,
         "sourceName": "宣威",
         "declaredCities": 14
-      }
+      },
+      "placeSlug": "g0072"
     },
     {
       "id": "hhs:113:永昌郡:005",
@@ -912,7 +941,8 @@
         "sourceName": "邪龙",
         "declaredCities": 8
       },
-      "commanderyCentroidKm": 92
+      "commanderyCentroidKm": 92,
+      "placeSlug": "g0062"
     },
     {
       "id": "hhs:110:汝南郡:009",
@@ -941,7 +971,8 @@
         "ordinal": 9,
         "sourceName": "北宜春",
         "declaredCities": 37
-      }
+      },
+      "placeSlug": "g0008"
     },
     {
       "id": "hhs:110:汝南郡:016",
@@ -971,7 +1002,8 @@
         "sourceName": "細陽",
         "declaredCities": 37
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0008"
     },
     {
       "id": "hhs:110:汝南郡:019",
@@ -1001,7 +1033,8 @@
         "sourceName": "鮦陽",
         "declaredCities": 37
       },
-      "commanderyCentroidKm": 0
+      "commanderyCentroidKm": 0,
+      "placeSlug": "g0008"
     },
     {
       "id": "hhs:110:汝南郡:034",
@@ -1030,7 +1063,8 @@
         "ordinal": 34,
         "sourceName": "定潁",
         "declaredCities": 37
-      }
+      },
+      "placeSlug": "g0008"
     },
     {
       "id": "hhs:110:汝南郡:035",
@@ -1060,7 +1094,8 @@
         "sourceName": "固始",
         "declaredCities": 37
       },
-      "commanderyCentroidKm": 82
+      "commanderyCentroidKm": 82,
+      "placeSlug": "g0008"
     },
     {
       "id": "hhs:110:沛國:017",
@@ -1090,7 +1125,8 @@
         "sourceName": "向",
         "declaredCities": 21
       },
-      "crossSourceKm": 1.2
+      "crossSourceKm": 1.2,
+      "placeSlug": "g0010"
     },
     {
       "id": "hhs:109:河南尹:003",
@@ -1119,7 +1155,8 @@
         "ordinal": 3,
         "sourceName": "梁",
         "declaredCities": 21
-      }
+      },
+      "placeSlug": "g0000"
     },
     {
       "id": "hhs:109:河南尹:018",
@@ -1148,7 +1185,8 @@
         "ordinal": 18,
         "sourceName": "新城",
         "declaredCities": 21
-      }
+      },
+      "placeSlug": "g0000"
     },
     {
       "id": "hhs:109:河東郡:002",
@@ -1178,7 +1216,8 @@
         "sourceName": "杨",
         "declaredCities": 20
       },
-      "commanderyCentroidKm": 97
+      "commanderyCentroidKm": 97,
+      "placeSlug": "g0002"
     },
     {
       "id": "hhs:110:河閒國:003",
@@ -1208,7 +1247,8 @@
         "sourceName": "易",
         "declaredCities": 11
       },
-      "commanderyCentroidKm": 70
+      "commanderyCentroidKm": 70,
+      "placeSlug": "g0018"
     },
     {
       "id": "hhs:113:漁陽郡:002",
@@ -1237,7 +1277,8 @@
         "ordinal": 2,
         "sourceName": "狐奴",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0091"
     },
     {
       "id": "hhs:113:漁陽郡:004",
@@ -1266,7 +1307,8 @@
         "ordinal": 4,
         "sourceName": "雍奴",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0091"
     },
     {
       "id": "hhs:113:漁陽郡:007",
@@ -1300,7 +1342,8 @@
         "override": "안락",
         "hanjaOutput": "안악",
         "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
-      }
+      },
+      "placeSlug": "g0091"
     },
     {
       "id": "hhs:113:漢陽郡:006",
@@ -1329,7 +1372,8 @@
         "ordinal": 6,
         "sourceName": "成纪",
         "declaredCities": 13
-      }
+      },
+      "placeSlug": "g0067"
     },
     {
       "id": "hhs:113:漢陽郡:012",
@@ -1358,7 +1402,8 @@
         "ordinal": 12,
         "sourceName": "上邽",
         "declaredCities": 13
-      }
+      },
+      "placeSlug": "g0067"
     },
     {
       "id": "hhs:113:益州郡:003",
@@ -1387,7 +1432,8 @@
         "ordinal": 3,
         "sourceName": "俞元",
         "declaredCities": 17
-      }
+      },
+      "placeSlug": "g0061"
     },
     {
       "id": "hhs:113:西河郡:005",
@@ -1417,7 +1463,8 @@
         "sourceName": "中阳",
         "declaredCities": 13
       },
-      "crossSourceKm": 86.9
+      "crossSourceKm": 86.9,
+      "placeSlug": "g0081"
     },
     {
       "id": "hhs:112:豫章郡:005",
@@ -1447,7 +1494,8 @@
         "sourceName": "廬陵",
         "declaredCities": 21
       },
-      "commanderyCentroidKm": 130
+      "commanderyCentroidKm": 130,
+      "placeSlug": "g0053"
     },
     {
       "id": "hhs:113:越巂郡:006",
@@ -1476,7 +1524,8 @@
         "ordinal": 6,
         "sourceName": "卑水",
         "declaredCities": 14
-      }
+      },
+      "placeSlug": "g0060"
     },
     {
       "id": "hhs:113:越巂郡:008",
@@ -1505,7 +1554,8 @@
         "ordinal": 8,
         "sourceName": "会无",
         "declaredCities": 14
-      }
+      },
+      "placeSlug": "g0060"
     },
     {
       "id": "hhs:113:酒泉郡:002",
@@ -1534,7 +1584,8 @@
         "ordinal": 2,
         "sourceName": "表氏",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0074"
     },
     {
       "id": "hhs:113:酒泉郡:003",
@@ -1568,7 +1619,8 @@
         "override": "낙관",
         "hanjaOutput": "악관",
         "witness": "지도 jurisdictionRecords 의 樂/乐 9 행이 전부 두음법칙대로다 — 어두 낙(낙안현·낙평후국·낙릉현·낙성현·낙평현·낙릉현), 비어두 락(부락현·신락현), 「악」 은 0 건. hanja 는 두 이름을 「악」 으로 뱉는다."
-      }
+      },
+      "placeSlug": "g0074"
     },
     {
       "id": "hhs:113:酒泉郡:005",
@@ -1597,7 +1649,8 @@
         "ordinal": 5,
         "sourceName": "会水",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0074"
     },
     {
       "id": "hhs:113:酒泉郡:006",
@@ -1626,7 +1679,8 @@
         "ordinal": 6,
         "sourceName": "沙头",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0074"
     },
     {
       "id": "hhs:113:酒泉郡:007",
@@ -1655,7 +1709,8 @@
         "ordinal": 7,
         "sourceName": "安弥",
         "declaredCities": 9
-      }
+      },
+      "placeSlug": "g0074"
     },
     {
       "id": "hhs:111:陳留郡:008",
@@ -1685,7 +1740,8 @@
         "sourceName": "東昬",
         "declaredCities": 17
       },
-      "commanderyCentroidKm": 40
+      "commanderyCentroidKm": 40,
+      "placeSlug": "g0022"
     },
     {
       "id": "hhs:113:鴈門郡:001",
@@ -1715,7 +1771,8 @@
         "sourceName": "阴馆",
         "declaredCities": 14
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0085"
     },
     {
       "id": "hhs:113:鴈門郡:002",
@@ -1745,7 +1802,8 @@
         "sourceName": "繁畤",
         "declaredCities": 14
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0085"
     },
     {
       "id": "hhs:113:鴈門郡:007",
@@ -1775,7 +1833,8 @@
         "sourceName": "崞",
         "declaredCities": 14
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0085"
     },
     {
       "id": "hhs:113:鴈門郡:010",
@@ -1805,7 +1864,9 @@
         "sourceName": "马邑",
         "declaredCities": 14
       },
-      "crossSourceKm": 0.0
+      "crossSourceKm": 0.0,
+      "placeSlug": "g0085"
     }
-  ]
+  ],
+  "placeIdBasis": "물리 지점 id 는 거점 분할 단계가 `gc-<placeSlug>-<郡國志 순번>` 으로 만든다. placeSlug 는 `g<parentRegions 番號>` 로 郡國志 소속 郡의 안정 id 꼬리다 — 지도의 220 년 경계가 다른 郡을 가리켜도(재배정) 물리 id 는 고정된다. 소속 郡은 배치 원장의 commanderyId 가 싣는다."
 }

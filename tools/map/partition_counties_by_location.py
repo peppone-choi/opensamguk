@@ -851,6 +851,12 @@ def committed_area_problems(committed: dict) -> list[str]:
         stage = json.loads(carving.LEDGER.read_text(encoding="utf-8"))["geometry"]["stages"][0]
         allowed.update({row["placeId"]: row["carvedCellCount"] for row in stage["placements"]
                         if row["carvedCellCount"] < MIN_AREA})
+        # 결손 縣도 같은 단계가 같은 규칙으로 발자국을 줄여 세운다 — 기증 省의 최소 넓이를 지키려면
+        # 그래야 한다(汝南 固始 6칸: 같은 郡 인접이 陳縣 8칸 하나뿐이라 빌릴 곳이 없다).
+        # 결정 원장의 areaExceptions 로는 표현할 수 없다 — 그 행은 ★ 자신의 출력에 대고 검산하는데
+        # 이 省들은 ★ 보다 나중 단계가 만든다("no longer violates — remove it" 이 그 뜻이다).
+        allowed.update({row["placeId"]: row["carvedCellCount"] for row in stage.get("gapCountyPlacements", ())
+                        if row["carvedCellCount"] < MIN_AREA})
     meta = committed["_meta"]
     # 한반도 보정 단계가 남긴 경계 조각 예외. 행은 省 id 라 격자 프레임과 무관하다 —
     # 2026-09-21 북동 확장 프레임을 걷어내며 rows==843 조건을 없앴다(그 조건은 예외를 조용히 꺼뜨렸다).
