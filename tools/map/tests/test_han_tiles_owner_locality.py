@@ -157,7 +157,7 @@ class OrphanLandIntakeTest(unittest.TestCase):
             flat.extend([value] * count)
         water = land = 0
         orphans = []
-        for row in range(290, 351):
+        for row in range(464, 525):
             for col in range(380, 461):
                 pos = row * cols + col
                 kind = terrain[row][col]

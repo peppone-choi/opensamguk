@@ -34,7 +34,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X028",
         "wikidataId": "Q1016720",
         "confidence": "IDENTIFIED"
@@ -60,7 +60,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X029",
         "wikidataId": "Q1331781",
         "confidence": "IDENTIFIED"
@@ -86,9 +86,9 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X030",
-        "wikidataId": "Q48888",
+        "wikidataId": "Q128674",
         "confidence": "DISPUTED"
       }
     },
@@ -112,7 +112,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X031",
         "wikidataId": "Q50338",
         "confidence": "IDENTIFIED"
@@ -138,7 +138,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X032",
         "wikidataId": "Q42102",
         "confidence": "IDENTIFIED"
@@ -164,7 +164,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X033",
         "wikidataId": "Q42059",
         "confidence": "IDENTIFIED"
@@ -190,7 +190,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X034",
         "wikidataId": "Q50317",
         "confidence": "IDENTIFIED"
@@ -216,7 +216,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X035",
         "wikidataId": "Q485570",
         "confidence": "IDENTIFIED"
@@ -242,10 +242,10 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X036",
-        "wikidataId": "Q1205815",
-        "confidence": "IDENTIFIED"
+        "wikidataId": "Q92277",
+        "confidence": "DISPUTED"
       }
     },
     {
@@ -268,7 +268,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X037",
         "wikidataId": "Q109356",
         "confidence": "IDENTIFIED"
@@ -294,7 +294,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X038",
         "wikidataId": "Q42056",
         "confidence": "IDENTIFIED"
@@ -308,19 +308,19 @@
       "subjectKey": "han-tiles-external-settlement:X039",
       "canonicalName": "挹婁",
       "nodeClass": "SETTLEMENT_NODE",
-      "seatRole": "NON_SEAT",
-      "parentName": "北沃沮",
-      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "seatRole": "COMMANDERY_SEAT",
+      "parentName": "挹婁",
+      "parentRef": "han-tiles-commandery:PARENT-0172",
       "physicalPlaceRef": "external:v1:X039",
       "tileBinding": {
         "jurisdictionId": "X039",
-        "commanderyId": "PARENT-0111",
+        "commanderyId": "PARENT-0172",
         "seatPlaceId": "X039"
       },
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X039",
         "wikidataId": "Q196934",
         "confidence": "IDENTIFIED"
@@ -346,7 +346,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X040",
         "wikidataId": "Q42137",
         "confidence": "DISPUTED"
@@ -372,7 +372,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X041",
         "wikidataId": "Q42077",
         "confidence": "DISPUTED"
@@ -398,7 +398,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X042",
         "wikidataId": "Q8684",
         "confidence": "IDENTIFIED"
@@ -424,7 +424,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X043",
         "wikidataId": "Q27289020",
         "confidence": "IDENTIFIED"
@@ -450,7 +450,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X044",
         "wikidataId": "Q42097",
         "confidence": "IDENTIFIED"
@@ -476,7 +476,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X045",
         "wikidataId": "Q42082",
         "confidence": "IDENTIFIED"
@@ -502,7 +502,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X046",
         "wikidataId": "Q50208",
         "confidence": "IDENTIFIED"
@@ -528,7 +528,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X047",
         "wikidataId": "Q50207",
         "confidence": "DISPUTED"
@@ -540,10 +540,10 @@
       "reviewState": "APPROVED",
       "subjectType": "EXTERNAL_SETTLEMENT",
       "subjectKey": "han-tiles-external-settlement:X048",
-      "canonicalName": "星山伽耶",
+      "canonicalName": "本彼",
       "nodeClass": "SETTLEMENT_NODE",
       "seatRole": "COMMANDERY_SEAT",
-      "parentName": "星山伽耶",
+      "parentName": "本彼",
       "parentRef": "han-tiles-commandery:PARENT-0142",
       "physicalPlaceRef": "external:v1:X048",
       "tileBinding": {
@@ -554,7 +554,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X048",
         "wikidataId": "Q50250",
         "confidence": "IDENTIFIED"
@@ -566,10 +566,10 @@
       "reviewState": "APPROVED",
       "subjectType": "EXTERNAL_SETTLEMENT",
       "subjectKey": "han-tiles-external-settlement:X049",
-      "canonicalName": "古寧伽耶",
+      "canonicalName": "古冬攬",
       "nodeClass": "SETTLEMENT_NODE",
       "seatRole": "COMMANDERY_SEAT",
-      "parentName": "古寧伽耶",
+      "parentName": "古冬攬",
       "parentRef": "han-tiles-commandery:PARENT-0115",
       "physicalPlaceRef": "external:v1:X049",
       "tileBinding": {
@@ -580,7 +580,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X049",
         "wikidataId": "Q5644362",
         "confidence": "IDENTIFIED"
@@ -606,7 +606,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X050",
         "wikidataId": "Q991032",
         "confidence": "IDENTIFIED"
@@ -632,7 +632,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X051",
         "wikidataId": "Q861519",
         "confidence": "IDENTIFIED"
@@ -658,7 +658,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X052",
         "wikidataId": "Q738275",
         "confidence": "IDENTIFIED"
@@ -684,7 +684,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X053",
         "wikidataId": "Q1011145",
         "confidence": "IDENTIFIED"
@@ -710,7 +710,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X054",
         "wikidataId": "Q47084",
         "confidence": "IDENTIFIED"
@@ -736,7 +736,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X055",
         "wikidataId": "Q1206915",
         "confidence": "DISPUTED"
@@ -762,7 +762,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X056",
         "wikidataId": "Q140631",
         "confidence": "IDENTIFIED"
@@ -788,7 +788,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X057",
         "wikidataId": "Q181966",
         "confidence": "DISPUTED"
@@ -814,7 +814,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X058",
         "wikidataId": "Q69060",
         "confidence": "IDENTIFIED"
@@ -840,7 +840,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X059",
         "wikidataId": "Q519810",
         "confidence": "IDENTIFIED"
@@ -866,7 +866,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X060",
         "wikidataId": "Q1355705",
         "confidence": "IDENTIFIED"
@@ -892,7 +892,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X061",
         "wikidataId": "Q36034",
         "confidence": "IDENTIFIED"
@@ -918,7 +918,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X062",
         "wikidataId": "Q570829",
         "confidence": "IDENTIFIED"
@@ -944,7 +944,7 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X063",
         "wikidataId": "Q58650",
         "confidence": "DISPUTED"
@@ -970,9 +970,919 @@
       "evidence": {
         "kind": "EXTERNAL_PLACE_RECORD",
         "datasetPath": "data/map/external-places.json",
-        "datasetSha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
         "recordId": "X064",
         "wikidataId": "Q570937",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X065",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X065",
+      "canonicalName": "沸流",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X065",
+      "tileBinding": {
+        "jurisdictionId": "X065",
+        "commanderyId": "PARENT-0120",
+        "seatPlaceId": "X065"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X065",
+        "wikidataId": "Q92324",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X066",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X066",
+      "canonicalName": "藻那",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X066",
+      "tileBinding": {
+        "jurisdictionId": "X066",
+        "commanderyId": "PARENT-0120",
+        "seatPlaceId": "X066"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X066",
+        "wikidataId": "Q698477",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X067",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X067",
+      "canonicalName": "朱那",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X067",
+      "tileBinding": {
+        "jurisdictionId": "X067",
+        "commanderyId": "PARENT-0120",
+        "seatPlaceId": "X067"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X067",
+        "wikidataId": "Q430493",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X068",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X068",
+      "canonicalName": "蓋馬",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "國內城",
+      "parentRef": "han-tiles-commandery:PARENT-0120",
+      "physicalPlaceRef": "external:v1:X068",
+      "tileBinding": {
+        "jurisdictionId": "X068",
+        "commanderyId": "PARENT-0120",
+        "seatPlaceId": "X068"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X068",
+        "wikidataId": "Q705082",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X069",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X069",
+      "canonicalName": "句茶",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "東沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0143",
+      "physicalPlaceRef": "external:v1:X069",
+      "tileBinding": {
+        "jurisdictionId": "X069",
+        "commanderyId": "PARENT-0143",
+        "seatPlaceId": "X069"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X069",
+        "wikidataId": "Q196242",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X070",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X070",
+      "canonicalName": "荇人",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "北沃沮",
+      "parentRef": "han-tiles-commandery:PARENT-0111",
+      "physicalPlaceRef": "external:v1:X070",
+      "tileBinding": {
+        "jurisdictionId": "X070",
+        "commanderyId": "PARENT-0111",
+        "seatPlaceId": "X070"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X070",
+        "wikidataId": "Q718513",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X071",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X071",
+      "canonicalName": "梁貊",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "卒本",
+      "parentRef": "han-tiles-commandery:PARENT-0112",
+      "physicalPlaceRef": "external:v1:X071",
+      "tileBinding": {
+        "jurisdictionId": "X071",
+        "commanderyId": "PARENT-0112",
+        "seatPlaceId": "X071"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X071",
+        "wikidataId": "Q1366676",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X072",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X072",
+      "canonicalName": "小水貊",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "遼東郡",
+      "parentRef": "han-tiles-commandery:PARENT-0094",
+      "physicalPlaceRef": "external:v1:X072",
+      "tileBinding": {
+        "jurisdictionId": "X072",
+        "commanderyId": "PARENT-0094",
+        "seatPlaceId": "X072"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X072",
+        "wikidataId": "Q1367572",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X073",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X073",
+      "canonicalName": "古爰",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X073",
+      "tileBinding": {
+        "jurisdictionId": "X073",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X073"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X073",
+        "wikidataId": "Q50307",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X075",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X075",
+      "canonicalName": "冉路",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X075",
+      "tileBinding": {
+        "jurisdictionId": "X075",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X075"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X075",
+        "wikidataId": "Q42114",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X076",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X076",
+      "canonicalName": "監奚卑離",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X076",
+      "tileBinding": {
+        "jurisdictionId": "X076",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X076"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X076",
+        "wikidataId": "Q50343",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X077",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X077",
+      "canonicalName": "致利鞠",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X077",
+      "tileBinding": {
+        "jurisdictionId": "X077",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X077"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X077",
+        "wikidataId": "Q42105",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X078",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X078",
+      "canonicalName": "臣蘇塗國",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X078",
+      "tileBinding": {
+        "jurisdictionId": "X078",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X078"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X078",
+        "wikidataId": "Q50335",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X080",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X080",
+      "canonicalName": "不雲",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X080",
+      "tileBinding": {
+        "jurisdictionId": "X080",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X080"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X080",
+        "wikidataId": "Q42062",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X081",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X081",
+      "canonicalName": "支半",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X081",
+      "tileBinding": {
+        "jurisdictionId": "X081",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X081"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X081",
+        "wikidataId": "Q50246",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X082",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X082",
+      "canonicalName": "古臘",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X082",
+      "tileBinding": {
+        "jurisdictionId": "X082",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X082"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X082",
+        "wikidataId": "Q42087",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X083",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X083",
+      "canonicalName": "楚山塗卑離",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X083",
+      "tileBinding": {
+        "jurisdictionId": "X083",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X083"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X083",
+        "wikidataId": "Q42141",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X084",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X084",
+      "canonicalName": "牟盧卑離",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X084",
+      "tileBinding": {
+        "jurisdictionId": "X084",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X084"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X084",
+        "wikidataId": "Q50210",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X085",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X085",
+      "canonicalName": "不斯濆邪",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X085",
+      "tileBinding": {
+        "jurisdictionId": "X085",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X085"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X085",
+        "wikidataId": "Q42140",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X086",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X086",
+      "canonicalName": "萬盧",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "目支國",
+      "parentRef": "han-tiles-commandery:PARENT-0156",
+      "physicalPlaceRef": "external:v1:X086",
+      "tileBinding": {
+        "jurisdictionId": "X086",
+        "commanderyId": "PARENT-0156",
+        "seatPlaceId": "X086"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X086",
+        "wikidataId": "Q42074",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X087",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X087",
+      "canonicalName": "不彌",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X087",
+      "tileBinding": {
+        "jurisdictionId": "X087",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X087"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X087",
+        "wikidataId": "Q42083",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X089",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X089",
+      "canonicalName": "忱彌多禮",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "辟卑離國",
+      "parentRef": "han-tiles-commandery:PARENT-0164",
+      "physicalPlaceRef": "external:v1:X089",
+      "tileBinding": {
+        "jurisdictionId": "X089",
+        "commanderyId": "PARENT-0164",
+        "seatPlaceId": "X089"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X089",
+        "wikidataId": "Q50342",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X096",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X096",
+      "canonicalName": "骨伐",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "押督國",
+      "parentRef": "han-tiles-commandery:PARENT-0136",
+      "physicalPlaceRef": "external:v1:X096",
+      "tileBinding": {
+        "jurisdictionId": "X096",
+        "commanderyId": "PARENT-0136",
+        "seatPlaceId": "X096"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X096",
+        "wikidataId": "Q42128",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X097",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X097",
+      "canonicalName": "伊西",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "押督國",
+      "parentRef": "han-tiles-commandery:PARENT-0136",
+      "physicalPlaceRef": "external:v1:X097",
+      "tileBinding": {
+        "jurisdictionId": "X097",
+        "commanderyId": "PARENT-0136",
+        "seatPlaceId": "X097"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X097",
+        "wikidataId": "Q50330",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X098",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X098",
+      "canonicalName": "甘文",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "本彼",
+      "parentRef": "han-tiles-commandery:PARENT-0142",
+      "physicalPlaceRef": "external:v1:X098",
+      "tileBinding": {
+        "jurisdictionId": "X098",
+        "commanderyId": "PARENT-0142",
+        "seatPlaceId": "X098"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X098",
+        "wikidataId": "Q42078",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X099",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X099",
+      "canonicalName": "優由",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "悉直國",
+      "parentRef": "han-tiles-commandery:PARENT-0135",
+      "physicalPlaceRef": "external:v1:X099",
+      "tileBinding": {
+        "jurisdictionId": "X099",
+        "commanderyId": "PARENT-0135",
+        "seatPlaceId": "X099"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X099",
+        "wikidataId": "Q50314",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X100",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X100",
+      "canonicalName": "勤耆",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "斯盧國",
+      "parentRef": "han-tiles-commandery:PARENT-0137",
+      "physicalPlaceRef": "external:v1:X100",
+      "tileBinding": {
+        "jurisdictionId": "X100",
+        "commanderyId": "PARENT-0137",
+        "seatPlaceId": "X100"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X100",
+        "wikidataId": "Q42157",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X101",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X101",
+      "canonicalName": "于尸山",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "斯盧國",
+      "parentRef": "han-tiles-commandery:PARENT-0137",
+      "physicalPlaceRef": "external:v1:X101",
+      "tileBinding": {
+        "jurisdictionId": "X101",
+        "commanderyId": "PARENT-0137",
+        "seatPlaceId": "X101"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X101",
+        "wikidataId": "Q41278",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X102",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X102",
+      "canonicalName": "彌離彌凍",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X102",
+      "tileBinding": {
+        "jurisdictionId": "X102",
+        "commanderyId": "PARENT-0153",
+        "seatPlaceId": "X102"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X102",
+        "wikidataId": "Q42096",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X103",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X103",
+      "canonicalName": "瀆盧",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X103",
+      "tileBinding": {
+        "jurisdictionId": "X103",
+        "commanderyId": "PARENT-0153",
+        "seatPlaceId": "X103"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X103",
+        "wikidataId": "Q16520",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X104",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X104",
+      "canonicalName": "接塗",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "狗邪國",
+      "parentRef": "han-tiles-commandery:PARENT-0153",
+      "physicalPlaceRef": "external:v1:X104",
+      "tileBinding": {
+        "jurisdictionId": "X104",
+        "commanderyId": "PARENT-0153",
+        "seatPlaceId": "X104"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X104",
+        "wikidataId": "Q243327",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X105",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X105",
+      "canonicalName": "多羅",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "大伽耶",
+      "parentRef": "han-tiles-commandery:PARENT-0121",
+      "physicalPlaceRef": "external:v1:X105",
+      "tileBinding": {
+        "jurisdictionId": "X105",
+        "commanderyId": "PARENT-0121",
+        "seatPlaceId": "X105"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X105",
+        "wikidataId": "Q50341",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X106",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X106",
+      "canonicalName": "貊",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "伯濟國",
+      "parentRef": "han-tiles-commandery:PARENT-0109",
+      "physicalPlaceRef": "external:v1:X106",
+      "tileBinding": {
+        "jurisdictionId": "X106",
+        "commanderyId": "PARENT-0109",
+        "seatPlaceId": "X106"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X106",
+        "wikidataId": "Q42148",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X107",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X107",
+      "canonicalName": "不耐",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "樂浪郡",
+      "parentRef": "han-tiles-commandery:PARENT-0096",
+      "physicalPlaceRef": "external:v1:X107",
+      "tileBinding": {
+        "jurisdictionId": "X107",
+        "commanderyId": "PARENT-0096",
+        "seatPlaceId": "X107"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X107",
+        "wikidataId": "Q484890",
+        "confidence": "DISPUTED"
+      }
+    },
+    {
+      "sourceClaimId": "han-external-settlement-route-claim-v1-X108",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "EXTERNAL_SETTLEMENT",
+      "subjectKey": "han-tiles-external-settlement:X108",
+      "canonicalName": "華麗",
+      "nodeClass": "SETTLEMENT_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "樂浪郡",
+      "parentRef": "han-tiles-commandery:PARENT-0096",
+      "physicalPlaceRef": "external:v1:X108",
+      "tileBinding": {
+        "jurisdictionId": "X108",
+        "commanderyId": "PARENT-0096",
+        "seatPlaceId": "X108"
+      },
+      "evidence": {
+        "kind": "EXTERNAL_PLACE_RECORD",
+        "datasetPath": "data/map/external-places.json",
+        "datasetSha256": "c8c3b76cba7a356df3e9aaafb03e7386cc6d6a987ae22beac8601d0362334e06",
+        "recordId": "X108",
+        "wikidataId": "Q706067",
         "confidence": "DISPUTED"
       }
     }

@@ -68,7 +68,7 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
         "w5-external-settlement-route-claim", "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
         "han-tiles-external-settlement:", "EXTERNAL_SETTLEMENT", frozenset({"SETTLEMENT_NODE"}),
         frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"EXTERNAL_PLACE_RECORD"}),
-        37, "externalSettlementRouteClaims", "data/curated/han/route-node-external-settlement-claims-v1.json",
+        72, "externalSettlementRouteClaims", "data/curated/han/route-node-external-settlement-claims-v1.json",
     ),
 )
 #: 같은 縣이 두 번 선 城의 번호를 다른 claim 이 이어받는 키 재결속 사유(registry row 의 rebinding).
@@ -494,7 +494,8 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
             raise MaterializationContractError("append-only numeric registry row is malformed")
         appended[unit_id] = numeric_id
         issued_order.append(unit_id)
-    expected = list(range(LEGACY_SELECTION_COUNT + 1, LEGACY_SELECTION_COUNT + len(appended) + 1))
+    from tools.scenario.han_active_city_ids import active_numeric_ids
+    expected = [i for i in active_numeric_ids(LEGACY_SELECTION_COUNT + len(appended)) if i > LEGACY_SELECTION_COUNT]
     if sorted(appended.values()) != expected:
         raise MaterializationContractError("append-only numeric IDs must be next never-issued sequence")
     late = {unit_id for unit_id in appended if unit_id in VACATED_LOCATION_UNITS}

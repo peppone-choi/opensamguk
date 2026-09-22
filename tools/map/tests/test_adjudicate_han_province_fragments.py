@@ -696,7 +696,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
         # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
         # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
-        self.assertEqual((1331, 1133, 172), (
+        self.assertEqual((1374, 1168, 173), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
@@ -716,6 +716,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
             "45203": 7, "87489": 4, "87490": 7, "87506": 5, "87510": 4,
             "ss-dengsai": 4, "ss-fancheng": 2, "ss-mengjin": 4, "ss-xiaopingjin": 5,
         }
+        korea_exceptions = json.loads((ROOT / "data/curated/han/korea-spatial-area-exceptions-v1.json").read_text())
+        island_remnants.update({row["provinceId"]: row["cells"] for row in korea_exceptions["areaExceptions"]})
         below = {
             tiles["provinceRecords"][index]["id"]: count
             for index, count in areas.items()
@@ -727,7 +729,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         from tools.map import partition_counties_by_location as partition
         before_partition = partition.stage_input(tiles)
         self.assertNotEqual(partition.digest(before_partition), partition.digest(partition.peel_later_stages(tiles)))
-        owner_before = expand_rle(before_partition["owner"], rows, cols)
+        owner_before = expand_rle(before_partition["owner"], before_partition["_meta"]["rows"], before_partition["_meta"]["cols"])
         index_before = {record["id"]: index for index, record in enumerate(before_partition["provinceRecords"])}
         for decision in ledger["reassignments"]:
             target_index = index_before[decision["targetProvinceId"]]
@@ -762,7 +764,7 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         self.assertEqual(
             ledger["seatOwnerSha256"],
             hashlib.sha256(
-                json.dumps(tiles["seatOwner"], separators=(",", ":")).encode("utf-8")
+                json.dumps(prior["seatOwner"], separators=(",", ":")).encode("utf-8")
             ).hexdigest(),
         )
 

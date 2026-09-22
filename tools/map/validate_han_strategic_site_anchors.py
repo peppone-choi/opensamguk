@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 LEDGER = ROOT / "data/curated/han/strategic-site-anchor-review-v1.json"
 INPUT_PATHS = {
     path: ROOT / path
@@ -364,6 +365,8 @@ def _validate_projection(ledger: dict, documents: dict[str, object]) -> tuple[di
         raise ValueError("strategic-site manifest identity/order mismatch")
     if not isinstance(tiles, dict):
         raise ValueError("tile input is invalid")
+    from tools.map.korea_map_extension import base_frame
+    tiles = base_frame(tiles)
     meta = tiles.get("_meta")
     if not isinstance(meta, dict):
         raise ValueError("raster metadata is missing")

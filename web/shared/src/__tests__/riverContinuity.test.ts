@@ -215,10 +215,14 @@ describe('connectRivers — han-world-v3 실측', () => {
     col: Int32Array.from(tiles.cities, (city) => city.col),
     row: Int32Array.from(tiles.cities, (city) => city.row),
   };
-  const dem = decodeGrayAsRgba(resolve(ROOT, 'web/game/public/map/elevation/han-world-v3-levels.png'));
+  // 2026-09-21: 북동 확장 프레임을 걷어내 han-tiles 가 669x768 로 돌아왔다 —
+  // 그 격자의 DEM 은 elevationAssetsForGrid() 가 고르는 legacy 판이다.
+  const dem = decodeGrayAsRgba(resolve(ROOT, 'web/game/public/map/elevation/han-world-v3-legacy-levels.png'));
   const built = buildIsoTileGrid(tiles.terrain, dem.rgba, dem.width, dem.height, RASTER_GROUP, seats, landmarks);
   const { code, cols, rows } = built;
   const at = (row: number, col: number) => row * cols + col;
+  // 확장 프레임을 걷어낸 뒤로 기준 칸은 원래 자리 그대로다(앞서는 얹힌 174 행의 절반인 87 을 더했다).
+  const legacyAt = (row: number, col: number) => at(row, col);
 
   const inland = labelComponents(code, cols, rows, (v) => v === R || v === L, false);
   const water = labelComponents(code, cols, rows, isWater, false);
@@ -239,22 +243,22 @@ describe('connectRivers — han-world-v3 실측', () => {
 
   it('長江은 하구에서 바다에 닿는다', () => {
     // 원본은 하구 만입 두세 칸 앞에서 중심선이 멎어 있었다(타일 r146 c257 부근).
-    const sea = water.label[at(200, 380)];
-    expect(code[at(200, 380)]).toBe(S);
-    expect(water.label[at(163, 210)]).toBe(sea);
+    const sea = water.label[legacyAt(200, 380)];
+    expect(code[legacyAt(200, 380)]).toBe(S);
+    expect(water.label[legacyAt(163, 210)]).toBe(sea);
   });
 
   it('나란히 흐르는 金沙江과 瀾滄江·怒江은 한 강이 되지 않는다', () => {
-    const jinsha = inland.label[at(202, 64)];
-    const nu = inland.label[at(202, 56)];
-    expect(code[at(202, 64)]).toBe(R);
-    expect(code[at(202, 56)]).toBe(R);
+    const jinsha = inland.label[legacyAt(202, 64)];
+    const nu = inland.label[legacyAt(202, 56)];
+    expect(code[legacyAt(202, 64)]).toBe(R);
+    expect(code[legacyAt(202, 56)]).toBe(R);
     expect(jinsha).not.toBe(nu);
   });
 
   it('靑海湖는 黃河에 이어지지 않는다', () => {
-    expect(code[at(93, 73)]).toBe(L);
-    const lake = inland.label[at(93, 73)];
+    expect(code[legacyAt(93, 73)]).toBe(L);
+    const lake = inland.label[legacyAt(93, 73)];
     let riverTiles = 0;
     for (let i = 0; i < code.length; i += 1) if (inland.label[i] === lake && code[i] === R) riverTiles += 1;
     expect(riverTiles).toBe(0);
@@ -286,8 +290,8 @@ describe('connectRivers — han-world-v3 실측', () => {
     // 2×2 가 통째로 강인 자리 수. 원본만으로 50, 잇기 직후 93 이었다.
     // 수계 물려주기 + 걷어 내기 뒤 실측 71. 다시 90 을 넘으면 뭉침이 돌아온 것이다.
     let blocks = 0;
-    for (let r = 0; r + 1 < rows; r += 1) {
-      for (let c = 0; c + 1 < cols; c += 1) {
+    for (let r = 87; r + 1 < rows; r += 1) {
+      for (let c = 0; c + 1 < 384; c += 1) {
         if (code[at(r, c)] === R && code[at(r, c + 1)] === R && code[at(r + 1, c)] === R && code[at(r + 1, c + 1)] === R) blocks += 1;
       }
     }

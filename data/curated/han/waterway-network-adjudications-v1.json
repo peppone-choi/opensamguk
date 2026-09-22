@@ -7,7 +7,7 @@
  "base": {
   "hanTiles": {
    "path": "data/map/han-tiles.json",
-   "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
+   "sha256": "715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620"
   },
   "strongholds": {
    "path": "data/curated/han/strategic-strongholds-v1.json",

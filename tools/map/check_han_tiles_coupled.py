@@ -43,6 +43,9 @@ def _t(*a: str) -> tuple[str, ...]:
 
 # 순서 = 재생성 순서(귀속 원장 → 월드 → 그 뒤에 얹히는 것). han-tiles 자체의 단계 검사가 맨 앞이다.
 COUPLED: tuple[Coupled, ...] = (
+    Coupled("northeast-elevation", ("web/game/public/map/elevation/manifest.json",), _t("tools/map/build_northeast_elevation.py", "--check"), None),
+    Coupled("tiles-stage-korea-places", ("data/map/han-tiles.json",),
+            _t("tools/map/refine_korea_places.py", "--check"), None),
     Coupled("tiles-stage-lowland-terrain", ("data/map/han-tiles.json",),
             _t("tools/map/reclassify_han_lowland_terrain.py", "--check"), None),
     Coupled("tiles-stage-cityless-fold", ("data/map/han-tiles.json",),
@@ -70,6 +73,9 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
     Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",),
             _t("tools/map/audit_territory_disconnections.py", "--check"), None, slow=True),
+    Coupled("administrative-parent-reconciliation", ("data/curated/han/administrative-parent-reconciliation-v1.json",),
+            _t("tools/map/build_han_parent_reconciliation.py", "--check"),
+            _t("tools/map/build_han_parent_reconciliation.py", "--write"), slow=True),
     Coupled("province-city-attribution", ("data/curated/han/province-city-attribution-v1.json",),
             _t("tools/scenario/build_province_city_attribution.py", "--check"),
             _t("tools/scenario/build_province_city_attribution.py")),
@@ -152,10 +158,12 @@ COUPLED: tuple[Coupled, ...] = (
             ("docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
              "docs/superpowers/research/2026-09-17-siege-supply-baseline.md"),
             (PY, "-m", "unittest", "discover", "-s", "tools/sim/tests", "-p", "test_*.py"), None),
-    # 1133 릴리스 번들은 위 산출물의 동결본이다. 드리프트는 「재핀 + 월드 초기화」라는 사용자 결정 사항이라
-    # 자동 재생성하지 않는다(ADR-LITE-058·060). 도구: tools/map/repin_han_1133_bundle.py --write.
-    Coupled("release-1133-bundle", ("data/map/han-world-v3-1133-artifacts-v1/catalog.json",),
-            _t("tools/map/repin_han_1133_bundle.py", "--check"), None),
+    Coupled("korea-manchuria-coverage", ("data/curated/han/korea-manchuria-coverage-v1.json",),
+            _t("tools/map/audit_korea_manchuria.py", "--check"),
+            _t("tools/map/audit_korea_manchuria.py")),
+    # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
+    Coupled("release-1168-bundle", ("data/map/han-world-v3-1168-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1168_bundle.py", "--check"), None),
 )
 
 
