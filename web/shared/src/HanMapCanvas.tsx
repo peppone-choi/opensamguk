@@ -18,6 +18,7 @@ import {
   pinchGesture,
   screenToCell,
   viewAt,
+  visibleCells,
   zoomAt,
   type GridSize,
   type IsoView,
@@ -250,7 +251,38 @@ export interface IsoActivation {
   pointerType: string;
 }
 
-export type InitialFocusProfile = 'current-city-close';
+/**
+ * 지도를 처음 열 때 어디를 얼마나 당겨서 보여줄지.
+ *
+ * - `current-city-close` — 내가 있는 城 주변(배율 10). 기존 화면들이 쓴다.
+ * - `current-commandery` — 郡 하나가 화면을 채우는 배율(24). 칸 사이 선이 보이는 「문명」식
+ *   눈높이다. 칸을 단위로 다루는 화면(작전실·공사)이 쓴다.
+ */
+export type InitialFocusProfile = 'current-city-close' | 'current-commandery';
+
+/** 시야 단계 — 삼모의 완전·첩보·안개와 같다. */
+export type CommanderyVisibility = 'FULL' | 'INTEL' | 'FOG';
+
+/** `current-commandery` 목표 배율 — 한 칸이 화면에서 대략 24px 이 되어 격자선이 읽힌다. */
+export const COMMANDERY_FOCUS_SCALE = 24;
+
+/** 이 배율 아래에서는 칸 선이 면을 덮어 지형을 가린다 — 그때는 그리지 않는다. */
+const CELL_GRID_MIN_SCALE = 8;
+
+/** 칸 경계선 색 — 지형 위에 얹히므로 아주 옅게. */
+const CELL_GRID_STROKE = 'rgba(12,15,14,0.35)';
+
+/**
+ * 전장의 안개 덮개.
+ *
+ * 시야는 세 단계다(삼모 매뉴얼의 완전·첩보·안개와 정본 설계 §7 의 정찰·망루·봉화).
+ * - `FULL` 덮지 않는다.
+ * - `INTEL` 정탐으로 본 것 — 지형은 보이지만 낡았을 수 있어 옅게 덮는다.
+ * - `FOG` 못 본 곳 — 짙게 덮거나(`dim`) 지형째로 지운다(`hidden`).
+ */
+const FOG_INTEL_VEIL = 'rgba(8,10,9,0.34)';
+const FOG_DIM = 'rgba(8,10,9,0.78)';
+const FOG_HIDDEN = '#0c0f0e';
 
 export interface HanMapCanvasProps extends IsoSceneOptions {
   battlefieldTargets?: readonly BattlefieldMapTarget[];
@@ -269,6 +301,20 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   administrativeOwnership?: AdministrativeOwnershipData;
   sourceSize?: IsoSourceSize;
   initialFocus?: InitialFocusProfile;
+  /** 칸 경계선을 그린다. 칸이 단위인 화면에서 켠다 — 충분히 당겼을 때만 실제로 보인다. */
+  showCellGrid?: boolean;
+  /**
+   * 전장의 안개 — **군국 번호 → 시야 단계**다. 표에 없는 군국은 `FOG` 로 본다.
+   *
+   * 칸 단위가 아니라 군국 단위인 것은 규모 때문이다. 격자는 768×669 = 513,792 칸이라 사람마다
+   * 칸을 기억하면 터진다. 군국은 173 개뿐이라 사람마다 들고 있어도 가볍다.
+   *
+   * 번호는 `provinceMap.commanderies` 의 값이다 — 그래서 `provinceUrl`(또는 `provinceMap`)이
+   * 함께 있어야 동작한다. 주지 않으면 안개가 없다(전부 보인다).
+   */
+  commanderyVisibility?: ReadonlyMap<number, CommanderyVisibility> | null;
+  /** `FOG` 군국을 짙게 덮을지(`dim`), 지형째로 지울지(`hidden`). */
+  fogMode?: 'dim' | 'hidden';
   hideCityNames?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -385,9 +431,11 @@ export function initialFocusedView(
 ): IsoView {
   const fitted = initialView(width, height, grid, tiles, dpr);
   if (!current) return fitted;
-  const targetScale = profile === 'current-city-close'
-    ? 10 * effectiveDpr(dpr)
-    : labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
+  const targetScale = profile === 'current-commandery'
+    ? COMMANDERY_FOCUS_SCALE * effectiveDpr(dpr)
+    : profile === 'current-city-close'
+      ? 10 * effectiveDpr(dpr)
+      : labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
   const scale = Math.min(maxScaleForDpr(dpr) * 0.9, Math.max(fitted.scale, targetScale));
   return viewAt(width, height, current.col, current.row, scale);
 }
@@ -1200,6 +1248,8 @@ function drawScene(
   administrativeLayer: AdministrativeLayer,
   strategic: { scene: StrategicMapScene; controls: ReadonlyMap<string, StrategicWaterControl>;
     visible: boolean; route: readonly { col: number; row: number }[] | null } | null,
+  showCellGrid: boolean,
+  fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -1218,6 +1268,47 @@ function drawScene(
   if (political) {
     context.imageSmoothingEnabled = false;
     context.drawImage(political, -0.5, -0.5);
+  }
+  // 전장의 안개 — 못 본 군국을 덮는다. 칸마다 다이아몬드를 채우므로 보이는 범위만 돈다.
+  if (fog && provinceMap) {
+    const span = visibleCells(width, height, view, { cols: provinceMap.width, rows: provinceMap.height });
+    // 단계마다 색이 다르므로 경로를 따로 모아 두 번 칠한다. 칸마다 fillStyle 을 바꾸면 느리다.
+    const intel = new Path2D();
+    const fogged = new Path2D();
+    for (let row = span.row0; row <= span.row1; row += 1) {
+      for (let col = span.col0; col <= span.col1; col += 1) {
+        const commandery = provinceMap.commanderies[row * provinceMap.width + col];
+        // `commanderies` 는 0-based 이고 덮이지 않은 칸은 음수다(decodeProvincePixels).
+        const tier = commandery >= 0 ? fog.visibility.get(commandery) ?? 'FOG' : 'FOG';
+        if (tier === 'FULL') continue;
+        // 아이소 변환 안에서 한 칸은 [col-0.5, col+0.5) × [row-0.5, row+0.5) 사각형이다.
+        (tier === 'INTEL' ? intel : fogged).rect(col - 0.5, row - 0.5, 1, 1);
+      }
+    }
+    context.fillStyle = FOG_INTEL_VEIL;
+    context.fill(intel);
+    context.fillStyle = fog.mode === 'hidden' ? FOG_HIDDEN : FOG_DIM;
+    context.fill(fogged);
+  }
+  // 칸 경계선. 칸이 단위인 화면(작전실·공사)에서 한 칸이 어디까지인지 눈에 보이게 한다.
+  // 멀리서 보면 선이 면을 덮어 지형이 안 보이므로 충분히 당겼을 때만 그린다.
+  if (showCellGrid && scale >= CELL_GRID_MIN_SCALE) {
+    const span = visibleCells(width, height, view, {
+      cols: scene.terrain[0]?.length ?? 0,
+      rows: scene.terrain.length,
+    });
+    context.strokeStyle = CELL_GRID_STROKE;
+    context.lineWidth = dpr / scale;
+    context.beginPath();
+    for (let col = span.col0; col <= span.col1 + 1; col += 1) {
+      context.moveTo(col - 0.5, span.row0 - 0.5);
+      context.lineTo(col - 0.5, span.row1 + 0.5);
+    }
+    for (let row = span.row0; row <= span.row1 + 1; row += 1) {
+      context.moveTo(span.col0 - 0.5, row - 0.5);
+      context.lineTo(span.col1 + 0.5, row - 0.5);
+    }
+    context.stroke();
   }
   if (strategic?.visible) {
     for (const shape of strategic.scene.zones) {
@@ -1449,6 +1540,9 @@ export function HanMapCanvas({
   administrativeOwnership,
   sourceSize = DEFAULT_SOURCE,
   initialFocus,
+  showCellGrid = false,
+  commanderyVisibility = null,
+  fogMode = 'dim',
   currentCityId,
   selectedCityId,
   hideCityNames = false,
@@ -1791,6 +1885,8 @@ export function HanMapCanvas({
       selfLocationPhaseRef.current,
       administrativeLayer,
       strategicRef.current,
+      showCellGrid,
+      commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
     );
     battlefieldHits.current = [];
     const ctx = canvas.getContext('2d');
