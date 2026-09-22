@@ -119,6 +119,10 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("hwiha-resource-production", ("data/curated/han/hwiha-resource-production-v1.json",),
             _t("tools/map/build_hwiha_resource_production.py", "--check"),
             _t("tools/map/build_hwiha_resource_production.py")),
+    # 결손 배치 가능성은 han-tiles 의 郡 중심으로 同名異地를 걸러낸다 — 지도가 바뀌면 같이 상해야 한다.
+    Coupled("gap-placement-readiness", ("data/curated/han/gap-placement-readiness-v1.json",),
+            _t("tools/map/build_gap_placement_readiness.py", "--check"),
+            _t("tools/map/build_gap_placement_readiness.py")),
     Coupled("officer-native-county", ("data/curated/han/officer-native-county-v1.json",),
             _t("tools/scenario/build_officer_native_county.py", "--check"),
             _t("tools/scenario/build_officer_native_county.py")),

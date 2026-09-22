@@ -1,0 +1,1016 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "gap-placement-readiness-v1",
+  "note": "여섯 심사 원장이 확정한 실결손이 **지금 지도에 놓일 수 있는가** 를 좌표 확보 상태로 가른 것이다. 사료 축이 「220 년에 있었다」 를 말해도 좌표가 없으면 놓을 수 없다 — 두 질문은 따로다.",
+  "method": {
+    "coordinateSources": "namu-place-locations-v1 (현대 지명 서술 포함) 과 TGAZ 이름 조인 결과",
+    "crossSourceCaveat": "두 출처가 다 있는 건의 상호 거리는 **독립 검증이 아니다** — 실측 8 건 중 6 건이 0.0 km 로 완전 일치하는 것은 둘이 결국 CHGIS 를 공유한다는 뜻이다. 독립적인 부분은 나무위키 쪽의 현대 지명 서술뿐이고, 다른 값을 내는 건(西河 中陽 86.9 km)이 오히려 봐야 할 것이다.",
+    "homonymScreen": "TGAZ 단독은 지도 郡 중심과의 거리로 걸렀다. 200 km 초과는 판정이 아니라 심사 트리거다 — 廣漢 白水는 204 km 인데 진짜다(郡이 북으로 길고 같은 지점에 白水關·후대 白水郡이 겹친다). 郡 중심 표본 수(commanderyCentroidSample)가 작으면 거리 자체가 약하다.",
+    "rejected": "앞선 심사가 좌표를 기각한 건은 거리와 무관하게 COORDINATE_REJECTED 로 뺀다."
+  },
+  "totals": {
+    "READY_TGAZ": 29,
+    "REVIEW_TGAZ_FAR": 1,
+    "READY_BOTH_SOURCES": 8,
+    "COORDINATE_REJECTED": 4,
+    "READY_NAMU": 23,
+    "NO_COORDINATE": 45
+  },
+  "counties": [
+    {
+      "commandery": "河東郡",
+      "name": "楊",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 111.71672,
+      "lat": 36.22077,
+      "commanderyCentroidKm": 97,
+      "commanderyCentroidSample": 20,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "鮦陽",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 114.96882,
+      "lat": 33.0823,
+      "commanderyCentroidKm": 0,
+      "commanderyCentroidSample": 26,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "順陽",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 111.53245,
+      "lat": 32.74889,
+      "commanderyCentroidKm": 89,
+      "commanderyCentroidSample": 29,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "丹水",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 111.22923,
+      "lat": 33.08096,
+      "commanderyCentroidKm": 121,
+      "commanderyCentroidSample": 29,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "白水",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 105.49215,
+      "lat": 32.66547,
+      "commanderyCentroidKm": 204,
+      "commanderyCentroidSample": 6,
+      "readiness": "REVIEW_TGAZ_FAR"
+    },
+    {
+      "commandery": "永昌郡",
+      "name": "邪龍",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 100.30888,
+      "lat": 25.23003,
+      "commanderyCentroidKm": 92,
+      "commanderyCentroidSample": 7,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "太原郡",
+      "name": "茲氏",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "lon": 111.81372,
+      "lat": 37.20595,
+      "commanderyCentroidKm": 72,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "西河郡",
+      "name": "中陽",
+      "verdict": "REAL_GAP",
+      "ledger": "survived-county-adjudications-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 111.78615,
+      "lat": 37.1419,
+      "crossSourceKm": 86.9,
+      "modernLocation": "산시성 샤오이시"
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "氐道",
+      "verdict": "REAL_GAP_NO_COORDINATE",
+      "ledger": "survived-county-adjudications-v1",
+      "readiness": "COORDINATE_REJECTED",
+      "note": "사천 蜀郡 湔氐道 계승 사슬이다 (survived-county-adjudications-v1)"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "固始",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 114.76242,
+      "lat": 33.80199,
+      "commanderyCentroidKm": 82,
+      "commanderyCentroidSample": 26,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "繁畤",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 113.24369,
+      "lat": 39.56155,
+      "crossSourceKm": 0.0,
+      "modernLocation": "산시성 잉현 동측"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "崞",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 113.56726,
+      "lat": 39.70704,
+      "crossSourceKm": 0.0,
+      "modernLocation": "산시성 훈위안현"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "馬邑",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 112.42152,
+      "lat": 39.30807,
+      "crossSourceKm": 0.0,
+      "modernLocation": "산시성 숴저우시"
+    },
+    {
+      "commandery": "遼西郡",
+      "name": "陽樂",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "readiness": "COORDINATE_REJECTED",
+      "note": "산동 좌표의 同名異地다. 진짜는 hvd_87636 (119.038, 39.775) 이므로 재핀하면 쓸 수 있다"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "陰陵",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.44382,
+      "lat": 32.63618,
+      "commanderyCentroidKm": 52,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "歷陽",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 118.36112,
+      "lat": 31.71422,
+      "commanderyCentroidKm": 104,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "當塗",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.205,
+      "lat": 32.86466,
+      "commanderyCentroidKm": 79,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "全椒",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 118.26437,
+      "lat": 32.09835,
+      "commanderyCentroidKm": 82,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "鍾離",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.64022,
+      "lat": 32.90163,
+      "commanderyCentroidKm": 84,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "九江郡",
+      "name": "阜陵",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 118.18547,
+      "lat": 31.68121,
+      "commanderyCentroidKm": 92,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "舒",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.17437,
+      "lat": 31.18897,
+      "commanderyCentroidKm": 96,
+      "commanderyCentroidSample": 13,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "臨湖",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.6963,
+      "lat": 31.14534,
+      "commanderyCentroidKm": 142,
+      "commanderyCentroidSample": 13,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "龍舒",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 116.62608,
+      "lat": 31.34139,
+      "commanderyCentroidKm": 46,
+      "commanderyCentroidSample": 13,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "襄安",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.79866,
+      "lat": 31.15731,
+      "commanderyCentroidKm": 150,
+      "commanderyCentroidSample": 13,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "東海郡",
+      "name": "合鄕",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 117.21945,
+      "lat": 35.09516,
+      "commanderyCentroidKm": 90,
+      "commanderyCentroidSample": 11,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "北海國",
+      "name": "平昌",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "readiness": "COORDINATE_REJECTED",
+      "note": "TGAZ 에 이 시대 北海 平昌 레코드가 없다 (abolished-verdict-corrections-v1)"
+    },
+    {
+      "commandery": "南海郡",
+      "name": "中宿",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 112.89028,
+      "lat": 23.90139,
+      "commanderyCentroidKm": 146,
+      "commanderyCentroidSample": 6,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "廣陵郡",
+      "name": "東陽",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 118.83847,
+      "lat": 32.96185,
+      "commanderyCentroidKm": 53,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "丹陽郡",
+      "name": "秣陵",
+      "verdict": "REAL_GAP",
+      "ledger": "abolished-verdict-corrections-v1",
+      "lon": 118.82727,
+      "lat": 31.84265,
+      "commanderyCentroidKm": 113,
+      "commanderyCentroidSample": 31,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "河南尹",
+      "name": "梁",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 112.74347,
+      "lat": 34.16553,
+      "modernLocation": "허난성 핑딩산시 루저우시"
+    },
+    {
+      "commandery": "河南尹",
+      "name": "新城",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 112.39502,
+      "lat": 34.39771,
+      "modernLocation": "허난성 뤄양시 이촨현"
+    },
+    {
+      "commandery": "河東郡",
+      "name": "蒲子",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "汧",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "雍",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "美阳",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 108.0614,
+      "lat": 34.3378,
+      "modernLocation": "산시성 셴양시 우궁현 우궁진"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "北宜春",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 114.26909,
+      "lat": 32.8244,
+      "modernLocation": "허난성 주마뎬시 루난현"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "定潁",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 114.0718,
+      "lat": 33.3986,
+      "modernLocation": "허난성 주마뎬시 시핑현"
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "長垣",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "東郡",
+      "name": "濮陽",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "泰山郡",
+      "name": "山茌",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "濟陰郡",
+      "name": "離狐",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "巴郡",
+      "name": "涪陵",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "广汉",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "平夷",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "漏江",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "卑水",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 102.86078,
+      "lat": 28.29495,
+      "modernLocation": "쓰촨성 자오줴현 쩌푸향"
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "会无",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 102.24429,
+      "lat": 26.65907,
+      "modernLocation": "쓰촨성 후이리현"
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "姑复",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "俞元",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 102.90431,
+      "lat": 24.67462,
+      "modernLocation": "윈난성 청장시"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "律高",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "秦臧",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "蜀郡屬國",
+      "name": "旄牛",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "犍為屬國",
+      "name": "汉阳",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "略阳",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "成纪",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 105.68042,
+      "lat": 35.2415,
+      "modernLocation": "간쑤성 핑량시 징닝현 즈핑향"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "平襄",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "上邽",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 105.7258,
+      "lat": 34.5853,
+      "modernLocation": "간쑤성 톈수이시 시내"
+    },
+    {
+      "commandery": "武都郡",
+      "name": "河池",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "金城郡",
+      "name": "浩亹",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "金城郡",
+      "name": "允街",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "安定郡",
+      "name": "临泾",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 107.34059,
+      "lat": 35.53933,
+      "modernLocation": "간쑤성 칭양시 전위안현 슈광향"
+    },
+    {
+      "commandery": "武威郡",
+      "name": "姑臧",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 102.6347,
+      "lat": 37.92692,
+      "modernLocation": "간쑤성 우웨이시"
+    },
+    {
+      "commandery": "武威郡",
+      "name": "宣威",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 102.9854,
+      "lat": 38.4959,
+      "modernLocation": "간쑤성 우웨이시 민친현"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "福禄",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "表氏",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 99.61737,
+      "lat": 39.39404,
+      "modernLocation": "간쑤성 장예시 가오타이현"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "乐涫",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 98.9421,
+      "lat": 39.5309,
+      "modernLocation": "간쑤성 주취안시 쑤저우구"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "会水",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 99.37496,
+      "lat": 39.8688,
+      "modernLocation": "간쑤성 장예시 가오타이현"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "沙头",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 96.9849,
+      "lat": 40.4282,
+      "modernLocation": "간쑤성 주취안시 위먼시"
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "安弥",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 98.83275,
+      "lat": 39.71654,
+      "modernLocation": "간쑤성 주취안시 쑤저우구"
+    },
+    {
+      "commandery": "敦煌郡",
+      "name": "广至",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "太原郡",
+      "name": "于离",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "太原郡",
+      "name": "平陶",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "广牧",
+      "verdict": "REAL_GAP_RELOCATED",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "居庸",
+      "verdict": "REAL_GAP",
+      "ledger": "jinshu-token-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 115.9783,
+      "lat": 40.459,
+      "modernLocation": "베이징시 옌칭구 옌칭진"
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "衙",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 109.65974,
+      "lat": 35.32087,
+      "commanderyCentroidKm": 52,
+      "commanderyCentroidSample": 11,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "杜阳",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "細陽",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 115.74445,
+      "lat": 33.18829,
+      "crossSourceKm": 0.0,
+      "modernLocation": "안후이성 푸양시 타이허현"
+    },
+    {
+      "commandery": "梁國",
+      "name": "薄",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 115.5415,
+      "lat": 34.72515,
+      "commanderyCentroidKm": 41,
+      "commanderyCentroidSample": 7,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "沛國",
+      "name": "向",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 117.14322,
+      "lat": 33.08128,
+      "crossSourceKm": 1.2,
+      "modernLocation": "안후이성 벙부시 화이위안현"
+    },
+    {
+      "commandery": "魯國",
+      "name": "騶",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "常山國",
+      "name": "欒城",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 114.62434,
+      "lat": 37.91348,
+      "commanderyCentroidKm": 19,
+      "commanderyCentroidSample": 13,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "河閒國",
+      "name": "易",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 116.06742,
+      "lat": 38.9959,
+      "commanderyCentroidKm": 70,
+      "commanderyCentroidSample": 12,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "東昬",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 114.85936,
+      "lat": 34.92438,
+      "commanderyCentroidKm": 40,
+      "commanderyCentroidSample": 15,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "山陽郡",
+      "name": "東緡",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 116.30453,
+      "lat": 35.06816,
+      "commanderyCentroidKm": 30,
+      "commanderyCentroidSample": 8,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "琅邪國",
+      "name": "西海",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "平原郡",
+      "name": "濕陰",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "北海國",
+      "name": "壯武",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "豫章郡",
+      "name": "廬陵",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "lon": 114.83273,
+      "lat": 26.93722,
+      "commanderyCentroidKm": 130,
+      "commanderyCentroidSample": 32,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "安故",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "阿阳",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "COORDINATE_REJECTED",
+      "note": "산동 좌표의 同名異地다 (dushi-disposition-adjudications-v1)"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "勇士",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "陇",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "武都郡",
+      "name": "下辨",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "金城郡",
+      "name": "枝阳",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "安定郡",
+      "name": "三水",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "上郡",
+      "name": "高奴",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "五原郡",
+      "name": "五原",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 109.65046,
+      "lat": 40.70569,
+      "modernLocation": "내몽골 바오터우시 쿤두룬구"
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "昌平",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "军都",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "狐奴",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 116.754,
+      "lat": 40.1946,
+      "modernLocation": "베이징시 순이구"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "雍奴",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 117.0303,
+      "lat": 39.5932,
+      "modernLocation": "톈진시 우칭구"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "安乐",
+      "verdict": "REAL_GAP",
+      "ledger": "dushi-disposition-adjudications-v1",
+      "readiness": "READY_NAMU",
+      "lon": 116.6065,
+      "lat": 40.17,
+      "modernLocation": "베이징시 순이구"
+    },
+    {
+      "commandery": "梁國",
+      "name": "穀熟",
+      "verdict": "REAL_GAP",
+      "ledger": "songshu-provenance-adjudications-v1",
+      "lon": 115.77325,
+      "lat": 34.27525,
+      "commanderyCentroidKm": 22,
+      "commanderyCentroidSample": 7,
+      "readiness": "READY_TGAZ"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "毋棳",
+      "verdict": "REAL_GAP",
+      "ledger": "songshu-provenance-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "東郡",
+      "name": "衞",
+      "verdict": "REAL_GAP",
+      "ledger": "songshu-provenance-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "桂林",
+      "verdict": "REAL_GAP",
+      "ledger": "songshu-provenance-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "阴馆",
+      "verdict": "REAL_GAP",
+      "ledger": "songshu-provenance-adjudications-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 112.72729,
+      "lat": 39.24229,
+      "crossSourceKm": 0.0,
+      "modernLocation": "산시성 숴저우시"
+    },
+    {
+      "commandery": "代郡",
+      "name": "高柳",
+      "verdict": "REAL_GAP",
+      "ledger": "weishu-affiliation-adjudications-v1",
+      "readiness": "READY_BOTH_SOURCES",
+      "lon": 113.75209,
+      "lat": 40.3537,
+      "crossSourceKm": 0.0,
+      "modernLocation": "산시성 다퉁시 양가오현"
+    },
+    {
+      "commandery": "代郡",
+      "name": "东安阳",
+      "verdict": "REAL_GAP",
+      "ledger": "weishu-affiliation-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    },
+    {
+      "commandery": "武威郡",
+      "name": "休屠",
+      "verdict": "REAL_GAP",
+      "ledger": "weishu-affiliation-adjudications-v1",
+      "readiness": "NO_COORDINATE"
+    }
+  ]
+}
