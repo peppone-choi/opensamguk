@@ -245,6 +245,83 @@ def clean_markup(value: str) -> str:
     return cleaned.replace("'''", "").strip(" \t\r\n，。")
 
 
+def county_note_body(raw: str) -> str:
+    """Remove source annotations, preserving body readings without script folding.
+
+    This is markup handling only, not county segmentation or historical review.
+    Unknown templates and broken delimiters fail rather than discard body text.
+    """
+    pairs = {"{{": "}}", "[[": "]]", "-{": "}-", "〖": "〗"}
+    closers = tuple(pairs.values())
+
+    def enclosed(start: int, opening: str) -> tuple[str, int]:
+        stack = [pairs[opening]]
+        cursor = start + len(opening)
+        body_start = cursor
+        while cursor < len(raw):
+            if raw.startswith(stack[-1], cursor):
+                end = cursor
+                cursor += len(stack.pop())
+                if not stack:
+                    return raw[body_start:end], cursor
+                continue
+            nested = next((key for key in pairs if raw.startswith(key, cursor)), None)
+            if nested is not None:
+                stack.append(pairs[nested])
+                cursor += len(nested)
+                continue
+            if any(raw.startswith(close, cursor) for close in closers):
+                raise CatalogContractError("mismatched county note delimiter")
+            cursor += 1
+        raise CatalogContractError("unclosed county note delimiter")
+
+    out: list[str] = []
+    cursor = 0
+    while cursor < len(raw):
+        if raw.startswith("<ref", cursor) or raw.startswith("</ref", cursor):
+            tag = re.match(r"<ref\b[^>]*>", raw[cursor:])
+            if tag is None:
+                raise CatalogContractError("invalid county note ref")
+            cursor += tag.end()
+            if tag.group().rstrip().endswith("/>"):
+                continue
+            depth = 1
+            while depth:
+                next_tag = re.search(r"</?ref\b[^>]*>", raw[cursor:])
+                if next_tag is None:
+                    raise CatalogContractError("unclosed county note ref")
+                token = next_tag.group()
+                if token.startswith("</ref"):
+                    depth -= 1
+                elif not token.rstrip().endswith("/>"):
+                    depth += 1
+                cursor += next_tag.end()
+            continue
+        opening = next((key for key in pairs if raw.startswith(key, cursor)), None)
+        if opening is not None:
+            body, cursor = enclosed(cursor, opening)
+            if opening == "{{":
+                name, separator, arguments = body.partition("|")
+                if name.strip() == "*" and separator:
+                    continue
+                if name.strip() != "YL" or not separator:
+                    raise CatalogContractError("unknown county note template")
+                year = arguments.split("|", 1)[0]
+                if not year.strip():
+                    raise CatalogContractError("empty county note year template")
+                out.append(county_note_body(year))
+            elif opening == "[[":
+                out.append(county_note_body(body.rsplit("|", 1)[-1]))
+            else:
+                out.append(county_note_body(body))
+            continue
+        if any(raw.startswith(close, cursor) for close in closers):
+            raise CatalogContractError("unexpected county note closing delimiter")
+        out.append(raw[cursor])
+        cursor += 1
+    return "".join(out).strip()
+
+
 def unit_type(name: str, remainder: str) -> str:
     normalized = remainder.lstrip("，。 ")
     if normalized.startswith(("侯國", "侯国")):

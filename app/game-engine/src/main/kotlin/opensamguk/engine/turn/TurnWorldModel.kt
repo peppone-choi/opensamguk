@@ -273,7 +273,11 @@ data class TurnWorldState(
 ) {
     /** 월드 규칙 프로필(입력 registry 계약 §2). 시드 전 월드는 config 에 없어 SAMMO, 모르는 글자는 부팅 실패. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
-        get() = opensamguk.logic.input.RuleProfile.fromWorldConfig(config["ruleProfile"] as? String)
+        get() {
+            val value = config["ruleProfile"]
+            require(value == null || value is String) { "ruleProfile in world config must be a string" }
+            return opensamguk.logic.input.RuleProfile.fromWorldConfig(value as String?)
+        }
 }
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"

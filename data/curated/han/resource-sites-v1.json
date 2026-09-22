@@ -109,7 +109,7 @@
   "disagreeingCommanderies": []
  },
  "counts": {
-  "entries": 106,
+  "entries": 109,
   "byResourceEra": {
    "HORSE/FORMER_HAN": 1,
    "HORSE/LATER_HAN": 8,
@@ -117,7 +117,7 @@
    "IRON/LATER_HAN": 34,
    "SALT/FORMER_HAN": 22,
    "WOOD/FORMER_HAN": 1,
-   "WOOD/LATER_HAN": 1
+   "WOOD/LATER_HAN": 4
   },
   "byResourceEraMatchStatus": {
    "HORSE/FORMER_HAN/MATCHED_COMMANDERY": 1,
@@ -140,14 +140,15 @@
    "SALT/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 4,
    "SALT/FORMER_HAN/UNMATCHED_NO_JURISDICTION": 5,
    "WOOD/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 1,
-   "WOOD/LATER_HAN/UNKNOWN_NO_SOURCE": 1
+   "WOOD/LATER_HAN/UNKNOWN_NO_SOURCE": 1,
+   "WOOD/LATER_HAN/UNREVIEWED_EVENT_PROCUREMENT": 3
   },
   "byLevel": {
-   "COMMANDERY": 13,
+   "COMMANDERY": 16,
    "COUNTY": 90,
    "REGION": 3
   },
-  "distinctSites": 101
+  "distinctSites": 104
  },
  "entries": [
   {
@@ -2711,6 +2712,90 @@
    "claim": "羽林郎을 뽑는 기마 인력 6郡. 말 산지의 간접 근거다(목장 기록이 아니다)."
   },
   {
+   "id": "hhs:042:WOOD:procurement-90:常山",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "常山",
+   "sourceCommandery": "常山",
+   "sourceMarker": null,
+   "countyAttribution": "EVENT_PROCUREMENT",
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "matchReason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷042 光武十王列傳 中山簡王焉",
+    "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+    "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-042.txt",
+     "line": 183
+    }
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다.",
+   "eventYear": 90
+  },
+  {
+   "id": "hhs:042:WOOD:procurement-90:鉅鹿",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "鉅鹿",
+   "sourceCommandery": "鉅鹿",
+   "sourceMarker": null,
+   "countyAttribution": "EVENT_PROCUREMENT",
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "matchReason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷042 光武十王列傳 中山簡王焉",
+    "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+    "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-042.txt",
+     "line": 183
+    }
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다.",
+   "eventYear": 90
+  },
+  {
+   "id": "hhs:042:WOOD:procurement-90:涿郡",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "level": "COMMANDERY",
+   "sourceName": "涿郡",
+   "sourceCommandery": "涿郡",
+   "sourceMarker": null,
+   "countyAttribution": "EVENT_PROCUREMENT",
+   "jurisdictionId": null,
+   "commanderyId": null,
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "matchReason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토",
+   "confidence": "LOW",
+   "evidence": {
+    "book": "後漢書",
+    "volume": "卷042 光武十王列傳 中山簡王焉",
+    "quote": "發常山、鉅鹿、涿郡柏黃腸雜木",
+    "url": "https://zh.wikisource.org/wiki/後漢書/卷42",
+    "snapshotSha256": "7538969260fdf5e6bc77797f163e273b0f8eae56b6383524517f08a523fecbd2",
+    "locator": {
+     "corpusPath": "data/corpus/hhs-042.txt",
+     "line": 183
+    }
+   },
+   "claim": "永元二年(90) 中山簡王焉 장례의 목재 징발·조달 근거. 三郡不能備라고 이어진다. 지속 생산·벌채 縣·생산량·현 지도 郡 귀속은 확정하지 않는다.",
+   "eventYear": 90
+  },
+  {
    "id": "UNKNOWN:WOOD:LATER_HAN",
    "resource": "WOOD",
    "era": "LATER_HAN",
@@ -2722,7 +2807,7 @@
    "matchStatus": "UNKNOWN_NO_SOURCE",
    "confidence": "UNKNOWN",
    "evidence": null,
-   "missing": "後漢 목재 산지를 縣·郡 단위로 적은 사료를 아직 못 찾았다. 郡國志 본문에 산림·木 주기가 없고, han-tiles terrainLegend 10종(SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)이 유일한 문헌 근거다. 현대 식생을 2~3세기 경관으로 단정하지 않는다(스펙 §9.3)."
+   "missing": "後漢 縣 단위 벌채지·지속 생산량은 미확정이다. 卷42의 90년 장례 목재 조달3郡은 별도 사건 근거로 보존한다. han-tiles terrainLegend 10종(SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)은 시대가 다른 근거다. 현대 식생을 2~3세기 경관으로 단정하지 않는다(스펙 §9.3)."
   },
   {
    "id": "UNKNOWN:HORSE:PASTURE_SITES",

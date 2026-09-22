@@ -600,5 +600,24 @@ class JunguozhiContractTest(unittest.TestCase):
         self.assertEqual(render_catalog(self.catalog), artifact.read_text(encoding="utf-8"))
 
 
+class CountyNoteBodyTest(unittest.TestCase):
+    def test_yingchuan_notes_keep_all_body_sentences(self):
+        raw = "　　陽翟，禹所都。{{*|汲冢書：「禹都陽城。」}}有鈞臺。{{*|左傳曰享。}}有高氏亭。有雍氏城。"
+        self.assertEqual(CONTRACT.county_note_body(raw), "陽翟，禹所都。有鈞臺。有高氏亭。有雍氏城。")
+        self.assertEqual(CONTRACT.county_note_body("輪氏，{{YL|建初四年|79年}}置。"), "輪氏，建初四年置。")
+
+    def test_nested_annotations_are_removed_without_losing_following_body(self):
+        raw = '〖陽城〗{{*|註{{YL|建初四年}}及{{*|內註}}。}}有鐵。<ref name="a">註<ref>內註</ref></ref>有負黍聚。<ref name="a"/>'
+        self.assertEqual(CONTRACT.county_note_body(raw), "陽城有鐵。有負黍聚。")
+
+    def test_display_markup_preserves_reading_and_punctuation(self):
+        self.assertEqual(CONTRACT.county_note_body("襄，有養陰-{里}-。[[古地名|汜城]]，[[湛水]]。"), "襄，有養陰里。汜城，湛水。")
+
+    def test_unknown_and_unbalanced_markup_fails_closed(self):
+        for raw in ("前{{unknown|文}}後", "前{{*|註", "前}}後", "{{YL}}", "{{YL||79年}}", "<ref>註", "</ref>", "-{里", "里}-", "〖縣", "縣〗", "[[縣", "縣]]", "<ref name=broken"):
+            with self.subTest(raw=raw), self.assertRaises(CatalogContractError):
+                CONTRACT.county_note_body(raw)
+
+
 if __name__ == "__main__":
     unittest.main()

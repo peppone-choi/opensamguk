@@ -7,8 +7,8 @@
 사용자가 목표 템포 표를 고르기 위한 근거 표다.
 
 격자 → km 변환: han-tiles `_meta` 에 경위도 범위가 없어 `cities[]` 의 (col,row)↔(lon,lat)
-쌍을 최소제곱으로 맞춘 축척을 쓴다(2026-09-17 실측: 0.0534°/col · 0.0461°/row, 잔차 최대 약 2.8°
-— 城 칸은 지형에 맞춰 밀린 씨앗이라 개별 좌표는 어긋나도 축척은 안정적이다).
+쌍을 최소제곱으로 맞춘 축척을 쓴다(재분할 후 약 0.0542°/col · -0.0469°/row).
+끝점은 城 좌표가 아니라 省 마른땅 중심이므로 실제 도로 거리와 같지 않다.
 ADR-LITE-053 의 「lon 80.5–116.6」 범위는 이 격자와 맞지 않는다.
 """
 from __future__ import annotations
@@ -19,6 +19,8 @@ import heapq
 import json
 import math
 from pathlib import Path
+
+import simulation_evidence as E
 
 ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data/map/han-tiles.json"
@@ -81,9 +83,15 @@ class Graph:
         lat = self.lat0 + ((y1 + y2) / 2) * self.dlat
         return math.hypot((x2 - x1) * self.dlon * 111.32 * math.cos(math.radians(lat)), (y2 - y1) * self.dlat * 110.57)
 
-    def shortest(self, src: int, dst: int, rough_factor: float):
+    def shortest(self, src: int, dst: int, rough_factor: float, *, allowed_provinces: set[int] | None = None):
+        route = self.shortest_path(src, dst, rough_factor, allowed_provinces=allowed_provinces)
+        return route[:3] if route is not None else None
+
+    def shortest_path(self, src: int, dst: int, rough_factor: float, *, allowed_provinces: set[int] | None = None):
         """(비용 km, 실제 km, 간선 수 — 경유 省 수는 +1). 비용 = km × (1 + (계수-1) × 두 省 험지 비율 평균)."""
-        best = {src: (0.0, 0.0, 0)}
+        if allowed_provinces is not None and (src not in allowed_provinces or dst not in allowed_provinces):
+            return None
+        best = {src: (0.0, 0.0, 0, [src])}
         heap = [(0.0, src)]
         while heap:
             cost, u = heapq.heappop(heap)
@@ -92,11 +100,13 @@ class Graph:
             if cost > best[u][0]:
                 continue
             for v in sorted(self.adj[u]):
+                if allowed_provinces is not None and v not in allowed_provinces:
+                    continue
                 d = self.km(u, v)
                 share = (self.rough_share[u] + self.rough_share[v]) / 2
                 c = cost + d * (1 + (rough_factor - 1) * share)
                 if v not in best or c < best[v][0]:
-                    best[v] = (c, best[u][1] + d, best[u][2] + 1)
+                    best[v] = (c, best[u][1] + d, best[u][2] + 1, best[u][3] + [v])
                     heapq.heappush(heap, (c, v))
         return None
 
@@ -142,9 +152,16 @@ def table(tiles: dict) -> list[dict]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json", action="store_true")
+    output = ap.add_mutually_exclusive_group()
+    output.add_argument("--json", action="store_true")
+    output.add_argument("--evidence", action="store_true", help="JSON result with exact source hashes (exploratory, not S2 acceptance)")
     args = ap.parse_args(argv)
+    paths = [TILES, Path(__file__).resolve(), Path(E.__file__).resolve()]
+    before = E.snapshot(ROOT, paths) if args.evidence else None
     rows = table(json.loads(TILES.read_text(encoding="utf-8")))
+    if args.evidence:
+        print(json.dumps(E.evidence(ROOT, paths, before, rows), ensure_ascii=False, indent=1))
+        return 0
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=1))
         return 0

@@ -135,5 +135,42 @@ class SiegeSupplyTest(unittest.TestCase):
         self.assertIn(S.render(self.result), note)
 
 
+class SiegeStockTest(unittest.TestCase):
+    def test_full_blockade_exhausts_stock_then_records_unmet_demand(self):
+        rows = S.siege_stock(12, 1, 14, {})
+        self.assertEqual(rows[11]["closingStock"], 0)
+        self.assertEqual(rows[11]["shortfall"], 0)
+        self.assertEqual(rows[12]["shortfall"], 1)
+        self.assertEqual(sum(r["consumed"] for r in rows), 12)
+
+    def test_supply_arrives_before_consumption_and_preserves_balance(self):
+        rows = S.siege_stock(2, 2, 4, {2: 3, 4: 2})
+        self.assertEqual([r["closingStock"] for r in rows], [0, 1, 0, 0])
+        self.assertEqual([r["shortfall"] for r in rows], [0, 0, 1, 0])
+        for r in rows:
+            self.assertEqual(r["openingStock"] + r["delivered"], r["consumed"] + r["closingStock"])
+            self.assertEqual(r["consumed"] + r["shortfall"], 2)
+
+    def test_supply_order_does_not_change_results(self):
+        self.assertEqual(S.siege_stock(3, 1, 5, {4: 2, 2: 1}), S.siege_stock(3, 1, 5, {2: 1, 4: 2}))
+
+    def test_cli_build_consumes_target_and_reports_depletion_without_capture(self):
+        result = S.stock_sensitivity(S.load_json(S.TEMPO))
+        blocked = [c for c in result["cases"] if c["supplyCase"] == "완전 봉쇄"]
+        self.assertEqual([c["firstShortfallTurn"] for c in blocked], [13, 19, 25])
+        self.assertEqual([c["firstShortfallRealHours"] for c in blocked], [13, 19, 25])
+        for c in result["cases"]:
+            if c["supplyCase"] == "중간부터 매순 소비량 보급":
+                self.assertIsNone(c["firstShortfallTurn"])
+        self.assertEqual(result["status"], "EXPLORATORY")
+
+    def test_invalid_units_and_out_of_window_supply_are_rejected(self):
+        for args in [(-1, 1, 2, {}), (1, 0, 2, {}), (1, 1, 0, {}),
+                     (True, 1, 2, {}), (1, 1.5, 2, {}), (1, 1, 2, {3: 1}),
+                     (1, 1, 2, {1: -1}), (1, 1, 2, {True: 1})]:
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                S.siege_stock(*args)
+
+
 if __name__ == "__main__":
     unittest.main()

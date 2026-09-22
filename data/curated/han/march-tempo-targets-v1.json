@@ -3,13 +3,126 @@
  "status": "OWNER_APPROVED_BASELINE",
  "approvedOn": "2026-09-17",
  "approvedBy": "사용자(기획 대화, 이슈 #778)",
+ "turnClock": {
+  "defaultRealMinutesPerTurn": 60,
+  "worldConfigurable": true,
+  "approvedOn": "2026-09-20",
+  "approvedBy": "사용자(제작 착수 대화: 1순 1시간, 예약 12순 반나절)",
+  "scope": "신규 HWIHA 기획 기본값. 기존 운영 월드의 설정을 변경하지 않는다."
+ },
  "baseSpeedKmPerTurn": 30,
  "roughTerrainFactor": 1.5,
- "roughTerrain": ["MOUNTAIN", "PLATEAU", "HILL", "DESERT"],
- "forcedMarch": {"speedFactor": 1.5, "costs": ["fatigue", "morale"], "costMagnitude": "UNDECIDED"},
+ "roughTerrain": [
+  "MOUNTAIN",
+  "PLATEAU",
+  "HILL",
+  "DESERT"
+ ],
+ "forcedMarch": {
+  "speedFactor": 1.5,
+  "costs": [
+   "fatigue",
+   "morale"
+  ],
+  "costMagnitude": "UNDECIDED"
+ },
  "notes": [
-  "평지 30 km/순은 중원 인접 省 중심 간 거리(간선 711개 중앙값 32 km)에 가까운 값이다 — 1순에 인접 省 1개에 조금 못 미친다. 간선의 약 60% 는 30 km 를 넘어, 순 단위 올림이면 단독으로 2순이 든다(올림 규칙은 미정).",
+  "평지 30 km/순의 승인 당시 근거는 2026-09-17 지도 중원 간선 711개 중앙값 약 32 km였다. 이 관측은 지도 재분할 전 값이며 현재 지도 통계가 아니다. 최신 재산출은 docs/superpowers/research/2026-09-17-march-tempo-baseline.md 를 참조한다. 승인 속도는 유지한다. 2026-09-20 사용자 결정으로 省 경계에서 잔여 이동량을 이어 쓰며 중단 없는 경로는 전체 비용 합산 후 올림한다.",
   "험지 계수는 간선 비용 = km × (1 + (계수−1) × 두 省 험지 비율 평균)으로 적용한다(tools/sim/march_tempo.py).",
   "도로·강·관문·계절·보급 소모, 강행의 피로·사기 소모량은 미정이다. 시험 속도(분/턴)와 공개 속도(시간/순)에서 같은 km/순을 쓴다고 가정한다(미확정)."
- ]
+ ],
+ "siegeTarget": {
+  "status": "OWNER_APPROVED_TARGET",
+  "approvedOn": "2026-09-20",
+  "approvedBy": "사용자(제작 착수 대화: 12–24순, 구원·보급 대응 시간 확보)",
+  "minTurns": 12,
+  "maxTurns": 24,
+  "conditions": [
+   "일반 縣城",
+   "보급 완전 차단",
+   "강공 없음",
+   "구원군 없음",
+   "수송 재개 없음"
+  ],
+  "scope": "일반 縣城의 완전 봉쇄 목표. 사용자 위임으로 siegeResolution에 군량 부족·사기·항복 규칙을 결정했다. 운영 적용과 실제 점령 정산은 별도 구현한다."
+ },
+ "movementBudget": {
+  "status": "OWNER_APPROVED",
+  "approvedOn": "2026-09-20",
+  "approvedBy": "사용자(제작 착수 대화: 남은 이동량을 다음 省에서도 사용)",
+  "carryAcrossProvinceBoundaries": true,
+  "uninterruptedTravelTurns": "CEIL_TOTAL_PATH_COST_OVER_SPEED",
+  "encounterStopsMovement": true,
+  "scope": "같은 행군의 省 경계에서 이동량을 버리지 않는다. 정적 경로의 중단 없는 이동 시간은 전체 비용을 합한 뒤 순 단위 올림한다. 조우 시 중단하며 재출발·강행 소모·운영 엔진 연결은 별도 검증한다."
+ },
+ "warGrainBudget": {
+  "status": "OWNER_DELEGATED_DECISION",
+  "decidedOn": "2026-09-20",
+  "decidedBy": "메인 에이전트",
+  "authorization": "사용자: 너가 판단해서 넣어.",
+  "minPercentOfPeriodNetGrainTax": 25,
+  "maxPercentOfPeriodNetGrainTax": 50,
+  "periodTurns": 36,
+  "numerator": "최초 모집 군량 + 모집한 기준 병력의36순 군량 수요(실제 소비로 대체하지 않음)",
+  "denominator": "동일36순의 평시 순곡물 세입(초기 비축·수송 수입 제외)",
+  "rationale": "전쟁 유지에 평시 세입의 절반 이하를 배정해 내정과 구원·손실 대응 여력을 남긴다. 기존 예주 실험의25명/100호·월200단위 후보는 약40.62%로 범위 안이며 평시36순 내 군량 부족이 없다.",
+  "referenceCalibration": {
+   "status": "SELECTED_BENCHMARK_NOT_RUNTIME_TAX_FORMULA",
+   "troopsPerHundredHouseholds": 25,
+   "monthlyNetGrainPerHousehold": 200,
+   "rationUnitsPerSoldierTurn": 100,
+   "musterGrainUnitsPerSoldier": 300,
+   "turnsPerMonth": 3,
+   "peoplePerHouseholdForExperiment": 5,
+   "initialStockMonthsOfTax": 6
+  },
+  "scope": "전쟁 군량 부담 목표와 이를 검증하는 기준 규모·단위 선택이다. 실제 세율·수확·모집 한도·금/철/목재/말 비용·손실·함락 공식이나 운영 월드 설정을 확정하지 않는다."
+ },
+ "siegeResolution": {
+  "status": "OWNER_DELEGATED_DECISION",
+  "authorization": "사용자: 너에게 맡길게. (포위·항복 규칙 기획 위임)",
+  "decidedBy": "메인 에이전트",
+  "maxMorale": 10000,
+  "initialMorale": 10000,
+  "fullShortfallMoraleLoss": 2500,
+  "fullyFedMoraleRecovery": 1250,
+  "referenceInitialRationTurns": 18,
+  "stockSensitivityRationTurns": [
+   8,
+   12,
+   18,
+   20
+  ],
+  "shortfallRule": "ceil(fullShortfallMoraleLoss * unmetRation / rationDemand), morale floor 0",
+  "recoveryRule": "군량을 전부 먹은 순에만 회복, maxMorale 상한. 부분 급식은 부족 비율만큼 감소.",
+  "surrenderRule": "그 순의 실제 급식과 사기 정산 후 사기0이며 포위가 유지될 때 최초1회 항복. 같은 순 포위 해제는 항복을 막고 이후 도착은 이미 발생한 항복을 취소하지 않는다.",
+  "referenceScope": "일반 縣城, 최초 편성비와18순 군량을 별도로 확보, 보급·강공·구원 없음. 세입 없는 완전 봉쇄 기준 실험. 실제 세입·병력·창고는 별도 경제 정산 결과를 소비하며18순으로 강제 덮어쓰지 않는다.",
+  "scope": "정수 사기10000=100%. 병력0, 민간 소비, 강공·전투 손실, 공격군의 포위 유지 판정, 항복군 처우 및 점령 후 자원 이전은 별도. 사기1에서는 극소 부족도 올림1로 항복할 수 있다. 사료 수치가 아닌 게임 기획.",
+  "captureSettlement": {
+   "status": "OWNER_DELEGATED_DECISION",
+   "authorization": "그런 결정은 너가 판단해도 돼.",
+   "garrison": "DISARM_TO_COUNTY_CIVILIANS",
+   "warehouse": "KEEP_IN_COUNTY_UNDER_NEW_OWNER",
+   "monthlyTax": "OWNER_AFTER_CAPTURE",
+   "arrivals": "입력은 실제 도착 물량만 의미하며 도착 당시 창고 소유자에게 귀속한다. 진행 중 수송의 재경로·반송은 별도.",
+   "scope": "평화 항복 기준. 인구·재고 손실이나승자군대자동충원없음. 포위중징세없음/점령후정기징세재개는기준시나리오이며실제세율·생산식과공격군보급은별도."
+  }
+ },
+ "armyEncirclement": {
+  "status": "OWNER_DELEGATED_DECISION",
+  "authorization": "그런 결정은 너가 판단해도 돼.",
+  "minimumAttackerRatio": 2,
+  "arrival": "출발1순 이후 행군, 도착1+ceil(중단 없는 전체 경로 비용/속도)",
+  "maintenance": "도착·병력비·접근로 통제·당순 완전 급식이 모두 충족돼야 포위를 유지한다. 당순 포위 성립 시 외부 수비 보급은 차단한다.",
+  "interruption": "당순 군량 부족 또는 조우 시 현재 원정 명령 종료. 이후 군량 도착으로 자동 재출발하지 않는다. 병력과 남은 군량은 보존한다.",
+  "scope": "일반 縣城 평화 포위의 게임기획. 병력비는 전투 승리를 보장하지 않는다. 귀환경로·공격군 손실·전술적 접근로 통제 판정은 별도."
+ },
+ "convoyMovement": {
+  "status": "OWNER_DELEGATED_DECISION",
+  "authorization": "그런 결정은 너가 판단해도 돼.",
+  "baseSpeedKmPerTurn": 30,
+  "blockedRoute": "출발 후 현재 간선 양끝 중 하나라도 통과 불가이면 간선 진척과 물량을 보존하고 대기한다. 그 순 미사용 이동량은 저축하지 않는다. 통제 회복 후 재개한다.",
+  "arrival": "목적지 통과 조건까지 충족해야 실제 입고한다. 미도착 물량은 출발지 재차감 없이 수송중에 남는다.",
+  "scope": "고정 육상 경로. 자동 우회·약탈·손실·수송대 소비·수운은 별도. 출발1순, 이동2순부터."
+ }
 }

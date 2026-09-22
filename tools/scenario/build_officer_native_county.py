@@ -362,12 +362,26 @@ def validate_extracts(extracts: dict, tables: CharTables) -> None:
         missing = {"nameKanjiTraditional", "placeText", "form", "book", "volume", "quote"} - set(hit)
         if missing:
             raise LedgerError(f"추출 행에 필드가 없다: {sorted(missing)}")
+        digest = hit.get("volumeSha256")
+        if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+            raise LedgerError("추출 행의 volumeSha256가 SHA-256 형식이 아니다")
         if hit["book"] not in BOOKS:
             raise LedgerError(f"모르는 책: {hit['book']}")
         if len(hit["quote"]) > QUOTE_LIMIT:
             raise LedgerError(f"인용문이 {QUOTE_LIMIT}자를 넘는다: {hit['quote']}")
         if hit["placeText"] + "人" not in hit["quote"]:
             raise LedgerError(f"인용문에 본관 문구가 없다: {hit['quote']}")
+        if hit["form"] in ("E", "F"):
+            folded_quote = tables.fold(hit["quote"])
+            if hit["form"] == "E":
+                identity = TABOO_PATTERN.fullmatch(folded_quote)
+            else:
+                # Extracted F quotes omit the leading comma and trailing delimiter.
+                identity = TABOO_AFTER_PATTERN.match("，" + folded_quote + "。")
+                if identity is not None and identity.end() != len(folded_quote) + 1:
+                    identity = None
+            if identity is None or (identity.group("surname") + identity.group("given")) != tables.fold(hit["nameKanjiTraditional"]):
+                raise LedgerError("인용문의 姓·諱가 추출 인물 이름과 다르다")
         if hit["form"] not in ("E", "F") and not tables.fold(hit["quote"]).startswith(tables.fold(hit["nameKanjiTraditional"])):
             raise LedgerError(f"인용문이 인물 이름으로 시작하지 않는다: {hit['quote']}")
 
