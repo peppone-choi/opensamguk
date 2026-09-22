@@ -22,3 +22,7 @@ Export these variables before invoking the runner. Set both public web URLs to t
 The spec exercises actual signup, logout/login, character creation, personal-turn enlistment, NPC dispatch, and UI acceptance. It waits for terminal command results and reads persisted policy, dispatch, assignment, position, and reservation counts. It does not write membership or assignment through SQL. The one-minute QA cadence only affects newly seeded test worlds.
 
 This is court-flow evidence only. It does not establish historical-data validation, restart/re-delivery idempotence, marching, combat, or completion of the one-Zhou slice.
+
+Container builds must receive `GATEWAY_WEB_URL=http://web-gateway:3000`; Next.js captures server rewrites during the build. The standard Compose build passes this value. Runtime-only configuration cannot repair an already-built localhost rewrite.
+
+This synthetic scenario has no historical ownership baseline. Supply may use its seeded live city ownership only after every canonical jurisdiction has exactly one valid seat city. Partial or malformed coverage still fails; no missing province is inferred neutral. Browser failures collect masked project service diagnostics before isolated cleanup.

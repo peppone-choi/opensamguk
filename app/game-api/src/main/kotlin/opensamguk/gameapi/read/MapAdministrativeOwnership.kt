@@ -73,8 +73,6 @@ class MapAdministrativeOwnership(
         val numericScenarioCode = Regex("^(?:scenario_)?([1-9][0-9]*)$").matchEntire(scenarioCode)
             ?.groupValues?.get(1)?.toIntOrNull()
             ?: error("Unsupported Han scenario code: $scenarioCode")
-        val directOwners = canonical.scenarioOwners[numericScenarioCode]
-            ?: error("No canonical province ownership for scenario $numericScenarioCode")
 
         val liveCityByJurisdiction = linkedMapOf<String, LiveCityOwnership>()
         liveCities.sortedBy { it.cityId }.forEach { city ->
@@ -86,6 +84,20 @@ class MapAdministrativeOwnership(
                     "Runtime cities ${previous.cityId}, ${city.cityId} resolve to the same " +
                         "jurisdiction ${province.jurisdictionId}",
                 )
+            }
+        }
+
+        val directOwners = canonical.scenarioOwners[numericScenarioCode] ?: run {
+            check(liveCityByJurisdiction.keys == canonical.jurisdictionById.keys) {
+                "No canonical province ownership for scenario $numericScenarioCode and incomplete live jurisdiction coverage"
+            }
+            liveCityByJurisdiction.forEach { (id, city) ->
+                check(canonical.provinces[city.provinceIndex].id == canonical.jurisdictionById.getValue(id).seatProvinceId) {
+                    "Runtime city ${city.cityId} is not the seat of jurisdiction $id"
+                }
+            }
+            canonical.provinces.associate { province ->
+                province.id to liveCityByJurisdiction.getValue(province.jurisdictionId).nationId
             }
         }
 

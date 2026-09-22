@@ -25,6 +25,12 @@ class HwihaReservedTurnRejectionTest {
         cityLandProvinceById = mapOf(1 to "p1"),
     ))
 
+    @Test fun `stratagem supply does not touch SAMMO generals`() {
+        val world=world("SAMMO");val before=world.getGeneralById(1);val recorder=ChangeRecorder()
+        HwihaStratagemDraw(world,recorder).onTurn(1)
+        assertEquals(before,world.getGeneralById(1));assertFalse(recorder.isDirty)
+    }
+
     @Test fun `only an actually absent input becomes no action without reviving rest`() {
         val world = world("HWIHA")
         val before = world.getGeneralById(1)
@@ -110,7 +116,9 @@ class HwihaReservedTurnRejectionTest {
             assertEquals("blocked-request", result.requestId)
             assertEquals("placement.assign", result.reservedActionCode)
             assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong()),
-                meta = if (profile == "HWIHA") HwihaPersonalTurn.after(original.meta, world.getState()) else original.meta), world.getGeneralById(1))
+                meta = if (profile == "HWIHA") HwihaPersonalTurn.after(original.meta + ("hwihaStratagemHand" to mapOf(
+                    "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
+                    "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()) else original.meta), world.getGeneralById(1))
             assertEquals(1, pulls)
             assertEquals(1, observations)
             assertTrue(lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).isEmpty())

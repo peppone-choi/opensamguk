@@ -471,6 +471,32 @@ class HwihaMarchPersistenceIT {
         fixture.service(opensamguk.common.world.WorldId(id),world,published,movement=true)
             .runDueGeneralTurns(java.time.Instant.parse("0200-01-02T00:00:00Z"))
 
+    @Test fun `personal turn supplies a real stratagem hand once and persists future draws`() {
+        val id=650;var world=personalDeploymentFixture(id)
+        assertNull(HwihaStratagemHand.read(world.getGeneralById(1)!!.meta,1))
+        val published=mutableListOf<String>()
+        runDeploymentTurn(id,world,published);world=cold(id)
+        val first=assertNotNull(HwihaStratagemHand.read(world.getGeneralById(1)!!.meta,1))
+        assertEquals(listOf(1,2),first.hand);assertEquals(listOf(3,4),first.drawPile)
+        assertTrue(runDeploymentTurn(id,world,published).handled.isEmpty())
+        assertEquals(first.toMetaValue(),HwihaStratagemHand.read(cold(id).getGeneralById(1)!!.meta,1)!!.toMetaValue())
+        nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
+        val second=assertNotNull(HwihaStratagemHand.read(world.getGeneralById(1)!!.meta,1))
+        assertEquals(listOf(1,2,3),second.hand);assertEquals(listOf(4),second.drawPile)
+        nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
+        val third=assertNotNull(HwihaStratagemHand.read(world.getGeneralById(1)!!.meta,1))
+        assertEquals(listOf(1,2,3),third.hand);assertEquals(listOf(4),third.discard)
+        assertTrue(third.drawPile.isEmpty())
+    }
+
+    @Test fun `malformed stored stratagem hand is never silently resupplied`() {
+        val id=651;var world=personalDeploymentFixture(id)
+        jdbc.update("UPDATE general SET meta=meta || '{\"hwihaStratagemHand\":{\"version\":99}}'::jsonb WHERE world_id=? AND id=1",id)
+        world=cold(id);val before=world.getGeneralById(1)
+        assertFailsWith<IllegalArgumentException> { runDeploymentTurn(id,world,mutableListOf()) }
+        assertEquals(before,cold(id).getGeneralById(1))
+    }
+
     @Test fun `personal deployment reservation starts once pauses for other actions and persists through arrival`() {
         val id=641;var world=personalDeploymentFixture(id)
         val personal=world.getGeneralById(1)!!;val units=world.listBugoks();val target=destination(world)

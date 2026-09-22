@@ -39,6 +39,31 @@ class HanSpatialSupplyProviderTest {
     private val foldedLegacyV2Seats = setOf(576, 622)
 
     @Test
+    fun `custom scenario uses complete live jurisdiction authority without a historical baseline`() {
+        val cities=MapJson.loadFromClasspath("han-world-v3").cities.map { city ->
+            SpatialSupplyCity(city.id,requireNotNull(city.provinceId),if(city.id==720) 77 else 0,city.physicalPlaceRef,city.routeNodeKey)
+        }
+        val custom=provider().network(990001,cities)
+        val known=provider().network(1020,cities)
+        assertEquals(known.provinceOwners.toList(),custom.provinceOwners.toList())
+        assertTrue(custom.provinceOwners.any { it==77 })
+        assertTrue(custom.provinceOwners.all { it==0 || it==77 })
+        // 판을 박아 두면 지도 릴리스마다 살아 있는 城 집합과 어긋난다(2026-09-21 실측: 1,168 판에서
+        // 城 1134 identity 불일치). 런타임이 하는 그대로 살아 있는 城 id 로 판을 고른다.
+        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../.."))
+            .resolve(cities.map { it.cityId }, emptyList())
+        val selected=provider().network("han-world-v3",990001,cities,artifacts=artifacts)
+        assertEquals(custom.provinceOwners.toList(),selected.provinceOwners.toList())
+        assertFailsWith<IllegalArgumentException> {
+            provider().network("han-world-v3",990001,cities.mapIndexed { i,c ->
+                if(i==0)c.copy(routeNodeKey="invalid") else c },artifacts=artifacts)
+        }
+        assertFailsWith<IllegalStateException> { provider().network(990001,cities.dropLast(1)) }
+        assertFailsWith<IllegalStateException> { provider().network(990001,emptyList()) }
+        assertFailsWith<IllegalStateException> { provider().network(990001,cities+ cities.first()) }
+    }
+
+    @Test
     fun `reviewed active fallback policies are attached to the spatial network`() {
         val loader = HanSupplyDisconnectionPolicyLoader(
             mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,

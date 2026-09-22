@@ -31,6 +31,7 @@ const nextConfig = {
     // 발산 소멸). docker/prod에서는 nginx(infra/nginx/nginx.conf `/api/game/`)가 web-gateway로 보내고,
     // nginx 없이 `pnpm dev`만 단독 실행하는 프론트 dev 흐름에서는 이 rewrite가 그 역할을 대신한다.
     // 쿠키는 포트 무관 same-host 매치라(RFC 6265 §5.1.3) sam_access가 그대로 전달된다.
+    // Standalone builds capture these destinations; Docker must supply GATEWAY_WEB_URL at build time.
     async rewrites() {
         return [
             {

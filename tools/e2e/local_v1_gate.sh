@@ -488,6 +488,10 @@ E2E_PLAYWRIGHT_OUTPUT_DIR="$artifact_dir/playwright-output" \
 E2E_TEST_TIMEOUT_MS="$playwright_timeout_ms" \
 E2E_OPERATIONAL_SMOKE="$operational_smoke" \
 SCENARIO_QA_TURNTERM="$qa_turnterm" \
-pnpm "${playwright_args[@]}" >"$artifact_dir/playwright.log" 2>&1
+pnpm "${playwright_args[@]}" >"$artifact_dir/playwright.log" 2>&1 || {
+  playwright_exit=$?
+  capture_startup_failure || echo "browser failure diagnostics unavailable" >&2
+  exit "$playwright_exit"
+}
 
 echo "local v1 gate passed; artifacts: $artifact_dir"
