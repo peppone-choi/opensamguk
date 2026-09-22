@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "ledgerId": "gap-snapshot-reconciliation-v1",
-  "note": "결손 후보 282 건을 TGAZ(Temporal Gazetteer, CC0 1.0) 의 시대별 기록과 대조한 결과다. **郡國志는 永和五年(140) 단면이고 지도는 220 년 단면이다** — 그 사이 폐지된 縣 이 지도에 없는 것은 결손이 아니라 정상이다. 霸陵·高陵 의 TGAZ 존속 구간이 23~219 로 끝나는 것이 曹魏 개칭 시점과 맞는다. TGAZ 는 깃에 넣지 않는다 — references/sources/tgaz 에만 둔다.",
+  "note": "결손 후보 282 건을 TGAZ(Temporal Gazetteer, CC0 1.0) 의 시대별 기록과 대조한 결과다. **郡國志는 永和五年(140) 단면이고 지도는 220 년 단면이다** — 그 사이 폐지된 縣 이 지도에 없는 것은 결손이 아니라 정상이다. 霸陵·高陵 의 TGAZ 존속 구간이 23~219 로 끝나는 것이 曹魏 개칭 시점과 맞는다. TGAZ 는 깃에 넣지 않는다 — references/sources/tgaz 에만 둔다. SURVIVED_TO_220 10 건의 심사는 survived-county-adjudications-v1 에 있다 — 실결손 8, 좌표 없는 실결손 1(隴西 氐道), 오판정 1(魯國). TGAZ 좌표는 이름만으로 붙인 것이므로 배치 전에 郡 중심 거리로 同名異地를 걸러야 한다.",
   "source": {
     "dataset": "TGAZ (Temporal Gazetteer)",
     "doi": "doi:10.7910/DVN/H3OB28",
@@ -68,7 +68,8 @@
       "tgazCoordinates": {
         "longitude": "111.71672",
         "latitude": "36.22077"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "河東郡",
@@ -284,7 +285,8 @@
       "tgazCoordinates": {
         "longitude": "114.96882",
         "latitude": "33.08230"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "汝南郡",
@@ -437,7 +439,9 @@
       "tgazCoordinates": {
         "longitude": "116.98723",
         "latitude": "35.59860"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1",
+      "verdictRevised": "FALSE_ABSENCE — 지도에 鲁县 으로 이미 있다(魯國 속현 6/6). 결손이 아니다."
     },
     {
       "commandery": "魯國",
@@ -774,7 +778,8 @@
       "tgazCoordinates": {
         "longitude": "111.53245",
         "latitude": "32.74889"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "南陽郡",
@@ -796,7 +801,8 @@
       "tgazCoordinates": {
         "longitude": "111.22923",
         "latitude": "33.08096"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "南郡",
@@ -998,7 +1004,8 @@
       "tgazCoordinates": {
         "longitude": "105.49215",
         "latitude": "32.66547"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "廣漢郡",
@@ -1191,7 +1198,8 @@
       "tgazCoordinates": {
         "longitude": "100.30888",
         "latitude": "25.23003"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "廣漢屬國",
@@ -1247,10 +1255,9 @@
       "name": "氐道",
       "verdict": "SURVIVED_TO_220",
       "tgazSpan": "214~279",
-      "tgazCoordinates": {
-        "longitude": "103.60289",
-        "latitude": "32.77417"
-      }
+      "tgazCoordinates": null,
+      "adjudicatedIn": "survived-county-adjudications-v1",
+      "coordinateRejected": "REJECTED_HOMONYM — 「氐道縣 214~279 @103.60289,32.77417」 은 사천 蜀郡 湔氐道 계승 사슬(hvd_96448·96449→96450→96451 升遷縣)이다. 감숙 隴西 氐道와 245 km 떨어져 있다. 이름만으로 붙은 同名異地이므로 배치에 쓰면 안 된다."
     },
     {
       "commandery": "隴西郡",
@@ -1728,7 +1735,8 @@
       "tgazCoordinates": {
         "longitude": "111.81372",
         "latitude": "37.20595"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "太原郡",
@@ -1825,7 +1833,8 @@
       "tgazCoordinates": {
         "longitude": "110.84786",
         "latitude": "37.37575"
-      }
+      },
+      "adjudicatedIn": "survived-county-adjudications-v1"
     },
     {
       "commandery": "西河郡",
@@ -2523,5 +2532,11 @@
       "tgazSpan": null,
       "tgazCoordinates": null
     }
-  ]
+  ],
+  "supersededVerdicts": {
+    "ABOLISHED_BEFORE_220": "71 건 중 24 건이 晉書 地理志 축에서 걸렸고 20 건은 실제로 220 년 이후까지 살아 있다 — abolished-verdict-corrections-v1 을 보라. 이 원장의 tgazSpan 은 이름만 맞춰 붙인 것이므로 폐지 판정의 근거로 쓰지 말 것.",
+    "SURVIVED_TO_220": "10 건 심사는 survived-county-adjudications-v1 에 있다 (실결손 8, 좌표 없는 실결손 1, 오판정 1).",
+    "OTHER_ERA_HOMONYM_ONLY": "57 건 중 22 건이 晉書에 토큰으로 있다 — jinshu-survival-sweep-v1 을 보라. 미심사다.",
+    "NOT_IN_TGAZ": "144 건 중 28 건이 晉書에 토큰으로 있다 — jinshu-survival-sweep-v1 을 보라. 미심사다."
+  }
 }
