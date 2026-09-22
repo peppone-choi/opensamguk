@@ -293,3 +293,76 @@ export const MOCK_LAST_TURN = {
     state: '실행됨',
     what: '농지 개간 · 장사현',
 } as const;
+
+// ── 내가 있는 현 (작전실 좌측) ─────────────────────────────────────────────────────────────
+/**
+ * 현 상태 항목은 정본 설계 §8.1 이 정한 새 이름이다 — 호구·전답·시장·민심·방비·특산.
+ * 삼모의 농업·상업·기술·수비대·방어시설·민심·농민이 아니다.
+ *
+ * **숫자는 목이다.** 설계 §16 이 생산식·상한 곡선을 정하지 않았으므로 실제 값이 아니고, 화면이
+ * 「현재 / 최대 + 막대」 모양을 제대로 그리는지 보려고 둔 것이다. API 가 붙으면 이 파일을 걷어낸다.
+ * 표기는 한글로만 쓰고, 화면에 사료 이름·卷·고증 이야기를 넣지 않는다(시안 규칙).
+ */
+export interface MockCountyGauge {
+    readonly label: string;
+    readonly value: number;
+    readonly max: number;
+    readonly tone?: 'moss' | 'bronze' | 'rust';
+}
+
+export const MOCK_HOME_COUNTY = {
+    cityId: 122,
+    county: '양적현',
+    commandery: '영천군',
+    province: '예주',
+    nation: '조조',
+    grade: '군 치소',
+    terrain: '평지',
+    garrisonNote: '주둔 1명 · 접속 1명',
+    /** 현 상태 — 삼모의 성 상세처럼 「현재 / 최대」에 막대를 붙인다. */
+    gauges: [
+        { label: '호구', value: 12_400, max: 40_000 },
+        { label: '전답', value: 918, max: 2_400 },
+        { label: '시장', value: 1_088, max: 1_800 },
+        { label: '민심', value: 62, max: 100, tone: 'bronze' },
+        { label: '방비', value: 340, max: 1_200, tone: 'rust' },
+    ] as readonly MockCountyGauge[],
+    /** 특산은 양이 아니라 있고 없음이라 막대를 쓰지 않는다. */
+    specialty: '없음',
+    defense: [
+        { label: '수비대', value: 2_000, max: 10_000 },
+        { label: '농성 가능', value: 0, max: 25, tone: 'rust' },
+    ] as readonly MockCountyGauge[],
+} as const;
+
+// ── 로그 · 메시지 (작전실 좌측 아래) ───────────────────────────────────────────────────────
+export type MockLogKind = '개인' | '전투' | '정세';
+
+export interface MockLogRow {
+    readonly kind: MockLogKind;
+    readonly when: string;
+    readonly text: string;
+}
+
+export const MOCK_LOGS: readonly MockLogRow[] = [
+    { kind: '개인', when: '3월 중순', text: '장사현에서 농지 개간을 마쳤습니다.' },
+    { kind: '정세', when: '3월 중순', text: '영천군 일대에 적 군단이 나타났습니다.' },
+    { kind: '전투', when: '3월 상순', text: '진류 방면에서 군단이 조우하여 전투 처리를 기다리고 있습니다.' },
+    { kind: '개인', when: '3월 상순', text: '조인에게 윤씨현 현령을 발령했습니다 — 응답 대기.' },
+    { kind: '정세', when: '2월 하순', text: '진류현을 포위했습니다.' },
+];
+
+export type MockChannel = '세력' | '현' | '개인';
+
+export interface MockMessageRow {
+    readonly channel: MockChannel;
+    readonly who: string;
+    readonly when: string;
+    readonly text: string;
+}
+
+export const MOCK_MESSAGES: readonly MockMessageRow[] = [
+    { channel: '세력', who: '조조', when: '3월 중순', text: '진류 방면을 맡으시오.' },
+    { channel: '현', who: '이전', when: '3월 중순', text: '장사현 군량이 넉넉합니다.' },
+    { channel: '개인', who: '순욱', when: '3월 상순', text: '아직 배치를 받지 못했습니다.' },
+];

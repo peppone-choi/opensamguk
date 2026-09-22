@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Chip, HanMapCanvas, Panel, PlaceNameWithGloss, SectionHeader, splitCountyGloss } from '@opensamguk/ui';
+import { Chip, Gauge, HanMapCanvas, Panel, SectionHeader } from '@opensamguk/ui';
 import HwihaShell from '../../../components/HwihaShell';
 import {
     HWIHA_HOME_CITY_ID,
@@ -10,10 +10,12 @@ import {
 } from '../../../lib/hwiha-map-view';
 import { hwihaHref, hwihaScreensOfTab } from '../../../lib/hwiha-screens';
 import {
+    MOCK_HOME_COUNTY,
     MOCK_IDENTITY,
     MOCK_LAST_TURN,
+    MOCK_LOGS,
     MOCK_MAP_LEGEND,
-    MOCK_MAP_PROVINCES,
+    MOCK_MESSAGES,
     MOCK_STANDING,
     MOCK_TURN_SLOTS,
 } from '../../../lib/hwiha-mock';
@@ -75,43 +77,54 @@ export default function WarRoomPage() {
                             하후돈 군단 · 성 없는 구역 · 적 군단 · 설치 계책(매복)은 나에게만 보인다.
                         </p>
 
-                        <div style={{ paddingTop: 12 }}>
-                            <SectionHeader title="이번 순에 보이는 구역" as="h4" />
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                                    gap: 6,
-                                    paddingTop: 8,
-                                }}
-                            >
-                                {MOCK_MAP_PROVINCES.map((p) => {
-                                    const unscouted = p.note.includes('미정찰');
-                                    // 이름에 붙은 괄호(동명이지 구분 郡)는 괄호로 두지 않고 뱃지로 뗀다 — 시안 표기 규칙.
-                                    const { name, gloss } = splitCountyGloss(p.name);
-                                    return (
-                                        <div
-                                            key={p.name}
-                                            style={{
-                                                padding: '4px 8px',
-                                                minHeight: 44,
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                borderLeft: `3px solid ${unscouted ? '#3d4740' : 'var(--bronze, #c9a656)'}`,
-                                                background: unscouted
-                                                    ? 'repeating-linear-gradient(45deg, #161a18, #161a18 6px, #1b201d 6px, #1b201d 12px)'
-                                                    : '#161a18',
-                                            }}
-                                        >
-                                            <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                                <PlaceNameWithGloss name={name} gloss={gloss} />
-                                            </div>
-                                            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.note}</div>
-                                        </div>
-                                    );
-                                })}
+                    </Panel>
+
+                    <Panel style={{ padding: 12 }}>
+                        <SectionHeader
+                            title={
+                                <span style={{ whiteSpace: 'nowrap' }}>
+                                    {MOCK_HOME_COUNTY.county} <Chip tone="bronze">{MOCK_HOME_COUNTY.grade}</Chip>{' '}
+                                    <Chip tone="info">지금 여기</Chip>
+                                </span>
+                            }
+                            sub={`${MOCK_HOME_COUNTY.province} · ${MOCK_HOME_COUNTY.commandery} · ${MOCK_HOME_COUNTY.nation} · ${MOCK_HOME_COUNTY.terrain}`}
+                            actions={<Chip>{MOCK_HOME_COUNTY.garrisonNote}</Chip>}
+                        />
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                                gap: 12,
+                                paddingTop: 10,
+                            }}
+                        >
+                            {MOCK_HOME_COUNTY.gauges.map((g) => (
+                                <Gauge key={g.label} label={g.label} value={g.value} max={g.max} tone={g.tone} />
+                            ))}
+                            <div>
+                                <div style={{ fontSize: 12, color: 'var(--muted)' }}>특산</div>
+                                <div style={{ paddingTop: 4 }}>
+                                    <Chip>{MOCK_HOME_COUNTY.specialty}</Chip>
+                                </div>
                             </div>
+                        </div>
+
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                                gap: 12,
+                                paddingTop: 12,
+                                borderTop: '1px solid var(--line)',
+                                marginTop: 12,
+                            }}
+                        >
+                            {MOCK_HOME_COUNTY.defense.map((g) => (
+                                <Gauge key={g.label} label={g.label} value={g.value} max={g.max} tone={g.tone} />
+                            ))}
+                            <p style={{ fontSize: 12, color: 'var(--muted)', alignSelf: 'end' }}>
+                                내정·징세·징병은 현 단위다. 건물은 이 현의 칸에 올린다.
+                            </p>
                         </div>
                     </Panel>
 
@@ -139,6 +152,79 @@ export default function WarRoomPage() {
                         <SectionHeader title="지난 순" sub={MOCK_LAST_TURN.range} actions={<Chip tone="moss">{MOCK_LAST_TURN.state}</Chip>} />
                         <div style={{ paddingTop: 8, fontSize: 13 }}>{MOCK_LAST_TURN.what}</div>
                     </Panel>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+                        <Panel style={{ padding: 12 }}>
+                            <SectionHeader title="로그" sub="개인 · 전투 · 정세" />
+                            <div style={{ display: 'grid', gap: 4, paddingTop: 8 }}>
+                                {MOCK_LOGS.map((l, i) => (
+                                    <div
+                                        key={`${l.when}-${i}`}
+                                        style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '52px 64px 1fr',
+                                            gap: 8,
+                                            alignItems: 'baseline',
+                                            padding: '4px 0',
+                                            borderTop: i ? '1px solid var(--line)' : 'none',
+                                        }}
+                                    >
+                                        <Chip tone={l.kind === '전투' ? 'rust' : l.kind === '정세' ? 'info' : 'neutral'}>
+                                            {l.kind}
+                                        </Chip>
+                                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>{l.when}</span>
+                                        <span style={{ fontSize: 13 }}>{l.text}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Panel>
+
+                        <Panel style={{ padding: 12 }}>
+                            <SectionHeader title="서신" sub="세력 · 현 · 개인" />
+                            <div style={{ display: 'grid', gap: 4, paddingTop: 8 }}>
+                                {MOCK_MESSAGES.map((m, i) => (
+                                    <div
+                                        key={`${m.who}-${i}`}
+                                        style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '52px 1fr',
+                                            gap: 8,
+                                            padding: '4px 0',
+                                            borderTop: i ? '1px solid var(--line)' : 'none',
+                                        }}
+                                    >
+                                        <Chip tone={m.channel === '세력' ? 'bronze' : m.channel === '현' ? 'moss' : 'info'}>
+                                            {m.channel}
+                                        </Chip>
+                                        <span>
+                                            <div style={{ fontSize: 13 }}>{m.text}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                                                {m.who} · {m.when}
+                                            </div>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, paddingTop: 10 }}>
+                                <input
+                                    aria-label="서신 입력"
+                                    placeholder="세력에 보낼 말"
+                                    style={{
+                                        flex: 1,
+                                        minHeight: 36,
+                                        background: '#161a18',
+                                        border: '1px solid var(--line)',
+                                        borderRadius: 3,
+                                        color: 'var(--fg)',
+                                        padding: '0 8px',
+                                    }}
+                                />
+                                <button type="button" className="os-button os-button--ghost os-button--sm">
+                                    보내기
+                                </button>
+                            </div>
+                        </Panel>
+                    </div>
                 </div>
 
                 <Panel style={{ padding: 12 }}>
