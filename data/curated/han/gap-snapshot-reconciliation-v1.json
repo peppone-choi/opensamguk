@@ -1,0 +1,2527 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "gap-snapshot-reconciliation-v1",
+  "note": "결손 후보 282 건을 TGAZ(Temporal Gazetteer, CC0 1.0) 의 시대별 기록과 대조한 결과다. **郡國志는 永和五年(140) 단면이고 지도는 220 년 단면이다** — 그 사이 폐지된 縣 이 지도에 없는 것은 결손이 아니라 정상이다. 霸陵·高陵 의 TGAZ 존속 구간이 23~219 로 끝나는 것이 曹魏 개칭 시점과 맞는다. TGAZ 는 깃에 넣지 않는다 — references/sources/tgaz 에만 둔다.",
+  "source": {
+    "dataset": "TGAZ (Temporal Gazetteer)",
+    "doi": "doi:10.7910/DVN/H3OB28",
+    "license": "CC0 1.0",
+    "file": "tgaz_bak_2018.zip",
+    "sha256": "6dd8d1961936ab87a8f9598fa5b4e4c18bca79670e9282b4a2105a144d624f02",
+    "note": "Dataverse 기록에 이용약관 문구가 없다. CHGIS 셰이프파일 데이터셋과 달리 금지 EULA 가 동봉돼 있지 않다."
+  },
+  "mapProvenanceFinding": {
+    "note": "지도 城 1,298 중 791 이 TGAZ 좌표와 소수점까지 동일하다 — 기존 지도가 이미 이 계열에서 왔다.",
+    "identical": 791,
+    "within5km": 90,
+    "farther": 86,
+    "nameNotInTgaz": 331
+  },
+  "totals": {
+    "OTHER_ERA_HOMONYM_ONLY": 57,
+    "ABOLISHED_BEFORE_220": 71,
+    "SURVIVED_TO_220": 10,
+    "NOT_IN_TGAZ": 144
+  },
+  "counties": [
+    {
+      "commandery": "河南尹",
+      "ordinal": 3,
+      "name": "梁",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "河南尹",
+      "ordinal": 14,
+      "name": "巩",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "河南尹",
+      "ordinal": 18,
+      "name": "新城",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "河南尹",
+      "ordinal": 21,
+      "name": "平",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~29",
+      "tgazCoordinates": {
+        "longitude": "112.94897",
+        "latitude": "34.81825"
+      }
+    },
+    {
+      "commandery": "河東郡",
+      "ordinal": 2,
+      "name": "杨",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "-206~220",
+      "tgazCoordinates": {
+        "longitude": "111.71672",
+        "latitude": "36.22077"
+      }
+    },
+    {
+      "commandery": "河東郡",
+      "ordinal": 11,
+      "name": "绛",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-206~34",
+      "tgazCoordinates": {
+        "longitude": "111.43405",
+        "latitude": "35.62865"
+      }
+    },
+    {
+      "commandery": "河東郡",
+      "ordinal": 18,
+      "name": "蒲子",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "京兆尹",
+      "ordinal": 2,
+      "name": "霸陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "109.06953",
+        "latitude": "34.36034"
+      }
+    },
+    {
+      "commandery": "京兆尹",
+      "ordinal": 10,
+      "name": "阳陵",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "左馮翊",
+      "ordinal": 1,
+      "name": "高陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "109.07739",
+        "latitude": "34.53090"
+      }
+    },
+    {
+      "commandery": "左馮翊",
+      "ordinal": 4,
+      "name": "祋祤",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "左馮翊",
+      "ordinal": 5,
+      "name": "频阳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "左馮翊",
+      "ordinal": 7,
+      "name": "莲勺",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "左馮翊",
+      "ordinal": 12,
+      "name": "衙",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~110",
+      "tgazCoordinates": {
+        "longitude": "109.65974",
+        "latitude": "35.32087"
+      }
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 2,
+      "name": "安陵",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 3,
+      "name": "平陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "108.52646",
+        "latitude": "34.37203"
+      }
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 4,
+      "name": "茂陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "108.58281",
+        "latitude": "34.34693"
+      }
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 9,
+      "name": "汧",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 11,
+      "name": "雍",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 13,
+      "name": "美阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "右扶風",
+      "ordinal": 15,
+      "name": "杜阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "潁川郡",
+      "ordinal": 2,
+      "name": "襄",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "潁川郡",
+      "ordinal": 13,
+      "name": "焉陵",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 2,
+      "name": "新陽",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 9,
+      "name": "北宜春",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 10,
+      "name": "㶏強",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 11,
+      "name": "灌陽",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 16,
+      "name": "細陽",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "115.74445",
+        "latitude": "33.18829"
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 19,
+      "name": "鮦陽",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "206~529",
+      "tgazCoordinates": {
+        "longitude": "114.96882",
+        "latitude": "33.08230"
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 25,
+      "name": "宜祿",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~29",
+      "tgazCoordinates": {
+        "longitude": "115.24590",
+        "latitude": "33.48011"
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 28,
+      "name": "召陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-224~219",
+      "tgazCoordinates": {
+        "longitude": "114.14843",
+        "latitude": "33.60156"
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 30,
+      "name": "思善",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "88~219",
+      "tgazCoordinates": {
+        "longitude": "115.78110",
+        "latitude": "33.53850"
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 34,
+      "name": "定潁",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "汝南郡",
+      "ordinal": 35,
+      "name": "固始",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-202~29",
+      "tgazCoordinates": {
+        "longitude": "114.76242",
+        "latitude": "33.80199"
+      }
+    },
+    {
+      "commandery": "梁國",
+      "ordinal": 4,
+      "name": "碭山",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "梁國",
+      "ordinal": 6,
+      "name": "穀熟",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "26~36",
+      "tgazCoordinates": {
+        "longitude": "115.77325",
+        "latitude": "34.27525"
+      }
+    },
+    {
+      "commandery": "梁國",
+      "ordinal": 7,
+      "name": "焉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "梁國",
+      "ordinal": 9,
+      "name": "薄",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-202~219",
+      "tgazCoordinates": {
+        "longitude": "115.54150",
+        "latitude": "34.72515"
+      }
+    },
+    {
+      "commandery": "沛國",
+      "ordinal": 11,
+      "name": "鄲",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "沛國",
+      "ordinal": 13,
+      "name": "臨睢",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "44~219",
+      "tgazCoordinates": {
+        "longitude": "116.43211",
+        "latitude": "34.03668"
+      }
+    },
+    {
+      "commandery": "沛國",
+      "ordinal": 17,
+      "name": "向",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-203~212",
+      "tgazCoordinates": {
+        "longitude": "117.13154",
+        "latitude": "33.07769"
+      }
+    },
+    {
+      "commandery": "沛國",
+      "ordinal": 20,
+      "name": "太丘",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "58~219",
+      "tgazCoordinates": {
+        "longitude": "116.28903",
+        "latitude": "34.11170"
+      }
+    },
+    {
+      "commandery": "陳國",
+      "ordinal": 3,
+      "name": "寧平",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-202~219",
+      "tgazCoordinates": {
+        "longitude": "115.32458",
+        "latitude": "33.66484"
+      }
+    },
+    {
+      "commandery": "魯國",
+      "ordinal": 1,
+      "name": "魯國",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "26~36",
+      "tgazCoordinates": {
+        "longitude": "116.98723",
+        "latitude": "35.59860"
+      }
+    },
+    {
+      "commandery": "魯國",
+      "ordinal": 2,
+      "name": "騶",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "魏郡",
+      "ordinal": 11,
+      "name": "沙",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "25~195",
+      "tgazCoordinates": {
+        "longitude": "113.61689",
+        "latitude": "36.61033"
+      }
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "ordinal": 1,
+      "name": "陶",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "ordinal": 15,
+      "name": "南〈糸言糸〉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "常山國",
+      "ordinal": 3,
+      "name": "都鄉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "常山國",
+      "ordinal": 7,
+      "name": "欒城",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "58~219",
+      "tgazCoordinates": {
+        "longitude": "114.62434",
+        "latitude": "37.91348"
+      }
+    },
+    {
+      "commandery": "安平國",
+      "ordinal": 12,
+      "name": "南深",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "河閒國",
+      "ordinal": 3,
+      "name": "易",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-221~219",
+      "tgazCoordinates": {
+        "longitude": "116.06742",
+        "latitude": "38.99590"
+      }
+    },
+    {
+      "commandery": "勃海郡",
+      "ordinal": 8,
+      "name": "脩",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "116.25345",
+        "latitude": "37.63865"
+      }
+    },
+    {
+      "commandery": "陳留郡",
+      "ordinal": 8,
+      "name": "東昬",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "22~212",
+      "tgazCoordinates": {
+        "longitude": "114.85936",
+        "latitude": "34.92438"
+      }
+    },
+    {
+      "commandery": "陳留郡",
+      "ordinal": 10,
+      "name": "平丘",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "陳留郡",
+      "ordinal": 13,
+      "name": "長垣",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東郡",
+      "ordinal": 1,
+      "name": "濮陽",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東郡",
+      "ordinal": 14,
+      "name": "衞",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東平國",
+      "ordinal": 3,
+      "name": "富成",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "泰山郡",
+      "ordinal": 6,
+      "name": "山茌",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "山陽郡",
+      "ordinal": 2,
+      "name": "東緡",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-225~211",
+      "tgazCoordinates": {
+        "longitude": "116.30453",
+        "latitude": "35.06816"
+      }
+    },
+    {
+      "commandery": "山陽郡",
+      "ordinal": 10,
+      "name": "防東",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "126~219",
+      "tgazCoordinates": {
+        "longitude": "116.12553",
+        "latitude": "34.96954"
+      }
+    },
+    {
+      "commandery": "濟陰郡",
+      "ordinal": 7,
+      "name": "離狐",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東海郡",
+      "ordinal": 1,
+      "name": "郯",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東海郡",
+      "ordinal": 8,
+      "name": "陰平",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東海郡",
+      "ordinal": 10,
+      "name": "合鄕",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "117.21945",
+        "latitude": "35.09516"
+      }
+    },
+    {
+      "commandery": "琅邪國",
+      "ordinal": 5,
+      "name": "西海",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "彭城國",
+      "ordinal": 6,
+      "name": "梧",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "彭城國",
+      "ordinal": 7,
+      "name": "菑丘",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣陵郡",
+      "ordinal": 6,
+      "name": "東陽",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-224~212",
+      "tgazCoordinates": {
+        "longitude": "118.83847",
+        "latitude": "32.96185"
+      }
+    },
+    {
+      "commandery": "廣陵郡",
+      "ordinal": 9,
+      "name": "輿",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "下邳國",
+      "ordinal": 8,
+      "name": "盱臺",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "下邳國",
+      "ordinal": 9,
+      "name": "髙山",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "下邳國",
+      "ordinal": 10,
+      "name": "潘旌",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "下邳國",
+      "ordinal": 13,
+      "name": "東成",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "平原郡",
+      "ordinal": 7,
+      "name": "濕陰",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "樂安國",
+      "ordinal": 6,
+      "name": "蓼城",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "北海國",
+      "ordinal": 7,
+      "name": "平昌",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-66~65",
+      "tgazCoordinates": {
+        "longitude": "116.99136",
+        "latitude": "37.36936"
+      }
+    },
+    {
+      "commandery": "北海國",
+      "ordinal": 15,
+      "name": "壯武",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東萊郡",
+      "ordinal": 3,
+      "name": "惤",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "東萊郡",
+      "ordinal": 12,
+      "name": "葛盧",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "南陽郡",
+      "ordinal": 32,
+      "name": "順陽",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "58~78",
+      "tgazCoordinates": {
+        "longitude": "111.53245",
+        "latitude": "32.74889"
+      }
+    },
+    {
+      "commandery": "南陽郡",
+      "ordinal": 34,
+      "name": "襄鄉",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "30~143",
+      "tgazCoordinates": {
+        "longitude": "112.87054",
+        "latitude": "32.22641"
+      }
+    },
+    {
+      "commandery": "南陽郡",
+      "ordinal": 36,
+      "name": "丹水",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "-249~616",
+      "tgazCoordinates": {
+        "longitude": "111.22923",
+        "latitude": "33.08096"
+      }
+    },
+    {
+      "commandery": "南郡",
+      "ordinal": 4,
+      "name": "中盧",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 1,
+      "name": "陰陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "117.44382",
+        "latitude": "32.63618"
+      }
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 3,
+      "name": "浚遒",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 7,
+      "name": "歷陽",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~125",
+      "tgazCoordinates": {
+        "longitude": "118.36112",
+        "latitude": "31.71422"
+      }
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 8,
+      "name": "當塗",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "117.20500",
+        "latitude": "32.86466"
+      }
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 9,
+      "name": "全椒",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-202~48",
+      "tgazCoordinates": {
+        "longitude": "118.26437",
+        "latitude": "32.09835"
+      }
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 10,
+      "name": "鍾離",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~125",
+      "tgazCoordinates": {
+        "longitude": "117.64022",
+        "latitude": "32.90163"
+      }
+    },
+    {
+      "commandery": "九江郡",
+      "ordinal": 11,
+      "name": "阜陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~75",
+      "tgazCoordinates": {
+        "longitude": "118.18547",
+        "latitude": "31.68121"
+      }
+    },
+    {
+      "commandery": "丹陽郡",
+      "ordinal": 11,
+      "name": "秣陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "30~211",
+      "tgazCoordinates": {
+        "longitude": "118.82727",
+        "latitude": "31.84265"
+      }
+    },
+    {
+      "commandery": "廬江郡",
+      "ordinal": 1,
+      "name": "舒",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "117.17437",
+        "latitude": "31.18897"
+      }
+    },
+    {
+      "commandery": "廬江郡",
+      "ordinal": 4,
+      "name": "潛",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廬江郡",
+      "ordinal": 5,
+      "name": "臨湖",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-121~120",
+      "tgazCoordinates": {
+        "longitude": "117.69630",
+        "latitude": "31.14534"
+      }
+    },
+    {
+      "commandery": "廬江郡",
+      "ordinal": 6,
+      "name": "龍舒",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-121~57",
+      "tgazCoordinates": {
+        "longitude": "116.62608",
+        "latitude": "31.34139"
+      }
+    },
+    {
+      "commandery": "廬江郡",
+      "ordinal": 7,
+      "name": "襄安",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "117.79866",
+        "latitude": "31.15731"
+      }
+    },
+    {
+      "commandery": "會稽郡",
+      "ordinal": 14,
+      "name": "東部",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "吳郡",
+      "ordinal": 9,
+      "name": "安",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "豫章郡",
+      "ordinal": 5,
+      "name": "廬陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~190",
+      "tgazCoordinates": {
+        "longitude": "114.83273",
+        "latitude": "26.93722"
+      }
+    },
+    {
+      "commandery": "巴郡",
+      "ordinal": 8,
+      "name": "涪陵",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "巴郡",
+      "ordinal": 12,
+      "name": "充国",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-53~29",
+      "tgazCoordinates": {
+        "longitude": "105.86450",
+        "latitude": "31.43531"
+      }
+    },
+    {
+      "commandery": "廣漢郡",
+      "ordinal": 7,
+      "name": "白水",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "-201~582",
+      "tgazCoordinates": {
+        "longitude": "105.49215",
+        "latitude": "32.66547"
+      }
+    },
+    {
+      "commandery": "廣漢郡",
+      "ordinal": 8,
+      "name": "葭萌",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-316~218",
+      "tgazCoordinates": {
+        "longitude": "105.96745",
+        "latitude": "32.32973"
+      }
+    },
+    {
+      "commandery": "廣漢郡",
+      "ordinal": 10,
+      "name": "广汉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "蜀郡",
+      "ordinal": 7,
+      "name": "湔氐道",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-314~155",
+      "tgazCoordinates": {
+        "longitude": "103.60289",
+        "latitude": "32.77417"
+      }
+    },
+    {
+      "commandery": "蜀郡",
+      "ordinal": 9,
+      "name": "八陵",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "牂牁郡",
+      "ordinal": 2,
+      "name": "平夷",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "牂牁郡",
+      "ordinal": 7,
+      "name": "同并",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "牂牁郡",
+      "ordinal": 9,
+      "name": "漏江",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "牂牁郡",
+      "ordinal": 15,
+      "name": "进乘",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "牂牁郡",
+      "ordinal": 16,
+      "name": "西随",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 3,
+      "name": "灵关道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 6,
+      "name": "卑水",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 7,
+      "name": "三缝",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 8,
+      "name": "会无",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 11,
+      "name": "苏示",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 12,
+      "name": "大莋",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "越巂郡",
+      "ordinal": 14,
+      "name": "姑复",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 2,
+      "name": "胜休",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 3,
+      "name": "俞元",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 4,
+      "name": "律高",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 6,
+      "name": "毋棳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 16,
+      "name": "梇栋",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "益州郡",
+      "ordinal": 17,
+      "name": "秦臧",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "永昌郡",
+      "ordinal": 5,
+      "name": "邪龙",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "-109~548",
+      "tgazCoordinates": {
+        "longitude": "100.30888",
+        "latitude": "25.23003"
+      }
+    },
+    {
+      "commandery": "廣漢屬國",
+      "ordinal": 1,
+      "name": "阴平道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣漢屬國",
+      "ordinal": 2,
+      "name": "甸氐道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣漢屬國",
+      "ordinal": 3,
+      "name": "刚氐道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "蜀郡屬國",
+      "ordinal": 4,
+      "name": "旄牛",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "犍為屬國",
+      "ordinal": 2,
+      "name": "汉阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "隴西郡",
+      "ordinal": 2,
+      "name": "安故",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "隴西郡",
+      "ordinal": 3,
+      "name": "氐道",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "214~279",
+      "tgazCoordinates": {
+        "longitude": "103.60289",
+        "latitude": "32.77417"
+      }
+    },
+    {
+      "commandery": "隴西郡",
+      "ordinal": 5,
+      "name": "大夏",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "隴西郡",
+      "ordinal": 11,
+      "name": "河关",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 2,
+      "name": "望恒",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 3,
+      "name": "阿阳",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-153~29",
+      "tgazCoordinates": {
+        "longitude": "116.64092",
+        "latitude": "36.93187"
+      }
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 4,
+      "name": "略阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 5,
+      "name": "勇士",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 6,
+      "name": "成纪",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 7,
+      "name": "陇",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 8,
+      "name": "豲道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 9,
+      "name": "兰干",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 10,
+      "name": "平襄",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 11,
+      "name": "显亲",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漢陽郡",
+      "ordinal": 12,
+      "name": "上邽",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武都郡",
+      "ordinal": 1,
+      "name": "下辨",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武都郡",
+      "ordinal": 2,
+      "name": "武都道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武都郡",
+      "ordinal": 3,
+      "name": "上禄",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武都郡",
+      "ordinal": 5,
+      "name": "河池",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武都郡",
+      "ordinal": 7,
+      "name": "羌道",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "金城郡",
+      "ordinal": 1,
+      "name": "允吾",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "金城郡",
+      "ordinal": 2,
+      "name": "浩亹",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "金城郡",
+      "ordinal": 3,
+      "name": "令居",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "金城郡",
+      "ordinal": 4,
+      "name": "枝阳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "金城郡",
+      "ordinal": 10,
+      "name": "允街",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "安定郡",
+      "ordinal": 1,
+      "name": "临泾",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "安定郡",
+      "ordinal": 4,
+      "name": "乌枝",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "安定郡",
+      "ordinal": 5,
+      "name": "三水",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "安定郡",
+      "ordinal": 7,
+      "name": "彭阳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "安定郡",
+      "ordinal": 8,
+      "name": "鹑觚",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "北地郡",
+      "ordinal": 5,
+      "name": "参[�]",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "北地郡",
+      "ordinal": 6,
+      "name": "灵州",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 1,
+      "name": "姑臧",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 2,
+      "name": "张掖",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 3,
+      "name": "武威",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 4,
+      "name": "休屠",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 5,
+      "name": "揟次",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 6,
+      "name": "鸾鸟",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 7,
+      "name": "朴[B459]",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 8,
+      "name": "媪围",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 9,
+      "name": "宣威",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 10,
+      "name": "仓松",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 11,
+      "name": "鹯阴",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 12,
+      "name": "租厉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "武威郡",
+      "ordinal": 14,
+      "name": "左骑",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 1,
+      "name": "福禄",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 2,
+      "name": "表氏",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 3,
+      "name": "乐涫",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 5,
+      "name": "会水",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 6,
+      "name": "沙头",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 7,
+      "name": "安弥",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "酒泉郡",
+      "ordinal": 8,
+      "name": "乾齐",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "敦煌郡",
+      "ordinal": 4,
+      "name": "拼泉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "敦煌郡",
+      "ordinal": 5,
+      "name": "广至",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "張掖屬國",
+      "ordinal": 2,
+      "name": "左骑",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "張掖屬國",
+      "ordinal": 3,
+      "name": "千人",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "張掖屬國",
+      "ordinal": 4,
+      "name": "司马官",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "張掖屬國",
+      "ordinal": 5,
+      "name": "千人官",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "太原郡",
+      "ordinal": 1,
+      "name": "晋阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "太原郡",
+      "ordinal": 5,
+      "name": "于离",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "太原郡",
+      "ordinal": 6,
+      "name": "兹氏",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "23~281",
+      "tgazCoordinates": {
+        "longitude": "111.81372",
+        "latitude": "37.20595"
+      }
+    },
+    {
+      "commandery": "太原郡",
+      "ordinal": 10,
+      "name": "平陶",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 1,
+      "name": "肤施",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-221~219",
+      "tgazCoordinates": {
+        "longitude": "110.39807",
+        "latitude": "37.34969"
+      }
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 2,
+      "name": "白土",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 3,
+      "name": "漆垣",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 4,
+      "name": "奢延",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 6,
+      "name": "桢林",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上郡",
+      "ordinal": 8,
+      "name": "高奴",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 2,
+      "name": "平定",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 3,
+      "name": "美稷",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-125~185",
+      "tgazCoordinates": {
+        "longitude": "110.79623",
+        "latitude": "39.76624"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 4,
+      "name": "乐街",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 5,
+      "name": "中阳",
+      "verdict": "SURVIVED_TO_220",
+      "tgazSpan": "-125~219",
+      "tgazCoordinates": {
+        "longitude": "110.84786",
+        "latitude": "37.37575"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 6,
+      "name": "皋狼",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-125~219",
+      "tgazCoordinates": {
+        "longitude": "111.23601",
+        "latitude": "37.87442"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 7,
+      "name": "平周",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 8,
+      "name": "平陆",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 9,
+      "name": "益兰",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 10,
+      "name": "圜阴",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~199",
+      "tgazCoordinates": {
+        "longitude": "110.29407",
+        "latitude": "38.55500"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 11,
+      "name": "蔺",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-125~219",
+      "tgazCoordinates": {
+        "longitude": "110.80104",
+        "latitude": "37.55155"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 12,
+      "name": "圜阳",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-190~199",
+      "tgazCoordinates": {
+        "longitude": "110.28946",
+        "latitude": "38.81450"
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "ordinal": 13,
+      "name": "广衍",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 2,
+      "name": "五原",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 3,
+      "name": "临沃",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 4,
+      "name": "文国",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 6,
+      "name": "武都",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 7,
+      "name": "宜梁",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 8,
+      "name": "曼柏",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 9,
+      "name": "成宜",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "五原郡",
+      "ordinal": 10,
+      "name": "西安阳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 2,
+      "name": "咸阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 3,
+      "name": "箕陵",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 4,
+      "name": "沙陵",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 5,
+      "name": "沙南",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 6,
+      "name": "北舆",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 7,
+      "name": "武泉",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 8,
+      "name": "原阳",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 10,
+      "name": "成乐",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "雲中郡",
+      "ordinal": 11,
+      "name": "武进",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "定襄郡",
+      "ordinal": 2,
+      "name": "桐过",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "定襄郡",
+      "ordinal": 3,
+      "name": "武成",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "定襄郡",
+      "ordinal": 4,
+      "name": "骆",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "定襄郡",
+      "ordinal": 5,
+      "name": "中陵",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "112.32733",
+        "latitude": "39.93468"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 1,
+      "name": "阴馆",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "112.72729",
+        "latitude": "39.24229"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 2,
+      "name": "繁畤",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "113.24369",
+        "latitude": "39.56155"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 3,
+      "name": "楼烦",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-201~212",
+      "tgazCoordinates": {
+        "longitude": "112.22623",
+        "latitude": "38.93484"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 4,
+      "name": "武州",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "112.12454",
+        "latitude": "39.53058"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 5,
+      "name": "汪陶",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 7,
+      "name": "崞",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "113.56726",
+        "latitude": "39.70704"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 9,
+      "name": "埒",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "111.79202",
+        "latitude": "39.27210"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 10,
+      "name": "马邑",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "112.42152",
+        "latitude": "39.30807"
+      }
+    },
+    {
+      "commandery": "鴈門郡",
+      "ordinal": 14,
+      "name": "彊阴",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "朔方郡",
+      "ordinal": 2,
+      "name": "三封",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "朔方郡",
+      "ordinal": 3,
+      "name": "朔方",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "朔方郡",
+      "ordinal": 4,
+      "name": "沃野",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "朔方郡",
+      "ordinal": 5,
+      "name": "广牧",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "朔方郡",
+      "ordinal": 6,
+      "name": "大城",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣陽郡",
+      "ordinal": 1,
+      "name": "蓟",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣陽郡",
+      "ordinal": 2,
+      "name": "广阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣陽郡",
+      "ordinal": 3,
+      "name": "昌平",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "廣陽郡",
+      "ordinal": 4,
+      "name": "军都",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "代郡",
+      "ordinal": 1,
+      "name": "高柳",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-221~212",
+      "tgazCoordinates": {
+        "longitude": "113.75209",
+        "latitude": "40.35370"
+      }
+    },
+    {
+      "commandery": "代郡",
+      "ordinal": 3,
+      "name": "道人",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "113.96828",
+        "latitude": "40.11907"
+      }
+    },
+    {
+      "commandery": "代郡",
+      "ordinal": 5,
+      "name": "马城",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "代郡",
+      "ordinal": 6,
+      "name": "班氏",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~212",
+      "tgazCoordinates": {
+        "longitude": "113.39037",
+        "latitude": "39.84484"
+      }
+    },
+    {
+      "commandery": "代郡",
+      "ordinal": 9,
+      "name": "东安阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上谷郡",
+      "ordinal": 3,
+      "name": "甯",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "114.73473",
+        "latitude": "40.86490"
+      }
+    },
+    {
+      "commandery": "上谷郡",
+      "ordinal": 5,
+      "name": "居庸",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "上谷郡",
+      "ordinal": 6,
+      "name": "雊瞀",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-202~219",
+      "tgazCoordinates": {
+        "longitude": "114.99375",
+        "latitude": "40.13002"
+      }
+    },
+    {
+      "commandery": "上谷郡",
+      "ordinal": 8,
+      "name": "下落",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "115.18146",
+        "latitude": "40.37951"
+      }
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 1,
+      "name": "渔阳",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 2,
+      "name": "狐奴",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 4,
+      "name": "雍奴",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 5,
+      "name": "泉州",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 6,
+      "name": "平谷",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 7,
+      "name": "安乐",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 8,
+      "name": "傂奚",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "漁陽郡",
+      "ordinal": 9,
+      "name": "犷平",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "右北平郡",
+      "ordinal": 4,
+      "name": "无终",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "遼西郡",
+      "ordinal": 1,
+      "name": "阳乐",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~29",
+      "tgazCoordinates": {
+        "longitude": "119.81330",
+        "latitude": "37.14915"
+      }
+    },
+    {
+      "commandery": "樂浪郡",
+      "ordinal": 2,
+      "name": "𧦦邯",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "樂浪郡",
+      "ordinal": 18,
+      "name": "乐都",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "遼東屬國",
+      "ordinal": 5,
+      "name": "险渎",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "南海郡",
+      "ordinal": 3,
+      "name": "中宿",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-111~219",
+      "tgazCoordinates": {
+        "longitude": "112.89028",
+        "latitude": "23.90139"
+      }
+    },
+    {
+      "commandery": "蒼梧郡",
+      "ordinal": 11,
+      "name": "鄣平",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "鬱林郡",
+      "ordinal": 4,
+      "name": "广郁",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-111~219",
+      "tgazCoordinates": {
+        "longitude": "106.80605",
+        "latitude": "24.39517"
+      }
+    },
+    {
+      "commandery": "鬱林郡",
+      "ordinal": 6,
+      "name": "桂林",
+      "verdict": "OTHER_ERA_HOMONYM_ONLY",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "鬱林郡",
+      "ordinal": 8,
+      "name": "临尘",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "23~219",
+      "tgazCoordinates": {
+        "longitude": "107.35506",
+        "latitude": "22.42020"
+      }
+    },
+    {
+      "commandery": "鬱林郡",
+      "ordinal": 9,
+      "name": "定周",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-111~219",
+      "tgazCoordinates": {
+        "longitude": "108.65588",
+        "latitude": "24.49073"
+      }
+    },
+    {
+      "commandery": "鬱林郡",
+      "ordinal": 10,
+      "name": "增食",
+      "verdict": "ABOLISHED_BEFORE_220",
+      "tgazSpan": "-111~219",
+      "tgazCoordinates": {
+        "longitude": "107.57001",
+        "latitude": "23.32480"
+      }
+    },
+    {
+      "commandery": "合浦郡",
+      "ordinal": 4,
+      "name": "临元",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    },
+    {
+      "commandery": "交趾郡",
+      "ordinal": 10,
+      "name": "朱[B42B]",
+      "verdict": "NOT_IN_TGAZ",
+      "tgazSpan": null,
+      "tgazCoordinates": null
+    }
+  ]
+}

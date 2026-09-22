@@ -114,3 +114,8 @@ data/map/*
 data/corpus/
 data/natural-earth/
 data/modern-admin/
+
+# CHGIS/TGAZ 원본은 저장소에 넣지 않는다 — 번들·재배포 금지(chgis-license-review.md).
+# references/sources/ 는 메타레포 바깥이라 원래 깃에 들어오지 않지만, 실수로 복사될 때를 막는다.
+tgaz_bak_2018.*
+*_chgis_database.mdb
