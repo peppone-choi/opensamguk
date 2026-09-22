@@ -11,13 +11,14 @@ class HwihaAssignmentMarchTurn(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
+    private val cells: HanProvinceCellIndex,
 ) {
     fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: HwihaTurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
-        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics).onTurn(generalId)) return
+        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }

@@ -65,7 +65,8 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
             }
             HwihaDeployOptions(blocked == null, blocked?.name, blocked?.let(HwihaDeployRules::reason),
                 bugoks = rows, destinations = destinations,
-                order = order?.let { HwihaDeployOrder(it.orderId, it.destination.id, march?.checkpoint?.stop?.name) })
+                order = order?.let { HwihaDeployOrder(it.orderId, it.destination.id,
+                    if (HwihaCorpsEncounter.META_KEY in actor.meta) "ENCOUNTER" else march?.checkpoint?.stop?.name) })
         } catch (_: IllegalArgumentException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
           catch (_: NoSuchElementException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
     }

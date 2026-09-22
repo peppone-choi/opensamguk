@@ -6,7 +6,8 @@ import opensamguk.logic.world.*
 
 /** Returns whether a deployed corps owns this commander's movement stage. */
 class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot) {
+    private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot,
+    private val cells: HanProvinceCellIndex) {
     fun onTurn(commanderId: Int): Boolean {
         val actor = world.getGeneralById(commanderId) ?: return false
         val projection = HwihaDeploymentExecutor(world,recorder,topology,metrics).projection()
@@ -22,8 +23,16 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         val before = try { HwihaCorpsMarchState.read(actor.meta,topology,metrics) }
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
+        val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics, cells)
+        var defenders: List<HwihaDeployedCorps>? = null
         when (val result = HwihaCorpsMarchExecutor(world,recorder,topology,metrics,1)
-            .advance(order.orderId,commanderId,order.destination,edges) { military.entryAt(commanderId,it) }) {
+            .advance(order.orderId,commanderId,order.destination,edges) { node ->
+                val entry = military.entryAt(commanderId, node)
+                if (entry == LandMarchEntry.ENCOUNTER) {
+                    defenders = encounters.defendersAt(commanderId, node)
+                    if (defenders == null) LandMarchEntry.UNAVAILABLE else entry
+                } else entry
+            }) {
             CorpsMarchExecution.AlreadyProcessed -> Unit
             is CorpsMarchExecution.Rejected -> log(commanderId,when(result.reason) {
                 CorpsMarchFailure.BATTLE_PENDING -> "조우 처리가 끝나지 않아 출병 행군을 재개할 수 없습니다."
@@ -31,6 +40,9 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
                 else -> "출병 상태를 확인할 수 없어 이동하지 않았습니다."
             })
             is CorpsMarchExecution.Applied -> {
+                if (result.state.checkpoint.stop == LandMarchStop.ENCOUNTER) {
+                    encounters.record(requireNotNull(corps), requireNotNull(defenders), result.state.checkpoint)
+                }
                 if (before?.checkpoint?.stop == LandMarchStop.ARRIVED && result.state.checkpoint.stop == LandMarchStop.ARRIVED) return true
                 log(commanderId,when(result.state.checkpoint.stop) {
                     LandMarchStop.ARRIVED -> "출병 목적지에 도착했습니다."

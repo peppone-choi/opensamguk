@@ -25,6 +25,27 @@ object HwihaDeploymentProjection {
             require(corps.map { it.orderId }.distinct().size == corps.size)
             require(corps.map { it.commanderGeneralId }.distinct().size == corps.size)
             require(corps.flatMap { it.bugokIds }.distinct().size == corps.sumOf { it.bugokIds.size })
+            val encounters = orderedPeople.associate { it.id to HwihaCorpsEncounter.read(it.meta, topology) }
+            for ((storageId, encounter) in encounters) {
+                if (encounter == null) continue
+                encounter.requireParticipant(storageId)
+                val participants = listOf(encounter.attacker) + encounter.defenders
+                for (participant in participants) {
+                    val deployed = corps.singleOrNull { it.commanderGeneralId == participant.commanderGeneralId }
+                        ?: throw IllegalArgumentException("Encounter participant has no deployment")
+                    participant.requireBinding(deployed)
+                    require(encounter.phase >= deployed.startedAt)
+                    require(positions.stateFor(participant.commanderGeneralId)?.node == encounter.province)
+                    require(encounters[participant.commanderGeneralId]?.toMetaValue() == encounter.toMetaValue()) {
+                        "Encounter participant records disagree"
+                    }
+                }
+                val attacker = orderedPeople.single { it.id == encounter.attacker.commanderGeneralId }
+                val checkpoint = requireNotNull(HwihaCorpsMarchState.read(attacker.meta, topology, metrics)).checkpoint
+                require(checkpoint.stop == LandMarchStop.ENCOUNTER && checkpoint.lastAdvancedAt == encounter.phase)
+                require(checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex] == encounter.province.canonicalKey &&
+                    checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex - 1] == encounter.approachFrom.canonicalKey)
+            }
             DeploymentProjection(profile, orderedPeople.map { person ->
                 val position = positions.stateFor(person.id)
                 val march = HwihaMarchState.read(person.meta, topology, metrics)
@@ -48,7 +69,7 @@ object HwihaDeploymentProjection {
                     require(march == null) { "Assignment and corps marches cannot own the same position" }
                 }
                 DeploymentPerson(person.id, person.nationId, person.isUnownedNpc,
-                    position?.node, position?.battlefield != null || march?.stop == LandMarchStop.ENCOUNTER ||
+                    position?.node, encounters[person.id] != null || position?.battlefield != null || march?.stop == LandMarchStop.ENCOUNTER ||
                         corpsMarch?.checkpoint?.stop == LandMarchStop.ENCOUNTER)
             }, units, retainers, corps)
         } catch (_: IllegalArgumentException) { null }

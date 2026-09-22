@@ -479,7 +479,7 @@ class DaemonLoopConfig {
             hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(world, recorder,
-                    artifacts.projection.topology, artifacts.landMarchMetrics)
+                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells)
                 movement::onTurn
             } else { _, _, _ -> },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
