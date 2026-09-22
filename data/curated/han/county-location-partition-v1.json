@@ -5,7 +5,7 @@
   "inputs": {
     "decisions": {
       "path": "data/curated/han/county-location-partition-decisions-v1.json",
-      "sha256": "83cece89fd7f2564eea7a982a313eb5b41a5d18a8f775971d500569c96be75af"
+      "sha256": "d6cd04852e8fefa336efb99dce8336edd28a43e7c985835a40fe9a0b6efdaad6"
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
@@ -730,82 +730,6 @@
       },
       "cellDistance": 3.0,
       "seedBasis": "LONLAT"
-    },
-    {
-      "jurisdictionId": "gc-0003-018",
-      "nameCh": "新城縣",
-      "commanderyId": "PARENT-0003",
-      "class": "SEED_COLLISION",
-      "trueCell": {
-        "col": 372,
-        "row": 240
-      },
-      "seedCell": {
-        "col": 372,
-        "row": 239
-      },
-      "cellDistance": 1.0,
-      "seedBasis": "LONLAT",
-      "sharedWith": [
-        "82841"
-      ]
-    },
-    {
-      "jurisdictionId": "gc-0030-010",
-      "nameCh": "合鄕縣",
-      "commanderyId": "PARENT-0030",
-      "class": "SEED_COLLISION",
-      "trueCell": {
-        "col": 461,
-        "row": 225
-      },
-      "seedCell": {
-        "col": 461,
-        "row": 224
-      },
-      "cellDistance": 1.0,
-      "seedBasis": "LONLAT",
-      "sharedWith": [
-        "45299"
-      ]
-    },
-    {
-      "jurisdictionId": "gc-0053-005",
-      "nameCh": "廬陵縣",
-      "commanderyId": "PARENT-0053",
-      "class": "SEED_COLLISION",
-      "trueCell": {
-        "col": 417,
-        "row": 399
-      },
-      "seedCell": {
-        "col": 417,
-        "row": 398
-      },
-      "cellDistance": 1.0,
-      "seedBasis": "LONLAT",
-      "sharedWith": [
-        "40885"
-      ]
-    },
-    {
-      "jurisdictionId": "gc-0087-003",
-      "nameCh": "易縣",
-      "commanderyId": "PARENT-0087",
-      "class": "SEED_COLLISION",
-      "trueCell": {
-        "col": 440,
-        "row": 142
-      },
-      "seedCell": {
-        "col": 440,
-        "row": 141
-      },
-      "cellDistance": 1.0,
-      "seedBasis": "LONLAT",
-      "sharedWith": [
-        "87297"
-      ]
     }
   ],
   "seedlessComponents": [
@@ -1676,16 +1600,6 @@
       "satisfied": true
     },
     {
-      "jurisdictionId": "45299",
-      "nameCh": "合城县",
-      "borrowedCells": 3,
-      "donors": {
-        "gc-0030-010": 3
-      },
-      "areaAfter": 8,
-      "satisfied": true
-    },
-    {
       "jurisdictionId": "45651",
       "nameCh": "襄阳县",
       "borrowedCells": 13,
@@ -1794,14 +1708,6 @@
       },
       "areaAfter": 8,
       "satisfied": true
-    },
-    {
-      "jurisdictionId": "gc-0008-035",
-      "nameCh": "固始縣",
-      "borrowedCells": 0,
-      "donors": {},
-      "areaAfter": 6,
-      "satisfied": false
     }
   ],
   "strongholdReservations": [
@@ -1837,7 +1743,7 @@
     {
       "jurisdictionId": "200284",
       "nameCh": "定笮县",
-      "componentCells": 639,
+      "componentCells": 886,
       "pieces": 2
     },
     {
@@ -1913,15 +1819,21 @@
       "pieces": 6
     },
     {
+      "jurisdictionId": "45372",
+      "nameCh": "云南县",
+      "componentCells": 893,
+      "pieces": 2
+    },
+    {
       "jurisdictionId": "45412",
       "nameCh": "遂久县",
-      "componentCells": 1630,
+      "componentCells": 1631,
       "pieces": 3
     },
     {
       "jurisdictionId": "45445",
       "nameCh": "不韦县",
-      "componentCells": 711,
+      "componentCells": 1088,
       "pieces": 2
     },
     {
@@ -1981,8 +1893,8 @@
     {
       "jurisdictionId": "70459",
       "nameCh": "延寿县",
-      "componentCells": 1080,
-      "pieces": 2
+      "componentCells": 2574,
+      "pieces": 5
     },
     {
       "jurisdictionId": "70500",
@@ -2017,14 +1929,32 @@
     {
       "jurisdictionId": "70598",
       "nameCh": "渊泉县",
-      "componentCells": 735,
+      "componentCells": 1598,
+      "pieces": 3
+    },
+    {
+      "jurisdictionId": "70599",
+      "nameCh": "玉门县",
+      "componentCells": 634,
       "pieces": 2
+    },
+    {
+      "jurisdictionId": "70601",
+      "nameCh": "昭武县",
+      "componentCells": 1153,
+      "pieces": 3
     },
     {
       "jurisdictionId": "70605",
       "nameCh": "删丹县",
       "componentCells": 756,
       "pieces": 2
+    },
+    {
+      "jurisdictionId": "70609",
+      "nameCh": "显美县",
+      "componentCells": 3094,
+      "pieces": 5
     },
     {
       "jurisdictionId": "70610",
@@ -2049,6 +1979,12 @@
       "nameCh": "哀牢县",
       "componentCells": 4134,
       "pieces": 7
+    },
+    {
+      "jurisdictionId": "87436",
+      "nameCh": "潞县",
+      "componentCells": 1496,
+      "pieces": 3
     },
     {
       "jurisdictionId": "95016",
@@ -2217,36 +2153,6 @@
       "nameCh": "象林縣",
       "componentCells": 1417,
       "pieces": 3
-    },
-    {
-      "jurisdictionId": "gc-0062-005",
-      "nameCh": "邪龙县",
-      "componentCells": 1114,
-      "pieces": 2
-    },
-    {
-      "jurisdictionId": "gc-0072-001",
-      "nameCh": "姑臧縣",
-      "componentCells": 756,
-      "pieces": 2
-    },
-    {
-      "jurisdictionId": "gc-0072-009",
-      "nameCh": "宣威縣",
-      "componentCells": 2183,
-      "pieces": 4
-    },
-    {
-      "jurisdictionId": "gc-0074-006",
-      "nameCh": "沙头县",
-      "componentCells": 1175,
-      "pieces": 2
-    },
-    {
-      "jurisdictionId": "gc-0091-002",
-      "nameCh": "狐奴縣",
-      "componentCells": 773,
-      "pieces": 2
     }
   ],
   "areaViolations": [
@@ -2273,11 +2179,6 @@
     {
       "provinceId": "87510",
       "cells": 4,
-      "class": "BELOW_MIN"
-    },
-    {
-      "provinceId": "gc-0008-035",
-      "cells": 6,
       "class": "BELOW_MIN"
     }
   ],
@@ -4102,11 +4003,11 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "c3efb9be0da5472940f307b5ce78a1fed628b2600a7242948df326eb5057b2c0",
-        "outputDocumentSha256": "533b659cf16ceb63404fc9fa17f6b2dfe9b34ff7a8618137739d12ada1a35122",
+        "inputDocumentSha256": "8e4ce398a8852febe79b737534bda84e6927f411e39e65b89c4c175b02b5bd12",
+        "outputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
         "inputBlob": {
           "path": "data/curated/han/county-location-partition-v1.input.json.gz",
-          "sha256": "3d489283eb674370b141d6ad21c1b9b5558adf82b7b8f9ef4c85a444faad9d36",
+          "sha256": "06a42cba73e264d62e86ecb4a7ff2445ecfe12a998d657df8628d6c85baba259",
           "fields": [
             "owner",
             "provinceRecords",
@@ -5306,77 +5207,17 @@
           "fc-rinan-003",
           "fc-rinan-004",
           "fc-rinan-005",
-          "82879",
-          "gc-0090-005",
-          "gc-0049-011",
-          "gc-0048-001",
-          "gc-0048-007",
-          "gc-0048-008",
-          "gc-0048-009",
-          "gc-0010-010",
-          "gc-0048-011",
-          "gc-0082-002",
-          "gc-0089-001",
-          "gc-0098-003",
-          "gc-0041-032",
-          "gc-0113-036",
-          "gc-0006-013",
-          "gc-0079-006",
-          "gc-0070-001",
-          "gc-0028-002",
-          "gc-0005-012",
-          "gc-0015-007",
-          "gc-0033-006",
-          "gc-0050-001",
-          "gc-0050-005",
-          "gc-0050-006",
-          "gc-0050-007",
-          "gc-0030-010",
-          "gc-0009-006",
-          "gc-0009-009",
-          "gc-0072-001",
-          "gc-0072-009",
-          "gc-0062-005",
-          "gc-0008-009",
-          "gc-0008-016",
-          "gc-0008-019",
-          "gc-0008-034",
-          "gc-0008-035",
-          "gc-0010-017",
-          "gc-0007-003",
-          "gc-0003-018",
-          "gc-0002-002",
-          "gc-0087-003",
-          "gc-0091-002",
-          "gc-0091-004",
-          "gc-0091-007",
-          "gc-0067-006",
-          "gc-0067-012",
-          "gc-0061-003",
-          "gc-0079-005",
-          "gc-0053-005",
-          "gc-0060-006",
-          "gc-0060-008",
-          "gc-0073-002",
-          "gc-0074-003",
-          "gc-0074-005",
-          "gc-0074-006",
-          "gc-0074-007",
-          "gc-0022-008",
-          "gc-0085-001",
-          "gc-0085-002",
-          "gc-0085-007",
-          "gc-0085-010"
+          "82879"
         ],
-        "geometryDigest": "7eb7c083b040c7bf466f74b9cd9a2446a15998db0f997d821cdd35025270be2b",
+        "geometryDigest": "89acc1deaa0383ff2aea76be241511261dfc1f43e84e2b26416cf2046d06a5eb",
         "counts": {
-          "jurisdictions": 1131,
-          "provinces": 1311,
-          "seatProvinces": 1118,
-          "citylessProvinces": 193,
-          "provincesBefore": 1581,
-          "adjCounty": 3562,
-          "diagonalFragmentCellsReassigned": 256,
+          "jurisdictions": 1071,
+          "provinces": 1258,
+          "seatProvinces": 1058,
+          "citylessProvinces": 200,
+          "provincesBefore": 1521,
+          "adjCounty": 3408,
+          "diagonalFragmentCellsReassigned": 254,
           "seedlessComponents": 30,
           "seedlessCells": 1666
         }
