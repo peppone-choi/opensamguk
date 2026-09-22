@@ -95,9 +95,12 @@ class CommanderyIdRegistryTest(unittest.TestCase):
         registry_document = json.loads(REGISTRY.read_text(encoding="utf-8"))
         tiles = json.loads(TILES.read_text(encoding="utf-8"))
         roster = [row["nameCh"] for row in tiles["parentRegions"]]
+        extension = json.loads((ROOT / "data/curated/han/northeast-parent-id-append-v1.json").read_text())
+        registry_document["entries"].extend(extension["entries"])
+        registry_document["nextOrdinal"] = extension["nextOrdinal"]
         mapping = self.load(roster, registry_document)
 
-        self.assertEqual(172, len(mapping))
+        self.assertEqual(173, len(mapping))
         self.assertEqual(
             [mapping[name] for name in roster],
             [row["id"] for row in tiles["parentRegions"]],
