@@ -34,8 +34,10 @@ for (const record of tiles.provinceRecords) {
 const externals = tiles.cities.filter((city) => city.kind === 'EXTERNAL_PLACE');
 
 describe('郡國 밖 세력의 아이콘 단', () => {
-  it('밖 세력 37 곳이 전부 행정 계통에 닿는다 — 못 닿으면 계통 축이 죽은 것이다', () => {
-    expect(externals.length).toBe(37);
+  it('밖 세력 72 곳이 전부 행정 계통에 닿는다 — 못 닿으면 계통 축이 죽은 것이다', () => {
+    // 실측: 1133 번들에서 37 → 2026-09-21 조선반도·만주 재검토로 98(5b130608) → 근거 없는
+    // 취락 26 곳을 거두어 72(2288e886). 이 수는 핀일 뿐이고, 게이트는 아래 unreached 0 건이다.
+    expect(externals.length).toBe(72);
     const unreached = externals.filter((city) => !systemByName.has(city.nameCh));
     expect(unreached.map((city) => city.nameCh)).toEqual([]);
   });

@@ -852,6 +852,12 @@ def committed_area_problems(committed: dict) -> list[str]:
         allowed.update({row["placeId"]: row["carvedCellCount"] for row in stage["placements"]
                         if row["carvedCellCount"] < MIN_AREA})
     meta = committed["_meta"]
+    # 한반도 보정 단계가 남긴 경계 조각 예외. 행은 省 id 라 격자 프레임과 무관하다 —
+    # 2026-09-21 북동 확장 프레임을 걷어내며 rows==843 조건을 없앴다(그 조건은 예외를 조용히 꺼뜨렸다).
+    korea_exceptions = ROOT / "data/curated/han/korea-spatial-area-exceptions-v1.json"
+    if korea_exceptions.is_file():
+        extra = json.loads(korea_exceptions.read_text())
+        allowed.update({r['provinceId']: r['cells'] for r in extra['areaExceptions']})
     owner = expand(committed["owner"], meta["rows"], meta["cols"])
     areas = np.bincount(owner[owner >= 0], minlength=len(committed["provinceRecords"]))
     return [f"Q4 committed tiles: {row['id']} {row['nameCh']} area {int(areas[i])} has no exception"

@@ -36,11 +36,11 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
+      "sha256": "715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620"
     },
     "tools/map/build_han_places.py": {
       "path": "tools/map/build_han_places.py",
-      "sha256": "6cdb13c3fa8232211e65804595f81c26ca7549d5a550a9f25f7b9d75e901eca1"
+      "sha256": "e0758e0d543ee9a89e5a6e64744dafdf6b8bed6b7a5b35988f06f5c6fcfc6c8f"
     }
   },
   "evidenceSources": [
@@ -120,11 +120,22 @@
       "candidates": [
         {
           "candidateId": "site:dingjunshan:crosswalk",
-          "coordinate": [106.67025, 33.11738],
-          "rasterCell": [267, 268],
+          "coordinate": [
+            106.67025,
+            33.11738
+          ],
+          "rasterCell": [
+            267,
+            268
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["mian-county-locality", "mian-gazetteer"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "mian-county-locality",
+            "mian-gazetteer"
+          ]
         }
       ],
       "conflicts": [],
@@ -138,11 +149,21 @@
       "candidates": [
         {
           "candidateId": "site:jiange:crosswalk",
-          "coordinate": [105.56415, 32.21485],
-          "rasterCell": [246, 287],
+          "coordinate": [
+            105.56415,
+            32.21485
+          ],
+          "rasterCell": [
+            246,
+            287
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["jiange-official-plan"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "jiange-official-plan"
+          ]
         }
       ],
       "conflicts": [],
@@ -151,7 +172,9 @@
           "claimId": "site:jiange:malformed-official-coordinate",
           "rawCoordinateText": "105°3′E,31°11′N",
           "disposition": "REJECTED_MALFORMED_INCONSISTENT_COORDINATE",
-          "evidenceSourceIds": ["jiange-official-plan"],
+          "evidenceSourceIds": [
+            "jiange-official-plan"
+          ],
           "reason": "The published coordinate is inconsistent with the plan locality and is not auto-corrected."
         }
       ]
@@ -163,26 +186,49 @@
       "candidates": [
         {
           "candidateId": "site:jieting:longcheng-tradition",
-          "coordinate": [105.98359, 34.99615],
-          "rasterCell": [254, 228],
+          "coordinate": [
+            105.98359,
+            34.99615
+          ],
+          "rasterCell": [
+            254,
+            228
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["longcheng-gazetteer"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "longcheng-gazetteer"
+          ]
         },
         {
           "candidateId": "site:jieting:maiji-theory",
-          "coordinate": [105.99444, 34.45192],
-          "rasterCell": [254, 239],
+          "coordinate": [
+            105.99444,
+            34.45192
+          ],
+          "rasterCell": [
+            254,
+            239
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["hanzhong-jieting-dispute"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "hanzhong-jieting-dispute"
+          ]
         }
       ],
       "conflicts": [
         {
           "conflictId": "site:jieting:competing-locality-traditions",
           "kind": "COMPETING_LOCALITY_TRADITIONS",
-          "evidenceSourceIds": ["longcheng-gazetteer", "hanzhong-jieting-dispute"],
+          "evidenceSourceIds": [
+            "longcheng-gazetteer",
+            "hanzhong-jieting-dispute"
+          ],
           "reason": "The official Longcheng tradition remains contested by a live Maiji academic theory."
         }
       ],
@@ -196,11 +242,21 @@
       "candidates": [
         {
           "candidateId": "site:qishan:crosswalk",
-          "coordinate": [105.39401, 34.23089],
-          "rasterCell": [243, 244],
+          "coordinate": [
+            105.39401,
+            34.23089
+          ],
+          "rasterCell": [
+            243,
+            244
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["qishan-protection-plan"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "qishan-protection-plan"
+          ]
         }
       ],
       "conflicts": [],
@@ -213,26 +269,48 @@
       "candidates": [
         {
           "candidateId": "site:wuzhangyuan:committed-projection",
-          "coordinate": [107.90836, 34.21945],
-          "rasterCell": [289, 244],
+          "coordinate": [
+            107.90836,
+            34.21945
+          ],
+          "rasterCell": [
+            289,
+            244
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["wuzhang-locality"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "wuzhang-locality"
+          ]
         },
         {
           "candidateId": "site:wuzhangyuan:full-precision-generator",
-          "coordinate": [107.90836, 34.21945],
-          "rasterCell": [290, 244],
+          "coordinate": [
+            107.90836,
+            34.21945
+          ],
+          "rasterCell": [
+            290,
+            244
+          ],
           "cellBasis": "FULL_PRECISION_GENERATOR_WITNESS",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["wuzhang-locality"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "wuzhang-locality"
+          ]
         }
       ],
       "conflicts": [
         {
           "conflictId": "site:wuzhangyuan:projection-boundary",
           "kind": "PROJECTION_SSO_T_BOUNDARY",
-          "evidenceSourceIds": ["projection-generator-witness"],
+          "evidenceSourceIds": [
+            "projection-generator-witness"
+          ],
           "reason": "Committed rounded projection yields (289,244), while the full-precision generator yields (290,244)."
         }
       ],
@@ -247,11 +325,22 @@
       "candidates": [
         {
           "candidateId": "site:yanganguan:crosswalk",
-          "coordinate": [106.0346, 32.965611],
-          "rasterCell": [255, 271],
+          "coordinate": [
+            106.0346,
+            32.965611
+          ],
+          "rasterCell": [
+            255,
+            271
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["ningqiang-gazetteer", "hanzhong-gazetteer"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "ningqiang-gazetteer",
+            "hanzhong-gazetteer"
+          ]
         }
       ],
       "conflicts": [],
@@ -266,11 +355,23 @@
       "candidates": [
         {
           "candidateId": "site:yangpingguan:crosswalk",
-          "coordinate": [106.60975, 33.14761],
-          "rasterCell": [266, 267],
+          "coordinate": [
+            106.60975,
+            33.14761
+          ],
+          "rasterCell": [
+            266,
+            267
+          ],
           "cellBasis": "COMMITTED_PROJECTION",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
-          "placementEvidenceSourceIds": ["mian-county-locality", "mian-gazetteer", "hanzhong-gazetteer"]
+          "coordinateEvidenceSourceIds": [
+            "tracked-coordinate-crosswalk"
+          ],
+          "placementEvidenceSourceIds": [
+            "mian-county-locality",
+            "mian-gazetteer",
+            "hanzhong-gazetteer"
+          ]
         }
       ],
       "conflicts": [],

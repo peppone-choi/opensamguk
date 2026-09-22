@@ -86,6 +86,17 @@ async function openServerControl(): Promise<void> {
     fireEvent.click(screen.getByRole('button', { name: '서버 제어' }));
     await screen.findByText('새 서버 생성');
     await screen.findByRole('button', { name: '리셋' });
+    // 2026-09-21: 여기서 남은 초기 로딩 fetch 사슬(/admin/version · /admin/scenarios)을
+    // **진짜 타이머의 매크로태스크 경계**로 끝까지 흘린다.
+    //
+    // 이걸 안 하면 간헐 플레이크가 난다. 호출자는 이 함수 뒤에 vi.useFakeTimers() 를 걸고
+    // advanceTimersByTimeAsync(0) 으로 한 번 흘리는데, 그 한 번이 흘리는 마이크로태스크
+    // 깊이는 위 사슬이 이미 끝났는지에 따라 달라진다. 안 끝나 있으면 「처리 중」이 아직
+    // 안 그려져 getByText 가 못 찾는다.
+    // 실측: 고치기 전 단일 파일 8 회 중 1 회, 전체 스위트 3 회 중 1 회 적색.
+    await act(async () => {
+        await new Promise((resolve) => { setTimeout(resolve, 0); });
+    });
 }
 
 async function confirmReset(): Promise<void> {
