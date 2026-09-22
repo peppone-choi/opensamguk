@@ -5,10 +5,16 @@
 60 縣(33 郡)이다. 이 단계는 그것을 **명부 수준까지만** 올린다 — `cities[]` 물리 지점과
 `jurisdictionRecords[]` 관할, 그리고 郡의 `jurisdictionIds`.
 
-**省 구획은 건드리지 않는다.** 그 일은 다음 단계 ★(`partition_counties_by_location.py`)가 한다 —
-그쪽이 `owner`·`provinceRecords`·`jurisdictionRecords`·`cities` 를 통째로 다시 쓰고, 省 씨앗을
-관할마다 잡는다. ★ 의 규칙 1b 는 省 레코드가 없는 관할을 `cities` 의 row/col 로 씨앗 잡는 길을
-이미 갖고 있으므로(`STAND_IN_SEAT_POINT`) 이 단계가 省 을 미리 만들 필요가 없다.
+**省 기하는 건드리지 않는다** — `owner` 격자는 그대로 두고, 縣마다 **칸 없는 省 행 하나**만 더한다.
+칸을 나누는 일은 다음 단계 ★(`partition_counties_by_location.py`)가 한다. 그쪽이 `owner`·
+`provinceRecords`·`jurisdictionRecords`·`cities` 를 통째로 다시 쓴다.
+
+省 행을 반드시 만들어야 한다 — 처음에 만들지 않았다가 ★ 가 죽었다.
+`stand_in = seat_province is None or seat_province.get("cityIndex") is None` 이고 stand_in 경로는
+`provinces_in[old_ids[0]]` 로 **기존 省을 템플릿으로 찾는다**. 새 관할의 `provinceIds` 가 비어 있으면
+거기서 IndexError 다. 규칙 1b 의 `STAND_IN_SEAT_POINT` 는 씨앗 **칸**을 구하는 길일 뿐 템플릿을
+주지 않는다. 그래서 `cityIndex` 가 박힌 省 행을 만들어 stand_in 을 피한다(변경 縣 도구와 같은 이유).
+`owner` 에 칸이 없는 省 이 되지만 ★ 가 곧 칸을 준다 — 색인은 뒤에 붙이므로 기존 색인이 밀리지 않는다.
 
 `materialize_frontier_counties` 를 쓰지 않는 이유가 있다. 그 도구는 영향 郡의 기존 省 레코드를
 **전부 버리고** 「郡治 + 신규 縣」만을 앵커로 재구획한다. 변경 7 郡은 城이 없었으니 안전했지만
@@ -70,6 +76,8 @@ def strip_gap_counties(document: dict) -> dict:
     stripped = dict(document)
     stripped["cities"] = [r for r in document["cities"]
                           if not str(r["id"]).startswith(PLACE_ID_PREFIX)]
+    stripped["provinceRecords"] = [r for r in document["provinceRecords"]
+                                   if not str(r["id"]).startswith(PLACE_ID_PREFIX)]
     stripped["jurisdictionRecords"] = [r for r in document["jurisdictionRecords"]
                                        if not str(r["id"]).startswith(PLACE_ID_PREFIX)]
     stripped["commanderyRecords"] = [
@@ -154,6 +162,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
     counties_by_id = {row["id"]: row for row in ledger["counties"]}
 
     cities = [dict(row) for row in document["cities"]]
+    provinces = [dict(row) for row in document["provinceRecords"]]
     jurisdictions = {row["id"]: dict(row) for row in document["jurisdictionRecords"]}
     commanderies = {row["id"]: dict(row) for row in document["commanderyRecords"]}
     for placement in placements:
@@ -173,6 +182,20 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
             "lat": county["coordinates"]["latitude"],
         })
         parent_id = placement["worldParentRegionId"]
+        provinces.append({
+            "id": placement["physicalPlaceId"],
+            "displayName": f"{county['nameKo']}현",
+            "nameCh": f"{county['nameHan']}{suffix}",
+            "administrativeSystem": "HAN_COMMANDERY",
+            "kind": "SPATIAL_PROVINCE",
+            "parentRegionId": parent_id,
+            "cityIndex": len(cities) - 1,
+            "geometryBasis": "HISTORICAL_SEAT_ADAPTED",
+            "confidence": "IDENTIFIED",
+            "jurisdictionId": placement["physicalPlaceId"],
+            "assignmentBasis": "HISTORICAL_SEAT",
+            "assignmentConfidence": "IDENTIFIED",
+        })
         jurisdictions[placement["physicalPlaceId"]] = {
             "id": placement["physicalPlaceId"],
             "displayName": f"{county['nameKo']}현",
@@ -180,7 +203,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
             "kind": "COUNTY",
             "commanderyId": parent_id,
             "seatPlaceId": placement["physicalPlaceId"],
-            "provinceIds": [],
+            "provinceIds": [placement["physicalPlaceId"]],
         }
         commandery = commanderies[parent_id]
         commandery["jurisdictionIds"] = sorted({
@@ -189,6 +212,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
 
     updated = dict(document)
     updated["cities"] = cities
+    updated["provinceRecords"] = provinces
     updated["jurisdictionRecords"] = sorted(jurisdictions.values(), key=lambda r: r["id"])
     updated["commanderyRecords"] = [commanderies[r["id"]] for r in document["commanderyRecords"]]
     meta = dict(document["_meta"])
@@ -197,6 +221,7 @@ def materialize(document: dict, ledger: dict) -> tuple[dict, dict]:
     for row in cities:
         kinds[row["kind"]] = kinds.get(row["kind"], 0) + 1
     counts.update(cities=len(cities), **kinds,
+                  provinces=len(provinces),
                   jurisdictions=len(updated["jurisdictionRecords"]))
     meta["counts"] = counts
     updated["_meta"] = meta
