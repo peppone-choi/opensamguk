@@ -340,6 +340,15 @@ jobs:
           done
           find . -path '*/build/test-results/*/*.xml' -print > /tmp/xml-list.txt 2>/dev/null || true
           head -50 /tmp/xml-list.txt || true
+      - name: Upload game-engine test failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-engine-test-failures
+          if-no-files-found: warn
+          path: |
+            app/game-engine/build/reports/tests/
+            app/game-engine/build/test-results/test/
 
   web:
     runs-on: ubuntu-latest

@@ -2,7 +2,7 @@
 
 `scenario_990002.json` is a synthetic HWIHA scenario for the S3 core loop: six NPC lords, one per 豫州 commandery (潁川·汝南·梁國·沛國·陳國·魯國), each owning the administrative counties of its commandery on the active `han-world-v3` map, all at war with each other. A human signs up, creates a character and enlists with any lord (every lord accepts enlistment).
 
-**Not in the operating scenario catalog.** Adding it there needs the user's approval. The people, stats and quantities below are game-design placeholders, not historical data. All of them are `PROVISIONAL — 사용자 결정 대기`:
+The scenario is registered in the operating catalog as an S3 test and pep transition candidate. Registration does not change the live world. The people, stats and quantities below are game-design placeholders, not historical data. All of them remain `PROVISIONAL` until the W4 measurements are reviewed:
 
 | Item | Value | Note |
 |---|---|---|
@@ -23,6 +23,14 @@ SCENARIO_CODE=scenario_990002
 TURN_PROFILE_NAME=che:scenario_990002
 OPENSAMGUK_WORLD_ID=990002
 SCENARIO_HOST_DIR="$(pwd)/tools/e2e/fixtures/hwiha-yuzhou"
+SCENARIO_QA_TURNTERM=1
+E2E_ENABLE_AUTH=true
+E2E_HWIHA_YUZHOU=true
+E2E_TEST_SPEC=e2e/hwiha-yuzhou-live.spec.ts
+E2E_TEST_TIMEOUT_MS=3000000
+E2E_BUILD_MODE=sequential
 ```
+
+Run from a fresh isolated Compose stack with caller-supplied ephemeral JWT keys, `INTERNAL_SERVICE_TOKEN`, and unused host ports, as in the court fixture instructions. The Playwright case persists nine screen captures, their API responses, a read-only siege/warehouse DB snapshot, and the phase outcome in the runner artifact directory. Its only post-seed SQL write raises the new human general's `killturn` to 96 so the long QA loop does not delete that account. It also asserts that the engine log has no `tick failed` entry.
 
 This fixture establishes a playable loop candidate only. It is not a balance claim, and it does not validate historical ownership in 190.

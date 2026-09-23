@@ -115,6 +115,8 @@ class HwihaYuzhouSliceScenarioTest {
             Files.writeString(file, generated)
         }
         assertEquals(generated, Files.readString(file), "scenario drifted from the map; regenerate and review")
+        val deployed = repo.resolve("infra/src/main/resources/scenario/scenario_990002.json")
+        assertEquals(generated, Files.readString(deployed), "catalog resource drifted from the generated fixture")
     }
 
     @Test fun `scenario seeds a HWIHA world the importer accepts`() {

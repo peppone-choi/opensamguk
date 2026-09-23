@@ -13,8 +13,8 @@ import opensamguk.logic.world.*
  * The encounter was sealed on the turn the attacker entered the province; its plans, forces, relations,
  * combat profiles, layout and empty journal were frozen then. Resolution replays only those sealed
  * values ([HwihaEncounterResolution]) — live changes since sealing never alter the battle. An encounter
- * whose combat could not be prepared (unsupported unit, no battlefield) has no journal: it stays pending
- * with a reason and nothing is fabricated (§5.1.1 (D)).
+ * whose combat could not be prepared (unsupported unit, no battlefield) ends without battle; a transient
+ * sealed-state mismatch has a bounded retry window. Neither case traps the march forever.
  */
 class HwihaEncounterResolver(
     private val world: InMemoryTurnWorld,
@@ -28,6 +28,7 @@ class HwihaEncounterResolver(
         data object NotPending : Resolution
         data object NotAttacker : Resolution
         data class Unavailable(val reason: String) : Resolution
+        data class Disbanded(val reason: String, val encounter: HwihaCorpsEncounter) : Resolution
         data class Resolved(val result: HwihaEncounterResolution.Result, val encounter: HwihaCorpsEncounter) : Resolution
     }
 
@@ -39,21 +40,57 @@ class HwihaEncounterResolver(
             catch (_: IllegalArgumentException) { return Resolution.Unavailable("INVALID_ENCOUNTER") }
             ?: return Resolution.NotPending
         if (encounter.attacker.commanderGeneralId != generalId) return Resolution.NotAttacker
+        val permanent = permanentUnavailableReason(actor.meta, encounter)
+        if (permanent != null) return unavailable(encounter, permanent, permanent = true)
         val sealed = try { sealedOf(actor.meta, encounter) } catch (_: IllegalArgumentException) { null }
-            ?: return Resolution.Unavailable("INVALID_SEALED_STATE")
+            ?: return unavailable(encounter, "INVALID_SEALED_STATE")
         val (forces, relations, combat, plans, deployment) = sealed
         val journal = try { HwihaBattleJournal.read(actor.meta) } catch (_: IllegalArgumentException) {
-            return Resolution.Unavailable("INVALID_JOURNAL")
-        } ?: return Resolution.Unavailable("BATTLE_NOT_READY")
+            return unavailable(encounter, "INVALID_JOURNAL")
+        } ?: return unavailable(encounter, "BATTLE_NOT_READY")
         // Every participant must still carry byte-identical sealed records; disagreement is corruption.
         val participants = (listOf(encounter.attacker) + encounter.defenders).map { it.commanderGeneralId }.sorted()
         for (id in participants) {
-            val meta = world.getGeneralById(id)?.meta ?: return Resolution.Unavailable("PARTICIPANT_MISSING")
-            if (SEALED_KEYS.any { meta[it] != actor.meta[it] }) return Resolution.Unavailable("PARTICIPANT_MISMATCH")
+            val meta = world.getGeneralById(id)?.meta ?: return unavailable(encounter, "PARTICIPANT_MISSING")
+            if (SEALED_KEYS.any { meta[it] != actor.meta[it] }) return unavailable(encounter, "PARTICIPANT_MISMATCH")
         }
         val result = HwihaEncounterResolution.resolve(encounter, forces, relations, combat, plans, deployment, journal)
         settle(encounter, forces, result)
         return Resolution.Resolved(result, encounter)
+    }
+
+    /** These reasons are fixed by the sealed inputs, so another phase cannot make the battle ready. */
+    private fun permanentUnavailableReason(meta: Map<String, Any?>, encounter: HwihaCorpsEncounter): String? {
+        return try {
+            val forces = HwihaEncounterForces.read(meta, encounter) ?: return null
+            val combat = HwihaEncounterCombatProfiles.read(meta, forces, HwihaUnitProfilesJson.loadDefault())
+            if (combat != null && !combat.ready) return "UNIT_PROFILE_UNAVAILABLE"
+            when (HwihaEncounterDeployment.read(meta, encounter, cells)) {
+                is HwihaEncounterDeployment.Result.TerrainUnavailable,
+                HwihaEncounterDeployment.Result.InsufficientDefenderCapacity -> "BATTLEFIELD_UNAVAILABLE"
+                else -> null
+            }
+        } catch (_: IllegalArgumentException) { null }
+    }
+
+    private fun unavailable(encounter: HwihaCorpsEncounter, reason: String, permanent: Boolean = false): Resolution {
+        val state = world.getState()
+        val now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase)
+        if (!permanent && now < encounter.phase.plus(HwihaS3Provisional.ENCOUNTER_UNAVAILABLE_RETRY_PHASES))
+            return Resolution.Unavailable(reason)
+        val participants = (listOf(encounter.attacker) + encounter.defenders).sortedBy { it.commanderGeneralId }
+        val record = linkedMapOf<String, Any?>("version" to 1, "encounterId" to encounter.encounterId,
+            "reason" to reason, "resolvedAt" to now.toMetaValue(), "province" to encounter.province.id)
+        for (participant in participants) {
+            endDeployment(participant)
+            updateMeta(participant.commanderGeneralId) { it - SEALED_KEYS + (DISBAND_RECORD_KEY to record) }
+            if (world.getGeneralById(participant.commanderGeneralId) != null) {
+                HwihaRecords.general(world, participant.commanderGeneralId, HwihaRecordKind.ENCOUNTER_DISBANDED,
+                    "조우 전투를 준비할 수 없어 군단이 이 지역에서 행군을 멈췄습니다($reason).",
+                    mapOf("encounterId" to encounter.encounterId, "province" to encounter.province.id, "reason" to reason))
+            }
+        }
+        return Resolution.Disbanded(reason, encounter)
     }
 
     private data class Sealed(val forces: HwihaEncounterForces, val relations: HwihaEncounterRelations,
@@ -159,7 +196,8 @@ class HwihaEncounterResolver(
     private fun endDeployment(participant: HwihaEncounterParticipant) {
         val ownerId = participant.ownerGeneralId
         updateMeta(ownerId) { meta ->
-            val deployment = HwihaDeploymentState.read(meta) ?: return@updateMeta meta
+            val deployment = try { HwihaDeploymentState.read(meta) } catch (_: IllegalArgumentException) { null }
+                ?: return@updateMeta meta - HwihaDeploymentState.META_KEY
             val rest = deployment.corps.filterNot { it.orderId == participant.orderId }
             if (rest.isEmpty()) meta - HwihaDeploymentState.META_KEY
             else meta + (HwihaDeploymentState.META_KEY to HwihaDeploymentState(rest).toMetaValue())
@@ -183,6 +221,7 @@ class HwihaEncounterResolver(
 
     companion object {
         const val BATTLE_RECORD_KEY = "hwihaLastBattle"
+        const val DISBAND_RECORD_KEY = "hwihaLastEncounterDisbanded"
         const val CAPTIVE_KEY = "hwihaCaptive"
         val SEALED_KEYS = listOf(HwihaCorpsEncounter.META_KEY, HwihaEncounterDeployment.META_KEY,
             HwihaEncounterRelations.META_KEY, HwihaEncounterForces.META_KEY, HwihaEncounterCombatProfiles.META_KEY,

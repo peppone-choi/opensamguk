@@ -51,6 +51,11 @@
     "rewardMaxLoyaltyGain": 10,
     "note": "상사(court.reward): 금 100 마다 충성 +1(한 번에 최대 +10), 받는 인물에게 결속 사건(REWARD_RECEIVED → bondEvent) 월 1회. 금은 상사를 내리는 장수의 수도·보급망 창고에서 낸다."
   },
+  "encounterRecovery": {
+    "status": "PROVISIONAL — 사용자 결정 대기",
+    "unavailableRetryPhases": 2,
+    "note": "병종 프로필이나 전장 기하가 없으면 즉시 무전투 해산한다. 참가자 봉인 상태 불일치 같은 일시 사유는 조우 발생 순부터 2순까지 재시도한 뒤 해산한다. 양측 군단의 행군은 현재 省에서 끝나고 개인 지난 순에 사유를 남긴다."
+  },
   "npcDeploy": {
     "status": "PROVISIONAL — 사용자 결정 대기",
     "npcDeployMaxEdges": 6,

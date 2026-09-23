@@ -208,6 +208,7 @@ class HwihaCampReader(
                         sameAsLord = lordHome != null && ledgers.sameHome(it, lordHome))
                 }),
                 departureOrder = order[card.id],
+                locationCityId = person?.cityId,
             )
         }
         val units = retainers.bugoksOf(actor.id).map(RetinueController::bugokDto)

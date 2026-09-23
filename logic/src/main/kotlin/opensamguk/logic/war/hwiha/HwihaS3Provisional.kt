@@ -63,6 +63,10 @@ object HwihaS3Provisional {
     /** 상사 한 번에 오를 수 있는 충성 상한. */
     const val REWARD_MAX_LOYALTY_GAIN = 10
 
+    // ── 조우 준비 실패 ─────────────────────────────────────────────────────
+    /** 일시적인 봉인 상태 불일치를 재시도하는 순 수. 조우 발생 순부터 센다. */
+    const val ENCOUNTER_UNAVAILABLE_RETRY_PHASES = 2
+
     // ── NPC 출병 ───────────────────────────────────────────────────────────
     /** NPC 가 출병 목표로 보는 최대 경로 길이(省 간선 수). */
     const val NPC_DEPLOY_MAX_EDGES = 6

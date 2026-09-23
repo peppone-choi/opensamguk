@@ -44,7 +44,7 @@ class HwihaCampReaderTest {
     private val lord = GeneralReadEntity(id = 1, worldId = 1, name = "조조", nationId = 1, cityId = 5, userId = "41",
         leadership = 100, strength = 80, intel = 95, politics = 90, charm = 95,
         meta = mapOf("npc_org" to 1, HwihaPersonPolicyState.META_KEY to policy(30)))
-    private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, npcState = 2,
+    private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, cityId = 2, npcState = 2,
         leadership = 90, strength = 90, intel = 60, politics = 60, charm = 70, meta = mapOf("npc_org" to 2))
     private val liubei = GeneralReadEntity(id = 3, worldId = 1, name = "유비", nationId = 0, npcState = 2,
         leadership = 80, strength = 70, intel = 70, politics = 70, charm = 99,
@@ -270,6 +270,7 @@ class HwihaCampReaderTest {
 
         val xia = out.people[0]
         assertEquals(8, xia.cost); assertEquals("호위", xia.roleLabel); assertEquals("훈련", xia.taskLabel)
+        assertEquals(2, xia.locationCityId, "상사 화면은 카드 인물의 현재 城으로 창고망을 계산한다")
         assertEquals(90, xia.stats?.leadership)
         // 장 90*.6+90*.4=90, 리 60*.7+60*.3=60, 사 60, 사자 70*.6+60*.4=66
         assertEquals(opensamguk.gameapi.dto.HwihaAptitudesDto(90, 60, 60, 66), xia.aptitudes)
@@ -285,6 +286,7 @@ class HwihaCampReaderTest {
 
         val nobody = out.people[3]
         assertNull(nobody.generalId); assertNull(nobody.cost); assertNull(nobody.stats); assertNull(nobody.aptitudes)
+        assertNull(nobody.locationCityId)
         assertTrue(nobody.bonds.isEmpty()); assertEquals("무명 식객", nobody.name)
 
         val unit = out.units.single()

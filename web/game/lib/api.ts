@@ -457,6 +457,10 @@ export const api = {
         get<import('./hwiha-reads').HwihaCounty>(`/api/hwiha/county/${cityId}?generalId=${generalId}`, signal),
     hwihaRetinue: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaRetinue>(`/api/hwiha/retinue?generalId=${generalId}`, signal),
+    hwihaSieges: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaSieges>(`/api/hwiha/sieges?generalId=${generalId}`, signal),
+    courtReward: (generalId: number, args: {retainerId: number; money: number}) =>
+        post<IntakeOutcome>(`/api/commands/court/reward?generalId=${generalId}`, args),
     hwihaLastTurns: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaLastTurns>(`/api/hwiha/last-turns?generalId=${generalId}&limit=12`, signal),
     hwihaVisibility: (generalId: number, signal?: AbortSignal) =>

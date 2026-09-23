@@ -80,7 +80,7 @@ class RulerSuccessionHandler(
 
         // ── 4. 후계 없음 → 멸망 ──
         if (heir == null) {
-            deleteNation(ruler, nation, env)
+            deleteNation(ruler, nation)
             return
         }
 
@@ -109,13 +109,22 @@ class RulerSuccessionHandler(
         )
     }
 
+    /** County capture uses the same nation extinction cascade when no administrative county remains. */
+    fun destroyLandlessNation(nationId: Int) {
+        val nation = world.getNationById(nationId) ?: return
+        if (world.administrativeCountyIds.any { world.getCityById(it)?.nationId == nationId }) return
+        val ruler = nation.chiefGeneralId?.let(world::getGeneralById)?.takeIf { it.nationId == nationId }
+            ?: world.listGenerals().filter { it.nationId == nationId && it.officerLevel == 12 }.minByOrNull { it.id }
+        deleteNation(ruler, nation)
+    }
+
     /**
      * deleteNation (func.php:1713) — 후계 없는 국가 멸망. 로그 순서(패리티): global 【멸망】 →
      * (markNationDeleted: 도시 공백화 + ng_old_nations 스냅샷 + 국가/외교 삭제) → 전 장수 재야 리셋 +
      * 장수별 멸망 action/history 로그(타 장수 id ASC, 군주 마지막). 죽는 군주도 재야 리셋되나 직후
      * [ReservedTurnHandler.kill]이 dying message + tombstone 한다.
      */
-    private fun deleteNation(lord: TurnGeneral, nation: Nation, env: LifecycleEnv) {
+    private fun deleteNation(lord: TurnGeneral?, nation: Nation) {
         val nationId = nation.id
         val nationName = nation.name
 
@@ -131,8 +140,8 @@ class RulerSuccessionHandler(
 
         // 멸망 대상 장수 순서: 타 장수 id ASC + 군주 마지막 (func.php:1735).
         val orderedIds = world.listGenerals()
-            .filter { it.nationId == nationId && it.id != lord.id }
-            .map { it.id }.sorted() + lord.id
+            .filter { it.nationId == nationId && it.id != lord?.id }
+            .map { it.id }.sorted() + listOfNotNull(lord?.id)
 
         // 2. 국가 tombstone — 장수가 아직 nation=X일 때 스냅샷(ng_old_nations) + 도시 공백화 + 국가/외교 삭제.
         recorder.markNationDeleted(world, nationId)

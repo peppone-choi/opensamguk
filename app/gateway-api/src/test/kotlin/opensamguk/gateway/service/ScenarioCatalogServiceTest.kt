@@ -27,6 +27,7 @@ class ScenarioCatalogServiceTest {
             "scenario_1100",
             "scenario_1110",
             "scenario_1120",
+            "scenario_990002",
         )
         assertEquals(activeCodes, scenarios.map { it.code })
 
@@ -58,6 +59,7 @@ class ScenarioCatalogServiceTest {
         assertEquals("【역사모드1】 황건적의 난", byCode["scenario_1010"]?.title)
         assertEquals("【역사모드11】 출사표", byCode["scenario_1110"]?.title)
         assertEquals("【IF모드1】 백마장군의 위세", byCode["scenario_1120"]?.title)
+        assertEquals("휘하 예주 조각 (합성 운영 후보)", byCode["scenario_990002"]?.title)
         assertEquals(
             scenarios.map { it.code }.sortedBy { it.removePrefix("scenario_").toInt() },
             scenarios.map { it.code },
