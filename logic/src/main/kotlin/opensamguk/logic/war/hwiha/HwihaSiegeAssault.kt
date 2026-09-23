@@ -17,7 +17,7 @@ import opensamguk.logic.world.HwihaBattlefieldLayout
  * 움직이지 않고, 방비(wall/wallMax) 비율만큼 방어력이 오른다. 회차 상한 24(승인), 공격 측 퇴각 조건은
  * 조우 기본 계획과 같다(손실 50% 이상, 사기 20 미만). 성벽 패가 모두 무너지면 함락이다.
  *
- * 성벽 패 수·수비대 훈련/통솔·성벽 보정 상한은 [HwihaS3Provisional] 의 임시값이다. 순수 계산이며
+ * 성벽 패 수·수비대 훈련/통솔·성벽 보정 상한은 [HwihaS3Provisional] 의 확정값이다. 순수 계산이며
  * 실제 병력·縣 소유 정산은 호출자가 한다.
  */
 object HwihaSiegeAssault {

@@ -574,13 +574,19 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
         # 거점 관할은 기증 縣과 같은 郡이라 그 郡 조각의 구성원으로 들어간다. 앞 단계 행에서 달라진 것이
         # 거점 id 가 더해진 것뿐일 때만 행을 투영한다 — 그 밖의 차이는 그대로 드리프트로 잡힌다.
         site_ids = {row["placeId"] for row in stage["placements"]}
+        gap_ids = {row["placeId"] for row in stage.get("gapCountyPlacements", ())}
+        added_place_ids = site_ids | gap_ids
         current = {row["componentKey"]: row for row in inventory(document)}
         projected = []
         for row in rows:
             now = current.get(row["componentKey"])
             added = set(now["memberIds"]) - set(row["memberIds"]) if now else set()
-            if now and added and added <= site_ids and set(row["memberIds"]) <= set(now["memberIds"]):
-                row = {**row, "memberIds": now["memberIds"], "memberNamesCh": now["memberNamesCh"]}
+            if now and added <= added_place_ids and set(row["memberIds"]) <= set(now["memberIds"]):
+                # The pinned carve stage moves cells from donor 省 into new 省.
+                # Keep the old verdict, but compare its members and size against
+                # the exact reviewed stage output, including synthetic counties.
+                row = {**row, "memberIds": now["memberIds"],
+                       "memberNamesCh": now["memberNamesCh"], "cellCount": now["cellCount"]}
             projected.append(row)
         return projected, {"strategicSiteCarveStage": stage["outputDocumentSha256"], "priorProjection": projection}
     from tools.map import partition_counties_by_location as partition

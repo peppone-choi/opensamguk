@@ -86,6 +86,17 @@ class HwihaEconomyBoundaryTest {
         assertEquals(45, world.getRetainerById(4)!!.loyalty)
     }
 
+    @Test fun `invalid warehouse network is rejected before any county is charged`() {
+        val enemy = route.destinationCounty
+        val world = realm(enemyCounty = enemy, capitalMoney = 500)
+        world.applyCityDirtyFree(warehouse(world.getCityById(enemy)!!, HwihaResources(money = 1000)))
+        val network = HwihaWarehouseNetwork(world, ChangeRecorder())
+        assertFalse(network.payMoney(1, listOf(capital, enemy), 600))
+        assertEquals(500L, money(world, capital), "the earlier own warehouse cannot be partially charged")
+        assertEquals(1000L, money(world, enemy))
+        assertFalse(network.payMoney(1, listOf(capital), -1))
+    }
+
     @Test fun `legacy retainer upkeep and unit pay are off in HWIHA but provisions and drift remain`() {
         val card = Retainer(4, 1, RetainerRules.ORIGIN_RECRUITED, null, "무명", RetainerRules.RELATION_STAFF, loyalty = 50)
         val world = realm(card = card, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 500)))

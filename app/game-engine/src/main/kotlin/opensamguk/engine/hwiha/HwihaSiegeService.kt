@@ -12,7 +12,7 @@ import opensamguk.logic.world.*
  * 縣城 공성(§5.1 6단계·§5.2 2단계). 상태는 V61 `hwiha_siege` 행이고 쓰기는 world dirty 집합 → flush 뿐이다.
  *
  * - **포위 시작**: 출전 군단이 목적지 省에 도착했고 그 省에 적대(교전 중이거나 무주) 縣治가 있으며 적 군단이 없으면
- *   개인 턴 이동 단계 뒤에 포위를 건다. 수비병이 0 이면 지킬 사람이 없어 바로 넘어간다(임시 규칙).
+ *   개인 턴 이동 단계 뒤에 포위를 건다. 수비병이 0 이면 지킬 사람이 없어 바로 넘어간다(2026-09-23 확정 규칙).
  * - **순 경계**: 포위 유지(급식 → 병력비 2배)를 보고, 성 안 수비병이 縣 창고 곡을 먹고([HwihaWarehouseSettlement]
  *   — 첫 실제 차감 호출자), 사기·항복을 정산한다. 유지 실패는 포위 해제, 급식 실패는 원정 종료까지다.
  * - **강공**: 개인 행동 `action.assault` — [HwihaSiegeAssault] 격자 전투.
@@ -86,7 +86,10 @@ class HwihaSiegeService(
             log(commanderId, "이미 다른 군단이 이 縣城을 포위하고 있습니다.")
             return false
         }
-        val city = checkNotNull(world.getCityById(county))
+        val city = world.getCityById(county) ?: run {
+            log(commanderId, "포위 대상 縣 자료가 없어 이번 출병을 건너뛰었습니다.")
+            return false
+        }
         // A siege that could not hold at the next boundary is not started (no start/lift churn every phase).
         val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
         if (garrisonOf(city) > 0 && HwihaSiegeRules.maintenance(units.sumOf { it.troops }, garrisonOf(city),
@@ -228,7 +231,11 @@ class HwihaSiegeService(
         if (world.ruleProfile != RuleProfile.HWIHA) return
         val now = now()
         for (siege in world.listHwihaSieges().filter { it.status == ACTIVE }.sortedBy { it.countyId }) {
-            if (siege.settledYear != null && HwihaPhase(siege.settledYear, siege.settledMonth!!, siege.settledPhase!!) >= now) continue
+            val settledYear = siege.settledYear
+            val settledMonth = siege.settledMonth
+            val settledPhase = siege.settledPhase
+            if (settledYear != null && settledMonth != null && settledPhase != null &&
+                HwihaPhase(settledYear, settledMonth, settledPhase) >= now) continue
             val started = HwihaPhase(siege.startedYear, siege.startedMonth, siege.startedPhase)
             if (started >= now) continue
             settleOne(siege, now)
@@ -269,7 +276,11 @@ class HwihaSiegeService(
         if (warehouse != null && settled.rationServed > 0) {
             val result = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
                 HwihaResources(grain = settled.rationServed))
-            check(result == HwihaWarehouseSettlement.Result.APPLIED) { "Validated garrison ration debit was rejected: $result" }
+            if (result != HwihaWarehouseSettlement.Result.APPLIED) {
+                lift(stamped, "GARRISON_RATION_UNAVAILABLE")
+                log(siege.besiegerGeneralId, "${city.name} 縣城의 군량 정산에 실패해 포위를 풀었습니다($result).")
+                return
+            }
         }
         val next = stamped.copy(turns = siege.turns + 1, morale = settled.morale, garrison = garrison,
             timeline = appendEntry(siege.timeline, entry(now, "TURN", settled.morale, garrison,
@@ -287,17 +298,22 @@ class HwihaSiegeService(
 
     // ── 함락·해제 ────────────────────────────────────────────────────────────
     private fun capture(siege: HwihaSiege, reason: String) {
-        val before = checkNotNull(world.getCityById(siege.countyId))
+        val before = world.getCityById(siege.countyId) ?: run {
+            lift(siege, "COUNTY_UNAVAILABLE")
+            log(siege.besiegerGeneralId, "함락 대상 縣 자료가 없어 포위를 풀었습니다.")
+            return
+        }
         val previousOwner = before.nationId
         val settlement = HwihaCountyCapture.settle(HwihaCountyCapture.CountyBefore(before.id, before.nationId,
             before.population, garrisonOf(before)), siege.besiegerNationId)
-        // 점령군 수비대(PROVISIONAL): 포위 군단이 부곡에서 수비병을 떼어 남긴다. 옛 수비대는 위 정산대로 인구가 된다.
+        // 점령군 수비대(2026-09-23 확정): 포위 군단이 부곡에서 수비병을 떼어 남긴다. 옛 수비대는 위 정산대로 인구가 된다.
         val left = corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }
             ?.let { leaveGarrison(it, before.defenceMax) } ?: 0
         val after = before.copy(nationId = settlement.ownerNationId, population = settlement.population,
             defence = settlement.garrisonTroops + left, supplyState = 0, frontState = 0)
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
+        HwihaCapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
         val now = now()
         world.putHwihaSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
             timeline = appendEntry(siege.timeline, entry(now, "FALLEN", siege.morale, 0, "reason" to reason,

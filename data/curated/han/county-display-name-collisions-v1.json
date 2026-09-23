@@ -5,24 +5,53 @@
   "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
   "generator": "tools/map/build_county_display_name_collisions.py",
   "inputs": {
-    "hanTilesSha256": "99829b28075ec06e835f6f66d4233f5030a9b201a4184348ec282900afc67f09",
-    "hanWorldV3Sha256": "7ed3fcdd3859fb3451b1b9d2f5d4c96c8f78c883df00f9f92912d662646d5697",
+    "hanTilesSha256": "61bbf321dc7ebbf162b0bf9960d43a7ae486f8c8f5e3d3c8433f79198160f6ee",
+    "hanWorldV3Sha256": "bff073ff9c5d2eb2e6a340b5e41146114b20e147eb9915e204c41545d129e022",
     "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
     "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
   },
   "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
   "summary": {
-    "jurisdictions": 1224,
-    "sameCommanderyCollisionGroups": 5,
-    "sameCommanderyCollidingJurisdictions": 10,
-    "commanderiesWithCollisions": 5,
+    "jurisdictions": 1447,
+    "sameCommanderyCollisionGroups": 8,
+    "sameCommanderyCollidingJurisdictions": 16,
+    "commanderiesWithCollisions": 8,
     "byClassification": {
-      "HOMOPHONE": 3,
+      "HOMOPHONE": 6,
       "TILES_READING_DIVERGES_FROM_RUNTIME": 2
     },
-    "displayNamesSharedAcrossCommanderies": 96
+    "displayNamesSharedAcrossCommanderies": 127
   },
   "collisions": [
+    {
+      "commanderyId": "PARENT-0000",
+      "commanderyDisplayName": "하남윤",
+      "commanderyNameCh": "河南尹",
+      "displayName": "신성현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "82841",
+          "kind": "COUNTY",
+          "nameCh": "新成县",
+          "simplifiedStem": "新成",
+          "gloss": "新成",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 857,
+          "runtimeDisplayName": "하남윤 신성현(新成)"
+        },
+        {
+          "jurisdictionId": "gc-g0000-018",
+          "kind": "COUNTY",
+          "nameCh": "新城縣",
+          "simplifiedStem": "新城",
+          "gloss": "新城",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 1399,
+          "runtimeDisplayName": "하남윤 신성현(新城)"
+        }
+      ]
+    },
     {
       "commanderyId": "PARENT-0007",
       "commanderyDisplayName": "영천군",
@@ -49,6 +78,35 @@
           "glossBasis": "UNCHANGED",
           "runtimeCityId": 129,
           "runtimeDisplayName": "영천군 양성현(襄城)"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0008",
+      "commanderyDisplayName": "여남군",
+      "commanderyNameCh": "汝南郡",
+      "displayName": "신양현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "83168",
+          "kind": "COUNTY",
+          "nameCh": "慎阳县",
+          "simplifiedStem": "慎阳",
+          "gloss": "愼陽",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 869,
+          "runtimeDisplayName": "여남군 신양현(慎阳)"
+        },
+        {
+          "jurisdictionId": "gc-g0008-002",
+          "kind": "COUNTY",
+          "nameCh": "新陽縣",
+          "simplifiedStem": "新陽",
+          "gloss": "新陽",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 1417,
+          "runtimeDisplayName": "여남군 신양현(新陽)"
         }
       ]
     },
@@ -165,6 +223,35 @@
           "glossBasis": "REVIEWED",
           "runtimeCityId": 953,
           "runtimeDisplayName": "회계군 시령현"
+        }
+      ]
+    },
+    {
+      "commanderyId": "PARENT-0090",
+      "commanderyDisplayName": "상곡군",
+      "commanderyNameCh": "上谷郡",
+      "displayName": "하락현",
+      "classification": "HOMOPHONE",
+      "members": [
+        {
+          "jurisdictionId": "87638",
+          "kind": "COUNTY",
+          "nameCh": "下洛县",
+          "simplifiedStem": "下洛",
+          "gloss": "下雒",
+          "glossBasis": "SIMPLIFICATION_TABLE",
+          "runtimeCityId": 996,
+          "runtimeDisplayName": "상곡군 하락현(下洛)"
+        },
+        {
+          "jurisdictionId": "gc-g0090-008",
+          "kind": "COUNTY",
+          "nameCh": "下落縣",
+          "simplifiedStem": "下落",
+          "gloss": "下落",
+          "glossBasis": "UNCHANGED",
+          "runtimeCityId": 1603,
+          "runtimeDisplayName": "상곡군 하락현(下落)"
         }
       ]
     }

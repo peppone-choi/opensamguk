@@ -208,7 +208,7 @@
           "latitude": 43.8461,
           "landCells": 5590,
           "spatialProvinceCount": 10,
-          "connectionCount": 8,
+          "connectionCount": 9,
           "runtimeParentName": "夫餘"
         }
       ]
@@ -806,7 +806,7 @@
           "latitude": 42.255,
           "landCells": 4030,
           "spatialProvinceCount": 7,
-          "connectionCount": 8,
+          "connectionCount": 10,
           "runtimeParentName": "烏桓"
         }
       ]
@@ -828,7 +828,7 @@
           "latitude": 40.81078,
           "landCells": 1515,
           "spatialProvinceCount": 3,
-          "connectionCount": 6,
+          "connectionCount": 10,
           "runtimeParentName": "鮮卑"
         }
       ]
@@ -836,10 +836,10 @@
     {
       "id": "PARENT-0093",
       "name": "요서군",
-      "cityCount": 5,
+      "cityCount": 6,
       "landCells": 1161,
-      "cellsPerCity": 232.2,
-      "largestJurisdictionCells": 523,
+      "cellsPerCity": 193.5,
+      "largestJurisdictionCells": 515,
       "members": [
         {
           "jurisdictionId": "87468",
@@ -860,9 +860,9 @@
           "nameCh": "临渝县",
           "longitude": 119.55477,
           "latitude": 39.91299,
-          "landCells": 523,
+          "landCells": 515,
           "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "connectionCount": 5,
           "runtimeParentName": "遼西郡"
         },
         {
@@ -896,6 +896,18 @@
           "nameCh": "凡城",
           "longitude": 118.70127,
           "latitude": 41.01102,
+          "landCells": 8,
+          "spatialProvinceCount": 1,
+          "connectionCount": 2,
+          "runtimeParentName": "遼西郡"
+        },
+        {
+          "jurisdictionId": "gc-g0093-001",
+          "cityId": 1610,
+          "name": "양악",
+          "nameCh": "阳乐縣",
+          "longitude": 120.0688072,
+          "latitude": 40.9783941,
           "landCells": 8,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
@@ -980,7 +992,7 @@
           "latitude": 40.19671,
           "landCells": 247,
           "spatialProvinceCount": 2,
-          "connectionCount": 7,
+          "connectionCount": 9,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1178,9 +1190,9 @@
     {
       "id": "PARENT-0096",
       "name": "낙랑군",
-      "cityCount": 11,
+      "cityCount": 13,
       "landCells": 1210,
-      "cellsPerCity": 110.0,
+      "cellsPerCity": 93.1,
       "largestJurisdictionCells": 179,
       "members": [
         {
@@ -1238,9 +1250,9 @@
           "nameCh": "增地縣",
           "longitude": 125.6587,
           "latitude": 39.61897,
-          "landCells": 152,
+          "landCells": 144,
           "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
         },
         {
@@ -1250,9 +1262,9 @@
           "nameCh": "駟望縣",
           "longitude": 125.50904,
           "latitude": 39.40332,
-          "landCells": 151,
+          "landCells": 143,
           "spatialProvinceCount": 1,
-          "connectionCount": 6,
+          "connectionCount": 7,
           "runtimeParentName": "樂浪郡"
         },
         {
@@ -1292,6 +1304,30 @@
           "runtimeParentName": "樂浪郡"
         },
         {
+          "jurisdictionId": "gc-g0096-002",
+          "cityId": 1611,
+          "name": "𧦦감",
+          "nameCh": "𧦦邯縣",
+          "longitude": 124.347976,
+          "latitude": 39.8994708,
+          "landCells": 8,
+          "spatialProvinceCount": 1,
+          "connectionCount": 2,
+          "runtimeParentName": "樂浪郡"
+        },
+        {
+          "jurisdictionId": "gc-g0096-018",
+          "cityId": 1612,
+          "name": "악도",
+          "nameCh": "乐都縣",
+          "longitude": 125.1063097,
+          "latitude": 40.0401999,
+          "landCells": 8,
+          "spatialProvinceCount": 1,
+          "connectionCount": 2,
+          "runtimeParentName": "樂浪郡"
+        },
+        {
           "jurisdictionId": "X107",
           "cityId": 1176,
           "name": "불내",
@@ -1320,10 +1356,10 @@
     {
       "id": "PARENT-0097",
       "name": "요동속국",
-      "cityCount": 4,
+      "cityCount": 5,
       "landCells": 2350,
-      "cellsPerCity": 587.5,
-      "largestJurisdictionCells": 1671,
+      "cellsPerCity": 470.0,
+      "largestJurisdictionCells": 1663,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
@@ -1332,9 +1368,9 @@
           "nameCh": "昌遼縣",
           "longitude": 121.2349,
           "latitude": 41.53247,
-          "landCells": 1671,
+          "landCells": 1663,
           "spatialProvinceCount": 3,
-          "connectionCount": 8,
+          "connectionCount": 9,
           "runtimeParentName": "遼東屬國"
         },
         {
@@ -1346,7 +1382,7 @@
           "latitude": 41.06742,
           "landCells": 399,
           "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "connectionCount": 5,
           "runtimeParentName": "遼東屬國"
         },
         {
@@ -1371,6 +1407,18 @@
           "landCells": 188,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
+          "runtimeParentName": "遼東屬國"
+        },
+        {
+          "jurisdictionId": "gc-g0097-005",
+          "cityId": 1620,
+          "name": "험독(遼東屬國)",
+          "nameCh": "险渎縣",
+          "longitude": 121.9646415,
+          "latitude": 44.1682544,
+          "landCells": 8,
+          "spatialProvinceCount": 1,
+          "connectionCount": 2,
           "runtimeParentName": "遼東屬國"
         }
       ]

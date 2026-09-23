@@ -19,8 +19,11 @@ class HwihaAssignmentMarchTurn(
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // §5.1 step 5: a sealed encounter resolves on the attacker's turn whatever it reserved. The battle
         // ends this turn's movement; an unprepared battle stays pending and the march reports it below.
-        if (HwihaEncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)
-            is HwihaEncounterResolver.Resolution.Resolved) return
+        when (HwihaEncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)) {
+            is HwihaEncounterResolver.Resolution.Resolved,
+            is HwihaEncounterResolver.Resolution.Disbanded -> return
+            else -> Unit
+        }
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
@@ -58,6 +61,7 @@ class HwihaAssignmentMarchTurn(
                 }, refs + ("failure" to result.reason.name))
             }
             is AssignmentMarchExecution.Applied -> {
+                result.movement.reachedNodes.forEach { reactions.onEntered(world, recorder, generalId, it) }
                 if (previous?.assignment == result.state.assignment && previous.stop == LandMarchStop.ARRIVED &&
                     result.state.stop == LandMarchStop.ARRIVED) return
                 log(generalId, when (result.state.stop) {

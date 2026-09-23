@@ -9,6 +9,7 @@ import opensamguk.logic.economy.HwihaResources
 import opensamguk.infra.seed.HwihaCountyProductionJson
 import opensamguk.logic.input.HwihaRecordKind
 import opensamguk.logic.input.RuleProfile
+import org.slf4j.LoggerFactory
 
 /**
  * 월 경계에서 縣 창고에 월세입을 넣는다. HWIHA 전용이고, 기존 국가·개인 재정은 같은 프로파일에서
@@ -70,8 +71,12 @@ class HwihaMonthlyCountyIncome(
             val next = try { warehouse.replace(warehouse.stock.credit(produced)) }
                 catch (_: ArithmeticException) { overflow++; continue }
             val after = before.copy(meta = before.meta + (HwihaCountyWarehouse.META_KEY to next.toMetaValue()))
+            if (world.applyCityDirtyFree(after) == null) {
+                log.warn("hwiha_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
+                invalid++
+                continue
+            }
             recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
-            checkNotNull(world.applyCityDirtyFree(after))
             credited++
             total = try { total.credit(produced) } catch (_: ArithmeticException) { total }
             if (before.nationId != 0) {
@@ -94,6 +99,7 @@ class HwihaMonthlyCountyIncome(
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(HwihaMonthlyCountyIncome::class.java)
         const val STAMP_KEY = "hwihaCountyIncomeMonth"
         fun stampOf(year: Int, month: Int): String = "%04d-%02d".format(year, month)
     }

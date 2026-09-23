@@ -13,9 +13,9 @@ import kotlinx.serialization.json.long
 import opensamguk.logic.economy.HwihaResources
 
 /**
- * 휘하 내정 입력의 **잠정** 수치(`data/curated/han/hwiha-domestic-v1.json`, classpath `hwiha/`).
+ * 휘하 내정 입력의 확정 수치(`data/curated/han/hwiha-domestic-v1.json`, classpath `hwiha/`).
  * 설계 문서가 정하지 않은 효과량·비용·기간은 모두 이 파일 한 곳에만 있고 `status` 가
- * 「PROVISIONAL — 사용자 결정 대기」다 — 코드에 박지 않는다. 파일이 없거나 꼴이 어긋나면 기본값으로 가지 않고 실패한다.
+ * 「CONFIRMED」다 — 코드에 박지 않는다. 파일이 없거나 꼴이 어긋나면 기본값으로 가지 않고 실패한다.
  */
 class HwihaDomesticDesign internal constructor(
     val status: String,
@@ -50,7 +50,7 @@ class HwihaDomesticDesign internal constructor(
 
     companion object {
         const val RESOURCE = "hwiha/hwiha-domestic-v1.json"
-        const val PROVISIONAL = "PROVISIONAL — 사용자 결정 대기"
+        const val CONFIRMED = "CONFIRMED"
 
         val CANON: HwihaDomesticDesign by lazy {
             parse(checkNotNull(HwihaDomesticDesign::class.java.classLoader.getResource(RESOURCE)) {

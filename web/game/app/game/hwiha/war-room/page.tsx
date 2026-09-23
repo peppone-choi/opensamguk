@@ -40,6 +40,7 @@ export default function WarRoomPage() {
     // 시야·군단·첩보 — 서버 투영이 정한다. 휘하 규칙이 아니면 안개가 없다(null).
     const vision = useHwihaRead((id, signal) => api.hwihaVisibility(id, signal), [refreshKey]);
     const corps = useHwihaRead((id, signal) => api.hwihaCorps(id, signal), [refreshKey]);
+    const sieges = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
     const scout = useHwihaRead((id, signal) => api.hwihaScoutOptions(id, signal), [refreshKey]);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
@@ -97,10 +98,14 @@ export default function WarRoomPage() {
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
+                        sieges={sieges.data?.status === 'READY' ? sieges.data.sieges : undefined}
                         scoutable={scoutable}
                         onScout={isHwihaWorld ? (no) => void sendScout(no) : undefined}
                         scoutPending={scoutPending}
                     />
+                    {isHwihaWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
+                        요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
+                    </p>}
                     {frontInfo && generalId != null ? (
                         <>
                             <CountyPanel city={frontInfo.city} isHwihaWorld={isHwihaWorld} />

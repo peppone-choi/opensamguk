@@ -4,9 +4,10 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
+import org.slf4j.LoggerFactory
 
 /**
- * 「카드가 있는 곳의 보급망」(재설계 spec §9.2) — 녹봉·상사가 금을 내는 창고 목록. 임시 규칙
+ * 「카드가 있는 곳의 보급망」(재설계 spec §9.2) — 녹봉·상사가 금을 내는 창고 목록. 2026-09-23 확정 규칙
  * (`hwiha-s3-provisional-v1.json` salary.note):
  *
  * - 카드 인물의 기준 城이 지불자 세력의 **보급된** 縣이면: 그 세력의 보급된 縣 창고 전체(수도 먼저, 그다음 id 순).
@@ -36,9 +37,16 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
 
     private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (HwihaResources) -> Long,
         debit: (Long) -> HwihaResources): Boolean {
-        require(amount >= 0)
+        if (amount < 0 || counties.distinct().size != counties.size) {
+            log.warn("hwiha_warehouse_payment_skipped nation={} reason=INVALID_REQUEST", payerNationId)
+            return false
+        }
         if (amount == 0L) return true
         val stocks = counties.mapNotNull { id -> warehouse(id)?.let { id to it } }
+        if (stocks.size != counties.size || stocks.any { world.getCityById(it.first)?.nationId != payerNationId }) {
+            log.warn("hwiha_warehouse_payment_skipped nation={} reason=NETWORK_CHANGED", payerNationId)
+            return false
+        }
         if (stocks.sumOf { balance(it.second.stock) } < amount) return false
         var remaining = amount
         for ((county, warehouse) in stocks) {
@@ -46,7 +54,10 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
             val take = minOf(remaining, balance(warehouse.stock))
             if (take == 0L) continue
             val result = HwihaWarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision, debit(take))
-            check(result == HwihaWarehouseSettlement.Result.APPLIED) { "Validated warehouse payment was rejected: $result" }
+            if (result != HwihaWarehouseSettlement.Result.APPLIED) {
+                log.warn("hwiha_warehouse_payment_skipped nation={} county={} reason={}", payerNationId, county, result)
+                return false
+            }
             remaining -= take
         }
         return true
@@ -58,5 +69,9 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
         if (countyId !in world.administrativeCountyIds) return null
         val city = world.getCityById(countyId) ?: return null
         return try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
+    }
+
+    private companion object {
+        val log = LoggerFactory.getLogger(HwihaWarehouseNetwork::class.java)
     }
 }

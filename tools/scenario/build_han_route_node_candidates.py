@@ -30,6 +30,7 @@ from han_route_node_candidates import (
 from han_route_node_candidates import (
     build_candidates as build_candidate_rows,
 )
+from han_route_node_scenario_scope import is_route_node_scenario_resource
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "data/curated/han/administrative-units.json"
@@ -181,6 +182,8 @@ def build_scenario_catalog(scenario_dir: Path) -> list[JsonObject]:
     rows: list[JsonObject] = []
     codes: set[str] = set()
     for path in scenario_dir.glob("scenario_*.json"):
+        if not is_route_node_scenario_resource(path):
+            continue
         code = path.stem.removeprefix("scenario_")
         if not code.isdecimal() or code in codes:
             raise CandidateContractError(f"duplicate or malformed scenario code: {code}")

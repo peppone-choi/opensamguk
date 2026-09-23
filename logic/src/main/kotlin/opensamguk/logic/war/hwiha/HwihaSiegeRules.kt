@@ -5,9 +5,9 @@ package opensamguk.logic.war.hwiha
  *
  * 승인값: 병력비 2배([MINIMUM_ATTACKER_RATIO], `armyEncirclement.minimumAttackerRatio`), 사기·항복
  * ([HwihaSiegeMorale], `siegeResolution`). 나머지(수비병 식량, 포위군 급식 판정, 항복 권고 문턱)는
- * [HwihaS3Provisional] 의 임시값이다.
+ * [HwihaS3Provisional] 의 확정값이다.
  *
- * 수비병 수는 縣治 城의 `defence`(수비) 값을 쓴다 — 이것도 임시 대응이다(`hwiha-s3-provisional-v1.json`).
+ * 수비병 수는 縣治 城의 `defence`(수비) 값을 쓴다(`hwiha-s3-provisional-v1.json` 확정값).
  */
 object HwihaSiegeRules {
     /** 포위 유지에 필요한 최소 병력비(승인값). */

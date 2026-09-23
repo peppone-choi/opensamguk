@@ -5,9 +5,10 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
 import opensamguk.logic.world.*
+import org.slf4j.LoggerFactory
 
 /**
- * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, PROVISIONAL `hwiha-s3-provisional-v1.json` rations).
+ * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `hwiha-s3-provisional-v1.json` rations).
  *
  * - **출병 적재**: 출병하는 순간 출발지 창고망의 곡으로 부곡 휴대 군량을 (병력 × [HwihaS3Provisional.DEPLOY_LOAD_MONTHS] 개월)까지 채운다.
  *   출발지가 자국 縣이 아니면(적지·무주지) 싣지 못한다. 창고가 모자라면 있는 만큼만 싣는다.
@@ -41,12 +42,16 @@ class HwihaCorpsRations(
         var loaded = 0L
         for (id in corps.bugokIds.sorted()) {
             val unit = world.getBugokById(id) ?: continue
-            val want = unit.troops.toLong() * HwihaS3Provisional.DEPLOY_LOAD_MONTHS - unit.provisions
+            val want = (unit.troops.toLong() * HwihaS3Provisional.DEPLOY_LOAD_MONTHS)
+                .coerceAtMost(Int.MAX_VALUE.toLong()) - unit.provisions
             if (want <= 0) continue
             val add = minOf(want, network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION)
             if (add <= 0) break
-            check(network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION))
-            world.updateBugok(unit.copy(provisions = Math.toIntExact(unit.provisions + add)))
+            if (!network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION)) {
+                log.warn("hwiha_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                break
+            }
+            world.updateBugok(unit.copy(provisions = (unit.provisions + add).toInt()))
             loaded += add
         }
         return loaded
@@ -83,15 +88,23 @@ class HwihaCorpsRations(
                 }.minWithOrNull(compareBy({ it.first }, { it.second })) ?: continue
                 val counties = network.countiesFor(corps.nationId, source.second)
                 val delay = maxOf(1L, (source.first + LandMarchMetricSnapshot.NORMAL_BUDGET_MM - 1) / LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
-                val arrive = now().plus(Math.toIntExact(delay))
+                if (delay > Int.MAX_VALUE) {
+                    log.warn("hwiha_convoy_skipped commander={} reason=ROUTE_TOO_LONG", corps.commanderGeneralId)
+                    continue
+                }
+                val arrive = now().plus(delay.toInt())
                 for (id in corps.bugokIds.sorted()) {
                     val unit = world.getBugokById(id) ?: continue
                     val coming = inFlight.filter { it.bugokId == id }.sumOf { it.provisions }
-                    val want = unit.troops.toLong() * HwihaS3Provisional.CONVOY_TARGET_MONTHS - unit.provisions - coming
+                    val want = (unit.troops.toLong() * HwihaS3Provisional.CONVOY_TARGET_MONTHS)
+                        .coerceAtMost(Int.MAX_VALUE.toLong()) - unit.provisions - coming
                     if (want <= 0) continue
                     val add = minOf(want, network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION)
                     if (add <= 0) break
-                    check(network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION))
+                    if (!network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION)) {
+                        log.warn("hwiha_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                        break
+                    }
                     inFlight += Convoy(id, corps.nationId, add, arrive)
                     sent++
                 }
@@ -113,7 +126,10 @@ class HwihaCorpsRations(
         for (convoy in arrived) {
             // 부곡이 사라졌으면(궤멸·해산) 그 곡도 사라진다 — 되돌리는 규칙은 없다.
             val unit = world.getBugokById(convoy.bugokId) ?: continue
-            world.updateBugok(unit.copy(provisions = Math.toIntExact(unit.provisions + convoy.provisions)))
+            val replenished = unit.provisions.toLong() + convoy.provisions
+            if (replenished > Int.MAX_VALUE)
+                log.warn("hwiha_convoy_delivery_capped unit={} excess={}", convoy.bugokId, replenished - Int.MAX_VALUE)
+            world.updateBugok(unit.copy(provisions = replenished.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()))
         }
         if (arrived.isNotEmpty()) save(pending)
         return arrived.size
@@ -134,6 +150,7 @@ class HwihaCorpsRations(
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(HwihaCorpsRations::class.java)
         const val STAMP_KEY = "hwihaSupplyConvoyMonth"
         const val CONVOYS_KEY = "hwihaSupplyConvoys"
 

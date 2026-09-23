@@ -143,6 +143,19 @@ class HwihaGovernanceMeritWiringTest {
         assertEquals(30 + curve.domesticMerit, renown(world, 1), "치적은 한 번만 적용된다")
     }
 
+    @Test fun `monthly natural growth after merit closes cannot earn the magistrate merit`() {
+        val world = world(holder = false); val recorder = ChangeRecorder(); val context = context(world, recorder)
+        seatMagistrate(world, recorder, context, 10)
+        monthBoundary(world, recorder, context, 200, 3)
+        val boundary = HwihaDomesticBoundary(world, recorder, context)
+        assertEquals(0, boundary.closeMonthlyMerit(200, 4), "no direct work in March")
+        val before = world.getCityById(10)!!
+        world.applyCityDirtyFree(before.copy(agriculture = before.agriculture + 500)) // monthly natural event
+        world.setCurrentDate(200, 4, 1)
+        boundary.run(meritClosedBeforeMonthlyEvents = true)
+        assertEquals(0, boundary.closeMonthlyMerit(200, 5), "April baseline opened after natural growth")
+    }
+
     @Test fun `production daemon wires the domestic merit sink to the renown recorder on the shared recorder`() {
         val source = listOf(
             File("src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),

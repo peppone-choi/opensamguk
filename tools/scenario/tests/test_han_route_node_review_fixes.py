@@ -47,6 +47,12 @@ class HanRouteNodeReviewFixesTest(unittest.TestCase):
             path = ROOT / row["resourcePath"]
             self.assertEqual(row["resourceSha256"], MODULE._digest(path), row["code"])
 
+        self.assertTrue((inputs.scenario_dir / "scenario_990002.json").is_file())
+        self.assertEqual(
+            expected_codes,
+            {row["scenarioId"] for row in MODULE._scenario_resources(candidate, inputs.scenario_dir)},
+        )
+
     def test_copy_default_inputs_copies_only_pinned_scenarios(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:
             inputs = MODULE.copy_default_inputs(Path(raw_directory))

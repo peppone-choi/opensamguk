@@ -39,7 +39,7 @@ class HwihaReactionInventory(private val world: InMemoryTurnWorld, private val r
                 }
             }
         }
-        val next = HwihaMarchReactions.of(intercept, evade)
+        val next = HwihaMarchReactions.of(intercept, evade, current.installedSchemes)
         if (next == current) return Result.UNCHANGED
         val value = next.toMetaValue()
         world.setGameEnvValue(HwihaMarchReactions.META_KEY, value)

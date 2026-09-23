@@ -111,23 +111,25 @@ def load_sites(strongholds: dict, passes: dict) -> list[dict]:
 
 
 def load_gap_counties(ledger: dict) -> list[dict]:
-    """결손 縣을 거점과 같은 항목 모양으로 눕힌다. 정렬은 물리 id 순 — 省 인덱스 발급 순서다."""
+    """결손 縣을 거점과 같은 항목 모양으로 눕힌다. 원장 순서는 append-only 省 발급 순서다."""
     counties = []
     for row in ledger["counties"]:
         counties.append({
             "id": f"{row['placeSlug']}-{row['id'].rsplit(':', 1)[-1]}",
-            "nameKo": row["nameKo"],
-            "nameHan": f"{row['nameHan']}{row['countySuffix']}",
+            "nameKo": row.get("gameNameKo", row["nameKo"]),
+            "nameHan": f"{row.get('gameNameHan', row['nameHan'])}{row['countySuffix']}",
             "role": None,
             "canonicalId": row["id"],
             "hhsCommanderyHan": row["commanderyHan"],
             "latitude": row["coordinates"]["latitude"],
             "longitude": row["coordinates"]["longitude"],
+            "positionStatus": row["positionStatus"],
+            "coordinateBasis": row["coordinateBasis"],
         })
     ids = [row["id"] for row in counties]
     if len(ids) != len(set(ids)):
         raise ValueError("gap county place ids must be unique")
-    return sorted(counties, key=lambda row: row["id"])
+    return counties
 
 
 MAXIMUM_DISPLACEMENT = 6  # 앵커를 옮겨도 되는 최대 칸 거리(유클리드). 넘으면 세우지 않는다.
@@ -483,14 +485,15 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
             "level": TILE_PLACE_LEVEL, "kind": GAP_KIND, "seat": False, "zhi": False,
             "col": anchor[1], "row": anchor[0],
             "lon": county["longitude"], "lat": county["latitude"],
+            "locationBasis": county["coordinateBasis"],
         })
         provinces.append({
             "id": place_id, "displayName": f"{county['nameKo']}현", "nameCh": county["nameHan"],
             "administrativeSystem": donor_record["administrativeSystem"], "kind": "SPATIAL_PROVINCE",
             "parentRegionId": donor_record["parentRegionId"], "cityIndex": city_index,
-            "geometryBasis": "GAP_COUNTY_LOCAL_CARVE", "confidence": "APPROXIMATE",
+            "geometryBasis": "GAP_COUNTY_LOCAL_CARVE", "confidence": county["positionStatus"],
             "jurisdictionId": place_id, "assignmentBasis": "GAP_COUNTY_ANCHOR",
-            "assignmentConfidence": "APPROXIMATE",
+            "assignmentConfidence": county["positionStatus"],
         })
         new_jurisdiction = {
             "id": place_id, "displayName": f"{county['nameKo']}현", "nameCh": county["nameHan"],

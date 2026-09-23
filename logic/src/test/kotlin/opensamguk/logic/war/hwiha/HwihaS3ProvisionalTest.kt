@@ -5,7 +5,7 @@ import java.nio.file.Path
 import kotlin.test.*
 import kotlinx.serialization.json.*
 
-/** 코드 상수와 PROVISIONAL 정본 파일이 갈라지지 않게 한다 — 한쪽만 고치면 빨개진다. */
+/** 코드 상수와 확정 수치 정본 파일이 갈라지지 않게 한다 — 한쪽만 고치면 빨개진다. */
 class HwihaS3ProvisionalTest {
     private val root: JsonObject by lazy {
         var at: Path? = Path.of("").toAbsolutePath()
@@ -15,14 +15,14 @@ class HwihaS3ProvisionalTest {
     }
     private fun long(section: String, key: String) = root.getValue(section).jsonObject.getValue(key).jsonPrimitive.long
 
-    @Test fun `every section is marked provisional pending the user's decision`() {
-        val marker = "PROVISIONAL — 사용자 결정 대기"
+    @Test fun `every section is marked confirmed by the user's decision`() {
+        val marker = "CONFIRMED"
         assertEquals(marker, root.getValue("status").jsonPrimitive.content)
-        for (section in listOf("encounter", "siege", "salary", "reward", "npcDeploy", "reactions", "resupply"))
+        for (section in listOf("encounter", "encounterRecovery", "siege", "salary", "reward", "npcDeploy", "reactions", "rations", "resupply"))
             assertEquals(marker, root.getValue(section).jsonObject.getValue("status").jsonPrimitive.content, section)
     }
 
-    @Test fun `runtime constants equal the provisional ledger`() {
+    @Test fun `runtime constants equal the confirmed ledger`() {
         val p = HwihaS3Provisional
         assertEquals(p.GARRISON_RATION_PER_SOLDIER_TURN, long("siege", "garrisonRationPerSoldierTurn"))
         assertEquals(p.BESIEGER_MIN_PROVISION_MONTHS.toLong(), long("siege", "besiegerMinProvisionMonths"))
@@ -49,9 +49,11 @@ class HwihaS3ProvisionalTest {
         assertEquals(p.UNPAID_SALARY_LOYALTY_LOSS.toLong(), long("salary", "unpaidSalaryLoyaltyLoss"))
         assertEquals(p.REWARD_MONEY_PER_LOYALTY, long("reward", "rewardMoneyPerLoyalty"))
         assertEquals(p.REWARD_MAX_LOYALTY_GAIN.toLong(), long("reward", "rewardMaxLoyaltyGain"))
+        assertEquals(p.ENCOUNTER_UNAVAILABLE_RETRY_PHASES.toLong(), long("encounterRecovery", "unavailableRetryPhases"))
         assertEquals(p.NPC_DEPLOY_MAX_EDGES.toLong(), long("npcDeploy", "npcDeployMaxEdges"))
         assertEquals(p.NPC_DEPLOY_MIN_RATIO.toLong(), long("npcDeploy", "npcDeployMinRatio"))
         assertEquals(p.NPC_RELIEF_MIN_RATIO_PERCENT, long("npcDeploy", "npcReliefMinRatioPercent"))
+        assertEquals(p.INTERCEPT_RANGE_PROVINCES.toLong(), long("reactions", "interceptRangeProvinces"))
     }
 
     @Test fun `npc deployment never asks for less than the approved encirclement ratio`() {

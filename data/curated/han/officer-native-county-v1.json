@@ -39,8 +39,8 @@
    "NO_BIOGRAPHY_STATEMENT": 536
   },
   "byMatchStatus": {
-   "COUNTY_NOT_IN_COMMANDERY": 26,
-   "MATCHED": 104,
+   "COUNTY_NOT_IN_COMMANDERY": 22,
+   "MATCHED": 108,
    "NO_COUNTY": 19,
    "UNSPLIT": 16
   },
@@ -4543,8 +4543,8 @@
    "nativeCommandery": "左馮翊",
    "commanderyId": "PARENT-0005",
    "nativeCounty": "高陵",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0005-001",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷15",
@@ -7658,8 +7658,8 @@
    "nativeCommandery": "陳留郡",
    "commanderyId": "PARENT-0022",
    "nativeCounty": "平丘",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0022-010",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷12",
@@ -8405,8 +8405,8 @@
    "nativeCommandery": "太原郡",
    "commanderyId": "PARENT-0079",
    "nativeCounty": "晉陽",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0079-001",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷27",
@@ -14014,8 +14014,8 @@
    "nativeCommandery": "右扶風",
    "commanderyId": "PARENT-0006",
    "nativeCounty": "茂陵",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0006-004",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷36",

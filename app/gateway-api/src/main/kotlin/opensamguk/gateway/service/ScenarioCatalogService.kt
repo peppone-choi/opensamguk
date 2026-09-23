@@ -44,6 +44,7 @@ class ScenarioCatalogService(
             "scenario_1100",
             "scenario_1110",
             "scenario_1120",
+            "scenario_990002",
         )
     }
 }

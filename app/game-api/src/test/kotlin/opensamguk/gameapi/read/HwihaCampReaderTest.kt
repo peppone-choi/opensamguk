@@ -44,7 +44,7 @@ class HwihaCampReaderTest {
     private val lord = GeneralReadEntity(id = 1, worldId = 1, name = "조조", nationId = 1, cityId = 5, userId = "41",
         leadership = 100, strength = 80, intel = 95, politics = 90, charm = 95,
         meta = mapOf("npc_org" to 1, HwihaPersonPolicyState.META_KEY to policy(30)))
-    private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, npcState = 2,
+    private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, cityId = 2, npcState = 2,
         leadership = 90, strength = 90, intel = 60, politics = 60, charm = 70, meta = mapOf("npc_org" to 2))
     private val liubei = GeneralReadEntity(id = 3, worldId = 1, name = "유비", nationId = 0, npcState = 2,
         leadership = 80, strength = 70, intel = 70, politics = 70, charm = 99,
@@ -270,6 +270,7 @@ class HwihaCampReaderTest {
 
         val xia = out.people[0]
         assertEquals(8, xia.cost); assertEquals("호위", xia.roleLabel); assertEquals("훈련", xia.taskLabel)
+        assertEquals(2, xia.locationCityId, "상사 화면은 카드 인물의 현재 城으로 창고망을 계산한다")
         assertEquals(90, xia.stats?.leadership)
         // 장 90*.6+90*.4=90, 리 60*.7+60*.3=60, 사 60, 사자 70*.6+60*.4=66
         assertEquals(opensamguk.gameapi.dto.HwihaAptitudesDto(90, 60, 60, 66), xia.aptitudes)
@@ -285,6 +286,7 @@ class HwihaCampReaderTest {
 
         val nobody = out.people[3]
         assertNull(nobody.generalId); assertNull(nobody.cost); assertNull(nobody.stats); assertNull(nobody.aptitudes)
+        assertNull(nobody.locationCityId)
         assertTrue(nobody.bonds.isEmpty()); assertEquals("무명 식객", nobody.name)
 
         val unit = out.units.single()
@@ -340,13 +342,13 @@ class HwihaCampReaderTest {
         assertEquals(setOf("을"), table.keys, "갑은 두 행이 싣고, 병은 縣이 없다")
     }
 
-    @Test fun `산출 원장은 縣마다 목재(면적 축)이고 철·말은 36 縣이다`() {
+    @Test fun `산출 원장은 縣마다 목재(면적 축)이고 철·말은 새 판의 40 縣이다`() {
         val table = ledgers.productionByJurisdiction
         // 縣 수는 지도 판마다 바뀐다 — 박지 않고 모든 행에 목재가 있는지만 본다.
         assertTrue(table.values.all { rows -> rows.any { it.resource == "TIMBER" } })
         assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 132)), table["200197"])
         assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE", "TIMBER") })
-        assertEquals(36, table.values.count { rows -> rows.any { it.resource != "TIMBER" } }, "1224 판: 越巂郡 철 산지가 새 縣에 묶였다")
+        assertEquals(40, table.values.count { rows -> rows.any { it.resource != "TIMBER" } }, "1447 판: 결손 縣 배치 뒤 생산 원장 실측")
     }
 
     @Test fun `城 표에서 풀리지 않는 본관은 한글 이름이 null 이고 한자는 남는다`() {
@@ -378,9 +380,9 @@ class HwihaCampReaderTest {
         // 기준선(2026-09-23 실측): 1168 판에서는 120명 중 93명(관할 id 91 · (郡, 縣) 쌍 2)이 풀렸다
         // (tools/map/audit_county_coverage.make_normalizer 로 같은 대조를 파이썬에서 돌린 값). 1224 판(#865, 결손 縣 56곳)에서
         // 새 縣(1342–1397)에 본관이 걸린 7명(여범 세양·주유 서·장료 마읍·서황 양·전예 옹노·진교 동양·가후 고장)이 더 풀려
-        // 100명이다 — null 은 27 → 20 명.
+        // 100명이다 — null 은 27 → 20 명. 1447 판에서 새 城 223곳을 더한 뒤에는 104명이 풀린다.
         assertEquals(120, table.size)
-        assertEquals(100, table.values.count { names.korean(it) != null })
+        assertEquals(104, table.values.count { names.korean(it) != null })
     }
 
     @Test fun `지명 정규화는 audit 도구 규칙이다 - 邑·道·國은 이름의 일부`() {

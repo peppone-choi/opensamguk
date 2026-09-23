@@ -1141,6 +1141,15 @@ def build_one(path, out_dir, rtk, scenario_root=None, dry_run=False):
     if schema == "normalized_archive":
         return None, 0, 0, _empty_assignment_stats(), _inactive_detail(schema, "excluded_non_runtime_schema")
 
+    # The synthetic HWIHA slice has invented NPC lords. RTK14 historic officer
+    # matching must leave its reviewed game-design roster intact.
+    if relative_path.name == "scenario_990002.json" and scenario.get("ruleProfile") == "HWIHA":
+        out_path = Path(out_dir) / relative_path
+        if not dry_run:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, out_path)
+        return str(out_path), 0, 0, _empty_assignment_stats(), _inactive_detail(schema, "untouched_synthetic_hwiha")
+
     out_path = Path(out_dir) / relative_path
     devsam = read_devsam(scenario)
     if not devsam:

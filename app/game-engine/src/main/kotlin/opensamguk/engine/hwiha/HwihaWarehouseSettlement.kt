@@ -28,8 +28,8 @@ class HwihaWarehouseSettlement(private val world: InMemoryTurnWorld, private val
         val next = try { current.replace(remaining.credit(credit)) }
             catch (_: ArithmeticException) { return Result.OVERFLOW }
         val after = before.copy(meta = before.meta + (HwihaCountyWarehouse.META_KEY to next.toMetaValue()))
+        if (world.applyCityDirtyFree(after) == null) return Result.NOT_COUNTY
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
-        checkNotNull(world.applyCityDirtyFree(after))
         return Result.APPLIED
     }
 }

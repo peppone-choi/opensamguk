@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
   "ledgerId": "junguozhi-county-name-review-v1",
-  "note": "郡國志 縣 결손 원장의 한 글자 차이 후보 중 異體字로 접지 않은 행. proposedKind 는 분류 제안이지 판정이 아니다 — 개명·僑置·원문 잘림·이문은 사료로 사람이 가린다. 글자표(han-name-simplification-v1)에 넣지 않는 이유: 글자 단위 동치가 아니라 이름 단위 사건이라서다. 행 집합은 tools/map/tests/test_build_junguozhi_county_gaps.py 가 원장과 맞춘다.",
-  "rows": [
+  "note": "郡國志 縣 결손 원장의 한 글자 차이 후보 중 異體字로 접지 않은 행. proposedKind 는 분류 제안이지 판정이 아니다 — 개명·僑置·원문 잘림·이문은 사료로 사람이 가린다. 글자표(han-name-simplification-v1)에 넣지 않는 이유: 글자 단위 동치가 아니라 이름 단위 사건이라서다. 행 집합은 tools/map/tests/test_build_junguozhi_county_gaps.py 가 원장과 맞춘다. 2026-09-23: 226개 별도 게임 城을 세워 현재 이름 근접 후보 행은 0이다. 종전 18행은 closedHistoricalRows에 보존하며, 게임 배치는 이문 동치나 220년 존속의 판정이 아니다.",
+  "rows": [],
+  "closedHistoricalRows": [
     {
       "sourceVolume": 109,
       "commandery": "河東郡",
@@ -12,7 +13,8 @@
         "绛邑"
       ],
       "proposedKind": "SUFFIX_OR_RENAME",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 109,
@@ -23,7 +25,8 @@
         "霸城"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 109,
@@ -34,7 +37,8 @@
         "高陆"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 110,
@@ -45,7 +49,8 @@
         "砀"
       ],
       "proposedKind": "SOURCE_PARSE_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 110,
@@ -56,7 +61,8 @@
         "鲁"
       ],
       "proposedKind": "SOURCE_PARSE_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 110,
@@ -67,7 +73,8 @@
         "廮陶"
       ],
       "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 110,
@@ -78,7 +85,8 @@
         "南䜌"
       ],
       "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 111,
@@ -89,7 +97,8 @@
         "郯城"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 111,
@@ -100,7 +109,8 @@
         "合城"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 111,
@@ -111,7 +121,8 @@
         "舆国"
       ],
       "proposedKind": "SUFFIX_OR_RENAME",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 112,
@@ -122,7 +133,8 @@
         "永安"
       ],
       "proposedKind": "SOURCE_TRUNCATION_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 113,
@@ -133,7 +145,8 @@
         "蚕陵"
       ],
       "proposedKind": "SOURCE_CORRUPTION_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 113,
@@ -144,7 +157,8 @@
         "毋单"
       ],
       "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 113,
@@ -155,7 +169,8 @@
         "泾阳"
       ],
       "proposedKind": "UNRELATED_SUSPECT",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 113,
@@ -166,7 +181,8 @@
         "浧陶"
       ],
       "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 113,
@@ -177,7 +193,8 @@
         "下洛"
       ],
       "proposedKind": "TEXTUAL_VARIANT_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 109,
@@ -188,7 +205,8 @@
         "新成"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     },
     {
       "sourceVolume": 110,
@@ -199,7 +217,8 @@
         "易城"
       ],
       "proposedKind": "RENAME_CANDIDATE",
-      "review": "NEEDS_HUMAN"
+      "review": "NEEDS_HUMAN",
+      "closure": "SEPARATE_GAME_CITY_PLACED"
     }
   ]
 }

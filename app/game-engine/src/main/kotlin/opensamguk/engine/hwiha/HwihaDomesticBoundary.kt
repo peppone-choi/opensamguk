@@ -5,6 +5,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.input.*
+import org.slf4j.LoggerFactory
 
 /**
  * 순 경계의 내정 진행(§5.2 3단계). 월세입(4단계) 앞에서 한 순에 한 번 돈다 — 도장 [STAMP_KEY] 과 변경이 같은 flush 에 실린다.
@@ -24,7 +25,7 @@ class HwihaDomesticBoundary(
     data class Outcome(val stamp: String, val alreadyStamped: Boolean, val worksAdvanced: Int = 0, val worksCompleted: Int = 0,
         val worksStopped: Int = 0, val meritEvents: Int = 0)
 
-    fun run(): Outcome? {
+    fun run(meritClosedBeforeMonthlyEvents: Boolean = false): Outcome? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val now = world.hwihaNow()
         val stamp = stampOf(now)
@@ -45,7 +46,8 @@ class HwihaDomesticBoundary(
         val effects = HwihaDomesticCountyEffects(world, recorder, context)
         for (county in state.counties) effects.apply(county.id, state)
         HwihaReactionInventory(world, recorder).rebuild()
-        val events = if (now.phase == 1) monthlyMerit(now) else 0
+        val events = if (now.phase == 1 && !meritClosedBeforeMonthlyEvents) monthlyMerit(now, compare = true, open = false) else 0
+        if (now.phase == 1) monthlyMerit(now, compare = false, open = true)
         world.setGameEnvValue(STAMP_KEY, stamp)
         recorder.recordKv("game_env", "game_env", STAMP_KEY, stamp)
         return Outcome(stamp, false, advanced, completed, stopped, events)
@@ -81,7 +83,8 @@ class HwihaDomesticBoundary(
         if (warehouse == null) return stop(city.id, works, active, now, "WAREHOUSE_NOT_READY")
         val county = state.county(countyId) ?: return WorkResult.NONE
         val seat = try { HwihaDomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }?.let { seat ->
-            val person = checkNotNull(state.person(seat.personId))
+            val person = state.person(seat.personId)
+                ?: return stop(countyId, works, active, now, "SEAT_PERSON_MISSING")
             HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
                 state.homeCountyByGeneral[person.id] == countyId)
         }
@@ -90,14 +93,14 @@ class HwihaDomesticBoundary(
             is HwihaWorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
             is HwihaWorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
-                val after = checkNotNull(world.getCityById(countyId))
+                val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 world.updateCityMeta(recorder, countyId, after.meta.withKey(HwihaCountyWorks.META_KEY,
                     HwihaCountyWorks(step.work, works.completed).toMetaValue()))
                 WorkResult.ADVANCED
             }
             is HwihaWorkStep.Completed -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
-                val after = checkNotNull(world.getCityById(countyId))
+                val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 val done = HwihaCountyWorks(null, (works.completed + step.completed).sortedWith(
                     compareBy({ it.completedAt }, { it.work.ordinal })))
                 val trust = opensamguk.engine.turn.ReservedTurnHandler.materializeMariaDbFloat(step.levels.trust)
@@ -106,8 +109,8 @@ class HwihaDomesticBoundary(
                 val next = after.copy(population = step.levels.population, agriculture = step.levels.agriculture,
                     commerce = step.levels.commerce, security = step.levels.security, defence = step.levels.defence,
                     wall = step.levels.wall, meta = meta)
+                if (world.applyCityDirtyFree(next) == null) return missingCounty(active.actorId, countyId)
                 recorder.diffCity(opensamguk.engine.turn.PerTurnOverlay.toLogicCity(after), opensamguk.engine.turn.PerTurnOverlay.toLogicCity(next))
-                checkNotNull(world.applyCityDirtyFree(next))
                 log(active.actorId, "${city.name}의 ${active.work.label} 공사를 마쳤습니다.")
                 WorkResult.COMPLETED
             }
@@ -127,7 +130,7 @@ class HwihaDomesticBoundary(
     }
 
     private fun stop(countyId: Int, works: HwihaCountyWorks, work: HwihaActiveWork, now: HwihaPhase, reason: String): WorkResult {
-        val city = checkNotNull(world.getCityById(countyId))
+        val city = world.getCityById(countyId) ?: return missingCounty(work.actorId, countyId)
         val stopped = work.copy(stopReason = reason)
         if (work.stopReason != reason) log(work.actorId, "${city.name}의 ${work.work.label} 공사가 멈췄습니다: ${reasonText(reason)}")
         world.updateCityMeta(recorder, countyId, city.meta.withKey(HwihaCountyWorks.META_KEY,
@@ -136,7 +139,10 @@ class HwihaDomesticBoundary(
     }
 
     /** 縣令으로 배치된 카드가 앉은 縣만 비교한다. 지난달 기록이 없으면(처음 앉은 달) 사건 없이 기록만 남긴다. */
-    private fun monthlyMerit(now: HwihaPhase): Int {
+    /** Close the prior month before global growth events, so natural growth cannot become a magistrate's merit. */
+    fun closeMonthlyMerit(year: Int, month: Int): Int = monthlyMerit(HwihaPhase(year, month, 1), compare = true, open = false)
+
+    private fun monthlyMerit(now: HwihaPhase, compare: Boolean, open: Boolean): Int {
         val month = "%04d-%02d".format(now.year, now.month)
         val state = context.projection(world)
         var events = 0
@@ -151,12 +157,16 @@ class HwihaDomesticBoundary(
             if (previous?.stamp == month) continue
             val current = HwihaDomesticCountyEffects.levelsOf(city).indicators()
             val risen = previous?.indicators?.let { current.risenSince(it) }.orEmpty()
-            if (previous != null && risen.isNotEmpty()) {
-                context.merit.onCountyIndicatorsRose(HwihaGovernanceMeritEvent(seat.controllerId, seat.personId,
-                    checkNotNull(seat.retainerId), county.id, month, previous.indicators, current, risen))
-                events++
+            if (compare && previous != null && risen.isNotEmpty()) {
+                val retainerId = seat.retainerId
+                if (retainerId == null) log(seat.controllerId, "${city.name}의 치적을 기록하지 못했습니다(현령 카드가 없습니다).")
+                else {
+                    context.merit.onCountyIndicatorsRose(HwihaGovernanceMeritEvent(seat.controllerId, seat.personId,
+                        retainerId, county.id, month, previous.indicators, current, risen))
+                    events++
+                }
             }
-            world.updateCityMeta(recorder, county.id, city.meta.withKey(HwihaCountyMonthly.META_KEY,
+            if (open) world.updateCityMeta(recorder, county.id, city.meta.withKey(HwihaCountyMonthly.META_KEY,
                 HwihaCountyMonthly(month, current).toMetaValue()))
         }
         return events
@@ -166,7 +176,14 @@ class HwihaDomesticBoundary(
         HwihaDomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."
         "STALE_WAREHOUSE" -> "창고 정산이 어긋났습니다."
+        "SEAT_PERSON_MISSING" -> "현령 인물 정보를 확인할 수 없습니다."
         else -> reason
+    }
+
+    private fun missingCounty(actorId: Int, countyId: Int): WorkResult {
+        logger.warn("hwiha_domestic_work_skipped county={} reason=MISSING_COUNTY", countyId)
+        log(actorId, "현 $countyId 정보를 확인할 수 없어 공사 진행을 건너뛰었습니다.")
+        return WorkResult.STOPPED
     }
 
     private fun log(generalId: Int, text: String) {
@@ -175,6 +192,7 @@ class HwihaDomesticBoundary(
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(HwihaDomesticBoundary::class.java)
         const val STAMP_KEY = "hwihaDomesticPhase"
         fun stampOf(phase: HwihaPhase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
     }

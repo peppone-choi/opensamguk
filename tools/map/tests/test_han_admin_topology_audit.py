@@ -407,11 +407,12 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # 5 칸짜리 孟津 · 7 칸짜리 樊城 省이 최소 면적 미달로 더해져 2 → 4 다(기증 縣과 마른땅 경계 규칙).
         # 2026-09-23: 기증 縣 省 한가운데서 떼어 낸 결손 縣 省이 완전 포위로 잡혀 22 → 37 · 23 → 38(거점 때와 같은 현상),
         # 발자국을 6 칸으로 줄여 세운 汝南郡 固始縣이 최소 면적 미달로 더해져 11 → 12 다(carvedCellCount).
-        self.assertEqual(37, snapshot["provinceTopology"]["fullyEnclosedCount"])
-        self.assertEqual(12, snapshot["provinceTopology"]["belowMinimumCount"])
+        # 합성 城 223곳의 국소 carve 뒤 완전 포위 省은 48, 축소 발자국은 13곳이다.
+        self.assertEqual(48, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        self.assertEqual(13, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(31, snapshot["jurisdictionTopology"]["disconnectedCount"])
         # 2026-09-17: 安平口 관할이 遼東郡 西安平 땅에 합쳐 38 → 37(ADR-LITE-056).
-        self.assertEqual(38, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])  # 2026-09-18 ★ 뒤 실측(위 주석)
+        self.assertEqual(56, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
@@ -422,7 +423,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # 64 → 61: 관할 하나뿐이던 郡 3 곳(宜都·卒本·蘄春)에 거점 관할이 더해졌다.
         # 2026-09-16 1098: 五原郡에 河陰·九原 두 관할이 돌아와 61 → 60.
         # 2026-09-17: 관할 하나뿐이던 新平·毗陵典農校尉·汶山·章武가 이웃 城 관할에 접혀 60 → 56.
-        self.assertEqual(44, snapshot["singleJurisdictionCommanderyCount"])  # 2026-09-23: 관할 하나뿐이던 郡 3곳이 결손 縣을 받았다
+        self.assertEqual(38, snapshot["singleJurisdictionCommanderyCount"])  # 새 城이 관할 하나뿐이던 郡 6곳에 더 들어왔다
         self.assertEqual(173, snapshot["historicalParentCensus"]["currentCommanderyCount"])
         self.assertEqual(73, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
         self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])

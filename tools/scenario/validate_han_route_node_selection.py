@@ -53,9 +53,10 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 from tools.scenario.han_active_city_ids import active_numeric_ids
+from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
 
 # 결손 縣 56 곳을 더해 han-world-v3 는 1168 → 1224. 명부 수와 같이 움직이는 실측 기준선이다.
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1224}
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1447}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
 # 결손 縣 56 곳. 이 검증기는 선정 모듈과 **독립 사본**으로 상수를 들고 있으므로 여기에도 적는다.
@@ -73,7 +74,7 @@ SOURCE_CLAIM_BATCHES = {
     JURISDICTION_CLAIM_BATCH: {
         "input": "jurisdictionRouteClaims", "subjectPrefix": "han-tiles-jurisdiction:",
         "subjectType": "ADMINISTRATIVE_PLACE", "nodeClasses": frozenset({"COUNTY_NODE"}),
-        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 174},
+        "seatRoles": frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), "counts": {"han-780-v1": 0, "han-world-v3": 175},
     },
     STRATEGIC_SITE_CLAIM_BATCH: {
         "input": "strategicSiteRouteClaims", "subjectPrefix": "strategic-site:",
@@ -93,7 +94,7 @@ GAP_COUNTY_PLACE_PREFIX = "curated:gap-county-v1:"
 # 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 56, VACATED_LOCATION_BATCH: 1},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 278, VACATED_LOCATION_BATCH: 1},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -151,11 +152,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "63bed4552baaa2cf85fe9c75a7be38842b6ca358f7841c42f170ebdca8cec659"
-PINNED_SOURCE_WITNESS_SHA256 = "bae024b59b368b3338ba6545c1f1ee3fcf171e5f48adfbac82216e9bb031180f"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "28f853dbb6bb29d9531ca209e7dfd532fa90789ac5eb1a97e54f3d5cca497c2e"
+PINNED_SOURCE_WITNESS_SHA256 = "fda29e3c62827985d442446e89c12e600fbf366d172aaa15c199a02591b23cd5"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "83c95e2048965a92b9e5d1bfc5b1e84fe90110e0a40eaad17d87a8ccd0c235ac"
-PINNED_REVIEW_POLICY_SHA256 = "b91832c6adfcbb9c5312db039a98f297bcde63b618c567aed6abd2f05cc85441"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "8aa7713630c9a1f3b73a136b92b13b5e8f2429c19bad6f1f933a118a7e47a0f9"
+PINNED_REVIEW_POLICY_SHA256 = "30b71083c5df61d5a52699caee1f702d755b291854e0bc0cc4661dc55679c0c1"
 PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -979,6 +980,21 @@ def _location_claim_batch(point_ref: str, subject_key: str | None = None) -> str
     return EXTERNAL_LOCATION_BATCH
 
 
+def _synthetic_gap_claim(claim: JsonObject | None) -> bool:
+    if claim is None:
+        return False
+    point = claim.get("physicalPlaceRef")
+    resolution = claim.get("locationResolution")
+    if not isinstance(point, str) or not point.startswith(GAP_COUNTY_PLACE_PREFIX) or not isinstance(resolution, dict):
+        return False
+    dataset = resolution.get("coordinateDatasetRef")
+    conflict = claim.get("conflictDisposition")
+    return (isinstance(dataset, dict) and isinstance(conflict, dict)
+            and dataset.get("datasetPath") == "data/curated/han/route-node-external-place-authority-v1.json"
+            and dataset.get("recordId") == point.removeprefix(GAP_COUNTY_PLACE_PREFIX)
+            and "사용자 승인 합성 격자" in str(conflict.get("rationale", "")))
+
+
 def _script_variant_members(source_root: Path) -> frozenset:
     # 생산 승인 모드는 별도 핀 게이트가 정책 파일의 존재·해시를 먼저 강제하므로, 여기서
     # 파일이 없으면 fixture 루트다. 빈 집합이면 w1 노드는 w0b 기대와 어긋나 실패한다.
@@ -1109,11 +1125,12 @@ JURISDICTION_CLAIM_EVIDENCE_FIELDS = {
     "CHGIS_V6_COUNTY_POINT": frozenset({"kind", "datasetPath", "datasetSha256", "sysId", "nameCh", "nameFt",
                                         "beginYear", "endYear"}),
     "JURISDICTION_SEAT_RECOVERY": frozenset({"kind", "datasetPath", "datasetSha256", "jurisdictionId"}),
+    "USER_APPROVED_SYNTHETIC_GAME_CITY": frozenset({"kind", "datasetPath", "datasetSha256", "countyId", "jurisdictionId"}),
     "STRATEGIC_SITE_LEDGER": frozenset({"kind", "datasetPath", "datasetSha256", "siteId", "role"}),
     "EXTERNAL_PLACE_RECORD": frozenset({"kind", "datasetPath", "datasetSha256", "recordId", "wikidataId", "confidence"}),
 }
 EVIDENCE_KINDS_BY_BATCH = {
-    JURISDICTION_CLAIM_BATCH: frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
+    JURISDICTION_CLAIM_BATCH: frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY", "USER_APPROVED_SYNTHETIC_GAME_CITY"}),
     STRATEGIC_SITE_CLAIM_BATCH: frozenset({"STRATEGIC_SITE_LEDGER"}),
     EXTERNAL_SETTLEMENT_CLAIM_BATCH: frozenset({"EXTERNAL_PLACE_RECORD"}),
 }
@@ -1201,6 +1218,20 @@ def _jurisdiction_claims_index(source_root: Path, expected_count: int,
             _text(evidence, "jurisdictionId") != _text(binding, "jurisdictionId")
         ):
             _fail(f"seat recovery evidence must name its own jurisdiction: {claim_id}")
+        if evidence["kind"] == "USER_APPROVED_SYNTHETIC_GAME_CITY":
+            if (
+                _text(evidence, "jurisdictionId") != _text(binding, "jurisdictionId")
+                or _text(evidence, "datasetPath") != "data/curated/han/gap-counties-v1.json"
+                or not place.startswith(GAP_COUNTY_PLACE_PREFIX)
+            ):
+                _fail(f"synthetic game city evidence must name its own gap county: {claim_id}")
+            source = _resolved_repository_path(source_root, Path(evidence["datasetPath"]), "gap county evidence")
+            if _sha256(source) != evidence["datasetSha256"]:
+                _fail(f"synthetic game city source hash differs: {claim_id}")
+            matching = [row for row in _rows(_load(source), "counties")
+                        if row.get("id") == _text(evidence, "countyId")]
+            if len(matching) != 1 or matching[0].get("positionStatus") != "SYNTHETIC":
+                _fail(f"synthetic game city source row is missing: {claim_id}")
         if claim_id in indexed or subject in subjects:
             _fail(f"duplicate jurisdiction route claim: {claim_id}")
         indexed[claim_id] = claim
@@ -2101,7 +2132,8 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             )
             if registry_numeric_id != expected_registry_numeric:
                 _fail(f"route-node numeric registry mismatch for {unit_id}")
-            if catalog_unit.source_name_status == "SOURCE_PLACEHOLDER" and not catalog_unit.name_corrected:
+            synthetic_gap = _synthetic_gap_claim(claims.get(node.get("locationClaimId")))
+            if catalog_unit.source_name_status == "SOURCE_PLACEHOLDER" and not catalog_unit.name_corrected and not synthetic_gap:
                 _fail(f"source placeholder cannot bind a route node: {unit_id}")
             expected_metadata = {
                 "nodeClass": catalog_unit.node_class,
@@ -2124,10 +2156,11 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
                     and (rejected_homonyms is None or unit_id in rejected_homonyms)
                 )
                 or (join_status == "SOURCE_PLACEHOLDER" and catalog_unit.name_corrected)
+                or synthetic_gap
             )
             if claim_bound and join_status == "AMBIGUOUS_POINT" and unit_id in adjudications_or_empty(adjudications):
                 _fail(f"approved ambiguity cannot also bind a location claim: {unit_id}")
-            if join_status == "RESOLVED_POINT":
+            if join_status == "RESOLVED_POINT" and not claim_bound:
                 expected_review_batch = (
                     SCRIPT_VARIANT_BATCH if unit_id in script_variant_members else "w0b-overlay-unique-220"
                 )
@@ -2246,6 +2279,8 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
 def _load_scenarios(directory: Path) -> tuple[ScenarioResource, ...]:
     resources: list[ScenarioResource] = []
     for path in sorted(directory.glob("scenario_*.json")):
+        if not is_route_node_scenario_resource(path):
+            continue
         document = _load(path)
         map_info = document.get("map")
         if (not isinstance(map_info, dict)

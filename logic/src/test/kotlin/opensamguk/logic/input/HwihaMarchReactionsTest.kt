@@ -38,7 +38,14 @@ class HwihaMarchReactionsTest {
         // One corps cannot both intercept and evade; unsorted persisted lists are corruption.
         assertFailsWith<IllegalArgumentException> { HwihaMarchReactions.of(listOf(a), listOf(a.copy(nationId = 1))) }
         assertFailsWith<IllegalArgumentException> { read(inventory.toMetaValue() + ("interceptions" to listOf(a.toMetaValue(), b.toMetaValue()))) }
-        // Installed schemes remain unsupported even beside valid reaction orders.
+        // An untyped installed-scheme record remains invalid beside valid reaction orders.
         assertFailsWith<IllegalArgumentException> { read(inventory.toMetaValue() + ("installedSchemes" to listOf(a.toMetaValue()))) }
+    }
+
+    @Test fun `typed installed schemes survive inventory round trip`() {
+        val scheme = HwihaInstalledScheme("scheme-1", 4, 2, "p-1", now)
+        val inventory = HwihaMarchReactions.of(emptyList(), emptyList(), listOf(scheme))
+        assertEquals(listOf(scheme), inventory.installedSchemes)
+        assertEquals(inventory, read(inventory.toMetaValue()))
     }
 }

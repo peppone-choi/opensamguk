@@ -15,7 +15,7 @@ enum class VisionSourceKind { SELF, OWN_CORPS, RETINUE, TERRITORY, SCOUT_POST, W
 data class TroopBand(val code: String, val label: String, val minInclusive: Int)
 
 /**
- * PROVISIONAL vision numbers. The only source is `data/curated/han/hwiha-vision-rules-v1.json`; this object
+ * Confirmed vision numbers (2026-09-23 user decision). The only source is `data/curated/han/hwiha-vision-rules-v1.json`; this object
  * copies nothing into code and fails closed when the file is missing or malformed.
  */
 object HwihaVisionRules {

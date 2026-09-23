@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "claimSetId": "han-w2-route-node-jurisdiction-claims-v1",
   "status": "APPROVED",
-  "reviewAuthority": "user-approval-2026-09-15",
-  "reviewedAt": "2026-09-15",
+  "reviewAuthority": "user-approval-2026-09-23",
+  "reviewedAt": "2026-09-23",
   "policy": {
-    "purpose": "郡國志 식별자가 없는 han-tiles 縣 관할에 REVIEWED_SOURCE_CLAIM 경로 노드를 준다.",
+    "purpose": "郡國志 식별자가 없는 han-tiles 縣 관할에 REVIEWED_SOURCE_CLAIM 경로 노드를 준다. 추가 1건은 기존 郡國志 식별자와 별개인 사용자 승인 합성 게임 城이다.",
     "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
     "lifecycleClaimed": false,
-    "tilesSha256": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1"
+    "tilesSha256": "61bbf321dc7ebbf162b0bf9960d43a7ae486f8c8f5e3d3c8433f79198160f6ee"
   },
   "claims": [
     {
@@ -327,7 +327,7 @@
       "subjectKey": "han-tiles-jurisdiction:70741",
       "canonicalName": "高陸",
       "nodeClass": "COUNTY_NODE",
-      "seatRole": "COMMANDERY_SEAT",
+      "seatRole": "NON_SEAT",
       "parentName": "左馮翊",
       "parentRef": "han-tiles-commandery:PARENT-0005",
       "physicalPlaceRef": "chgis:v6:cnty:70741",
@@ -719,7 +719,7 @@
       "subjectKey": "han-tiles-jurisdiction:45180",
       "canonicalName": "魯",
       "nodeClass": "COUNTY_NODE",
-      "seatRole": "COMMANDERY_SEAT",
+      "seatRole": "NON_SEAT",
       "parentName": "魯國",
       "parentRef": "han-tiles-commandery:PARENT-0012",
       "physicalPlaceRef": "chgis:v6:cnty:45180",
@@ -859,7 +859,7 @@
       "subjectKey": "han-tiles-jurisdiction:87061",
       "canonicalName": "廮陶",
       "nodeClass": "COUNTY_NODE",
-      "seatRole": "COMMANDERY_SEAT",
+      "seatRole": "NON_SEAT",
       "parentName": "鉅鹿郡",
       "parentRef": "han-tiles-commandery:PARENT-0014",
       "physicalPlaceRef": "chgis:v6:cnty:87061",
@@ -3799,7 +3799,7 @@
       "subjectKey": "han-tiles-jurisdiction:96006",
       "canonicalName": "廣武",
       "nodeClass": "COUNTY_NODE",
-      "seatRole": "COMMANDERY_SEAT",
+      "seatRole": "NON_SEAT",
       "parentName": "廣漢屬國",
       "parentRef": "han-tiles-commandery:PARENT-0063",
       "physicalPlaceRef": "chgis:v6:cnty:96006",
@@ -4857,6 +4857,31 @@
         "nameFt": "廣寧縣",
         "beginYear": 23,
         "endYear": 264
+      }
+    },
+    {
+      "sourceClaimId": "han-jurisdiction-route-claim-v1-gc-g0097-005",
+      "claimRole": "ROUTE_NODE",
+      "reviewState": "APPROVED",
+      "subjectType": "ADMINISTRATIVE_PLACE",
+      "subjectKey": "han-tiles-jurisdiction:gc-g0097-005",
+      "canonicalName": "险渎",
+      "nodeClass": "COUNTY_NODE",
+      "seatRole": "NON_SEAT",
+      "parentName": "遼東屬國",
+      "parentRef": "han-tiles-commandery:PARENT-0097",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0097-005",
+      "tileBinding": {
+        "jurisdictionId": "gc-g0097-005",
+        "commanderyId": "PARENT-0097",
+        "seatPlaceId": "gc-g0097-005"
+      },
+      "evidence": {
+        "kind": "USER_APPROVED_SYNTHETIC_GAME_CITY",
+        "datasetPath": "data/curated/han/gap-counties-v1.json",
+        "datasetSha256": "493c16fe13cb6dc9b09abda687a3116e154d0fafb1ade904c65465415418d9c0",
+        "countyId": "hhs:113:遼東屬國:005",
+        "jurisdictionId": "gc-g0097-005"
       }
     }
   ],

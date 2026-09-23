@@ -331,9 +331,6 @@ class DaemonLoopConfig {
         // 전쟁 결과 → 명망 사건 경계: 기록 스트림(HwihaRenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
         val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener =
             opensamguk.engine.hwiha.HwihaWarOutcomeRenownListener(world, recorder)
-        // 반응 기록(요격·회피·설치 계책) → 행군 진입 판정 경계. 요격·회피 해석기가 아직 없어 NON_BLOCKING 을 유지한다 —
-        // 내정 군단 방침(INTERCEPT/EVADE)이 쓴 반응 목록은 PENDING 으로 읽혀 행군을 막지 않는다.
-        val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = opensamguk.engine.hwiha.HwihaMarchReactionPolicy.NON_BLOCKING
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
@@ -346,6 +343,15 @@ class DaemonLoopConfig {
                     artifacts.commanderyIndex)
             } catch (_: IllegalArgumentException) { null }
         } else null
+        // Saved reactions use the same pinned commandery sight and land topology as scouting. A missing index
+        // cannot silently turn a pending interception into clear passage.
+        val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = visionContext?.let {
+            opensamguk.engine.hwiha.HwihaMarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
+        } ?: opensamguk.engine.hwiha.HwihaMarchReactionPolicy { current, _, _ ->
+            if (opensamguk.logic.input.HwihaMarchReactions.presence(current.getState().meta) ==
+                opensamguk.logic.input.HwihaMarchReactions.Presence.EMPTY)
+                opensamguk.logic.world.LandMarchEntry.CLEAR else opensamguk.logic.world.LandMarchEntry.UNAVAILABLE
+        }
         val handler = ReservedTurnHandler(
             world = world,
             registry = registry,
