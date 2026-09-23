@@ -226,6 +226,8 @@ export {
 } from './iso/cityName';
 export {
   cityFootprintBlock,
+  resolveCityFootprints,
+  type FootprintCity,
   cityFootprintSpan,
   type CellBlock,
 } from './iso/cityFootprint';
