@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cityBadgeLabel, formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, isUprisingNation, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import IsoWorldMap, { type IsoView } from '../iso/IsoWorldMap';
-import type { PlacedCity } from '@opensamguk/ui';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
@@ -94,7 +92,6 @@ export function mapTitleTooltip(
 
 export interface MapViewerProps {
     mapData?: MapPreviewResponse | null;
-    isDetailMap?: boolean;
     disallowClick?: boolean;
     currentCityId?: number | null;
     initialFocus?: InitialFocusProfile;
@@ -109,11 +106,6 @@ export interface MapViewerProps {
     /** 선택 모드의 확장 콜백 — 클릭한 도시 오버레이(국가명·국가색 포함)를 통째로 받는다(05 천하 지도 레일). */
     onCityPick?: (city: IsoCityOverlay) => void;
     onNavigate?: (href: string) => void;
-    /** 2D 는 작전실과 같은 HanMapCanvas, 3D 는 IsoMap3D. 기본값은 2D. */
-    view?: IsoView;
-    onViewChange?: (view: IsoView) => void;
-    /** 전략 경로선 화면은 보기 설정과 관계없이 작전실 지도에 고정한다. */
-    legacyCanvas?: boolean;
 }
 
 function mergeLive(preview: MapPreviewResponse, world: WorldMapResponse) {
@@ -152,7 +144,6 @@ function mergeLive(preview: MapPreviewResponse, world: WorldMapResponse) {
 
 export default function MapViewer({
     mapData,
-    isDetailMap = false,
     disallowClick,
     currentCityId,
     initialFocus,
@@ -166,9 +157,6 @@ export default function MapViewer({
     onCitySelect,
     onCityPick,
     onNavigate,
-    view,
-    onViewChange,
-    legacyCanvas = false,
 }: MapViewerProps = {}) {
     const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(mapData ?? null);
@@ -387,17 +375,6 @@ export default function MapViewer({
         else window.location.assign(href);
     }, [cityBaseHref, navigationEnabled, onCityPick, onCitySelect, onNavigate, selectionEnabled, singleTap]);
 
-    // 아이소 지도가 집어 준 城 을 기존 활성화 경로에 그대로 넘긴다. 도시 번호가 같은
-    // 공간이라(placeGameCities 주석) 여기서 변환할 것이 없다 — 모양만 맞춘다.
-    const activatePlacedCity = useCallback((city: PlacedCity, activation: { pointerType: string }) => {
-        const overlay = cities.find((candidate) => candidate.id === city.id);
-        activateCity(overlay ?? {
-            id: city.id, name: city.name, level: city.level, nationId: city.nationId,
-            x: 0, y: 0, nationName: city.nationName, nationColor: city.nationColor,
-            isCapital: city.isCapital,
-        }, activation);
-    }, [activateCity, cities]);
-
     const toggleCityNames = () => setHideCityNames((hidden) => {
         window.localStorage.setItem(LS_HIDE_CITYNAME, hidden ? 'no' : 'yes');
         return !hidden;
@@ -414,7 +391,6 @@ export default function MapViewer({
         return <section className="map-viewer" aria-label="세계 지도"><div className="map-viewer-ph"><div className="spinner" /></div></section>;
     }
 
-    const useFlatCanvas = legacyCanvas || view !== 'iso3d';
     const title = `${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`;
     const tooltip = mapTitleTooltip(data.startYear, data.year, data.month, data.turnPhase ?? 1, gameConst);
     const legacyHoverOwnerName = hoverCounty?.nationName
@@ -440,54 +416,34 @@ export default function MapViewer({
             >
                 {title}
             </div>
-            <div className={`map-viewer-canvas${useFlatCanvas ? '' : ' map-viewer-canvas--iso'}`}>
-                {useFlatCanvas ? (
-                    <HanMapCanvas
-                        mapCode={data.mapCode}
-                        terrainUrl={terrainUrl}
-                        provinceUrl={provinceUrl}
-                        cities={cities}
-                        administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
-                            ? administrativeOwnership : undefined}
-                        sourceSize={sourceSize}
-                        currentCityId={currentCityId ?? liveMyCity}
-                        initialFocus={initialFocus}
-                        selectedCityId={selectedCityId}
-                        strategicTopology={strategicTopology ?? undefined}
-                        selectedServerRoute={mapData == null && selectedServerRoute?.serverId === readServerCookie()
-                            && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
-                        currentServerId={readServerCookie()}
-                        hideCityNames={hideCityNames}
-                        showCityFootprint
-                        politicalStyle="tint"
-                        ariaLabel={`${data.mapCode} 세계 지도`}
-                        onCountyHover={handleCountyHover}
-                        onCityHover={(city, point) => {
-                            setHoverCity(city);
-                            if (point) setCursor(point);
-                        }}
-                        onCityActivate={activateCity}
-                        onMissing={handleMissing}
-                    />
-                ) : (
-                    <IsoWorldMap
-                        terrainUrl={terrainUrl(data.mapCode)}
-                        cities={data.cities}
-                        works={worksRead}
-                        sieges={siegesRead}
-                        seaRoutes={data.seaRoutes}
-                        nations={data.nations}
-                        sourceSize={sourceSize}
-                        provinceOccupancy={data.provinceOccupancy}
-                        view={view}
-                        onViewChange={onViewChange}
-                        currentCityId={currentCityId ?? liveMyCity}
-                        selectedCityId={selectedCityId}
-                        hideCityNames={hideCityNames}
-                        onCityActivate={selectionEnabled || navigationEnabled ? activatePlacedCity : undefined}
-                        compact={isDetailMap}
-                    />
-                )}
+            <div className="map-viewer-canvas">
+                <HanMapCanvas
+                    mapCode={data.mapCode}
+                    terrainUrl={terrainUrl}
+                    provinceUrl={provinceUrl}
+                    cities={cities}
+                    administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
+                        ? administrativeOwnership : undefined}
+                    sourceSize={sourceSize}
+                    currentCityId={currentCityId ?? liveMyCity}
+                    initialFocus={initialFocus}
+                    selectedCityId={selectedCityId}
+                    strategicTopology={strategicTopology ?? undefined}
+                    selectedServerRoute={mapData == null && selectedServerRoute?.serverId === readServerCookie()
+                        && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
+                    currentServerId={readServerCookie()}
+                    hideCityNames={hideCityNames}
+                    showCityFootprint
+                    politicalStyle="tint"
+                    ariaLabel={`${data.mapCode} 세계 지도`}
+                    onCountyHover={handleCountyHover}
+                    onCityHover={(city, point) => {
+                        setHoverCity(city);
+                        if (point) setCursor(point);
+                    }}
+                    onCityActivate={activateCity}
+                    onMissing={handleMissing}
+                />
                 {strategicError && <p role="status">{strategicError}</p>}
                 <div className="map-btn-stack">
                     <button type="button" className={`map-toggle-cityname${hideCityNames ? ' active' : ''}`} aria-pressed={hideCityNames} onClick={toggleCityNames}>도시명 표기</button>

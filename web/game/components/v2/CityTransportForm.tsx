@@ -199,7 +199,7 @@ export default function CityTransportForm() {
                 하는 전략 경로선(selectedServerRoute)은 routeNodeKey 로 이어지고, 그 키가
                 지도 응답에 실려 오지 않아 아이소 격자 위에 되살릴 방법이 아직 없다.
                 없는 대조표를 지어내느니 경로가 보이는 쪽을 남긴다. */}
-            <MapViewer legacyCanvas disallowClick refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
+            <MapViewer disallowClick refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
                 onStrategicBindingChange={handleBindingChange} selectedCityId={Number(fromCityId) || null} />
             {outcome && (
                 <p

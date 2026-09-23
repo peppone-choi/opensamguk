@@ -2,7 +2,7 @@
 """후한 지도 격자의 표고(DEM)를 만든다 — NOAA ETOPO1 → han-world 투영.
 
 지형 분류(build_terrain_grid.py)는 Natural Earth 지리구역 폴리곤에서 나오므로
-표고값이 없다. 아이소 렌더러(iso2d 스프라이트 · iso3d glTF)는 타일당 정수 단차를
+표고값이 없다. 2D 아이소 스프라이트 격자는 타일당 정수 단차를
 요구한다. 이 도구가 그 단차의 유일한 출처다.
 
 출처: NOAA NCEI ETOPO1 (Ice Surface), ERDDAP griddap `etopo180`.
@@ -56,8 +56,8 @@ SOURCE_STEP_DEG = SOURCE_STRIDE / 60.0
 # 화북 평원 1, 황토고원 3, 티베트 6 이 되도록 잡았다.
 LEVEL_LADDER = [0, 200, 500, 1000, 2000, 3500]
 
-#: 타일 하나에 묶을 원본 셀 배수. web/shared/src/isoTileGrid.ts · build_iso3d_assets.py
-#: 와 같은 값이어야 한다. 매니페스트의 rasterGroup 이 그 계약을 런타임으로 나른다.
+#: 타일 하나에 묶을 원본 셀 배수. web/shared/src/isoTileGrid.ts 와 같은 값이어야 한다.
+#: 매니페스트의 rasterGroup 이 그 계약을 런타임으로 나른다.
 RASTER_GROUP = 2
 
 CACHE_DIR = 'data/map/dem-cache'
@@ -184,7 +184,7 @@ def sample_projection(lats, lons, grid, proj):
 def block_reduce_mean(array, group):
     """rasterGroup 배수로 평균낸다.
 
-    남는 가장자리 행·열은 버린다. 애셋 매니페스트(iso2d·iso3d)가 tileGrid 를
+    남는 가장자리 행·열은 버린다. iso2d 애셋 매니페스트가 tileGrid 를
     384×334 로 못박아 뒀고 669/2 = 334.5 이므로, 마지막 부분 행을 채워 335 로
     만들면 렌더러 인덱스가 한 줄씩 어긋난다. 버리는 쪽이 계약과 맞다.
     """

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  HEIGHT_STEP_WORLD,
   RASTER_GROUP,
   TERRAIN,
   buildCornerLattice,
@@ -314,18 +313,13 @@ describe('buildCornerLattice / buildTileHeights', () => {
   });
 });
 
-describe('화면·세계 기하', () => {
+describe('화면 기하', () => {
   it('타일 화면 좌표는 iso2d 계약(폭 256 · 높이 128)을 따른다', () => {
     expect(tileToScreen(0, 0)).toEqual([0, 0]);
     expect(tileToScreen(1, 0)).toEqual([128, 64]);
     expect(tileToScreen(0, 1)).toEqual([-128, 64]);
   });
 
-  it('한 단차의 세계 높이가 화면 32px 과 맞는다', () => {
-    // 화면 투영: 타일 폭 = √2, 세로 한 칸 = HEIGHT_STEP_WORLD·cos30°.
-    const ratio = (HEIGHT_STEP_WORLD * Math.cos(Math.PI / 6)) / Math.SQRT2;
-    expect(ratio).toBeCloseTo(32 / 256, 12);
-  });
 });
 
 describe('pickTileAtScreen — 높이를 감안한 집기', () => {
