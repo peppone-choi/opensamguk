@@ -44,6 +44,9 @@ def largest_remainder(total: int, weights: list[float]) -> list[int]:
 
 
 def build(tiles: dict, world: dict, params: dict, households: dict, historical_economy: dict | None = None) -> dict:
+    area_decision = params.get("areaInputDecision")
+    if not isinstance(area_decision, dict) or area_decision.get("geometrySource") != "COMMITTED_HAN_TILES" or area_decision.get("provinceAreaRebalanceInput") != "NOT_USED":
+        raise ValueError("county economy area input must follow the reviewed geography-first decision")
     legend = {int(k): v for k, v in tiles["_meta"]["terrainLegend"].items()}
     cols = tiles["_meta"]["cols"]
     terrain = "".join(tiles["terrain"])
@@ -102,9 +105,14 @@ def build(tiles: dict, world: dict, params: dict, households: dict, historical_e
             "landCells": sum(v for k, v in c.items() if k not in WATER),
             "terrainCells": {k: c[k] for k in sorted(c)},
             "arableCells": c["PLAIN"] + c["BASIN"],
+            "fieldCapacityCells": c["PLAIN"] + c["BASIN"],
             "terrainScore": round(score, 2),
             "wetAdjacentCells": wet_adj[jid],
             "connections": len(city.get("connections", [])) if city else 0,
+            "marketCapacityCells": min(
+                sum(v for k, v in c.items() if k not in WATER),
+                wet_adj[jid] + (len(city.get("connections", [])) if city else 0),
+            ),
             "households": None,
             "householdsBasis": "NO_SOURCE_HOUSEHOLDS",
         }
@@ -139,14 +147,29 @@ def build(tiles: dict, world: dict, params: dict, households: dict, historical_e
                 raise ValueError(f"unknown historical economy jurisdiction: {jid}")
             rows[jid].setdefault("historicalEconomyRefs", []).append(group["id"])
     ordered = [rows[k] for k in sorted(rows)]
+    missing_inputs = []
+    for row in ordered:
+        states = []
+        if row["households"] is None:
+            states.append("UNSOURCED_HOUSEHOLDS")
+        if row["fieldCapacityCells"] == 0:
+            states.append("GEOMETRIC_ZERO_FIELD_CAPACITY")
+        if row["marketCapacityCells"] == 0:
+            states.append("GEOMETRIC_ZERO_MARKET_CAPACITY")
+        if states:
+            missing_inputs.append({"jurisdictionId": row["jurisdictionId"], "states": states})
     return {
         "schemaVersion": 1,
         "paramsStatus": params["status"],
+        "areaInputDecision": area_decision,
         "source": "後漢書 郡國志 郡 戶數 × 治所 위계·지형 가중; 三國志 東夷傳 권역 경제는 historicalEconomy로 별도 보존",
         "counts": {
             "jurisdictions": len(ordered),
             "withHouseholds": sum(1 for r in ordered if r["households"] is not None),
             "zeroArable": sum(1 for r in ordered if r["arableCells"] == 0),
+            "zeroFieldCapacity": sum(r["fieldCapacityCells"] == 0 for r in ordered),
+            "zeroMarketCapacity": sum(r["marketCapacityCells"] == 0 for r in ordered),
+            "missingInputRows": len(missing_inputs),
             "commanderiesWithFewerCountiesThanSource": fewer,
         },
         "limitations": [
@@ -157,7 +180,10 @@ def build(tiles: dict, world: dict, params: dict, households: dict, historical_e
         "fieldNotes": {
             "landCells": "WATER 가 아닌 칸. RIVER 칸을 포함한다.",
             "wetAdjacentCells": "상하좌우에 물기 있는(WET = RIVER·LAKE·SEA) 이웃이 하나 이상인 뭍 칸의 수. RIVER 칸도 뭍 칸으로 센다.",
+            "fieldCapacityCells": "전답 상한의 지형 입력. PLAIN·BASIN 소유 칸 수이며 실제 경작지 면적이나 생산량은 아니다.",
+            "marketCapacityCells": "시장 상한의 지형·경로 입력. min(뭍 소유 칸, 물 인접 칸 + 城 경로 연결 수). 실제 시장 수나 역사 도로 수는 아니다.",
         },
+        "missingInputs": missing_inputs,
         "historicalEconomy": historical_economy,
         "jurisdictions": ordered,
     }
