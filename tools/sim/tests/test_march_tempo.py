@@ -33,9 +33,10 @@ class MarchTempoTest(unittest.TestCase):
             costs = [r["costKm"] for r in sorted(rs, key=lambda r: r["roughFactor"])]
             self.assertEqual(costs, sorted(costs))
 
-    def test_absent_county_name_is_rejected(self):
+    def test_current_puyang_is_present_and_absent_name_is_rejected(self):
+        self.assertIsInstance(M.county(self.tiles, "濮陽縣")["province"], int)
         with self.assertRaisesRegex(ValueError, "matched 0"):
-            M.county(self.tiles, "濮阳县")  # 1133 판 관할에 없다(東郡 治所는 燕縣으로 잡혀 있다)
+            M.county(self.tiles, "不存在县")
 
     def test_homonym_county_name_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "matched 2"):
