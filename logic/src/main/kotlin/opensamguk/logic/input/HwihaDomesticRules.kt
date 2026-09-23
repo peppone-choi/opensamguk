@@ -50,7 +50,10 @@ data class HwihaDomesticProjection(
 ) {
     private val peopleById = people.associateBy { it.id }
     private val countyById = counties.associateBy { it.id }
+    private val peopleByNode: Map<String?, List<DomesticPerson>> by lazy { people.sortedBy { it.id }.groupBy { it.node } }
     fun person(id: Int): DomesticPerson? = peopleById[id]
+    /** 그 省에 선 장수들(id 순). */
+    fun peopleAt(node: String): List<DomesticPerson> = peopleByNode[node].orEmpty()
     fun county(id: Int): DomesticCounty? = countyById[id]
     fun nation(id: Int): DomesticNation? = nations.firstOrNull { it.id == id }
 }
@@ -209,8 +212,8 @@ object HwihaDomesticRules {
      */
     fun seatedMagistrate(county: DomesticCounty, state: HwihaDomesticProjection): HwihaSeatedMagistrate? {
         val province = county.provinceId ?: return null
-        val seats = state.people.sortedBy { it.id }.mapNotNull { person ->
-            if (person.node != province || person.inBattle || person.nationId != county.nationId) return@mapNotNull null
+        val seats = state.peopleAt(province).mapNotNull { person ->
+            if (person.inBattle || person.nationId != county.nationId) return@mapNotNull null
             // Only people standing in this county are read: a corrupt record elsewhere cannot unseat this county.
             val active = HwihaPlacementState.read(person.meta)?.active
             if (active != null && active.arrivedAt != null && active.order.post == PlacementPost.MAGISTRATE &&
