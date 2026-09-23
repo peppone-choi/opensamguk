@@ -1,6 +1,8 @@
 package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.dto.HwihaRenownPendingEventDto
+import opensamguk.gameapi.dto.HwihaRenownReasonDto
 import opensamguk.gameapi.dto.HwihaRetinueResponse
 import opensamguk.gameapi.dto.HwihaWarehousesResponse
 import opensamguk.gameapi.dto.HwihaYuedanResponse
@@ -11,6 +13,7 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
+import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.world.HanWorldVariant
 import org.mockito.Mockito.*
 import java.util.Optional
@@ -146,6 +149,39 @@ class HwihaCampReaderTest {
         assertEquals("유비", liu.name); assertEquals(40, liu.renown); assertNull(liu.nationName); assertNull(liu.nationColor)
         val cao = out.ranking.last()
         assertEquals("위", cao.nationName); assertEquals("#1A4E8C", cao.nationColor); assertEquals(30, cao.renown)
+    }
+
+    @Test fun `순위 행에 지난 월단평 사유를 종류로만 싣고 본인 대기 사건은 본인에게만 준다`() {
+        setup()
+        // 본인(조조) 집계: 이번 달 발령 거절 1건 — 원인까지 본인은 본다.
+        lord.meta = lord.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+            mapOf("kind" to "dispatchRefusal", "stamp" to "0190-03", "source" to "DISPATCH_REFUSAL"))))
+        // 남(유비)의 집계는 응답 어디에도 나오지 않는다.
+        liubei.meta = liubei.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+            mapOf("kind" to "warMerit", "stamp" to "0190-03", "source" to "ENCOUNTER_VICTORY"))))
+        kv(HwihaRenownAssessment.STAMP_KEY, "\"0190-03\"")
+        kv(HwihaRenownAssessment.RANKING_KEY, "[3, 1]")
+        kv(HwihaRenownAssessment.REASONS_KEY, """{"stamp":"0190-03","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3},
+            {"kind":"bogus","count":1,"amount":9}],"1":[{"kind":"defeat","count":2,"amount":-6}]}}""")
+        val out = reader.yuedan(1, 41)
+        assertEquals(listOf(HwihaRenownReasonDto("warMerit", "전공", 1, 3)), out.ranking.first { it.generalId == 3 }.reasons)
+        assertEquals(listOf(HwihaRenownReasonDto("defeat", "패전", 2, -6)), out.ranking.first { it.generalId == 1 }.reasons)
+        assertEquals(listOf(HwihaRenownPendingEventDto("dispatchRefusal", "발령 거절", "0190-03", "DISPATCH_REFUSAL", "발령 거절", -4)),
+            out.selfPendingEvents)
+        assertFalse("ENCOUNTER_VICTORY" in mapper.writeValueAsString(out), "남의 사건 원인은 새지 않는다")
+
+        // 사유의 도장이 발표 도장과 다르면(다른 달) 싣지 않는다.
+        kv(HwihaRenownAssessment.REASONS_KEY, """{"stamp":"0190-02","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3}]}}""")
+        assertTrue(reader.yuedan(1, 41).ranking.all { it.reasons.isEmpty() })
+    }
+
+    @Test fun `월단평 전에도 본인 대기 사건은 보인다`() {
+        setup()
+        lord.meta = lord.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+            mapOf("kind" to "betrayal", "stamp" to "0190-03", "source" to "DEFECTION"))))
+        val out = reader.yuedan(1, 41)
+        assertEquals("NOT_ASSESSED", out.status)
+        assertEquals(listOf("betrayal"), out.selfPendingEvents.map { it.kind })
     }
 
     @Test fun `순위 값이 목록이 아니면 UNAVAILABLE`() {

@@ -291,6 +291,13 @@ class ReservedTurnHandler(
                     checkNotNull(applied) { "HWIHA handler must produce an execution outcome" }
                 }
             }
+            // 「실행 시점에 조건이 맞지 않는 입력은 비용 없이 무효가 되고 사유를 남긴다」(spec §4) — the reason also
+            // goes to the general's own record so that 「지난 순」 shows why the slot did nothing.
+            if (outcome is HwihaTurnOutcome.Rejected && world.ruleProfile == RuleProfile.HWIHA) {
+                opensamguk.engine.hwiha.HwihaRecords.general(world, generalId,
+                    opensamguk.logic.input.HwihaRecordKind.INPUT_REJECTED, outcome.reason,
+                    linkedMapOf("inputId" to outcome.inputId, "code" to outcome.code))
+            }
             return HandledTurn(generalId, null, false, (outcome as? HwihaTurnOutcome.Rejected)?.reason,
                 emptyList(), emptyMap(), requestId = reserved.requestId,
                 reservedActionCode = reserved.actionCode, hwihaOutcome = outcome)

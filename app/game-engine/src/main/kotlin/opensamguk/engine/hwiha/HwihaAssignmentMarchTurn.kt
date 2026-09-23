@@ -23,8 +23,9 @@ class HwihaAssignmentMarchTurn(
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }
             catch (_: IllegalArgumentException) { null }
+        val refs = assignmentRefs(actor.meta)
         if (edges == null) {
-            log(generalId, "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다.")
+            log(generalId, "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다.", refs + ("stop" to "PASSAGE_UNAVAILABLE"))
             return
         }
         val previous = try { HwihaMarchState.read(actor.meta, topology, metrics) }
@@ -40,7 +41,7 @@ class HwihaAssignmentMarchTurn(
                     AssignmentMarchFailure.BATTLE_PENDING -> "조우 처리가 끝나지 않아 부임 행군을 재개할 수 없습니다."
                     AssignmentMarchFailure.NO_ROUTE -> "발령지까지 통행 가능한 육상 경로가 없습니다."
                     else -> "부임 행군 상태를 확인할 수 없어 이동하지 않았습니다."
-                })
+                }, refs + ("failure" to result.reason.name))
             }
             is AssignmentMarchExecution.Applied -> {
                 if (previous?.assignment == result.state.assignment && previous.stop == LandMarchStop.ARRIVED &&
@@ -51,13 +52,18 @@ class HwihaAssignmentMarchTurn(
                     LandMarchStop.EDGE_BLOCKED -> "통행로가 닫혀 부임 행군을 멈췄습니다."
                     LandMarchStop.ENCOUNTER_UNAVAILABLE -> "진입할 지역의 군사·반응 상태를 확인할 수 없어 부임 행군을 멈췄습니다."
                     LandMarchStop.ENCOUNTER -> "조우가 발생해 부임 행군을 멈췄습니다."
-                })
+                }, assignmentRefs(result.state.assignment) + ("stop" to result.state.stop.name))
             }
         }
     }
 
-    private fun log(generalId: Int, text: String) {
-        world.pushLog(LogEntryDraft(scope = "general", category = "action", text = text,
-            generalId = generalId, nationId = world.getGeneralById(generalId)?.nationId))
-    }
+    private fun log(generalId: Int, text: String, refs: Map<String, Any?>) =
+        HwihaRecords.general(world, generalId, HwihaRecordKind.MARCH_ASSIGNMENT, text, refs)
+
+    private fun assignmentRefs(meta: Map<String, Any?>): Map<String, Any?> =
+        (try { HwihaCountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null })
+            ?.let(::assignmentRefs) ?: emptyMap()
+
+    private fun assignmentRefs(assignment: HwihaCountyAssignment): Map<String, Any?> =
+        linkedMapOf("dispatchId" to assignment.dispatchId, "countyId" to assignment.countyId)
 }

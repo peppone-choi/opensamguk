@@ -67,11 +67,9 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
         val queued = HwihaQueuedDispatch.read(actor.meta)
         if (queued == null) {
             HwihaNpcDispatchSelector.select(world, generalId, executor)?.let { request ->
-                if (executor.issue(HwihaNpcDispatchSelector.dispatchId(world, request), request) is DispatchExecution.Applied) {
-                    world.pushLog(LogEntryDraft(scope = "general", category = "action",
-                        text = "담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다.",
-                        generalId = request.targetGeneralId, nationId = actor.nationId))
-                }
+                // The NPC lord's reason is the target's dispatch record (spec §14: 발령 근거를 「지난 순」에).
+                executor.issue(HwihaNpcDispatchSelector.dispatchId(world, request), request,
+                    targetText = NPC_DISPATCH_REASON)
             }
             return
         }
@@ -89,6 +87,10 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
     }
 
     fun expireDue() { executor.expireDue() }
+
+    companion object {
+        const val NPC_DISPATCH_REASON = "담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다."
+    }
     fun takeExecutions(): List<HwihaCourtExecution> = executions.toList().also { executions.clear() }
 
     fun rejectPersonalReservation(generalId: Int, inputId: String) =

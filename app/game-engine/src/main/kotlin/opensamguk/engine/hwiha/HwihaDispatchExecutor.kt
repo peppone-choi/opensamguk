@@ -21,7 +21,11 @@ class HwihaDispatchExecutor(
         HwihaDispatchRules.assessAssignment(actorId, assignment, it)
     } ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
 
-    fun issue(dispatchId: String, request: DispatchRequest): DispatchExecution {
+    /**
+     * @param targetText the target's private record text. An NPC lord passes its reason here so that the
+     *   dispatch basis stays in the target's own record (spec §14); a player lord's dispatch uses the default.
+     */
+    fun issue(dispatchId: String, request: DispatchRequest, targetText: String? = null): DispatchExecution {
         val assessment = assess(request)
         if (assessment is DispatchAssessment.Rejected) return reject(assessment.reason)
         assessment as DispatchAssessment.Eligible
@@ -30,6 +34,11 @@ class HwihaDispatchExecutor(
             assessment.issuer.nationId, request.countyId, now, now.plus(policy.responsePhases))
         updateMeta(world.getGeneralById(request.targetGeneralId)!!,
             assessment.target.meta + (HwihaDispatchState.META_KEY to dispatch.toMetaValue()))
+        // Only the issuer and the target learn about a dispatch; it is private to both (HwihaDispatchState).
+        HwihaRecords.general(world, dispatch.targetId, HwihaRecordKind.DISPATCH_RECEIVED,
+            targetText ?: "발령이 도착했습니다. 기한 안에 수락하거나 거절할 수 있습니다.", refs(dispatch))
+        if (humanOwned(dispatch.issuerId)) HwihaRecords.general(world, dispatch.issuerId, HwihaRecordKind.DISPATCH_ISSUED,
+            "휘하 장수에게 발령을 내렸습니다.", refs(dispatch))
         return DispatchExecution.Applied(dispatch)
     }
 
@@ -60,6 +69,9 @@ class HwihaDispatchExecutor(
                     return reject(assessment.reason)
                 val cancelled = old.copy(status = DispatchStatus.CANCELLED)
                 updateMeta(target, target.meta + (HwihaDispatchState.META_KEY to cancelled.toMetaValue()))
+                HwihaRecords.general(world, target.id, HwihaRecordKind.DISPATCH_CANCELLED,
+                    "기한이 되었지만 발령이 더 이상 유효하지 않아 벌점 없이 취소되었습니다.",
+                    refs(cancelled) + ("reason" to assessment.reason.name))
             }
             return reject(assessment.reason)
         }
@@ -68,22 +80,48 @@ class HwihaDispatchExecutor(
         val old = HwihaDispatchState.read(target.meta)!!
         val accept = request.accept || now() >= old.dueAt
         val resolved = old.copy(status = if (accept) DispatchStatus.ACCEPTED else DispatchStatus.REFUSED)
-        val meta = LinkedHashMap(target.meta)
+        var meta: Map<String, Any?> = LinkedHashMap(target.meta)
+        var renownRecorded = false
         if (accept) {
-            meta[HwihaCountyAssignment.META_KEY] = HwihaCountyAssignment(old.dispatchId, old.issuerId,
-                old.nationId, old.countyId).toMetaValue()
+            meta = meta + (HwihaCountyAssignment.META_KEY to HwihaCountyAssignment(old.dispatchId, old.issuerId,
+                old.nationId, old.countyId).toMetaValue())
         } else {
-            val personPolicy = try { HwihaPersonPolicyState.read(target.meta) }
+            // Renown is charged once, by the monthly assessment (2026-09-23 user decision: one path, tally -4).
+            // A refusal still requires a readable renown state so that the charge has somewhere to land.
+            try { HwihaPersonPolicyState.read(target.meta) }
                 catch (_: IllegalArgumentException) { null } ?: return reject(DispatchFailure.POLICY_UNAVAILABLE)
-            meta[HwihaPersonPolicyState.META_KEY] = personPolicy.copy(
-                renownCapacity = (personPolicy.renownCapacity - policy.refusalRenownLoss).coerceAtLeast(0)).toMetaValue()
+            val tallied = HwihaRenownEvents.recordRenownEvent(meta, HwihaRenownEventSource.DISPATCH_REFUSAL,
+                HwihaRenownEvents.stampOf(now().year, now().month))
+            meta = tallied.meta
+            renownRecorded = tallied.recorded
             val card = world.getRetainerById(assessment.card.id)!!
             world.updateRetainer(card.copy(loyalty = (card.loyalty - policy.refusalLoyaltyLoss).coerceAtLeast(0)))
         }
-        meta[HwihaDispatchState.META_KEY] = resolved.toMetaValue()
+        meta = meta + (HwihaDispatchState.META_KEY to resolved.toMetaValue())
         updateMeta(target, meta)
+        val kind = if (accept) HwihaRecordKind.DISPATCH_ACCEPTED else HwihaRecordKind.DISPATCH_REFUSED
+        // A lapsed deadline accepts: the automatic expiry, or a refusal that arrived at or after the deadline.
+        val lapsed = automatic || (accept && !request.accept)
+        val how = if (lapsed) "기한이 지나 발령을 수락한 것으로 처리되었습니다. 다음 턴부터 부임지로 행군합니다." else null
+        HwihaRecords.general(world, target.id, kind,
+            how ?: if (accept) "발령을 수락했습니다. 다음 턴부터 부임지로 행군합니다."
+                else "발령을 거절했습니다. 충성이 ${policy.refusalLoyaltyLoss} 줄고 다음 월단평에 발령 거절이 반영됩니다.",
+            refs(resolved) + ("lapsed" to lapsed))
+        if (renownRecorded) HwihaRenownEventRecorder.announce(world, target.id, HwihaRenownEventSource.DISPATCH_REFUSAL)
+        // An NPC lord keeps no personal record; its reasoning is already in the target's record.
+        if (humanOwned(old.issuerId)) HwihaRecords.general(world, old.issuerId, kind,
+            if (accept) "발령한 장수가 부임을 수락했습니다." else "발령한 장수가 부임을 거절했습니다.",
+            refs(resolved) + ("lapsed" to lapsed))
         return DispatchExecution.Applied(resolved)
     }
+
+    private fun humanOwned(generalId: Int): Boolean =
+        (world.getGeneralById(generalId)?.userId?.toLongOrNull() ?: 0) > 0
+
+    private fun refs(dispatch: HwihaDispatchState): Map<String, Any?> = linkedMapOf(
+        "dispatchId" to dispatch.dispatchId, "issuerId" to dispatch.issuerId, "targetId" to dispatch.targetId,
+        "countyId" to dispatch.countyId,
+    )
 
     private fun projection(): HwihaDispatchProjection? = try {
         HwihaDispatchProjection(world.ruleProfile, world.listGenerals().map {

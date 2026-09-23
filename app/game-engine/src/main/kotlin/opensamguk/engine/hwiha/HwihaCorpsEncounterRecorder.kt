@@ -2,7 +2,6 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
@@ -34,7 +33,8 @@ class HwihaCorpsEncounterRecorder(
         return defenders
     }
 
-    fun record(attacker: HwihaDeployedCorps, defenders: List<HwihaDeployedCorps>, checkpoint: HwihaMarchCheckpoint) {
+    /** @return the recorded encounter id — the attacker's own march record carries it. */
+    fun record(attacker: HwihaDeployedCorps, defenders: List<HwihaDeployedCorps>, checkpoint: HwihaMarchCheckpoint): String {
         require(checkpoint.stop == LandMarchStop.ENCOUNTER)
         val index = checkpoint.cursor.edgeIndex
         fun node(key: String): StrategicNodeRef.LandProvince {
@@ -96,9 +96,13 @@ class HwihaCorpsEncounterRecorder(
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {
-                world.pushLog(LogEntryDraft(scope = "general", category = "action",
-                    text = "군단이 조우하여 전투 처리를 기다리고 있습니다.", generalId = before.id, nationId = before.nationId))
+                // A participant may know that it was engaged and where; forces and plans stay sealed (#343).
+                HwihaRecords.general(world, before.id, HwihaRecordKind.ENCOUNTER_PENDING,
+                    "군단이 조우하여 전투 처리를 기다리고 있습니다.",
+                    linkedMapOf("encounterId" to encounter.encounterId, "province" to encounter.province.canonicalKey),
+                    nationId = before.nationId)
             }
         }
+        return encounter.encounterId
     }
 }

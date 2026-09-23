@@ -1,5 +1,6 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.common.josa.JosaUtil
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -70,6 +71,13 @@ class HwihaEnlistmentExecutor(
         recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
         world.applyNationDirtyFree(nextNation)
         world.createRetainer(card)
+        val master = byId[plan.masterId]
+        val refs = linkedMapOf<String, Any?>("nationId" to plan.nationId, "masterId" to plan.masterId,
+            "generalId" to actor.id, "retainerId" to card.id)
+        HwihaRecords.general(world, actor.id, HwihaRecordKind.ENLISTED,
+            "${nation.name}에 출사해 ${master?.name ?: "주공"}의 휘하에 들어갔습니다.", refs, nationId = plan.nationId)
+        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, HwihaRecordKind.RETAINER_JOINED,
+            "${JosaUtil.put(actor.name, "이")} 출사해 휘하에 들어왔습니다.", refs, nationId = plan.nationId)
         return EnlistmentExecution.Applied(plan, card.id)
     }
 }

@@ -7,6 +7,8 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.input.HwihaAptitude
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
+import opensamguk.logic.input.HwihaRenownEventKind
+import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.retainer.RetainerRules
 import org.springframework.stereotype.Service
@@ -14,6 +16,21 @@ import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
 class HwihaCampForbidden : RuntimeException()
+
+/** 휘하 조회 공통 소유 확인 — `?generalId=` 장수의 `userId` 가 principal 과 같아야 한다. 없는 장수도 403 이다. */
+internal fun ownedHwihaGeneral(generals: GeneralReadRepository, generalId: Int, userId: Long): GeneralReadEntity {
+    val actor = generals.findById(generalId).orElse(null) ?: throw HwihaCampForbidden()
+    if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw HwihaCampForbidden()
+    return actor
+}
+
+/** 휘하 조회 공통 월드 문 — 처리 월드가 아니면 `UNAVAILABLE`, 휘하 규칙이 아니면 `WRONG_RULE_PROFILE`, 통과면 null. */
+internal fun hwihaGate(worlds: WorldStateReadRepository, actor: GeneralReadEntity): String? {
+    val world = worlds.findProcessWorld() ?: return "UNAVAILABLE"
+    if (actor.worldId != world.id) return "UNAVAILABLE"
+    if (world.config["ruleProfile"] != "HWIHA") return "WRONG_RULE_PROFILE"
+    return null
+}
 
 /**
  * 휘하 화면 조회 네 가지(월단평·창고·현 특산·휘하 카드). **읽기만 한다** — 쓰기·ChangeRecorder 없음.
@@ -46,10 +63,13 @@ class HwihaCampReader(
         val cost = retinueCost(actor.id) { everyone[it] }
         val renown = renownOf(actor)
         val self = HwihaYuedanSelf(actor.id, renown, cost, renown != null && cost > renown)
+        val pending = pendingEvents(actor)
         val stamp = kv(HwihaRenownAssessment.STAMP_KEY)?.let { node -> if (node.isTextual) node.asText() else node.toString() }
-        val published = kv(HwihaRenownAssessment.RANKING_KEY) ?: return HwihaYuedanResponse("NOT_ASSESSED", stamp, self)
+        val published = kv(HwihaRenownAssessment.RANKING_KEY)
+            ?: return HwihaYuedanResponse("NOT_ASSESSED", stamp, self, selfPendingEvents = pending)
         if (!published.isArray || !published.all { it.isIntegralNumber && it.canConvertToInt() })
-            return HwihaYuedanResponse("UNAVAILABLE", stamp, self)
+            return HwihaYuedanResponse("UNAVAILABLE", stamp, self, selfPendingEvents = pending)
+        val reasons = reasonsFor(stamp)
         val nationById = nations.findAll().associateBy { it.id }
         // 순위는 발표된 자리 그대로다(1부터). 그 뒤 사라졌거나 명망을 읽을 수 없는 장수는 빠지고 자리는 남는다.
         val ranking = published.map { it.intValue() }.mapIndexedNotNull { index, id ->
@@ -57,10 +77,36 @@ class HwihaCampReader(
             val value = renownOf(general) ?: return@mapIndexedNotNull null
             val nation = nationById[general.nationId]?.takeIf { general.nationId != 0 }
             HwihaYuedanRow(index + 1, general.id, general.name, general.nationId, nation?.name,
-                nation?.color?.takeIf { it.isNotBlank() }, value)
+                nation?.color?.takeIf { it.isNotBlank() }, value, reasons[general.id].orEmpty())
         }
-        return HwihaYuedanResponse("READY", stamp, self, ranking)
+        return HwihaYuedanResponse("READY", stamp, self, ranking, pending)
     }
+
+    /**
+     * 마지막 월단평의 사유(엔진 [HwihaRenownAssessment.REASONS_KEY]). 발표 도장과 같은 달의 것만 쓴다 — 도장이
+     * 다르면 다른 달의 사유라 싣지 않는다. 읽을 수 없는 줄은 빠진다(사유는 곁들임이다).
+     */
+    private fun reasonsFor(stamp: String?): Map<Int, List<HwihaRenownReasonDto>> {
+        val node = kv(HwihaRenownAssessment.REASONS_KEY) ?: return emptyMap()
+        if (stamp == null || node.path("stamp").asText(null) != stamp) return emptyMap()
+        val byGeneral = node.path("byGeneral").takeIf { it.isObject } ?: return emptyMap()
+        return byGeneral.fields().asSequence().mapNotNull { (key, rows) ->
+            val id = key.toIntOrNull() ?: return@mapNotNull null
+            id to rows.mapNotNull { row ->
+                val kind = HwihaRenownEventKind.ofKey(row.path("kind").asText("")) ?: return@mapNotNull null
+                val count = row.path("count").takeIf { it.canConvertToInt() }?.intValue() ?: return@mapNotNull null
+                val amount = row.path("amount").takeIf { it.canConvertToInt() }?.intValue() ?: return@mapNotNull null
+                HwihaRenownReasonDto(kind.key, kind.label, count, amount)
+            }
+        }.toMap()
+    }
+
+    /** 본인 집계 — 본인만 받는다(이 응답은 소유 확인을 지난 장수 것이다). */
+    private fun pendingEvents(actor: GeneralReadEntity): List<HwihaRenownPendingEventDto> =
+        HwihaRenownEvents.entries(actor.meta).map {
+            HwihaRenownPendingEventDto(it.kind.key, it.kind.label, it.stamp, it.source?.name, it.source?.label,
+                it.kind.amountIn(HwihaRenownAssessment.CANON))
+        }
 
     // ── 縣 창고 ────────────────────────────────────────────────────────────
     fun warehouses(generalId: Int, userId: Long): HwihaWarehousesResponse {
@@ -139,18 +185,9 @@ class HwihaCampReader(
     }
 
     // ── 공용 ───────────────────────────────────────────────────────────────
-    private fun owned(generalId: Int, userId: Long): GeneralReadEntity {
-        val actor = generals.findById(generalId).orElse(null) ?: throw HwihaCampForbidden()
-        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw HwihaCampForbidden()
-        return actor
-    }
+    private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedHwihaGeneral(generals, generalId, userId)
 
-    private fun gate(actor: GeneralReadEntity): String? {
-        val world = worlds.findProcessWorld() ?: return "UNAVAILABLE"
-        if (actor.worldId != world.id) return "UNAVAILABLE"
-        if (world.config["ruleProfile"] != "HWIHA") return "WRONG_RULE_PROFILE"
-        return null
-    }
+    private fun gate(actor: GeneralReadEntity): String? = hwihaGate(worlds, actor)
 
     private fun renownOf(general: GeneralReadEntity): Int? =
         try { HwihaPersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }
