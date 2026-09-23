@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "hwiha-renown-events-v1",
+  "status": "PROVISIONAL",
+  "authorization": "2026-09-23 사용자 결정: 월단평 사건은 큰 사건만, 한 달에 종류당 한 번. 치적 = 관할 縣 지표 상승(임계값 PROVISIONAL). 발령 거절 명망은 월단평 집계 −4 로 통일.",
+  "decidedBy": "구현 에이전트(임계값) · 사용자(규칙)",
+  "note": "사료 수치가 아니라 게임 기획이다. 가감값은 hwiha-renown-assessment-v1.json 에 있고 여기는 「무엇이 사건인가」만 적는다.",
+  "oncePerKindPerMonth": true,
+  "sources": {
+    "warMerit": ["ENCOUNTER_VICTORY", "COUNTY_CAPTURE"],
+    "defeat": ["ENCOUNTER_DEFEAT", "COUNTY_LOSS"],
+    "domesticMerit": ["COUNTY_INDICATOR_RISE"],
+    "betrayal": ["DEPARTURE", "DEFECTION"],
+    "bondEvent": ["SWORN_OATH", "RECOMMENDATION", "REWARD"],
+    "office": ["OFFICE_APPOINTMENT"],
+    "misrule": ["MISRULE"],
+    "dispatchRefusal": ["DISPATCH_REFUSAL"]
+  },
+  "wired": {
+    "DISPATCH_REFUSAL": "HwihaDispatchExecutor — 기한 전 거절",
+    "DEPARTURE": "HwihaMonthlyAssessment — 코스트 상한 초과 이탈 판정을 받은 인물",
+    "COUNTY_INDICATOR_RISE": "HwihaCountyMeritWindow — 월 경계",
+    "ENCOUNTER_VICTORY": "훅만(HwihaRenownHooks.onEncounterResolved) — 조우 판정 흐름이 부른다",
+    "ENCOUNTER_DEFEAT": "훅만(HwihaRenownHooks.onEncounterResolved)",
+    "COUNTY_CAPTURE": "훅만(HwihaRenownHooks.onCountyCaptured)",
+    "COUNTY_LOSS": "훅만(HwihaRenownHooks.onCountyCaptured)",
+    "DEFECTION": "원천 없음",
+    "SWORN_OATH": "원천 없음",
+    "RECOMMENDATION": "원천 없음",
+    "REWARD": "원천 없음",
+    "OFFICE_APPOINTMENT": "원천 없음",
+    "MISRULE": "원천 없음"
+  },
+  "domesticMerit": {
+    "status": "PROVISIONAL",
+    "holders": "발령을 수락해 그 縣 을 부임지로 받은 장수(hwihaCountyAssignment)이고, 발령 세력이 지금 그 縣 을 소유한다.",
+    "indicators": ["population", "agriculture", "commerce"],
+    "window": "월 경계 월간 사건 뒤에 열고 다음 월 경계 월간 사건 전에 닫는다 — 반기 도시 성장 같은 자연 증가를 빼기 위해서다.",
+    "minRiseBasisPoints": 200,
+    "minRiseNote": "PROVISIONAL. 세 지표 중 하나라도 그 縣 상한의 2% 이상 오르면 치적 한 건이다. 기존 내정 직접 행동 한 번의 상승폭이 통솔·정치 능력치 규모(수십~백)이고 縣 상한이 수천 규모라, 한 달(3순) 꾸준히 손본 정도를 문턱으로 잡았다. 실측 기준선이 아니다 — HWIHA 내정 입력이 들어오면 실제 월 상승 분포로 다시 정한다."
+  }
+}

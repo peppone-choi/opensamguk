@@ -886,6 +886,7 @@ object DatabaseHooks {
             userId = draft.userId,
             meta = draftMeta.filterTo(LinkedHashMap()) { (key, _) -> key != INTERNAL_FLUSH_BEFORE_ARCHIVE },
             flushBeforeArchive = draftMeta[INTERNAL_FLUSH_BEFORE_ARCHIVE] == true,
+            eventKind = draft.eventKind,
         )
     }
 

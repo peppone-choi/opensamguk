@@ -326,6 +326,12 @@ open class TurnRunService(
             val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
                 drain = { upto -> handledDuringBoundaries += lifecycle.runTick(upto, generalDrainCohort) },
                 runMonth = { nextTurn ->
+                    if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                        // 치적 창 닫기 — 월간 사건(반기 도시 성장 등) **전** 값으로 지난 달을 잰다.
+                        boundaryDate(nextTurn).let { date ->
+                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder).close(date.year, date.month)
+                        }
+                    }
                     val state = world.getState()
                     val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
                     val startTime = Instant.parse(
@@ -381,6 +387,9 @@ open class TurnRunService(
                                 world, handler.recorder,
                                 opensamguk.logic.input.HwihaRenownAssessment.CANON,
                             ).assess(date.year, date.month)
+                            // 치적 창 열기 — 월간 사건이 끝난 뒤 값으로 이번 달을 연다.
+                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder)
+                                .open(date.year, date.month)
                         }
                         handler.courtHandler.expireDue()
                     }

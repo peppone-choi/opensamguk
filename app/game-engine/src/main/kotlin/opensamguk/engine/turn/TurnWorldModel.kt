@@ -251,6 +251,8 @@ data class LogEntryDraft(
     val year: Int? = null,
     val month: Int? = null,
     val phase: Int? = null,
+    /** HWIHA record kind (`log_entry.event_kind`; vocabulary in `HwihaRecordKind`). Null for legacy logs. */
+    val eventKind: String? = null,
 )
 
 data class TurnWorldState(

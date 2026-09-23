@@ -253,10 +253,13 @@ class HwihaMonthBoundaryLoopIT {
                 county, WORLD,
             )
 
-            // 월단평 집계를 장수 1 에 얹는다. 사건을 기록하는 쪽이 아직 없으므로, 게이트가 갱신
-            // 기계 전체를 지나게 하려면 집계를 직접 심어야 한다. 전공 2건 → CANON 에서 +3*2.
+            // 월단평 집계를 장수 1 에 얹는다. 조우·점령 원천은 다른 흐름이 붙이므로, 게이트가 갱신 기계 전체를
+            // 지나게 하려면 집계를 직접 심어야 한다. 한 달에 종류당 한 건이라 전공 2건은 서로 다른 두 달이다
+            // (199-12, 200-01 — 둘 다 200-02 월단평 이전) → CANON 에서 +3*2.
             jdbc.update(
-                """UPDATE general SET meta = meta || '{"hwihaRenownTally":{"warMerit":2}}'::jsonb
+                """UPDATE general SET meta = meta || '{"hwihaRenownTally":{"entries":[
+                     {"kind":"warMerit","stamp":"0199-12","source":"ENCOUNTER_VICTORY"},
+                     {"kind":"warMerit","stamp":"0200-01","source":"COUNTY_CAPTURE"}]}}'::jsonb
                    WHERE world_id=? AND id=1""",
                 WORLD,
             )

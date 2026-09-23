@@ -1519,14 +1519,16 @@ open class JdbcFlushExecutor(
                 .addValue("nation_id", l.nationId)
                 .addValue("user_id", l.userId)
                 .addValue("meta", jsonb(MetaJson.encode(l.meta)))
+                .addValue("event_kind", l.eventKind)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO log_entry
-                (world_id, scope, category, sub_type, year, month, phase, text, general_id, nation_id, user_id, meta)
+                (world_id, scope, category, sub_type, year, month, phase, text, general_id, nation_id, user_id, meta,
+                 event_kind)
             VALUES
                 (:world_id, CAST(:scope AS log_scope), CAST(:category AS log_category), :sub_type,
-                 :year, :month, :phase, :text, :general_id, :nation_id, :user_id, :meta)
+                 :year, :month, :phase, :text, :general_id, :nation_id, :user_id, :meta, :event_kind)
             """.trimIndent(),
             batch,
         )
@@ -3274,6 +3276,8 @@ data class KvWrite(val table: String, val namespace: String, val key: String, va
  * (`log_scope`/`log_category`); they bind through a `CAST(... AS log_scope)` in the INSERT.
  * `year`/`month`/`phase` come from world state (the engine `LogEntryDraft` does not carry them; they are
  * stamped at finalize). `meta` is encoded jsonb via [MetaJson] (insertion-order, PHP-faithful).
+ * `eventKind` is the HWIHA record kind (`log_entry.event_kind`, V60; vocabulary in `HwihaRecordKind`) — null for
+ * every legacy writer.
  */
 data class LogRow(
     val scope: String,
@@ -3288,6 +3292,7 @@ data class LogRow(
     val userId: Int? = null,
     val meta: Map<String, Any?> = linkedMapOf(),
     val flushBeforeArchive: Boolean = false,
+    val eventKind: String? = null,
 )
 
 
