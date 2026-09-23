@@ -82,7 +82,10 @@ class HwihaDispatchPersistenceIT {
         save(cold,replyRecorder)
         val after=fixture.load(92)
         assertEquals(45,after.retainers.single { it.generalId==1 }.loyalty)
-        assertEquals(29,HwihaPersonPolicyState.read(after.generals.single { it.id==1 }.meta)!!.renownCapacity)
+        // 거절 명망은 다음 월단평에 −4 로 한 번 — 즉시 깎지 않고, 쌓인 사건이 재적재 뒤에도 남는다.
+        assertEquals(30,HwihaPersonPolicyState.read(after.generals.single { it.id==1 }.meta)!!.renownCapacity)
+        assertEquals(listOf(opensamguk.logic.input.HwihaRenownEventSource.DISPATCH_REFUSAL),
+            opensamguk.logic.input.HwihaRenownEvents.entries(after.generals.single { it.id==1 }.meta).map { it.source })
         assertEquals(DispatchStatus.REFUSED,HwihaDispatchState.read(after.generals.single { it.id==1 }.meta)!!.status)
         val repeated=ChangeRecorder()
         assertIs<DispatchExecution.Rejected>(HwihaDispatchExecutor(InMemoryTurnWorld(after),repeated)

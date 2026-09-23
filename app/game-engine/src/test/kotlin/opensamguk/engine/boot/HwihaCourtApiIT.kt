@@ -129,7 +129,10 @@ class HwihaCourtApiIT {
         val beforeActor=issued.generals.single { it.id==1 }; val afterActor=after.generals.single { it.id==1 }
         assertEquals(beforeActor,afterActor.copy(meta=beforeActor.meta))
         assertEquals(45,after.retainers.single { it.generalId==1 }.loyalty)
-        assertEquals(29,opensamguk.logic.input.HwihaPersonPolicyState.read(afterActor.meta)!!.renownCapacity)
+        // 거절 명망은 즉시 깎지 않고 다음 월단평에 −4 로 한 번 반영한다(2026-09-23 결정) — 지금은 사건만 쌓인다.
+        assertEquals(30,opensamguk.logic.input.HwihaPersonPolicyState.read(afterActor.meta)!!.renownCapacity)
+        assertEquals(listOf(opensamguk.logic.input.HwihaRenownEventSource.DISPATCH_REFUSAL),
+            opensamguk.logic.input.HwihaRenownEvents.entries(afterActor.meta).map { it.source })
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1",Int::class.java))
         assertEquals(listOf(requestId,requestId,reply),published)
         assertEquals(0,fixture.service(WorldId(1),InMemoryTurnWorld(after),published,intake=true).runIntakeCommands())

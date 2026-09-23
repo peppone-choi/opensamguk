@@ -63,6 +63,11 @@ internal object HwihaS3ChainSupport {
             VALUES (?,?,'플레이어',?,0,?,0,0,0,0,0,60,60,60,60,60,?,'{"command":"휴식"}'::jsonb,?::jsonb)""",
             world, HUMAN, HUMAN_USER.toString(), capital, java.sql.Timestamp.from(START.plusSeconds(30)),
             MetaJson.encode(mapOf(HwihaLordStatus.META_KEY to false, HwihaPersonPolicyState.META_KEY to policy)))
+        // Every general carries its rank_data rows (the importer and the flush insert them with the general);
+        // a hand-inserted player without them breaks the first rank write of a battle.
+        jdbc.update("""INSERT INTO rank_data (world_id, nation_id, general_id, type, value)
+            SELECT ?, 0, ?, type, 0 FROM rank_data WHERE world_id=?
+              AND general_id=(SELECT min(general_id) FROM rank_data WHERE world_id=?)""", world, HUMAN, world, world)
         jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
             VALUES (?,?,?,?,'LAND_PROVINCE',?,1)""", world, HUMAN, projection.topology.topologyRevision,
             projection.topology.contentHash, province)
