@@ -228,12 +228,12 @@ HWIHA 시드의 개인 예약은 빈 큐로 시작한다. 예약된 행의 실�
 
 ### 배치·방침·공사 접수·실행 계약 (2026-09-23)
 
-사용자 결정(2026-09-23)으로 縣 방침 6(권농·중상·중세·휼민·둔전·징발), 군단 방침 5(조련·공략·수비·요격·회피), 배치 자리 4(縣令·군단장·사자·정찰)와 해제를 둔다. 공사는 §4(수리·둔전·성방·도로·역참·창고)와 재설계 §8.2(곡창·역참·망루봉화·성벽관문·병영·시장수운 + 수리·둔전)의 문자 그대로 합집합 **11종**이다 — 창고/곡창, 성방/성벽관문을 같은 것으로 볼지는 사용자 결정 대기다. `placement.assign`·`policy.set`·`work.start` 는 HANDLER_READY 다.
+사용자 결정(2026-09-23)으로 縣 방침 6(권농·중상·중세·휼민·둔전·징발), 군단 방침 5(조련·공략·수비·요격·회피), 배치 자리 4(縣令·군단장·사자·정찰)와 해제를 둔다. 공사는 **9종**이다(2026-09-23 사용자 결정): §4(수리·둔전·성방·도로·역참·창고)와 재설계 §8.2(곡창·역참·망루봉화·성벽관문·병영·시장수운 + 수리·둔전)의 합집합에서 곡창은 창고로, 성벽관문은 성방으로 합쳤다 — 수리·둔전·성방·도로·역참·창고·망루봉화·병영·시장수운. `placement.assign`·`policy.set`·`work.start` 는 HANDLER_READY 다.
 
 - 채널: 12순 슬롯을 쓰지 않는 지속 입력이다(재설계 §5.1). 조정 입력과 같은 즉시 인테이크 봉투 `hwihaCourtInput` 으로 들어오고, 개인 예약으로 들어오면 `INVALID_INPUT_CHANNEL` 로 거절한다. `POST /api/commands/placement/assign`·`/api/commands/policy/set`·`/api/commands/work/start` `?generalId=` 는 인증 계정이 그 장수의 주인이어야 하며(403), 사전검사 거절은 200 `BLOCKED`, 접수는 202 `AVAILABLE` 이다.
 - 인자(정확한 키만, 중복·미지 키·문자열 숫자 거절): 배치 `{"cardId","post":"MAGISTRATE","countyId"}` · `{"cardId","post":"SCOUT","provinceId"}` · `{"cardId","post":"ENVOY","nationId"}` · `{"cardId","post":"CORPS_COMMANDER"}` · `{"cardId","post":"NONE"}`. 방침 `{"scope":"COUNTY","countyId","policy"}` · `{"scope":"COMMANDERY","commanderyId","policy"}`(郡 id = 런타임 지도 `meta.junCh`) · `{"scope":"CORPS","orderId","policy"}`, `policy:"NONE"` 은 거두기. 공사 `{"countyId","work"}`.
 - 권한: 縣令·사자 자리는 주공, 정찰·군단장은 카드 주인. 縣 방침·공사는 그 세력 군주 또는 그 縣의 현령 자리 주인(발령된 사람 장수 본인·배치 카드의 주인). 郡 방침은 군주만(太守·刺史는 2층 관직). 郡 방침이 걸린 縣은 군주가 아니면 縣 방침을 바꿀 수 없다. 군단 방침은 출전 군단 주인.
-- 효력: 접수는 대기만 저장한다. 배치·縣 방침·군단 방침은 해당 카드(배치 카드·앉은 縣令·지휘 장수)의 다음 턴 첫 단계에서 재검사 후 현행이 되고, 郡 방침은 다음 순 경계에서 현행이 된다. 공사는 다음 순 경계부터 진척한다. 縣 방침의 지표 효과는 순 경계에서 縣 id 순으로 한 순에 한 번 적용한다(도장 `hwihaDomesticPhase`, 월세입 앞).
+- 효력: 접수는 대기만 저장한다. 배치·縣 방침·군단 방침은 해당 카드(배치 카드·앉은 縣令·지휘 장수)의 다음 턴 첫 단계에서 재검사 후 현행이 되고, 郡 방침은 다음 순 경계에서 현행이 된다. 공사는 다음 순 경계부터 진척한다. 縣 방침의 지표 효과는 순 경계마다 縣 번호 순으로 한 번 적용한다(2026-09-23 사용자 결정, 도장 `hwihaDomesticPhase`, 월세입 앞).
 - 결과 봉투: commandKind `PLACEMENT`·`POLICY`·`WORK`, 접수 성공 type `reservationAccepted`(대기 저장, 결과 조회에서 최종), 거절 `executionRejected` + 공통 code/reason.
 - 잠정 수치의 정본은 `data/curated/han/hwiha-domestic-v1.json` 하나이며 모든 항목이 `PROVISIONAL — 사용자 결정 대기` 다.
 - 요격·회피 현행은 월드 `hwihaMarchReactions.interceptions/avoidanceOrders` 에 싣는다(game_env 영속). 조우 소비자가 이 기록을 해결하기 전에는 기존 계약대로 진입 판정이 「확인 불가」로 멈춘다.

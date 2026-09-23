@@ -24,14 +24,12 @@ enum class CorpsPolicy(val label: String) {
 }
 
 /**
- * 공사: §4(수리·둔전·성방·도로·역참·창고)와 §8.2(곡창·역참·망루봉화·성벽관문·병영·시장수운 + 수리·둔전)의
- * 문자 그대로의 합집합 11종. 사용자는 8종을 예상했지만 두 목록의 정확한 합은 11종이다 — 창고/곡창, 성방/성벽관문을
- * 같은 것으로 볼지는 사용자 결정 대기다. 망루봉화는 §8.2 가 한 건물로 적은 그대로 하나다.
+ * 공사 9종(2026-09-23 사용자 결정): §4(수리·둔전·성방·도로·역참·창고)와 §8.2(곡창·역참·망루봉화·성벽관문·병영·시장수운
+ * + 수리·둔전)의 합집합에서 곡창은 창고로, 성벽관문은 성방으로 합쳤다. 망루봉화는 §8.2 가 한 건물로 적은 그대로 하나다.
  */
 enum class DomesticWork(val label: String) {
     IRRIGATION("수리"), MILITARY_FARM("둔전"), FORTIFICATION("성방"), ROAD("도로"), POST_STATION("역참"),
-    WAREHOUSE("창고"), GRANARY("곡창"), WATCHTOWER_BEACON("망루봉화"), WALL_GATE("성벽관문"), BARRACKS("병영"),
-    MARKET_WATERWAY("시장수운");
+    WAREHOUSE("창고"), WATCHTOWER_BEACON("망루봉화"), BARRACKS("병영"), MARKET_WATERWAY("시장수운");
 }
 
 sealed interface PlacementTarget {

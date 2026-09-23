@@ -45,13 +45,16 @@ class HwihaDomesticInputTest {
         for (raw in bad) assertNull(HwihaDomesticInput.parsePolicy(7, raw), raw)
     }
 
-    @Test fun `work bodies name one of the eleven works`() {
+    @Test fun `work bodies name one of the nine works`() {
         assertEquals(WorkRequest(7, 10, DomesticWork.WATCHTOWER_BEACON),
             HwihaDomesticInput.parseWork(7, """{"countyId":10,"work":"WATCHTOWER_BEACON"}"""))
         assertNull(HwihaDomesticInput.parseWork(7, """{"countyId":10,"work":"망루봉화"}"""))
         assertNull(HwihaDomesticInput.parseWork(7, """{"countyId":10,"work":"IRRIGATION","extra":1}"""))
-        assertEquals(11, DomesticWork.entries.size)
-        assertEquals(listOf("수리", "둔전", "성방", "도로", "역참", "창고", "곡창", "망루봉화", "성벽관문", "병영", "시장수운"),
+        assertEquals(9, DomesticWork.entries.size)
+        // 2026-09-23 user decision: 곡창 → 창고, 성벽관문 → 성방.
+        assertNull(HwihaDomesticInput.parseWork(7, """{"countyId":10,"work":"GRANARY"}"""))
+        assertNull(HwihaDomesticInput.parseWork(7, """{"countyId":10,"work":"WALL_GATE"}"""))
+        assertEquals(listOf("수리", "둔전", "성방", "도로", "역참", "창고", "망루봉화", "병영", "시장수운"),
             DomesticWork.entries.map { it.label })
         assertEquals(listOf("권농", "중상", "중세", "휼민", "둔전", "징발"), CountyPolicy.entries.map { it.label })
         assertEquals(listOf("조련", "공략", "수비", "요격", "회피"), CorpsPolicy.entries.map { it.label })

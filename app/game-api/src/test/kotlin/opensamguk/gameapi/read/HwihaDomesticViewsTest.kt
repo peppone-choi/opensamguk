@@ -80,9 +80,10 @@ class HwihaDomesticViewsTest {
         assertEquals(100_000, c7.warehouse!!.money)
         val c8 = view.counties.single { it.countyId == 8 }
         assertEquals(DomesticFailure.WAREHOUSE_NOT_READY.name, c8.startable.first().blocked!!.code)
-        assertEquals(11, c8.startable.size)
-        assertEquals(HwihaDomesticDesign.CANON.works.getValue(DomesticWork.WALL_GATE).cost.timber,
-            c8.startable.single { it.work == "WALL_GATE" }.cost.timber)
+        assertEquals(listOf("IRRIGATION", "MILITARY_FARM", "FORTIFICATION", "ROAD", "POST_STATION", "WAREHOUSE",
+            "WATCHTOWER_BEACON", "BARRACKS", "MARKET_WATERWAY"), c8.startable.map { it.work })
+        assertEquals(HwihaDomesticDesign.CANON.works.getValue(DomesticWork.FORTIFICATION).cost.timber,
+            c8.startable.single { it.work == "FORTIFICATION" }.cost.timber)
     }
 
     @Test fun `failures pass through without a projection`() {

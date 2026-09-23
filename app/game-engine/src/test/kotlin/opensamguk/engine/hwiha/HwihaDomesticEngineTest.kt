@@ -207,7 +207,14 @@ class HwihaDomesticEngineTest {
         val works = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!
         assertEquals(listOf(DomesticWork.FORTIFICATION), works.completed.map { it.work })
         assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
-        assertEquals(minOf(1000, 500 + spec.completion.single().amount), world.getCityById(10)!!.defence)
+        for (effect in spec.completion) {
+            val value = when (effect.indicator) {
+                HwihaDomesticDesign.Indicator.DEFENCE -> world.getCityById(10)!!.defence
+                HwihaDomesticDesign.Indicator.WALL -> world.getCityById(10)!!.wall
+                else -> fail("unexpected 성방 effect ${effect.indicator}")
+            }
+            assertEquals(minOf(1000, 500 + effect.amount), value)
+        }
     }
 
     @Test fun `corps reaction policies populate the march reaction inventory on the commander's turn`() {

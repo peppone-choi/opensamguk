@@ -14,6 +14,10 @@ class HwihaDomesticEffectsTest {
         assertEquals(CountyPolicy.entries.toSet(), design.countyPolicies.keys)
         assertEquals(DomesticWork.entries.toSet(), design.works.keys)
         assertEquals(CountyPolicy.AGRICULTURE, design.defaultCountyPolicy)
+        // Merged works (user decision 2026-09-23): 성방 carries both the defence and the wall effect.
+        assertEquals(setOf(HwihaDomesticDesign.Indicator.DEFENCE, HwihaDomesticDesign.Indicator.WALL),
+            design.works.getValue(DomesticWork.FORTIFICATION).completion.map { it.indicator }.toSet())
+        assertTrue(design.works.getValue(DomesticWork.WAREHOUSE).completion.isEmpty())
         // Every row declares its own provisional status: no silent design numbers.
         val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
         val statuses = Regex("\"status\": \"([^\"]+)\"").findAll(raw).map { it.groupValues[1] }.toList()
