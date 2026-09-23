@@ -31,7 +31,20 @@ class ResolvedHanWorldArtifacts internal constructor(
 }
 
 /** Cache immutable artifacts, never the world's selection: a reset can change its roster. */
-class HanWorldArtifactsResolver(private val root: Path = Path.of(".")) {
+class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
+    companion object {
+        /**
+         * 엔진·API 는 저장소 루트에서 뜨므로 기본값은 `.` 이다. 그 전제가 성립하지 않는 곳 —
+         * Gradle 이 모듈 디렉터리(app/game-engine)에서 띄우는 통합 테스트처럼 — 에서는 이
+         * 시스템 프로퍼티나 환경 변수로 루트를 가리킨다. 설정하지 않으면 동작이 그대로다.
+         */
+        fun defaultRoot(): Path =
+            (System.getProperty("opensamguk.artifacts.root")
+                ?: System.getenv("OPENSAMGUK_ARTIFACTS_ROOT"))
+                ?.takeIf { it.isNotBlank() }?.let { Path.of(it) }
+                ?: Path.of(".")
+    }
+
     private val cache = ConcurrentHashMap<HanWorldVariant, ResolvedHanWorldArtifacts>()
 
     fun artifacts(variant: HanWorldVariant): ResolvedHanWorldArtifacts = cache.computeIfAbsent(variant) {

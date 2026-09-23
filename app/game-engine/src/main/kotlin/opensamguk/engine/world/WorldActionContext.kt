@@ -814,6 +814,12 @@ class WorldActionContext(
         leaders: List<ProvideNPCTroopLeader.NewLeader>,
         seed: String,
     ) {
+        // v1 부대장은 `che_집합` 30칸 턴 고리를 들고 태어난다. HWIHA 는 그 명령 체계를 휘하·부곡
+        // 카드로 교체했고 recordGeneralCreate 의 HWIHA 불변식은 「≤12칸, 전부 action.enlist」다 —
+        // 그래서 이 이벤트는 HWIHA 월 경계에서 반드시 예외를 던지고, 턴 루프는 예외 하나로 영구히
+        // 멈춘다. HWIHA 부대는 다른 경로로 태어나므로 여기서는 아무것도 만들지 않는다.
+        // (HWIHA 용 NPC 부대장 주조가 따로 필요한지는 미결 — 필요해지면 휘하 규칙으로 새로 만든다.)
+        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) return
         val rng = RandUtil(LiteHashDrbg(seed))
         val cityPool = world.listCities().sortedBy { it.id }
             .map { GeneralBuilder.CityChoice(it.id, it.nationId) }
