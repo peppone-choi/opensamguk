@@ -172,6 +172,22 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 
 같은 조우 트랜잭션에서 `hwihaEncounterForces`와 `hwihaEncounterRelations`도 모든 참가자에게 동일하게 저장한다. 전자는 부곡의 실제 자원·훈련·병종 식별자와 현재 지휘 능력, 후자는 모든 참가 군단 쌍의 교전 적대 여부를 보존한다. codec은 정확한 필드·정수 범위·참가자 결속·정규 순서·snapshotId를 검사한다. 이후 live 부곡/장수/외교 수치가 달라져도 봉인값은 바뀌지 않는다. 수치 봉인은 병종 catalog 검증이나 전투 공식 승인을 의미하지 않는다. 기존 사건에 빠진 자료는 자동 소급 생성하지 않으며, 향후 전투 소비자는 모든 참가자 봉인값의 일치와 원본 결속을 재검사해야 한다. 상대 봉인 자료를 일반 API에 그대로 반환하지 않는다.
 
+### HWIHA 조우 정산
+
+pending 조우는 공격 지휘관의 다음 개인 턴 시작(`HwihaAssignmentMarchTurn` → `HwihaEncounterResolver`)에 봉인 기록만으로 끝까지 해결한다. 참가자 전원의 봉인 기록이 바이트 단위로 같지 않거나 전투 기록(`hwihaBattleJournal`)이 없으면 결과를 만들지 않고 대기로 둔다. 해결되면 봉인 키들을 모든 참가자에서 함께 지우고 `hwihaLastBattle`(판정·회차·전체 입력 journal·재현 해시)을 남긴다. 병력 0 이 된 부곡은 `general_bugok` 제약(troops > 0) 때문에 행을 지우고 살아남은 군단의 부곡 목록에서 뺀다. 패한 공격 측은 접근 省으로 돌아가며 출전 기록·명령·행군을 지운다. 궤멸한 패자 지휘관에는 임시 포로 표식 `hwihaCaptive`만 남는다(효과 없음). 명망 사건은 `HwihaWarOutcomeListener`(기본 무동작)로 나가며 기록 스트림 병합 때 연결한다.
+
+### HWIHA 포위 상태(V61 `hwiha_siege`)
+
+縣治 城 하나에 행 하나(PK world_id·county_id)이고 `ACTIVE`·`LIFTED`·`FALLEN` 을 가진다. 끝난 포위도 조회·기록용으로 남고 같은 縣의 새 포위가 덮어쓴다. 쓰기는 엔진 world dirty 집합 → `JdbcFlushExecutor` 8j 채널(CREATE → UPDATE)뿐이며 부팅 스냅샷(`loadHwihaSieges`)이 싣는다. 포위 장수 행이 지워지면 FK CASCADE 로 함께 사라진다. 순 경계(`HwihaPhaseBoundary`)는 `settled_*` 도장으로 같은 순을 두 번 정산하지 않는다. 성 안 급식은 `HwihaWarehouseSettlement` 로 縣 창고 곡을 뺀다. 함락은 `city.nation_id`·`pop`·`def` 를 바꾸고 창고는 縣에 남긴다. 수도 함락 때 수도 이전·국고 이동은 아직 없다. 조회는 `GET /api/hwiha/sieges?generalId=`(관여한 포위만).
+
+### HWIHA 순 경계 보급·녹봉·기존 유지비
+
+HWIHA 순 경계마다 포위 정산 뒤 세력 수도에서 보급 BFS 를 다시 돌려 縣 `supply_state` 만 고친다(감쇠·중립화는 기존 월간 `UpdateCitySupply`). 포위 중인 縣은 외부 보급이 끊긴다. 보급망을 계산할 수 없으면 경고만 남기고 이전 값을 유지한다(턴 루프를 멈추지 않는다). 월 경계는 징세 → 녹봉(`HwihaMonthlySalary`, 도장 `hwihaSalaryMonth`) → 월단평 순이다. `RetainerMonthlyService` 는 HWIHA 에서 부곡 급여·가신 유지비 30/30 의 재정 효과를 적용하지 않는다. 상사(`court.reward`)는 발령처럼 결정권자 meta `hwihaQueuedReward` 에 한 건 대기했다가 그 장수의 턴에 실행한다.
+
+### HWIHA 반응 기록 임시 규칙
+
+`hwihaMarchReactions` 에 틀이 맞는 기록(버전 1, 세 목록)이 쌓여도 해석기(`HwihaMarchReactionPolicy`)가 연결되기 전에는 행군 진입과 출병 입력을 막지 않는다. 키가 없거나 틀이 깨졌으면 기존처럼 판정 불가로 멈춘다. 이 기본값에서는 요격·회피 효과가 적용되지 않는다. 요격 범위 후보는 `data/curated/han/hwiha-s3-provisional-v1.json` reactions 에 있다.
+
 ### Han V3 수역 상태와 보급 복구
 
 V49는 세계별 `water_zone_control` 빈 테이블을 추가합니다. V3 부팅은 실제 snapshot loader에서
@@ -281,4 +297,4 @@ HWIHA 개인 턴은 행동 처리 전에 소유 장수의 `hwihaStratagemHand`�
 
 이 항목을 사용하면 모든 `nation`의 기존 gold/rice는 0이어야 한다. 수도를 포함해 모든 재화는 명시된 縣 창고에만 넣고, 기존 국가 잔고를 복사하지 않는다. 입력 부재는 기존 시나리오 동작을 유지하며 창고를 추정 생성하지 않는다. `ScenarioSeedCoordinator`의 신규 월드 트랜잭션 안에서만 초기화하며, 뒤 단계가 실패하면 창고도 롤백된다. 기존 월드 재기동은 소비한 재고를 보충하지 않는다. 초기 입력의 단위·출처·지도 핀·縣 수는 `world_state.meta.hwihaWarehouseSeed`에 남긴다.
 
-창고 시드만으로 새 경제가 활성화되지는 않는다. 현재 HWIHA에서도 기본 월간 세입·전쟁 수입과 개인 재화 기반 유지비 경로가 남아 있다. 새 창고 생산을 연결할 때 이 재정 경로를 함께 전환해야 하며, 기존 세입과 창고 세입을 동시에 켜서는 안 된다. 현재 시드 검증은 최초 재고의 중복 방지를 증명하며 월 경계 경제 완성을 뜻하지 않는다.
+HWIHA 에서는 기존 월간 국가 세입·전쟁 수입과 개인 재화 기반 가신 유지비·부곡 급여를 적용하지 않는다. 縣 창고 월세입(`HwihaMonthlyCountyIncome`)과 녹봉(`HwihaMonthlySalary`)이 창고 경제를 맡는다. 기존 세입과 창고 세입을 동시에 켜서는 안 된다. 연결 창고 간 자동 이동·군단 군량 소모·계책 비용은 아직 없다.

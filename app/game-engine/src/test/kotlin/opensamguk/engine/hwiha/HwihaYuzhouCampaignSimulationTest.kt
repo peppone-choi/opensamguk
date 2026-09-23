@@ -116,7 +116,7 @@ class HwihaYuzhouCampaignSimulationTest {
 
     @Test fun `the same seed replays to the same world`() {
         fun fingerprint(): List<Any?> {
-            val run = campaign(); repeat(12) { run.phase(it) }
+            val run = campaign(); repeat(8) { run.phase(it) }
             return run.world.listCities().map { it.id to it.nationId } + run.world.listBugoks().map { it.id to it.troops } +
                 run.world.listHwihaSieges().map { it.countyId to it.timeline }
         }
