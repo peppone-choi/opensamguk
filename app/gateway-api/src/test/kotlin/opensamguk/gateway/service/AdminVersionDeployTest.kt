@@ -53,6 +53,8 @@ class AdminVersionDeployTest {
             )
             """.trimIndent(),
         )
+        jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
+        jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, FALSE)")
         jdbc.execute(
             """
             CREATE TABLE game_server_registry_transition (
