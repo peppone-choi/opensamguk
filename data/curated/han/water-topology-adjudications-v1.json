@@ -14,7 +14,7 @@
   "barrierAdjudications": [],
   "base": {
     "path": "data/map/han-tiles.json",
-    "sha256": "7d01a22614081100ea5afbd58bd5875efa38bb7561720a5265a977c00923d1cb",
+    "sha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312",
     "bytes": 2484025,
     "cols": 768,
     "rows": 669,

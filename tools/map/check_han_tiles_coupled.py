@@ -79,6 +79,8 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("province-city-attribution", ("data/curated/han/province-city-attribution-v1.json",),
             _t("tools/scenario/build_province_city_attribution.py", "--check"),
             _t("tools/scenario/build_province_city_attribution.py")),
+    Coupled("ferry-water-proximity", ("data/curated/han/ferry-water-adjudications-v1.json",),
+            _t("tools/map/audit_ferry_water_proximity.py", "--check"), None),
     # 수로 망은 han-world-v3 의 입력이다(강 뱃길 = portLinks). 세계 파일보다 먼저 굽는다.
     Coupled("waterway-network", ("data/map/han-waterway-network-v1.json",),
             _t("tools/map/build_han_waterway_network.py", "--check"),

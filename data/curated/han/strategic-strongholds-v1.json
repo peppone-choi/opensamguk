@@ -3607,8 +3607,8 @@
           "row": 281.576
         },
         "terrain": {
-          "code": "1",
-          "name": "PLAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 269,
         "sameCellPlaces": [],
@@ -3810,8 +3810,8 @@
           "row": 104.914
         },
         "terrain": {
-          "code": "1",
-          "name": "PLAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 1038,
         "sameCellPlaces": [],
@@ -4074,8 +4074,8 @@
           "row": 94.574
         },
         "terrain": {
-          "code": "1",
-          "name": "PLAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 970,
         "sameCellPlaces": [],
@@ -5013,8 +5013,8 @@
           "row": 317.008
         },
         "terrain": {
-          "code": "2",
-          "name": "MOUNTAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 443,
         "sameCellPlaces": [],
@@ -5315,8 +5315,8 @@
           "row": 294.613
         },
         "terrain": {
-          "code": "1",
-          "name": "PLAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 238,
         "sameCellPlaces": [],
@@ -5403,8 +5403,8 @@
           "row": 271.462
         },
         "terrain": {
-          "code": "1",
-          "name": "PLAIN"
+          "code": "3",
+          "name": "RIVER"
         },
         "provinceIndex": 240,
         "sameCellPlaces": [],
