@@ -21,7 +21,8 @@ import opensamguk.logic.world.*
  */
 class HwihaYuzhouCampaignSimulationTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }.first { Files.isDirectory(it.resolve("data/map")) }
-    private val bundle = HanWorldArtifactsResolver(repo).artifacts(HanWorldVariant.V3_1224)
+    private val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
+    private val bundle = HanWorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
     private val topology = bundle.projection.topology
     private val metrics = bundle.landMarchMetrics
     private val cells = bundle.provinceCells
@@ -31,7 +32,6 @@ class HwihaYuzhouCampaignSimulationTest {
 
     private fun campaign(npcDeploy: Boolean = true): Campaign {
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
-        val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val warehouses = requireNotNull(scenario.hwihaWarehouses).warehouses
         val provinceOf = bundle.projection.bindingsByCityId.mapNotNull { (id, b) -> b.landProvinceId?.let { id to it } }.toMap()
@@ -63,7 +63,7 @@ class HwihaYuzhouCampaignSimulationTest {
                 StrategicNodeRef.LandProvince(provinceOf.getValue(g.cityId)), 1))
         }
         val state = TurnWorldState(1, 190, 1, 3600, Instant.parse("0190-01-01T00:00:00Z"), currentPhase = 1,
-            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = HanWorldVariant.V3_1224,
+            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = bundle.variant,
             meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
                 HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(), "startYear" to 190))
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals, cities = cities,

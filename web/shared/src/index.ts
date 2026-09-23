@@ -153,9 +153,6 @@ export {
   TILE_SCREEN_HEIGHT,
   STEP_SCREEN_PIXELS,
   SEAT_ONLY_TILE_PIXELS,
-  CAMERA_ELEVATION_RAD,
-  CAMERA_AZIMUTH_RAD,
-  HEIGHT_STEP_WORLD,
   isWater,
   pickTileAtScreen,
   downsampleTerrain,
@@ -169,7 +166,6 @@ export {
   landUnderSeats,
   type SeatCells,
   tileToScreen,
-  tileToWorld,
   expandRunLength,
   downsampleOwner,
   stampSeatOwners,
@@ -180,9 +176,7 @@ export {
   type IsoTileGrid,
 } from './isoTileGrid';
 
-// ── 아이소 지도(3D·2D 공용) ──────────────────────────────────────────────────
-// 3D 렌더러(IsoMap3D)는 three 를 쓰므로 여기서 내보내지 않는다 — web/game 안에 남는다.
-// 로비(web/gateway)는 2D 판만 쓰고 three 를 번들에 들이지 않는다.
+// ── 지도 격자와 2D 자산 유틸리티 ──────────────────────────────────────────
 export {
   useIsoTileGrid,
   buildProvinceSeatCells,
@@ -277,10 +271,11 @@ export {
   SPRITE_SILHOUETTE_PX,
   cellFootprintInTiles,
   spriteFootprintFit,
-  modelFootprintFit,
   type TileFootprint,
   type SpriteFit,
-  type ModelBounds,
-  type ModelFit,
 } from './iso/buildingFit';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';
+export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
+export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
+export { isUprisingNation } from './iso/marker';
+export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';

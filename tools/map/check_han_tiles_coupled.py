@@ -73,6 +73,8 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
     Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",),
             _t("tools/map/audit_territory_disconnections.py", "--check"), None, slow=True),
+    Coupled("territory-review-table", ("data/curated/han/territory-disconnection-review-table-v1.json",),
+            _t("tools/map/refresh_territory_review_table.py", "--check"), None),
     Coupled("administrative-parent-reconciliation", ("data/curated/han/administrative-parent-reconciliation-v1.json",),
             _t("tools/map/build_han_parent_reconciliation.py", "--check"),
             _t("tools/map/build_han_parent_reconciliation.py", "--write"), slow=True),
@@ -158,9 +160,6 @@ COUPLED: tuple[Coupled, ...] = (
     # 손으로 검토한 원장이다. 적색이면 해시만 갈지 말고 후보 셀의 투영·지형 검사가 새 타일에서도 통과하는지 본다.
     Coupled("strategic-site-anchor-review", ("data/curated/han/strategic-site-anchor-review-v1.json",),
             _t("tools/map/validate_han_strategic_site_anchors.py", "--check"), None),
-    Coupled("iso3d-assets", ("web/game/public/models/iso3d/", "web/gateway/public/models/iso3d/"),
-            _t("tools/assets/build_iso3d_assets.py", "--check"),
-            _t("tools/assets/build_iso3d_assets.py")),
     # 노트는 도구 출력을 옮겨 적은 문서다 — 적색이면 도구를 다시 돌려 표의 행을 손으로 고친다.
     Coupled("march-tempo-and-siege-supply-notes",
             ("docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
