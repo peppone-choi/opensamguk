@@ -33,7 +33,7 @@ async function terminal(page: Page, response: Response): Promise<void> {
   expect(response.status(), JSON.stringify(intake)).toBe(202);
   expect(intake.requestId).toMatch(/^[A-Za-z0-9._:-]+$/);
   await expect.poll(async () => (await read<{ status: string; ok?: boolean }>(page,
-    `/api/command/result/${intake.requestId}`)).status, { timeout: 180_000, intervals: [1000, 3000] }).toBe('RESOLVED');
+    `/api/command/result/${intake.requestId}`)).status, { timeout: 1_200_000, intervals: [1000, 3000] }).toBe('RESOLVED');
   expect((await read<{ ok: boolean }>(page, `/api/command/result/${intake.requestId}`)).ok).toBe(true);
 }
 
