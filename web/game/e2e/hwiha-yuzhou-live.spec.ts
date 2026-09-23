@@ -25,8 +25,8 @@ async function read<T>(page: Page, path: string): Promise<T> {
 }
 
 async function terminal(page: Page, response: Response): Promise<void> {
-  expect(response.status()).toBe(202);
   const intake = await response.json() as { requestId: string };
+  expect(response.status(), JSON.stringify(intake)).toBe(202);
   expect(intake.requestId).toMatch(/^[A-Za-z0-9._:-]+$/);
   await expect.poll(async () => (await read<{ status: string; ok?: boolean }>(page,
     `/api/command/result/${intake.requestId}`)).status, { timeout: 180_000, intervals: [1000, 3000] }).toBe('RESOLVED');
@@ -51,7 +51,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   expect((await context.cookies()).some(c => c.name === 'sam_access' && c.httpOnly)).toBe(true);
 
   await page.goto(`${gameUrl}/game/join`);
-  await page.locator('form input[type="text"]').first().fill(`豫州QA${suffix}`);
+  await page.locator('form input[type="text"]').first().fill(`예주${suffix.slice(-6)}`);
   page.on('dialog', dialog => void dialog.accept());
   const creation = page.waitForResponse(r => r.request().method() === 'POST' && r.url().includes('/api/game/api/join'));
   await page.getByRole('button', { name: '장수 생성', exact: true }).click();

@@ -53,6 +53,7 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 from tools.scenario.han_active_city_ids import active_numeric_ids
+from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
 
 # 결손 縣 56 곳을 더해 han-world-v3 는 1168 → 1224. 명부 수와 같이 움직이는 실측 기준선이다.
 WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1224}
@@ -2246,6 +2247,8 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
 def _load_scenarios(directory: Path) -> tuple[ScenarioResource, ...]:
     resources: list[ScenarioResource] = []
     for path in sorted(directory.glob("scenario_*.json")):
+        if not is_route_node_scenario_resource(path):
+            continue
         document = _load(path)
         map_info = document.get("map")
         if (not isinstance(map_info, dict)
