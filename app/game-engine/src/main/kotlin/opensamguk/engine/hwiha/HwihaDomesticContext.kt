@@ -1,0 +1,80 @@
+package opensamguk.engine.hwiha
+
+import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.TurnGeneral
+import opensamguk.logic.input.*
+import opensamguk.logic.world.LandMarchMetricSnapshot
+import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.logic.world.StrategicTopologySnapshot
+
+/**
+ * 휘하 내정 입력이 읽는 고정 자료. [geography] 가 없으면 郡 방침과 향당 보너스를 판정할 수 없고(STATE_UNAVAILABLE·보너스 없음),
+ * [topology]·[metrics] 가 없으면 배치 부임 행군을 하지 않는다. [renown] 은 치적 사건을 받는 자리(기본은 버림).
+ */
+class HwihaDomesticContext(
+    val design: HwihaDomesticDesign = HwihaDomesticDesign.CANON,
+    val geography: HwihaCountyGeography? = null,
+    val nativeCounties: HwihaNativeCountyLedger? = null,
+    val topology: StrategicTopologySnapshot? = null,
+    val metrics: LandMarchMetricSnapshot? = null,
+    val renown: HwihaRenownEventSink = HwihaRenownEventSink.NONE,
+) {
+    /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */
+    fun projection(world: InMemoryTurnWorld): HwihaDomesticProjection {
+        val positions = world.generalPositionSnapshot()
+        val state = world.getState()
+        val generals = world.listGenerals().sortedBy { it.id }
+        val geography = geography
+        val ledger = nativeCounties
+        return HwihaDomesticProjection(
+            profile = world.ruleProfile,
+            now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase),
+            people = generals.map { g ->
+                val position = positions?.stateFor(g.id)
+                DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
+                    g.stats.leadership, g.stats.strength, g.stats.intelligence, g.stats.politics, g.stats.charm,
+                    (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta)
+            },
+            cards = world.listRetainers().sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) },
+            counties = world.listCities().filter { it.id in world.administrativeCountyIds }.sortedBy { it.id }.map { c ->
+                DomesticCounty(c.id, c.name, c.nationId, (world.landNodeOfCity(c.id) as? StrategicNodeRef.LandProvince)?.id,
+                    geography?.commanderyOf(c.id), c.meta)
+            },
+            nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
+            landProvinceIds = positions?.knownLandProvinceIds,
+            homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
+                ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
+            }.toMap(),
+        )
+    }
+}
+
+internal fun InMemoryTurnWorld.hwihaNow(): HwihaPhase = getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+
+internal fun InMemoryTurnWorld.updateGeneralMeta(recorder: ChangeRecorder, before: TurnGeneral, meta: Map<String, Any?>) {
+    if (before.meta == meta) return
+    val after = before.copy(meta = meta)
+    recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
+    applyGeneralDirtyFree(after)
+}
+
+internal fun InMemoryTurnWorld.updateCityMeta(recorder: ChangeRecorder, cityId: Int, meta: Map<String, Any?>) {
+    val before = checkNotNull(getCityById(cityId)) { "unknown city $cityId" }
+    if (before.meta == meta) return
+    val after = before.copy(meta = meta)
+    recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
+    checkNotNull(applyCityDirtyFree(after))
+}
+
+internal fun InMemoryTurnWorld.updateNationMeta(recorder: ChangeRecorder, nationId: Int, meta: Map<String, Any?>) {
+    val before = checkNotNull(getNationById(nationId)) { "unknown nation $nationId" }
+    if (before.meta == meta) return
+    val after = before.copy(meta = meta)
+    recorder.diffNation(PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(after))
+    applyNationDirtyFree(after)
+}
+
+internal fun Map<String, Any?>.withKey(key: String, value: Any?): Map<String, Any?> =
+    if (value == null) this - key else LinkedHashMap(this).apply { put(key, value) }

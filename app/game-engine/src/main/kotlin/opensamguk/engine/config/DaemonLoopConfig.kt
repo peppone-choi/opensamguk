@@ -319,6 +319,16 @@ class DaemonLoopConfig {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
         } else null
+        // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림 연결 전까지 버린다.
+        val domesticContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
+            opensamguk.engine.hwiha.HwihaDomesticContext(
+                geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(artifacts),
+                nativeCounties = opensamguk.logic.input.HwihaNativeCountyLedger.load(),
+                topology = artifacts.projection.topology,
+                metrics = artifacts.landMarchMetrics,
+            )
+        } else opensamguk.engine.hwiha.HwihaDomesticContext()
         val handler = ReservedTurnHandler(
             world = world,
             registry = registry,
@@ -333,6 +343,7 @@ class DaemonLoopConfig {
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
+            hwihaDomesticContext = domesticContext,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,

@@ -194,12 +194,16 @@ class ReservedTurnHandler(
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
     private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
+    /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
+    val hwihaDomesticContext: opensamguk.engine.hwiha.HwihaDomesticContext = opensamguk.engine.hwiha.HwihaDomesticContext(),
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
 
     private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
-    val courtHandler by lazy { opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder) }
+    val courtHandler by lazy { opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder, hwihaDomesticContext) }
+    val domesticTurn by lazy { opensamguk.engine.hwiha.HwihaDomesticTurn(world, recorder, hwihaDomesticContext) }
+    private val domesticHandler by lazy { opensamguk.engine.hwiha.HwihaDomesticHandler(world, recorder, hwihaDomesticContext) }
     private val deployHandler by lazy { opensamguk.engine.hwiha.HwihaDeployHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
@@ -279,6 +283,9 @@ class ReservedTurnHandler(
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
             )
+            for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
+                handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+            }
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
             }

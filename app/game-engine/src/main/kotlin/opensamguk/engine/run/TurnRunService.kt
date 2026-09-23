@@ -175,6 +175,7 @@ open class TurnRunService(
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
             v2CityLedger = v2CityLedger,
+            hwihaCourtHandler = handler.courtHandler,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(
                     "year" to world.getState().currentYear,
@@ -370,6 +371,8 @@ open class TurnRunService(
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                         boundaryDate(nextTurn).let { date ->
                             world.setCurrentDate(date.year, date.month, date.phase)
+                            // §5.2 3단계 내정 진행(공사·방침·치적) — 4단계 월세입보다 먼저, 한 순에 한 번(도장).
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
@@ -389,6 +392,10 @@ open class TurnRunService(
                 advanceNonMonthlyBoundary = { nextTurn ->
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
+                        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                            // §5.2 3단계 내정 진행 — 순 경계마다 한 번(도장).
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
+                        }
                         handler.courtHandler.expireDue()
                     }
                 },

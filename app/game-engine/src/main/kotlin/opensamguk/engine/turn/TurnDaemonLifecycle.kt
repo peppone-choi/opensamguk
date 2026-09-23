@@ -181,6 +181,8 @@ class TurnDaemonLifecycle(
                 // Even an undelivered reservation receives a terminal result and consumes one slot.
                 require(state.tickSeconds > 0) { "positive personal-turn interval required" }
                 opensamguk.engine.hwiha.HwihaStratagemDraw(world, handler.recorder).onTurn(g.id)
+                // §5.1 1단계 재검사: 배치·방침은 해당 카드의 다음 턴부터 효력(대기 → 현행).
+                handler.domesticTurn.beforeMovement(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
                 val reserved = opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
