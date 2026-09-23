@@ -389,6 +389,18 @@ const CITY_MARKER_LARGE_URLS = CITY_MARKER_LARGE_SIZES.flatMap((size) => (
   CITY_LEVELS.map((level) => ({ size, level, url: `/city/${size / 32}x/cast_${level}.png` }))
 ));
 
+/** 성내 맞춤으로 그릴 城 그림 — 그릴 폭 이상인 가장 작은 해상도, 없으면 불러온 것 가운데 가장 큰 것. */
+export function cityFitSprite<T>(images: Partial<Record<string, T>>, level: number, drawWidth: number): T | undefined {
+  const sizes: Array<[number, string]> = [
+    [32, cityMarkerImageKey(1, level)],
+    [64, cityMarkerImageKey(2, level)],
+    ...CITY_MARKER_LARGE_SIZES.map((size) => [size, `L${size}:${level}`] as [number, string]),
+  ];
+  const loaded = sizes.filter(([, key]) => images[key] !== undefined);
+  const pick = loaded.find(([size]) => size >= drawWidth) ?? loaded.at(-1);
+  return pick ? images[pick[1]] : undefined;
+}
+
 export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
 
 /** 미리 불러 둘 배지 — 알려진 재해·사건 코드와 휘하 상태. */
@@ -1508,10 +1520,8 @@ function drawScene(
         drawCurrentLocationOverlay(context, x, y, detail, dpr, selfLocationPhase);
       }
     } else if (marker && fit) {
-      // 성내 폭보다 작지 않은 가장 작은 원본 해상도를 쓴다(64 → 128 → 256). 없으면 64 로 그린다.
-      const large = CITY_MARKER_LARGE_SIZES.find((size) => size >= fit.width && markerImages[`L${size}:${level}`])
-        ?? [...CITY_MARKER_LARGE_SIZES].reverse().find((size) => markerImages[`L${size}:${level}`]);
-      const sprite = fit.width > marker.naturalWidth && large ? markerImages[`L${large}:${level}`]! : marker;
+      // 그릴 폭보다 작지 않은 가장 작은 원본(1x 32 · 2x 64 · 4x 128 · 8x 256)을 쓴다. 불러온 것이 없으면 가장 큰 것.
+      const sprite = cityFitSprite(markerImages, level, fit.width) ?? marker;
       hits.push({
         city,
         provinceId: city.provinceId,
@@ -1521,7 +1531,8 @@ function drawScene(
         bottom: fit.baseY,
       });
       // 그림보다 크게 늘리면 흐려진다 — 늘릴 때만 부드럽게 보간한다.
-      context.imageSmoothingEnabled = fit.width > sprite.naturalWidth;
+      // 픽셀아트라 늘려도 최근접으로 — 흐리게 보간하지 않는다.
+      context.imageSmoothingEnabled = false;
       context.drawImage(sprite, fit.x, fit.y, fit.width, fit.height);
     } else {
       hits.push({
