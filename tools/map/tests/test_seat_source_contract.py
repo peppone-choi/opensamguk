@@ -180,15 +180,6 @@ class KnownDefectsAreStillBroken(unittest.TestCase):
         for node in nodes:
             self.assertFalse(node.get("zhi"), f"江夏郡 {node.get('name')} 이 판에 올라왔다 — U46 이 무해가 아니게 됐다")
 
-    def test_u47_shiping_two_nodes_have_different_korean_names(self) -> None:
-        """**이 값은 결함이다.** `始平县` 두 노드의 한글명이 `시평현`/`시령현` 으로 다르다(U47).
-
-        `nameCh` 는 같은데 `name` 이 다르다. **어느 쪽이 오기인지 확인 안 했다** — 그래서 고치지 않고 고정한다.
-        정정하면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U47 을 닫아라.
-        """
-        names = sorted(c.get("name") for c in self.cities if c.get("nameCh") == "始平县")
-        self.assertEqual(["시령현", "시평현"], names, "始平县 한글명이 변했다 — U47 을 재판정해라")
-
     def test_u48_offboard_homonyms_are_still_offboard(self) -> None:
         """**이 값은 결함이다.** `zhi=False` 동명 縣이 15개 이름에 걸쳐 있다(U48).
 
@@ -251,11 +242,12 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
         # 2026-09-15: 수·진·관 거점이 들어오며 「와구」(渦口·瓦口) 한 이름이 새로 겹쳤다.
-        # 결손 縣 223곳이 들어오며 겹치는 이름이 늘었다. 키 표면은 여전히 郡뿐이다.
-        self.assertEqual(137, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(310, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        # 결손 縣 223곳이 들어오며 겹치는 이름이 늘었다. U47 始平 이름 보정과
+        # 宛陵 이름 보정 뒤의 1447 城 실측이다. 키 표면은 여전히 郡뿐이다.
+        self.assertEqual(136, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(308, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            120, len(different),
+            118, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 

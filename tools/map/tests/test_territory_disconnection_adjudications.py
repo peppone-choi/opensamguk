@@ -958,11 +958,8 @@ class CommittedDataTest(unittest.TestCase):
         self.assertEqual([], audit.check(document, ledger)["errors"])
         # The immutable historical rows describe the prior state. The later Geuk
         # body swap is validated separately by audit.check above.
-        from tools.map import materialize_frontier_counties as frontier
-        from tools.map import relocate_han_province as relocation
-        prior = relocation.restore_document(
-            frontier.restored_to_prior_stage(document), json.loads(relocation.LEDGER.read_text())
-        )
+        from tools.map.tests.frozen_geuk_map import input_bytes
+        prior = json.loads(input_bytes())
         inventory_keys = {row["componentKey"] for row in audit.inventory(prior)}
         ledger_keys = {row["componentKey"] for row in ledger["adjudications"]}
 

@@ -1355,8 +1355,10 @@ def _assert_locked_contract(
         "cityLinkedProvinceCount": 998,
         "directTerritoryProvinceCount": 526,
         "landCellCount": 227_349,
-        "cityLinkedCellCount": 107_156,
-        "directTerritoryCellCount": 120_193,
+        # 1447 城 입력을 이전 1138 城 단계로 되감으면 城 연결 한 칸이 직할지로
+        # 돌아간다. 총 육지 227349칸과 승인/미결 행 수는 그대로다.
+        "cityLinkedCellCount": 107_155,
+        "directTerritoryCellCount": 120_194,
         # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 경로 노드로 서면서 782 → 785.
         # 2026-09-14: w1 간체표 폴딩 결합 11곳이 城 836–846 으로 서면서 785 → 796(귀속 충돌 5곳은 defer).
         # unresolved 353 → 342, 승인 셀 +872 = 미결 셀 -872 로 보존된다.
@@ -1367,7 +1369,7 @@ def _assert_locked_contract(
         # (5_841칸)이 승인으로 옮겨 973 → 1008, unresolved 165 → 130 · 6_443 → 602 셀로 보존된다.
         "exactApprovedRowCount": 1_008,
         # 巴郡 漢昌(579)을 巴中(44621)으로 바로잡아 그 縣 칸 70 이 승인으로 옮겼다(106_554 → 106_624, 미결 602 → 532).
-        "exactApprovedCellCount": 106_624,
+        "exactApprovedCellCount": 106_623,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
         "unresolvedRowCount": 130,
         "unresolvedCellCount": 532,

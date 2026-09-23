@@ -29,7 +29,7 @@
   "monthlyTotals": {
    "HORSE": 600,
    "IRON": 34000,
-   "TIMBER": 197466
+   "TIMBER": 197460
   },
   "skipped": 2,
   "withoutRuntimeCity": 0
@@ -12501,9 +12501,9 @@
    "countyId": 1026,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-anpingkou",
@@ -12618,9 +12618,9 @@
    "countyId": 1039,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-guoshiwu",
@@ -12744,18 +12744,18 @@
    "countyId": 1053,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-liaokou",
    "countyId": 1054,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-licheng",
@@ -13032,9 +13032,9 @@
    "countyId": 1085,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-xiaopingjin",
@@ -13050,9 +13050,9 @@
    "countyId": 1087,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 7
    },
-   "woodedCells": 8
+   "woodedCells": 7
   },
   {
    "jurisdictionId": "ss-xieguguan",

@@ -9,7 +9,7 @@
   "monthlyTotals": {
    "HORSE": 600,
    "IRON": 34000,
-   "TIMBER": 197466
+   "TIMBER": 197460
   }
  },
  "counties": [
@@ -6177,7 +6177,7 @@
   {
    "countyId": 1026,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {
@@ -6255,7 +6255,7 @@
   {
    "countyId": 1039,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {
@@ -6339,13 +6339,13 @@
   {
    "countyId": 1053,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {
    "countyId": 1054,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {
@@ -6531,7 +6531,7 @@
   {
    "countyId": 1085,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {
@@ -6543,7 +6543,7 @@
   {
    "countyId": 1087,
    "monthly": {
-    "timber": 8
+    "timber": 7
    }
   },
   {

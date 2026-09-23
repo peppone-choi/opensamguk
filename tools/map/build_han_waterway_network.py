@@ -51,6 +51,7 @@ BLOCK_CODES = {
     "RIVER_COURSE_NOT_IN_GRID",        # nearest water >= 2 cells away: needs river-course adjudication
     "PORT_CELL_NOT_ADJACENT_TO_WATER",  # evidence exists, but no water cell within 1 of the cell
     "PORT_CELL_NOT_ADJACENT_TO_REACH",  # evidence exists, water nearby is not the attested reach
+    "FERRY_ANCHOR_NOT_CONNECTED_TO_ATTESTED_REACH",  # a local river cell exists but not the reviewed reach
     "SITE_PROVINCE_DOES_NOT_TOUCH_REACH",  # node is on water, its carved province is not
     "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",  # on water, but no quote shows crossing or embarkation
     "BOTH_BANKS_IN_ONE_PROVINCE",       # crossing attested, but one province owns both banks
@@ -417,7 +418,10 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
              f"{where}: ledger distance {row['measuredCellDistanceToWater']} != measured {measured}")
         if row["reasonCode"] in {"RIVER_COURSE_NOT_IN_GRID", "PORT_CELL_NOT_ADJACENT_TO_WATER"}:
             need(measured is None or measured >= 2, f"{where}: site IS adjacent to water")
-        elif row["reasonCode"] == "PORT_CELL_NOT_ADJACENT_TO_REACH":
+        elif row["reasonCode"] in {"PORT_CELL_NOT_ADJACENT_TO_REACH", "FERRY_ANCHOR_NOT_CONNECTED_TO_ATTESTED_REACH"}:
+            if row["reasonCode"] == "FERRY_ANCHOR_NOT_CONNECTED_TO_ATTESTED_REACH":
+                need(row["siteRef"]["kind"] == "STRONGHOLD" and row["siteRef"]["id"] in ferries,
+                     f"{where}: disconnected ferry reason requires a FERRY stronghold")
             need(row.get("reach") in reach_cells, f"{where}: names no known reach")
             to_reach = chebyshev_to(cell, reach_cells[row["reach"]])
             need(to_reach == row.get("measuredCellDistanceToReach") and to_reach >= 2,

@@ -4,8 +4,8 @@ import json
 import unittest
 from pathlib import Path
 
-from tools.map import materialize_frontier_counties as frontier
 from tools.map import relocate_han_province as relocation
+from tools.map.tests.frozen_geuk_map import input_bytes
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -13,13 +13,8 @@ ROOT = Path(__file__).resolve().parents[3]
 class GeukRelocationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source_bytes = (ROOT / 'data/map/han-tiles.json').read_bytes()
+        cls.source_bytes = input_bytes()
         cls.source = json.loads(cls.source_bytes)
-        # 변경 縣 51곳은 이 재배치 위에 얹힌 나중 단계다 — 먼저 그 단계를 벗겨낸다.
-        cls.source = frontier.restored_to_prior_stage(cls.source)
-        if relocation.digest(cls.source) == json.loads(relocation.LEDGER.read_text())['outputDocumentSha256']:
-            cls.source = relocation.restore_document(cls.source, json.loads(relocation.LEDGER.read_text()))
-            cls.source_bytes = (json.dumps(cls.source, ensure_ascii=False, separators=(',', ':')) + '\n').encode()
         cls.ledger, cls.result = relocation.prepare(cls.source_bytes)
 
     def test_exact_projected_target_owns_new_territory(self):
@@ -88,13 +83,9 @@ class GeukRelocationTest(unittest.TestCase):
         self.assertEqual(121603, rebinding['priorSummary']['cityLinkedCellCount'])
         self.assertEqual(121071, rebinding['priorSummary']['exactApprovedCellCount'])
         self.assertEqual(532, rebinding['priorSummary']['unresolvedCellCount'])
-        # 縣 51곳을 세운 뒤로 재배치 투영은 그 縣 단계가 재귀로 증명하는 **앞 단계 원장**
-        # 안에 실려 온다 — 재바인딩이 그 위에 한 겹 더 얹혔을 뿐 같은 61칸이다.
-        self.assertEqual(
-            61,
-            rebinding['priorFrontierCountyProjection']
-            ['priorRelocationCountProjection']['changedCellCount'],
-        )
+        # 1447 城 단계는 앞선 지도 문서를 다시 고정한다. 옛 劇 재배치의
+        # 61칸 증명은 고정 입력과 재배치 원장으로 따로 검사한다.
+        self.assertEqual(61, len(self.ledger['ownerDelta']))
 
     def test_forged_ledger_hashes_cannot_replace_the_frozen_input(self):
         source, output = copy.deepcopy(self.source), copy.deepcopy(self.result)

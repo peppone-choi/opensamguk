@@ -1,0 +1,794 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "ferry-water-adjudications-v1",
+  "issue": "https://github.com/peppone-choi/opensamguk/issues/826",
+  "waterTerrainCodes": [
+    "0",
+    "3",
+    "4"
+  ],
+  "distanceMetric": "Chebyshev",
+  "policy": {
+    "anchorMoveAllowed": false,
+    "unidentifiedWater": "UNKNOWN",
+    "riverCellRule": "Only the source-backed FERRY anchor cell is changed to RIVER; historical-course and UNKNOWN rows remain exceptions."
+  },
+  "summary": {
+    "ferryCount": 37,
+    "baselineFarCount": 18,
+    "localRiverAnchorCount": 6,
+    "historicalCoursePendingCount": 3,
+    "unknownExceptionCount": 9
+  },
+  "rows": [
+    {
+      "siteId": "mengjin",
+      "nameHan": "孟津",
+      "anchor": {
+        "row": 231,
+        "col": 379
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 231,
+        "col": 379
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "xiaopingjin",
+      "nameHan": "小平津",
+      "anchor": {
+        "row": 231,
+        "col": 383
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 231,
+        "col": 383
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "guandu",
+      "nameHan": "官渡",
+      "anchor": {
+        "row": 233,
+        "col": 403
+      },
+      "baselineWaterDistance": 3,
+      "baselineNearestWaterCell": {
+        "row": 230,
+        "col": 400
+      },
+      "crossedWater": "官渡水",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 47,
+          "quote": "鴻溝自滎陽下分二渠，一爲官渡水是也",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-047.txt",
+          "sha256": "409abf52669831251f71105531cb0bbfa7360b9cee758eb3fd5d1b83060de741",
+          "line": 209
+        }
+      ],
+      "disposition": "HISTORICAL_COURSE_PENDING",
+      "exceptionReason": "官渡水는 黃河에서 갈라진 옛 鴻溝 수계다. CHGIS·譚其驤 축의 220년 물길 판정 전에는 격자 경로를 추정하지 않는다.",
+      "decisionNote": "官渡水는 黃河에서 갈라진 옛 鴻溝 수계다. CHGIS·譚其驤 축의 220년 물길 판정 전에는 격자 경로를 추정하지 않는다.",
+      "currentWaterDistance": 3
+    },
+    {
+      "siteId": "pubanjin",
+      "nameHan": "蒲坂津",
+      "anchor": {
+        "row": 231,
+        "col": 333
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 231,
+        "col": 333
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "doujin",
+      "nameHan": "郖津",
+      "anchor": {
+        "row": 234,
+        "col": 345
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 234,
+        "col": 345
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "shanjin",
+      "nameHan": "陝津",
+      "anchor": {
+        "row": 232,
+        "col": 349
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 232,
+        "col": 349
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "lankou",
+      "nameHan": "濫口",
+      "anchor": {
+        "row": 203,
+        "col": 402
+      },
+      "baselineWaterDistance": 18,
+      "baselineNearestWaterCell": {
+        "row": 221,
+        "col": 420
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "濫口의 건너는 물을 두 사료에서 특정하지 못했다. 이름 口만으로 漳水를 확정하지 않는다.",
+      "currentWaterDistance": 18
+    },
+    {
+      "siteId": "yanjin",
+      "nameHan": "延津",
+      "anchor": {
+        "row": 219,
+        "col": 406
+      },
+      "baselineWaterDistance": 10,
+      "baselineNearestWaterCell": {
+        "row": 229,
+        "col": 406
+      },
+      "crossedWater": "河水",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 47,
+          "quote": "河水經卷縣北，又東至酸棗之延津",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-047.txt",
+          "sha256": "409abf52669831251f71105531cb0bbfa7360b9cee758eb3fd5d1b83060de741",
+          "line": 235
+        }
+      ],
+      "disposition": "HISTORICAL_COURSE_PENDING",
+      "exceptionReason": "漢代 黃河 옛 물길이다. CHGIS·譚其驤 축으로 220년 강줄기 위치를 판정하기 전에는 현대 黃河에 끌어 붙이지 않는다.",
+      "decisionNote": "漢代 黃河 옛 물길이다. CHGIS·譚其驤 축으로 220년 강줄기 위치를 판정하기 전에는 현대 黃河에 끌어 붙이지 않는다.",
+      "currentWaterDistance": 10
+    },
+    {
+      "siteId": "cangtingjin",
+      "nameHan": "倉亭津",
+      "anchor": {
+        "row": 202,
+        "col": 436
+      },
+      "baselineWaterDistance": 3,
+      "baselineNearestWaterCell": {
+        "row": 205,
+        "col": 439
+      },
+      "crossedWater": "河水",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 34,
+          "quote": "河水於范縣東北流爲倉亭津",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-034.txt",
+          "sha256": "c6ac7e4ac949b68132c1563aeb8190a4122b3823441f8cbb8aab3f1fe9c878d8",
+          "line": 256
+        }
+      ],
+      "disposition": "HISTORICAL_COURSE_PENDING",
+      "exceptionReason": "漢代 黃河 옛 물길이다. CHGIS·譚其驤 축으로 220년 강줄기 위치를 판정하기 전에는 현대 黃河에 끌어 붙이지 않는다.",
+      "decisionNote": "漢代 黃河 옛 물길이다. CHGIS·譚其驤 축으로 220년 강줄기 위치를 판정하기 전에는 현대 黃河에 끌어 붙이지 않는다.",
+      "currentWaterDistance": 3
+    },
+    {
+      "siteId": "anfengjin",
+      "nameHan": "安風津",
+      "anchor": {
+        "row": 281,
+        "col": 444
+      },
+      "baselineWaterDistance": 19,
+      "baselineNearestWaterCell": {
+        "row": 298,
+        "col": 463
+      },
+      "crossedWater": "淮水",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 21,
+          "quote": "淮水過安豐東北，又東為安豐津",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-021.txt",
+          "sha256": "1ddc4521d32984a4c90c18b55bbc5606651f45171f4c09d289163af7fe2499a5",
+          "line": 282
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "安風津·安豐津 이표기와 淮水의 직접 결합 근거가 있다. anchor 한 칸만 RIVER로 새기며 전체 淮水 경로는 별도 판정 대상이다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "1"
+    },
+    {
+      "siteId": "boluojin",
+      "nameHan": "薄落津",
+      "anchor": {
+        "row": 183,
+        "col": 423
+      },
+      "baselineWaterDistance": 19,
+      "baselineNearestWaterCell": {
+        "row": 202,
+        "col": 442
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "薄落津의 건너는 물을 두 사료에서 특정하지 못했다. 津 접미만으로 漳水를 확정하지 않는다.",
+      "currentWaterDistance": 19
+    },
+    {
+      "siteId": "liaokou",
+      "nameHan": "遼口",
+      "anchor": {
+        "row": 104,
+        "col": 559
+      },
+      "baselineWaterDistance": 4,
+      "baselineNearestWaterCell": {
+        "row": 100,
+        "col": 557
+      },
+      "crossedWater": "遼水",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 37,
+          "quote": "遼水暴漲，運船自遼口竟至城下",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-037.txt",
+          "sha256": "2a9ac690590c2871d89c5bfe860e4518b3e7581e3a24f55804f701465e6a9d50",
+          "line": 49
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "遼口과 遼水의 직접 결합 근거가 있다. anchor 한 칸만 RIVER로 새긴다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "1"
+    },
+    {
+      "siteId": "anpingkou",
+      "nameHan": "安平口",
+      "anchor": {
+        "row": 116,
+        "col": 597
+      },
+      "baselineWaterDistance": 6,
+      "baselineNearestWaterCell": {
+        "row": 122,
+        "col": 593
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "安平口는 배가 도착한 기록뿐이며 특정 강·바다 건넘은 확인되지 않는다.",
+      "currentWaterDistance": 6
+    },
+    {
+      "siteId": "tajin",
+      "nameHan": "沓津",
+      "anchor": {
+        "row": 147,
+        "col": 534
+      },
+      "baselineWaterDistance": 1,
+      "baselineNearestWaterCell": {
+        "row": 147,
+        "col": 533
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 1
+    },
+    {
+      "siteId": "liangkou",
+      "nameHan": "梁口",
+      "anchor": {
+        "row": 94,
+        "col": 595
+      },
+      "baselineWaterDistance": 19,
+      "baselineNearestWaterCell": {
+        "row": 75,
+        "col": 576
+      },
+      "crossedWater": "沸流水",
+      "evidence": [
+        {
+          "book": "三國志·魏書·毌丘儉傳",
+          "volume": 28,
+          "quote": "進軍沸流水上，大戰梁口",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/sgz-28.txt",
+          "sha256": "775fbbfafba87ba1fa76e83444f9adbe5329667430abf76e2e618f5cb999fb3c",
+          "line": 27
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "沸流水上의 梁口라는 직접 기사다. anchor 한 칸만 RIVER로 새기며 수계 전체를 추정하지 않는다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "1"
+    },
+    {
+      "siteId": "zhanyinkou",
+      "nameHan": "鸇陰口",
+      "anchor": {
+        "row": 195,
+        "col": 230
+      },
+      "baselineWaterDistance": 1,
+      "baselineNearestWaterCell": {
+        "row": 194,
+        "col": 229
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 1
+    },
+    {
+      "siteId": "nanan-xiakou",
+      "nameHan": "南安峽口",
+      "anchor": {
+        "row": 344,
+        "col": 213
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 344,
+        "col": 213
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "dadu",
+      "nameHan": "大渡",
+      "anchor": {
+        "row": 316,
+        "col": 226
+      },
+      "baselineWaterDistance": 28,
+      "baselineNearestWaterCell": {
+        "row": 344,
+        "col": 213
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "成都 북쪽 大渡와 오늘날 大渡河는 동명이지만 이 위치의 동일 수계 근거가 없다.",
+      "currentWaterDistance": 28
+    },
+    {
+      "siteId": "wakou",
+      "nameHan": "瓦口",
+      "anchor": {
+        "row": 316,
+        "col": 272
+      },
+      "baselineWaterDistance": 17,
+      "baselineNearestWaterCell": {
+        "row": 331,
+        "col": 289
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "瓦口는 산간 길목일 가능성이 있으며 口 접미만으로 물길을 만들지 않는다.",
+      "currentWaterDistance": 17
+    },
+    {
+      "siteId": "sikou",
+      "nameHan": "泗口",
+      "anchor": {
+        "row": 259,
+        "col": 493
+      },
+      "baselineWaterDistance": 3,
+      "baselineNearestWaterCell": {
+        "row": 262,
+        "col": 492
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "泗口는 泗水 동쪽·淮水 남쪽이라는 후대 지리 기술이 있으나 건너는 물이 어느 쪽인지 확정되지 않는다.",
+      "currentWaterDistance": 3
+    },
+    {
+      "siteId": "qikou",
+      "nameHan": "祁口",
+      "anchor": {
+        "row": 298,
+        "col": 366
+      },
+      "baselineWaterDistance": 3,
+      "baselineNearestWaterCell": {
+        "row": 295,
+        "col": 368
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "祁口의 건너는 물을 두 사료에서 특정하지 못했다.",
+      "currentWaterDistance": 3
+    },
+    {
+      "siteId": "xunkou",
+      "nameHan": "尋口",
+      "anchor": {
+        "row": 309,
+        "col": 376
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 309,
+        "col": 376
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "hanjin",
+      "nameHan": "漢津",
+      "anchor": {
+        "row": 319,
+        "col": 376
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 319,
+        "col": 376
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "fankou",
+      "nameHan": "樊口",
+      "anchor": {
+        "row": 325,
+        "col": 418
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 325,
+        "col": 418
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "xiakou",
+      "nameHan": "峽口",
+      "anchor": {
+        "row": 317,
+        "col": 353
+      },
+      "baselineWaterDistance": 2,
+      "baselineNearestWaterCell": {
+        "row": 317,
+        "col": 351
+      },
+      "crossedWater": "大江",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 78,
+          "quote": "出西陵峽口，流稍緩",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-078.txt",
+          "sha256": "0f9fd7dfead9ce5aa8bab9c1a4c4f5c1e74724bbbcd7a4e4472adccd70e68278",
+          "line": 250
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "西陵峽口를 지나는 大江의 직접 지리 서술이다. anchor 한 칸만 RIVER로 새긴다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "2"
+    },
+    {
+      "siteId": "lukou",
+      "nameHan": "陸口",
+      "anchor": {
+        "row": 336,
+        "col": 396
+      },
+      "baselineWaterDistance": 1,
+      "baselineNearestWaterCell": {
+        "row": 335,
+        "col": 396
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 1
+    },
+    {
+      "siteId": "oukou",
+      "nameHan": "漚口",
+      "anchor": {
+        "row": 403,
+        "col": 394
+      },
+      "baselineWaterDistance": 21,
+      "baselineNearestWaterCell": {
+        "row": 406,
+        "col": 415
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "漚口의 건너는 물을 두 사료에서 특정하지 못했다.",
+      "currentWaterDistance": 21
+    },
+    {
+      "siteId": "xiaoyaojin",
+      "nameHan": "逍遙津",
+      "anchor": {
+        "row": 294,
+        "col": 463
+      },
+      "baselineWaterDistance": 4,
+      "baselineNearestWaterCell": {
+        "row": 298,
+        "col": 463
+      },
+      "crossedWater": "施水",
+      "evidence": [
+        {
+          "book": "水經注·施水",
+          "volume": 32,
+          "quote": "施水又東逕合肥縣城南，城居四水中，又東有逍遙津，水上舊有梁",
+          "sourceUrl": "https://ctext.org/text.pl?if=en&node=570162&remap=gb"
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "施水 위의 逍遙津 다리를 직접 적는다. anchor 한 칸만 RIVER로 새긴다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "1"
+    },
+    {
+      "siteId": "guokou",
+      "nameHan": "渦口",
+      "anchor": {
+        "row": 271,
+        "col": 461
+      },
+      "baselineWaterDistance": 11,
+      "baselineNearestWaterCell": {
+        "row": 269,
+        "col": 472
+      },
+      "crossedWater": "渦水·淮水合流",
+      "evidence": [
+        {
+          "book": "讀史方輿紀要",
+          "volume": 8,
+          "quote": "渦口，渦水入淮之口",
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/dsfy-008.txt",
+          "sha256": "02cb36b350dd030ef5b43184a6d3298ddb8ad1dc6dc2c81b0285764126d8b01d",
+          "line": 23
+        }
+      ],
+      "disposition": "LOCAL_RIVER_CELL",
+      "exceptionReason": null,
+      "decisionNote": "渦水가 淮水에 드는 입구라는 직접 서술이다. anchor 한 칸만 RIVER로 새기며 합류부 전체는 추정하지 않는다.",
+      "currentWaterDistance": 0,
+      "terrainBefore": "1"
+    },
+    {
+      "siteId": "hengjiangjin",
+      "nameHan": "橫江津",
+      "anchor": {
+        "row": 299,
+        "col": 483
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 299,
+        "col": 483
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "danglikou",
+      "nameHan": "當利口",
+      "anchor": {
+        "row": 297,
+        "col": 484
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 297,
+        "col": 484
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "dongpu",
+      "nameHan": "洞浦",
+      "anchor": {
+        "row": 300,
+        "col": 483
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 300,
+        "col": 483
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "shukou",
+      "nameHan": "舒口",
+      "anchor": {
+        "row": 301,
+        "col": 464
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 301,
+        "col": 464
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "wuqiangkou",
+      "nameHan": "無彊口",
+      "anchor": {
+        "row": 308,
+        "col": 460
+      },
+      "baselineWaterDistance": 6,
+      "baselineNearestWaterCell": {
+        "row": 302,
+        "col": 465
+      },
+      "crossedWater": "UNKNOWN",
+      "evidence": [],
+      "disposition": "UNKNOWN_EXCEPTION",
+      "exceptionReason": "無彊口의 건너는 물을 두 사료에서 특정하지 못했다.",
+      "currentWaterDistance": 6
+    },
+    {
+      "siteId": "wankou",
+      "nameHan": "皖口",
+      "anchor": {
+        "row": 324,
+        "col": 458
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 324,
+        "col": 458
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "ruxukou",
+      "nameHan": "濡須口",
+      "anchor": {
+        "row": 309,
+        "col": 476
+      },
+      "baselineWaterDistance": 0,
+      "baselineNearestWaterCell": {
+        "row": 309,
+        "col": 476
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 0
+    },
+    {
+      "siteId": "jukou",
+      "nameHan": "擧口",
+      "anchor": {
+        "row": 321,
+        "col": 418
+      },
+      "baselineWaterDistance": 1,
+      "baselineNearestWaterCell": {
+        "row": 322,
+        "col": 417
+      },
+      "crossedWater": "NOT_REQUIRED",
+      "evidence": [],
+      "disposition": "ALREADY_NEAR_WATER",
+      "exceptionReason": null,
+      "currentWaterDistance": 1
+    }
+  ],
+  "baselineMainCommit": "bbe096e4531fc339798bc2f3649358547ec97a94"
+}
