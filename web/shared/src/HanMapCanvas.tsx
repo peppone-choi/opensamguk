@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { cityFootprintBlock } from './iso/cityFootprint';
+import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 import {
   cellToScreen,
   clampView,
@@ -322,6 +323,11 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   commanderyVisibility?: ReadonlyMap<number, CommanderyVisibility> | null;
   /** `FOG` 군국을 짙게 덮을지(`dim`), 지형째로 지울지(`hidden`). */
   fogMode?: 'dim' | 'hidden';
+  /**
+   * 군단 겹(#465). 무엇을 보일지는 서버 시야 투영이 정한다 — 이 겹은 받은 것만 그린다.
+   * 내 군단은 행군 경로와 요격 범위까지, 남의 군단은 깃발과 이름표만.
+   */
+  corps?: readonly MapCorpsOverlay[] | null;
   hideCityNames?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -1567,6 +1573,7 @@ export function HanMapCanvas({
   showCityFootprint = false,
   commanderyVisibility = null,
   fogMode = 'dim',
+  corps = null,
   currentCityId,
   selectedCityId,
   hideCityNames = false,
@@ -1888,6 +1895,8 @@ export function HanMapCanvas({
   }) : [], [battlefieldTargets, loadedTiles]);
   const projectedBattlefieldsRef = useRef(projectedBattlefields);
   projectedBattlefieldsRef.current = projectedBattlefields;
+  const corpsRef = useRef(corps);
+  corpsRef.current = corps;
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const terrain = terrainRef.current;
@@ -1924,7 +1933,13 @@ export function HanMapCanvas({
       ctx.restore();
       battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
     }
+    if (ctx && corpsRef.current?.length) drawCorpsOverlay(ctx, corpsRef.current, view, sizeRef.current.dpr);
   }, [administrativeLayer]);
+
+  // 군단 겹이 바뀌면 다시 그린다 — 순 갱신마다 새 배열이 온다.
+  useEffect(() => {
+    render();
+  }, [corps, render]);
 
   useEffect(() => {
     let alive = true;

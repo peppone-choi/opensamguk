@@ -229,6 +229,7 @@ export {
   cityFootprintSpan,
   type CellBlock,
 } from './iso/cityFootprint';
+export { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 export {
   countyGlossForJurisdiction,
   splitCountyGloss,
