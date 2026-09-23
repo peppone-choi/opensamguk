@@ -118,6 +118,8 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     const march = marchState();
     return march.edgeIndex > 0 || march.paidMm > 0 || march.stop === 'ARRIVED';
   }, { timeout: 600_000, intervals: [10_000] }).toBe(true);
+  const activeWarAfterFirstBoundary = Number(sql(`SELECT count(*) FROM diplomacy WHERE world_id=${worldId} AND state_code=0 AND term>0;`));
+  expect(activeWarAfterFirstBoundary, 'war relations survive the first monthly settlement').toBe(30);
 
   const siegeSummary = () => JSON.parse(sql(`SELECT json_build_object('active', count(*) FILTER (WHERE status='ACTIVE'),
     'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM hwiha_siege WHERE world_id=${worldId};`)) as
@@ -201,10 +203,9 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
         AND (l.meta->'refs'->>'countyId')::integer=c.id);`));
   expect(abandonedWithGarrison, 'a captured county with occupying troops became neutral').toBe(0);
   const activeWarRelations = Number(sql(`SELECT count(*) FROM diplomacy WHERE world_id=${worldId} AND state_code=0 AND term>0;`));
-  expect(activeWarRelations, 'the 30 directed war relations survive monthly settlement').toBe(30);
   await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, march: marchState(),
     siege: siegeSummary(), npcBattles: npcBattles(), liveEncounterCount: encounterIds.size,
-    repeatedNeutralCaptures, abandonedWithGarrison, activeWarRelations,
+    repeatedNeutralCaptures, abandonedWithGarrison, activeWarAfterFirstBoundary, activeWarRelations,
     yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);

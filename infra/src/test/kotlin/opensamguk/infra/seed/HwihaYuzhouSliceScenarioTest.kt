@@ -152,7 +152,8 @@ class HwihaYuzhouSliceScenarioTest {
     private companion object {
         const val JU = "예주"
         const val START_YEAR = 190
-        const val WAR_MONTHS = 36
+        // Monthly settlement caps an active war to 13 months before decrementing.
+        const val WAR_MONTHS = 13
         val COLORS = listOf("#8B1E1E", "#1E4F8B", "#2E7D32", "#B8860B", "#6A1B9A", "#00695C")
         /** 합성 NPC 주공 능력치(통솔·무력·지력·정치·매력) — 게임 기획 값, 사료 아님. */
         val STATS = listOf(70, 65, 65, 60, 70)
