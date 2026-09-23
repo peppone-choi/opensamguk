@@ -11,6 +11,16 @@ class HwihaMarchReactionInterpreterTest {
     private val route = fixture.route()
     private val policy = HwihaMarchReactionInterpreter(fixture.topology, fixture.metrics, fixture.bundle.commanderyIndex)
 
+    @Test fun `policy inventory rebuild preserves installed schemes`() {
+        val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.start,
+            fixture.person(2, 2, route.destinationCounty) to route.destination))
+        val scheme = HwihaInstalledScheme("scheme-1", 2, 2, route.first.id, HwihaPhase(200, 1, 1))
+        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
+            HwihaMarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
+        assertEquals(HwihaReactionInventory.Result.UNCHANGED, HwihaReactionInventory(world, ChangeRecorder()).rebuild())
+        assertEquals(listOf(scheme), HwihaMarchReactions.read(world.getState().meta)?.installedSchemes)
+    }
+
     @Test fun `entering an enemy installed scheme province causes a contact stop`() {
         val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.start,
             fixture.person(2, 2, route.destinationCounty) to route.destination),
