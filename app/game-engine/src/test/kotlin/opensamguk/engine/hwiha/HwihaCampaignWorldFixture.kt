@@ -125,8 +125,18 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
         world.setCurrentDate(next.year, next.month, next.phase)
     }
 
-    fun movement(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
-        HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells)
+    fun movement(world: InMemoryTurnWorld, recorder: ChangeRecorder, outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE) =
+        HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes)
+
+    /** Captures the war-outcome boundary calls; the renown writer itself belongs to the records stream. */
+    class RecordingOutcomes : HwihaWarOutcomeListener {
+        val encounters = mutableListOf<Pair<List<Int>, List<Int>>>()
+        val captures = mutableListOf<List<Any>>()
+        override fun onEncounterResolved(winnerIds: List<Int>, loserIds: List<Int>) { encounters += winnerIds to loserIds }
+        override fun onCountyCaptured(countyId: Int, previousNationId: Int, captorNationId: Int, capturerIds: List<Int>) {
+            captures += listOf(countyId, previousNationId, captorNationId, capturerIds)
+        }
+    }
 
     companion object {
         val NO_INPUT = ReservedTurn("휴식", "{}", rowExists = false)

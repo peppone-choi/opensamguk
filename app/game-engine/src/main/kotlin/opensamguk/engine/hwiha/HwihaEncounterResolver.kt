@@ -22,6 +22,7 @@ class HwihaEncounterResolver(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     sealed interface Resolution {
         data object NotPending : Resolution
@@ -133,9 +134,9 @@ class HwihaEncounterResolver(
                 meta + (HwihaCorpsMarchState.META_KEY to march.copy(checkpoint = checkpoint.copy(stop = stop)).toMetaValue())
             }
         }
-        // 6. Renown events (once per kind per month) and the provisional captive marker.
-        for (winner in result.winners) recordRenown(winner, HwihaRenownEvents.Kind.BATTLE_VICTORY)
-        for (loser in result.losers) recordRenown(loser, HwihaRenownEvents.Kind.BATTLE_DEFEAT)
+        // 6. Renown events go through the war-outcome boundary exactly once; a battle with no winner is not reported.
+        if (result.winners.isNotEmpty()) outcomes.onEncounterResolved(result.winners, result.losers)
+        // The provisional captive marker.
         for ((captive, captor) in result.captives) {
             updateMeta(captive) { meta -> meta + (CAPTIVE_KEY to linkedMapOf("version" to 1, "captorGeneralId" to captor,
                 "encounterId" to encounter.encounterId, "capturedAt" to now.toMetaValue())) }
@@ -166,11 +167,6 @@ class HwihaEncounterResolver(
         updateMeta(participant.commanderGeneralId) { meta ->
             meta - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY
         }
-    }
-
-    private fun recordRenown(generalId: Int, kind: HwihaRenownEvents.Kind) {
-        val state = world.getState()
-        updateMeta(generalId) { meta -> HwihaRenownEvents.record(meta, kind, state.currentYear, state.currentMonth) ?: meta }
     }
 
     private fun updateMeta(generalId: Int, change: (Map<String, Any?>) -> Map<String, Any?>) {

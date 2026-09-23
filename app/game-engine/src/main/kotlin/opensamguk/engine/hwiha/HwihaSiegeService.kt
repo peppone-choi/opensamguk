@@ -9,7 +9,7 @@ import opensamguk.logic.war.hwiha.*
 import opensamguk.logic.world.*
 
 /**
- * 縣城 공성(§5.1 6단계·§5.2 2단계). 상태는 V60 `hwiha_siege` 행이고 쓰기는 world dirty 집합 → flush 뿐이다.
+ * 縣城 공성(§5.1 6단계·§5.2 2단계). 상태는 V61 `hwiha_siege` 행이고 쓰기는 world dirty 집합 → flush 뿐이다.
  *
  * - **포위 시작**: 출전 군단이 목적지 省에 도착했고 그 省에 적대(교전 중이거나 무주) 縣治가 있으며 적 군단이 없으면
  *   개인 턴 이동 단계 뒤에 포위를 건다. 수비병이 0 이면 지킬 사람이 없어 바로 넘어간다(임시 규칙).
@@ -26,6 +26,7 @@ class HwihaSiegeService(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     enum class Failure(val message: String) {
         WRONG_RULE_PROFILE("이 세계에서는 공성 입력을 사용할 수 없습니다."),
@@ -169,7 +170,6 @@ class HwihaSiegeService(
         if (remaining.isEmpty()) {
             endDeployment(corps)
             lift(next, "BESIEGER_DESTROYED")
-            recordRenown(actorId, HwihaRenownEvents.Kind.BATTLE_DEFEAT)
             log(actorId, "${city.name} 縣城 강공에서 부대를 모두 잃었습니다(${result.rounds}회차).")
             return null
         }
@@ -178,7 +178,6 @@ class HwihaSiegeService(
             log(actorId, "${city.name} 縣城을 강공으로 함락했습니다(${result.rounds}회차).")
             capture(next, "ASSAULT")
         } else {
-            recordRenown(actorId, HwihaRenownEvents.Kind.BATTLE_DEFEAT)
             log(actorId, "${city.name} 縣城 강공이 물리쳐졌습니다(${result.rounds}회차).")
         }
         return null
@@ -263,10 +262,8 @@ class HwihaSiegeService(
                 "disarmedToCivilians" to settlement.disarmedToCivilians))))
         // The expedition achieved its objective: the corps disbands in the captured county.
         corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }?.let(::endDeployment)
-        recordRenown(siege.besiegerGeneralId, HwihaRenownEvents.Kind.COUNTY_CAPTURED)
-        world.getNationById(previousOwner)?.chiefGeneralId?.takeIf { it > 0 }?.let {
-            recordRenown(it, HwihaRenownEvents.Kind.COUNTY_LOST)
-        }
+        // Exactly once, right after the ownership transfer.
+        outcomes.onCountyCaptured(before.id, previousOwner, siege.besiegerNationId, listOf(siege.besiegerGeneralId))
         world.pushLog(LogEntryDraft(scope = "general", category = "action",
             text = "${before.name} 縣이 넘어왔습니다.", generalId = siege.besiegerGeneralId,
             nationId = siege.besiegerNationId))
@@ -294,11 +291,6 @@ class HwihaSiegeService(
                 if (it.orderId == corps.orderId) it.copy(bugokIds = remaining.sorted()) else it
             }).toMetaValue())
         }
-    }
-
-    private fun recordRenown(generalId: Int, kind: HwihaRenownEvents.Kind) {
-        val state = world.getState()
-        updateMeta(generalId) { meta -> HwihaRenownEvents.record(meta, kind, state.currentYear, state.currentMonth) ?: meta }
     }
 
     private fun updateMeta(generalId: Int, change: (Map<String, Any?>) -> Map<String, Any?>) {

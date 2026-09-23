@@ -219,7 +219,7 @@ data class DirtyState(
     val battlePlans: List<BattlePlan> = emptyList(),
     val createdBattlePlans: List<BattlePlan> = emptyList(),
     val deletedBattlePlans: List<Int> = emptyList(),
-    /** HWIHA 포위(V60) — step-8j(8i 뒤), CREATE → UPDATE. 행은 지우지 않는다. */
+    /** HWIHA 포위(V61) — step-8j(8i 뒤), CREATE → UPDATE. 행은 지우지 않는다. */
     val hwihaSieges: List<HwihaSiege> = emptyList(),
     val createdHwihaSieges: List<HwihaSiege> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),

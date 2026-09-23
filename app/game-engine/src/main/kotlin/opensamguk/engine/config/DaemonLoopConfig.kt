@@ -315,6 +315,8 @@ class DaemonLoopConfig {
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
+        // 전쟁 결과 → 명망 사건 경계. 기록 스트림(HwihaRenownEventRecorder)이 병합되면 여기 한 곳만 바꾼다.
+        val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener = opensamguk.engine.hwiha.HwihaWarOutcomeListener.NONE
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
@@ -334,6 +336,7 @@ class DaemonLoopConfig {
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
             hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
+            hwihaWarOutcomes = hwihaWarOutcomes,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -480,7 +483,7 @@ class DaemonLoopConfig {
             hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(world, recorder,
-                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells)
+                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes)
                 movement::onTurn
             } else { _, _, _ -> },
             hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
@@ -525,7 +528,7 @@ class DaemonLoopConfig {
             hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
                 opensamguk.engine.hwiha.HwihaPhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
-                    artifacts.provinceCells, spatialSupplyNetworkProvider)
+                    artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
             } else null,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,

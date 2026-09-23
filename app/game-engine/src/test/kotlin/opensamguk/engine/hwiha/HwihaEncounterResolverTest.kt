@@ -29,9 +29,11 @@ class HwihaEncounterResolverTest {
         return world to recorder
     }
 
+    private val outcomes = HwihaCampaignWorldFixture.RecordingOutcomes()
+
     private fun resolveNextTurn(world: InMemoryTurnWorld, recorder: ChangeRecorder) {
         fixture.nextPhase(world)
-        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        fixture.movement(world, recorder, outcomes).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
     }
 
     @Test fun `strong attacker wins clears both sides and resumes its march next turn`() {
@@ -49,8 +51,7 @@ class HwihaEncounterResolverTest {
         assertNotEquals(LandMarchStop.ENCOUNTER, march.checkpoint.stop)
         val projection = HwihaDeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection()!!
         assertFalse(projection.people.single { it.id == 1 }.inBattle, "BATTLE_PENDING cleared")
-        assertEquals(mapOf("warMerit" to 1), tally(world, 1).filterValues { it != 0 })
-        assertEquals(mapOf("defeat" to 1), tally(world, 100).filterValues { it != 0 })
+        assertEquals(listOf(listOf(1) to listOf(100)), outcomes.encounters, "renown boundary called exactly once")
         // The march continues on the attacker's following turn.
         fixture.nextPhase(world)
         fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
@@ -68,19 +69,20 @@ class HwihaEncounterResolverTest {
         assertFalse(HwihaCorpsOrder.META_KEY in attacker || HwihaCorpsMarchState.META_KEY in attacker)
         assertNotNull(HwihaDeploymentState.read(world.getGeneralById(100)!!.meta), "winner defender keeps its corps")
         assertTrue(world.getBugokById(7)!!.troops < 100)
-        assertEquals(mapOf("defeat" to 1), tally(world, 1).filterValues { it != 0 })
+        assertEquals(listOf(listOf(100) to listOf(1)), outcomes.encounters)
     }
 
-    @Test fun `same sealed battle resolves byte-identically and a second battle in the month adds no renown`() {
+    @Test fun `same sealed battle resolves byte-identically and the renown writer is not called twice`() {
         val records = List(2) {
             val (world, recorder) = sealed(1000, 100)
             resolveNextTurn(world, recorder)
             world.getGeneralById(1)!!.meta[HwihaEncounterResolver.BATTLE_RECORD_KEY]
         }
         assertEquals(records[0], records[1])
+        assertEquals(2, outcomes.encounters.size, "one call per resolved battle")
         val meta = mapOf<String, Any?>()
-        val once = HwihaRenownEvents.record(meta, HwihaRenownEvents.Kind.BATTLE_VICTORY, 200, 1)!!
-        assertNull(HwihaRenownEvents.record(once, HwihaRenownEvents.Kind.BATTLE_VICTORY, 200, 1))
+        val once = HwihaRenownEvents.record(meta, HwihaRenownEvents.Kind.REWARD_RECEIVED, 200, 1)!!
+        assertNull(HwihaRenownEvents.record(once, HwihaRenownEvents.Kind.REWARD_RECEIVED, 200, 1))
     }
 
     @Test fun `an unprepared encounter stays pending instead of fabricating a result`() {
@@ -97,7 +99,4 @@ class HwihaEncounterResolverTest {
             HwihaEncounterResolver(world, recorder, fixture.topology, fixture.metrics, fixture.cells).resolvePending(100))
     }
 
-    private fun tally(world: InMemoryTurnWorld, id: Int): Map<String, Int> =
-        (world.getGeneralById(id)!!.meta[HwihaRenownEvents.TALLY_META_KEY] as? Map<*, *>).orEmpty()
-            .entries.associate { it.key as String to (it.value as Number).toInt() }
 }

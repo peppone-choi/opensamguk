@@ -32,9 +32,11 @@ class HwihaSiegeServiceTest {
         return world to recorder
     }
 
+    private val outcomes = HwihaCampaignWorldFixture.RecordingOutcomes()
+
     private fun boundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, times: Int = 1) = repeat(times) {
         fixture.nextPhase(world)
-        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder)
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells, outcomes = outcomes).run(world, recorder)
     }
 
     @Test fun `a starved county surrenders on the fourth boundary and keeps its warehouse in the county`() {
@@ -50,9 +52,10 @@ class HwihaSiegeServiceTest {
         assertEquals(0, city.defence); assertEquals(1100, city.population, "garrison disarmed into civilians")
         assertEquals(HwihaResources(), HwihaCountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
         assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
-        assertEquals(1, (world.getGeneralById(1)!!.meta[HwihaRenownEvents.TALLY_META_KEY] as Map<*, *>)["warMerit"])
+        assertEquals(listOf(listOf<Any>(county, 2, 1, listOf(1))), outcomes.captures, "capture reported exactly once")
         boundary(world, recorder)
         assertEquals(4, world.getHwihaSiege(county)!!.turns, "a fallen siege is not settled again")
+        assertEquals(1, outcomes.captures.size)
     }
 
     @Test fun `a fed garrison eats from its warehouse through the settlement boundary`() {

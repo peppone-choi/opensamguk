@@ -24,10 +24,11 @@ class HwihaPhaseBoundary(
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
     private val spatialSupplyNetwork: () -> SpatialSupplyNetwork? = { null },
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     fun run(world: InMemoryTurnWorld, recorder: ChangeRecorder) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
-        val siege = HwihaSiegeService(world, recorder, topology, metrics, cells)
+        val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
         siege.settleBoundary()
         recomputeSupply(world, recorder, siege.besiegedCountyIds())
     }

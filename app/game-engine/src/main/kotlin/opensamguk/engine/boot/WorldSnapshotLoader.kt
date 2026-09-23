@@ -298,7 +298,7 @@ class WorldSnapshotLoader(
         worldId.value,
     )
 
-    /** HWIHA 포위(V60) 적재 — 끝난 포위도 조회·기록용으로 싣는다. 행 0 이면 빈 목록. */
+    /** HWIHA 포위(V61) 적재 — 끝난 포위도 조회·기록용으로 싣는다. 행 0 이면 빈 목록. */
     private fun loadHwihaSieges(): List<opensamguk.engine.turn.HwihaSiege> = jdbc.query(
         "SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id, " +
             "defender_nation_id, approach_province_id, started_year, started_month, started_phase, settled_year, settled_month, " +

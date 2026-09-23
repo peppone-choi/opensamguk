@@ -3,26 +3,24 @@ package opensamguk.logic.input
 /**
  * 명망 사건 기록기 — 월단평([HwihaRenownAssessment])이 다음 월 경계에 읽어 비우는 집계에 사건을 한 건 더한다.
  *
- * 순수 함수다: 장수 meta 를 받아 새 meta 를 돌려준다. 저장(ChangeRecorder)은 호출부가 한다. 전투 정산,
- * 縣 점령·상실, 상사(賞賜)가 모두 이 함수 하나로 기록한다 — 기록 규칙이 한 곳에만 있게 한다.
+ * 순수 함수다: 장수 meta 를 받아 새 meta 를 돌려준다. 저장(ChangeRecorder)은 호출부가 한다. 지금 쓰는 곳은
+ * 상사(賞賜)의 결속 사건뿐이다.
  *
  * **같은 종류는 한 달에 한 번만** 센다(2026-09-23 사용자 지시). 종류별 마지막 기록 달을 [STAMPS_META_KEY]
- * 에 남긴다. 집계는 월단평이 비우지만 도장은 남으므로, 같은 달 두 번째 전투가 전공을 또 쌓지 않는다.
- * 서로 다른 종류(예: 전투 승리와 縣 점령)는 같은 집계 칸(전공)에 각각 한 번씩 들어갈 수 있다.
+ * 에 남긴다. 집계는 월단평이 비우지만 도장은 남으므로, 같은 달 두 번째 상사가 결속 사건을 또 쌓지 않는다.
  */
 object HwihaRenownEvents {
-    /** 월단평이 읽는 집계 키 — 엔진 `HwihaMonthlyAssessment.TALLY_META_KEY` 가 이 값을 가리킨다. */
+    /** 월단평이 읽는 집계 키 — 엔진 `HwihaMonthlyAssessment.TALLY_META_KEY` 와 같은 값이어야 한다. */
     const val TALLY_META_KEY = "hwihaRenownTally"
 
     /** 종류별 마지막 기록 달(`YYYY-MM`). 월단평이 지우지 않는다. */
     const val STAMPS_META_KEY = "hwihaRenownEventStamps"
 
-    /** 사건 종류와 그것이 들어가는 집계 칸([HwihaRenownAssessment.Tally] 필드 이름). */
+    /**
+     * 사건 종류와 그것이 들어가는 집계 칸([HwihaRenownAssessment.Tally] 필드 이름). 전공·패전·縣 점령/상실은 엔진의
+     * 전쟁 결과 경계(`HwihaWarOutcomeListener`)를 거쳐 기록 스트림이 쓴다 — 여기에는 상사(결속 사건)만 둔다.
+     */
     enum class Kind(val tallyField: String) {
-        BATTLE_VICTORY("warMerit"),
-        BATTLE_DEFEAT("defeat"),
-        COUNTY_CAPTURED("warMerit"),
-        COUNTY_LOST("defeat"),
         REWARD_RECEIVED("bondEvent"),
     }
 

@@ -34,7 +34,7 @@ data class WorldSnapshot(
     val operationUnits: List<OperationUnit> = emptyList(),
     /** Phase 4X-C — 미소비 출병 계획(부팅·rehydrate 적재, `resolved_year IS NULL` 만). */
     val battlePlans: List<BattlePlan> = emptyList(),
-    /** HWIHA 縣城 포위(V60) — 끝난 포위도 조회용으로 남는다. */
+    /** HWIHA 縣城 포위(V61) — 끝난 포위도 조회용으로 남는다. */
     val hwihaSieges: List<HwihaSiege> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
@@ -143,7 +143,7 @@ class InMemoryTurnWorld(
     private val createdBattlePlanIds = LinkedHashSet<Int>()
     private val deletedBattlePlanIds = LinkedHashSet<Int>()
     private var maxBattlePlanId: Int = 0
-    // HWIHA 포위(V60) — 縣治 城 id 키. 행은 지우지 않고 상태만 바꾼다(같은 縣의 새 포위는 덮어쓴다).
+    // HWIHA 포위(V61) — 縣治 城 id 키. 행은 지우지 않고 상태만 바꾼다(같은 縣의 새 포위는 덮어쓴다).
     private val hwihaSieges = java.util.TreeMap<Int, HwihaSiege>()
     private val dirtyHwihaSiegeIds = LinkedHashSet<Int>()
     private val createdHwihaSiegeIds = LinkedHashSet<Int>()
@@ -420,7 +420,7 @@ class InMemoryTurnWorld(
         for (id in goneBugok) { bugoks.remove(id); dirtyBugokIds.remove(id); createdBugokIds.remove(id); deletedBugokIds.remove(id) }
         // 남의 부곡이 사라진 가신을 지휘하고 있었다면(다른 주인 — 이 절편엔 없지만 방어) commander 를 비운다.
         for (b in bugoks.values.filter { it.commanderRetainerId != null && it.commanderRetainerId in gone }) updateBugok(b.copy(commanderRetainerId = null))
-        // V60 포위 행은 포위 장수 FK CASCADE 로 DB 에서 지워진다 — 메모리에서도 같이 내린다(pending 작업 0).
+        // V61 포위 행은 포위 장수 FK CASCADE 로 DB 에서 지워진다 — 메모리에서도 같이 내린다(pending 작업 0).
         for (county in hwihaSieges.values.filter { it.besiegerGeneralId == generalId }.map { it.countyId }) {
             hwihaSieges.remove(county); dirtyHwihaSiegeIds.remove(county); createdHwihaSiegeIds.remove(county)
         }

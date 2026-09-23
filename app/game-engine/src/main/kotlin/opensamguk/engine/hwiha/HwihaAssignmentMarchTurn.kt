@@ -12,19 +12,20 @@ class HwihaAssignmentMarchTurn(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: HwihaTurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // §5.1 step 5: a sealed encounter resolves on the attacker's turn whatever it reserved. The battle
         // ends this turn's movement; an unprepared battle stays pending and the march reports it below.
-        if (HwihaEncounterResolver(world, recorder, topology, metrics, cells).resolvePending(generalId)
+        if (HwihaEncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)
             is HwihaEncounterResolver.Resolution.Resolved) return
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
         if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
-            val siege = HwihaSiegeService(world, recorder, topology, metrics, cells)
+            val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
             if (siege.startIfArrived(generalId) && isUnowned(generalId)) siege.npcAct(generalId)
             return
         }

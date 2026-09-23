@@ -292,7 +292,7 @@ open class JdbcFlushExecutor(
             if (payload.createdBattlePlans.isNotEmpty()) battlePlanCreateMany(payload.worldId, payload.createdBattlePlans)
             if (payload.battleReplayInserts.isNotEmpty()) battleReplayInsertMany(payload.worldId, payload.battleReplayInserts)
 
-            // 8j. HWIHA 포위 채널(V60): 행을 지우지 않는다 — CREATE → UPDATE. 5단계 general DELETE 의 CASCADE 로
+            // 8j. HWIHA 포위 채널(V61): 행을 지우지 않는다 — CREATE → UPDATE. 5단계 general DELETE 의 CASCADE 로
             //     사라진 행은 엔진 메모리에서도 함께 내렸으므로 pending 작업이 남지 않는다.
             if (payload.createdHwihaSieges.isNotEmpty()) hwihaSiegeCreateMany(payload.worldId, payload.createdHwihaSieges)
             if (payload.updatedHwihaSieges.isNotEmpty()) hwihaSiegeUpdate(payload.worldId, payload.updatedHwihaSieges)
@@ -1837,7 +1837,7 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general_bugok", FlushVerb.UPDATE, rows.size))
     }
 
-    // --- step 8j: HWIHA 포위 채널 (V60) --------------------------------------------------------------
+    // --- step 8j: HWIHA 포위 채널 (V61) --------------------------------------------------------------
     private fun hwihaSiegeParams(worldId: WorldId, r: HwihaSiegeRow): MapSqlParameterSource = MapSqlParameterSource()
         .addValue("world_id", worldId.value).addValue("county_id", r.countyId).addValue("status", r.status)
         .addValue("besieger_general_id", r.besiegerGeneralId).addValue("besieger_owner_general_id", r.besiegerOwnerGeneralId)
@@ -3071,7 +3071,7 @@ data class FlushPayload(
     val updatedBattlePlans: List<BattlePlanRow> = emptyList(),
     val deletedBattlePlanIds: List<Int> = emptyList(),
     val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
-    // --- HWIHA 포위(V60, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
+    // --- HWIHA 포위(V61, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
     val createdHwihaSieges: List<HwihaSiegeRow> = emptyList(),
     val updatedHwihaSieges: List<HwihaSiegeRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),

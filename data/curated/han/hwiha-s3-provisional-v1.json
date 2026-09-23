@@ -11,7 +11,8 @@
     "loserDefender": "제자리에 남고 출전만 끝낸다(궤주). 물러날 省을 고르는 규칙은 없다.",
     "winnerAttacker": "원래 명령을 유지하고 다음 턴 그 省에서 행군을 이어 간다.",
     "captives": "궤멸한 쪽 지휘관이 반대편 승자의 포로 표식(hwihaCaptive)을 받는다. 공격 승리면 공격 지휘관, 방어 승리면 버틴 방어 지휘관 중 가장 작은 id. 표식 외 효과(행동 제한·설득·석방)는 없다.",
-    "unpreparedBattle": "병종 미지원·전장 없음으로 기록이 없는 조우는 결과를 지어내지 않고 보류로 남는다."
+    "unpreparedBattle": "병종 미지원·전장 없음으로 기록이 없는 조우는 결과를 지어내지 않고 보류로 남는다.",
+    "renown": "승자가 있는 조우만 HwihaWarOutcomeListener.onEncounterResolved(승자, 패자) 를 한 번 부른다(양쪽 모두 퇴각·궤멸한 결말은 부르지 않는다)."
   },
   "siege": {
     "status": "PROVISIONAL — 사용자 결정 대기",
@@ -35,7 +36,7 @@
     "npcAssaultMinRatio": 3,
     "npcNote": "NPC 포위 지휘관은 항복 권고가 통하면 권고, 병력이 수비병의 3배 이상이면 강공, 아니면 포위만 유지한다.",
     "captureEffects": "함락 뒤 포위 군단의 출병은 끝나고(목표 달성), 縣 supplyState 는 다음 순 경계 재계산까지 0 이다. 수도 함락 시 수도 이전·국고 이동은 하지 않는다(미구현).",
-    "renownOnCapture": "점령한 지휘관 COUNTY_CAPTURED(전공), 잃은 세력의 군주(nation.chiefGeneralId) COUNTY_LOST(패전).",
+    "renownOnCapture": "縣 소유가 넘어간 직후 HwihaWarOutcomeListener.onCountyCaptured(縣, 이전 세력, 점령 세력, [포위 지휘관]) 를 한 번 부른다. 명망 집계 기록은 기록 스트림 구현이 맡는다(이 브랜치 기본값은 무동작). 강공 실패는 명망 사건을 내지 않는다.",
     "siegeTimelineMax": 36
   },
   "salary": {

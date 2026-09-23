@@ -14,6 +14,7 @@ class HwihaSiegeHandler(
     private val topology: StrategicTopologySnapshot?,
     private val metrics: LandMarchMetricSnapshot?,
     private val cells: HanProvinceCellIndex?,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     fun handle(inputId: String, actorId: Int, argJson: String?): HwihaTurnOutcome {
         if (world.ruleProfile != RuleProfile.HWIHA)
@@ -22,7 +23,7 @@ class HwihaSiegeHandler(
             return HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT", "이 입력은 인자를 받지 않습니다.")
         if (topology == null || metrics == null || cells == null)
             return HwihaTurnOutcome.Rejected(inputId, "STATE_UNAVAILABLE", HwihaSiegeService.Failure.STATE_UNAVAILABLE.message)
-        val service = HwihaSiegeService(world, recorder, topology, metrics, cells)
+        val service = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
         val failure = when (inputId) {
             ASSAULT -> service.assault(actorId)
             DEMAND_SURRENDER -> service.demandSurrender(actorId)
