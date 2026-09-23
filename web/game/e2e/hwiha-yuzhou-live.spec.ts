@@ -137,7 +137,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   for (const screen of screens) {
     await page.goto(`${gameUrl}/game/hwiha/${screen}`);
     await expect(page.locator('main')).toBeVisible();
-    await testInfo.attach(`screen-${screen}`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+    await testInfo.attach(`screen-${screen}`, { body: await page.screenshot({ animations: 'disabled', timeout: 30_000 }), contentType: 'image/png' });
     for (const path of paths[screen]) {
       const response = await page.request.get(`${gameUrl}/api/game${path}`);
       expect(response.status(), `${screen}: ${path}`).toBe(200);
