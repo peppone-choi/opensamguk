@@ -19,6 +19,7 @@ class HwihaNpcDeploySelectorTest {
     @Test fun `an unreserved npc picks the cheapest reachable hostile county it can besiege`() {
         val choice = assertNotNull(selector.choose(world(), 1))
         assertEquals(listOf(7), choice.bugokIds)
+        assertEquals(route.destination, choice.destination, "a reachable wartime county outranks neutral expansion")
         val w = world()
         val county = w.administrativeCountyIds.first { w.landNodeOfCity(it) == choice.destination }
         assertNotEquals(1, w.getCityById(county)!!.nationId, "the target is hostile")

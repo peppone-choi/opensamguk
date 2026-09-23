@@ -207,6 +207,26 @@ class UpdateCitySupplyLossTest {
     }
 
     @Test
+    fun `hwiha occupying garrison keeps an isolated conquered county until its troops are gone`() {
+        val owned = listOf(city(1, 1), city(2, 2), city(3, 1, trust = 10.0, def = 100))
+        val guarded = applyCitySupply(owned, emptyList(), listOf(SupplyCapital(1, 1), SupplyCapital(2, 2)),
+            lineConst(), year = 200, month = 1, retainGarrisonOnIsolation = true)
+        val county = guarded.cities.single { it.id == 3 }
+        assertEquals(1, county.nationId)
+        assertEquals(0, county.supplyState)
+        assertEquals(90, county.defense, "isolation still decays the occupying force")
+        assertEquals(9.0, county.trust, 1e-9)
+        assertTrue(guarded.lostCityIds.isEmpty())
+        assertTrue(guarded.isolatedLogs.isEmpty())
+
+        val undefended = applyCitySupply(owned.map { if (it.id == 3) it.copy(defense = 0) else it }, emptyList(),
+            listOf(SupplyCapital(1, 1), SupplyCapital(2, 2)), lineConst(), year = 200, month = 1,
+            retainGarrisonOnIsolation = true)
+        assertEquals(listOf(3), undefended.lostCityIds)
+        assertEquals(0, undefended.cities.single { it.id == 3 }.nationId)
+    }
+
+    @Test
     fun `trust exactly 30 after decay is NOT neutralized (threshold is strictly less than 30)`() {
         // trust must be >= 33.34 BEFORE decay to stay >= 30 AFTER. Use 40 → 36 (>=30) → kept.
         val result = applyCitySupply(

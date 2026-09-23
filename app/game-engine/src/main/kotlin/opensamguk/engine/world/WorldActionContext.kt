@@ -642,6 +642,9 @@ class WorldActionContext(
         world.listNations().filter { it.level > 0 }.sortedBy { it.id }
             .map { SupplyCapital(it.capitalCityId ?: 0, it.id) }
 
+    override fun retainGarrisonOnIsolation(): Boolean =
+        world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA
+
     override fun applyCitySupply(result: CitySupplyResult) {
         val diagnostics = result.reachabilityRows.sortedBy { it.cityId }.map { row ->
             linkedMapOf<String, Any?>(
