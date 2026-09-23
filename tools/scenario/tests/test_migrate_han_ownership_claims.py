@@ -180,7 +180,10 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
         self.assertEqual(
             # 九原县(95698)은 무소유지만 바깥과 닿아 구멍 성분이 아니다 — 넣으면 allowlist 가 실제 구멍과
             # 어긋나 test_province_ownership_audit 가 빨개진다(2026-09-18, #829).
-            ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884"],
+            ["95125", "95676", "DIRECT-PARENT-0138-877c5fc0e884",
+             "gc-g0083-002", "gc-g0083-003", "gc-g0083-004", "gc-g0083-005",
+             "gc-g0083-006", "gc-g0083-007", "gc-g0083-008", "gc-g0083-010",
+             "gc-g0083-011"],
             scenario["auditAllowlist"][0]["provinceIds"],
         )
         self.assertTrue(all(row["reviewState"] == "APPROVED" for row in scenario["auditAllowlist"]))

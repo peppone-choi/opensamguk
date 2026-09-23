@@ -57,8 +57,8 @@ CLAIM_BATCHES: tuple[ClaimBatch, ...] = (
     ClaimBatch(
         "w2-cityless-jurisdiction-route-claim", "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND",
         "han-tiles-jurisdiction:", "ADMINISTRATIVE_PLACE", frozenset({"COUNTY_NODE"}),
-        frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY"}),
-        174, "jurisdictionRouteClaims", "data/curated/han/route-node-jurisdiction-claims-v1.json",
+        frozenset({"COMMANDERY_SEAT", "NON_SEAT"}), frozenset({"CHGIS_V6_COUNTY_POINT", "JURISDICTION_SEAT_RECOVERY", "USER_APPROVED_SYNTHETIC_GAME_CITY"}),
+        175, "jurisdictionRouteClaims", "data/curated/han/route-node-jurisdiction-claims-v1.json",
     ),
     # 縣이 아닌 수·진·관 거점(ADR-LITE-052, tools/scenario/append_strategic_site_route_claims.py).
     ClaimBatch(
@@ -94,7 +94,7 @@ CLAIM_BATCH_BY_ID = {batch.batch_id: batch for batch in CLAIM_BATCHES}
 APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND", "GAP_COUNTY_V1_APPEND", VACATED_LOCATION_ISSUANCE} | {batch.issuance_reason for batch in CLAIM_BATCHES}
 # 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
 # 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
-EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 56, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
+EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 278, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
 EXPECTED_JURISDICTION_CLAIM_COUNT = sum(batch.expected_count for batch in CLAIM_BATCHES)
 EXPECTED_BATCH_COUNTS = {**EXPECTED_HHS_BATCH_COUNTS, **{batch.batch_id: batch.expected_count for batch in CLAIM_BATCHES}}
 EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
@@ -102,7 +102,7 @@ EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] 
                                  + EXPECTED_BATCH_COUNTS[VACATED_LOCATION_BATCH])
 HHS_SELECTION_COUNT = sum(EXPECTED_HHS_BATCH_COUNTS.values())
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
-EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "gapCountyClaimCount": 56, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "gapCountyClaimCount": 278, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -248,6 +248,18 @@ def _location_claim_eligible(unit: JsonObject, overlay_row: JsonObject, rejected
     return False
 
 
+def _synthetic_gap_claim(claim: JsonObject) -> bool:
+    """User-approved separate game city, including an existing historical point."""
+    resolution = obj(claim, "locationResolution")
+    place_id = text(resolution, "physicalPlaceId")
+    dataset = obj(resolution, "coordinateDatasetRef")
+    disposition = obj(claim, "conflictDisposition")
+    return (place_id.startswith(GAP_COUNTY_PLACE_PREFIX)
+            and dataset.get("datasetPath") == "data/curated/han/route-node-external-place-authority-v1.json"
+            and dataset.get("recordId") == place_id.removeprefix(GAP_COUNTY_PLACE_PREFIX)
+            and "사용자 승인 합성 격자" in text(disposition, "rationale"))
+
+
 def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObject, claims: JsonObject,
                         units: dict[str, JsonObject], script_variant_members: frozenset[str],
                         deferred_commandery: frozenset[str] = frozenset(),
@@ -307,8 +319,9 @@ def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObjec
             raise MaterializationContractError("location claim is not approved LOCATION_ONLY")
         if claim.get("selectionReviewCoverage") != "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY":
             raise MaterializationContractError("location claim must be identity-only W0 review coverage")
-        if unit_id not in overlay or unit_id not in units or not _location_claim_eligible(
-            units[unit_id], overlay[unit_id], rejected_homonyms
+        if unit_id not in overlay or unit_id not in units or not (
+            _location_claim_eligible(units[unit_id], overlay[unit_id], rejected_homonyms)
+            or _synthetic_gap_claim(claim)
         ):
             raise MaterializationContractError(
                 f"location-only claim requires an HHS unit without any surviving coordinate candidate: {unit_id}"
@@ -581,7 +594,7 @@ def build_outputs(
     claim_numeric_ids = {subject: appended_ids.pop(subject) for subject in claim_subjects}
     # 늦게 덧붙인 HHS 추가분은 floor 에서 뺀다. 이 계약은 「HHS 추가분이 claim 배치보다 먼저 번호를
     # 받는다」를 가정하는데, 나중에 추가된 것은 그럴 수 없다 — 은퇴 번호를 되쓸 수 없기 때문이다.
-    # VACATED_LOCATION_UNITS 가 이미 같은 이유로 빠져 있고, 결손 縣 56 곳(GAP_COUNTY_BATCH)도 같다.
+    # VACATED_LOCATION_UNITS 가 이미 같은 이유로 빠져 있고, 결손 縣 추가분도 같다.
     # 대신 아래에서 「늦은 추가분은 앞선 모든 추가분 뒤에 온다」를 따로 단언한다.
     late_batches = {GAP_COUNTY_BATCH}
     late_units = {unit_id for unit_id, value in selected.items() if value[1] in late_batches}
@@ -592,13 +605,25 @@ def build_outputs(
         if earlier and min(appended_ids[unit_id] for unit_id in late_units) <= max(earlier):
             raise MaterializationContractError("late HHS append IDs must follow every earlier append")
     rebound = {registry_unit_id(row) for row in rows(registry, "keys") if "rebinding" in row}
+    late_claim_subjects = {
+        text(claim, "subjectKey") for _, claim in route_claims
+        if obj(claim, "evidence").get("kind") == "USER_APPROVED_SYNTHETIC_GAME_CITY"
+    }
+    if len(late_claim_subjects) != 1:
+        raise MaterializationContractError("exactly one already-bound HHS game city requires a late source claim")
     for batch in CLAIM_BATCHES:
         # 재결속으로 앞 번호를 이어받은 claim 은 번호 순서 대조에서 뺀다(그 번호는 앞 batch 가 발급했다).
         batch_ids = [claim_numeric_ids[text(claim, "subjectKey")] for owner, claim in route_claims
-                     if owner is batch and text(claim, "subjectKey") not in rebound]
+                     if owner is batch and text(claim, "subjectKey") not in rebound
+                     and text(claim, "subjectKey") not in late_claim_subjects]
         if min(batch_ids) <= floor:
             raise MaterializationContractError(f"{batch.batch_id} numeric IDs must follow every earlier append")
         floor = max(batch_ids)
+    if min(claim_numeric_ids[subject] for subject in late_claim_subjects) <= max(
+        list(appended_ids.values()) + [value for subject, value in claim_numeric_ids.items()
+                                       if subject not in late_claim_subjects]
+    ):
+        raise MaterializationContractError("late synthetic game city IDs must follow every earlier append")
     retired = sorted(set(range(1, LEGACY_SELECTION_COUNT + 1)) - {value[0] for value in matched.values()})
     replacements = [
         unit_id

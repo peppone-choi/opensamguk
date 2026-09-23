@@ -125,4 +125,4 @@ class KoreaCorrectionsTest(unittest.TestCase):
         self.assertEqual(meta['rows'] - 1, owned_rows[-1], '남쪽에 무주 여백 띠가 남았다')
         self.assertEqual(0, owned_cols[0], '서쪽에 무주 여백 띠가 남았다')
         self.assertEqual(meta['cols'] - 1, owned_cols[-1], '동쪽에 무주 여백 띠가 남았다')
-        self.assertEqual(1_430, len(self.current['provinceRecords']))  # 2026-09-23 결손 縣 56곳
+        self.assertEqual(1_653, len(self.current['provinceRecords']))  # 결손 縣 223곳 추가 후

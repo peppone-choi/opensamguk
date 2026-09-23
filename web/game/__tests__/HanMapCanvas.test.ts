@@ -438,8 +438,8 @@ describe('지도 아이콘 배율과 앵커', () => {
         // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,168. 「관할 수 = 城 수」는 그대로다
         //   — han-world-v3 의 城 도 1,168 이다(web/shared cityName.test.ts 가 그쪽 축을 건다).
         // 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 56 곳이 제 관할을 받아 1,228. 「관할 수 = 城 수」는 그대로다.
-        expect(jurisdictions).toHaveLength(1_224);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_224);
+        expect(jurisdictions).toHaveLength(1_447);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_447);
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',

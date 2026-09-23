@@ -9,8 +9,7 @@
     "rejected": "앞선 심사가 좌표를 기각한 건은 거리와 무관하게 COORDINATE_REJECTED 로 뺀다."
   },
   "totals": {
-    "READY_TGAZ": 29,
-    "REVIEW_TGAZ_FAR": 1,
+    "READY_TGAZ": 30,
     "READY_BOTH_SOURCES": 8,
     "COORDINATE_REJECTED": 4,
     "READY_NAMU": 23,
@@ -24,8 +23,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.71672,
       "lat": 36.22077,
-      "commanderyCentroidKm": 92,
-      "commanderyCentroidSample": 21,
+      "commanderyCentroidKm": 86,
+      "commanderyCentroidSample": 23,
       "readiness": "READY_TGAZ"
     },
     {
@@ -35,8 +34,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 114.96882,
       "lat": 33.0823,
-      "commanderyCentroidKm": 5,
-      "commanderyCentroidSample": 31,
+      "commanderyCentroidKm": 3,
+      "commanderyCentroidSample": 37,
       "readiness": "READY_TGAZ"
     },
     {
@@ -46,8 +45,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.53245,
       "lat": 32.74889,
-      "commanderyCentroidKm": 83,
-      "commanderyCentroidSample": 31,
+      "commanderyCentroidKm": 82,
+      "commanderyCentroidSample": 32,
       "readiness": "READY_TGAZ"
     },
     {
@@ -57,8 +56,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.22923,
       "lat": 33.08096,
-      "commanderyCentroidKm": 115,
-      "commanderyCentroidSample": 31,
+      "commanderyCentroidKm": 113,
+      "commanderyCentroidSample": 32,
       "readiness": "READY_TGAZ"
     },
     {
@@ -68,9 +67,9 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 105.49215,
       "lat": 32.66547,
-      "commanderyCentroidKm": 204,
-      "commanderyCentroidSample": 6,
-      "readiness": "REVIEW_TGAZ_FAR"
+      "commanderyCentroidKm": 180,
+      "commanderyCentroidSample": 9,
+      "readiness": "READY_TGAZ"
     },
     {
       "commandery": "永昌郡",
@@ -90,8 +89,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.81372,
       "lat": 37.20595,
-      "commanderyCentroidKm": 67,
-      "commanderyCentroidSample": 13,
+      "commanderyCentroidKm": 82,
+      "commanderyCentroidSample": 16,
       "readiness": "READY_TGAZ"
     },
     {
@@ -120,8 +119,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 114.76242,
       "lat": 33.80199,
-      "commanderyCentroidKm": 78,
-      "commanderyCentroidSample": 31,
+      "commanderyCentroidKm": 84,
+      "commanderyCentroidSample": 37,
       "readiness": "READY_TGAZ"
     },
     {
@@ -172,8 +171,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.44382,
       "lat": 32.63618,
-      "commanderyCentroidKm": 47,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidKm": 48,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -183,8 +182,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.36112,
       "lat": 31.71422,
-      "commanderyCentroidKm": 95,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidKm": 94,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -194,8 +193,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.205,
       "lat": 32.86466,
-      "commanderyCentroidKm": 78,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidKm": 79,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -205,8 +204,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.26437,
       "lat": 32.09835,
-      "commanderyCentroidKm": 69,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidKm": 68,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -217,7 +216,7 @@
       "lon": 117.64022,
       "lat": 32.90163,
       "commanderyCentroidKm": 76,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -227,8 +226,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.18547,
       "lat": 31.68121,
-      "commanderyCentroidKm": 85,
-      "commanderyCentroidSample": 18,
+      "commanderyCentroidKm": 84,
+      "commanderyCentroidSample": 19,
       "readiness": "READY_TGAZ"
     },
     {
@@ -238,8 +237,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.17437,
       "lat": 31.18897,
-      "commanderyCentroidKm": 71,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 69,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -249,8 +248,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.6963,
       "lat": 31.14534,
-      "commanderyCentroidKm": 117,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 113,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -260,8 +259,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 116.62608,
       "lat": 31.34139,
-      "commanderyCentroidKm": 25,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 29,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -271,8 +270,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.79866,
       "lat": 31.15731,
-      "commanderyCentroidKm": 125,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 122,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -282,8 +281,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.21945,
       "lat": 35.09516,
-      "commanderyCentroidKm": 90,
-      "commanderyCentroidSample": 11,
+      "commanderyCentroidKm": 99,
+      "commanderyCentroidSample": 14,
       "readiness": "READY_TGAZ"
     },
     {
@@ -312,8 +311,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.83847,
       "lat": 32.96185,
-      "commanderyCentroidKm": 49,
-      "commanderyCentroidSample": 13,
+      "commanderyCentroidKm": 63,
+      "commanderyCentroidSample": 14,
       "readiness": "READY_TGAZ"
     },
     {
@@ -706,8 +705,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 109.65974,
       "lat": 35.32087,
-      "commanderyCentroidKm": 48,
-      "commanderyCentroidSample": 12,
+      "commanderyCentroidKm": 33,
+      "commanderyCentroidSample": 16,
       "readiness": "READY_TGAZ"
     },
     {
@@ -735,8 +734,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 115.5415,
       "lat": 34.72515,
-      "commanderyCentroidKm": 38,
-      "commanderyCentroidSample": 9,
+      "commanderyCentroidKm": 40,
+      "commanderyCentroidSample": 11,
       "readiness": "READY_TGAZ"
     },
     {
@@ -764,8 +763,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 114.62434,
       "lat": 37.91348,
-      "commanderyCentroidKm": 18,
-      "commanderyCentroidSample": 14,
+      "commanderyCentroidKm": 24,
+      "commanderyCentroidSample": 15,
       "readiness": "READY_TGAZ"
     },
     {
@@ -775,8 +774,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 116.06742,
       "lat": 38.9959,
-      "commanderyCentroidKm": 64,
-      "commanderyCentroidSample": 13,
+      "commanderyCentroidKm": 59,
+      "commanderyCentroidSample": 14,
       "readiness": "READY_TGAZ"
     },
     {
@@ -786,8 +785,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 114.85936,
       "lat": 34.92438,
-      "commanderyCentroidKm": 37,
-      "commanderyCentroidSample": 16,
+      "commanderyCentroidKm": 36,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -797,8 +796,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 116.30453,
       "lat": 35.06816,
-      "commanderyCentroidKm": 26,
-      "commanderyCentroidSample": 9,
+      "commanderyCentroidKm": 27,
+      "commanderyCentroidSample": 10,
       "readiness": "READY_TGAZ"
     },
     {
@@ -829,8 +828,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 114.83273,
       "lat": 26.93722,
-      "commanderyCentroidKm": 130,
-      "commanderyCentroidSample": 32,
+      "commanderyCentroidKm": 127,
+      "commanderyCentroidSample": 33,
       "readiness": "READY_TGAZ"
     },
     {
@@ -951,8 +950,8 @@
       "ledger": "songshu-provenance-adjudications-v1",
       "lon": 115.77325,
       "lat": 34.27525,
-      "commanderyCentroidKm": 22,
-      "commanderyCentroidSample": 9,
+      "commanderyCentroidKm": 18,
+      "commanderyCentroidSample": 11,
       "readiness": "READY_TGAZ"
     },
     {

@@ -251,11 +251,11 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
         # 2026-09-15: 수·진·관 거점이 들어오며 「와구」(渦口·瓦口) 한 이름이 새로 겹쳤다.
-        # 2026-09-23: 결손 縣 56곳이 들어오며 겹치는 이름이 늘었다(96 → 102). 키 표면은 여전히 郡뿐이라 안전 근거는 그대로다.
-        self.assertEqual(102, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(231, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        # 결손 縣 223곳이 들어오며 겹치는 이름이 늘었다. 키 표면은 여전히 郡뿐이다.
+        self.assertEqual(137, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(310, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            85, len(different),
+            120, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 
@@ -444,7 +444,6 @@ class SelfSeatCommanderies(unittest.TestCase):
 # 邊郡·屬國의 治所 縣 이름. 값은 (사료가 말하는 治所, 출전). 전부 데이터에 **없다**(§3.29).
 # 繁簡 양쪽으로 조회했고 같은 조회에 양성 대조를 넣어 조회가 살아있는 걸 확인했다.
 MISSING_FRONTIER_SEATS = {
-    "상군": ("膚施", "續漢書 郡國志 上郡"),
     "서하군": ("離石", "續漢書 郡國志 西河郡"),
     "정양군": ("善無", "續漢書 郡國志 定襄郡"),
     "삭방군": ("臨戎", "續漢書 郡國志 朔方郡"),
@@ -467,7 +466,7 @@ _SIMPLIFY = str.maketrans({
 
 
 class FrontierSeatsAreMissing(unittest.TestCase):
-    """§3.29 — 邊郡·屬國 14건의 治所 縣이 CHGIS 縣 레이어에 **없다**. (a) 결손 확정.
+    """§3.29 — 남은 邊郡·屬國 13건의 治所 縣이 현행 타일에 없다.
 
     **0건은 「그 표기로 0건」이지 「없다」가 아니다** — 그래서 繁簡 양쪽으로 걸고,
     같은 조회에 **반드시 걸려야 하는 양성 대조**를 넣는다. 대조가 안 걸리면 조회가 죽은 것이다.

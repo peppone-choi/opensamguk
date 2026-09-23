@@ -24,8 +24,8 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
     def test_committed_pilot_is_valid_and_river_activation_remains_blocked(self):
         result = self.audit.audit_materialized()
 
-        # 1,520 省 + 수·진·관 거점 省 73.
-        self.assertEqual(1_430, result["counts"]["landProvinceIds"])  # 2026-09-23 결손 縣 56곳
+        # 결손 223 城의 省을 포함하며, 미해독 세 城의 省은 제외한다.
+        self.assertEqual(1_653, result["counts"]["landProvinceIds"])
         self.assertEqual(2, result["counts"]["waterZones"])
         self.assertEqual({"COASTAL_SEA": 1, "LAKE_BASIN": 1}, result["zoneKinds"])
         self.assertEqual({}, result["edgeModes"])

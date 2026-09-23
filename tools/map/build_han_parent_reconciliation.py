@@ -52,10 +52,11 @@ REFERENCE_YEAR = 220
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
 # 2026-09-21: retire 26 unsupported locality proxies from the 98-row release.
 EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 72
-CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 174
+# One HHS identity already bound to an older city also receives a separate approved game city.
+CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 175
 JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
                                   + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
-HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 56
+HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 278
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
@@ -559,7 +560,7 @@ def _validate_review_chain(
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 11,
             "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": 1,
-            "gapCountyClaimCount": 56,
+            "gapCountyClaimCount": 278,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT - JURISDICTION_ROUTE_CLAIM_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
@@ -590,7 +591,7 @@ def _validate_review_chain(
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w4-vacated-county-location", 1, "APPROVED"),
             ("w5-external-settlement-route-claim", EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT, "APPROVED"),
-            ("w1-gap-county-location", 56, "APPROVED"),
+            ("w1-gap-county-location", 278, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")

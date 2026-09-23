@@ -45,10 +45,9 @@ class CommittedLedgerTest(unittest.TestCase):
         self.assertEqual(len(iron), 34)
         self.assertEqual(sum(1 for e in iron if e["sourceMarker"] in ("出铁", "出鐵")), 4)
         unmatched = [e for e in iron if e["jurisdictionId"] is None]
-        self.assertTrue(unmatched, "못 붙인 縣이 사라졌다 — 지우지 말고 사유와 함께 남겨라")
-        for entry in unmatched:
-            self.assertTrue(entry["matchStatus"].startswith("UNMATCHED"))
-            self.assertTrue(entry["matchReason"])
+        # 추가 城 배치 뒤 34곳 모두 관할에 붙는다. 소스 행이 줄어든 결과여서는 안 된다.
+        self.assertEqual(unmatched, [])
+        self.assertEqual(sum(e["jurisdictionId"] is not None for e in iron), 34)
 
     def test_homonyms_are_split_by_commandery_heading(self) -> None:
         expected = {("河東郡", "平阳"): "PARENT-0002", ("右扶風", "漆"): "PARENT-0006", ("潁川郡", "陽城"): "PARENT-0007"}
