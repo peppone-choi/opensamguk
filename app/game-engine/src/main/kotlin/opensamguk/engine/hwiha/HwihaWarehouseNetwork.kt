@@ -26,18 +26,26 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
     }
 
     /** @return 전액을 뺐으면 true. 모자라면 아무것도 빼지 않고 false. */
-    fun payMoney(payerNationId: Int, counties: List<Int>, amount: Long): Boolean {
+    fun payMoney(payerNationId: Int, counties: List<Int>, amount: Long): Boolean =
+        pay(payerNationId, counties, amount, { it.money }, { HwihaResources(money = it) })
+
+    fun payGrain(payerNationId: Int, counties: List<Int>, amount: Long): Boolean =
+        pay(payerNationId, counties, amount, { it.grain }, { HwihaResources(grain = it) })
+
+    fun grainIn(counties: List<Int>): Long = counties.mapNotNull(::warehouse).sumOf { it.stock.grain }
+
+    private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (HwihaResources) -> Long,
+        debit: (Long) -> HwihaResources): Boolean {
         require(amount >= 0)
         if (amount == 0L) return true
         val stocks = counties.mapNotNull { id -> warehouse(id)?.let { id to it } }
-        if (stocks.sumOf { it.second.stock.money } < amount) return false
+        if (stocks.sumOf { balance(it.second.stock) } < amount) return false
         var remaining = amount
         for ((county, warehouse) in stocks) {
             if (remaining == 0L) break
-            val take = minOf(remaining, warehouse.stock.money)
+            val take = minOf(remaining, balance(warehouse.stock))
             if (take == 0L) continue
-            val result = HwihaWarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision,
-                HwihaResources(money = take))
+            val result = HwihaWarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision, debit(take))
             check(result == HwihaWarehouseSettlement.Result.APPLIED) { "Validated warehouse payment was rejected: $result" }
             remaining -= take
         }

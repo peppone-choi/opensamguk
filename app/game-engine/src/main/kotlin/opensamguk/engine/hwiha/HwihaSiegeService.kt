@@ -86,6 +86,10 @@ class HwihaSiegeService(
             return false
         }
         val city = checkNotNull(world.getCityById(county))
+        // A siege that could not hold at the next boundary is not started (no start/lift churn every phase).
+        val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
+        if (garrisonOf(city) > 0 && HwihaSiegeRules.maintenance(units.sumOf { it.troops }, garrisonOf(city),
+                units.all { HwihaSiegeRules.besiegerFed(it.troops, it.provisions) }) != HwihaSiegeRules.Maintenance.MAINTAINED) return false
         val path = march.checkpoint.path
         val approach = if (path.nodeKeys.size >= 2) path.nodeKeys[path.nodeKeys.size - 2].removePrefix("land:")
             else fallbackApproach(node)

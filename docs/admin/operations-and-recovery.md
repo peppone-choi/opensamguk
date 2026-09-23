@@ -182,7 +182,7 @@ pending 조우는 공격 지휘관의 다음 개인 턴 시작(`HwihaAssignmentM
 
 ### HWIHA 순 경계 보급·녹봉·기존 유지비
 
-HWIHA 순 경계마다 포위 정산 뒤 세력 수도에서 보급 BFS 를 다시 돌려 縣 `supply_state` 만 고친다(감쇠·중립화는 기존 월간 `UpdateCitySupply`). 포위 중인 縣은 외부 보급이 끊긴다. 보급망을 계산할 수 없으면 경고만 남기고 이전 값을 유지한다(턴 루프를 멈추지 않는다). 월 경계는 징세 → 녹봉(`HwihaMonthlySalary`, 도장 `hwihaSalaryMonth`) → 월단평 순이다. `RetainerMonthlyService` 는 HWIHA 에서 부곡 급여·가신 유지비 30/30 의 재정 효과를 적용하지 않는다. 상사(`court.reward`)는 발령처럼 결정권자 meta `hwihaQueuedReward` 에 한 건 대기했다가 그 장수의 턴에 실행한다.
+HWIHA 순 경계마다 포위 정산 뒤 세력 수도에서 보급 BFS 를 다시 돌려 縣 `supply_state` 만 고친다(감쇠·중립화는 기존 월간 `UpdateCitySupply`). 포위 중인 縣은 외부 보급이 끊긴다. 보급망을 계산할 수 없으면 경고만 남기고 이전 값을 유지한다(턴 루프를 멈추지 않는다). 월 경계는 징세 → 녹봉(`HwihaMonthlySalary`, 도장 `hwihaSalaryMonth`) → 부곡 군량 보충(`HwihaUnitResupply`, 도장 `hwihaUnitResupplyMonth`, 자국 縣에 있는 부곡만 창고 곡으로 병력×2개월까지) → 월단평 순이다. 적지의 포위군은 보충받지 못해 군량이 떨어지면 포위를 풀고 원정을 멈춘다. `RetainerMonthlyService` 는 HWIHA 에서 부곡 급여·가신 유지비 30/30 의 재정 효과를 적용하지 않는다. 상사(`court.reward`)는 발령처럼 결정권자 meta `hwihaQueuedReward` 에 한 건 대기했다가 그 장수의 턴에 실행한다.
 
 ### HWIHA 반응 기록 임시 규칙
 

@@ -43,6 +43,13 @@ object HwihaS3Provisional {
     /** 포위 기록(timeline)에 남기는 최대 줄 수 — 36순(1년). */
     const val SIEGE_TIMELINE_MAX = 36
 
+    // ── 부곡 군량 보충 ──────────────────────────────────────────────────────
+    /** 월 경계에 부곡 휴대 군량을 (병력 × 이 개월 수)까지 채운다. */
+    const val UNIT_RESUPPLY_TARGET_MONTHS = 2
+
+    /** 휴대 군량 1 = 창고 곡 이 값. 수비병 급식(순당 100) × 한 달 3순 = 병사 한 명의 한 달 곡(기존 부곡 월 소비 1)이다. */
+    const val GRAIN_PER_PROVISION = 300L
+
     // ── 녹봉·상사 ──────────────────────────────────────────────────────────
     /** 인물 카드 녹봉 = 명망 코스트 × 이 값(금, 월). */
     const val SALARY_MONEY_PER_RENOWN_COST = 100L

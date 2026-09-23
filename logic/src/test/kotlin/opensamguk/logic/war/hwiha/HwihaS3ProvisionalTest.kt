@@ -18,7 +18,7 @@ class HwihaS3ProvisionalTest {
     @Test fun `every section is marked provisional pending the user's decision`() {
         val marker = "PROVISIONAL — 사용자 결정 대기"
         assertEquals(marker, root.getValue("status").jsonPrimitive.content)
-        for (section in listOf("encounter", "siege", "salary", "reward", "npcDeploy", "reactions"))
+        for (section in listOf("encounter", "siege", "salary", "reward", "npcDeploy", "reactions", "resupply"))
             assertEquals(marker, root.getValue(section).jsonObject.getValue("status").jsonPrimitive.content, section)
     }
 
@@ -38,6 +38,9 @@ class HwihaS3ProvisionalTest {
         assertEquals(p.NPC_ASSAULT_MIN_RATIO.toLong(), long("siege", "npcAssaultMinRatio"))
         assertEquals(p.SIEGE_TIMELINE_MAX.toLong(), long("siege", "siegeTimelineMax"))
         assertEquals(p.SALARY_MONEY_PER_RENOWN_COST, long("salary", "salaryMoneyPerRenownCost"))
+        assertEquals(p.UNIT_RESUPPLY_TARGET_MONTHS.toLong(), long("resupply", "unitResupplyTargetMonths"))
+        assertEquals(p.GRAIN_PER_PROVISION, long("resupply", "grainPerProvision"))
+        assertEquals(p.GRAIN_PER_PROVISION, p.GARRISON_RATION_PER_SOLDIER_TURN * 3, "one soldier-month of grain")
         assertEquals(p.UNPAID_SALARY_LOYALTY_LOSS.toLong(), long("salary", "unpaidSalaryLoyaltyLoss"))
         assertEquals(p.REWARD_MONEY_PER_LOYALTY, long("reward", "rewardMoneyPerLoyalty"))
         assertEquals(p.REWARD_MAX_LOYALTY_GAIN.toLong(), long("reward", "rewardMaxLoyaltyGain"))

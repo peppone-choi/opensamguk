@@ -95,6 +95,23 @@ class HwihaEconomyBoundaryTest {
         assertEquals(50, unit.morale, "no unpaid-pay morale loss"); assertEquals(400, unit.provisions, "provisions still consumed")
     }
 
+    @Test fun `units at home refill carried rations from the network once a month and besiegers abroad do not`() {
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)))
+        val capitalCity = world.getCityById(capital)!!
+        world.applyCityDirtyFree(warehouse(capitalCity, HwihaResources(grain = 1_000_000)))
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        assertEquals(1, HwihaUnitResupply(world, recorder).resupply(200, 2))
+        assertEquals(200, world.getBugokById(7)!!.provisions, "filled to troops × 2 months")
+        assertEquals(1_000_000L - 150 * 300, HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+        assertEquals(0, HwihaUnitResupply(world, recorder).resupply(200, 2), "once a month")
+        // Abroad (standing in an enemy county) there is no network to draw from.
+        val abroad = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
+            people = listOf(fixture.person(1, 1, route.destinationCounty, userId = "42") to route.destination))
+        assertEquals(0, HwihaUnitResupply(abroad, ChangeRecorder()).resupply(200, 2))
+        assertEquals(50, abroad.getBugokById(7)!!.provisions)
+    }
+
     @Test fun `reward is a queued court decision paid from the warehouse raising loyalty and one bond event a month`() {
         val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
         val world = realm(capitalMoney = 2000, card = card)

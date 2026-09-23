@@ -70,15 +70,31 @@ class HwihaSiegeServiceTest {
     }
 
     @Test fun `too few besiegers lift the siege and no rations end the expedition`() {
-        val (thin, thinRecorder) = besieged(troops = 150)
+        val (thin, thinRecorder) = besieged()
+        thin.updateBugok(thin.getBugokById(7)!!.copy(troops = 150))
         boundary(thin, thinRecorder)
         assertEquals("INSUFFICIENT_RATIO", thin.getHwihaSiege(county)!!.endReason)
         assertNotNull(HwihaDeploymentState.read(thin.getGeneralById(1)!!.meta), "a thin corps keeps its deployment")
-        val (hungry, hungryRecorder) = besieged(provisions = 10)
+        val (hungry, hungryRecorder) = besieged()
+        hungry.updateBugok(hungry.getBugokById(7)!!.copy(provisions = 10))
         boundary(hungry, hungryRecorder)
         assertEquals("BESIEGER_UNFED", hungry.getHwihaSiege(county)!!.endReason)
         assertNull(HwihaDeploymentState.read(hungry.getGeneralById(1)!!.meta), "an unfed expedition ends")
         assertEquals(1000, hungry.getBugokById(7)!!.troops, "troops are preserved")
+    }
+
+    @Test fun `a siege that could not hold is not started at all`() {
+        for ((troops, provisions) in listOf(150 to 100_000, 1000 to 10)) {
+            val world = fixture.world(listOf(fixture.person(1, 1, route.startCity, userId = "42") to route.first),
+                bugoks = listOf(fixture.unit(7, 1, troops, provisions = provisions)),
+                cityChanges = { city -> if (city.id != county) city else city.copy(nationId = 2) })
+            val recorder = ChangeRecorder()
+            fixture.deploy(world, recorder, 1, listOf(7), route.destination)
+            fixture.nextPhase(world)
+            fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+            assertEquals(route.destination, world.positionOf(1))
+            assertNull(world.getHwihaSiege(county), "troops=$troops provisions=$provisions")
+        }
     }
 
     @Test fun `assault through the grid takes the county and surrender demand needs low morale and trust`() {
