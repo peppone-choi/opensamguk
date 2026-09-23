@@ -6,6 +6,10 @@ const gameUrl = process.env.E2E_GAME_URL ?? 'http://localhost:3001';
 const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
 const enabled = process.env.E2E_HWIHA_YUZHOU === 'true';
 
+// Live map animation can stall Playwright's automatic failure screenshot.
+// The test attaches its own screenshots through CDP below.
+test.use({ screenshot: 'off', video: 'off', trace: 'off' });
+
 function compose(args: string[]): string {
   const project = process.env.E2E_COMPOSE_PROJECT_NAME ?? '';
   expect(project).toMatch(/^v1-e2e-[a-z0-9-]+$/);
@@ -51,7 +55,8 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   expect((await context.cookies()).some(c => c.name === 'sam_access' && c.httpOnly)).toBe(true);
 
   await page.goto(`${gameUrl}/game/join`);
-  await page.locator('form input[type="text"]').first().fill(`예주${suffix.slice(-6)}`);
+  const generalName = `예주${suffix.slice(-6)}`;
+  await page.locator('form input[type="text"]').first().fill(generalName);
   page.on('dialog', dialog => void dialog.accept());
   const creation = page.waitForResponse(r => r.request().method() === 'POST' && r.url().includes('/api/game/api/join'));
   await page.getByRole('button', { name: '장수 생성', exact: true }).click();
@@ -118,6 +123,13 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM hwiha_siege WHERE world_id=${worldId};`)) as
     { active: number; fallen: number; rows: number };
   await expect.poll(() => siegeSummary().fallen, { timeout: 2_400_000, intervals: [10_000] }).toBeGreaterThan(0);
+  const npcBattles = () => Number(sql(`SELECT count(*) FROM general WHERE world_id=${worldId} AND id BETWEEN 1001 AND 1006
+    AND meta ? 'hwihaLastBattle';`));
+  await expect.poll(npcBattles, { timeout: 4_800_000, intervals: [10_000] }).toBeGreaterThan(0);
+  // Observe the same 36-phase horizon as the in-memory simulation. The old
+  // isolation bug only recaptured the same neutralized counties months later.
+  await expect.poll(() => Number(sql(`SELECT current_year FROM world_state WHERE id=${worldId};`)),
+    { timeout: 3_000_000, intervals: [10_000] }).toBeGreaterThanOrEqual(191);
   type Yuedan = { status: string; stamp: string | null; ranking: unknown[] };
   await expect.poll(async () => (await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`)).status,
     { timeout: 600_000, intervals: [5000] }).toBe('READY');
@@ -134,16 +146,22 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     'war-room': [`/api/hwiha/visibility?generalId=${generalId}`, `/api/hwiha/corps?generalId=${generalId}`],
     yuedan: [`/api/hwiha/yuedan?generalId=${generalId}`],
   };
+  const cdp = await context.newCDPSession(page);
   for (const screen of screens) {
     await page.goto(`${gameUrl}/game/hwiha/${screen}`);
-    await expect(page.locator('main')).toBeVisible();
-    await testInfo.attach(`screen-${screen}`, { body: await page.screenshot({ animations: 'disabled', timeout: 30_000 }), contentType: 'image/png' });
+    await expect(page.locator('nav[aria-label="입력 여섯 가지"]')).toBeVisible();
+    await expect(page.locator('body')).toContainText(generalName, { timeout: 120_000 });
+    await expect(page.locator('body')).not.toContainText('불러오는 중입니다', { timeout: 120_000 });
+    // Playwright's screenshot stability wait can stall on the live map's continuous rendering.
+    const capture = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    await testInfo.attach(`screen-${screen}`, { body: Buffer.from(capture.data, 'base64'), contentType: 'image/png' });
     for (const path of paths[screen]) {
       const response = await page.request.get(`${gameUrl}/api/game${path}`);
       expect(response.status(), `${screen}: ${path}`).toBe(200);
       await testInfo.attach(`api-${screen}-${paths[screen].indexOf(path)}`, { body: await response.body(), contentType: 'application/json' });
     }
   }
+  await cdp.detach();
   const db = sql(`SELECT json_build_object('sieges', (SELECT json_agg(json_build_object('countyId',county_id,'status',status,'turns',turns,'endReason',end_reason)) FROM hwiha_siege WHERE world_id=${worldId}),
     'player', (SELECT json_build_object('nationId',g.nation_id,'assignment',g.meta->'hwihaCountyAssignment',
       'position',(SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id))
@@ -161,10 +179,31 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     'kind',event_kind,'generalId',general_id,'nationId',nation_id,'text',text,'refs',meta->'refs') ORDER BY year,month,phase,id),'[]'::json)
     FROM log_entry WHERE world_id=${worldId} AND event_kind IS NOT NULL;`);
   await testInfo.attach('phase-events', { body: phaseEvents, contentType: 'application/json' });
-  const events = JSON.parse(phaseEvents) as { kind: string; refs?: { money?: number; grain?: number } }[];
+  const events = JSON.parse(phaseEvents) as { kind: string; refs?: {
+    money?: number; grain?: number; countyId?: number; fromNationId?: number; encounterId?: string;
+  } }[];
   expect(events.some(e => e.kind === 'income.monthly' && ((e.refs?.money ?? 0) > 0 || (e.refs?.grain ?? 0) > 0))).toBe(true);
+  const encounterIds = new Set(events.filter(e => e.kind === 'march.corps')
+    .map(e => e.refs?.encounterId).filter((id): id is string => typeof id === 'string'));
+  expect(encounterIds.size, 'live NPC encounters').toBeGreaterThan(0);
+  const seenCapture = new Set<number>();
+  let repeatedNeutralCaptures = 0;
+  for (const event of events.filter(e => e.kind === 'county.captured')) {
+    const countyId = event.refs?.countyId;
+    if (countyId === undefined) continue;
+    if (seenCapture.has(countyId) && event.refs?.fromNationId === 0) repeatedNeutralCaptures += 1;
+    seenCapture.add(countyId);
+  }
+  expect(repeatedNeutralCaptures, 'a previously captured county became neutral and was captured again').toBe(0);
+  const abandonedWithGarrison = Number(sql(`SELECT count(*) FROM city c WHERE c.world_id=${worldId}
+    AND c.nation_id=0 AND c.def>0 AND EXISTS (
+      SELECT 1 FROM log_entry l WHERE l.world_id=c.world_id AND l.event_kind='county.captured'
+        AND (l.meta->'refs'->>'countyId')::integer=c.id);`));
+  expect(abandonedWithGarrison, 'a captured county with occupying troops became neutral').toBe(0);
   await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, march: marchState(),
-    siege: siegeSummary(), yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
+    siege: siegeSummary(), npcBattles: npcBattles(), liveEncounterCount: encounterIds.size,
+    repeatedNeutralCaptures, abandonedWithGarrison,
+    yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);
 });
