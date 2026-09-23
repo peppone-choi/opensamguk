@@ -28,6 +28,7 @@ INPUT_PATHS = {
         "data/curated/han/route-node-review-policy-v1.json",
         "data/curated/han/route-node-selection-v1.json",
         "data/curated/han/administrative-units.json",
+        "data/curated/han/administrative-zhou-axis-v1.json",
         "data/curated/han/administrative-place-bindings-v1.json",
         "data/curated/han/administrative-temporal-adjudications-v1.json",
         "data/curated/han/route-node-location-adjudications-v1.json",
@@ -155,6 +156,16 @@ FORBIDDEN_APPROVAL_INPUTS = (
     "nearestGeometry",
     "runtimeNumericId",
 )
+# 郡國志 chapter-tail witnesses; group-line intervals are source locators, never
+# city names or runtime array positions used to join a city to its parent.
+ZHOU_SOURCE_INTERVALS = {
+    109: ((254, "zhou:司隸"),),
+    110: ((234, "zhou:豫州"), (472, "zhou:冀州")),
+    111: ((205, "zhou:兗州"), (353, "zhou:徐州")),
+    112: ((166, "zhou:靑州"), (432, "zhou:荊州"), (644, "zhou:揚州")),
+    113: ((275, "zhou:益州"), (498, "zhou:涼州"), (715, "zhou:并州"),
+          (920, "zhou:幽州"), (1049, "zhou:交州")),
+}
 EMBEDDED_HASH_EDGES = (
     (
         "data/curated/han/route-node-review-policy-v1.json",
@@ -253,6 +264,74 @@ def load_inputs(input_paths: dict[str, Path] | None = None) -> tuple[dict[str, d
             "sha256": hashlib.sha256(raw).hexdigest(),
         }
     return documents, records
+
+
+def _zhou_by_administrative_unit(documents: dict[str, dict]) -> dict[str, tuple[str, str]]:
+    """Resolve 州 using the reviewed HHS group ID followed by the HHS unit ID."""
+    axis = documents["data/curated/han/administrative-zhou-axis-v1.json"]
+    catalog = documents["data/curated/han/administrative-units.json"]
+    if (axis.get("ledgerId") != "han-thirteen-zhou-canon-105-v1"
+            or axis.get("sourceCatalogId") != catalog.get("catalogId")):
+        raise ValueError("thirteen-zhou axis catalog identity mismatch")
+    rows = axis.get("rows")
+    if not isinstance(rows, list) or len(rows) != 105:
+        raise ValueError("thirteen-zhou axis must cover CANON_105")
+    by_group = {}
+    for row in rows:
+        if set(row) != {"administrativeGroupId", "hanTileParentRegionId", "zhouId", "sourceCitation"}:
+            raise ValueError("thirteen-zhou axis row schema mismatch")
+        group_id = row["administrativeGroupId"]
+        if group_id in by_group or not isinstance(group_id, str):
+            raise ValueError("duplicate or invalid HHS group ID in thirteen-zhou axis")
+        by_group[group_id] = row
+    if len({row["zhouId"] for row in rows}) != 13:
+        raise ValueError("thirteen-zhou axis must contain exactly thirteen 州")
+    if len({row["hanTileParentRegionId"] for row in rows}) != 105:
+        raise ValueError("thirteen-zhou axis must use unique stable parent-region IDs")
+    tile_parent_ids = {
+        row["id"] for row in documents["data/map/han-tiles.json"]["parentRegions"]
+    }
+    if not {row["hanTileParentRegionId"] for row in rows} <= tile_parent_ids:
+        raise ValueError("thirteen-zhou axis references an absent tile parent-region ID")
+    by_unit = {}
+    expected_groups = set()
+    for group in catalog["groups"]:
+        volume, name = group["sourceVolume"], group["canonicalGroup"]
+        group_id = f"hhs-group:{volume}:{name}"
+        expected_groups.add(group_id)
+        row = by_group.get(group_id)
+        if row is None:
+            raise ValueError(f"missing HHS group ID in thirteen-zhou axis: {group_id}")
+        citation = row["sourceCitation"]
+        if (citation.get("corpusPath") != group["sourceCitation"]["corpusPath"]
+                or citation.get("groupLine") != group["sourceCitation"]["line"]
+                or citation.get("stateTailLine", 0) <= citation["groupLine"]):
+            raise ValueError(f"thirteen-zhou source citation mismatch: {group_id}")
+        source_interval = next(
+            ((end, zhou) for end, zhou in ZHOU_SOURCE_INTERVALS[volume]
+             if citation["groupLine"] < end), None
+        )
+        if source_interval != (citation["stateTailLine"], row["zhouId"]):
+            raise ValueError(f"thirteen-zhou source section mismatch: {group_id}")
+        for unit in group["units"]:
+            unit_id = f'hhs:{volume}:{name}:{unit["ordinal"]:03d}'
+            if unit_id in by_unit:
+                raise ValueError(f"duplicate HHS unit ID: {unit_id}")
+            by_unit[unit_id] = (group_id, row["zhouId"])
+    if set(by_group) != expected_groups or len(by_unit) != 1180:
+        raise ValueError("thirteen-zhou HHS group or unit coverage mismatch")
+    return by_unit
+
+
+def _canon_parent_units(documents: dict[str, dict], zhou_by_unit: dict[str, tuple[str, str]]) -> dict[str, list[str]]:
+    group_to_parent = {
+        row["administrativeGroupId"]: row["hanTileParentRegionId"]
+        for row in documents["data/curated/han/administrative-zhou-axis-v1.json"]["rows"]
+    }
+    by_parent: dict[str, list[str]] = defaultdict(list)
+    for unit_id, (group_id, _) in zhou_by_unit.items():
+        by_parent[group_to_parent[group_id]].append(unit_id)
+    return {parent_id: sorted(units) for parent_id, units in by_parent.items()}
 
 
 def expand_rle(runs: object, expected_cells: int, label: str) -> list[int]:
@@ -1253,7 +1332,7 @@ def _external_review(city_id: str, jun_name: object, external: dict) -> dict:
 def _direct_territory_jun_reviews(
     tiles: dict,
     groups_by_jun: dict,
-    binding_groups: dict[str, list[str]],
+    canon_parent_units: dict[str, list[str]],
     external: dict,
 ) -> list[dict]:
     reviews = []
@@ -1263,16 +1342,18 @@ def _direct_territory_jun_reviews(
         name = jun.get("nameCh") if isinstance(jun, dict) else None
         if name in external["hubByName"]:
             continue
-        sourced = binding_groups.get(name, []) if isinstance(name, str) else []
+        parent_id = tiles["parentRegions"][jun_index]["id"]
+        sourced = canon_parent_units.get(parent_id, [])
         reviews.append(
             {
                 "diagnosticOnly": True,
                 "junArrayIndex": jun_index,
+                "parentRegionId": parent_id,
                 "nameCh": name,
                 "reviewState": (
                     "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST"
                     if sourced
-                    else "PENDING_DIRECT_TERRITORY_REVIEW"
+                    else "REVIEWED_OUTSIDE_CANON_105_NO_SOURCE_UNIT"
                 ),
                 "sourcedAdministrativeUnitIds": sourced,
             }
@@ -1331,6 +1412,10 @@ def _summary(
         "directTerritoryReview": {
             "rejectedSourcedGroupJunCount": len(rejected_juns),
             "pendingCandidateJunCount": len(pending_juns),
+            "reviewedOutsideCanonJunCount": sum(
+                row["reviewState"] == "REVIEWED_OUTSIDE_CANON_105_NO_SOURCE_UNIT"
+                for row in direct_jun_reviews
+            ),
         },
         "crossParentRegionFootprintCount": sum(
             row["footprintDiagnostic"]["crossJun"] for row in rows
@@ -1355,8 +1440,10 @@ def _assert_locked_contract(
         "cityLinkedProvinceCount": 998,
         "directTerritoryProvinceCount": 526,
         "landCellCount": 227_349,
-        "cityLinkedCellCount": 107_156,
-        "directTerritoryCellCount": 120_193,
+        # close-all-county-gaps changed one prior-stage owner cell from a city-linked
+        # province to direct territory; the total land area remains 227_349.
+        "cityLinkedCellCount": 107_155,
+        "directTerritoryCellCount": 120_194,
         # 城 없던 郡 3곳(朔方·西河·定襄)의 治所가 경로 노드로 서면서 782 → 785.
         # 2026-09-14: w1 간체표 폴딩 결합 11곳이 城 836–846 으로 서면서 785 → 796(귀속 충돌 5곳은 defer).
         # unresolved 353 → 342, 승인 셀 +872 = 미결 셀 -872 로 보존된다.
@@ -1367,7 +1454,7 @@ def _assert_locked_contract(
         # (5_841칸)이 승인으로 옮겨 973 → 1008, unresolved 165 → 130 · 6_443 → 602 셀로 보존된다.
         "exactApprovedRowCount": 1_008,
         # 巴郡 漢昌(579)을 巴中(44621)으로 바로잡아 그 縣 칸 70 이 승인으로 옮겼다(106_554 → 106_624, 미결 602 → 532).
-        "exactApprovedCellCount": 106_624,
+        "exactApprovedCellCount": 106_623,
         "approvedPhysicalPlaceIdAbsentCount": len(expected_absent_terminal_ids),
         "unresolvedRowCount": 130,
         "unresolvedCellCount": 532,
@@ -1406,14 +1493,15 @@ def _assert_locked_contract(
         raise ValueError("locked external-polity blocker cell count changed")
     if summary["directTerritoryReview"] != {
         "rejectedSourcedGroupJunCount": 0,
-        "pendingCandidateJunCount": 5,
+        "pendingCandidateJunCount": 0,
+        "reviewedOutsideCanonJunCount": 5,
     }:
         raise ValueError("locked direct-territory review split changed")
 
 
-FRONTIER_STAGE_VARIANT_KEYS = frozenset({"cellCount", "seatJunDiagnostic", "footprintDiagnostic"})
+FRONTIER_STAGE_VARIANT_KEYS = frozenset({"cellCount", "seatJunDiagnostic", "footprintDiagnostic", "reviewDisposition"})
 FRONTIER_STAGE_SOURCED_KEYS = frozenset(
-    {"decision", "reviewState", "directTerritoryReview", "geometryDiagnostic"}
+    {"decision", "reviewState", "directTerritoryReview", "geometryDiagnostic", "reviewDisposition"}
 )
 
 
@@ -1427,6 +1515,7 @@ def build_ledger(
         raise ValueError("ledger build requires every pinned input")
     # Reject invalid review metadata before expensive historical geometry restoration.
     _validate_review_chain(documents, input_records)
+    zhou_by_unit = _zhou_by_administrative_unit(documents)
     sys.path.insert(0, str(ROOT))
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import refine_korea_places as korea
@@ -1523,13 +1612,13 @@ def build_ledger(
             if expected_relation not in history_relations:
                 raise ValueError("temporal adjudication and administrative history relation disagree")
     groups_by_jun, anchors_by_jun = _jun_diagnostics(tiles, selections)
-    binding_groups = _binding_groups(documents["data/curated/han/administrative-place-bindings-v1.json"])
+    canon_parent_units = _canon_parent_units(documents, zhou_by_unit)
     external = _external_context(
         documents["data/map/external-places.json"],
         documents["data/curated/han/route-node-selection-candidates-v1.json"],
     )
     direct_jun_reviews = _direct_territory_jun_reviews(
-        tiles, groups_by_jun, binding_groups, external
+        tiles, groups_by_jun, canon_parent_units, external
     )
     rows = []
     for city_id in sorted(tiles["cityById"]):
@@ -1612,11 +1701,12 @@ def build_ledger(
                     }
                 )
             else:
-                sourced = binding_groups.get(jun_name, []) if isinstance(jun_name, str) else []
+                parent_id = tiles["parentRegions"][jun_index]["id"]
+                sourced = canon_parent_units.get(parent_id, [])
                 state = (
                     "REJECTED_SOURCED_COUNTIES_ALREADY_EXIST"
                     if sourced
-                    else "PENDING_DIRECT_TERRITORY_REVIEW"
+                    else "REVIEWED_OUTSIDE_CANON_105_NO_SOURCE_UNIT"
                 )
                 row.update(
                     {
@@ -1624,11 +1714,34 @@ def build_ledger(
                         "reviewState": "BLOCKED",
                         "directTerritoryReview": {
                             "diagnosticOnly": True,
+                            "parentRegionId": parent_id,
                             "reviewState": state,
                             "sourcedAdministrativeUnitIds": sourced,
                         },
                     }
                 )
+        if row["decision"] == "PROPOSED_GEOMETRIC":
+            row["reviewDisposition"] = (
+                "BLOCKED_SOURCE_IDENTITY_MISSING" if row["cellCount"]
+                else "REVIEWED_NO_PROVINCE_FOOTPRINT"
+            )
+        elif row["decision"] == "BLOCKED_DIRECT_TERRITORY_REVIEW":
+            row["reviewDisposition"] = "OUTSIDE_CANON_105_NO_SOURCE_UNIT"
+        approved_unit_id = row.get("approvedParentAdministrativeUnitId")
+        if approved_unit_id in zhou_by_unit:
+            group_id, zhou_id = zhou_by_unit[approved_unit_id]
+            row["zhouMembership"] = {
+                "reviewState": "CANON_105_APPROVED_ID_CHAIN",
+                "administrativeGroupId": group_id,
+                "zhouId": zhou_id,
+            }
+        else:
+            row["zhouMembership"] = {
+                "reviewState": (
+                    "OUTSIDE_CANON_105_ID_CHAIN" if approved_unit_id is not None
+                    else "NO_APPROVED_ADMINISTRATIVE_UNIT_ID"
+                )
+            }
         rows.append(row)
     summary = _summary(rows, selections["absent"], direct_jun_reviews, tiles)
     projection = None
@@ -1715,6 +1828,11 @@ def build_ledger(
         "summary": summary,
         "approvedPhysicalPlaceIdsAbsentFromTiles": selections["absent"],
         "directTerritoryJunReviews": direct_jun_reviews,
+        "zhouAxis": {
+            "ledgerId": documents["data/curated/han/administrative-zhou-axis-v1.json"]["ledgerId"],
+            "groupCount": 105,
+            "zhouCount": 13,
+        },
         "rows": rows,
     }
     if projection is not None:

@@ -768,7 +768,8 @@ class HanParentReconciliationTest(unittest.TestCase):
             # 5 에서 2 로 — 朔方·西河·定襄 治所가 城 833–835 로 섰다.
             # 2026-09-15: w2 로 屬國 2·直轄 후보 11 이 빠졌다. 남은 4 는 治所가 기존 城과 같은 자리라
             # 새 城을 세우지 않은 新平·毗陵典農校尉·汶山·章武다.
-            {"rejectedSourcedGroupJunCount": 0, "pendingCandidateJunCount": 4},
+            {"rejectedSourcedGroupJunCount": 0, "pendingCandidateJunCount": 0,
+             "reviewedOutsideCanonJunCount": 4},
             self.ledger["summary"]["directTerritoryReview"],
         )
 
