@@ -235,8 +235,8 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(15, len(generated))
         # 省 수는 data/map/han-tiles.json provinceRecords 실측이다. 현재 판 1,374 × 활성 시나리오 15 = 20,610.
         # 직전 기대값 23,370(=15 × 1,558)은 #848 한반도 임시 거점 정리 이전 판이다.
-        self.assertEqual(21_450, sum(len(rows) for rows in generated.values()))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
-        self.assertTrue(all(len(rows) == 1_430 for rows in generated.values()))
+        self.assertEqual(24_795, sum(len(rows) for rows in generated.values()))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertTrue(all(len(rows) == 1_653 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)
@@ -245,7 +245,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
         self.assertEqual(15, len(first["scenarios"]))
         self.assertEqual(
-            21_450,  # 15 시나리오 × 현재 판 省 1,434 (test_production_document_has_1434_rows_per_active_scenario 와 같은 기준)
+            24_795,  # 15 시나리오 × 현재 판 省 1,653 (test_production_document_has_1434_rows_per_active_scenario 와 같은 기준)
             sum(len(scenario["assignments"]) for scenario in first["scenarios"]),
         )
         self.assertNotIn(str(ROOT), canonical_bytes(first).decode("utf-8"))

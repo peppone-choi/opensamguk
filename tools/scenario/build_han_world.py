@@ -84,7 +84,7 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
 from tools.scenario.han_active_city_ids import active_numeric_ids
 # 결손 縣 56 곳을 더해 1168 → 1224. 명부 수가 늘면 같이 움직이는 실측 기준선이다.
-V3_ROUTE_NODE_COUNT = 1224
+V3_ROUTE_NODE_COUNT = 1447
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
 # 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.

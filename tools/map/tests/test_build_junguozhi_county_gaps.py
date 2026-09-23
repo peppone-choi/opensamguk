@@ -19,9 +19,9 @@ class GapLedgerTest(unittest.TestCase):
         self.assertEqual(self.doc["totals"]["counties"], sum(len(g["units"]) for g in units["groups"]))
         self.assertEqual(len(self.doc["commanderies"]), len(units["groups"]))
 
-    def test_known_present_and_absent_counties(self):
+    def test_all_formerly_absent_counties_are_present(self):
         dong = {c["sourceName"]: c["status"] for c in self.by["東郡"]["counties"]}
-        self.assertEqual(dong["濮陽"], "ABSENT")          # 2026-09-17 실측: 東郡 治所가 1133 판에 없다
+        self.assertEqual(dong["濮陽"], "IN_OWN_COMMANDERY")
         self.assertEqual(dong["燕"], "IN_OWN_COMMANDERY")
         ying = {c["sourceName"]: c["status"] for c in self.by["潁川郡"]["counties"]}
         self.assertEqual(ying["潁陰"], "IN_OWN_COMMANDERY")  # 繁→簡 접기(潁→颍, 陰→阴)가 죽으면 빨개진다
@@ -37,11 +37,41 @@ class GapLedgerTest(unittest.TestCase):
         import audit_county_coverage
         self.assertEqual(self.doc["totals"]["IN_OWN_COMMANDERY"], audit_county_coverage.audit()["totals"]["placed"])
 
-    def test_absent_rows_carry_one_glyph_near_matches_without_promotion(self):
+    def test_former_near_match_is_its_own_game_city(self):
         yan = {c["sourceName"]: c for c in self.by["鴈門郡"]["counties"]}
-        self.assertEqual(yan["汪陶"]["status"], "ABSENT")  # 이문(汪/浧) — 글자표로 접지 않는다, 판정은 사람이 한다
-        self.assertEqual(yan["汪陶"]["nearMatchInOwnCommandery"], ["浧陶"])
+        self.assertEqual(yan["汪陶"]["status"], "IN_OWN_COMMANDERY")
+        self.assertNotIn("nearMatchInOwnCommandery", yan["汪陶"])
         self.assertNotIn("nearMatchInOwnCommandery", {c["sourceName"]: c for c in self.by["東郡"]["counties"]}["濮陽"])
+
+    def test_only_user_excluded_undeciphered_rows_remain_absent_and_red_probe(self):
+        self.assertEqual(self.doc["totals"].get("ABSENT", 0), 3)
+        absent = {(g["commandery"], c["sourceName"]) for g in self.doc["commanderies"]
+                  for c in g["counties"] if c["status"] == "ABSENT"}
+        self.assertEqual(absent, {("北地郡", "参[�]"), ("武威郡", "朴[B459]"),
+                                  ("交趾郡", "朱[B42B]")})
+        self.assertEqual(self.doc["totals"]["undisposedAbsent"], 0)
+        self.assertTrue(all(c.get("disposition") == "USER_EXCLUDED_UNDECIPHERED_NAME_FROM_MAP"
+                            for g in self.doc["commanderies"] for c in g["counties"]
+                            if c["status"] == "ABSENT"))
+        ledger = json.loads((B.ROOT / "data/curated/han/gap-counties-v1.json").read_text(encoding="utf-8"))
+        synthetic = [row for row in ledger["counties"] if row.get("positionStatus") == "SYNTHETIC"]
+        self.assertEqual(len(synthetic), 223)
+        self.assertEqual({row["sourceName"] for row in ledger["excludedUndeciphered"]},
+                         {name for _, name in absent})
+        self.assertTrue(all(not row["syntheticPlacement"]["historicalSeatClaim"] for row in synthetic))
+        units, tiles, world = [json.loads(p.read_text(encoding="utf-8")) for p in (B.UNITS, B.TILES, B.WORLD)]
+        excluded_ids = {row["placeId"] for row in ledger["excludedUndeciphered"]}
+        self.assertEqual(excluded_ids, {"gc-g0071-005", "gc-g0072-007", "gc-g0102-010"})
+        self.assertTrue(all(row["sourceCitation"]["snapshotSha256"] for row in ledger["excludedUndeciphered"]))
+        self.assertFalse(excluded_ids & {city["id"] for city in tiles["cities"]})
+        self.assertFalse(excluded_ids & {city["meta"].get("physicalPlaceRef", "").split(":")[-1]
+                                         for city in world["cities"]})
+        tiles = {**tiles, "jurisdictionRecords": [row for row in tiles["jurisdictionRecords"]
+                                                 if row["id"] != "gc-g0023-001"]}
+        world = {**world, "cities": [row for row in world["cities"] if row["id"] != 1440]}
+        broken = B.build(units, tiles, world)
+        self.assertEqual(broken["totals"]["ABSENT"], 4)
+        self.assertEqual(broken["totals"]["undisposedAbsent"], 1)
 
     # 검토된 異體字 쌍(#813) 하나당 고정점 하나. 글자표에서 그 쌍을 빼면 그 행만 ABSENT 로 돌아가 빨개진다.
     VARIANT_FIXED_POINTS = (
@@ -96,8 +126,8 @@ class GapLedgerTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     A.load_fold_table(path)
 
-    def test_a_tile_county_near_several_absent_rows_is_not_pinned_on_each(self):
-        # 글자표에서 愼 을 빼면 汝南 慎阳 은 新陽·灌陽·細陽·鮦陽·愼陽 다섯 행에 걸린다 — 행마다 달지 않는다.
+    def test_removing_reviewed_glyph_exposes_absence_without_promotion(self):
+        # 사용자 승인 별도 城이 생긴 뒤에도 愼→慎 접기를 지우면 그 행이 다시 ABSENT 로 보인다.
         import audit_county_coverage as A
         doc = json.loads(A.TABLE_PATH.read_text(encoding="utf-8"))
         doc["table"].pop("愼")
@@ -112,8 +142,8 @@ class GapLedgerTest(unittest.TestCase):
             finally:
                 A.TABLE_PATH = original
         ru = {c["sourceName"]: c for g in built["commanderies"] if g["commandery"] == "汝南郡" for c in g["counties"]}
-        self.assertNotIn("nearMatchInOwnCommandery", ru["愼陽"])
-        self.assertEqual(ru["愼陽"]["ambiguousNearMatchInOwnCommandery"], ["慎阳"])
+        self.assertEqual(ru["愼陽"]["status"], "ABSENT")
+        self.assertEqual(ru["愼陽"]["nearMatchInOwnCommandery"], ["慎阳"])
         for g in self.doc["commanderies"]:
             seen = [f for c in g["counties"] for f in c.get("nearMatchInOwnCommandery", [])]
             self.assertEqual(len(seen), len(set(seen)), g["commandery"])
@@ -134,7 +164,7 @@ class GapLedgerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             stale = Path(tmp) / "stale.json"
             doc = json.loads(original.read_text(encoding="utf-8"))
-            doc["totals"]["ABSENT"] -= 1
+            doc["totals"]["IN_OWN_COMMANDERY"] -= 1
             stale.write_text(B.render(doc), encoding="utf-8")
             B.OUTPUT = stale
             try:

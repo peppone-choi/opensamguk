@@ -264,7 +264,7 @@ class HanWorldV3Test(unittest.TestCase):
         expected_reassigned.add(("chgis:v6:cnty:82841", "弘農郡", "河南尹"))
         expected_reassigned.add(("chgis:v6:cnty:87297", "涿郡", "河閒國"))
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(1224, len(actual))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1447, len(actual))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -440,11 +440,11 @@ class HanWorldV3Test(unittest.TestCase):
             self.assertEqual(expected_max, city["max"], city["name"])
             self.assertEqual(expected_initial, city["initial"], city["name"])
         # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
-        self.assertEqual(105, seats)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 治所 城이 6곳 늘었다.
+        self.assertEqual(115, seats)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 治所 城이 6곳 늘었다.
         self.assertEqual(72, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
         # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
-        self.assertEqual(974, counties)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 縣 등급이 50곳 늘었다(나머지 6곳은 治所).
+        self.assertEqual(1187, counties)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 縣 등급이 50곳 늘었다(나머지 6곳은 治所).
         self.assertEqual(73, sites)
         # '이'(이민족)는 郡國 밖 이민족 거점 7곳만 단다(2026-09-17 w5) — 漢 縣에는 한 곳도 없다.
         self.assertEqual(
@@ -480,8 +480,8 @@ class HanWorldV3Test(unittest.TestCase):
         # 2026-09-17: 郡國 밖 취락 37곳(w5)이 제 세력 이름 29개를 郡으로 더하고, 卒本·鮮卑가 치소 城을 받아 155 / 25 다.
         self.assertEqual(156, len(by_parent))
         # 2026-09-23: 결손 縣 56곳이 서면서 治所 없는 郡이 25 → 19 로 줄었다(개선).
-        self.assertEqual(19, len(seatless))
-        self.assertIn("太原郡", seatless)
+        self.assertEqual(9, len(seatless))
+        self.assertNotIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
 
 
@@ -566,8 +566,14 @@ class DisplayNameTest(unittest.TestCase):
                 (745, "일남군", "일남군 서권현"),
                 # 같은 郡 같은 글자 두 縣 — CHGIS 가 자리를 둘 적었다. 앞선 城은 표기를 지키고 새 城만 가른다.
                 # 같은 한글 독음의 두 거점(渦口·瓦口) — 거점은 郡을 앞에 세우지 않아 漢字 어간으로만 갈린다.
+                (857, "신성(河南尹)#857", "하남윤 신성현(新成)"),
+                (869, "신양(汝南郡)#869", "여남군 신양현(慎阳)"),
+                (996, "하락(上谷郡)#996", "상곡군 하락현(下洛)"),
                 (1039, "와구(九江郡)", "와구(渦口)"),
                 (1080, "와구(巴郡)", "와구(瓦口)"),
+                (1399, "신성(河南尹)#1399", "하남윤 신성현(新城)"),
+                (1417, "신양(汝南郡)#1417", "여남군 신양현(新陽)"),
+                (1603, "하락(上谷郡)#1603", "상곡군 하락현(下落)"),
             ],
             mismatched,
         )
@@ -576,9 +582,9 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(1224, len(world["cities"]))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1447, len(world["cities"]))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-        self.assertEqual(1086, len(changed))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1310, len(changed))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

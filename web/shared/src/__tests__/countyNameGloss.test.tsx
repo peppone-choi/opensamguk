@@ -62,7 +62,7 @@ describe('splitCountyGloss', () => {
       .map((c) => ({ id: c.id, ...splitCountyGloss(c.meta.displayName) }))
       .filter((c) => c.gloss);
     // 런타임은 同音 3쌍(陽城·襄城 / 泠道·營道 / 安豐·安風)만 꼬리로 가른다. 0건 통과가 아님을 못박는다.
-    expect(split.map((c) => c.id).sort((a, b) => a - b)).toEqual([129, 134, 490, 495, 527, 528]);
+    expect(split.map((c) => c.id).sort((a, b) => a - b)).toEqual([129, 134, 490, 495, 527, 528, 857, 869, 996, 1399, 1417, 1603]);
     const shown = new Set(split.map((c) => `${c.name}|${c.gloss}`));
     expect(shown.size).toBe(split.length);
   });

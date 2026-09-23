@@ -48,16 +48,19 @@ CLAIM_PREFIX = "han-gap-county-claim-v1-"
 PLACE_NAMESPACE = "curated:gap-county-v1"
 
 
-def build_rows(ledger: dict, carves: dict) -> list[dict]:
+def build_rows(ledger: dict, carves: dict, already_bound: set[str] | None = None) -> list[dict]:
     stage = carves["geometry"]["stages"][0]
     placement_by_unit = {row["countyId"]: row for row in stage["gapCountyPlacements"]}
     rows = []
     for county in ledger["counties"]:
+        if county["id"] in (already_bound or set()):
+            continue  # its original HHS unit already owns another 城
         placement = placement_by_unit.get(county["id"])
         if placement is None:
             raise ValueError(f"gap county has no carve placement: {county['id']}")
         evidence = [row for row in county["primaryEvidence"]
-                    if "COUNTY_EXISTS_IN_COMMANDERY" in row.get("supports", [])]
+                    if {"COUNTY_EXISTS_IN_COMMANDERY", "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"}
+                    & set(row.get("supports", []))]
         if len(evidence) != 1:
             raise ValueError(f"gap county needs exactly one 郡國志 county-line evidence: {county['id']}")
         evidence = evidence[0]
@@ -71,6 +74,7 @@ def build_rows(ledger: dict, carves: dict) -> list[dict]:
             "commanderyHan": county["commanderyHan"],
             "worldCommanderyHan": placement["worldCommanderyHan"],
             "coordinateBasis": county["coordinateBasis"],
+            "positionStatus": county["positionStatus"],
             "sourceRecord": {
                 "corpusPath": f"data/corpus/hhs-{evidence['volume']}.txt",
                 "lineEnd": evidence["line"],
@@ -111,6 +115,7 @@ def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
         # 연도(\d{3,4}년)·존속·시점 같은 생애 주장을 막는다. 사료 판정은 심사 원장에만 산다.
         reassigned = ("" if row["worldCommanderyHan"] == row["commanderyHan"]
                       else f" 투영 칸의 세계 소속 郡은 {row['worldCommanderyHan']} 이다.")
+        synthetic = row["positionStatus"] == "SYNTHETIC"
         document["claims"].append({
             "aliases": [],
             "canonicalName": row["canonicalName"],
@@ -119,9 +124,11 @@ def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
                 "rationaleCode": "PLACE_IDENTITY_ONLY",
                 "competingRefs": [],
                 "rationale": (
-                    f"郡國志 {row['commanderyHan']} 屬縣 {row['canonicalName']}을 gap-counties-v1 검토 원장의 "
-                    f"좌표({row['coordinateBasis']}, APPROXIMATE)로 비정한 외부 좌표 보조 record다. "
-                    "좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다." + reassigned
+                    f"郡國志 {row['commanderyHan']} 항목 {row['canonicalName']}의 게임 城 위치를 "
+                    f"gap-counties-v1 의 {row['coordinateBasis']}로 지정한 record다. "
+                    + ("사용자 승인 합성 격자이며 역사적 위치 주장이 아니다. " if synthetic else
+                       "좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. ")
+                    + reassigned
                 ),
                 "status": "NONE",
             },
@@ -149,7 +156,7 @@ def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
         document["policy"]["purpose"] = (
             "CHGIS V6 county coverage 밖의 HHS administrative unit 에만 유한 W0 물리 anchor를 제공한다 — "
             "변경 郡治 8건(OPENSAM-225)과 frontier-counties-v1 의 변경 屬縣 51건, "
-            "gap-counties-v1 의 결손 屬縣 60건."
+            "gap-counties-v1 의 게임 城 279건(기존 실결손 56건과 사용자 승인 합성 223건)."
         )
     return added
 
@@ -219,20 +226,21 @@ def append_registry(document: dict, rows: list[dict]) -> int:
 
 def update_policy(document: dict, rows: list[dict]) -> None:
     batches = document["selectionBatches"]
-    if not any(row["batchId"] == BATCH_ID for row in batches):
-        batches.append({
+    batch = next((entry for entry in batches if entry["batchId"] == BATCH_ID), None)
+    if batch is None:
+        batch = {
             "batchId": BATCH_ID,
             "criteria": ("HHS gap county identity (gap-counties-v1) with APPROVED "
                          "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim"),
-            "expectedCount": len(rows),
             "reviewState": "APPROVED",
-            "selectionRationale": (
-                "續漢書 郡國志가 적었는데 지도에 없던 縣 가운데 220 년 존속이 사료로 확정되고 좌표까지 확보된 "
-                "60 곳이다(확정 실결손 110 중 60). 존속 판정은 晉書 地理志·讀史方輿紀要·宋書 州郡志·魏書 地形志 "
-                "네 축의 여섯 원장에, 좌표 확보와 同名異地 기각은 gap-placement-readiness-v1 에 있다. "
-                "역사 binding 은 모두 HHS identity 다."
-            ),
-        })
+        }
+        batches.append(batch)
+    batch["expectedCount"] = len(rows)
+    batch["selectionRationale"] = (
+        "郡國志 항목에 대응하는 게임 城 279곳이다. 기존 56곳은 사료 판정과 좌표를 갖췄다. "
+        "추가 223곳은 사용자 승인 인공 격자로, 역사적 존속이나 실제 縣治 좌표를 뜻하지 않는다. "
+        "각 행의 위치 근거는 gap-counties-v1 에 있다."
+    )
     # expectedSelection 의 정본은 코드의 EXPECTED_SELECTION 이다 — 배치 합으로 직접 계산하면
     # HHS 결합 수(909)와 총 노드 수(1224)를 구분하지 못해 「policy count drift」 로 걸린다.
     from tools.scenario.han_route_node_selection import EXPECTED_SELECTION
@@ -249,7 +257,10 @@ def update_policy(document: dict, rows: list[dict]) -> None:
 def main() -> int:
     argparse.ArgumentParser(description=__doc__,
                             formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
-    rows = build_rows(_load(GAP_LEDGER), _load(CARVES))
+    registry = _load(REGISTRY)
+    already_bound = {row["initialAdministrativeUnitId"] for row in registry["keys"]
+                     if row.get("issuanceReason") != ISSUANCE_REASON}
+    rows = build_rows(_load(GAP_LEDGER), _load(CARVES), already_bound)
     authority = _load(AUTHORITY)
     added_authority = append_authority(authority, rows)
     _dump(AUTHORITY, authority)
@@ -261,7 +272,6 @@ def main() -> int:
     witness = _load(WITNESS)
     added_witness = append_witness(witness, rows)
     _dump(WITNESS, witness)
-    registry = _load(REGISTRY)
     added_registry = append_registry(registry, rows)
     _dump(REGISTRY, registry)
     policy = _load(POLICY)

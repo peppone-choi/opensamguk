@@ -14,12 +14,12 @@ class Han780V1CompatibilityResourceTest {
     }
 
     @Test
-    fun `new world v3 resolves its reviewed 1224 city resource`() {
+    fun `new world v3 resolves its reviewed 1447 city resource`() {
         val v3 = MapJson.loadFromClasspath("han-world-v3")
         // 결손 縣 56 곳은 1342–1397 을 받았다. 은퇴 번호 26 개(≤1194)와 동결 1341 판에서 철회한 1195–1341 은
         // 계속 비워 둔다(korea-retired-settlements-v1 numericIdsReserved).
         val retired = setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194)
-        assertEquals((1..1194).filterNot { it in retired } + (1342..1397), v3.cities.map { it.id })
+        assertEquals((1..1194).filterNot { it in retired } + (1342..1620), v3.cities.map { it.id })
     }
 
     @Test

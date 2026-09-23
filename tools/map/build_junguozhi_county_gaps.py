@@ -5,9 +5,11 @@
 이름 대조만 한다(판정 아님). 後漢書 郡國志 105 郡國의 縣 이름을 han-tiles `jurisdictionRecords`
 와 맞춰, 縣마다 IN_OWN_COMMANDERY / IN_OTHER_COMMANDERY / ABSENT 로 분류한다. 개명·僑置·
 220년 단면 차이는 가리지 않으므로 모든 행은 `review: UNREVIEWED_NAME_MATCH` 다.
+사용자가 지도에서 빼라고 지정한 미해독 3행은 ABSENT 를 유지하고 별도 disposition 을 기록한다.
 
 입력(커밋본): data/curated/han/administrative-units.json, data/map/han-tiles.json,
-data/curated/han/han-name-simplification-v1.json(audit_county_coverage 의 정규화 규칙을 그대로 쓴다)
+data/curated/han/han-name-simplification-v1.json(audit_county_coverage 의 정규화 규칙을 그대로 쓴다),
+data/curated/han/gap-counties-v1.json(excludedUndeciphered 처분)
 사람 판정 목록: data/curated/han/junguozhi-county-name-review-v1.json — 글자표로 접지 않은 한 글자 차이 후보(개명·잘림·이문)
 출력: data/curated/han/junguozhi-county-gaps-v1.json   (`--check` = 재생성 대조)
 """
@@ -23,9 +25,11 @@ ROOT = Path(__file__).resolve().parents[2]
 UNITS = ROOT / "data/curated/han/administrative-units.json"
 TILES = ROOT / "data/map/han-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
+GAP_LEDGER = ROOT / "data/curated/han/gap-counties-v1.json"
 OUTPUT = ROOT / "data/curated/han/junguozhi-county-gaps-v1.json"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import audit_county_coverage  # noqa: E402 — 접미사·글자표 규칙의 정본. 따로 만들면 邑·道·國을 잘라 먹는다(2026-09-17 교차 비평)
+
 
 
 def _near(a: str, b: str) -> bool:
@@ -34,7 +38,11 @@ def _near(a: str, b: str) -> bool:
     return abs(len(a) - len(b)) == 1 and (a in b or b in a)
 
 
-def build(units: dict, tiles: dict, world: dict) -> dict:
+def build(units: dict, tiles: dict, world: dict, gap_ledger: dict | None = None) -> dict:
+    if gap_ledger is None:
+        gap_ledger = json.loads(GAP_LEDGER.read_text(encoding="utf-8"))
+    excluded = {(row["commandery"], row["sourceName"]): row["reason"]
+                for row in gap_ledger.get("excludedUndeciphered", [])}
     fold = audit_county_coverage.make_normalizer()
     fold_group = audit_county_coverage.make_normalizer(group=True)
     commandery_name = {c["id"]: c["nameCh"] for c in tiles["commanderyRecords"]}
@@ -67,6 +75,9 @@ def build(units: dict, tiles: dict, world: dict) -> dict:
                 status, extra = "IN_OTHER_COMMANDERY", {"foundIn": sorted(set(anywhere[key]))}
             else:
                 status, extra = "ABSENT", {}
+                disposition = excluded.get((g["canonicalGroup"], u["sourceName"]))
+                if disposition is not None:
+                    extra["disposition"] = disposition
             rows.append({"ordinal": u["ordinal"], "sourceName": u["sourceName"], "status": status, **extra, "_key": key})
         # 부재 후보에 같은 郡의 「아직 안 맞은」 타일 縣 중 한 글자 차이 이름을 단다(異體字·개명 후보). 승격하지 않는다.
         taken = {r["_key"] for r in rows if r["status"] != "ABSENT"}
@@ -100,8 +111,10 @@ def build(units: dict, tiles: dict, world: dict) -> dict:
     return {
         "schemaVersion": 1,
         "review": "UNREVIEWED_NAME_MATCH",
-        "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다.",
+        "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다. 미해독 3행은 지도에서 제외하라는 사용자 결정으로 disposition 을 닫았다.",
         "totals": {"counties": sum(g["declaredCounties"] for g in groups), **{k: totals[k] for k in sorted(totals)},
+                   "undisposedAbsent": sum(1 for g in groups for row in g["counties"]
+                                            if row["status"] == "ABSENT" and "disposition" not in row),
                    "commanderiesWithAbsentFirstCounty": sum(
                        1 for g in groups if g["firstListedCounty"] and g["firstListedCounty"]["status"] == "ABSENT")},
         "commanderies": groups,

@@ -18,6 +18,7 @@ CHECK_FLAG_RE = re.compile(r"""add_argument\(\s*['"]--check['"]""")
 
 # han-tiles 를 읽고 --check 도 있지만 일괄 게이트에 못 넣는 도구와 그 사유(2026-09-18 origin/main 실측).
 EXEMPT = {
+    "tools/map/build_han_1224_bundle.py": "Frozen prior release; current drift uses 1447.",
     "tools/map/build_han_1168_bundle.py": "Frozen prior release (2026-09-21), integrity checked by Han1168ArtifactsIntegrityTest; latest drift uses 1224.",
     "tools/map/build_han_1194_bundle.py": "Deployed historical release remains frozen; active drift uses 1224.",
     "tools/map/build_han_1341_bundle.py": "Withdrawn roster remains frozen for compatibility; current drift uses 1224.",
