@@ -10,6 +10,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from build_hwiha_item_ledgers import split as split_items
+
 ROOT = Path(__file__).resolve().parents[2]
 RESOURCE_COLORS = {"money", "grain", "iron", "timber", "horses"}
 COUNTY_INDICATORS = {
@@ -103,11 +105,51 @@ def validate_sites(sites: dict, extracts: dict, production: dict) -> list[str]:
     return errors
 
 
+def validate_item_ledgers(source: dict, treasures: dict, equipment: dict, excluded: dict) -> list[str]:
+    """Every extracted row has one destination; no fixed catalogue row count is assumed."""
+    errors: list[str] = []
+    ledgers = ((treasures, "cards"), (equipment, "equipment"), (excluded, "excluded"))
+    actual_rows = [row for ledger, key in ledgers for row in ledger.get(key, [])]
+    source_rows = source.get("items", [])
+    source_by_code = {row["code"]: row for row in source_rows}
+    consumed = Counter(row.get("sourceCode") for row in actual_rows)
+    for code, count in sorted(consumed.items(), key=lambda entry: str(entry[0])):
+        if count > 1:
+            errors.append(f"double consumed item source: {code}")
+        if code not in source_by_code:
+            errors.append(f"dangling item source: {code}")
+    for code in sorted(source_by_code.keys() - consumed.keys()):
+        errors.append(f"partial item split: {code} has no destination")
+    try:
+        expected = split_items(source)
+    except (KeyError, TypeError, ValueError) as exc:
+        return errors + [f"invalid extracted item source: {exc}"]
+    for actual, intended, key in zip((treasures, equipment, excluded), expected,
+                                     ("cards", "equipment", "excluded")):
+        if {k: v for k, v in actual.items() if k != key} != {k: v for k, v in intended.items() if k != key}:
+            errors.append(f"invalid item ledger header: {key}")
+        intended_by_code = {row["sourceCode"]: row for row in intended[key]}
+        for row in actual.get(key, []):
+            code = row.get("sourceCode")
+            if code not in intended_by_code:
+                errors.append(f"wrong item destination: {key}/{code}")
+            elif row != intended_by_code[code]:
+                errors.append(f"item contract/source mismatch: {key}/{code}")
+        if len(actual.get(key, [])) != len(intended[key]):
+            errors.append(f"partial item ledger: {key}")
+    return errors
+
+
 def validate_current() -> list[str]:
     return validate_domestic(load("data/curated/han/hwiha-domestic-v1.json")) + validate_sites(
         load("data/curated/han/resource-sites-v1.json"),
         load("data/curated/han/resource-site-source-extracts-v1.json"),
         load("data/curated/han/hwiha-resource-production-v1.json"),
+    ) + validate_item_ledgers(
+        load("data/extracted/item/items.json"),
+        load("data/curated/han/hwiha-treasure-cards-v1.json"),
+        load("data/curated/han/hwiha-equipment-v1.json"),
+        load("data/curated/han/hwiha-items-excluded-v1.json"),
     )
 
 
