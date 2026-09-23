@@ -200,9 +200,11 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
       SELECT 1 FROM log_entry l WHERE l.world_id=c.world_id AND l.event_kind='county.captured'
         AND (l.meta->'refs'->>'countyId')::integer=c.id);`));
   expect(abandonedWithGarrison, 'a captured county with occupying troops became neutral').toBe(0);
+  const activeWarRelations = Number(sql(`SELECT count(*) FROM diplomacy WHERE world_id=${worldId} AND state_code=0 AND term>0;`));
+  expect(activeWarRelations, 'the 30 directed war relations survive monthly settlement').toBe(30);
   await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, march: marchState(),
     siege: siegeSummary(), npcBattles: npcBattles(), liveEncounterCount: encounterIds.size,
-    repeatedNeutralCaptures, abandonedWithGarrison,
+    repeatedNeutralCaptures, abandonedWithGarrison, activeWarRelations,
     yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);
