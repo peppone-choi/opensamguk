@@ -4003,11 +4003,11 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "8e4ce398a8852febe79b737534bda84e6927f411e39e65b89c4c175b02b5bd12",
-        "outputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
+        "inputDocumentSha256": "a31d44b9f835d2b3214ba65d36043f5f407500f1c16f89f63a9a630196229172",
+        "outputDocumentSha256": "a16c1810c4a5a94ab2d4b64628980a99297d51641ec9f28ccddd02172317d1b8",
         "inputBlob": {
           "path": "data/curated/han/county-location-partition-v1.input.json.gz",
-          "sha256": "06a42cba73e264d62e86ecb4a7ff2445ecfe12a998d657df8628d6c85baba259",
+          "sha256": "e549f918635cdf0148304ba2db4d63ce1d3b22118ebe3407cbe01bdaef5a9f09",
           "fields": [
             "owner",
             "provinceRecords",

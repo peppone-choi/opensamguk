@@ -33,7 +33,7 @@ class HanStrategicTopologyJsonTest {
         // 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
         // parentRegions 3 곳이 aliases 를 얻은 것뿐이고 물 기하·격자·좌표는 그대로다.
         // 2026-09-23: 결손 縣 56곳이 제 省을 받고 郡 오귀속 2건(857·993)을 바로잡으며 재핀했다. 물 기하는 그대로다.
-        assertEquals("61bbf321dc7ebbf162b0bf9960d43a7ae486f8c8f5e3d3c8433f79198160f6ee",
+        assertEquals("7d01a22614081100ea5afbd58bd5875efa38bb7561720a5265a977c00923d1cb",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),

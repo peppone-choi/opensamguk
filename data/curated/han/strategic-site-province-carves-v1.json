@@ -43,8 +43,8 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
-        "outputDocumentSha256": "a12ea6eee00cc1dbca6c4fb21bffddcefca07b1151a6ea52ea50b63b8f94266c",
+        "inputDocumentSha256": "a16c1810c4a5a94ab2d4b64628980a99297d51641ec9f28ccddd02172317d1b8",
+        "outputDocumentSha256": "4048d1ded0d356080dffe8ddc6ab7ebc23690ccc625c8b5913883fe444cc8f1b",
         "inputCounts": {
           "cities": 1190,
           "seats": 172,

@@ -5,22 +5,21 @@
   "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
   "generator": "tools/map/build_county_display_name_collisions.py",
   "inputs": {
-    "hanTilesSha256": "61bbf321dc7ebbf162b0bf9960d43a7ae486f8c8f5e3d3c8433f79198160f6ee",
-    "hanWorldV3Sha256": "bff073ff9c5d2eb2e6a340b5e41146114b20e147eb9915e204c41545d129e022",
+    "hanTilesSha256": "7d01a22614081100ea5afbd58bd5875efa38bb7561720a5265a977c00923d1cb",
+    "hanWorldV3Sha256": "4d5eec1eabbef132d4c799d6b211d724310d8ef614ae737608d392ce95c7dbf2",
     "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
     "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
   },
   "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
   "summary": {
     "jurisdictions": 1447,
-    "sameCommanderyCollisionGroups": 8,
-    "sameCommanderyCollidingJurisdictions": 16,
-    "commanderiesWithCollisions": 8,
+    "sameCommanderyCollisionGroups": 6,
+    "sameCommanderyCollidingJurisdictions": 12,
+    "commanderiesWithCollisions": 6,
     "byClassification": {
-      "HOMOPHONE": 6,
-      "TILES_READING_DIVERGES_FROM_RUNTIME": 2
+      "HOMOPHONE": 6
     },
-    "displayNamesSharedAcrossCommanderies": 127
+    "displayNamesSharedAcrossCommanderies": 128
   },
   "collisions": [
     {
@@ -140,35 +139,6 @@
       ]
     },
     {
-      "commanderyId": "PARENT-0049",
-      "commanderyDisplayName": "단양군",
-      "commanderyNameCh": "丹陽郡",
-      "displayName": "완릉현",
-      "classification": "TILES_READING_DIVERGES_FROM_RUNTIME",
-      "members": [
-        {
-          "jurisdictionId": "41302",
-          "kind": "COUNTY",
-          "nameCh": "宛陵县",
-          "simplifiedStem": "宛陵",
-          "gloss": "宛陵",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 499,
-          "runtimeDisplayName": "단양군 완릉현"
-        },
-        {
-          "jurisdictionId": "41305",
-          "kind": "COUNTY",
-          "nameCh": "宣城县",
-          "simplifiedStem": "宣城",
-          "gloss": "宣城",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 936,
-          "runtimeDisplayName": "단양군 선성현"
-        }
-      ]
-    },
-    {
       "commanderyId": "PARENT-0050",
       "commanderyDisplayName": "여강군",
       "commanderyNameCh": "廬江郡",
@@ -194,35 +164,6 @@
           "glossBasis": "SIMPLIFICATION_TABLE",
           "runtimeCityId": 527,
           "runtimeDisplayName": "여강군 안풍현(安丰)"
-        }
-      ]
-    },
-    {
-      "commanderyId": "PARENT-0051",
-      "commanderyDisplayName": "회계군",
-      "commanderyNameCh": "會稽郡",
-      "displayName": "시령현",
-      "classification": "TILES_READING_DIVERGES_FROM_RUNTIME",
-      "members": [
-        {
-          "jurisdictionId": "40663",
-          "kind": "COUNTY",
-          "nameCh": "始平县",
-          "simplifiedStem": "始平",
-          "gloss": "始平",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 949,
-          "runtimeDisplayName": "회계군 시평현"
-        },
-        {
-          "jurisdictionId": "40775",
-          "kind": "COUNTY",
-          "nameCh": "始宁县",
-          "simplifiedStem": "始宁",
-          "gloss": "始寧",
-          "glossBasis": "REVIEWED",
-          "runtimeCityId": 953,
-          "runtimeDisplayName": "회계군 시령현"
         }
       ]
     },
