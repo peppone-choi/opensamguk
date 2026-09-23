@@ -7,6 +7,7 @@ import Toast from '@/components/Toast';
 import MainRecordZone from '@/components/game/MainRecordZone';
 import MessagePanel from '@/components/game/MessagePanel';
 import CountyPanel from '@/components/hwiha/CountyPanel';
+import GeneralRoster from '@/components/hwiha/GeneralRoster';
 import StandingBar from '@/components/hwiha/StandingBar';
 import TurnList from '@/components/hwiha/TurnList';
 import WarRoomMap from '@/components/hwiha/WarRoomMap';
@@ -66,6 +67,8 @@ export default function WarRoomPage() {
                 </div>
 
                 {generalId != null && frontInfo ? (
+                    <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+                    <GeneralRoster />
                     <TurnList
                         generalId={generalId}
                         nationId={frontInfo.general.nationId}
@@ -74,6 +77,7 @@ export default function WarRoomPage() {
                         onToast={show}
                         onReserved={bump}
                     />
+                    </div>
                 ) : (
                     <Panel style={{ padding: 12 }}>
                         <p style={{ margin: 0, color: 'var(--muted)', fontSize: 13 }}>

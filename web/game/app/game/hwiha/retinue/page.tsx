@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Chip, KV, Panel, Portrait, SectionHeader, Table } from '@opensamguk/ui';
 import HwihaShell from '@/components/HwihaShell';
 import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
@@ -106,7 +107,9 @@ function PersonDetail({ person }: { person: HwihaPersonCard }) {
  */
 export default function RetinuePage() {
     const read = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal));
-    const [selectedId, setSelectedId] = useState<number | null>(null);
+    // 작전실 장수 목록에서 ?person=<retainerId> 로 들어오면 그 인물을 연다.
+    const linked = Number(useSearchParams().get('person'));
+    const [selectedId, setSelectedId] = useState<number | null>(Number.isInteger(linked) && linked > 0 ? linked : null);
     const notice = hwihaReadNotice(read, read.data?.status);
     const people = read.data?.people ?? [];
     const units = read.data?.units ?? [];
