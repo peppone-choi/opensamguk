@@ -393,12 +393,20 @@ class ServerRegistry(
     }
 
     private fun seedEmptyRegistry() {
-        if (registryJson.isBlank()) return
         transactions.executeWithoutResult {
+            val initialized = requireNotNull(
+                jdbc.queryForObject(
+                    "SELECT initialized FROM game_server_registry_seed_state WHERE id = 1 FOR UPDATE",
+                    Boolean::class.java,
+                ),
+            ) { "Server registry seed state is missing" }
+            if (initialized) return@executeWithoutResult
             val count = jdbc.queryForObject("SELECT COUNT(*) FROM game_server", Long::class.java) ?: 0L
-            if (count != 0L) return@executeWithoutResult
-            val seed = parseSeed() ?: return@executeWithoutResult
-            seed.forEach(::insert)
+            if (count == 0L && registryJson.isNotBlank()) {
+                val seed = parseSeed() ?: return@executeWithoutResult
+                seed.forEach(::insert)
+            }
+            jdbc.update("UPDATE game_server_registry_seed_state SET initialized = TRUE WHERE id = 1")
         }
     }
 

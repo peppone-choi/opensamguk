@@ -41,6 +41,25 @@ class ServerRegistryTest {
     }
 
     @Test
+    fun `environment seed does not restore the final deleted server after restart`() {
+        val seed = """[{"id":"seeded"}]"""
+        val fixture = fixture(seed)
+        assertEquals(listOf("seeded"), fixture.registry.all().map { it.id })
+
+        fixture.registry.unregister("seeded")
+        val restarted = ServerRegistry(seed, mapper, fixture.jdbc)
+
+        assertTrue(restarted.all().isEmpty())
+        assertEquals(
+            true,
+            fixture.jdbc.queryForObject(
+                "SELECT initialized FROM game_server_registry_seed_state WHERE id = 1",
+                Boolean::class.java,
+            ),
+        )
+    }
+
+    @Test
     fun `database read failure returns an empty registry`() {
         val fixture = fixture("""[{"id":"seeded"}]""")
         fixture.jdbc.execute("DROP TABLE game_server")
@@ -197,6 +216,8 @@ class ServerRegistryTest {
             )
             """.trimIndent(),
         )
+        jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
+        jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, FALSE)")
         jdbc.execute(
             """
             CREATE TABLE game_server_registry_transition (
