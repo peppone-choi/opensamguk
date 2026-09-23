@@ -58,6 +58,38 @@ class CommittedLedgerTest(unittest.TestCase):
         params = json.loads(B.PARAMS.read_text(encoding="utf-8"))
         self.assertEqual(params["status"], "EXPLORATORY")
         self.assertEqual(self.doc["paramsStatus"], "EXPLORATORY")
+        self.assertEqual("NOT_USED", self.doc["areaInputDecision"]["provinceAreaRebalanceInput"])
+        params["areaInputDecision"]["provinceAreaRebalanceInput"] = "USED"
+        with self.assertRaisesRegex(ValueError, "geography-first"):
+            B.build({}, {}, params, {})
+
+    def test_field_market_caps_and_missing_inventory_use_live_rows(self):
+        rows = self.doc["jurisdictions"]
+        by_id = {row["jurisdictionId"]: row for row in rows}
+        self.assertEqual(len(rows), len(by_id))
+        for row in rows:
+            self.assertEqual(row["arableCells"], row["fieldCapacityCells"])
+            self.assertEqual(
+                min(row["landCells"], row["wetAdjacentCells"] + row["connections"]),
+                row["marketCapacityCells"],
+            )
+        expected = {}
+        for row in rows:
+            states = []
+            if row["households"] is None:
+                states.append("UNSOURCED_HOUSEHOLDS")
+            if row["fieldCapacityCells"] == 0:
+                states.append("GEOMETRIC_ZERO_FIELD_CAPACITY")
+            if row["marketCapacityCells"] == 0:
+                states.append("GEOMETRIC_ZERO_MARKET_CAPACITY")
+            if states:
+                expected[row["jurisdictionId"]] = states
+        actual = {row["jurisdictionId"]: row["states"] for row in self.doc["missingInputs"]}
+        self.assertEqual(expected, actual)
+        self.assertTrue(any("UNSOURCED_HOUSEHOLDS" in states for states in actual.values()))
+        self.assertTrue(any("GEOMETRIC_ZERO_FIELD_CAPACITY" in states for states in actual.values()))
+        self.assertTrue(any(row["marketCapacityCells"] > 0 for row in rows))
+        self.assertEqual(len(actual), self.doc["counts"]["missingInputRows"])
 
 
 class CheckGateRedProbeTest(unittest.TestCase):

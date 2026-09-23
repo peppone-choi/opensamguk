@@ -5,7 +5,7 @@
   "inputs": {
     "resourceLedger": {
       "path": "data/curated/han/resource-sites-v1.json",
-      "sha256": "72752ad9c1fc4cb606c1f4d4bb8a35e135b7a6d849aff601d495b0553e6df8b4"
+      "sha256": "0c62368882d07a45767c77ecee903282f6f0b7cc725a1aec39d9107251d77ff1"
     },
     "formerHanAnnotatedSource": {
       "snapshotSha256": "13dd0c1387d1fb8d234ef64fce09d03140a2a8747c08b115c46ec5f52e3e4b5d",

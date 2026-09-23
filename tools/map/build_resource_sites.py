@@ -688,6 +688,18 @@ def build_ledger(extracts_doc: dict) -> dict:
         c = Counter("/".join(str(e[k]) for k in keys) for e in entries)
         return dict(sorted(c.items()))
 
+    missing_states = {
+        "UNKNOWN_NO_SOURCE": "DOCUMENTED_GAP",
+        "UNREVIEWED_EVENT_PROCUREMENT": "EVENT_NOT_PERSISTENT_SITE",
+        "UNMATCHED_NO_JURISDICTION": "UNBOUND_JURISDICTION",
+    }
+    missing_rows = [
+        {"entryId": e["id"], "resource": e["resource"], "era": e["era"],
+         "matchStatus": e["matchStatus"], "disposition": missing_states[e["matchStatus"]],
+         "reason": e.get("missing") or e.get("matchReason")}
+        for e in entries if e["matchStatus"] in missing_states
+    ]
+
     return {
         "schemaVersion": 1,
         "catalogId": "resource-sites-v1",
@@ -717,7 +729,9 @@ def build_ledger(extracts_doc: dict) -> dict:
             "byLevel": tally(("level",)),
             "distinctSites": len([e for e in entries if "duplicateMentionOf" not in e
                                   and not e["matchStatus"].startswith("UNKNOWN")]),
+            "missingRows": len(missing_rows),
         },
+        "missingRows": missing_rows,
         "entries": entries,
     }
 
@@ -753,6 +767,15 @@ def validate_ledger(ledger: dict) -> list[str]:
             errors.append(f"{e['id']}: quote {len(ev['quote'])}자 > {QUOTE_MAX}")
     if ledger["crossWitness"]["disagreeingCommanderies"]:
         errors.append(f"두 번째 증인 불일치: {ledger['crossWitness']['disagreeingCommanderies']}")
+    required_missing_ids = {
+        e["id"] for e in ledger["entries"]
+        if e["matchStatus"] in {"UNKNOWN_NO_SOURCE", "UNREVIEWED_EVENT_PROCUREMENT", "UNMATCHED_NO_JURISDICTION"}
+    }
+    recorded_missing_ids = [row["entryId"] for row in ledger.get("missingRows", [])]
+    if set(recorded_missing_ids) != required_missing_ids or len(recorded_missing_ids) != len(required_missing_ids):
+        errors.append("산지 결손 목록이 살아 있는 항목 집합과 다르다")
+    if ledger["counts"].get("missingRows") != len(required_missing_ids):
+        errors.append("산지 결손 수가 결손 목록과 다르다")
     return errors
 
 
