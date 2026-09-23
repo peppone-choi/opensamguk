@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "hwiha-s3-provisional-v1",
+  "status": "PROVISIONAL — 사용자 결정 대기",
+  "note": "S3 핵심 고리(조우 정산·공성·보급·녹봉·상사·NPC 출병)를 돌리려고 구현자가 임시로 정한 규칙과 수치다. 설계 정본(2026-09-17 재설계 spec)과 march-tempo-targets-v1.json 에 없는 값만 여기 둔다. 사료 수치가 아니라 게임 기획 후보이며 사용자 결정 전까지 확정값으로 인용하지 않는다. Kotlin 은 data/curated 를 읽지 않으므로 같은 값을 logic 의 HwihaS3Provisional 에 두고 HwihaS3ProvisionalTest 가 이 파일과 대조한다.",
+  "encounter": {
+    "status": "PROVISIONAL — 사용자 결정 대기",
+    "resolutionTiming": "조우는 진입한 턴에 봉인하고, 공격 지휘관의 다음 개인 턴 시작에 해결한다. 전투가 그 턴 이동을 끝낸다.",
+    "verdict": "공격 측이 버티고(퇴각·궤멸 아님) 모든 방어 측이 퇴각·궤멸이면 공격 승리. 그 밖의 모든 장벽(회차 상한의 동시 퇴각 포함)은 방어 승리이며 공격 측이 물러난다.",
+    "loserAttacker": "온 省(approachFrom)으로 물러나고 출병(출전·명령·행군)을 끝낸다. 병력·군량은 부곡에 남는다.",
+    "loserDefender": "제자리에 남고 출전만 끝낸다(궤주). 물러날 省을 고르는 규칙은 없다.",
+    "winnerAttacker": "원래 명령을 유지하고 다음 턴 그 省에서 행군을 이어 간다.",
+    "captives": "궤멸한 쪽 지휘관이 반대편 승자의 포로 표식(hwihaCaptive)을 받는다. 공격 승리면 공격 지휘관, 방어 승리면 버틴 방어 지휘관 중 가장 작은 id. 표식 외 효과(행동 제한·설득·석방)는 없다.",
+    "unpreparedBattle": "병종 미지원·전장 없음으로 기록이 없는 조우는 결과를 지어내지 않고 보류로 남는다."
+  }
+}
