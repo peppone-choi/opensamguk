@@ -2,6 +2,8 @@
 
 `scenario_990002.json` is a synthetic HWIHA scenario for the S3 core loop: six NPC lords, one per 豫州 commandery (潁川·汝南·梁國·沛國·陳國·魯國), each owning the administrative counties of its commandery on the active `han-world-v3` map, all at war with each other. A human signs up, creates a character and enlists with any lord (every lord accepts enlistment).
 
+The 30 directed war relations last 36 months. A zero-month term expires at the first monthly settlement in the live engine, leaving all six lords neutral and suppressing NPC encounters even though the in-memory 36-phase simulation still reports battles.
+
 The scenario is registered in the operating catalog as an S3 test and pep transition candidate. Registration does not change the live world. The people, stats and quantities below are game-design placeholders, not historical data. All of them remain `PROVISIONAL` until the W4 measurements are reviewed:
 
 | Item | Value | Note |

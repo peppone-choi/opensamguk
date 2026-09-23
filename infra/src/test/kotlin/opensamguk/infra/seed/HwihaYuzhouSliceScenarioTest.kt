@@ -62,7 +62,7 @@ class HwihaYuzhouSliceScenarioTest {
         }
         line("  ],")
         line("  \"diplomacy\": [")
-        val pairs = commanderies.indices.flatMap { a -> commanderies.indices.filter { it != a }.map { b -> listOf(a + 1, b + 1, 0, 0) } }
+        val pairs = commanderies.indices.flatMap { a -> commanderies.indices.filter { it != a }.map { b -> listOf(a + 1, b + 1, 0, WAR_MONTHS) } }
         pairs.forEachIndexed { i, p -> line("    ${j(p)}${if (i < pairs.lastIndex) "," else ""}") }
         line("  ],")
         line("  \"general\": [")
@@ -131,6 +131,7 @@ class HwihaYuzhouSliceScenarioTest {
         assertTrue(owned.all { cityMeta.getValue(it)["ju"] == JU }, "only 豫州 counties are owned")
         val nations = scenario.nations.map { it.id }
         assertEquals(nations.size * (nations.size - 1), scenario.diplomacy.count { it.state == 0 }, "every lord pair is at war")
+        assertTrue(scenario.diplomacy.all { it.remainMonths == WAR_MONTHS }, "war must survive monthly settlement during live QA")
         assertEquals(scenario.nations.size, scenario.generals.count { it.hwihaLord == true })
         assertTrue(scenario.generals.all { it.hwihaPersonPolicy?.acceptsEnlistment == true }, "a human can enlist with any lord")
     }
@@ -151,6 +152,7 @@ class HwihaYuzhouSliceScenarioTest {
     private companion object {
         const val JU = "예주"
         const val START_YEAR = 190
+        const val WAR_MONTHS = 36
         val COLORS = listOf("#8B1E1E", "#1E4F8B", "#2E7D32", "#B8860B", "#6A1B9A", "#00695C")
         /** 합성 NPC 주공 능력치(통솔·무력·지력·정치·매력) — 게임 기획 값, 사료 아님. */
         val STATS = listOf(70, 65, 65, 60, 70)
