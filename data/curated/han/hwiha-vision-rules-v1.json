@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "ledgerId": "hwiha-vision-rules-v1",
-  "status": "PROVISIONAL",
-  "authorization": "2026-09-23 사용자 결정: 시야 단위는 郡國, 단계는 FULL/INTEL/FOG, 첩보 결과는 본 순간의 스냅숏과 「N순 전」 표시, 갱신은 다시 첩보할 때만. 반경·병력 구간·첩보 비용은 PROVISIONAL 데이터 파일에 둔다고 지시했다.",
-  "note": "정본 설계 §7 은 시야의 출처(정찰 배치·망루·봉화)만 정하고 반경·구간 수치를 두지 않았다. 아래 수치는 모두 게임 기획 초안(PROVISIONAL)이며 사료 수치가 아니다. 바꾸려면 이 파일만 고친다 — 코드에 사본을 두지 않는다.",
+  "status": "CONFIRMED",
+  "authorization": "2026-09-23 사용자 결정: 시야 단위는 郡國, 단계는 FULL/INTEL/FOG, 첩보 결과는 본 순간의 스냅숏과 「N순 전」 표시, 갱신은 다시 첩보할 때만. 반경·병력 구간·첩보 비용은 이 데이터 파일의 현행 값으로 확정했다.",
+  "note": "정본 설계 §7 은 시야의 출처(정찰 배치·망루·봉화)만 정하고 반경·구간 수치를 두지 않았다. 아래 수치는 2026-09-23 사용자 결정으로 확정한 게임 기획 값이며 사료 수치가 아니다. 바꾸려면 이 파일만 고친다 — 코드에 사본을 두지 않는다.",
   "unit": "COMMANDERY",
   "adjacency": {
     "rule": "SHARED_BORDER_4_NEIGHBOUR",
@@ -32,12 +32,12 @@
     {"code": "B4", "label": "1만~3만", "minInclusive": 10000},
     {"code": "B5", "label": "3만 이상", "minInclusive": 30000}
   ],
-  "troopBandNote": "남의 군단 병력은 구간으로만 보인다(자기 군단만 정확한 수). 구간 경계는 기획 초안이다.",
+  "troopBandNote": "남의 군단 병력은 구간으로만 보인다(자기 군단만 정확한 수). 구간 경계는 2026-09-23 확정값이다.",
   "scout": {
     "inputId": "action.scout",
     "target": "ADJACENT_COMMANDERY",
     "cost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0},
-    "costNote": "PROVISIONAL 비용 0 — 직접 행동 한 순(명령 목록 한 칸)을 쓰는 것이 대가다. 창고 차감은 보급망 접근 판정과 창고 revision 결속이 먼저 있어야 해서(HwihaWarehouseSettlement 계약) 이번 판에 넣지 않았다. 0 이 아닌 값을 넣으면 로더가 거절한다 — 차감 경로 없이 비용을 적어 두면 비용이 있는 척만 하게 된다.",
+    "costNote": "확정 비용 0 — 직접 행동 한 순(명령 목록 한 칸)을 쓰는 것이 대가다. 창고 차감은 보급망 접근 판정과 창고 revision 결속이 먼저 있어야 해서(HwihaWarehouseSettlement 계약) 이번 판에 넣지 않았다. 0 이 아닌 값을 넣으면 로더가 거절한다 — 차감 경로 없이 비용을 적어 두면 비용이 있는 척만 하게 된다.",
     "reveals": ["CITY_OWNER", "CORPS_TROOP_BAND", "WAREHOUSE_PRESENCE"],
     "revealsNote": "계책 카탈로그 「첩보」 행(병력·창고·설치 카드 유무) 가운데 병력(구간)과 창고 유무를 싣는다. 설치 계책은 아직 모델이 없어(HwihaMarchReactions 는 빈 목록뿐) 싣지 않는다."
   }

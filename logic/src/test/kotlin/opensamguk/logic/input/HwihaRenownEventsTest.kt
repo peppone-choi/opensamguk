@@ -129,7 +129,7 @@ class HwihaRenownEventsTest {
         val text = Files.readString(repoRoot().resolve("data/curated/han/hwiha-renown-events-v1.json"))
         val bp = Regex("\"minRiseBasisPoints\"\\s*:\\s*(\\d+)").find(text)!!.groupValues[1].toInt()
         assertEquals(HwihaDomesticMerit.MIN_RISE_BASIS_POINTS, bp)
-        assertTrue("\"status\": \"PROVISIONAL\"" in text, "임계값은 PROVISIONAL 로 표시돼 있어야 한다")
+        assertTrue("\"status\": \"CONFIRMED\"" in text, "2026-09-23 확정 상태를 유지해야 한다")
         for (kind in HwihaRenownEventKind.entries) {
             val listed = Regex("\"${kind.key}\"\\s*:\\s*\\[([^]]*)]").find(text)
                 ?.groupValues?.get(1)?.split(',')?.map { it.trim().trim('"') }?.filter { it.isNotEmpty() }?.toSet()

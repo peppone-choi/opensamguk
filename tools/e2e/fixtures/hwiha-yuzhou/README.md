@@ -4,14 +4,14 @@
 
 The 30 directed war relations start at the game's 13-month maximum. Monthly settlement reduces the term by one; a zero-month seed expires immediately, leaving all six lords neutral and suppressing NPC encounters even though the in-memory 36-phase simulation still reports battles.
 
-The scenario is registered in the operating catalog as an S3 test and pep transition candidate. Registration does not change the live world. The people, stats and quantities below are game-design placeholders, not historical data. All of them remain `PROVISIONAL` until the W4 measurements are reviewed:
+The scenario is registered in the operating catalog as an S3 test and pep transition candidate. Registration does not change the live world. Its synthetic starting people, stats, unit counts and warehouse stocks are QA fixture choices, not historical data; these seed choices remain `PROVISIONAL` until the W4 measurements are reviewed. Rule constants cited below come from the separately confirmed ledgers.
 
 | Item | Value | Note |
 |---|---|---|
 | Lords | `<郡> 주공`, stats 70/65/65/60/70, `synthetic-qa:yuzhou-slice` | synthetic; no historical person is claimed |
 | Nations | level 1, gold/rice 0 | treasury lives only in county warehouses |
 | Units (`hwihaUnits`) | 2 per lord, infantry 1100, 4,000 troops, training 50, morale 60, provisions 6 months (24,000) | the generator test checks that every lord can besiege an enemy county on the active map |
-| Warehouses | grain = seed garrison × 100 × 18 phases in every slice county; money 100,000 in each capital; zero elsewhere | 18 phases is the approved siege reference (`march-tempo-targets-v1.json` `siegeResolution.referenceInitialRationTurns`); 100/soldier/phase is the provisional ration |
+| Warehouses | grain = seed garrison × 100 × 18 phases in every slice county; money 100,000 in each capital; zero elsewhere | 18 phases is the approved siege reference (`march-tempo-targets-v1.json` `siegeResolution.referenceInitialRationTurns`); 100/soldier/phase is the 2026-09-23 confirmed ration in `hwiha-s3-provisional-v1.json`. The seed stock amount remains a QA fixture choice. |
 | Start | year 190 | |
 
 Counties outside 豫州 are unowned (neutral). NPC lords may also march on nearby neutral counties when they can field twice the garrison.

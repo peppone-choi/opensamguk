@@ -25,7 +25,7 @@ class HwihaDomesticBoundary(
     data class Outcome(val stamp: String, val alreadyStamped: Boolean, val worksAdvanced: Int = 0, val worksCompleted: Int = 0,
         val worksStopped: Int = 0, val meritEvents: Int = 0)
 
-    fun run(): Outcome? {
+    fun run(meritClosedBeforeMonthlyEvents: Boolean = false): Outcome? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val now = world.hwihaNow()
         val stamp = stampOf(now)
@@ -46,7 +46,8 @@ class HwihaDomesticBoundary(
         val effects = HwihaDomesticCountyEffects(world, recorder, context)
         for (county in state.counties) effects.apply(county.id, state)
         HwihaReactionInventory(world, recorder).rebuild()
-        val events = if (now.phase == 1) monthlyMerit(now) else 0
+        val events = if (now.phase == 1 && !meritClosedBeforeMonthlyEvents) monthlyMerit(now, compare = true, open = false) else 0
+        if (now.phase == 1) monthlyMerit(now, compare = false, open = true)
         world.setGameEnvValue(STAMP_KEY, stamp)
         recorder.recordKv("game_env", "game_env", STAMP_KEY, stamp)
         return Outcome(stamp, false, advanced, completed, stopped, events)
@@ -138,7 +139,10 @@ class HwihaDomesticBoundary(
     }
 
     /** 縣令으로 배치된 카드가 앉은 縣만 비교한다. 지난달 기록이 없으면(처음 앉은 달) 사건 없이 기록만 남긴다. */
-    private fun monthlyMerit(now: HwihaPhase): Int {
+    /** Close the prior month before global growth events, so natural growth cannot become a magistrate's merit. */
+    fun closeMonthlyMerit(year: Int, month: Int): Int = monthlyMerit(HwihaPhase(year, month, 1), compare = true, open = false)
+
+    private fun monthlyMerit(now: HwihaPhase, compare: Boolean, open: Boolean): Int {
         val month = "%04d-%02d".format(now.year, now.month)
         val state = context.projection(world)
         var events = 0
@@ -153,7 +157,7 @@ class HwihaDomesticBoundary(
             if (previous?.stamp == month) continue
             val current = HwihaDomesticCountyEffects.levelsOf(city).indicators()
             val risen = previous?.indicators?.let { current.risenSince(it) }.orEmpty()
-            if (previous != null && risen.isNotEmpty()) {
+            if (compare && previous != null && risen.isNotEmpty()) {
                 val retainerId = seat.retainerId
                 if (retainerId == null) log(seat.controllerId, "${city.name}의 치적을 기록하지 못했습니다(현령 카드가 없습니다).")
                 else {
@@ -162,7 +166,7 @@ class HwihaDomesticBoundary(
                     events++
                 }
             }
-            world.updateCityMeta(recorder, county.id, city.meta.withKey(HwihaCountyMonthly.META_KEY,
+            if (open) world.updateCityMeta(recorder, county.id, city.meta.withKey(HwihaCountyMonthly.META_KEY,
                 HwihaCountyMonthly(month, current).toMetaValue()))
         }
         return events

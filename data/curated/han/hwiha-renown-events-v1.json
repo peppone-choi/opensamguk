@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "artifactId": "hwiha-renown-events-v1",
-  "status": "PROVISIONAL",
-  "authorization": "2026-09-23 사용자 결정: 월단평 사건은 큰 사건만, 한 달에 종류당 한 번. 치적 = 관할 縣 지표 상승(임계값 PROVISIONAL). 발령 거절 명망은 월단평 집계 −4 로 통일. 이탈과 배신은 구분한다(이탈 0, 배신 −8).",
-  "decidedBy": "구현 에이전트(임계값) · 사용자(규칙)",
+  "status": "CONFIRMED",
+  "authorization": "2026-09-23 사용자 결정: 월단평 사건은 큰 사건만, 한 달에 종류당 한 번. 치적 = 관할 縣 지표 상승(임계값 2% 확정). 발령 거절 명망은 월단평 집계 −4 로 통일. 이탈과 배신은 구분한다(이탈 0, 배신 −8).",
+  "decidedBy": "사용자(규칙·임계값, 2026-09-23)",
   "note": "사료 수치가 아니라 게임 기획이다. 가감값은 hwiha-renown-assessment-v1.json 에 있고 여기는 「무엇이 사건인가」만 적는다.",
   "oncePerKindPerMonth": true,
   "sources": {
@@ -35,11 +35,11 @@
     "note": "2026-09-23 사용자 결정 「이탈과 배신은 구분해야지」: 코스트 상한 초과 이탈 판정은 월단평 사건이 아니다(명망 0). 기록 종류 retinue.departureJudged(주인)·retinue.departed(판정된 인물)로만 남는다. 배신(−8)은 실제 배반(DEFECTION)에만 쓴다."
   },
   "domesticMerit": {
-    "status": "PROVISIONAL",
+    "status": "CONFIRMED",
     "holders": "발령을 수락해 그 縣 을 부임지로 받은 장수(hwihaCountyAssignment)이고, 발령 세력이 지금 그 縣 을 소유한다.",
     "indicators": ["population", "agriculture", "commerce"],
     "window": "월 경계 월간 사건 뒤에 열고 다음 월 경계 월간 사건 전에 닫는다 — 반기 도시 성장 같은 자연 증가를 빼기 위해서다.",
     "minRiseBasisPoints": 200,
-    "minRiseNote": "PROVISIONAL. 세 지표 중 하나라도 그 縣 상한의 2% 이상 오르면 치적 한 건이다. 기존 내정 직접 행동 한 번의 상승폭이 통솔·정치 능력치 규모(수십~백)이고 縣 상한이 수천 규모라, 한 달(3순) 꾸준히 손본 정도를 문턱으로 잡았다. 실측 기준선이 아니다 — HWIHA 내정 입력이 들어오면 실제 월 상승 분포로 다시 정한다."
+    "minRiseNote": "2026-09-23 사용자 결정으로 확정. 세 지표 중 하나라도 그 縣 상한의 2% 이상 오르면 치적 한 건이다. 기존 내정 직접 행동 한 번의 상승폭이 통솔·정치 능력치 규모(수십~백)이고 縣 상한이 수천 규모라, 한 달(3순) 꾸준히 손본 정도를 문턱으로 잡았다. 월간 자연 성장과 직접 행동을 함께 세지 않도록 치적 창 경계에서 자연 성장분을 제외한다."
   }
 }

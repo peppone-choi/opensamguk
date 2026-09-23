@@ -58,6 +58,7 @@ export default function OrdersPage() {
                 </Panel>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="상사" sub="직속 인물에게 창고 금을 내립니다" />
+                    <p style={{ margin: '8px 0', fontSize: 13, color: 'var(--text-2)' }}>금 100당 충성 +1, 한 번에 최대 +10</p>
                     {problem && <HwihaEmpty>{problem}</HwihaEmpty>}
                     {notice && <p role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
                     {!problem && people.length === 0 && <HwihaEmpty>상사할 직속 인물 카드가 없습니다.</HwihaEmpty>}

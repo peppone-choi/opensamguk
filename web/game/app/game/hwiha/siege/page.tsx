@@ -74,9 +74,10 @@ export default function SiegePage() {
             </Panel>
             {!problem && rows.map((siege) => <Panel key={siege.countyId} style={{ padding: 12 }}>
                 <SectionHeader title={siege.countyName ?? `縣 ${siege.countyId}`} sub={`${siege.besieger.nationName ?? '포위군'} → ${siege.defenderNationName ?? '수비군'}`}
-                    actions={<Chip tone={siege.status === 'ACTIVE' ? 'rust' : 'moss'}>{siege.status === 'ACTIVE' ? '포위 중' : siege.status === 'FALLEN' ? '함락' : '종료'}</Chip>} />
+                    actions={<Chip tone={siege.status === 'ACTIVE' ? 'rust' : 'moss'}>{siege.status === 'ACTIVE' ? '포위 중' : siege.status === 'FALLEN' ? '함락' : siege.status === 'LIFTED' ? '포위 해제' : '[미정]'}</Chip>} />
                 <KV items={[
                     { k: '포위 누적', v: `${siege.turns}순` },
+                    { k: '강공까지', v: siege.status !== 'ACTIVE' ? '종료' : siege.turns >= 3 ? '가능' : `${3 - siege.turns}순` },
                     { k: '포위 지휘관', v: siege.besieger.name ?? `장수 ${siege.besieger.generalId}` },
                     { k: '성 안 수비', v: `${number.format(siege.garrison)}명` },
                     { k: '성 안 사기', v: `${Math.round(siege.morale / 100)}%` },

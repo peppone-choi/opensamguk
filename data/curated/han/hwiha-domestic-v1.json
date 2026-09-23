@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "ledgerId": "hwiha-domestic-v1",
-  "status": "PROVISIONAL — 사용자 결정 대기",
-  "note": "휘하 내정 입력(배치·방침·공사)의 효과·비용·기간. 설계 문서(§4·§8.2·§9.1)가 정한 것은 종류·능력치 대응·자원 종류뿐이고, 여기 있는 수치는 모두 구현자가 둔 잠정값이다. 사료 근거가 없는 게임 설계 수치이며 사용자 결정 전까지 그대로 확정하지 않는다. 계산은 정수이고 효과량 = 기준량 × 배율(천분율) / 1000, 0 쪽으로 자른다.",
+  "status": "CONFIRMED",
+  "note": "휘하 내정 입력(배치·방침·공사)의 효과·비용·기간. 설계 문서(§4·§8.2·§9.1)가 정한 것은 종류·능력치 대응·자원 종류뿐이고, 여기 있는 수치는 게임 설계 수치이며 2026-09-23 사용자 결정으로 현행 값을 확정했다. 계산은 정수이고 효과량 = 기준량 × 배율(천분율) / 1000, 0 쪽으로 자른다.",
   "scaling": {
-    "status": "PROVISIONAL — 사용자 결정 대기",
+    "status": "CONFIRMED",
     "note": "縣令이 앉은 縣은 배율 = 1000 + (능력치 − neutralStat) × permillePerStatPoint (+ 본관이면 hometownBonusPermille), 아래로 minimumPermille. 빈자리는 emptySeatPermille. 능력치 대응은 §8.2: 정치 = 세수·개간, 매력 = 민심·유민, 통솔 = 치안·둔전병, 지력 = 공사 속도.",
     "neutralStat": 50,
     "permillePerStatPoint": 10,
@@ -13,28 +13,28 @@
     "hometownBonusPermille": 200
   },
   "defaultCountyPolicy": {
-    "status": "PROVISIONAL — 사용자 결정 대기",
-    "note": "§8.2 「빈자리는 기본 방침으로 자동 운영」의 기본 방침. 설계 문서는 어느 방침인지 정하지 않았다.",
+    "status": "CONFIRMED",
+    "note": "§8.2 「빈자리는 기본 방침으로 자동 운영」의 기본 방침. 2026-09-23 사용자 결정으로 권농을 확정했다.",
     "policy": "AGRICULTURE"
   },
   "countyPolicies": [
     {
-      "code": "AGRICULTURE", "name": "권농", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "AGRICULTURE", "name": "권농", "status": "CONFIRMED",
       "indicators": [{"indicator": "agriculture", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}],
       "resources": []
     },
     {
-      "code": "COMMERCE", "name": "중상", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "COMMERCE", "name": "중상", "status": "CONFIRMED",
       "indicators": [{"indicator": "commerce", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}],
       "resources": []
     },
     {
-      "code": "HEAVY_TAX", "name": "중세", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "HEAVY_TAX", "name": "중세", "status": "CONFIRMED",
       "indicators": [{"indicator": "trust", "amount": -1, "unit": "ABSOLUTE", "stat": null}],
       "resources": [{"resource": "money", "direction": "CREDIT", "perHouseholdPermille": 2000, "stat": "politics"}]
     },
     {
-      "code": "RELIEF", "name": "휼민", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "RELIEF", "name": "휼민", "status": "CONFIRMED",
       "indicators": [
         {"indicator": "trust", "amount": 2, "unit": "ABSOLUTE", "stat": "charm"},
         {"indicator": "population", "amount": 1, "unit": "PERMILLE_OF_CURRENT", "stat": "charm"}
@@ -42,7 +42,7 @@
       "resources": [{"resource": "grain", "direction": "DEBIT", "perHouseholdPermille": 1000, "stat": null}]
     },
     {
-      "code": "MILITARY_FARM", "name": "둔전", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "MILITARY_FARM", "name": "둔전", "status": "CONFIRMED",
       "indicators": [
         {"indicator": "agriculture", "amount": 10, "unit": "ABSOLUTE", "stat": "politics"},
         {"indicator": "security", "amount": 10, "unit": "ABSOLUTE", "stat": "leadership"}
@@ -50,7 +50,7 @@
       "resources": []
     },
     {
-      "code": "LEVY", "name": "징발", "status": "PROVISIONAL — 사용자 결정 대기",
+      "code": "LEVY", "name": "징발", "status": "CONFIRMED",
       "indicators": [
         {"indicator": "trust", "amount": -2, "unit": "ABSOLUTE", "stat": null},
         {"indicator": "population", "amount": -1, "unit": "PERMILLE_OF_CURRENT", "stat": null}
@@ -59,15 +59,15 @@
     }
   ],
   "corpsPolicies": [
-    {"code": "DRILL", "name": "조련", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "저장·조회만 한다. 훈련 증가 소비자는 아직 없다."},
-    {"code": "ASSAULT", "name": "공략", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "저장·조회만 한다. 공성 보정 소비자는 아직 없다."},
-    {"code": "DEFEND", "name": "수비", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "방어 측 진형 방침(§6.3). 저장·조회만 한다. 진형 어휘와 전투 소비자는 아직 없다."},
-    {"code": "INTERCEPT", "name": "요격", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "월드 hwihaMarchReactions.interceptions 에 싣는다. 요격 범위·판정은 조우 소비자가 정한다."},
-    {"code": "EVADE", "name": "회피", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "월드 hwihaMarchReactions.avoidanceOrders 에 싣는다. 물러나기 판정은 조우 소비자가 정한다."}
+    {"code": "DRILL", "name": "조련", "status": "CONFIRMED", "effect": "저장·조회만 한다. 훈련 증가 소비자는 아직 없다."},
+    {"code": "ASSAULT", "name": "공략", "status": "CONFIRMED", "effect": "저장·조회만 한다. 공성 보정 소비자는 아직 없다."},
+    {"code": "DEFEND", "name": "수비", "status": "CONFIRMED", "effect": "방어 측 진형 방침(§6.3). 저장·조회만 한다. 진형 어휘와 전투 소비자는 아직 없다."},
+    {"code": "INTERCEPT", "name": "요격", "status": "CONFIRMED", "effect": "월드 hwihaMarchReactions.interceptions 에 싣는다. 요격 범위·판정은 조우 소비자가 정한다."},
+    {"code": "EVADE", "name": "회피", "status": "CONFIRMED", "effect": "월드 hwihaMarchReactions.avoidanceOrders 에 싣는다. 물러나기 판정은 조우 소비자가 정한다."}
   ],
   "works": {
-    "status": "PROVISIONAL — 사용자 결정 대기",
-    "merge": "2026-09-23 사용자 결정: 공사는 9종이다. 곡창은 창고로(id·이름 창고 유지, 기록만 남기는 효과 유지), 성벽관문은 성방으로 합쳤다(성방이 방비·성벽 효과를 모두 가진다). 합친 뒤의 비용·필요 진척도 잠정값이다.",
+    "status": "CONFIRMED",
+    "merge": "2026-09-23 사용자 결정: 공사는 9종이다. 곡창은 창고로(id·이름 창고 유지, 기록만 남기는 효과 유지), 성벽관문은 성방으로 합쳤다(성방이 방비·성벽 효과를 모두 가진다). 합친 뒤의 비용·필요 진척도는 2026-09-23 확정값이다.",
     "note": "순 경계마다 진척 = progressPerPhase × 배율(지력; 빈자리는 emptySeatPermille) / 1000. 비용은 진척에 비례해 순마다 나눠 낸다: 누적 청구 = 총비용 × 진척 / requiredProgress(내림). 창고가 모자라면 그 순은 진척 없이 멈춤 사유를 남기고 다음 순 다시 시도한다. 縣마다 진행 중인 공사는 maxActiveWorksPerCounty 개, 같은 공사는 한 번만 완공한다.",
     "maxActiveWorksPerCounty": 1,
     "progressPerPhase": 100,

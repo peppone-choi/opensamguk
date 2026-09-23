@@ -146,7 +146,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     retinue: [`/api/hwiha/retinue?generalId=${generalId}`],
     siege: [`/api/hwiha/sieges?generalId=${generalId}`],
     supply: [`/api/hwiha/warehouses?generalId=${generalId}`],
-    'war-room': [`/api/hwiha/visibility?generalId=${generalId}`, `/api/hwiha/corps?generalId=${generalId}`],
+    'war-room': [`/api/hwiha/visibility?generalId=${generalId}`, `/api/hwiha/corps?generalId=${generalId}`, `/api/hwiha/sieges?generalId=${generalId}`],
     yuedan: [`/api/hwiha/yuedan?generalId=${generalId}`],
   };
   const cdp = await context.newCDPSession(page);
@@ -156,7 +156,10 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     await expect(page.locator('body')).toContainText(generalName, { timeout: 120_000 });
     await expect(page.locator('body')).not.toContainText('불러오는 중입니다', { timeout: 120_000 });
     // Playwright's screenshot stability wait can stall on the live map's continuous rendering.
-    const capture = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    const size = await page.evaluate(() => ({ width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight }));
+    const capture = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true,
+      clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 } });
     await testInfo.attach(`screen-${screen}`, { body: Buffer.from(capture.data, 'base64'), contentType: 'image/png' });
     for (const path of paths[screen]) {
       const response = await page.request.get(`${gameUrl}/api/game${path}`);

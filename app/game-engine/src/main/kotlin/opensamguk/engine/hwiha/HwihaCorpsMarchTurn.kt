@@ -28,13 +28,13 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
         val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics, cells)
-        var defenders: List<HwihaDeployedCorps>? = null
         when (val result = HwihaCorpsMarchExecutor(world,recorder,topology,metrics,1)
             .advance(order.orderId,commanderId,order.destination,edges) { node ->
                 val entry = military.entryAt(commanderId, node, reactions)
                 if (entry == LandMarchEntry.ENCOUNTER) {
-                    defenders = encounters.defendersAt(commanderId, node)
-                    if (defenders == null) LandMarchEntry.UNAVAILABLE else entry
+                    val defenders = encounters.defendersAt(commanderId, node)
+                    if (defenders == null && !reactions.interceptsAt(world, commanderId, node) &&
+                        !reactions.schemeContact(world, commanderId, node)) LandMarchEntry.UNAVAILABLE else entry
                 } else entry
             }) {
             CorpsMarchExecution.AlreadyProcessed -> Unit
@@ -44,8 +44,15 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
                 else -> "출병 상태를 확인할 수 없어 이동하지 않았습니다."
             }, refs + ("failure" to result.reason.name))
             is CorpsMarchExecution.Applied -> {
+                result.movement.reachedNodes.forEach { reactions.onEntered(world, recorder, commanderId, it) }
                 val encounterId = if (result.state.checkpoint.stop == LandMarchStop.ENCOUNTER) {
-                    encounters.record(requireNotNull(corps), requireNotNull(defenders), result.state.checkpoint)
+                    val at = result.movement.reachedNodes.last()
+                    val defenders = encounters.defendersAt(commanderId, at)
+                    if (defenders != null) encounters.record(requireNotNull(corps), defenders, result.state.checkpoint)
+                    else {
+                        check(reactions.schemeContact(world, commanderId, at)) { "Encounter lost its defender" }
+                        null // A scheme contact has no army to seal into grid combat.
+                    }
                 } else null
                 if (before?.checkpoint?.stop == LandMarchStop.ARRIVED && result.state.checkpoint.stop == LandMarchStop.ARRIVED) return true
                 log(commanderId,when(result.state.checkpoint.stop) {
@@ -53,7 +60,8 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
                     LandMarchStop.BUDGET_EXHAUSTED -> "부대를 거느리고 목적지로 행군하고 있습니다."
                     LandMarchStop.EDGE_BLOCKED -> "통행로가 닫혀 출병 행군을 멈췄습니다."
                     LandMarchStop.ENCOUNTER_UNAVAILABLE -> "진입할 지역의 군사·반응 상태를 확인할 수 없어 출병 행군을 멈췄습니다."
-                    LandMarchStop.ENCOUNTER -> "군단이 조우해 출병 행군을 멈췄습니다."
+                    LandMarchStop.ENCOUNTER -> if (encounterId == null) "적의 설치 계책을 만나 출병 행군을 멈췄습니다."
+                        else "군단이 조우해 출병 행군을 멈췄습니다."
                 }, refs + ("stop" to result.state.checkpoint.stop.name) +
                     (encounterId?.let { mapOf("encounterId" to it) } ?: emptyMap()))
             }

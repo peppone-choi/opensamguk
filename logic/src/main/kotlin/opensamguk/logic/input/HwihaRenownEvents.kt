@@ -263,10 +263,10 @@ object HwihaRenownHooks {
  * 한 달은 **순 경계 사건을 뺀** 창이다: 월 경계의 월간 사건(반기 도시 성장 등)이 끝난 뒤 값을 열고, 다음
  * 월 경계의 월간 사건 **전** 값으로 닫는다. 그래야 가만히 있어도 오르는 자연 성장이 치적이 되지 않는다.
  *
- * [MIN_RISE_BASIS_POINTS] 는 **PROVISIONAL** 이다(`data/curated/han/hwiha-renown-events-v1.json`).
+ * [MIN_RISE_BASIS_POINTS] 는 2026-09-23 사용자 결정으로 확정됐다(`data/curated/han/hwiha-renown-events-v1.json`).
  */
 object HwihaDomesticMerit {
-    /** PROVISIONAL — 지표 상한의 2%. 근거와 상태는 데이터 파일에 있다. */
+    /** 확정 — 지표 상한의 2%. 근거와 상태는 데이터 파일에 있다. */
     const val MIN_RISE_BASIS_POINTS = 200
 
     data class Indicators(val population: Int, val agriculture: Int, val commerce: Int)

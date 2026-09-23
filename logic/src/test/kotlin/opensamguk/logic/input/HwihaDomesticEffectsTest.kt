@@ -10,7 +10,7 @@ class HwihaDomesticEffectsTest {
     private fun seat(stat: Int, hometown: Boolean = false) = HwihaSeatStats(stat, stat, stat, stat, stat, hometown)
 
     @Test fun `design file is the provisional ledger with every catalogued policy and work`() {
-        assertEquals(HwihaDomesticDesign.PROVISIONAL, design.status)
+        assertEquals(HwihaDomesticDesign.CONFIRMED, design.status)
         assertEquals(CountyPolicy.entries.toSet(), design.countyPolicies.keys)
         assertEquals(DomesticWork.entries.toSet(), design.works.keys)
         assertEquals(CountyPolicy.AGRICULTURE, design.defaultCountyPolicy)
@@ -22,7 +22,7 @@ class HwihaDomesticEffectsTest {
         val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
         val statuses = Regex("\"status\": \"([^\"]+)\"").findAll(raw).map { it.groupValues[1] }.toList()
         assertTrue(statuses.size >= 1 + 1 + 1 + CountyPolicy.entries.size + CorpsPolicy.entries.size + 1)
-        assertTrue(statuses.all { it == HwihaDomesticDesign.PROVISIONAL }, statuses.toString())
+        assertTrue(statuses.all { it == HwihaDomesticDesign.CONFIRMED }, statuses.toString())
     }
 
     @Test fun `malformed design fails instead of defaulting`() {

@@ -30,15 +30,18 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
         if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
         val hazard = reactions.entryHazard(world, actorId, node)
         if (hazard == LandMarchEntry.UNAVAILABLE) return LandMarchEntry.UNAVAILABLE
-        return entryAt(actorId, node, hazard)
+        return entryAt(actorId, node, hazard, reactions.evadingOrderIds(world, actorId, node))
     }
 
     /** Other encounter authorities (installed schemes, interception, avoidance) are mandatory. */
-    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, otherHazards: LandMarchEntry): LandMarchEntry {
+    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, otherHazards: LandMarchEntry,
+        yieldingOrderIds: Set<String> = emptySet()): LandMarchEntry {
         if (!topology.containsNode(node)) return LandMarchEntry.UNAVAILABLE
         return when (val result = assess(actorId)) {
             MilitaryPresenceAssessment.Unavailable -> LandMarchEntry.UNAVAILABLE
-            is MilitaryPresenceAssessment.Ready -> if (node.id in result.blockedProvinceIds) LandMarchEntry.ENCOUNTER else otherHazards
+            is MilitaryPresenceAssessment.Ready -> if (result.hostileCorps.any { corps ->
+                world.positionOf(corps.commanderGeneralId) == node && corps.orderId !in yieldingOrderIds
+            }) LandMarchEntry.ENCOUNTER else otherHazards
         }
     }
 

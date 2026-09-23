@@ -1,7 +1,7 @@
 package opensamguk.logic.war.hwiha
 
 /**
- * S3 고리를 돌리려고 임시로 정한 수치 — **PROVISIONAL, 사용자 결정 대기.**
+ * S3 수치 — 2026-09-23 사용자 결정으로 현행 값을 확정했다.
  *
  * 정본은 `data/curated/han/hwiha-s3-provisional-v1.json` 이다. Kotlin 런타임은 `data/curated` 를 읽지
  * 않으므로(월단평 곡선·포위 사기와 같은 방식) 같은 값을 여기 두고, `HwihaS3ProvisionalTest` 가 파일과
@@ -9,6 +9,8 @@ package opensamguk.logic.war.hwiha
  * `march-tempo-targets-v1.json` 을 옮긴 [HwihaSiegeMorale]·[HwihaSiegeRules] 쪽에 있고 여기 두지 않는다.
  */
 object HwihaS3Provisional {
+    /** 요격 군단이 반응할 수 있는 省 간선 수. */
+    const val INTERCEPT_RANGE_PROVINCES = 1
     // ── 공성 ────────────────────────────────────────────────────────────────
     /** 성 안 수비병 1명이 한 순에 먹는 곡(창고 게임 단위). warGrainBudget 기준 규모 rationUnitsPerSoldierTurn 를 런타임에 옮겼다. */
     const val GARRISON_RATION_PER_SOLDIER_TURN = 100L
