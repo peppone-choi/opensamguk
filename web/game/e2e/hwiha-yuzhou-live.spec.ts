@@ -102,7 +102,8 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     .find(d => d.dispatchId === dispatch.dispatchId)?.status).toBe('ACCEPTED');
   const marchStop = () => sql(`SELECT coalesce(meta->'hwihaMarch'->>'stop','') FROM general
     WHERE world_id=${worldId} AND id=${generalId};`);
-  await expect.poll(marchStop, { timeout: 1_200_000, intervals: [10_000] }).toBe('ARRIVED');
+  // The observed 762 km appointment route takes at least 26 turns at 30 km/turn.
+  await expect.poll(marchStop, { timeout: 2_400_000, intervals: [10_000] }).toBe('ARRIVED');
 
   const siegeSummary = () => JSON.parse(sql(`SELECT json_build_object('active', count(*) FILTER (WHERE status='ACTIVE'),
     'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM hwiha_siege WHERE world_id=${worldId};`)) as
