@@ -22,6 +22,10 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/hwiha-aptitude-weights-v1.json")) {
         into("hwiha")
     }
+    // 휘하 시야 반경·병력 구간·첩보 비용(PROVISIONAL 게임 기획 수치) — 정본은 저장소 루트 파일 하나다.
+    from(rootProject.file("data/curated/han/hwiha-vision-rules-v1.json")) {
+        into("hwiha")
+    }
 }
 
 tasks.test { useJUnitPlatform() }
