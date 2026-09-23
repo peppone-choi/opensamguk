@@ -15,8 +15,8 @@
       "44580",
       "70523"
     ],
-    "inputTilesSha256": "50e694f3f506176cdb221b95cad3f8e2b4d4ac6a435ec78248b61a4d7aa589a8",
-    "outputDocumentSha256": "4502de9b3c9973c7c6beedc7dee317f425af18cdd11f6df6c17c442334499011"
+    "inputTilesSha256": "a07fc846aee76aab92cabc6e6dcb01c99b071b320ec5990d717becfc49447234",
+    "outputDocumentSha256": "2b8e3bf782d21036e62c5b4aefde301911f1aba4b91fb0a6eb68950e5769a54f"
   },
   "countyRebindingProjection": {
     "affectedParentRegionIds": [
@@ -78,7 +78,7 @@
         }
       },
       "priorSummary": {
-        "approvedPhysicalPlaceIdAbsentCount": 160,
+        "approvedPhysicalPlaceIdAbsentCount": 216,
         "cityLinkedCellCount": 107155,
         "cityLinkedProvinceCount": 998,
         "coordinateFootprintMajorityMismatchCount": 0,
@@ -127,7 +127,7 @@
       }
     },
     "priorSummary": {
-      "approvedPhysicalPlaceIdAbsentCount": 109,
+      "approvedPhysicalPlaceIdAbsentCount": 165,
       "cityLinkedCellCount": 121603,
       "cityLinkedProvinceCount": 1057,
       "coordinateFootprintMajorityMismatchCount": 0,
@@ -224,15 +224,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "a7e94abb6acf0c443d0200e9ebcfd92713515660b4be7d1b17e52b27358e5efa"
+      "sha256": "b91832c6adfcbb9c5312db039a98f297bcde63b618c567aed6abd2f05cc85441"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "4920e77a87a9e35a7d6f525afdea29e4681aa39d455e59466f2d9c008de40d74"
+      "sha256": "83c95e2048965a92b9e5d1bfc5b1e84fe90110e0a40eaad17d87a8ccd0c235ac"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "4c6732327b7377c81b1099468785bd2506f7cc03bb15cc0e7f572aa771532e1d"
+      "sha256": "7eb6fd0682350c04d89dd88d49f36090efe66c5e0c3f575ab749c0127701e1e7"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -252,7 +252,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620"
+      "sha256": "99829b28075ec06e835f6f66d4233f5030a9b201a4184348ec282900afc67f09"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -297,7 +297,7 @@
       "X107",
       "X108"
     ],
-    "inputTilesSha256": "1b19cc34d13e31262049ddbdb7649752ec3e83d0bd2ff3668b0d48f5dbd85f99"
+    "inputTilesSha256": "09ebcd2e39df91522dd061556e156371ffe63540f09e4dd153d12b6262ba5e89"
   },
   "ledgerId": "han-administrative-parent-reconciliation-v1",
   "policy": {
@@ -49335,9 +49335,10 @@
   ],
   "schemaVersion": 1,
   "strategicSiteCarveProjection": {
-    "changedCellCount": 567,
+    "changedCellCount": 1013,
     "inputTilesSha256": "61fb0a0993329e3515b952210a35ebb012df7607f10bf07e7983a11884e2183a",
-    "outputDocumentSha256": "1dbc2cbb97905f1295f145d3e82f04fc11b87d9311e83fc006fa3b395419975c",
+    "outputDocumentSha256": "604df72d2898f76d4f9fdf0f22879d8d202df0124f45d24fd6695c9ff79f0ba5",
+    "placedGapCountyCount": 56,
     "placedSiteCount": 73
   },
   "summary": {

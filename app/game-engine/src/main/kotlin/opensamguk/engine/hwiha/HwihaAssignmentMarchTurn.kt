@@ -30,7 +30,8 @@ class HwihaAssignmentMarchTurn(
         if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
             val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
-            if (siege.startIfArrived(generalId) && isUnowned(generalId)) siege.npcAct(generalId)
+            val besieging = siege.startIfArrived(generalId)
+            if (isUnowned(generalId)) { if (besieging) siege.npcAct(generalId) else siege.npcEndIfStranded(generalId) }
             return
         }
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.

@@ -21,7 +21,8 @@ class KoreaSettlementEconomyTest(unittest.TestCase):
 
     def test_generated_world_has_all_reviewed_playable_connected_settlements(self):
         world=json.loads((ROOT/'infra/src/main/resources/map/han-world-v3.json').read_text())
-        additions=[c for c in world['cities'] if c['id']>=1134]
+        # 2026-09-23: 郡國 밖 취락 묶음은 1134–1194 다. 결손 縣(1342–)은 다른 묶음이라 여기서 세지 않는다.
+        additions=[c for c in world['cities'] if 1134<=c['id']<=1194]
         self.assertEqual(35,len(additions))
         self.assertEqual({'external:v1:'+r['id'] for r in json.loads((ROOT/'data/curated/han/korea-place-corrections-v1.json').read_text())['settlements']}, {c['physicalPlaceRef'] for c in additions})
         for city in additions:

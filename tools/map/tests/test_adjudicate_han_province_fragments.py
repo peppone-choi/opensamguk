@@ -696,7 +696,9 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-17: 城 없던 관할 11곳을 같은 실체 城 관할에 접어 1,133.
         # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
         # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
-        self.assertEqual((1374, 1168, 173), (
+        # 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 56곳이 거점 분할 단계의 국소 carve 로
+        # 제 省·관할을 받아 배열 끝에 붙었다 — 1,374 → 1,434 · 1,168 → 1,228. 郡 수는 그대로다.
+        self.assertEqual((1430, 1224, 173), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
@@ -718,6 +720,15 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         }
         korea_exceptions = json.loads((ROOT / "data/curated/han/korea-spatial-area-exceptions-v1.json").read_text())
         island_remnants.update({row["provinceId"]: row["cells"] for row in korea_exceptions["areaExceptions"]})
+        # 2026-09-23: 결손 縣도 같은 carve 규칙을 탄다 — 발자국을 8칸으로 떼면 기증 省이 갈라지는 縣은
+        # 줄여서 세운다(汝南郡 固始縣 6칸). 위 거점 넷처럼 손으로 적지 않고 원장에서 읽는다.
+        carves = json.loads((ROOT / "data/curated/han/strategic-site-province-carves-v1.json").read_text())
+        for stage in carves["geometry"]["stages"]:
+            island_remnants.update({
+                row["placeId"]: row["carvedCellCount"]
+                for row in stage.get("gapCountyPlacements", ())
+                if row["carvedCellCount"] < 8
+            })
         below = {
             tiles["provinceRecords"][index]["id"]: count
             for index, count in areas.items()

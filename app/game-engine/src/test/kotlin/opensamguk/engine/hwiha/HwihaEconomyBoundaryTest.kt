@@ -8,6 +8,7 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
+import opensamguk.logic.war.hwiha.HwihaS3Provisional
 
 /** 순 경계 보급 재계산, 녹봉(창고망), 기존 가신 유지비 끔, 상사 — in-memory, real map. */
 class HwihaEconomyBoundaryTest {
@@ -134,6 +135,48 @@ class HwihaEconomyBoundaryTest {
         assertEquals(0, HwihaUnitResupply(world, ChangeRecorder()).resupply(200, 2))
         assertEquals(50, world.getBugokById(7)!!.provisions)
         assertEquals(1_000_000L, HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+    }
+
+    @Test fun `deploying loads three months of rations from the departure network and only what the warehouses hold`() {
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        fixture.deploy(world, ChangeRecorder(), 1, listOf(7), route.destination)
+        assertEquals(100 * HwihaS3Provisional.DEPLOY_LOAD_MONTHS, world.getBugokById(7)!!.provisions, "troops × 3 months")
+        assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
+            HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+
+        val poor = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
+        poor.applyCityDirtyFree(warehouse(poor.getCityById(capital)!!, HwihaResources(grain = 30_000)))
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(poor, ChangeRecorder(), emptySet())
+        fixture.deploy(poor, ChangeRecorder(), 1, listOf(7), route.destination)
+        assertEquals(100, poor.getBugokById(7)!!.provisions, "only what the network holds (30000 / 300)")
+    }
+
+    @Test fun `a corps abroad gets a monthly convoy that arrives after the march delay without loss`() {
+        // Deployed from an enemy county: nothing is loaded at departure, so only the convoy can feed it.
+        val world = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)),
+            people = listOf(fixture.person(1, 1, capital, userId = "42") to route.destination))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, 1, listOf(7), route.destination)
+        assertEquals(0, world.getBugokById(7)!!.provisions, "no loading outside the own network")
+        val rations = HwihaCorpsRations(world, recorder, fixture.topology, fixture.metrics)
+        val dispatchedAt = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+        assertEquals(1, rations.dispatch(200, 2))
+        val convoy = rations.convoys().single()
+        assertEquals(100L * HwihaS3Provisional.CONVOY_TARGET_MONTHS, convoy.provisions)
+        assertTrue(convoy.arrive > dispatchedAt, "a convoy is never instant")
+        assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
+            HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain, "paid at departure")
+        assertEquals(0, rations.dispatch(200, 2), "once a month")
+        assertEquals(0, rations.deliver(), "not yet")
+        var phases = 0
+        while (world.getBugokById(7)!!.provisions == 0 && phases < 12) { fixture.nextPhase(world); rations.deliver(); phases++ }
+        assertEquals(300, world.getBugokById(7)!!.provisions, "delivered in full: no loss")
+        assertEquals(convoy.arrive, world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) })
+        assertTrue(rations.convoys().isEmpty())
     }
 
     @Test fun `reward is a queued court decision paid from the warehouse raising loyalty and one bond event a month`() {

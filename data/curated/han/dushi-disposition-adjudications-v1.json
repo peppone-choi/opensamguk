@@ -1,0 +1,639 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "dushi-disposition-adjudications-v1",
+  "note": "dushi-disposition-v1 이 뽑은 처분 문구 66 건의 심사다. 晉書 地理志 축(jinshu-survival-sweep-v1)에서 이 표기로 걸리지 않은 후보들을 讀史方輿紀要의 歷代 연혁 서술로 다시 건 것이다.",
+  "method": {
+    "axis": "讀史方輿紀要는 縣마다 歷代 연혁을 적는다 — 「晉省X縣入Y」 처럼 **폐지 주체의 시대**가 나오므로 220 년 전후를 가를 수 있다. 시대 표지와 처분 동사가 함께 든 대목만 뽑아 읽었다.",
+    "confidence": "STRONG 은 晉代 처분이 명시된 것(그러면 220 년엔 있었다), MODERATE 는 「魏廢」 처럼 폐지 주체가 魏라 魏가 선 220 년에는 있었다고 읽히지만 연도가 없는 것이다.",
+    "boundaryCases": "霸陵·葭萌·漁陽은 개명·폐지가 220 년 바로 그 경계라 이 축으로 갈리지 않는다. 판정하지 않는다.",
+    "homonymRule": "인용이 다른 곳을 가리키면 기각했다(13 건). 한 글자 이름이 특히 취약하다 — 襄→定襄, 鄲→邯鄲, 梧→蒼梧, 安→東安.",
+    "limits": "UNRESOLVED 14 건과 처분 문구가 없는 132 건은 판정되지 않았다. 폐지의 증명이 아니다.",
+    "control": {
+      "design": "晉書 축에서 이미 판정이 끝난 縣을 같은 조회에 넣었다 — 220 년 존속이 확정된 것(양성)과 폐지 연도가 적힌 것(음성).",
+      "negative": "樓煩 → 卷040 「後漢仍爲樓煩縣，靈帝時廢」 가 걸린다. 조회가 살아 있다.",
+      "positive": "順陽 → 卷051 「建安中，置南鄉郡。晉改爲順陽郡，而順陽縣屬之」 가 걸려 晉書 판정과 일치한다.",
+      "coverageLimit": "그러나 양성 5 건 중 3 건(鮦陽·中陽·邪龍)이 **0 건**이고 楊은 유일한 히트가 사천 萇楊縣(허위)이었다. 이 축의 커버리지는 절반 이하다 — 처분 문구가 없는 132 건과 UNRESOLVED 14 건은 판정되지 않은 것이지 폐지가 아니다.",
+      "homonymPressure": "白水로 통제했을 때 「白水縣」 히트 8 건이 전부 섬서 白水縣(左馮翊 계열)이고 廣漢 白水는 하나도 없었다. 이 축은 同名異地 압력이 특히 높다 — 문구를 읽지 않고 히트 수로 판정하면 틀린다."
+    },
+    "controlVerdict": "조회는 살아 있으나 커버리지가 낮다. 걸린 것은 쓰고, 안 걸린 것은 다음 축으로 넘긴다.",
+    "correction": "碭山·陶·霸陵 3 건을 FALSE_ABSENCE 로 정정했다. 이 축은 「그 縣이 220 년에 있었나」 를 잘 재지만 「지도에 없나」 를 재지 않는다 — 두 질문을 따로 확인해야 하고, 카탈로그 절단 이름은 교정된 이름으로 지도를 다시 봐야 한다."
+  },
+  "totals": {
+    "FALSE_ABSENCE": 3,
+    "HOMONYM_REJECTED": 13,
+    "UNRESOLVED": 14,
+    "REAL_GAP": 28,
+    "BOUNDARY_UNCERTAIN": 2,
+    "ABOLISHED_140_TO_220": 6
+  },
+  "adjudications": [
+    {
+      "commandery": "京兆尹",
+      "name": "霸陵",
+      "verdict": "FALSE_ABSENCE",
+      "evidence": "讀史 卷053 — 「後漢仍爲霸陵縣。興平二年李傕等作亂…曹魏景初元年…留之霸城。晉曰霸城縣，屬京兆郡」",
+      "reading": "**정정**: 지도가 이 縣을 후대 이름 霸城으로 싣고 있어 결손이 아니다. naming-artifact-false-absences-v1 을 보라.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "高陵",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷053 — 渭橋·漕運 서술",
+      "reading": "시대 처분이 아니라 후대 교통 서술이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "祋祤",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷054 — 「漢祋祤縣地。晉爲瀕陽縣地」. 「漢…縣地」 는 이미 없어진 縣을 가리키는 표현이라 220 을 가르지 못한다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "衙",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷054 — 「漢爲衙縣地，亦爲粟邑縣地。晉省衙縣入粟邑」",
+      "confidence": "STRONG",
+      "reading": "晉이 粟邑에 합쳤으니 220 년엔 있었다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "安陵",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷013 — 「晉置東安陵縣，屬勃海郡」",
+      "reading": "勃海郡의 安陵이다. 右扶風 安陵(咸陽)과 다른 곳이다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "平陵",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷031 — 「漢置東平陵縣，以右扶風有平陵，故此加東也」 로 右扶風 平陵의 실재는 확인되나 처분이 없다. 卷020 의 平陵縣은 晉 義興郡(강남)이라 다른 곳이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "杜阳",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷055 — 「漢因置杜陽縣。後漢初省。永和年，復置。晉廢」",
+      "confidence": "STRONG",
+      "reading": "永和(136–141) 복치가 郡國志 永和五年 단면과 정확히 맞는다. 폐지는 晉이다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "潁川郡",
+      "name": "襄",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷040 — 太原 定襄·陽曲 서술",
+      "reading": "한 글자 이름이 「定襄」 속에 걸렸다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "細陽",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷021 — 「漢置細陽縣，屬汝南郡。光武封岑彭子遵爲侯邑。晉縣廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "宜祿",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷054 — 「後魏熙平二年分置東陰盤縣。廢帝初，改爲宜祿縣，以南臨宜祿川而名」",
+      "reading": "安定郡의 宜祿으로 後魏 때 명명됐다. 汝南 宜祿과 다른 곳이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "梁國",
+      "name": "碭山",
+      "verdict": "FALSE_ABSENCE",
+      "evidence": "讀史 卷029 — 「漢改郡曰梁國，碭縣屬焉。晉省入下邑」",
+      "reading": "**정정**: 지도에 교정된 이름(砀 / 廮陶)으로 이미 있으므로 결손이 아니다. 讀史의 晉代 처분 문구는 縣의 존속을 보여 주지만 지도 부재의 전제가 틀렸다. naming-artifact-false-absences-v1 을 보라.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "梁國",
+      "name": "薄",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷050 — 「漢置薄縣，屬山陽郡。後漢改屬梁國。晉省」",
+      "confidence": "STRONG",
+      "reading": "後漢에 梁國으로 이관됐다는 서술이 郡國志 소속과 맞는다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "沛國",
+      "name": "鄲",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷015 — 邯鄲 서술",
+      "reading": "한 글자 이름이 「邯鄲」 속에 걸렸다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "沛國",
+      "name": "向",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷021 — 「漢置向縣，屬沛郡。後漢因之。魏廢」",
+      "confidence": "MODERATE",
+      "reading": "폐지 주체가 魏이니 魏가 선 220 년에는 있었다. 다만 연도가 적히지 않았다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "魯國",
+      "name": "騶",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷032 — 「漢置騶縣，屬魯國。晉曰鄒縣，屬魯郡」",
+      "confidence": "STRONG",
+      "reading": "폐지가 아니라 개명이다. 220 년엔 騶.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "name": "陶",
+      "verdict": "FALSE_ABSENCE",
+      "evidence": "讀史 卷014 — 「漢爲楊氏縣，屬鉅鹿郡。後漢因之。晉省入癭陶縣，屬鉅鹿國」",
+      "reading": "**정정**: 지도에 교정된 이름(砀 / 廮陶)으로 이미 있으므로 결손이 아니다. 讀史의 晉代 처분 문구는 縣의 존속을 보여 주지만 지도 부재의 전제가 틀렸다. naming-artifact-false-absences-v1 을 보라.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "常山國",
+      "name": "欒城",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷014 — 「漢置關縣，屬常山郡。後漢改置欒城縣。三國魏廢」",
+      "confidence": "MODERATE",
+      "reading": "後漢에 關→欒城 개명이 郡國志 표제와 맞는다. 폐지 주체는 魏다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "河閒國",
+      "name": "易",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷012 — 「漢易縣地，屬涿郡。後漢屬河間國。晉曰易城縣」",
+      "confidence": "STRONG",
+      "reading": "後漢 河間國 소속이 郡國志와 맞는다. 晉의 처분은 개명이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "東昬",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷047 — 「漢東昏縣地，屬陳留郡。三國魏廢縣爲鎮」",
+      "confidence": "MODERATE",
+      "reading": "폐지 주체가 魏다. 연도는 없다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "山陽郡",
+      "name": "東緡",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷032 — 「漢置東緡縣，屬山陽郡…晉省縣入金鄉」; 「興平二年呂布屯於東緡，與曹操戰」",
+      "confidence": "STRONG",
+      "reading": "興平二年(195) 용례까지 있다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "東海郡",
+      "name": "郯",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷022 — 「漢郯縣城也」, 「下邳縣北有故郯縣」. 東海郡 治所이나 처분 문구가 없다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "琅邪國",
+      "name": "西海",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷035 — 「漢置西海縣，屬琅邪郡…後漢仍屬琅邪郡。晉廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "彭城國",
+      "name": "梧",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷002·100 — 蒼梧 서술",
+      "reading": "한 글자 이름이 「蒼梧」 속에 걸렸다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "廣陵郡",
+      "name": "輿",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷012 — 「本漢樊輿縣地，屬涿郡。後漢廢」",
+      "reading": "涿郡의 樊輿다. 廣陵 輿와 다른 곳이다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "平原郡",
+      "name": "濕陰",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷031 — 「漯亦當作「濕」。晉縣省」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "北海國",
+      "name": "壯武",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷036 — 「漢置縣，屬膠東國…後漢屬北海國。晉屬城陽郡」",
+      "confidence": "STRONG",
+      "reading": "後漢 北海國 소속이 郡國志와 맞고 晉엔 城陽으로 이관됐다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "襄鄉",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷079 — 「後漢析置襄鄉縣，後廢。晉亦爲蔡陽縣地」. 後漢 신설은 郡國志와 맞으나 「後廢」 의 시점이 없다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "潛",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷028·090 — 於潛·寧國 서술",
+      "reading": "浙江의 於潛에 걸렸다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "吳郡",
+      "name": "安",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷002 — 東安郡·秦安 서술",
+      "reading": "한 글자 이름이 아무 데나 걸린다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY"
+    },
+    {
+      "commandery": "豫章郡",
+      "name": "廬陵",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷002 — 「建安四年孫策分豫章置，治廬陵縣」",
+      "confidence": "STRONG",
+      "reading": "建安四年(199)에 廬陵郡 治所가 됐다. 220 년엔 廬陵郡 소속이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "巴郡",
+      "name": "充国",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷068 — 「漢巴郡充國縣地，後漢末爲南充國縣地，晉屬巴西郡」. 漢末에 南充國으로 갈렸다는 것만 알 수 있다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "葭萌",
+      "verdict": "BOUNDARY_UNCERTAIN",
+      "evidence": "讀史 卷068 — 「漢屬廣漢郡，後漢因之。蜀漢曰漢壽縣，屬梓潼郡。晉太康初改曰晉壽縣」; 晉書 卷014 — 「又立漢德縣，改葭萌曰漢壽」",
+      "reading": "蜀漢이 葭萌을 漢壽로 고쳤다. 유비의 촉한 성립이 221 년이라 220 년 단면이 개명 직전인지 직후인지 이 축으로 갈리지 않는다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "安故",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷060 — 「後漢仍屬…晉省」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "阿阳",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷059 — 「後漢屬…晉省入略陽。後魏復置阿陽縣，屬略陽郡」",
+      "confidence": "STRONG",
+      "reading": "이전 대조가 붙인 TGAZ 「-153~29 @116.64,36.93」 은 산동 좌표의 同名異地였다. 실제 처분은 晉의 略陽 폐합이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "勇士",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷062 — 「後漢屬…晉廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "陇",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷059 — 「漢隴縣，屬天水郡。後漢屬漢陽郡，爲涼州刺史治。晉縣廢」",
+      "confidence": "STRONG",
+      "reading": "郡國志 「〖陇〗刺史治」 와 정확히 일치한다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "武都郡",
+      "name": "下辨",
+      "verdict": "REAL_GAP",
+      "evidence": "晉書 卷014 武都郡 「下辯　河池　沮　武都　故道」; 讀史 卷059 — 「武街，下辨縣治也」",
+      "confidence": "STRONG",
+      "reading": "晉書가 下辯 로 적어 표기차 때문에 晉書 축에서 ABSENT 로 나왔다. 같은 縣이다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "武都郡",
+      "name": "上禄",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷059 — 唐 成州 治所 上祿縣 서술뿐이고 漢代 처분이 없다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "金城郡",
+      "name": "允吾",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷060 — 「後魏亦曰允吾縣，屬武威郡」. 漢~後魏 연속을 시사하나 晉書 金城郡 속현(榆中·允街·金城·白土·浩亹)에는 없다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "金城郡",
+      "name": "枝阳",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷060 — 「漢金城郡枝陽縣地。西晉末，張氏分金城之令居、枝陽二縣地，立永登縣」",
+      "confidence": "STRONG",
+      "reading": "西晉 말까지 枝陽이 縣으로 있었다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "安定郡",
+      "name": "三水",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷054 — 「本漢縣，屬安定郡。晉廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "安定郡",
+      "name": "彭阳",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷057 — 「本漢彭陽縣地，屬安定郡。後漢靈帝時，以北地郡富平縣寄治此」. 靈帝 때 富平이 寄治했다는 것이 彭陽 폐지를 뜻하는지 불명이다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "武威郡",
+      "name": "张掖",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷063 — 인용이 張掖郡의 屋蘭·昭武다. 武威郡 張掖縣의 처분이 아니다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "上郡",
+      "name": "高奴",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷057 — 「後漢亦爲高奴縣。晉廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平定",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷040 — 宋 平定軍·金 平定州 서술이다. 西河 平定과의 연속이 서지 않는다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平陆",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷039 — 황하 수계 서술",
+      "reading": "河東의 平陸(현 지명)에 걸렸다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "五原郡",
+      "name": "五原",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷061 — 「西漢置五原縣，屬五原郡。後漢因之。永和五年以南匈奴叛亂，徙朔方郡治五原…晉縣廢」",
+      "confidence": "STRONG",
+      "reading": "永和五年 = 140 년, 郡國志 단면 바로 그 해의 용례다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "咸阳",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷038·053 — 조선 咸陽·右扶風 渭城 서술",
+      "reading": "雲中 咸陽과 무관하다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "沙南",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷061 — 「榆林，漢沙南縣地，屬雲中郡。後漢末，廢」",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "武泉",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷044 — 「中部都尉治焉。後漢廢」(武泉水 대목, 같은 권의 定襄 諸縣과 함께 「後漢末廢」)",
+      "reading": "같은 대목이 雲中·定襄 북변 縣들을 일괄로 漢末 폐지로 적는다. 다만 武泉 자체를 지목한 문장은 아니다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "原阳",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷044 — 「漢爲原陽縣，屬雲中郡。後漢末廢」",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "楼烦",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷040 — 「後漢仍爲樓煩縣，靈帝時廢」",
+      "reading": "靈帝(168–189) 폐지다. 연도가 적힌 유일한 건이다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "武州",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷044 — 「漢爲武州縣，屬鴈門郡…後漢末，縣廢」",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "三封",
+      "verdict": "ABOLISHED_140_TO_220",
+      "evidence": "讀史 卷061 — 「漢置三封縣，爲朔方郡治。後漢朔方郡遷治臨戎，以三封縣屬焉。漢末廢」",
+      "reading": "지도의 朔方郡이 臨戎 한 縣만 남은 것과 정확히 부합한다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "朔方",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷061 — 唐 貞觀二年 夏州 朔方縣 개명 서술이다. 漢 朔方縣의 처분이 아니다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "沃野",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷061 — 後魏 沃野鎮 서술뿐이다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "大城",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷011 — 「漢爲東平舒縣，屬勃海郡…後漢屬河間國」",
+      "reading": "현 直隸 大城縣(옛 東平舒)이다. 朔方 大城과 다른 곳이다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "昌平",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷011 — 「屯昌平。晉仍爲昌平縣，屬燕國。後魏廢入軍都縣」",
+      "confidence": "STRONG",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "军都",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷011 — 「後魏廢入軍都縣」; 「東魏天平中，復置昌平縣於軍都縣界」",
+      "confidence": "STRONG",
+      "reading": "昌平을 흡수한 쪽이 軍都다 — 後魏까지 있었다.",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "代郡",
+      "name": "马城",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "讀史 卷017 — 遼西 海陽·陽樂 서술",
+      "reading": "遼西의 馬城이다. 다만 같은 대목의 「漢置陽樂縣，屬遼西郡。後漢爲郡治」 는 遼西 陽樂 판정을 보강한다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "渔阳",
+      "verdict": "BOUNDARY_UNCERTAIN",
+      "evidence": "讀史 卷011 — 「魏初，郡縣俱廢。晉復置漁陽郡，仍領漁陽縣」",
+      "reading": "「魏初」 폐지라 220 년 단면이 폐지 직전인지 직후인지 갈리지 않는다. 지도에 없는 것이 맞을 수 있다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "狐奴",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷011 — 「晉仍爲狐奴縣，屬燕國。後魏廢」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "雍奴",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷011 — 「漢置雍奴縣，隸漁陽郡。後漢因之。晉屬燕國」",
+      "confidence": "STRONG",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "平谷",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷011 — 인용이 密雲(漁陽·𠂆奚 等縣地) 서술이다. 平谷 자체의 처분이 아니다.",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "安乐",
+      "verdict": "REAL_GAP",
+      "evidence": "讀史 卷011 — 「後漢仍屬…晉亦曰安樂縣，屬燕國。北魏太平真君七年廢入潞縣」",
+      "confidence": "STRONG",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT"
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "广郁",
+      "verdict": "UNRESOLVED",
+      "evidence": "",
+      "reading": "讀史 卷110 — 「漢鬱林郡廣鬱縣地，吳置昌平縣，晉太康元年析置寧浦縣」. 吳가 그 땅에 昌平을 세웠다는 것만 알 수 있다.",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT"
+    }
+  ]
+}

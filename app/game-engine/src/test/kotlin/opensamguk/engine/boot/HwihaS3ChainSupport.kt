@@ -51,6 +51,12 @@ internal object HwihaS3ChainSupport {
         // boundaryDate falls back to Instant.now() without these; pin the calendar like HwihaMonthBoundaryLoopIT.
         jdbc.update("""UPDATE world_state SET meta = meta || ?::jsonb WHERE id=?""",
             MetaJson.encode(mapOf("startYear" to 190, "startTime" to START.toString(), "lastTurnTime" to START.toString())), world)
+        // The loader takes start_time as the clock authority. The importer writes it (and every turn_time) through
+        // java.sql.Timestamp, whose Julian conversion moves year 190 by a day — the world then idled 24 phases before
+        // anyone's turn came. Pin start_time exactly and shift the turn times back by the same drift (see end of seed).
+        val imported = jdbc.queryForObject("SELECT start_time FROM world_state WHERE id=?", OffsetDateTime::class.java, world)!!
+        val drift = java.time.Duration.between(START, imported.toInstant())
+        jdbc.update("""UPDATE world_state SET start_time = ? WHERE id=?""", OffsetDateTime.ofInstant(START, ZoneOffset.UTC), world)
         if (!withUnits) jdbc.update("DELETE FROM general_bugok WHERE world_id=?", world)
 
         // The human player: a created character (npc_state 0) standing in the first lord's capital.
@@ -81,6 +87,9 @@ internal object HwihaS3ChainSupport {
                 commandKind = opensamguk.infra.persistence.CommandInboxRepository.CommandKind.RESERVED_TURN,
                 intentFingerprint = "b".repeat(64), generalId = HUMAN, turnIdx = 0, actionCode = "action.enlist",
                 payloadJson = opensamguk.common.wire.encodeCommandPayload(envelope), ownerUserId = HUMAN_USER))
+        // Same Julian drift on every turn_time (the importer's and the player's above) — undo it once for all generals.
+        jdbc.update("UPDATE general SET turn_time = turn_time - make_interval(secs => ?) WHERE world_id=?",
+            drift.seconds.toDouble(), world)
         opensamguk.infra.persistence.ReservedTurnRepository(named).reserve(WorldId(world), HUMAN, 0, "action.enlist",
             HwihaEnlistmentInput.canonicalJson(EnlistmentRequest(HUMAN, EnlistmentMode.NATION, 1)), requestId = requestId)
     }
@@ -107,12 +116,17 @@ internal object HwihaS3ChainSupport {
         assertTrue(jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
         val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM hwiha_siege WHERE world_id=? AND status='FALLEN'", id)
         assertTrue(fallen.isNotEmpty(), "점령: a county fell")
+        // A captured county can change hands again later — retaken, or neutralized by the monthly isolation decay
+        // (UpdateCitySupply). So each fallen county's owner in the database must equal the live world's (the capture
+        // and every later transfer were flushed), and at least one is still held by its captor (the capture itself).
+        var held = 0
         for (row in fallen) {
             val county = (row["county_id"] as Number).toInt()
-            assertEquals((row["besieger_nation_id"] as Number).toInt(),
-                jdbc.queryForObject("SELECT nation_id FROM city WHERE world_id=? AND id=?", Int::class.java, id, county),
-                "점령: county $county belongs to its captor in the database")
+            val stored = jdbc.queryForObject("SELECT nation_id FROM city WHERE world_id=? AND id=?", Int::class.java, id, county)
+            assertEquals(world.getCityById(county)?.nationId, stored, "점령: county $county owner is flushed as the live world holds it")
+            if (stored == (row["besieger_nation_id"] as Number).toInt()) held++
         }
+        assertTrue(held > 0, "점령: a fallen county is held by its captor in the database")
         // 징세 · 녹봉 · 월단평
         val meta = world.getState().meta
         assertNotNull(meta[HwihaMonthlyCountyIncome.STAMP_KEY], "징세: the loop credited county warehouses")

@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "jinshu-token-adjudications-v1",
+  "note": "jinshu-survival-sweep-v1 에서 晉書 地理志 속현 목록에 토큰으로 걸린 50 건(OTHER_ERA_HOMONYM_ONLY 22 · NOT_IN_TGAZ 28)의 심사다. TGAZ 축에서는 「이 시대 레코드가 없다」 또는 「다른 시대 동명만 있다」 로 남아 미판정이던 것들이다.",
+  "method": {
+    "mapAbsence": "50 건 전부 지도에 없다 — 제 郡에도, 다른 郡에도 없다(지도 縣 1,140 / 郡 172 전수 대조, 공용 정규화기).",
+    "catalogHeadword": "50/50 이 郡國志 표제 縣이다. 표제 추출 패턴을 두 번 고쳐야 했다 — 괄호 안에 註가 끼인 형태(〖汧{{*|…}}〗·〖雍{{*|…}}〗·〖新城{{*|…}}〗)가 31 건이고, 註 안에 결자 표기 {單心} 같은 홑괄호가 중첩돼 非탐욕 매칭이 또 깨진다. 표제는 〖이름(?=〗|{{) 으로 잡아야 한다.",
+    "successionRule": "晉書 쪽 郡이 다를 때는 晉書 자체 진술로 계승을 세웠다 — 「故屬河東，魏分立」(平陽), 「故屬東郡，晉初分東郡置」(濮陽), 「漢武置，孝明改爲漢陽，晉復爲天水」(天水), 「太初中更名右扶風」(扶風). 진술이 없으면 UNVERIFIED_SUCCESSION 으로 남긴다.",
+    "homonymRule": "晉書 쪽 郡이 전혀 다른 지역이면 그 토큰은 이 縣의 증인이 아니다. 5 건을 기각했다 — 五原 武都(감숙 武都郡), 廣陽 廣陽(사천 汶山郡), 東海 陰平(감숙 陰平郡), 汝南 新陽(天水郡), 上郡 白土(황하 상류 金城郡).",
+    "limits": "HOMONYM_REJECTED 5 건의 220 년 존속은 UNKNOWN 이다 — 폐지의 증명이 아니다."
+  },
+  "totals": {
+    "REAL_GAP": 44,
+    "HOMONYM_REJECTED": 5,
+    "REAL_GAP_RELOCATED": 1
+  },
+  "adjudications": [
+    {
+      "commandery": "河南尹",
+      "name": "梁",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 河南尹 표제 縣",
+      "jinshuMatch": [
+        "河南郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 河南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "河南尹",
+      "name": "新城",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 河南尹 표제 縣",
+      "jinshuMatch": [
+        "河南郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 河南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "河東郡",
+      "name": "蒲子",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 河東郡 표제 縣",
+      "jinshuMatch": [
+        "平陽郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「故屬河東，魏分立」"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "汧",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 右扶風 표제 縣",
+      "jinshuMatch": [
+        "扶風郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「漢武帝以爲主爵都尉，太初中更名右扶風」. 右扶風 그 자체다. 속현 「池陽　郿　雍　汧　陳倉　美陽」"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "雍",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 右扶風 표제 縣",
+      "jinshuMatch": [
+        "扶風郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「漢武帝以爲主爵都尉，太初中更名右扶風」. 右扶風 그 자체다. 속현 「池陽　郿　雍　汧　陳倉　美陽」"
+    },
+    {
+      "commandery": "右扶風",
+      "name": "美阳",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 右扶風 표제 縣",
+      "jinshuMatch": [
+        "扶風郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「漢武帝以爲主爵都尉，太初中更名右扶風」. 右扶風 그 자체다. 속현 「池陽　郿　雍　汧　陳倉　美陽」"
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "新陽",
+      "verdict": "HOMONYM_REJECTED",
+      "junguozhi": "後漢書 郡國志 汝南郡 표제 縣",
+      "jinshuMatch": [
+        "天水郡"
+      ],
+      "relation": "DIFFERENT_PLACE",
+      "reading": "晉 天水郡 속현 「上邽　冀　始昌　新陽　顯新　成紀」 의 新陽이다. 汝南의 新陽과 다른 곳이다.",
+      "note": "220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "北宜春",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 汝南郡 표제 縣",
+      "jinshuMatch": [
+        "汝南郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 汝南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "定潁",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 汝南郡 표제 縣",
+      "jinshuMatch": [
+        "汝南郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 汝南郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "長垣",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 陳留郡 표제 縣",
+      "jinshuMatch": [
+        "陳留國"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 陳留國 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "東郡",
+      "name": "濮陽",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 東郡 표제 縣",
+      "jinshuMatch": [
+        "濮陽國"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「故屬東郡，晉初分東郡置」"
+    },
+    {
+      "commandery": "泰山郡",
+      "name": "山茌",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 泰山郡 표제 縣",
+      "jinshuMatch": [
+        "泰山郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 泰山郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "濟陰郡",
+      "name": "離狐",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 濟陰郡 표제 縣",
+      "jinshuMatch": [
+        "濟陰郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 濟陰郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "東海郡",
+      "name": "陰平",
+      "verdict": "HOMONYM_REJECTED",
+      "junguozhi": "後漢書 郡國志 東海郡 표제 縣",
+      "jinshuMatch": [
+        "陰平郡"
+      ],
+      "relation": "DIFFERENT_PLACE",
+      "reading": "晉 陰平郡(「泰始中置。統縣二: 陰平　平廣」)은 廣漢屬國 陰平道 계열의 감숙·사천 접경 郡이다. 東海郡(산동)의 陰平縣과 다른 곳이다.",
+      "note": "220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "巴郡",
+      "name": "涪陵",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 巴郡 표제 縣",
+      "jinshuMatch": [
+        "涪陵郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「蜀置」. 巴郡에서 갈린 郡이다"
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "广汉",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 廣漢郡 표제 縣",
+      "jinshuMatch": [
+        "廣漢郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 廣漢郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다.",
+      "corroboration": "郡國志 廣漢郡 十一城의 同名 治所 縣이다. 이미 실결손으로 판정된 白水와 같은 郡이다."
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "平夷",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 牂牁郡 표제 縣",
+      "jinshuMatch": [
+        "牂柯郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 卷014 牂柯郡 = 郡國志 牂牁郡. 표기차뿐이다",
+      "corroboration": "三國志 卷43 李恢傳 — 「遂以恢為庲降都督，使持節領交州刺史，住平夷縣」, 「故都督常駐平夷縣。至忠，乃移治味縣」. 蜀漢의 庲降都督府 소재지였다 — 220년대 존속의 직접 증거다. 華陽國志 卷四도 晉 平夷郡의 「平夷縣　郡治」 로 적는다."
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "漏江",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 牂牁郡 표제 縣",
+      "jinshuMatch": [
+        "建寧郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「蜀置。統縣十七」. 蜀이 益州郡을 建寧郡으로 고쳤다"
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "卑水",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 越巂郡 표제 縣",
+      "jinshuMatch": [
+        "越巂郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 越巂郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "会无",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 越巂郡 표제 縣",
+      "jinshuMatch": [
+        "越巂郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 越巂郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "姑复",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 越巂郡 표제 縣",
+      "jinshuMatch": [
+        "雲南郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「蜀置。統縣九」. 越巂·永昌에서 갈린 郡이다. 속현에 姑復"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "俞元",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 益州郡 표제 縣",
+      "jinshuMatch": [
+        "建寧郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「蜀置。統縣十七」. 蜀이 益州郡을 建寧郡으로 고쳤다"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "律高",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 益州郡 표제 縣",
+      "jinshuMatch": [
+        "興古郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「蜀置。統縣十一」. 益州·牂牁에서 갈린 郡이다. 속현 첫머리가 律高다"
+    },
+    {
+      "commandery": "益州郡",
+      "name": "秦臧",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 益州郡 표제 縣",
+      "jinshuMatch": [
+        "建寧郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「蜀置。統縣十七」. 蜀이 益州郡을 建寧郡으로 고쳤다"
+    },
+    {
+      "commandery": "蜀郡屬國",
+      "name": "旄牛",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 蜀郡屬國 표제 縣",
+      "jinshuMatch": [
+        "漢嘉郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「蜀置。統縣四: 漢嘉　徙陽　嚴道　旄牛」. 蜀郡屬國의 후신이다"
+    },
+    {
+      "commandery": "犍為屬國",
+      "name": "汉阳",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 犍為屬國 표제 縣",
+      "jinshuMatch": [
+        "朱提郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「蜀置。統縣五: 朱提　南廣　漢陽　南秦　堂狼」. 犍爲屬國의 후신이다"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "略阳",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 漢陽郡 표제 縣",
+      "jinshuMatch": [
+        "略陽郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「本名廣魏，泰始中更名焉」. 廣魏郡은 魏가 漢陽에서 갈랐다. 속현 「臨渭　平襄　略陽　清水」"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "成纪",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 漢陽郡 표제 縣",
+      "jinshuMatch": [
+        "天水郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「漢武置，孝明改爲漢陽，晉復爲天水」. 漢陽郡 그 자체다. 속현 「上邽　冀　始昌　新陽　顯新　成紀」"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "平襄",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 漢陽郡 표제 縣",
+      "jinshuMatch": [
+        "略陽郡"
+      ],
+      "relation": "SPLIT_FROM",
+      "reading": "晉書 卷014 — 「本名廣魏，泰始中更名焉」. 廣魏郡은 魏가 漢陽에서 갈랐다. 속현 「臨渭　平襄　略陽　清水」"
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "上邽",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 漢陽郡 표제 縣",
+      "jinshuMatch": [
+        "天水郡"
+      ],
+      "relation": "SAME_COMMANDERY_RENAMED",
+      "reading": "晉書 卷014 — 「漢武置，孝明改爲漢陽，晉復爲天水」. 漢陽郡 그 자체다. 속현 「上邽　冀　始昌　新陽　顯新　成紀」"
+    },
+    {
+      "commandery": "武都郡",
+      "name": "河池",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 武都郡 표제 縣",
+      "jinshuMatch": [
+        "武都郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 武都郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "金城郡",
+      "name": "浩亹",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 金城郡 표제 縣",
+      "jinshuMatch": [
+        "金城郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 金城郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "金城郡",
+      "name": "允街",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 金城郡 표제 縣",
+      "jinshuMatch": [
+        "金城郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 金城郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "安定郡",
+      "name": "临泾",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 安定郡 표제 縣",
+      "jinshuMatch": [
+        "安定郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 安定郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "武威郡",
+      "name": "姑臧",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 武威郡 표제 縣",
+      "jinshuMatch": [
+        "武威郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 武威郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "武威郡",
+      "name": "宣威",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 武威郡 표제 縣",
+      "jinshuMatch": [
+        "武威郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 武威郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "福禄",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "表氏",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "乐涫",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "会水",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "沙头",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "安弥",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 酒泉郡 표제 縣",
+      "jinshuMatch": [
+        "酒泉郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 酒泉郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "敦煌郡",
+      "name": "广至",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 敦煌郡 표제 縣",
+      "jinshuMatch": [
+        "敦煌郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 敦煌郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "太原郡",
+      "name": "于离",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 太原郡 표제 縣",
+      "jinshuMatch": [
+        "太原國"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 太原國 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "太原郡",
+      "name": "平陶",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 太原郡 표제 縣",
+      "jinshuMatch": [
+        "太原國"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 太原國 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    },
+    {
+      "commandery": "上郡",
+      "name": "白土",
+      "verdict": "HOMONYM_REJECTED",
+      "junguozhi": "後漢書 郡國志 上郡 표제 縣",
+      "jinshuMatch": [
+        "金城郡"
+      ],
+      "relation": "DIFFERENT_PLACE",
+      "reading": "晉 金城郡의 白土는 황하 상류다 — 三國志 卷26 郭淮傳 「九年，遮塞等屯河關、白土故城，據河拒軍。淮…密於下渡兵據白土城」 은 金城郡 河關 옆이고, 晉書 卷122 는 「白土津累石為堤」 로 황하 도하점으로 적는다. 漢書 金城郡 縣十三에 白土는 없고 上郡 縣二十三에 있다 — 上郡(陝北)의 白土와 다른 곳이다.",
+      "note": "정상 9년(248)에 이미 「白土故城」이라 불린 것으로 보아 상군 백토의 220년 존속은 이 축으로 판정되지 않는다."
+    },
+    {
+      "commandery": "五原郡",
+      "name": "武都",
+      "verdict": "HOMONYM_REJECTED",
+      "junguozhi": "後漢書 郡國志 五原郡 표제 縣",
+      "jinshuMatch": [
+        "武都郡"
+      ],
+      "relation": "DIFFERENT_PLACE",
+      "reading": "晉 武都郡(감숙, 속현 「下辯　河池　沮　武都　故道」)의 武都縣이다. 五原郡(내몽골)의 武都縣과 다른 곳이다.",
+      "note": "220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "广牧",
+      "verdict": "REAL_GAP_RELOCATED",
+      "junguozhi": "後漢書 卷113 郡國志 朔方郡 표제 縣 (漢書 朔方郡 縣十에도 廣牧)",
+      "jinshuMatch": [
+        "新興郡"
+      ],
+      "relation": "QIAOZHI",
+      "reading": "晉 新興郡 「魏置。統縣五: 九原　定襄　雲中　廣牧　晉昌」 에 있다. 九原·定襄·雲中은 본래 郡名인데 縣이 됐다 — 魏가 북변 郡들을 남쪽으로 僑置한 것이고 廣牧도 그중 하나다. 縣은 220년에 존재하지만 자리가 옮겨졌다.",
+      "note": "배치할 때 朔方郡이 아니라 新興郡으로 넣어야 한다. 지도에 新興郡은 있고 廣牧은 어디에도 없다. 僑置는 동명 병합 금지 사안이다."
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "广阳",
+      "verdict": "HOMONYM_REJECTED",
+      "junguozhi": "後漢書 郡國志 廣陽郡 표제 縣",
+      "jinshuMatch": [
+        "汶山郡"
+      ],
+      "relation": "DIFFERENT_PLACE",
+      "reading": "晉 汶山郡(사천, 속현 「汶山　升遷　都安　廣陽　興樂　平康　蠶陵　廣柔」)의 廣陽縣이다. 廣陽郡(북경)과 다른 곳이다.",
+      "note": "220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "居庸",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 郡國志 上谷郡 표제 縣",
+      "jinshuMatch": [
+        "上谷郡"
+      ],
+      "relation": "SAME_COMMANDERY",
+      "reading": "晉書 地理志 上谷郡 속현 목록에 토큰으로 있다 — 郡 이름이 그대로 이어진다."
+    }
+  ]
+}

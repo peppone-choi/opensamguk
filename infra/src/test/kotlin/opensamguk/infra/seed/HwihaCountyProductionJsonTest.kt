@@ -13,8 +13,9 @@ class HwihaCountyProductionJsonTest {
     @Test
     fun `committed runtime table matches the generated ledger totals`() {
         val table = HwihaCountyProductionJson.table()
-        assertEquals(1_164, table.size, "생성된 원장의 縣 수와 같아야 한다")
-        assertEquals(29_000, table.values.sumOf { it.iron })
+        // 2026-09-23: 결손 縣 56곳이 지도에 서며 縣 1,164 → 1,217, 건너뛰던 越巂郡 철 산지(hhs:113:越巂郡:008)가 묶여 철 +1,000.
+        assertEquals(1_217, table.size, "생성된 원장의 縣 수와 같아야 한다")
+        assertEquals(30_000, table.values.sumOf { it.iron })
         assertEquals(600, table.values.sumOf { it.horses })
         assertEquals(197_466, table.values.sumOf { it.timber })
         assertTrue(table.values.all { it.money == 0L && it.grain == 0L },
@@ -26,7 +27,7 @@ class HwihaCountyProductionJsonTest {
     fun `목재는 분산이고 철 말은 희소하다`() {
         val table = HwihaCountyProductionJson.table()
         assertTrue(table.count { it.value.timber > 0 } > 1_000, "목재는 거의 모든 縣에서 난다")
-        assertEquals(29, table.count { it.value.iron > 0 })
+        assertEquals(30, table.count { it.value.iron > 0 })
         assertEquals(6, table.count { it.value.horses > 0 })
     }
 

@@ -37,11 +37,31 @@ object HwihaS3Provisional {
     /** 성벽 방어 보정 상한(%) — 방비 wall/wallMax 비율만큼 방어력을 최대 이만큼 올린다. */
     const val ASSAULT_MAX_WALL_BONUS_PERCENT = 100
 
+    /**
+     * 강공 준비 — 포위가 이 순 수만큼 순 경계를 버텨야(siege.turns ≥ 이 값) 강공할 수 있다. 사람·NPC 같다.
+     * 포위 즉시 강공으로 1~2순 만에 함락돼 구원군이 닿을 틈이 없던 것을 막는다(2026-09-23 사용자 결정: 공성 수치 조정).
+     */
+    const val ASSAULT_MIN_SIEGE_TURNS = 3
+
+    /**
+     * 점령군 수비대 — 함락 뒤 포위 군단이 그 縣에 수비병을 남긴다: min(방비 상한 × 이 %, 포위군 병력 × [CAPTURE_GARRISON_MAX_CORPS_PERCENT] %).
+     * 부곡에서 빼서 縣 수비(defence)로 옮긴다. 수비 0 인 縣이 도착 즉시 되넘어가 두 세력이 매 순 주고받던 것을 막는다.
+     */
+    const val CAPTURE_GARRISON_DEFENCE_MAX_PERCENT = 30
+    const val CAPTURE_GARRISON_MAX_CORPS_PERCENT = 20
+
     /** NPC 포위 지휘관이 강공을 고르는 최소 병력비(포위군 ÷ 수비병). */
     const val NPC_ASSAULT_MIN_RATIO = 3
 
     /** 포위 기록(timeline)에 남기는 최대 줄 수 — 36순(1년). */
     const val SIEGE_TIMELINE_MAX = 36
+
+    // ── 군단 군량(출병 적재·보급선) ────────────────────────────────────────
+    /** 출병 적재 — 출병하는 순간 출발지 창고망 곡으로 휴대 군량을 (병력 × 이 개월 수)까지 채운다. */
+    const val DEPLOY_LOAD_MONTHS = 3
+
+    /** 보급선 — 월 경계에 자국 縣 밖의 군단으로 (병력 × 이 개월 수)까지 모자란 군량을 보낸다. 손실 없이 경로 비용만큼 늦게 도착한다. */
+    const val CONVOY_TARGET_MONTHS = 3
 
     // ── 부곡 군량 보충 ──────────────────────────────────────────────────────
     /** 월 경계에 부곡 휴대 군량을 (병력 × 이 개월 수)까지 채운다. */

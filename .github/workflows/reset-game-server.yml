@@ -33,11 +33,11 @@ on:
         required: true
         default: "current"
         type: string
-      # Active map release: 1168 cities after unsupported locality proxies were retired.
+      # Active map release: 1224 cities (결손 縣 56 곳 편입).
       expected_city_count:
         description: "Optional public API city count assertion (blank = skip)"
         required: false
-        default: "1168"
+        default: "1224"
         type: string
       expected_first_city:
         description: "Optional public API first-city assertion (blank = skip)"

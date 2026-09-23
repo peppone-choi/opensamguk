@@ -1,0 +1,1189 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "songshu-provenance-v1",
+  "note": "아직 심사되지 않은 결손 후보를 宋書 州郡志(卷035–038)에 대조한 결과다. 이 志는 縣마다 前漢·後漢·魏·吳·晉을 이름으로 지목하는 연혁을 한 줄로 달기 때문에 그 줄이 220 년을 가른다. HEADWORD 는 宋代까지 縣으로 남아 제 표제를 가진 것, MENTION_ONLY 는 남의 縣 연혁 안에서만 언급되는 것, ABSENT 는 이 표기로 이 志에 없다는 뜻이다.",
+  "method": {
+    "headwordForms": "「:名令，」 「:名相，」 「:名長，」 및 單字 縣의 「:名縣令，」",
+    "normalizer": "tools/map/audit_county_coverage.make_normalizer(group=True); 접은 길이가 원문과 1:1 임을 단언한다",
+    "catalogCrosscheck": "이 志는 「續漢志無」·「二漢無」·「晉太康三年地志有」 로 정본을 직접 언급한다 — 결손 목록 자체의 검산이 된다",
+    "limits": "宋書 州郡志는 宋(420–479)에 있던 縣만 표제로 싣는다. 그 전에 없어진 漢縣은 표제가 없으므로 ABSENT 는 폐지의 증명이 아니라 이 축의 한계다."
+  },
+  "source": {
+    "book": "宋書",
+    "volumes": [
+      "卷035",
+      "卷036",
+      "卷037",
+      "卷038"
+    ]
+  },
+  "totals": {
+    "ABSENT": 120,
+    "HEADWORD": 4,
+    "MENTION_ONLY": 8
+  },
+  "counties": [
+    {
+      "commandery": "河南尹",
+      "name": "巩",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "河東郡",
+      "name": "绛",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "京兆尹",
+      "name": "阳陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "频阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "莲勺",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "茂陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "潁川郡",
+      "name": "焉陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "㶏強",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "灌陽",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "召陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "思善",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "穀熟",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "HEADWORD",
+      "entries": [
+        {
+          "volume": "卷035",
+          "title": "志第二十五 州郡一",
+          "entry": "穀熟令，前漢無，後漢、晉屬梁。永初郡國、何、徐志並屬南梁。後廢帝元徽元年度。"
+        },
+        {
+          "volume": "卷036",
+          "title": "志第二十六 州郡二",
+          "entry": "穀熟令，漢舊名。"
+        }
+      ],
+      "mentions": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "焉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷035",
+          "quote": "州，凡十二州；司隸所部如故。及三國鼎跱，吳得揚、荊、交三州，蜀得益州，魏氏猶得九焉。吳又分交為廣。魏末平蜀，又分益為梁。晉武帝{{YL|太康元年}}，天下一統，凡十有六州。後又分涼、雍為秦，分荊、揚為江"
+        },
+        {
+          "volume": "卷035",
+          "quote": "其間不居者各數百里，此諸縣並在江北淮南，虛其地，無復民戶。吳平，民各還本，故復立焉。其後中原亂，胡寇屢南侵，淮南民多南度。成帝初，蘇峻、祖約為亂於江淮，胡寇又大至，民南度江者轉多，乃於江南僑立淮南郡及諸"
+        },
+        {
+          "volume": "卷035",
+          "quote": "俱立為僑縣，晉末分于湖為境。\n\n:繁昌令，漢舊名，本屬潁川。魏分潁川為襄城，又屬焉。晉亂，省襄城郡，<ref>晉亂省襄城郡　各本並脫「省」字，句不可通。成孺宋書州郡志校勘記云：「疑『晉亂』下奪『省』字。"
+        }
+      ]
+    },
+    {
+      "commandery": "沛國",
+      "name": "臨睢",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "沛國",
+      "name": "太丘",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "陳國",
+      "name": "寧平",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "name": "南〈糸言糸〉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "常山國",
+      "name": "都鄉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷038",
+          "quote": "，立為異義耳。」熊會貞云：「按文選吳都賦注，漢武帝置北景縣。後漢紀，梁冀更封北景都鄉侯。乃兩漢又作『北景』之據。」</ref>漢舊縣。\n\n義昌郡，宋末立。\n\n宋平郡，孝武世，分日南立宋平縣，後為郡。\n\n="
+        }
+      ]
+    },
+    {
+      "commandery": "安平國",
+      "name": "南深",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "平丘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷035",
+          "quote": "為秦郡。永初郡國屬豫州，元嘉八年度南兗。永初郡國又領臨塗、{{*|晉、宋立。}}平丘、{{*|漢舊，屬陳留，晉太康地志無。}}外黃、{{*|漢舊名，屬陳留。}}沛、雍丘、浚儀、頓丘{{*|別見。}}凡七縣"
+        },
+        {
+          "volume": "卷035",
+          "quote": "以浚儀併秦。\n\n:義成令，江左立。\n\n:尉氏令，漢舊名，屬陳留。文帝元嘉八年，以平丘併尉氏。\n\n:懷德令，孝武大明五年立。又以歷陽之烏江，并此為二縣，立臨江郡。前廢帝永光元年，省臨江郡。懷德即住郡治，烏江"
+        }
+      ]
+    },
+    {
+      "commandery": "東郡",
+      "name": "衞",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷036",
+          "quote": "縣四。戶一千二百三十八，口三千八百五十一。\n\n:頓丘令。{{*|別見。}}\n\n:衞國令，晉太康地志有。\n\n:肥陽令，何志以前無。\n\n:陰安令，二漢屬魏，魏屬陽平，晉屬頓丘。<ref>陰安令二漢屬魏魏屬陽"
+        }
+      ]
+    },
+    {
+      "commandery": "東平國",
+      "name": "富成",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "山陽郡",
+      "name": "防東",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "彭城國",
+      "name": "菑丘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "下邳國",
+      "name": "盱臺",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "下邳國",
+      "name": "髙山",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "下邳國",
+      "name": "潘旌",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "下邳國",
+      "name": "東成",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "樂安國",
+      "name": "蓼城",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "東萊郡",
+      "name": "惤",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷036",
+          "quote": "ref>𢮂令　「𢮂」漢書地理志、魏書地形志作「㡉」。續漢書郡國志、晉書地理志作「惤」。按㡉，漢東萊郡屬縣，出㡉布，則字應從巾。作「惤」作「𢮂」，並「㡉」之或體。</ref>漢舊縣。\n\n:盧鄉令，漢舊縣。"
+        },
+        {
+          "volume": "卷036",
+          "quote": "。續漢書郡國志、晉書地理志作「惤」。按㡉，漢東萊郡屬縣，出㡉布，則字應從巾。作「惤」作「𢮂」，並「㡉」之或體。</ref>漢舊縣。\n\n:盧鄉令，漢舊縣。\n\n:牟平令，漢舊縣。\n\n:當利令，漢舊縣。\n\n:"
+        }
+      ]
+    },
+    {
+      "commandery": "東萊郡",
+      "name": "葛盧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "南郡",
+      "name": "中盧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "九江郡",
+      "name": "浚遒",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "會稽郡",
+      "name": "東部",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷035",
+          "quote": ":遂昌令，孫權赤烏二年，分太末立曰平昌。晉武帝太康元年更名。\n\n臨海太守，本會稽東部都尉。前漢都尉治鄞，後漢分會稽為吳郡，疑是都尉徙治章安也。孫亮太平二年立。領縣五。戶三千九百六十一，口二萬四千二百二十六"
+        },
+        {
+          "volume": "卷036",
+          "quote": "。\n\n:葛陽令，吳立。\n\n:樂安男相，吳立。\n\n臨川內史，吳孫亮太平二年，分豫章東部都尉立。領縣九。戶八千九百八十三，口六萬四千八百五。去州水一千一百，陸一千二十。去京都水二千八百三十，陸三千。\n\n:臨汝"
+        },
+        {
+          "volume": "卷036",
+          "quote": "謂之冶乎？閩中有山名湛，疑湛山之鑪鑄劍為湛鑪也。」後分冶地為會稽東、南二部都尉。東部，臨海是也；南部，建安是也。吳孫休永安三年，分南部立為建安郡。領縣七。<ref>領縣七　按此云領縣七，而下祇吳興、將樂、"
+        }
+      ]
+    },
+    {
+      "commandery": "蜀郡",
+      "name": "湔氐道",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "蜀郡",
+      "name": "八陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "同并",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "进乘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "西随",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "灵关道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "三缝",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "苏示",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "大莋",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "胜休",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "毋棳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "HEADWORD",
+      "entries": [
+        {
+          "volume": "卷038",
+          "title": "志第二十八 州郡四 (益州 甯州 廣州 交州 越州)",
+          "entry": "毋棳令，<ref>毋棳令　「毋棳」各本並作「毋掇」，據漢書地理志、水經溫水注改。續漢書郡國志、華陽國志、晉書地理志、舊本南齊書州郡志亦並作毋掇。漢書顏師古注曰：「棳音之悅反。其字從木。」錢大昕廿二史考異云：「說文，棳，從木，此從手誤。前志亦作棳。」</ref>漢舊縣，屬益州郡，晉太康地志屬興古。劉氏改曰西豐，晉武帝泰始五年，復為毋棳。"
+        }
+      ],
+      "mentions": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "梇栋",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "阴平道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "甸氐道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "刚氐道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "大夏",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "HEADWORD",
+      "entries": [
+        {
+          "volume": "卷037",
+          "title": "志第二十七 州郡三 (荊州 郢州 湘州 雍州 梁州 秦州)",
+          "entry": "大夏令，漢舊名，晉太康地志無。"
+        }
+      ],
+      "mentions": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "河关",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "望恒",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "豲道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "兰干",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "显亲",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "武都道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "羌道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "令居",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "乌枝",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "鹑觚",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "北地郡",
+      "name": "参[�]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "北地郡",
+      "name": "灵州",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "武威",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "休屠",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "揟次",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "鸾鸟",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "朴[B459]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "媪围",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "仓松",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "鹯阴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "租厉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "左骑",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "乾齐",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "敦煌郡",
+      "name": "拼泉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "左骑",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "千人",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "司马官",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "千人官",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "太原郡",
+      "name": "晋阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "肤施",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "漆垣",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "奢延",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "桢林",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "美稷",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "乐街",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "皋狼",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平周",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "HEADWORD",
+      "entries": [
+        {
+          "volume": "卷037",
+          "title": "志第二十七 州郡三 (荊州 郢州 湘州 雍州 梁州 秦州)",
+          "entry": "平周令，益州巴西有平州縣。"
+        },
+        {
+          "volume": "卷037",
+          "title": "志第二十七 州郡三 (荊州 郢州 湘州 雍州 梁州 秦州)",
+          "entry": "平周令，徐志作「平州」。此五縣，徐並不注置立。"
+        }
+      ],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "益兰",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "圜阴",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "蔺",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "圜阳",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "广衍",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "临沃",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "文国",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "宜梁",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "曼柏",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "成宜",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "西安阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "箕陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "沙陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "北舆",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "成乐",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "武进",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "桐过",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "武成",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "骆",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "中陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "阴馆",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷035",
+          "quote": "{{*|江左立。}}凡二縣。雁門郡{{*|漢舊郡。}}領樓煩、{{*|別見。}}陰館、{{*|前漢作「觀」，後漢、晉作「館」也。}}廣武、{{*|前漢屬太原，後漢、晉太康地志屬雁門也。}}崞、馬邑{{*|"
+        }
+      ]
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "汪陶",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "埒",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "彊阴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "蓟",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "高柳",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "道人",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "班氏",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "东安阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "雊瞀",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "下落",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "泉州",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "傂奚",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "犷平",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "右北平郡",
+      "name": "无终",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "樂浪郡",
+      "name": "𧦦邯",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "樂浪郡",
+      "name": "乐都",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "遼東屬國",
+      "name": "险渎",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "蒼梧郡",
+      "name": "鄣平",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "桂林",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "songshu": "MENTION_ONLY",
+      "entries": [],
+      "mentions": [
+        {
+          "volume": "卷038",
+          "quote": "更名。永初郡國有安遠、程安、威定、{{*|三縣別見。}}中冑、歸化五縣。中冑疑即桂林之中溜。歸化，二漢、晉太康地志無，疑是江左所立。何志無中冑、歸化，餘三縣屬桂林，徐志同。今領縣十七。戶一千一百二十一，口"
+        },
+        {
+          "volume": "卷038",
+          "quote": "即桂林之中溜。歸化，二漢、晉太康地志無，疑是江左所立。何志無中冑、歸化，餘三縣屬桂林，徐志同。今領縣十七。戶一千一百二十一，口五千七百二十七。去州水一千六百。去京都水七千九百。\n\n:布山令，漢舊縣。\n\n:"
+        },
+        {
+          "volume": "卷038",
+          "quote": "ref>徐志有。\n\n:中冑令，徐志有。\n\n:建安令，永初郡國有，何無，徐有。\n\n桂林太守，本縣名，屬鬱林。吳孫晧鳳皇三年，分鬱林，<ref>分鬱林　孫虨宋書考論云：「鬱林下脫『立』字。」</ref>治武熙"
+        }
+      ]
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "临尘",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "定周",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "增食",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "合浦郡",
+      "name": "临元",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    },
+    {
+      "commandery": "交趾郡",
+      "name": "朱[B42B]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "songshu": "ABSENT",
+      "entries": [],
+      "mentions": []
+    }
+  ]
+}

@@ -392,6 +392,8 @@ open class TurnRunService(
                             // 녹봉 — 수입 뒤, 월단평 앞(§5.2 4단계). 기존 가신 유지비는 HWIHA 에서 꺼져 있다.
                             opensamguk.engine.hwiha.HwihaMonthlySalary(world, handler.recorder).pay(date.year, date.month)
                             opensamguk.engine.hwiha.HwihaUnitResupply(world, handler.recorder).resupply(date.year, date.month)
+                            // 보급선 — 자국 縣 밖의 군단으로 군량을 보낸다(보충 뒤, 같은 창고망).
+                            hwihaPhaseBoundary?.dispatchConvoys(world, handler.recorder, date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.hwiha.HwihaMonthlyAssessment(
