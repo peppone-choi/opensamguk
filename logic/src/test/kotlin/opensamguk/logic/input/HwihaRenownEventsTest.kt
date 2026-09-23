@@ -41,7 +41,7 @@ class HwihaRenownEventsTest {
     fun `월단평은 이번 달 이전 사건만 적용하고 이번 달 사건은 남긴다`() {
         var meta = base
         meta = HwihaRenownEvents.recordRenownEvent(meta, HwihaRenownEventSource.DISPATCH_REFUSAL, "0199-12").meta
-        meta = HwihaRenownEvents.recordRenownEvent(meta, HwihaRenownEventSource.DEPARTURE, "0200-01").meta
+        meta = HwihaRenownEvents.recordRenownEvent(meta, HwihaRenownEventSource.DEFECTION, "0200-01").meta
         val split = HwihaRenownEvents.split(meta, "0200-01")
         assertEquals(listOf(HwihaRenownEventKind.DISPATCH_REFUSAL), split.applied.map { it.kind })
         assertEquals(listOf(HwihaRenownEventKind.BETRAYAL), split.remaining.map { it.kind })
@@ -113,6 +113,15 @@ class HwihaRenownEventsTest {
         // 내려간 지표·상한 0 은 보지 않는다.
         assertFalse(HwihaDomesticMerit.risen(open, open.copy(commerce = 4_000), max))
         assertFalse(HwihaDomesticMerit.risen(open, open.copy(commerce = 6_000), max.copy(commerce = 0)))
+    }
+
+    @Test
+    fun `이탈은 배신의 원인이 아니다 - 배신은 실제 배반뿐이다`() {
+        // 2026-09-23 사용자 결정 「이탈과 배신은 구분해야지」.
+        assertEquals(listOf(HwihaRenownEventSource.DEFECTION),
+            HwihaRenownEventSource.entries.filter { it.kind == HwihaRenownEventKind.BETRAYAL })
+        assertTrue(HwihaRenownEventSource.entries.none { it.name == "DEPARTURE" || "이탈" in it.label })
+        assertEquals(-8, HwihaRenownEventKind.BETRAYAL.amountIn(HwihaRenownAssessment.CANON), "배신 −8 은 그대로다")
     }
 
     @Test

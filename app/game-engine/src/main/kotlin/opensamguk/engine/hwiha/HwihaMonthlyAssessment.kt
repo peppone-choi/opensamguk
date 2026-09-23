@@ -8,7 +8,6 @@ import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRecordKind
 import opensamguk.logic.input.HwihaRenownAssessment
 import opensamguk.logic.input.HwihaRenownEntry
-import opensamguk.logic.input.HwihaRenownEventSource
 import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.input.RuleProfile
@@ -32,10 +31,10 @@ import opensamguk.logic.input.RuleProfile
  *
  * ### 이탈
  *
- * 코스트 상한을 넘은 휘하는 판정해 기록한다. 판정된 인물에게는 월단평 사건 「배신」(원인: 이탈)을 쌓는다 —
- * 2026-09-23 사용자 결정(배신 = 이탈·배반). **실제 해방은 아직 하지 않는다**: 월드에 해방·이탈 경로가 없고
- * `releasePolicy`(MASTER_ONLY·MUTUAL) 처리 규칙이 정해지지 않았다. 그래서 같은 인물이 주인이 회복할 때까지
- * 달마다 다시 판정된다 — 한 판정 연속([DEPARTURE_MARK_KEY], 같은 주인)에는 「배신」을 한 번만 쌓는다.
+ * 코스트 상한을 넘은 휘하는 판정해 주인 앞([HwihaRecordKind.DEPARTURE_JUDGED])과 판정된 인물 앞
+ * ([HwihaRecordKind.RETINUE_DEPARTED])으로 기록한다. **이탈은 배신이 아니다**(2026-09-23 사용자 결정 「이탈과 배신은
+ * 구분해야지」): 이탈은 명망 0 이고 월단평 사건을 쌓지 않는다. 배신(−8)은 실제 배반에만 쓴다. **실제 해방은 아직 하지 않는다**: 월드에 해방·이탈 경로가 없고 `releasePolicy`(MASTER_ONLY·MUTUAL)
+ * 처리 규칙이 정해지지 않았다.
  */
 class HwihaMonthlyAssessment(
     private val world: InMemoryTurnWorld,
@@ -46,7 +45,6 @@ class HwihaMonthlyAssessment(
      * @property moved 명망이 실제로 움직인 장수 수.
      * @property overCap 갱신 뒤에도 휘하 코스트가 명망을 넘어 이탈 판정을 받은 장수 수.
      * @property ranking 명망 내림차순 순위(동점은 id 오름차순).
-     * @property departures 새로 「배신(이탈)」이 쌓인 인물 장수 id.
      */
     data class Outcome(
         val stamp: String,
@@ -55,7 +53,6 @@ class HwihaMonthlyAssessment(
         val moved: Int = 0,
         val overCap: Int = 0,
         val ranking: List<Int> = emptyList(),
-        val departures: List<Int> = emptyList(),
     )
 
     fun assess(year: Int, month: Int): Outcome? {
@@ -64,15 +61,11 @@ class HwihaMonthlyAssessment(
         if (world.getState().meta[STAMP_KEY] == stamp) return Outcome(stamp, alreadyStamped = true)
 
         val retainersByMaster = world.listRetainers().groupBy { it.masterGeneralId }
-        val retainerGeneralByCard = world.listRetainers().associate { it.id to it.generalId }
         var assessed = 0
         var moved = 0
         var overCap = 0
         val renownByGeneral = LinkedHashMap<Int, Int>()
         val reasons = LinkedHashMap<String, Any?>()
-        // 이탈 판정을 받은 인물 → 주인. 두 번째 줄에서 「배신」을 쌓는다(이 줄에서 남의 meta 를 쓰면 뒤 차례가
-        // 그 장수를 처리할 때 덮거나, 막 쌓은 사건을 이번 달 적용분으로 잘못 볼 수 있다).
-        val judged = LinkedHashMap<Int, Int>()
 
         for (id in world.listGenerals().map { it.id }.sorted()) {
             // 매번 새로 읽는다 — 앞 차례가 이 장수를 바꿨을 수 있다.
@@ -125,11 +118,17 @@ class HwihaMonthlyAssessment(
                     linkedMapOf("stamp" to stamp, "retainerIds" to outcome.released, "renown" to outcome.renown,
                         "retainedCost" to outcome.retainedCost),
                     nationId = general.nationId)
-                outcome.released.forEach { card -> retainerGeneralByCard[card]?.let { judged[it] = general.id } }
+                // The judged person learns about its own departure judgement; it carries no renown (not betrayal).
+                val cards = world.listRetainers().associateBy { it.id }
+                for (card in outcome.released) {
+                    val person = cards[card]?.generalId?.let { world.getGeneralById(it) } ?: continue
+                    HwihaRecords.general(world, person.id, HwihaRecordKind.RETINUE_DEPARTED,
+                        "${general.name}의 명망이 휘하 코스트에 모자라 이탈 판정을 받았습니다. 명망에는 영향이 없습니다.",
+                        linkedMapOf("stamp" to stamp, "masterId" to general.id, "retainerId" to card),
+                        nationId = person.nationId)
+                }
             }
         }
-
-        val departures = markDepartures(judged, stamp)
 
         val ranking = HwihaRenownAssessment.ranking(renownByGeneral)
         world.setGameEnvValue(STAMP_KEY, stamp)
@@ -140,30 +139,7 @@ class HwihaMonthlyAssessment(
         world.setGameEnvValue(REASONS_KEY, published)
         recorder.recordKv("game_env", "game_env", REASONS_KEY, published)
         announce(year, month, stamp, ranking, renownByGeneral)
-        return Outcome(stamp, alreadyStamped = false, assessed, moved, overCap, ranking, departures)
-    }
-
-    /**
-     * 이탈 판정 연속마다 「배신(이탈)」을 한 번 쌓는다. 표식이 같은 주인을 가리키면 이미 쌓은 연속이다.
-     * 판정에서 빠진 인물의 표식은 지운다 — 연속이 끝났다. 순서는 장수 id 오름차순.
-     */
-    private fun markDepartures(judged: Map<Int, Int>, stamp: String): List<Int> {
-        val events = HwihaRenownEventRecorder(world, recorder)
-        val recorded = ArrayList<Int>()
-        for (id in world.listGenerals().map { it.id }.sorted()) {
-            val general = world.getGeneralById(id) ?: continue
-            val master = judged[id]
-            val mark = (general.meta[DEPARTURE_MARK_KEY] as? Map<*, *>)?.get("masterId") as? Number
-            when {
-                master == null && DEPARTURE_MARK_KEY in general.meta -> apply(general, general.meta - DEPARTURE_MARK_KEY)
-                master != null && mark?.toInt() != master -> {
-                    apply(general, general.meta + (DEPARTURE_MARK_KEY to linkedMapOf("masterId" to master, "stamp" to stamp)))
-                    // 이번 달 도장이라 이번 월단평이 아니라 다음 월단평에 반영된다.
-                    if (events.record(id, HwihaRenownEventSource.DEPARTURE, stamp)) recorded += id
-                }
-            }
-        }
-        return recorded
+        return Outcome(stamp, alreadyStamped = false, assessed, moved, overCap, ranking)
     }
 
     private fun announce(year: Int, month: Int, stamp: String, ranking: List<Int>, renown: Map<Int, Int>) {
@@ -197,9 +173,6 @@ class HwihaMonthlyAssessment(
         const val RANKING_KEY = HwihaRenownAssessment.RANKING_KEY
         const val REASONS_KEY = HwihaRenownAssessment.REASONS_KEY
         const val TALLY_META_KEY = HwihaRenownEvents.META_KEY
-
-        /** 이탈 판정 연속 표식(인물 장수 meta) — `{masterId, stamp}`. */
-        const val DEPARTURE_MARK_KEY = "hwihaDepartureJudged"
 
         /** 발표 기록에 싣는 상위 순위 수. 전체 순위는 [RANKING_KEY] 에 있다. */
         const val ANNOUNCED_TOP = 10

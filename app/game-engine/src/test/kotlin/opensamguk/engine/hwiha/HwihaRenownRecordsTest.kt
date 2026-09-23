@@ -76,30 +76,30 @@ class HwihaRenownRecordsTest {
         assertTrue(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2)!!.alreadyStamped)
     }
 
-    @Test fun `이탈 판정 연속마다 배신이 한 번 쌓이고 연속이 끝나면 표식이 지워진다`() {
+    @Test fun `이탈 판정은 배신이 아니다 - 명망 사건도 배신 사유도 없고 이탈 기록만 남는다`() {
+        // 2026-09-23 사용자 결정 「이탈과 배신은 구분해야지」: 이탈 0, 배신 −8 유지.
         // 주인 명망 10(하한), 휘하 코스트 7+7 → 충성 낮은 3 이 이탈 판정.
         val cards = listOf(Retainer(21, 1, "EXISTING", 2, "G2", "guest", loyalty = 50),
             Retainer(22, 1, "EXISTING", 3, "G3", "guest", loyalty = 20))
         val world = world(listOf(person(1, renown = 10), person(2), person(3)), cards)
         val recorder = ChangeRecorder()
-        val first = HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2)!!
-        assertEquals(listOf(3), first.departures)
-        assertEquals(listOf(HwihaRenownEntry(HwihaRenownEventKind.BETRAYAL, "0200-02", HwihaRenownEventSource.DEPARTURE)), entries(world, 3))
-        assertEquals(30, renown(world, 3), "이번 달 도장이라 이번 월단평에는 반영되지 않는다")
-        assertEquals(listOf(1), world.peekLogs().filter { it.eventKind == HwihaRecordKind.DEPARTURE_JUDGED }.map { it.generalId })
-
-        world.setCurrentDate(200, 3, 1)
-        val second = HwihaMonthlyAssessment(world, recorder, curve).assess(200, 3)!!
-        assertTrue(second.departures.isEmpty(), "같은 주인 아래 연속 판정은 다시 쌓지 않는다")
-        assertEquals(30 + curve.betrayal, renown(world, 3), "지난 달 배신이 적용됐다")
-        assertTrue(entries(world, 3).isEmpty())
-
-        // 주인이 회복하면 연속이 끝나고 표식이 지워진다.
-        val lord = world.getGeneralById(1)!!
-        world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (HwihaPersonPolicyState.META_KEY to policy(40))))
-        world.setCurrentDate(200, 4, 1)
-        assertTrue(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 4)!!.departures.isEmpty())
-        assertFalse(HwihaMonthlyAssessment.DEPARTURE_MARK_KEY in world.getGeneralById(3)!!.meta)
+        for ((month, stamp) in listOf(2 to "0200-02", 3 to "0200-03")) {
+            world.setCurrentDate(200, month, 1)
+            assertEquals(1, HwihaMonthlyAssessment(world, recorder, curve).assess(200, month)!!.overCap)
+            assertTrue(entries(world, 3).isEmpty(), "$stamp: 이탈 판정은 월단평 사건을 쌓지 않는다")
+            assertEquals(30, renown(world, 3), "$stamp: 이탈은 명망 0 이다")
+            @Suppress("UNCHECKED_CAST")
+            val reasons = world.getState().meta[HwihaMonthlyAssessment.REASONS_KEY] as Map<String, Any?>
+            assertFalse("betrayal" in reasons.toString(), "$stamp: 월단평 사유에 배신이 없다 — $reasons")
+        }
+        val logs = world.peekLogs()
+        assertEquals(listOf(1, 1), logs.filter { it.eventKind == HwihaRecordKind.DEPARTURE_JUDGED }.map { it.generalId })
+        val departed = logs.filter { it.eventKind == HwihaRecordKind.RETINUE_DEPARTED }
+        assertEquals(listOf(3, 3), departed.map { it.generalId }, "판정된 인물 본인 앞 이탈 기록")
+        assertEquals(mapOf("stamp" to "0200-02", "masterId" to 1, "retainerId" to 22),
+            departed.first().meta!![HwihaRecordKind.REFS_META_KEY])
+        assertTrue(logs.none { it.eventKind == HwihaRecordKind.RENOWN_EVENT }, "명망 사건 알림도 없다")
+        assertTrue(world.getGeneralById(3)!!.meta.keys.none { it.startsWith("hwihaDeparture") }, "이탈 표식을 남기지 않는다")
     }
 
     @Test fun `치적 창은 관할 縣 지표가 문턱 이상 오른 달에만 관할 장수에게 치적을 쌓는다`() {

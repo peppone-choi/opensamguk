@@ -46,7 +46,10 @@ enum class HwihaRenownEventSource(val kind: HwihaRenownEventKind, val label: Str
     ENCOUNTER_DEFEAT(HwihaRenownEventKind.DEFEAT, "조우 패배"),
     COUNTY_LOSS(HwihaRenownEventKind.DEFEAT, "縣 상실"),
     COUNTY_INDICATOR_RISE(HwihaRenownEventKind.DOMESTIC_MERIT, "관할 縣 지표 상승"),
-    DEPARTURE(HwihaRenownEventKind.BETRAYAL, "이탈"),
+    /**
+     * 실제 배반만 배신이다 — 원천은 아직 없다(훅 자리). 코스트 상한 초과 이탈은 배신이 아니며 월단평 사건도
+     * 아니다(2026-09-23 사용자 결정 「이탈과 배신은 구분해야지」: 이탈 0, 배신 −8 유지).
+     */
     DEFECTION(HwihaRenownEventKind.BETRAYAL, "배반"),
     SWORN_OATH(HwihaRenownEventKind.BOND_EVENT, "결의"),
     RECOMMENDATION(HwihaRenownEventKind.BOND_EVENT, "천거"),

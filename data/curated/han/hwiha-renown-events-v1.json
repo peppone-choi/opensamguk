@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "artifactId": "hwiha-renown-events-v1",
   "status": "PROVISIONAL",
-  "authorization": "2026-09-23 사용자 결정: 월단평 사건은 큰 사건만, 한 달에 종류당 한 번. 치적 = 관할 縣 지표 상승(임계값 PROVISIONAL). 발령 거절 명망은 월단평 집계 −4 로 통일.",
+  "authorization": "2026-09-23 사용자 결정: 월단평 사건은 큰 사건만, 한 달에 종류당 한 번. 치적 = 관할 縣 지표 상승(임계값 PROVISIONAL). 발령 거절 명망은 월단평 집계 −4 로 통일. 이탈과 배신은 구분한다(이탈 0, 배신 −8).",
   "decidedBy": "구현 에이전트(임계값) · 사용자(규칙)",
   "note": "사료 수치가 아니라 게임 기획이다. 가감값은 hwiha-renown-assessment-v1.json 에 있고 여기는 「무엇이 사건인가」만 적는다.",
   "oncePerKindPerMonth": true,
@@ -10,7 +10,7 @@
     "warMerit": ["ENCOUNTER_VICTORY", "COUNTY_CAPTURE"],
     "defeat": ["ENCOUNTER_DEFEAT", "COUNTY_LOSS"],
     "domesticMerit": ["COUNTY_INDICATOR_RISE"],
-    "betrayal": ["DEPARTURE", "DEFECTION"],
+    "betrayal": ["DEFECTION"],
     "bondEvent": ["SWORN_OATH", "RECOMMENDATION", "REWARD"],
     "office": ["OFFICE_APPOINTMENT"],
     "misrule": ["MISRULE"],
@@ -18,7 +18,6 @@
   },
   "wired": {
     "DISPATCH_REFUSAL": "HwihaDispatchExecutor — 기한 전 거절",
-    "DEPARTURE": "HwihaMonthlyAssessment — 코스트 상한 초과 이탈 판정을 받은 인물",
     "COUNTY_INDICATOR_RISE": "HwihaCountyMeritWindow — 월 경계",
     "ENCOUNTER_VICTORY": "훅만(HwihaRenownHooks.onEncounterResolved) — 조우 판정 흐름이 부른다",
     "ENCOUNTER_DEFEAT": "훅만(HwihaRenownHooks.onEncounterResolved)",
@@ -30,6 +29,10 @@
     "REWARD": "원천 없음",
     "OFFICE_APPOINTMENT": "원천 없음",
     "MISRULE": "원천 없음"
+  },
+  "departure": {
+    "renownAmount": 0,
+    "note": "2026-09-23 사용자 결정 「이탈과 배신은 구분해야지」: 코스트 상한 초과 이탈 판정은 월단평 사건이 아니다(명망 0). 기록 종류 retinue.departureJudged(주인)·retinue.departed(판정된 인물)로만 남는다. 배신(−8)은 실제 배반(DEFECTION)에만 쓴다."
   },
   "domesticMerit": {
     "status": "PROVISIONAL",

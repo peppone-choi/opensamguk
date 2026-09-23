@@ -32,6 +32,8 @@ object HwihaRecordKind {
     const val RENOWN_EVENT = "renown.event"
     const val YUEDAN_ASSESSED = "yuedan.assessed"
     const val DEPARTURE_JUDGED = "retinue.departureJudged"
+    /** 코스트 상한 초과로 이탈 판정을 받은 인물 본인 앞. 이탈은 배신이 아니다 — 명망 사건이 아니다(2026-09-23). */
+    const val RETINUE_DEPARTED = "retinue.departed"
 
     // 세력
     const val INCOME_MONTHLY = "income.monthly"

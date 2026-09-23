@@ -178,7 +178,7 @@ class HwihaCampReaderTest {
     @Test fun `월단평 전에도 본인 대기 사건은 보인다`() {
         setup()
         lord.meta = lord.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
-            mapOf("kind" to "betrayal", "stamp" to "0190-03", "source" to "DEPARTURE"))))
+            mapOf("kind" to "betrayal", "stamp" to "0190-03", "source" to "DEFECTION"))))
         val out = reader.yuedan(1, 41)
         assertEquals("NOT_ASSESSED", out.status)
         assertEquals(listOf("betrayal"), out.selfPendingEvents.map { it.kind })
