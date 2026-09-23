@@ -194,6 +194,8 @@ class ReservedTurnHandler(
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
     private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
+    /** Pinned commandery geography for `action.scout`; null outside a Han HWIHA world (the input then rejects). */
+    private val hwihaVisionContext: opensamguk.engine.hwiha.HwihaVisionContext? = null,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
@@ -203,6 +205,7 @@ class ReservedTurnHandler(
     private val deployHandler by lazy { opensamguk.engine.hwiha.HwihaDeployHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
+    private val scoutHandler by lazy { opensamguk.engine.hwiha.HwihaScoutHandler(world, recorder, hwihaVisionContext) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -281,6 +284,9 @@ class ReservedTurnHandler(
             )
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
+            }
+            handlers[opensamguk.logic.input.HwihaScoutInput.INPUT_ID] = InputHandler {
+                applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {

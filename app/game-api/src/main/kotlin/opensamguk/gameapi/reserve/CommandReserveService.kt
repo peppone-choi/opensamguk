@@ -83,6 +83,7 @@ class CommandReserveService(
     private val hwihaAdmission: HwihaEnlistmentAdmission? = null,
     private val hwihaCourtAdmission: HwihaCourtAdmission? = null,
     private val hwihaDeployAdmission: HwihaDeployAdmission? = null,
+    private val hwihaScoutAdmission: HwihaScoutAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -173,7 +174,7 @@ class CommandReserveService(
         if (worldProfile != "SAMMO" && worldProfile != "HWIHA") {
             throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
         }
-        if (worldProfile == "HWIHA" && actionCode !in setOf("action.enlist", "action.deploy")) {
+        if (worldProfile == "HWIHA" && actionCode !in setOf("action.enlist", "action.deploy", "action.scout")) {
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
@@ -182,6 +183,10 @@ class CommandReserveService(
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode == "action.deploy") {
             (hwihaDeployAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == "action.scout") {
+            (hwihaScoutAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else argJson
@@ -258,7 +263,7 @@ class CommandReserveService(
                     turnIdx = turnIdx,
                     actionCode = actionCode,
                     argJson = canonicalArgs,
-                    brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; else -> registry.resolve(actionCode).name },
+                    brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; "action.scout" -> "첩보"; else -> registry.resolve(actionCode).name },
                     requestId = requestId,
                 )
                 commandResults.insertTerminalResult(

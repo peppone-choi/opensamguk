@@ -319,6 +319,14 @@ class DaemonLoopConfig {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
         } else null
+        // The index is loaded lazily from the same pinned tiles; a malformed index fails the scout input only.
+        val visionContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA vision requires pinned Han artifacts" }
+            try {
+                opensamguk.engine.hwiha.HwihaVisionContext(artifacts.projection.topology, artifacts.landMarchMetrics,
+                    artifacts.commanderyIndex)
+            } catch (_: IllegalArgumentException) { null }
+        } else null
         val handler = ReservedTurnHandler(
             world = world,
             registry = registry,
@@ -333,6 +341,7 @@ class DaemonLoopConfig {
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
+            hwihaVisionContext = visionContext,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
