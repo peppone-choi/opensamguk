@@ -28,7 +28,7 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
             val target = unit.troops.toLong() * HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS
             if (unit.provisions >= target) continue
             val holder = world.getGeneralById(commanderOf[unit.id] ?: owner.id) ?: continue
-            val here = cityAt(holder.id, holder.cityId) ?: continue
+            val here = HwihaCorpsRations.cityAt(world, holder.id) ?: continue
             val counties = network.countiesFor(owner.nationId, here)
             if (counties.isEmpty()) continue
             val available = network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION
@@ -41,13 +41,6 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
         world.setGameEnvValue(STAMP_KEY, stamp)
         recorder.recordKv("game_env", "game_env", STAMP_KEY, stamp)
         return filled
-    }
-
-    /** 장수가 실제로 선 省의 城. 기준 城이 그 省이면 그것을, 아니면 그 省의 城을, 城 없는 省이면 null. */
-    private fun cityAt(generalId: Int, referenceCityId: Int): Int? {
-        val node = world.positionOf(generalId) ?: return null
-        if (world.landNodeOfCity(referenceCityId) == node) return referenceCityId
-        return world.cityOfLandNode(node)
     }
 
     companion object {

@@ -34,6 +34,7 @@ class HwihaSiegeService(
         STATE_UNAVAILABLE("포위 상태를 확인할 수 없습니다."),
         BATTLEFIELD_UNAVAILABLE("이 縣의 전장을 만들 수 없어 강공할 수 없습니다."),
         UNIT_UNAVAILABLE("강공에 쓸 수 있는 병종이 아닌 부대가 있습니다."),
+        ASSAULT_NOT_READY("포위한 지 한 달(3순)이 지나야 강공할 수 있습니다."),
         REFUSED("성 안의 사기와 민심이 아직 높아 항복 권고를 거절했습니다."),
         BATTLE_PENDING("포위 군단이 조우 전투 중이라 공성 행동을 할 수 없습니다."),
     }
@@ -112,16 +113,42 @@ class HwihaSiegeService(
     }
 
     // ── NPC 공성 선택(개인 턴 6단계) ──────────────────────────────────────
-    /** NPC 포위 지휘관: 항복 권고가 통하면 권고, 병력비가 충분하면 강공, 아니면 포위 유지. */
+    /** NPC 포위 지휘관: 구원할 자국 縣이 있으면 포위를 풀고, 아니면 항복 권고가 통하면 권고, 강공 준비가 됐고 병력비가 충분하면 강공, 아니면 포위 유지. */
     fun npcAct(commanderId: Int) {
         val siege = activeSiegeOf(commanderId) ?: return
         if (inBattle(commanderId)) return
         val started = HwihaPhase(siege.startedYear, siege.startedMonth, siege.startedPhase)
         if (started >= now()) return // 포위를 건 턴에는 더 하지 않는다
+        // 구원이 먼저다(포위 중에도): 자국 縣이 포위돼 있고 구원할 수 있으면 이 포위를 풀고 출병을 끝낸다.
+        // 다음 턴 출병 선택기가 같은 규칙으로 구원 출병을 고른다.
+        if (HwihaNpcDeploySelector(topology, metrics).reliefFor(world, commanderId) != null) {
+            corpsOf(commanderId)?.takeIf { it.orderId == siege.besiegerOrderId }?.let(::endDeployment)
+            lift(siege, "RELIEF")
+            log(commanderId, "자국 縣을 구원하려고 ${world.getCityById(siege.countyId)?.name ?: ""} 縣城 포위를 풀었습니다.")
+            return
+        }
         val city = world.getCityById(siege.countyId) ?: return
         if (HwihaSiegeRules.surrenderDemandAccepted(siege.morale, trustOf(city))) { demandSurrender(commanderId); return }
         val corps = corpsOf(commanderId) ?: return
+        if (siege.turns < HwihaS3Provisional.ASSAULT_MIN_SIEGE_TURNS) return
         if (corpsTroops(corps).toLong() >= garrisonOf(city).toLong() * HwihaS3Provisional.NPC_ASSAULT_MIN_RATIO) assault(commanderId)
+    }
+
+    /**
+     * NPC 원정 마감: 군단이 목적지에 도착했는데 포위를 걸지 못했으면(굶음·병력 부족·이미 포위됨·자국 縣 귀환) 출병을 끝낸다.
+     * 끝내지 않으면 도착한 군단이 그 자리에 영원히 서 있어 다음 출병·구원·보충이 모두 막힌다.
+     * @return 출병을 끝냈으면 true.
+     */
+    fun npcEndIfStranded(commanderId: Int): Boolean {
+        if (activeSiegeOf(commanderId) != null || inBattle(commanderId)) return false
+        val corps = corpsOf(commanderId) ?: return false
+        val commander = world.getGeneralById(commanderId) ?: return false
+        val march = try { HwihaCorpsMarchState.read(commander.meta, topology, metrics) } catch (_: IllegalArgumentException) { null }
+            ?: return false
+        if (march.checkpoint.stop != LandMarchStop.ARRIVED) return false
+        endDeployment(corps)
+        log(commanderId, "목적지에서 포위를 걸 수 없어 원정을 마쳤습니다.")
+        return true
     }
 
     // ── 항복 권고 ────────────────────────────────────────────────────────────
@@ -145,6 +172,7 @@ class HwihaSiegeService(
         if (world.ruleProfile != RuleProfile.HWIHA) return Failure.WRONG_RULE_PROFILE
         val siege = activeSiegeOf(actorId) ?: return Failure.NOT_BESIEGING
         if (inBattle(actorId)) return Failure.BATTLE_PENDING
+        if (siege.turns < HwihaS3Provisional.ASSAULT_MIN_SIEGE_TURNS) return Failure.ASSAULT_NOT_READY
         val corps = corpsOf(actorId)?.takeIf { it.orderId == siege.besiegerOrderId } ?: return Failure.STATE_UNAVAILABLE
         val city = world.getCityById(siege.countyId) ?: return Failure.STATE_UNAVAILABLE
         val node = world.landNodeOfCity(siege.countyId) as? StrategicNodeRef.LandProvince ?: return Failure.STATE_UNAVAILABLE
@@ -263,8 +291,11 @@ class HwihaSiegeService(
         val previousOwner = before.nationId
         val settlement = HwihaCountyCapture.settle(HwihaCountyCapture.CountyBefore(before.id, before.nationId,
             before.population, garrisonOf(before)), siege.besiegerNationId)
+        // 점령군 수비대(PROVISIONAL): 포위 군단이 부곡에서 수비병을 떼어 남긴다. 옛 수비대는 위 정산대로 인구가 된다.
+        val left = corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }
+            ?.let { leaveGarrison(it, before.defenceMax) } ?: 0
         val after = before.copy(nationId = settlement.ownerNationId, population = settlement.population,
-            defence = settlement.garrisonTroops, supplyState = 0, frontState = 0)
+            defence = settlement.garrisonTroops + left, supplyState = 0, frontState = 0)
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
         val now = now()
@@ -278,6 +309,26 @@ class HwihaSiegeService(
         world.pushLog(LogEntryDraft(scope = "general", category = "action",
             text = "${before.name} 縣이 넘어왔습니다.", generalId = siege.besiegerGeneralId,
             nationId = siege.besiegerNationId))
+    }
+
+    /**
+     * 포위 군단 부곡에서 min(방비 상한 × %, 군단 병력 × %) 명을 떼어 낸다 — id 순 비례, 부곡마다 1명은 남긴다.
+     * @return 실제로 뗀 수(縣 수비로 옮겨질 수).
+     */
+    private fun leaveGarrison(corps: HwihaDeployedCorps, defenceMax: Int): Int {
+        val units = corps.bugokIds.sorted().mapNotNull { world.getBugokById(it) }.filter { it.troops > 1 }
+        val total = units.sumOf { it.troops.toLong() }
+        val want = minOf(defenceMax.coerceAtLeast(0).toLong() * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
+            total * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
+        if (want <= 0 || total <= 0) return 0
+        var left = 0L
+        for (unit in units) {
+            val share = minOf(want * unit.troops / total, unit.troops - 1L)
+            if (share <= 0) continue
+            world.updateBugok(unit.copy(troops = Math.toIntExact(unit.troops - share)))
+            left += share
+        }
+        return Math.toIntExact(left)
     }
 
     private fun lift(siege: HwihaSiege, reason: String) {

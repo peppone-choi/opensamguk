@@ -1,5 +1,6 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.war.hwiha.HwihaS3Provisional
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -49,7 +50,13 @@ class HwihaSiegeServiceTest {
         assertEquals(HwihaSiegeService.FALLEN, siege.status); assertEquals("STARVED", siege.endReason); assertEquals(4, siege.turns)
         val city = world.getCityById(county)!!
         assertEquals(1, city.nationId, "the county transfers to the besieger")
-        assertEquals(0, city.defence); assertEquals(1100, city.population, "garrison disarmed into civilians")
+        assertEquals(1100, city.population, "garrison disarmed into civilians")
+        // 점령군 수비대: min(방비 상한 × 30%, 포위군 1000 × 20% = 200) 명이 부곡에서 縣 수비로 옮겨 간다.
+        val garrison = minOf(city.defenceMax * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
+            1000 * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
+        assertTrue(garrison > 0)
+        assertEquals(garrison, city.defence, "the captor leaves a garrison")
+        assertEquals(1000 - garrison, world.getBugokById(7)!!.troops, "taken from the besieging unit")
         assertEquals(HwihaResources(), HwihaCountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
         assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
         assertEquals(listOf(listOf<Any>(county, 2, 1, listOf(1))), outcomes.captures, "capture reported exactly once")
@@ -101,6 +108,10 @@ class HwihaSiegeServiceTest {
         val (world, recorder) = besieged(troops = 5000)
         fixture.nextPhase(world)
         val handler = HwihaSiegeHandler(world, recorder, fixture.topology, fixture.metrics, fixture.cells)
+        // 강공 준비: 포위가 순 경계를 3번 버티기 전에는 강공할 수 없다.
+        assertEquals("ASSAULT_NOT_READY", assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaSiegeHandler.ASSAULT, 1, "{}")).code)
+        assertEquals(2, world.getCityById(county)!!.nationId)
+        boundary(world, recorder, HwihaS3Provisional.ASSAULT_MIN_SIEGE_TURNS)
         assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaSiegeHandler.ASSAULT, 1, "{}"))
         assertEquals(1, world.getCityById(county)!!.nationId)
         assertEquals("ASSAULT", world.getHwihaSiege(county)!!.endReason)
@@ -116,11 +127,17 @@ class HwihaSiegeServiceTest {
         assertEquals("NOT_BESIEGING", assertIs<HwihaTurnOutcome.Rejected>(demandHandler.handle(HwihaSiegeHandler.ASSAULT, 1, null)).code)
     }
 
-    @Test fun `an npc commander assaults on its own turn when it outnumbers the garrison three to one`() {
-        val (world, recorder) = besieged(troops = 5000, userId = null)
+    @Test fun `an npc commander assaults on its own turn when it outnumbers the garrison three to one once the siege is ready`() {
+        // 민심이 높아 항복 권고는 통하지 않는다 — 강공 길만 본다.
+        val (world, recorder) = besieged(troops = 5000, userId = null, trust = 80.0)
         fixture.nextPhase(world)
         fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        assertEquals(2, world.getCityById(county)!!.nationId, "no assault before the siege has held three boundaries")
+        boundary(world, recorder, HwihaS3Provisional.ASSAULT_MIN_SIEGE_TURNS)
+        assertEquals(2, world.getCityById(county)!!.nationId)
+        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
         assertEquals(1, world.getCityById(county)!!.nationId)
+        assertEquals("ASSAULT", world.getHwihaSiege(county)!!.endReason)
     }
 
     @Test fun `an undefended county falls the moment it is besieged`() {

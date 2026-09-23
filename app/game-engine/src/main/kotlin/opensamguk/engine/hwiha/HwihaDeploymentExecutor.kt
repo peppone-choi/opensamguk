@@ -33,6 +33,8 @@ class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val 
         val after = owner.copy(meta = owner.meta + (HwihaDeploymentState.META_KEY to next.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(owner), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
+        // 출병 적재: 출발지 창고망의 곡으로 휴대 군량을 채운다(PROVISIONAL rations).
+        HwihaCorpsRations(world, recorder, topology, metrics).load(corps)
         return DeploymentExecution.Applied(corps)
     }
 

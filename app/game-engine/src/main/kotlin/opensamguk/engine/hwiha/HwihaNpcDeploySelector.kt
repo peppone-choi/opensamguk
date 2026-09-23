@@ -5,6 +5,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.hwiha.HwihaSiegeRules
 import opensamguk.logic.world.*
 
 /**
@@ -17,6 +18,7 @@ import opensamguk.logic.world.*
  * 가까운 간선 고리(省 hop)부터, 같은 고리 안에서는 경로 비용 → 縣 id 순으로 하나 고른다. 다른 아군 군단이 이미 향하거나 포위 중인 縣은 뺀다.
  *
  * **구원이 먼저다**: 자국 縣이 적에게 포위돼 있고 그 포위 군단 병력 이하로 갈 수 있으면 그 縣으로 출병한다
+ * (포위 중인 NPC 도 포위를 풀고 구원한다). 부곡이 굶었으면 공격 출병 대신 가장 가까운 자국 縣으로 돌아간다
  * (포위 군단이 있는 省에 들어가면 조우가 일어난다). 같은 입력이면 같은 선택이다 — 난수·벽시계·맵 순회 순서를 쓰지 않는다.
  */
 class HwihaNpcDeploySelector(
@@ -42,6 +44,19 @@ class HwihaNpcDeploySelector(
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
             ?: return null
+        reliefTarget(world, actor.nationId, position, troops, projection, edges)?.let { return DeployInput(actorId, units.map { it.id }.sorted(), it) }
+        // 급식이 안 되는 부곡으로는 공격 출병하지 않는다 — 도착해도 포위를 걸 수 없다. 자국 縣에 있으면 월 보충을 기다리고,
+        // 적지·무주지에 있으면 가장 가까운 자국 縣으로 돌아간다(적지에서는 보충받지 못한다).
+        if (!units.all { HwihaSiegeRules.besiegerFed(it.troops, it.provisions) }) {
+            val here = world.administrativeCountyIds.any { world.landNodeOfCity(it) == position && world.getCityById(it)?.nationId == actor.nationId }
+            if (here) return null
+            val home = world.administrativeCountyIds.sorted().mapNotNull { countyId ->
+                val node = world.landNodeOfCity(countyId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
+                if (world.getCityById(countyId)?.nationId != actor.nationId) return@mapNotNull null
+                route(position, node, edges)?.let { Triple(it.totalCostMm, countyId, node) }
+            }.minWithOrNull(compareBy({ it.first }, { it.second })) ?: return null
+            return DeployInput(actorId, units.map { it.id }.sorted(), home.third)
+        }
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
         val claimed = world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.map { it.countyId }.toSet() +
             projection.people.mapNotNull { person ->
@@ -51,21 +66,7 @@ class HwihaNpcDeploySelector(
             }.flatten()
         val hops = provinceHops(position, HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES)
         val near = hops.keys
-        fun route(node: StrategicNodeRef.LandProvince) = (StrategicPathResolver.resolveLandMarch(topology,
-            StrategicPathRequest(position, node, 1), edges, metrics) as? LandMarchPathResult.Resolved)?.path
-            ?.takeIf { it.edgeIds.size <= HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES }
-        // Relief first: an own county under enemy siege that this army can at least match.
-        val relief = world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
-            val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == actor.nationId } ?: return@mapNotNull null
-            val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
-            if (node == position || node.id !in near) return@mapNotNull null
-            val besieger = projection.deployed.singleOrNull { it.orderId == siege.besiegerOrderId } ?: return@mapNotNull null
-            val besiegers = besieger.bugokIds.sumOf { (world.getBugokById(it)?.troops ?: 0).toLong() }
-            if (troops * HwihaS3Provisional.NPC_RELIEF_MIN_RATIO_PERCENT < besiegers * 100) return@mapNotNull null
-            val path = route(node) ?: return@mapNotNull null
-            Triple(path.totalCostMm, city.id, node)
-        }.minWithOrNull(compareBy({ it.first }, { it.second }))
-        if (relief != null) return DeployInput(actorId, units.map { it.id }.sorted(), relief.third)
+        fun route(node: StrategicNodeRef.LandProvince) = route(position, node, edges)
         val targets = world.administrativeCountyIds.sorted().mapNotNull { countyId ->
             val node = world.landNodeOfCity(countyId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (node == position || node.id !in near || countyId in claimed) return@mapNotNull null
@@ -84,6 +85,42 @@ class HwihaNpcDeploySelector(
         }
         return null
     }
+
+    /**
+     * 구원이 필요한 자국 縣 — NPC 포위 지휘관도 자기 턴에 이것을 보고 포위를 푼다(2026-09-23 사용자 결정: 포위 중에도 구원).
+     * 출전 중이 아니거나 포위 중인 NPC 가 [actorId] 의 직속 부곡으로 갈 수 있는 곳만. 없으면 null.
+     */
+    fun reliefFor(world: InMemoryTurnWorld, actorId: Int): StrategicNodeRef.LandProvince? {
+        val actor = world.getGeneralById(actorId) ?: return null
+        if (!isUnowned(actor.userId) || actor.nationId <= 0) return null
+        val troops = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }.sumOf { it.troops.toLong() }
+        if (troops <= 0) return null
+        val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
+        val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
+        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
+            ?: return null
+        return reliefTarget(world, actor.nationId, position, troops, projection, edges)
+    }
+
+    /** Relief first: an own county under enemy siege that this army can at least match, nearest by march cost then county id. */
+    private fun reliefTarget(world: InMemoryTurnWorld, nationId: Int, position: StrategicNodeRef.LandProvince, troops: Long,
+        projection: DeploymentProjection, edges: StrategicEdgeStateSnapshot): StrategicNodeRef.LandProvince? {
+        val near = provinceHops(position, HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES).keys
+        return world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
+            val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == nationId } ?: return@mapNotNull null
+            val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
+            if (node == position || node.id !in near) return@mapNotNull null
+            val besieger = projection.deployed.singleOrNull { it.orderId == siege.besiegerOrderId } ?: return@mapNotNull null
+            val besiegers = besieger.bugokIds.sumOf { (world.getBugokById(it)?.troops ?: 0).toLong() }
+            if (troops * HwihaS3Provisional.NPC_RELIEF_MIN_RATIO_PERCENT < besiegers * 100) return@mapNotNull null
+            val path = route(position, node, edges) ?: return@mapNotNull null
+            Triple(path.totalCostMm, city.id, node)
+        }.minWithOrNull(compareBy({ it.first }, { it.second }))?.third
+    }
+
+    private fun route(from: StrategicNodeRef.LandProvince, to: StrategicNodeRef.LandProvince, edges: StrategicEdgeStateSnapshot) =
+        (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(from, to, 1), edges, metrics)
+            as? LandMarchPathResult.Resolved)?.path?.takeIf { it.edgeIds.size <= HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES }
 
     /** Topology hop distance (not march cost) within [hops]: a cheap ring order before exact path resolution. */
     private fun provinceHops(start: StrategicNodeRef.LandProvince, hops: Int): Map<String, Int> {
