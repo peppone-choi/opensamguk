@@ -21,9 +21,7 @@ import opensamguk.logic.world.*
  */
 class HwihaYuzhouCampaignSimulationTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }.first { Files.isDirectory(it.resolve("data/map")) }
-    private val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
-    // The fixture is generated against the active map; resolve its variant from the live city set, never pin one.
-    private val bundle = HanWorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
+    private val bundle = HanWorldArtifactsResolver(repo).artifacts(HanWorldVariant.V3_1224)
     private val topology = bundle.projection.topology
     private val metrics = bundle.landMarchMetrics
     private val cells = bundle.provinceCells
@@ -33,6 +31,7 @@ class HwihaYuzhouCampaignSimulationTest {
 
     private fun campaign(npcDeploy: Boolean = true): Campaign {
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val warehouses = requireNotNull(scenario.hwihaWarehouses).warehouses
         val provinceOf = bundle.projection.bindingsByCityId.mapNotNull { (id, b) -> b.landProvinceId?.let { id to it } }.toMap()
@@ -64,7 +63,7 @@ class HwihaYuzhouCampaignSimulationTest {
                 StrategicNodeRef.LandProvince(provinceOf.getValue(g.cityId)), 1))
         }
         val state = TurnWorldState(1, 190, 1, 3600, Instant.parse("0190-01-01T00:00:00Z"), currentPhase = 1,
-            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = bundle.variant,
+            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = HanWorldVariant.V3_1224,
             meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
                 HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(), "startYear" to 190))
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals, cities = cities,
@@ -111,17 +110,26 @@ class HwihaYuzhouCampaignSimulationTest {
             captured.joinToString { "${it.countyId}: was ${owners[it.countyId]} now ${run.world.getCityById(it.countyId)!!.nationId} by ${it.besiegerNationId} ${it.endReason}" })
         assertTrue(run.outcomes.captures.size >= captured.size, "every capture is reported, recaptures included")
         assertTrue(captured.any { owners[it.countyId] != it.besiegerNationId }, "the map changed hands")
+        val durations = captured.map { it.turns }.sorted()
         println("yuzhou-simulation encounters=${run.outcomes.encounters.size} sieges=${run.world.listHwihaSieges().size} " +
-            "fallen=${captured.size} battles=${run.world.listGenerals().count { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }}")
+            "fallen=${captured.size} battles=${run.world.listGenerals().count { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }} " +
+            "fallTurns=$durations target12to24=${durations.count { it in 12..24 }}/${durations.size}")
     }
 
-    @Test fun `the same seed replays to the same world`() {
-        fun fingerprint(): List<Any?> {
-            val run = campaign(); repeat(8) { run.phase(it) }
-            return run.world.listCities().map { it.id to it.nationId } + run.world.listBugoks().map { it.id to it.troops } +
-                run.world.listHwihaSieges().map { it.countyId to it.timeline }
+    @Test fun `the same seed has an identical outcome at each of 36 phases`() {
+        fun trace(): List<Any> {
+            val run = campaign()
+            return (0 until 36).map { phase ->
+                run.phase(phase)
+                listOf(
+                    run.world.listCities().sortedBy { it.id }.map { it.id to it.nationId },
+                    run.world.listBugoks().sortedBy { it.id }.map { listOf(it.id, it.troops, it.provisions) },
+                    run.world.listHwihaSieges().sortedBy { it.countyId }.map { listOf(it.countyId, it.status, it.turns, it.timeline) },
+                    run.outcomes.encounters.toList(), run.outcomes.captures.toList(),
+                )
+            }
         }
-        assertEquals(fingerprint(), fingerprint())
+        assertEquals(trace(), trace(), "the 36 phase result must not depend on process state or iteration order")
     }
 
     @Test fun `cutting npc deployment leaves the slice without sieges or captures`() {

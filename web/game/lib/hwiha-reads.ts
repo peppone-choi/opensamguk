@@ -120,6 +120,7 @@ export interface HwihaPersonCard {
     readonly aptitudes: HwihaAptitudes | null;
     readonly bonds: readonly HwihaBond[];
     readonly departureOrder: number | null;
+    readonly locationCityId: number | null;
 }
 export interface HwihaUnitCard {
     readonly id: number;
@@ -141,6 +142,33 @@ export interface HwihaRetinue {
     readonly overCapacity: boolean;
     readonly people: readonly HwihaPersonCard[];
     readonly units: readonly HwihaUnitCard[];
+}
+
+// ── 공성 (`GET /api/hwiha/sieges`) ───────────────────────────────────────────
+export interface HwihaSiege {
+    readonly countyId: number;
+    readonly countyName: string | null;
+    readonly status: string;
+    readonly endReason: string | null;
+    readonly besieger: { readonly generalId: number; readonly name: string | null; readonly nationId: number; readonly nationName: string | null };
+    readonly defenderNationId: number;
+    readonly defenderNationName: string | null;
+    readonly startedAt: { readonly year: number; readonly month: number; readonly phase: number };
+    readonly turns: number;
+    readonly grain: number | null;
+    readonly morale: number;
+    readonly garrison: number;
+    readonly trust: number;
+    readonly countySupplied: boolean;
+    readonly besiegerTroops: number | null;
+    readonly besiegerFed: boolean | null;
+    readonly canAct: boolean;
+    readonly surrenderDemandAccepted: boolean;
+    readonly timeline: readonly Record<string, unknown>[];
+}
+export interface HwihaSieges {
+    readonly status: HwihaReadStatus;
+    readonly sieges: readonly HwihaSiege[];
 }
 
 // ── 공용 훅 ──────────────────────────────────────────────────────────────────

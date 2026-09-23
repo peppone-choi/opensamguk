@@ -53,7 +53,7 @@ class HwihaS3PassChainIT {
 
     @Test
     fun `S3 고리 — 출사 발령 행군 조우 공성 점령 징세 월단평이 관리자 개입 없이 이어진다`() {
-        HwihaS3ChainSupport.run(service)
+        HwihaS3ChainSupport.run(service, measuredWorld = world)
         HwihaS3ChainSupport.assertChain(world, jdbc, WORLD)
         HwihaS3ChainSupport.assertSiegesReload(world, loader)
     }

@@ -6,6 +6,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.HwihaBattleJournal
 import opensamguk.logic.world.LandMarchStop
+import opensamguk.logic.world.HanProvinceCellIndex
 
 /** Real pinned map, in-memory world: an entered encounter is sealed, then resolved on the attacker's next turn. */
 class HwihaEncounterResolverTest {
@@ -13,18 +14,19 @@ class HwihaEncounterResolverTest {
     private val route = fixture.route()
 
     /** Attacker 1 (nation 1) marches from start toward destination; defender 100 (nation 2) holds the first province. */
-    private fun sealed(attackerTroops: Int, defenderTroops: Int): Pair<InMemoryTurnWorld, ChangeRecorder> {
+    private fun sealed(attackerTroops: Int, defenderTroops: Int, attackerCrewTypeId: Int = 1100): Pair<InMemoryTurnWorld, ChangeRecorder> {
         val world = fixture.world(
             listOf(fixture.person(1, 1, route.startCity) to route.start,
                 fixture.person(100, 2, route.startCity) to route.first),
-            bugoks = listOf(fixture.unit(7, 1, attackerTroops), fixture.unit(1100, 100, defenderTroops)))
+            bugoks = listOf(fixture.unit(7, 1, attackerTroops, crewTypeId = attackerCrewTypeId), fixture.unit(1100, 100, defenderTroops)))
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.deploy(world, recorder, 100, listOf(1100), route.first)
         fixture.nextPhase(world)
         assertTrue(HwihaCorpsMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells).onTurn(1))
         for (id in listOf(1, 100)) assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(id)!!.meta, fixture.topology))
-        assertNotNull(HwihaBattleJournal.read(world.getGeneralById(1)!!.meta), "combat was prepared at approach")
+        if (attackerCrewTypeId == 1100)
+            assertNotNull(HwihaBattleJournal.read(world.getGeneralById(1)!!.meta), "combat was prepared at approach")
         assertEquals(route.first, world.positionOf(1))
         return world to recorder
     }
@@ -85,7 +87,7 @@ class HwihaEncounterResolverTest {
         assertFalse(HwihaRenownEvents.recordRenownEvent(once.meta, HwihaRenownEventSource.REWARD, "0200-01").recorded)
     }
 
-    @Test fun `an unprepared encounter stays pending instead of fabricating a result`() {
+    @Test fun `an unprepared encounter retries two phases then disbands without battle`() {
         val (world, recorder) = sealed(1000, 100)
         for (id in listOf(1, 100)) {
             val general = world.getGeneralById(id)!!
@@ -97,6 +99,50 @@ class HwihaEncounterResolverTest {
         assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))
         assertEquals(HwihaEncounterResolver.Resolution.NotAttacker,
             HwihaEncounterResolver(world, recorder, fixture.topology, fixture.metrics, fixture.cells).resolvePending(100))
+        fixture.nextPhase(world)
+        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        for (id in listOf(1, 100)) {
+            val meta = world.getGeneralById(id)!!.meta
+            assertTrue(HwihaEncounterResolver.SEALED_KEYS.none { it in meta })
+            assertEquals("BATTLE_NOT_READY", (meta[HwihaEncounterResolver.DISBAND_RECORD_KEY] as Map<*, *>)["reason"])
+            assertNull(HwihaDeploymentState.read(meta), "both corps stop in their current province")
+            assertFalse(HwihaEncounterResolver.BATTLE_RECORD_KEY in meta, "no battle result is fabricated")
+        }
+        assertEquals(route.first, world.positionOf(1))
+    }
+
+    @Test fun `unsupported crew type disbands immediately and does not stop the personal turn loop`() {
+        val (world, recorder) = sealed(1000, 100, attackerCrewTypeId = 9999)
+        fixture.nextPhase(world)
+        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        for (id in listOf(1, 100)) {
+            val meta = world.getGeneralById(id)!!.meta
+            assertTrue(HwihaEncounterResolver.SEALED_KEYS.none { it in meta })
+            assertEquals("UNIT_PROFILE_UNAVAILABLE", (meta[HwihaEncounterResolver.DISBAND_RECORD_KEY] as Map<*, *>)["reason"])
+            assertNull(HwihaDeploymentState.read(meta))
+        }
+        assertEquals(route.first, world.positionOf(1))
+    }
+
+    @Test fun `battlefield geometry unavailable disbands without a battle`() {
+        val world = fixture.world(
+            listOf(fixture.person(1, 1, route.startCity) to route.start,
+                fixture.person(100, 2, route.startCity) to route.first),
+            bugoks = listOf(fixture.unit(7, 1, 1000), fixture.unit(1100, 100, 100)))
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, 1, listOf(7), route.destination)
+        fixture.deploy(world, recorder, 100, listOf(1100), route.first)
+        val emptyTerrain = HanProvinceCellIndex(fixture.topology.topologyRevision, fixture.topology.contentHash,
+            fixture.cells.tilesContentHash, 1, 1, mapOf('0' to "plain"),
+            mapOf(route.start.id to emptyList(), route.first.id to emptyList()))
+        fixture.nextPhase(world)
+        assertTrue(HwihaCorpsMarchTurn(world, recorder, fixture.topology, fixture.metrics, emptyTerrain).onTurn(1))
+        fixture.nextPhase(world)
+        HwihaAssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, emptyTerrain)
+            .onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        val meta = world.getGeneralById(1)!!.meta
+        assertEquals("BATTLEFIELD_UNAVAILABLE", (meta[HwihaEncounterResolver.DISBAND_RECORD_KEY] as Map<*, *>)["reason"])
+        assertFalse(HwihaEncounterResolver.BATTLE_RECORD_KEY in meta)
     }
 
 }

@@ -212,6 +212,7 @@ fun applyCitySupply(
     year: Int,
     month: Int,
     spatialSupplyNetwork: SpatialSupplyNetwork? = null,
+    retainGarrisonOnIsolation: Boolean = false,
 ): CitySupplyResult {
     // The BFS reads ONLY owned cities (nation != 0), iterated in ASCENDING id order (anchor #1).
     val ownedCities = cities.filter { it.nationId != 0 }.map { SupplyCity(it.id, it.nationId) }
@@ -266,7 +267,13 @@ fun applyCitySupply(
 
     // Step 4 — trust<30 neutralize. lostCities = unsupplied (owned) AND POST-decay trust < 30.
     // First-seen order = ascending city id (the decayedCities preserve input order; anchor #1).
-    val lostCities = decayedCities.filter { it.supplyState == 0 && it.trust < 30.0 }
+    // HWIHA leaves part of the conquering corps as an occupying garrison. An
+    // isolated county still suffers monthly decay, but cannot become neutral
+    // while that garrison survives; otherwise it is recaptured for free on the
+    // following phase despite the transfer made at conquest.
+    val lostCities = decayedCities.filter {
+        it.supplyState == 0 && it.trust < 30.0 && !(retainGarrisonOnIsolation && it.defense > 0)
+    }
     val lostCityIds = lostCities.map { it.id }
     val lostCitySet = lostCityIds.toSet()
     // The 고립 log uses the city's canonical name (PHP `city.name`); resolved from the active
@@ -324,6 +331,7 @@ interface UpdateCitySupplyContext : EventActionContext {
     fun capitals(): List<SupplyCapital>
     fun cityConst(): CityConstVariant
     fun spatialSupplyNetwork(): SpatialSupplyNetwork? = null
+    fun retainGarrisonOnIsolation(): Boolean = false
     fun year(): Int
     fun month(): Int
     /** Apply the mutated cities/generals to the world and push the isolated logs. */
@@ -346,6 +354,7 @@ class UpdateCitySupplyAction : EventAction {
             uctx.year(),
             uctx.month(),
             uctx.spatialSupplyNetwork(),
+            uctx.retainGarrisonOnIsolation(),
         )
         uctx.applyCitySupply(result)
     }

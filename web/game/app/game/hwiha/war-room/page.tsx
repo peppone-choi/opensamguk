@@ -101,6 +101,9 @@ export default function WarRoomPage() {
                         onScout={isHwihaWorld ? (no) => void sendScout(no) : undefined}
                         scoutPending={scoutPending}
                     />
+                    {isHwihaWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
+                        요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
+                    </p>}
                     {frontInfo && generalId != null ? (
                         <>
                             <CountyPanel city={frontInfo.city} isHwihaWorld={isHwihaWorld} />

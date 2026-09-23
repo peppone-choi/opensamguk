@@ -25,7 +25,7 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
         var filled = 0
         for (unit in world.listBugoks().sortedBy { it.id }) {
             val owner = world.getGeneralById(unit.masterGeneralId) ?: continue
-            val target = unit.troops.toLong() * HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS
+            val target = (unit.troops.toLong() * HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS).coerceAtMost(Int.MAX_VALUE.toLong())
             if (unit.provisions >= target) continue
             val holder = world.getGeneralById(commanderOf[unit.id] ?: owner.id) ?: continue
             val here = HwihaCorpsRations.cityAt(world, holder.id) ?: continue
@@ -34,8 +34,12 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
             val available = network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION
             val add = minOf(target - unit.provisions, available)
             if (add <= 0) continue
-            check(network.payGrain(owner.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION))
-            world.updateBugok(unit.copy(provisions = Math.toIntExact(unit.provisions + add)))
+            if (!network.payGrain(owner.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION)) {
+                HwihaRecords.general(world, owner.id, opensamguk.logic.input.HwihaRecordKind.INPUT_REJECTED,
+                    "부곡 ${unit.name}의 군량 보충을 건너뛰었습니다(창고 정산 실패).", mapOf("bugokId" to unit.id))
+                continue
+            }
+            world.updateBugok(unit.copy(provisions = (unit.provisions.toLong() + add).toInt()))
             filled++
         }
         world.setGameEnvValue(STAMP_KEY, stamp)

@@ -119,6 +119,8 @@ data class HwihaPersonCardDto(
     val aptitudes: HwihaAptitudesDto?,
     val bonds: List<HwihaBondDto>,
     val departureOrder: Int?,
+    /** 상사 재원 판단에 쓰는 카드 인물의 현재 城. 인물이 없는 카드는 null. */
+    val locationCityId: Int? = null,
 )
 
 data class HwihaRetinueResponse(

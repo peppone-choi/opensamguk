@@ -32,6 +32,7 @@ from tools.scenario.han_route_node_selection import (
     rows,
     text,
 )
+from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
 
 CURATED = ROOT / "data/curated/han"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
@@ -181,6 +182,8 @@ def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonO
     expected_names = {Path(text(row, "resourcePath")).name for row in expected_rows}
     actual_names: set[str] = set()
     for path in scenario_dir.glob("scenario_*.json"):
+        if not is_route_node_scenario_resource(path):
+            continue
         map_info = _load(path).get("map")
         if isinstance(map_info, dict) and map_info.get("mapName") in {"han", "han-world-v2", "han-world-v3"}:
             actual_names.add(path.name)

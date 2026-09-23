@@ -86,7 +86,10 @@ class HwihaSiegeService(
             log(commanderId, "이미 다른 군단이 이 縣城을 포위하고 있습니다.")
             return false
         }
-        val city = checkNotNull(world.getCityById(county))
+        val city = world.getCityById(county) ?: run {
+            log(commanderId, "포위 대상 縣 자료가 없어 이번 출병을 건너뛰었습니다.")
+            return false
+        }
         // A siege that could not hold at the next boundary is not started (no start/lift churn every phase).
         val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
         if (garrisonOf(city) > 0 && HwihaSiegeRules.maintenance(units.sumOf { it.troops }, garrisonOf(city),
@@ -228,7 +231,11 @@ class HwihaSiegeService(
         if (world.ruleProfile != RuleProfile.HWIHA) return
         val now = now()
         for (siege in world.listHwihaSieges().filter { it.status == ACTIVE }.sortedBy { it.countyId }) {
-            if (siege.settledYear != null && HwihaPhase(siege.settledYear, siege.settledMonth!!, siege.settledPhase!!) >= now) continue
+            val settledYear = siege.settledYear
+            val settledMonth = siege.settledMonth
+            val settledPhase = siege.settledPhase
+            if (settledYear != null && settledMonth != null && settledPhase != null &&
+                HwihaPhase(settledYear, settledMonth, settledPhase) >= now) continue
             val started = HwihaPhase(siege.startedYear, siege.startedMonth, siege.startedPhase)
             if (started >= now) continue
             settleOne(siege, now)
@@ -269,7 +276,11 @@ class HwihaSiegeService(
         if (warehouse != null && settled.rationServed > 0) {
             val result = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
                 HwihaResources(grain = settled.rationServed))
-            check(result == HwihaWarehouseSettlement.Result.APPLIED) { "Validated garrison ration debit was rejected: $result" }
+            if (result != HwihaWarehouseSettlement.Result.APPLIED) {
+                lift(stamped, "GARRISON_RATION_UNAVAILABLE")
+                log(siege.besiegerGeneralId, "${city.name} 縣城의 군량 정산에 실패해 포위를 풀었습니다($result).")
+                return
+            }
         }
         val next = stamped.copy(turns = siege.turns + 1, morale = settled.morale, garrison = garrison,
             timeline = appendEntry(siege.timeline, entry(now, "TURN", settled.morale, garrison,
@@ -287,7 +298,11 @@ class HwihaSiegeService(
 
     // ── 함락·해제 ────────────────────────────────────────────────────────────
     private fun capture(siege: HwihaSiege, reason: String) {
-        val before = checkNotNull(world.getCityById(siege.countyId))
+        val before = world.getCityById(siege.countyId) ?: run {
+            lift(siege, "COUNTY_UNAVAILABLE")
+            log(siege.besiegerGeneralId, "함락 대상 縣 자료가 없어 포위를 풀었습니다.")
+            return
+        }
         val previousOwner = before.nationId
         val settlement = HwihaCountyCapture.settle(HwihaCountyCapture.CountyBefore(before.id, before.nationId,
             before.population, garrisonOf(before)), siege.besiegerNationId)
@@ -298,6 +313,7 @@ class HwihaSiegeService(
             defence = settlement.garrisonTroops + left, supplyState = 0, frontState = 0)
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
+        HwihaCapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
         val now = now()
         world.putHwihaSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
             timeline = appendEntry(siege.timeline, entry(now, "FALLEN", siege.morale, 0, "reason" to reason,

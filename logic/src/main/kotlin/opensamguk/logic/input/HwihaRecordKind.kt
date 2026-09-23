@@ -21,6 +21,7 @@ object HwihaRecordKind {
     const val MARCH_CORPS = "march.corps"
     const val DEPLOY_STARTED = "deploy.started"
     const val ENCOUNTER_PENDING = "encounter.pending"
+    const val ENCOUNTER_DISBANDED = "encounter.disbanded"
     const val DISPATCH_ISSUED = "court.dispatchIssued"
     const val DISPATCH_RECEIVED = "court.dispatchReceived"
     const val DISPATCH_ACCEPTED = "court.dispatchAccepted"

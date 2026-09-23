@@ -289,7 +289,7 @@ describe('GameChrome main map', () => {
   });
 
   it('returns a successful explicit possession claim to the selected server base after refreshed front-info confirms it', async () => {
-    mocks.useFrontInfo.mockReturnValueOnce({
+    mocks.useFrontInfo.mockReturnValue({
       frontInfo: {
         ...frontInfo,
         global: { ...frontInfo.global, serverId: 'pep', npcMode: 1, blockGeneralCreate: 1 },

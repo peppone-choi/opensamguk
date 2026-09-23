@@ -11,6 +11,7 @@ import opensamguk.logic.input.HwihaRenownEntry
 import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.input.RuleProfile
+import org.slf4j.LoggerFactory
 
 /**
  * 월 경계의 「월단평」 — 명망을 갱신하고 순위를 발표한다(정본 설계 §2.8, §5.2 순 경계 4번).
@@ -100,7 +101,11 @@ class HwihaMonthlyAssessment(
             val nextMeta = LinkedHashMap(HwihaRenownEvents.withEntries(general.meta, split.remaining))
             nextMeta[HwihaPersonPolicyState.META_KEY] = policy.copy(renownCapacity = outcome.renown).toMetaValue()
             if (nextMeta != general.meta) {
-                apply(general, nextMeta)
+                if (!apply(general, nextMeta)) {
+                    renownByGeneral.remove(general.id)
+                    assessed--
+                    continue
+                }
                 if (outcome.renown != policy.renownCapacity) moved++
             }
             if (split.applied.isNotEmpty()) {
@@ -157,18 +162,27 @@ class HwihaMonthlyAssessment(
         }
 
     private fun labelOf(row: Map<String, Any?>): String {
-        val kind = opensamguk.logic.input.HwihaRenownEventKind.ofKey(row["kind"] as String)!!
-        val count = row["count"] as Int
+        val kind = opensamguk.logic.input.HwihaRenownEventKind.ofKey(row["kind"] as? String ?: "")
+            ?: run {
+                log.warn("hwiha_monthly_assessment_label_unavailable kind={}", row["kind"])
+                return "알 수 없는 사건"
+            }
+        val count = row["count"] as? Int ?: 1
         return if (count > 1) "${kind.label}×$count" else kind.label
     }
 
-    private fun apply(before: TurnGeneral, meta: Map<String, Any?>) {
+    private fun apply(before: TurnGeneral, meta: Map<String, Any?>): Boolean {
         val after = before.copy(meta = meta)
+        if (world.applyGeneralDirtyFree(after) == null) {
+            log.warn("hwiha_monthly_assessment_skipped general={} reason=APPLY_REJECTED", before.id)
+            return false
+        }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
-        checkNotNull(world.applyGeneralDirtyFree(after))
+        return true
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(HwihaMonthlyAssessment::class.java)
         const val STAMP_KEY = HwihaRenownAssessment.STAMP_KEY
         const val RANKING_KEY = HwihaRenownAssessment.RANKING_KEY
         const val REASONS_KEY = HwihaRenownAssessment.REASONS_KEY

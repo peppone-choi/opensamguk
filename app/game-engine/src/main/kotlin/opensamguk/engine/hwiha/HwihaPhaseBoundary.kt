@@ -13,7 +13,8 @@ import org.slf4j.LoggerFactory
  *
  * 1. **포위**(§5.2 2단계) — 성 안 군량·사기·항복. 함락이 여기서 일어난다.
  * 2. **보급망 재계산**(§5.2 1단계의 재계산 부분) — 세력별 수도에서 보급 BFS 를 다시 돌려 縣의 보급 여부만 고친다.
- *    감쇠·중립화는 기존 월간 `UpdateCitySupply` 가 하고 여기서는 하지 않는다. 포위 중인 縣은 외부 보급이 끊긴다
+ *    감쇠·중립화는 기존 월간 `UpdateCitySupply` 가 하고 여기서는 하지 않는다. 휘하 월드에서는 점령군 수비대가
+ *    남은 고립 縣의 중립화만 억제한다. 포위 중인 縣은 외부 보급이 끊긴다
  *    (armyEncirclement.maintenance). 포위보다 **뒤**에 두는 것은 같은 순에 함락된 縣이 새 주인의 망에 들어가야
  *    같은 순 월세입이 새 주인에게 가기 때문이다(captureSettlement.monthlyTax = OWNER_AFTER_CAPTURE).
  *

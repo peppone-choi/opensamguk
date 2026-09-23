@@ -8,6 +8,7 @@ import opensamguk.logic.input.HwihaRecordKind
 import opensamguk.logic.input.HwihaRenownEventSource
 import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.input.HwihaRenownHooks
+import org.slf4j.LoggerFactory
 
 /**
  * 월단평 사건을 월드에 쌓는 엔진 어댑터 — 순수 훅([HwihaRenownHooks]·[HwihaRenownEvents])이 돌려준 meta 를
@@ -31,7 +32,7 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         val before = world.getGeneralById(generalId) ?: return false
         val result = HwihaRenownEvents.recordRenownEvent(before.meta, source, stamp)
         if (!result.recorded) return false
-        apply(generalId, result.meta)
+        if (!apply(generalId, result.meta)) return false
         announce(world, generalId, source, stamp)
         return true
     }
@@ -56,7 +57,10 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
      * @return 새로 사건이 쌓인 장수 id(오름차순).
      */
     fun onCountyCaptured(countyId: Int, previousNationId: Int, captorNationId: Int, capturerIds: Collection<Int>): List<Int> {
-        require(previousNationId != captorNationId) { "captor already owns county $countyId" }
+        if (previousNationId == captorNationId) {
+            log.warn("hwiha_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
+            return emptyList()
+        }
         val holders = if (previousNationId == 0) emptyList() else HwihaRenownHooks.countyHolderIds(countyId,
             previousNationId, world.listGenerals().associate { it.id to it.meta })
         val state = world.getState()
@@ -72,20 +76,34 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         return updated
     }
 
-    private fun applyAll(updates: List<HwihaRenownHooks.MetaUpdate>): List<Int> = updates.map { update ->
-        apply(update.generalId, update.meta)
-        announce(world, update.generalId, requireNotNull(update.entry.source), update.entry.stamp)
+    private fun applyAll(updates: List<HwihaRenownHooks.MetaUpdate>): List<Int> = updates.mapNotNull { update ->
+        val source = update.entry.source
+        if (source == null) {
+            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
+            return@mapNotNull null
+        }
+        if (!apply(update.generalId, update.meta)) return@mapNotNull null
+        announce(world, update.generalId, source, update.entry.stamp)
         update.generalId
     }
 
-    private fun apply(generalId: Int, meta: Map<String, Any?>) {
-        val before = checkNotNull(world.getGeneralById(generalId))
+    private fun apply(generalId: Int, meta: Map<String, Any?>): Boolean {
+        val before = world.getGeneralById(generalId)
+        if (before == null) {
+            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_GENERAL", generalId)
+            return false
+        }
         val after = before.copy(meta = meta)
+        if (world.applyGeneralDirtyFree(after) == null) {
+            log.warn("hwiha_renown_event_skipped general={} reason=APPLY_REJECTED", generalId)
+            return false
+        }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
-        checkNotNull(world.applyGeneralDirtyFree(after))
+        return true
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(HwihaRenownEventRecorder::class.java)
         /** 새로 쌓인 사건을 본인 개인 기록에 남긴다 — 종류·원인은 본인 것이다. */
         internal fun announce(
             world: InMemoryTurnWorld,
