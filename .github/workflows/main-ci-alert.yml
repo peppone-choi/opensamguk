@@ -1,0 +1,35 @@
+name: Main CI Alert
+
+# main 브랜치 CI 가 빨갛게 끝나면(한도 초과 cancelled 포함) 실패 잡을, 빨강 뒤 첫 초록이면 복구를
+# 데몬 경보와 같은 Discord webhook 으로 보낸다(#866). 머지 전 방어는 main 브랜치 보호
+# (CI 8개 필수·최신 상태 요구·관리자 우회 금지)가 맡고, 이 워크플로는 그 뒤의 탐지다.
+# workflow_run 은 기본 브랜치의 이 파일로만 돈다 — PR 에서는 실행되지 않는다.
+# 수동 실행(run_id 지정)은 배선 확인용이다.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 알림을 판정할 CI 실행 id
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  main-ci-alert:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send main CI red/recovery alert
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+          DAEMON_ALERT_WEBHOOK_URL: ${{ secrets.DAEMON_ALERT_WEBHOOK_URL }}
+        run: python3 tools/ops/main_ci_alert.py
