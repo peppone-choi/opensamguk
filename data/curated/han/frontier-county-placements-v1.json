@@ -968,8 +968,8 @@
   ],
   "priorStage": {
     "inputTilesSha256": "5feffb4a8a1af8a58203f62fa1497c2d82ea5903c21f4f175411d9dff56afcfb",
-    "inputDocumentSha256": "0c036d9f13999c9883e8125e7cdf5f07f230f906d447f13fcbf0f30211cc376c",
-    "outputDocumentSha256": "e3d6cd76ffccc2e24b2ac696f9c06540ffa9f4fcf3f1b46267f0bc61f1961bfb",
+    "inputDocumentSha256": "930bb3ec27295c6672015eec4ca9219b732e5fed93fe9e0507baf187796a85da",
+    "outputDocumentSha256": "97feb041bddb767ba3e7bf1bf8d60cd486bc7542b82a9ee644e744325d099ab7",
     "affectedParentRegionIds": [
       "PARENT-0094",
       "PARENT-0095",

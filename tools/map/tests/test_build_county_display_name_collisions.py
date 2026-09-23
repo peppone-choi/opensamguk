@@ -49,6 +49,37 @@ class CommittedListTest(unittest.TestCase):
         counts = collections.Counter((r["commanderyId"], r["displayName"]) for r in self.tiles["jurisdictionRecords"])
         self.assertEqual(sum(1 for n in counts.values() if n > 1), len(self.doc["collisions"]))
 
+    def test_reviewed_readings_remove_two_original_collisions_and_revert_restores_them(self):
+        # #842: the three name readings are tied to ids, not row order or a name join.
+        expected = {"41305": "선성현", "40663": "시평현", "40775": "시녕현"}
+        by_id = {r["id"]: r for r in self.tiles["jurisdictionRecords"]}
+        province_by_id = {r["id"]: r for r in self.tiles["provinceRecords"]}
+        city_by_id = {r["id"]: r for r in self.tiles["cities"]}
+        runtime = {c["spatialProvinceId"]: c for c in self.world["cities"] if c.get("spatialProvinceId")}
+        for jid, reading in expected.items():
+            self.assertEqual(by_id[jid]["displayName"], reading)
+            self.assertEqual(province_by_id[jid]["displayName"], reading)
+            self.assertEqual(city_by_id[jid]["name"], reading)
+            self.assertTrue(runtime[jid]["meta"]["displayName"].endswith(reading))
+
+        original_commandery_names = {"영천군", "영릉군", "여강군", "단양군", "회계군"}
+        reviewed = [c for c in self.doc["collisions"] if c["commanderyDisplayName"] in original_commandery_names]
+        self.assertEqual(len(reviewed), 3)
+        self.assertEqual(self.doc["summary"]["sameCommanderyCollisionGroups"], 6)
+
+        reverted = copy.deepcopy(self.tiles)
+        previous = {"41305": "완릉현", "40663": "시령현", "40775": "시령현"}
+        for record in reverted["jurisdictionRecords"]:
+            if record["id"] in previous:
+                record["displayName"] = previous[record["id"]]
+        red = B.build(reverted, self.world, self.table, self.units)
+        red_original = [c for c in red["collisions"] if c["commanderyDisplayName"] in original_commandery_names]
+        self.assertEqual(len(red_original), 5)
+        self.assertEqual(red["summary"]["sameCommanderyCollisionGroups"], 8)
+        self.assertEqual({(c["commanderyDisplayName"], c["displayName"]) for c in red_original} -
+                         {(c["commanderyDisplayName"], c["displayName"]) for c in reviewed},
+                         {("단양군", "완릉현"), ("회계군", "시령현")})
+
 
 class SyntheticTest(unittest.TestCase):
     def _tiles(self, records):

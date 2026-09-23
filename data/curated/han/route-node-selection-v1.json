@@ -19,7 +19,7 @@
         "sha256": "7e6fb6f7606a880157db33890a7607ad12bad288ec8645ea1da6eaf983514c8e"
       },
       "jurisdictionRouteClaims": {
-        "sha256": "3af2d84281aea98c8c0e7ed9a5f45dcdcdd9641009de9936dc1c0cd444a9bf23"
+        "sha256": "507a33c04d5634e43dcff193163496b47788520bc9e8b649708b509644839766"
       },
       "legacyHanMap": {
         "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
@@ -31,7 +31,7 @@
         "sha256": "e8e1bd5c2881973ff38241a34c565e8a1a01c285454485d91a3b1af3d8657896"
       },
       "reviewPolicy": {
-        "sha256": "30b71083c5df61d5a52699caee1f702d755b291854e0bc0cc4661dc55679c0c1"
+        "sha256": "74e3b2dc39a2ea865ff118a6e9261377fc9ee17104e31db71c53f44f28211889"
       },
       "routeNodeKeyRegistry": {
         "sha256": "28f853dbb6bb29d9531ca209e7dfd532fa90789ac5eb1a97e54f3d5cca497c2e"

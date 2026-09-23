@@ -8,7 +8,7 @@
     "purpose": "郡國志 식별자가 없는 han-tiles 縣 관할에 REVIEWED_SOURCE_CLAIM 경로 노드를 준다. 추가 1건은 기존 郡國志 식별자와 별개인 사용자 승인 합성 게임 城이다.",
     "historicalBindingBasis": "REVIEWED_SOURCE_CLAIM",
     "lifecycleClaimed": false,
-    "tilesSha256": "61bbf321dc7ebbf162b0bf9960d43a7ae486f8c8f5e3d3c8433f79198160f6ee"
+    "tilesSha256": "7d01a22614081100ea5afbd58bd5875efa38bb7561720a5265a977c00923d1cb"
   },
   "claims": [
     {
