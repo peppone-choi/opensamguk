@@ -50,6 +50,7 @@ describe('휘하 공성·상사 화면', () => {
         expect(await screen.findByText('초현')).toBeInTheDocument();
         expect(screen.getByText(/항복 권고 조건.*수락 가능/)).toBeInTheDocument();
         expect(screen.getByText(/포위 시작/)).toBeInTheDocument();
+        expect(screen.getByText('가능')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: '강공 예약' }));
         await waitFor(() => expect(mock.command).toHaveBeenCalledWith('action.assault', {}, 9, 1));
     });
@@ -74,6 +75,17 @@ describe('휘하 공성·상사 화면', () => {
         expect(screen.queryByRole('button', { name: '강공 예약' })).not.toBeInTheDocument();
     });
 
+    it('shows the remaining assault turns and a lifted siege explicitly', async () => {
+        mock.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [
+            { ...siege, turns: 1 },
+            { ...siege, countyId: 13, countyName: '패현', status: 'LIFTED', canAct: false },
+        ] });
+        render(<SiegePage />);
+        expect(await screen.findByText('초현')).toBeInTheDocument();
+        expect(screen.getByText('2순')).toBeInTheDocument();
+        expect(screen.getByText('포위 해제')).toBeInTheDocument();
+    });
+
     it('explains when a queued siege order finds no active siege at execution', async () => {
         mock.submit.mockResolvedValueOnce({ status: 'rejected', reason: 'NOT_BESIEGING', result: { result: { code: 'NOT_BESIEGING' } } });
         render(<SiegePage />);
@@ -84,6 +96,7 @@ describe('휘하 공성·상사 화면', () => {
 
     it('limits reward to the selected person card network balance', async () => {
         render(<OrdersPage />);
+        expect(screen.getByText(/금 100당 충성 \+1, 한 번에 최대 \+10/)).toBeInTheDocument();
         await userEvent.selectOptions(await screen.findByLabelText('상사 대상'), '31');
         expect(screen.getByText(/사용 가능한 창고망 금: 150/)).toBeInTheDocument();
         await userEvent.type(screen.getByLabelText('상사 금액'), '151');

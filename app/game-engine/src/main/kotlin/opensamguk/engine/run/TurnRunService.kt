@@ -333,6 +333,8 @@ open class TurnRunService(
                         // 치적 창 닫기 — 월간 사건(반기 도시 성장 등) **전** 값으로 지난 달을 잰다.
                         boundaryDate(nextTurn).let { date ->
                             opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder).close(date.year, date.month)
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                                .closeMonthlyMerit(date.year, date.month)
                         }
                     }
                     val state = world.getState()
@@ -383,7 +385,8 @@ open class TurnRunService(
                             hwihaPhaseBoundary?.run(world, handler.recorder)
                             // §5.2 3단계 내정 진행(공사·방침·치적) — 포위 정산 뒤(함락된 縣의 공사는 거둔다),
                             // 4단계 월세입보다 먼저, 한 순에 한 번(도장).
-                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                                .run(meritClosedBeforeMonthlyEvents = true)
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.

@@ -1,7 +1,7 @@
 # 휘하 시야·첩보 계약
 
 > 작성일: 2026-09-23
-> 상태: **구현 계약(PROVISIONAL 수치 포함).** 이슈 #785(OPENSAM-265) · #343(OPENSAM-166) · #465(OPENSAM-205)의 서버 쪽 범위.
+> 상태: **구현 계약(수치 2026-09-23 확정).** 이슈 #785(OPENSAM-265) · #343(OPENSAM-166) · #465(OPENSAM-205)의 서버 쪽 범위.
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §5.1(7단계), §5.1.1 (D), §6.4, §7, §12.1, §14 · [입력 registry 계약](./2026-09-17-input-registry-contract.md)
 
 ## 1. 사용자 결정(2026-09-23)
@@ -9,10 +9,10 @@
 - 시야 단위는 **郡國**이다. 번호 `no` 는 선택된 세계 판의 han-tiles `parentRegions`(= `juns`) 색인이며, `/api/map/provinces` PNG 의 commandery 채널과 같은 번호다(`tools/map/build_province_map.py` 가 `parentOwner` 로 굽는다).
 - 단계는 `FULL` / `INTEL` / `FOG` 세 가지다.
 - 첩보 결과는 **그 순간의 스냅숏**이고 「N순 전」을 함께 보인다. 갱신은 다시 첩보할 때뿐이다(만료 없음).
-- FULL 의 출처: 자기 위치, 자기 군단 위치, 자기 縣(영토)·휘하 배치, 정찰 배치, 망루·봉화 공사. 반경·구간·비용은 PROVISIONAL 데이터 파일에 둔다.
+- FULL 의 출처: 자기 위치, 자기 군단 위치, 자기 縣(영토)·휘하 배치, 정찰 배치, 망루·봉화 공사. 반경·구간·비용은 확정 데이터 파일에 둔다.
 - 옛 웹 규칙 「내 郡國 + 8방향 이웃 = 완전 시야」는 SAMMO 매뉴얼에서 온 것이며 §7 이 아니다. **채택하지 않았다.** 기본 시야 반경은 0(자기 郡國만)이고, 이웃은 직접 행동 첩보나 정찰 배치·망루봉화로만 본다.
 
-## 2. PROVISIONAL 수치 — `data/curated/han/hwiha-vision-rules-v1.json`
+## 2. 확정 수치 — `data/curated/han/hwiha-vision-rules-v1.json`
 
 코드에 사본을 두지 않는다. 로더(`HwihaVisionRules`)가 스키마를 엄격히 읽고 어긋나면 실패한다.
 

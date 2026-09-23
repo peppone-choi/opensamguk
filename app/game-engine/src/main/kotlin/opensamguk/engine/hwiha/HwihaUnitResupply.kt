@@ -7,7 +7,7 @@ import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
 
 /**
- * 월 경계 부곡 군량 보충(재설계 spec §5.2 1단계의 「군량」과 §9.2 「부대 유지비는 카드가 있는 곳의 망에서」의 임시 구현).
+ * 월 경계 부곡 군량 보충(재설계 spec §5.2 1단계의 「군량」과 §9.2 「부대 유지비는 카드가 있는 곳의 망에서」의 확정 수치).
  * 부곡 휴대 군량을 병력 × [HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS] 개월까지 창고망 곡으로 채운다.
  * 부곡 위치는 출전 중이면 지휘 장수, 아니면 주인 장수의 **실제 위치**(위치 정본 `positionOf`)다. 기준 城 id 는 城 없는 省에
  * 들어가도 이전 값으로 남으므로 쓰지 않는다. 위치가 城 없는 省이거나 주인 세력 縣이 아니면(적지 포위군) 채우지 않는다.

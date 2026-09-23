@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Chip, HanMapCanvas, Panel, SectionHeader, type CommanderyVisibility, type MapCorpsOverlay } from '@opensamguk/ui';
+import { Chip, HanMapCanvas, Panel, SectionHeader, type CommanderyVisibility, type IsoCityOverlay, type MapCorpsOverlay } from '@opensamguk/ui';
 import { HWIHA_DIRECTIONS, commanderyOfCity, neighborInDirection } from '@/lib/hwiha-fog';
 import { HWIHA_MAP_CODE, HWIHA_PROVINCES_URL, useHwihaWorldMap } from '@/lib/hwiha-map';
-import type { HwihaCorps } from '@/lib/hwiha-reads';
+import type { HwihaCorps, HwihaSiege } from '@/lib/hwiha-reads';
 import { HwihaEmpty } from './HwihaStates';
 
 /** 3×3 배치 — 가운데는 「여기」다. */
@@ -26,6 +26,14 @@ const VISIBILITY_TONE: Record<CommanderyVisibility, 'moss' | 'info' | 'rust'> = 
     FOG: 'rust',
 };
 
+export function citiesWithSiegeBadges(cities: readonly IsoCityOverlay[], sieges: readonly HwihaSiege[] | undefined): IsoCityOverlay[] {
+    const active = new Set(sieges?.filter((row) => row.status === 'ACTIVE').map((row) => row.countyId) ?? []);
+    return cities.map((city) => {
+        const otherBadges = (city.statusBadges ?? []).filter((badge) => badge !== 'besieged');
+        return { ...city, statusBadges: active.has(city.id) ? [...otherBadges, 'besieged' as const] : otherBadges };
+    });
+}
+
 export interface WarRoomMapProps {
     /** 내 장수가 선 城. 없으면(재야 이동 중 등) 첫 초점은 지도 기본값이다. */
     readonly homeCityId: number | null;
@@ -43,17 +51,20 @@ export interface WarRoomMapProps {
     readonly intelAge?: ReadonlyMap<number, number>;
     /** 서버 시야 투영이 허락한 군단만 온다(#343). */
     readonly corps?: readonly HwihaCorps[];
+    /** 공성 화면과 같은 조회 응답에서 온 진행 중 포위만 배지로 보인다. */
+    readonly sieges?: readonly HwihaSiege[];
 }
 
 /**
  * 작전실 지도 — 실제 지형·구역·세력. 군국 하나가 화면을 채우는 배율로 열고, 화살표로 이웃 군국에
  * 옮긴다. 칸이 게임 단위이므로 칸 경계선과 성내 칸을 그린다.
  */
-export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable, intelAge, corps }: WarRoomMapProps) {
+export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable, intelAge, corps, sieges }: WarRoomMapProps) {
     const map = useHwihaWorldMap();
     const [focusNo, setFocusNo] = useState<number | null>(null);
 
     const ready = map.kind === 'ready' ? map : null;
+    const cities = useMemo(() => ready ? citiesWithSiegeBadges(ready.cities, sieges) : undefined, [ready, sieges]);
     const home = useMemo(() => {
         if (!ready || homeCityId == null) return undefined;
         const city = ready.preview.cities.find((c) => c.id === homeCityId);
@@ -103,7 +114,7 @@ export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPendi
                             provinceMap={ready.provinceMap ?? undefined}
                             provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
                             corps={corpsOverlay}
-                            cities={ready.cities}
+                            cities={cities ?? ready.cities}
                             administrativeOwnership={ready.administrativeOwnership}
                             sourceSize={ready.sourceSize}
                             markerPositions={ready.markerPositions}
