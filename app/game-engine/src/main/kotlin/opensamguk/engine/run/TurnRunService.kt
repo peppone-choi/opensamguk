@@ -141,6 +141,8 @@ open class TurnRunService(
     private val commandOutboxRelay: CommandOutboxRelay? = null,
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
     private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
+    /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
+    private val hwihaPhaseBoundary: opensamguk.engine.hwiha.HwihaPhaseBoundary? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -377,13 +379,19 @@ open class TurnRunService(
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                         boundaryDate(nextTurn).let { date ->
                             world.setCurrentDate(date.year, date.month, date.phase)
-                            // §5.2 3단계 내정 진행(공사·방침·치적) — 4단계 월세입보다 먼저, 한 순에 한 번(도장).
+                            // §5.2 1·2단계(보급·포위)가 징세보다 먼저다 — 같은 순에 함락된 縣의 월세입은 새 주인에게 간다.
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            // §5.2 3단계 내정 진행(공사·방침·치적) — 포위 정산 뒤(함락된 縣의 공사는 거둔다),
+                            // 4단계 월세입보다 먼저, 한 순에 한 번(도장).
                             opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
                             opensamguk.engine.hwiha.HwihaMonthlyCountyIncome(world, handler.recorder)
                                 .credit(date.year, date.month)
+                            // 녹봉 — 수입 뒤, 월단평 앞(§5.2 4단계). 기존 가신 유지비는 HWIHA 에서 꺼져 있다.
+                            opensamguk.engine.hwiha.HwihaMonthlySalary(world, handler.recorder).pay(date.year, date.month)
+                            opensamguk.engine.hwiha.HwihaUnitResupply(world, handler.recorder).resupply(date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.hwiha.HwihaMonthlyAssessment(
@@ -402,7 +410,8 @@ open class TurnRunService(
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
                         if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-                            // §5.2 3단계 내정 진행 — 순 경계마다 한 번(도장).
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            // §5.2 3단계 내정 진행 — 포위 정산 뒤, 순 경계마다 한 번(도장).
                             opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
                         }
                         handler.courtHandler.expireDue()

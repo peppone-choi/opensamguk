@@ -109,7 +109,7 @@ class CommandController(
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        if (code == "action.enlist" || code == "action.deploy" || code == "action.scout") {
+        if (code in opensamguk.gameapi.reserve.CommandReserveService.HWIHA_RESERVABLE_ACTIONS) {
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             return try {
                 reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt())

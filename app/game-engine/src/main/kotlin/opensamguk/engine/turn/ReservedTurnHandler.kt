@@ -196,6 +196,10 @@ class ReservedTurnHandler(
     private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
     /** Pinned commandery geography for `action.scout`; null outside a Han HWIHA world (the input then rejects). */
     private val hwihaVisionContext: opensamguk.engine.hwiha.HwihaVisionContext? = null,
+    /** HWIHA 강공 격자에 쓰는 핀된 省 칸 색인. 없으면 공성 입력은 상태 없음으로 거절된다. */
+    private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
+    /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
+    private val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener = opensamguk.engine.hwiha.HwihaWarOutcomeListener.NONE,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
@@ -210,6 +214,8 @@ class ReservedTurnHandler(
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
     private val scoutHandler by lazy { opensamguk.engine.hwiha.HwihaScoutHandler(world, recorder, hwihaVisionContext) }
+    private val siegeHandler by lazy { opensamguk.engine.hwiha.HwihaSiegeHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -285,12 +291,17 @@ class ReservedTurnHandler(
                 },
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
+                "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
             )
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
                 handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
             }
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
-                applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
+                applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,
+                    npcSelected = !reserved.rowExists)
+            }
+            for (siegeInput in listOf(opensamguk.engine.hwiha.HwihaSiegeHandler.ASSAULT, opensamguk.engine.hwiha.HwihaSiegeHandler.DEMAND_SURRENDER)) {
+                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
             }
             handlers[opensamguk.logic.input.HwihaScoutInput.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)

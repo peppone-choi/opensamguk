@@ -73,6 +73,7 @@ object TruncateContract {
         "operation_unit",
         "battle_plan",
         "battle_replay",
+        "hwiha_siege",
         "vote_poll",
         "vote",
         "vote_comment",

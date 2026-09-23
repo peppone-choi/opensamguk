@@ -170,6 +170,11 @@ object ScenarioJson {
             ruleProfile = ruleProfile,
             seedContract = seedContract,
             hwihaWarehouses = HwihaScenarioWarehouseSeeds.decode(root, ruleProfile),
+            hwihaUnits = HwihaScenarioUnits.decode(root, ruleProfile).also { units ->
+                for (unit in units) require(roster.count { it.name == unit.general } == 1) {
+                    "hwihaUnits general must identify exactly one general: ${unit.general}"
+                }
+            },
         )
     }
 
@@ -379,6 +384,8 @@ data class Scenario(
     val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val seedContract: ScenarioSeedContract? = null,
     val hwihaWarehouses: HwihaWarehouseSeed? = null,
+    /** HWIHA 초기 부곡 선언(`hwihaUnits`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
+    val hwihaUnits: List<HwihaScenarioUnit> = emptyList(),
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()

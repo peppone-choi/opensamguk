@@ -12,13 +12,24 @@ class HwihaAssignmentMarchTurn(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING,
 ) {
     fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: HwihaTurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
+        // §5.1 step 5: a sealed encounter resolves on the attacker's turn whatever it reserved. The battle
+        // ends this turn's movement; an unprepared battle stays pending and the march reports it below.
+        if (HwihaEncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)
+            is HwihaEncounterResolver.Resolution.Resolved) return
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
-        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) return
+        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
+            // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
+            val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
+            if (siege.startIfArrived(generalId) && isUnowned(generalId)) siege.npcAct(generalId)
+            return
+        }
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
@@ -35,7 +46,7 @@ class HwihaAssignmentMarchTurn(
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
         // One is the minimum positive passage threshold, not one soldier or one unit card.
         when (val result = HwihaAssignmentMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
-            .advance(generalId, edges) { node -> military.entryAt(generalId, node) }) {
+            .advance(generalId, edges) { node -> military.entryAt(generalId, node, reactions) }) {
             AssignmentMarchExecution.NoAssignment, AssignmentMarchExecution.AlreadyProcessed -> Unit
             is AssignmentMarchExecution.Rejected -> if (result.reason != AssignmentMarchFailure.CORPS_DEPLOYED) {
                 log(generalId, when (result.reason) {
@@ -58,6 +69,9 @@ class HwihaAssignmentMarchTurn(
             }
         }
     }
+
+    private fun isUnowned(generalId: Int): Boolean = world.getGeneralById(generalId)?.userId
+        .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
 
     private fun log(generalId: Int, text: String, refs: Map<String, Any?>) =
         HwihaRecords.general(world, generalId, HwihaRecordKind.MARCH_ASSIGNMENT, text, refs)
