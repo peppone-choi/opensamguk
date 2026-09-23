@@ -13,10 +13,21 @@ class HwihaEnlistmentBudgetTest {
         val cards = listOf(DirectPersonCard(1, 10, 2), DirectPersonCard(2, 2, 3))
         val result = assertIs<RenownBudgetResult.Ready>(HwihaEnlistmentBudget.assess(1, RuleProfile.HWIHA, persons, cards))
         assertEquals(mapOf(10 to 25), result.freeRenownByLord)
+        assertEquals(25, result.freeRenownByOwner[2], "a nested general pays for their own direct NPC")
+        assertEquals(25, result.freeRenownByOwner[10], "the lord pays only for the general card")
         assertEquals(5, result.actorCardCost)
         assertEquals(setOf(10), result.acceptingLordIds)
         assertEquals(result, HwihaEnlistmentBudget.assess(1, RuleProfile.HWIHA, persons.reversed(), cards.reversed()))
         assertEquals(30, HwihaPersonPolicyState.read(persons[1].meta)!!.renownCapacity)
+    }
+    @Test fun `over capacity personal retinue blocks its owner without charging the upper lord`() {
+        val people = listOf(person(1), person(10, true), person(2).copy(meta = mapOf(
+            "hwihaLord" to false, HwihaPersonPolicyState.META_KEY to
+                HwihaPersonPolicyState(4, true, "fixture", "pin", 2).toMetaValue())), person(3))
+        val result = assertIs<RenownBudgetResult.Ready>(HwihaEnlistmentBudget.assess(1, RuleProfile.HWIHA, people,
+            listOf(DirectPersonCard(1, 10, 2), DirectPersonCard(2, 2, 3))))
+        assertEquals(25, result.freeRenownByLord[10])
+        assertEquals(RenownBudgetFailure.CAPACITY_EXCEEDED, result.unavailableOwnerReasons[2])
     }
     @Test fun `shared failures distinguish global invalid state from unsupported target card`() {
         val people = listOf(person(1), person(10, true))

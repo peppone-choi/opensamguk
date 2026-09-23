@@ -114,7 +114,7 @@
   "reviewRows": [
     {
       "siteId": "site:dingjunshan",
-      "reviewState": "PROPOSED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "selectedCandidateId": "site:dingjunshan:crosswalk",
       "candidates": [
@@ -139,11 +139,15 @@
         }
       ],
       "conflicts": [],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "三國志 卷36의 산지 전투 장소로 지도 지형 표식만 승인한다."
     },
     {
       "siteId": "site:jiange",
-      "reviewState": "PROPOSED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "selectedCandidateId": "site:jiange:crosswalk",
       "candidates": [
@@ -177,11 +181,15 @@
           ],
           "reason": "The published coordinate is inconsistent with the plan locality and is not auto-corrected."
         }
-      ]
+      ],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "三國志 卷28의 관문 장소로 지도 지형 표식만 승인한다. 공식 계획의 불일치 좌표는 계속 기각한다."
     },
     {
       "siteId": "site:jieting",
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "candidates": [
         {
@@ -232,11 +240,17 @@
           "reason": "The official Longcheng tradition remains contested by a live Maiji academic theory."
         }
       ],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "용성 관방지의 전승을 지도 대표점으로 채택한다. 맥적 설은 역사 지점 대안으로 유지하며 위치 확정으로 해석하지 않는다.",
+      "selectedCandidateId": "site:jieting:longcheng-tradition",
+      "conflictDisposition": "REPRESENTATIVE_MAP_ANCHOR_WITH_ALTERNATIVE_RETAINED"
     },
     {
       "siteId": "site:qishan",
-      "reviewState": "PROPOSED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "selectedCandidateId": "site:qishan:crosswalk",
       "candidates": [
@@ -260,11 +274,15 @@
         }
       ],
       "conflicts": [],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "三國志 卷33의 산지 전투 장소로 지도 지형 표식만 승인한다."
     },
     {
       "siteId": "site:wuzhangyuan",
-      "reviewState": "BLOCKED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "candidates": [
         {
@@ -314,12 +332,18 @@
           "reason": "Committed rounded projection yields (289,244), while the full-precision generator yields (290,244)."
         }
       ],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "저장된 지도 투영 상수로 재현되는 (289,244)를 대표점으로 채택한다. 전정밀도 생성기의 (290,244) 차이는 기록한다.",
+      "selectedCandidateId": "site:wuzhangyuan:committed-projection",
+      "conflictDisposition": "REPRESENTATIVE_MAP_ANCHOR_WITH_ALTERNATIVE_RETAINED"
     },
     {
       "siteId": "site:yanganguan",
       "siteLineage": "THREE_KINGDOMS_YANGAN_NINGQIANG",
-      "reviewState": "PROPOSED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "selectedCandidateId": "site:yanganguan:crosswalk",
       "candidates": [
@@ -344,12 +368,16 @@
         }
       ],
       "conflicts": [],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "三國志 卷44의 관문 표식으로 분류한다. 별도 현성으로 세우지 않는다."
     },
     {
       "siteId": "site:yangpingguan",
       "siteLineage": "HAN_YANGPING_MIAXIAN",
-      "reviewState": "PROPOSED",
+      "reviewState": "APPROVED",
       "mandatoryRuntimeSeed": false,
       "selectedCandidateId": "site:yangpingguan:crosswalk",
       "candidates": [
@@ -375,7 +403,11 @@
         }
       ],
       "conflicts": [],
-      "rejectedClaims": []
+      "rejectedClaims": [],
+      "siteRole": "TERRAIN_MARKER",
+      "reviewerId": "reviewer:lane3-map-adjudication-2026-09-24",
+      "reviewedDate": "2026-09-24",
+      "adjudicationRationale": "한대 양평관 지명 계보의 관문 표식으로 분류한다. 양안관과 합치지 않는다."
     }
   ]
 }

@@ -170,22 +170,22 @@ EXPECTED_SOURCES = {
 
 LOCKED_ROWS = {
     "site:dingjunshan": {
-        "state": "PROPOSED",
+        "state": "APPROVED",
         "selected": "site:dingjunshan:crosswalk",
         "candidates": [
             ("site:dingjunshan:crosswalk", [106.67025, 33.11738], [267, 268], "COMMITTED_PROJECTION")
         ],
     },
     "site:jiange": {
-        "state": "PROPOSED",
+        "state": "APPROVED",
         "selected": "site:jiange:crosswalk",
         "candidates": [
             ("site:jiange:crosswalk", [105.56415, 32.21485], [246, 287], "COMMITTED_PROJECTION")
         ],
     },
     "site:jieting": {
-        "state": "BLOCKED",
-        "selected": None,
+        "state": "APPROVED",
+        "selected": "site:jieting:longcheng-tradition",
         "candidates": [
             (
                 "site:jieting:longcheng-tradition",
@@ -202,15 +202,15 @@ LOCKED_ROWS = {
         ],
     },
     "site:qishan": {
-        "state": "PROPOSED",
+        "state": "APPROVED",
         "selected": "site:qishan:crosswalk",
         "candidates": [
             ("site:qishan:crosswalk", [105.39401, 34.23089], [243, 244], "COMMITTED_PROJECTION")
         ],
     },
     "site:wuzhangyuan": {
-        "state": "BLOCKED",
-        "selected": None,
+        "state": "APPROVED",
+        "selected": "site:wuzhangyuan:committed-projection",
         "candidates": [
             (
                 "site:wuzhangyuan:committed-projection",
@@ -227,14 +227,14 @@ LOCKED_ROWS = {
         ],
     },
     "site:yanganguan": {
-        "state": "PROPOSED",
+        "state": "APPROVED",
         "selected": "site:yanganguan:crosswalk",
         "candidates": [
             ("site:yanganguan:crosswalk", [106.0346, 32.965611], [255, 271], "COMMITTED_PROJECTION")
         ],
     },
     "site:yangpingguan": {
-        "state": "PROPOSED",
+        "state": "APPROVED",
         "selected": "site:yangpingguan:crosswalk",
         "candidates": [
             ("site:yangpingguan:crosswalk", [106.60975, 33.14761], [266, 267], "COMMITTED_PROJECTION")
@@ -540,7 +540,9 @@ def _validate_review_row_keys(row: object, label: str) -> dict:
     if state == "PROPOSED":
         required.add("selectedCandidateId")
     elif state == "APPROVED":
-        required.update({"selectedCandidateId", "reviewerId", "reviewedDate"})
+        required.update({"selectedCandidateId", "reviewerId", "reviewedDate", "siteRole", "adjudicationRationale"})
+        if row.get("conflicts"):
+            required.add("conflictDisposition")
     elif state == "REJECTED":
         required.add("rejection")
     if row.get("siteId") in LINEAGE_SITE_IDS:
@@ -584,8 +586,11 @@ def _validate_review_state(
             date.fromisoformat(reviewed_date)
         except (TypeError, ValueError) as error:
             raise ValueError("APPROVED requires an ISO reviewedDate") from error
-        if conflicts:
-            raise ValueError("APPROVED requires no unresolved conflicts")
+        if row.get("siteRole") != "TERRAIN_MARKER":
+            raise ValueError("APPROVED siteRole must classify the non-city terrain marker")
+        _require_nonempty_string(row.get("adjudicationRationale"), "APPROVED.adjudicationRationale")
+        if conflicts and row.get("conflictDisposition") != "REPRESENTATIVE_MAP_ANCHOR_WITH_ALTERNATIVE_RETAINED":
+            raise ValueError("APPROVED conflict requires an explicit representative-map disposition")
     else:
         if selected_id is not None or candidates:
             raise ValueError("REJECTED has no anchor")
@@ -625,7 +630,7 @@ def _validate_locked_decisions(rows: list[dict]) -> None:
         if actual_candidates != expected["candidates"]:
             raise ValueError(f"locked review candidate/order changed: {site_id}")
     states = Counter(row["reviewState"] for row in rows)
-    if states != Counter({"PROPOSED": 5, "BLOCKED": 2}):
+    if states != Counter({"APPROVED": 7}):
         raise ValueError(f"locked current state counts changed: {dict(states)}")
 
 

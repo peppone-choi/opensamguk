@@ -3,8 +3,10 @@ package opensamguk.engine.hwiha
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.Retainer
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
+import opensamguk.logic.content.HwihaPersonContributionState
 
 class HwihaNpcDeploySelectorTest {
     private val fixture = HwihaCampaignWorldFixture()
@@ -35,6 +37,27 @@ class HwihaNpcDeploySelectorTest {
         assertSame(reserved, selector.select(world(), 1, reserved))
         val deployed = world(); fixture.deploy(deployed, ChangeRecorder(), 1, listOf(7), route.destination)
         assertNull(selector.choose(deployed, 1))
+    }
+
+    @Test fun `held npc does not select an autonomous deployment`() {
+        val held = fixture.world(listOf(
+            fixture.person(1, 1, route.startCity, lord = false).let { person -> person.copy(meta = person.meta +
+                (HwihaPersonContributionState.META_KEY to HwihaPersonContributionState(
+                    setOf("hwiha-stratagem-insight")).toMetaValue())) } to route.first,
+            fixture.person(10, 1, route.startCity) to route.first,
+        ), bugoks = listOf(fixture.unit(7, 1, 1000)),
+            retainers = listOf(Retainer(1, 10, "EXISTING", 1, "G1", "lieutenant")),
+            cityChanges = { city -> city.copy(defence = 100, nationId = if (city.id == route.destinationCounty) 2 else city.nationId) })
+        assertNull(selector.choose(held, 1))
+        assertNull(selector.reliefFor(held, 1))
+        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
+        val ownersHand = assertNotNull(HwihaStratagemHand.read(held.getGeneralById(10)!!.meta, 10))
+        assertEquals(HwihaStratagemCardType.INSIGHT, ownersHand.cardType(ownersHand.extras.single().instanceId))
+        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(1)
+        assertNull(HwihaStratagemHand.read(held.getGeneralById(1)!!.meta, 1))
+        held.removeRetainer(1)
+        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
+        assertTrue(HwihaStratagemHand.read(held.getGeneralById(10)!!.meta, 10)!!.extras.isEmpty())
     }
 
     @Test fun `the deploy handler accepts a synthesized npc order and still forbids an unowned human reservation`() {

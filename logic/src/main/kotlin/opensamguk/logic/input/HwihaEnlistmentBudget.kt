@@ -21,6 +21,8 @@ sealed interface RenownBudgetResult {
         val freeRenownByLord: Map<Int, Int>,
         val actorCardCost: Int,
         val unavailableLordReasons: Map<Int, RenownBudgetFailure>,
+        val freeRenownByOwner: Map<Int, Int> = freeRenownByLord,
+        val unavailableOwnerReasons: Map<Int, RenownBudgetFailure> = unavailableLordReasons,
     ) : RenownBudgetResult
     data class Unavailable(val reason: RenownBudgetFailure) : RenownBudgetResult
 }
@@ -64,15 +66,17 @@ object HwihaEnlistmentBudget {
         val accepting = linkedSetOf<Int>()
         val budgets = linkedMapOf<Int, Int>()
         val failures = linkedMapOf<Int, RenownBudgetFailure>()
-        for (lord in generals.values.sortedBy { it.id }) {
-            if (lord.nationId <= 0) continue
-            if (lordStatuses[lord.id] != true) continue
+        val ownerBudgets = linkedMapOf<Int, Int>()
+        val ownerFailures = linkedMapOf<Int, RenownBudgetFailure>()
+        for (owner in generals.values.sortedBy { it.id }) {
+            val lord = owner.nationId > 0 && lordStatuses[owner.id] == true
+            if (!lord && cards.none { it.masterId == owner.id }) continue
             try {
-                val state = person(lord)
-                if (state.acceptsEnlistment) accepting.add(lord.id)
+                val state = person(owner)
+                if (lord && state.acceptsEnlistment) accepting.add(owner.id)
                 var occupied = 0L
                 val seen = mutableSetOf<Int>()
-                for (card in cards.filter { it.masterId == lord.id }.sortedBy { it.id }) {
+                for (card in cards.filter { it.masterId == owner.id }.sortedBy { it.id }) {
                     val id = card.generalId ?: unavailable(RenownBudgetFailure.UNSUPPORTED_UNLINKED_CARD)
                     if (!seen.add(id)) unavailable(RenownBudgetFailure.DUPLICATE_LINKED_PERSON)
                     val linked = generals[id] ?: unavailable(RenownBudgetFailure.LINKED_PERSON_NOT_FOUND)
@@ -80,11 +84,13 @@ object HwihaEnlistmentBudget {
                     if (occupied > Int.MAX_VALUE) unavailable(RenownBudgetFailure.COST_OVERFLOW)
                 }
                 if (occupied > state.renownCapacity) unavailable(RenownBudgetFailure.CAPACITY_EXCEEDED)
-                budgets[lord.id] = state.renownCapacity - occupied.toInt()
+                ownerBudgets[owner.id] = state.renownCapacity - occupied.toInt()
+                if (lord) budgets[owner.id] = ownerBudgets.getValue(owner.id)
             } catch (e: Invalid) {
-                failures[lord.id] = e.reason
+                ownerFailures[owner.id] = e.reason
+                if (lord) failures[owner.id] = e.reason
             }
         }
-        return RenownBudgetResult.Ready(accepting, budgets, actorCost, failures)
+        return RenownBudgetResult.Ready(accepting, budgets, actorCost, failures, ownerBudgets, ownerFailures)
     }
 }

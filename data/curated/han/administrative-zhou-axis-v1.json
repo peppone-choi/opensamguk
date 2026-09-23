@@ -1,0 +1,1058 @@
+{
+  "ledgerId": "han-thirteen-zhou-canon-105-v1",
+  "membershipBasis": "REVIEWED_HHS_GROUP_ID",
+  "rows": [
+    {
+      "administrativeGroupId": "hhs-group:109:京兆尹",
+      "hanTileParentRegionId": "PARENT-0004",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 166,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:右扶風",
+      "hanTileParentRegionId": "PARENT-0006",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 220,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:左馮翊",
+      "hanTileParentRegionId": "PARENT-0005",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 190,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:弘農郡",
+      "hanTileParentRegionId": "PARENT-0003",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 144,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:河內郡",
+      "hanTileParentRegionId": "PARENT-0001",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 60,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:河南尹",
+      "hanTileParentRegionId": "PARENT-0000",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 14,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:109:河東郡",
+      "hanTileParentRegionId": "PARENT-0002",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-109.txt",
+        "groupLine": 100,
+        "stateTailLine": 254
+      },
+      "zhouId": "zhou:司隸"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:中山國",
+      "hanTileParentRegionId": "PARENT-0016",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 336,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:勃海郡",
+      "hanTileParentRegionId": "PARENT-0021",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 452,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:安平國",
+      "hanTileParentRegionId": "PARENT-0017",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 366,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:常山國",
+      "hanTileParentRegionId": "PARENT-0015",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 306,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:梁國",
+      "hanTileParentRegionId": "PARENT-0009",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 128,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:汝南郡",
+      "hanTileParentRegionId": "PARENT-0008",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 50,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:沛國",
+      "hanTileParentRegionId": "PARENT-0010",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 150,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:河閒國",
+      "hanTileParentRegionId": "PARENT-0018",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 394,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:清河國",
+      "hanTileParentRegionId": "PARENT-0019",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 420,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:潁川郡",
+      "hanTileParentRegionId": "PARENT-0007",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 12,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:趙國",
+      "hanTileParentRegionId": "PARENT-0020",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 438,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:鉅鹿郡",
+      "hanTileParentRegionId": "PARENT-0014",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 272,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:陳國",
+      "hanTileParentRegionId": "PARENT-0011",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 196,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:魏郡",
+      "hanTileParentRegionId": "PARENT-0013",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 238,
+        "stateTailLine": 472
+      },
+      "zhouId": "zhou:冀州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:110:魯國",
+      "hanTileParentRegionId": "PARENT-0012",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-110.txt",
+        "groupLine": 218,
+        "stateTailLine": 234
+      },
+      "zhouId": "zhou:豫州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:下邳國",
+      "hanTileParentRegionId": "PARENT-0034",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 315,
+        "stateTailLine": 353
+      },
+      "zhouId": "zhou:徐州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:任城國",
+      "hanTileParentRegionId": "PARENT-0025",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 103,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:山陽郡",
+      "hanTileParentRegionId": "PARENT-0028",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 155,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:廣陵郡",
+      "hanTileParentRegionId": "PARENT-0033",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 289,
+        "stateTailLine": 353
+      },
+      "zhouId": "zhou:徐州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:彭城國",
+      "hanTileParentRegionId": "PARENT-0032",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 269,
+        "stateTailLine": 353
+      },
+      "zhouId": "zhou:徐州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:東平國",
+      "hanTileParentRegionId": "PARENT-0024",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 85,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:東海郡",
+      "hanTileParentRegionId": "PARENT-0030",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 209,
+        "stateTailLine": 353
+      },
+      "zhouId": "zhou:徐州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:東郡",
+      "hanTileParentRegionId": "PARENT-0023",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 51,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:泰山郡",
+      "hanTileParentRegionId": "PARENT-0026",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 113,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:濟北國",
+      "hanTileParentRegionId": "PARENT-0027",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 141,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:濟陰郡",
+      "hanTileParentRegionId": "PARENT-0029",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 179,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:琅邪國",
+      "hanTileParentRegionId": "PARENT-0031",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 239,
+        "stateTailLine": 353
+      },
+      "zhouId": "zhou:徐州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:111:陳留郡",
+      "hanTileParentRegionId": "PARENT-0022",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "groupLine": 13,
+        "stateTailLine": 205
+      },
+      "zhouId": "zhou:兗州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:丹陽郡",
+      "hanTileParentRegionId": "PARENT-0049",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 468,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:九江郡",
+      "hanTileParentRegionId": "PARENT-0048",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 436,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:北海國",
+      "hanTileParentRegionId": "PARENT-0038",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 80,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:南郡",
+      "hanTileParentRegionId": "PARENT-0042",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 248,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:南陽郡",
+      "hanTileParentRegionId": "PARENT-0041",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 170,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:吳郡",
+      "hanTileParentRegionId": "PARENT-0052",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 568,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:平原郡",
+      "hanTileParentRegionId": "PARENT-0036",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 36,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:廬江郡",
+      "hanTileParentRegionId": "PARENT-0050",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 504,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:會稽郡",
+      "hanTileParentRegionId": "PARENT-0051",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 536,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:東萊郡",
+      "hanTileParentRegionId": "PARENT-0039",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 120,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:桂陽郡",
+      "hanTileParentRegionId": "PARENT-0045",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 348,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:樂安國",
+      "hanTileParentRegionId": "PARENT-0037",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 58,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:武陵郡",
+      "hanTileParentRegionId": "PARENT-0046",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 374,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:江夏郡",
+      "hanTileParentRegionId": "PARENT-0043",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 286,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:濟南國",
+      "hanTileParentRegionId": "PARENT-0035",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 12,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:豫章郡",
+      "hanTileParentRegionId": "PARENT-0053",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 598,
+        "stateTailLine": 644
+      },
+      "zhouId": "zhou:揚州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:長沙郡",
+      "hanTileParentRegionId": "PARENT-0047",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 402,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:零陵郡",
+      "hanTileParentRegionId": "PARENT-0044",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 318,
+        "stateTailLine": 432
+      },
+      "zhouId": "zhou:荊州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:112:齊國",
+      "hanTileParentRegionId": "PARENT-0040",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-112.txt",
+        "groupLine": 150,
+        "stateTailLine": 166
+      },
+      "zhouId": "zhou:靑州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:上谷郡",
+      "hanTileParentRegionId": "PARENT-0090",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 770,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:上郡",
+      "hanTileParentRegionId": "PARENT-0080",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 563,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:上黨郡",
+      "hanTileParentRegionId": "PARENT-0078",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 501,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:九真郡",
+      "hanTileParentRegionId": "PARENT-0103",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 1025,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:五原郡",
+      "hanTileParentRegionId": "PARENT-0082",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 613,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:交趾郡",
+      "hanTileParentRegionId": "PARENT-0102",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 999,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:代郡",
+      "hanTileParentRegionId": "PARENT-0089",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 746,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:北地郡",
+      "hanTileParentRegionId": "PARENT-0071",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 386,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:南海郡",
+      "hanTileParentRegionId": "PARENT-0098",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 923,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:右北平郡",
+      "hanTileParentRegionId": "PARENT-0092",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 808,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:合浦郡",
+      "hanTileParentRegionId": "PARENT-0101",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 987,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:太原郡",
+      "hanTileParentRegionId": "PARENT-0079",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 529,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:安定郡",
+      "hanTileParentRegionId": "PARENT-0070",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 368,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:定襄郡",
+      "hanTileParentRegionId": "PARENT-0084",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 659,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:巴郡",
+      "hanTileParentRegionId": "PARENT-0055",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 35,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:廣漢屬國",
+      "hanTileParentRegionId": "PARENT-0063",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 251,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:廣漢郡",
+      "hanTileParentRegionId": "PARENT-0056",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 65,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:廣陽郡",
+      "hanTileParentRegionId": "PARENT-0088",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 734,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:張掖居延屬國",
+      "hanTileParentRegionId": "PARENT-0077",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 494,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:張掖屬國",
+      "hanTileParentRegionId": "PARENT-0076",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 482,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:張掖郡",
+      "hanTileParentRegionId": "PARENT-0073",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 430,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:敦煌郡",
+      "hanTileParentRegionId": "PARENT-0075",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 468,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:日南郡",
+      "hanTileParentRegionId": "PARENT-0104",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 1037,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:朔方郡",
+      "hanTileParentRegionId": "PARENT-0086",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 701,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:樂浪郡",
+      "hanTileParentRegionId": "PARENT-0096",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 868,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:武威郡",
+      "hanTileParentRegionId": "PARENT-0072",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 400,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:武都郡",
+      "hanTileParentRegionId": "PARENT-0068",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 330,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:永昌郡",
+      "hanTileParentRegionId": "PARENT-0062",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 233,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:涿郡",
+      "hanTileParentRegionId": "PARENT-0087",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 718,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:漁陽郡",
+      "hanTileParentRegionId": "PARENT-0091",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 788,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:漢中郡",
+      "hanTileParentRegionId": "PARENT-0054",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 15,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:漢陽郡",
+      "hanTileParentRegionId": "PARENT-0067",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 302,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:牂牁郡",
+      "hanTileParentRegionId": "PARENT-0059",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 133,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:犍為屬國",
+      "hanTileParentRegionId": "PARENT-0065",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 269,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:犍為郡",
+      "hanTileParentRegionId": "PARENT-0058",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 113,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:玄菟郡",
+      "hanTileParentRegionId": "PARENT-0095",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 854,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:益州郡",
+      "hanTileParentRegionId": "PARENT-0061",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 197,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:蒼梧郡",
+      "hanTileParentRegionId": "PARENT-0099",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 939,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:蜀郡",
+      "hanTileParentRegionId": "PARENT-0057",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 89,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:蜀郡屬國",
+      "hanTileParentRegionId": "PARENT-0064",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 259,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:西河郡",
+      "hanTileParentRegionId": "PARENT-0081",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 585,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:越巂郡",
+      "hanTileParentRegionId": "PARENT-0060",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 167,
+        "stateTailLine": 275
+      },
+      "zhouId": "zhou:益州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:遼東屬國",
+      "hanTileParentRegionId": "PARENT-0097",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 906,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:遼東郡",
+      "hanTileParentRegionId": "PARENT-0094",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 830,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:遼西郡",
+      "hanTileParentRegionId": "PARENT-0093",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 818,
+        "stateTailLine": 920
+      },
+      "zhouId": "zhou:幽州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:酒泉郡",
+      "hanTileParentRegionId": "PARENT-0074",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 448,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:金城郡",
+      "hanTileParentRegionId": "PARENT-0069",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 346,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:隴西郡",
+      "hanTileParentRegionId": "PARENT-0066",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 278,
+        "stateTailLine": 498
+      },
+      "zhouId": "zhou:涼州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:雲中郡",
+      "hanTileParentRegionId": "PARENT-0083",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 635,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:鬱林郡",
+      "hanTileParentRegionId": "PARENT-0100",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 963,
+        "stateTailLine": 1049
+      },
+      "zhouId": "zhou:交州"
+    },
+    {
+      "administrativeGroupId": "hhs-group:113:鴈門郡",
+      "hanTileParentRegionId": "PARENT-0085",
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "groupLine": 671,
+        "stateTailLine": 715
+      },
+      "zhouId": "zhou:并州"
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceCatalogId": "hhs-junguozhi-administrative-units-v1"
+}

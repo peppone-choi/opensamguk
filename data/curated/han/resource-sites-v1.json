@@ -146,8 +146,83 @@
    "COUNTY": 90,
    "REGION": 3
   },
-  "distinctSites": 104
+  "distinctSites": 104,
+  "missingRows": 9
  },
+ "missingRows": [
+  {
+   "entryId": "hs:028A:東萊郡:〈巾弦〉:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "disposition": "UNBOUND_JURISDICTION",
+   "reason": "han-tiles jurisdictionRecords 에 「〈巾弦〉」 縣이 없다"
+  },
+  {
+   "entryId": "hs:028A:琅邪郡:海曲:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "disposition": "UNBOUND_JURISDICTION",
+   "reason": "han-tiles jurisdictionRecords 에 「海曲」 縣이 없다"
+  },
+  {
+   "entryId": "hs:028A:琅邪郡:計斤:SALT",
+   "resource": "SALT",
+   "era": "FORMER_HAN",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "disposition": "UNBOUND_JURISDICTION",
+   "reason": "han-tiles jurisdictionRecords 에 「計斤」 縣이 없다"
+  },
+  {
+   "entryId": "hhs:042:WOOD:procurement-90:常山",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "disposition": "EVENT_NOT_PERSISTENT_SITE",
+   "reason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토"
+  },
+  {
+   "entryId": "hhs:042:WOOD:procurement-90:鉅鹿",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "disposition": "EVENT_NOT_PERSISTENT_SITE",
+   "reason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토"
+  },
+  {
+   "entryId": "hhs:042:WOOD:procurement-90:涿郡",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "matchStatus": "UNREVIEWED_EVENT_PROCUREMENT",
+   "disposition": "EVENT_NOT_PERSISTENT_SITE",
+   "reason": "특정 사건의 조달 기록. 현재 지도 귀속·생산지 미검토"
+  },
+  {
+   "entryId": "UNKNOWN:WOOD:LATER_HAN",
+   "resource": "WOOD",
+   "era": "LATER_HAN",
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "disposition": "DOCUMENTED_GAP",
+   "reason": "後漢 縣 단위 벌채지·지속 생산량은 미확정이다. 卷42의 90년 장례 목재 조달3郡은 별도 사건 근거로 보존한다. han-tiles terrainLegend 10종(SEA·PLAIN·MOUNTAIN·RIVER·LAKE·DESERT·PLATEAU·BASIN·HILL·OUT_OF_SCOPE)에 숲이 없다. 前漢 木官 1곳(蜀郡 嚴道)은 시대가 다른 근거다. 현대 식생을 2~3세기 경관으로 단정하지 않는다(스펙 §9.3)."
+  },
+  {
+   "entryId": "UNKNOWN:HORSE:PASTURE_SITES",
+   "resource": "HORSE",
+   "era": "LATER_HAN",
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "disposition": "DOCUMENTED_GAP",
+   "reason": "목장(苑·牧師苑)의 縣 단위 위치. 後漢書 색인에서 「牧師苑」·「馬苑」 0건. 涼州諸苑·六郡은 州·郡 단위 근거뿐이다."
+  },
+  {
+   "entryId": "UNKNOWN:FORMER_HAN:DILIZHI_LOWER",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "matchStatus": "UNKNOWN_NO_SOURCE",
+   "disposition": "DOCUMENTED_GAP",
+   "reason": "漢書 地理志 下편(武都~長沙國)의 班固 自注. 위키소스 顏師古註본은 上편(京兆尹~巴郡)뿐이고, ctext 는 자동 수집을 막으며, wayback 의 ctext 下편 캡처는 自注가 빠진 판이다. 下편 鐵官·鹽官·馬官(隴西·北地·遼東 등)은 이 원장에 없다 — 없음이 아니라 미수집이다."
+  }
+ ],
  "entries": [
   {
    "id": "hhs:109:河內郡:018:IRON",

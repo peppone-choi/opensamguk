@@ -104,7 +104,7 @@ export default function YuedanPage() {
                         <div style={{ paddingTop: 8 }}>
                             <KV
                                 items={[
-                                    { k: '휘하 코스트 합', v: self ? String(self.retinueCost) : '—' },
+                                    { k: '휘하 코스트 합', v: self?.retinueCost == null ? '—' : String(self.retinueCost) },
                                     { k: '코스트 상한', v: self?.renown != null ? String(self.renown) : '—' },
                                 ]}
                             />

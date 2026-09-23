@@ -90,6 +90,18 @@ class CommittedLedgerTest(unittest.TestCase):
         self.assertEqual(unknown, {"UNKNOWN:WOOD:LATER_HAN", "UNKNOWN:HORSE:PASTURE_SITES",
                                    "UNKNOWN:FORMER_HAN:DILIZHI_LOWER"})
 
+    def test_missing_rows_are_closed_against_live_sites_with_a_matched_control(self) -> None:
+        expected = {e["id"] for e in self.entries if e["matchStatus"] in
+                    {"UNKNOWN_NO_SOURCE", "UNREVIEWED_EVENT_PROCUREMENT", "UNMATCHED_NO_JURISDICTION"}}
+        actual = {row["entryId"] for row in self.ledger["missingRows"]}
+        self.assertEqual(expected, actual)
+        self.assertEqual(len(actual), self.ledger["counts"]["missingRows"])
+        self.assertIn("UNKNOWN:WOOD:LATER_HAN", actual)
+        self.assertNotIn("hhs:109:河內郡:018:IRON", actual)
+        damaged = json.loads(json.dumps(self.ledger))
+        damaged["missingRows"].pop()
+        self.assertTrue(any("결손 목록" in error for error in brs.validate_ledger(damaged)))
+
     def test_horse_is_region_and_commandery_level_only(self) -> None:
         horses = [e for e in self.select(resource="HORSE", era="LATER_HAN") if e["evidence"]]
         self.assertEqual(sorted(e["level"] for e in horses), ["COMMANDERY"] * 6 + ["REGION"])
