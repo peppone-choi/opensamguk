@@ -6,6 +6,7 @@
   "inputs": [
     {"inputId": "action.enlist", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_임관", "che_랜덤임관", "che_장수대상임관"]},
     {"inputId": "action.deploy", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_출병"]},
+    {"inputId": "action.scout", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_첩보"]},
     {"inputId": "court.dispatch", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_발령"]},
     {"inputId": "court.dispatchReply", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
     {"inputId": "placement.assign", "kind": "PLACEMENT", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},

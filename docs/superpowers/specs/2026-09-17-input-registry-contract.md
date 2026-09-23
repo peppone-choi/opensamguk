@@ -9,6 +9,8 @@
 
 사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언을 적고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 누락만 SAMMO 기본값이며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
+2026-09-23 현재 원장은 출사 `action.enlist`·출병 `action.deploy`·첩보 `action.scout`(직접 행동, [휘하 시야·첩보 계약](./2026-09-23-hwiha-vision-contract.md) §6)와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 배치·방침·공사·계책 4행은 PLANNED다.
+
 2026-09-21 현재 원장은 출사 `action.enlist`와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 나머지4행은 PLANNED다. 이 결정은 입력 기능 완료나 계약 전체의 승격이 아니다. actor·권한·효과 봉투는 출사 소비자의 접수·실행 계약을 따르며, 아래 WORK·UI·이전 관련 미결을 기반 구현 완료로 포장하지 않는다.
 
 ## 1. 왜 필요한가 — 2026-09-17 SAMMO 경로 관측
