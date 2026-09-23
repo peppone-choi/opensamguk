@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "hwiha-domestic-v1",
+  "status": "PROVISIONAL — 사용자 결정 대기",
+  "note": "휘하 내정 입력(배치·방침·공사)의 효과·비용·기간. 설계 문서(§4·§8.2·§9.1)가 정한 것은 종류·능력치 대응·자원 종류뿐이고, 여기 있는 수치는 모두 구현자가 둔 잠정값이다. 사료 근거가 없는 게임 설계 수치이며 사용자 결정 전까지 그대로 확정하지 않는다. 계산은 정수이고 효과량 = 기준량 × 배율(천분율) / 1000, 0 쪽으로 자른다.",
+  "scaling": {
+    "status": "PROVISIONAL — 사용자 결정 대기",
+    "note": "縣令이 앉은 縣은 배율 = 1000 + (능력치 − neutralStat) × permillePerStatPoint (+ 본관이면 hometownBonusPermille), 아래로 minimumPermille. 빈자리는 emptySeatPermille. 능력치 대응은 §8.2: 정치 = 세수·개간, 매력 = 민심·유민, 통솔 = 치안·둔전병, 지력 = 공사 속도.",
+    "neutralStat": 50,
+    "permillePerStatPoint": 10,
+    "minimumPermille": 200,
+    "emptySeatPermille": 500,
+    "hometownBonusPermille": 200
+  },
+  "defaultCountyPolicy": {
+    "status": "PROVISIONAL — 사용자 결정 대기",
+    "note": "§8.2 「빈자리는 기본 방침으로 자동 운영」의 기본 방침. 설계 문서는 어느 방침인지 정하지 않았다.",
+    "policy": "AGRICULTURE"
+  },
+  "countyPolicies": [
+    {
+      "code": "AGRICULTURE", "name": "권농", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [{"indicator": "agriculture", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}],
+      "resources": []
+    },
+    {
+      "code": "COMMERCE", "name": "중상", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [{"indicator": "commerce", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}],
+      "resources": []
+    },
+    {
+      "code": "HEAVY_TAX", "name": "중세", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [{"indicator": "trust", "amount": -1, "unit": "ABSOLUTE", "stat": null}],
+      "resources": [{"resource": "money", "direction": "CREDIT", "perHouseholdPermille": 2000, "stat": "politics"}]
+    },
+    {
+      "code": "RELIEF", "name": "휼민", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [
+        {"indicator": "trust", "amount": 2, "unit": "ABSOLUTE", "stat": "charm"},
+        {"indicator": "population", "amount": 1, "unit": "PERMILLE_OF_CURRENT", "stat": "charm"}
+      ],
+      "resources": [{"resource": "grain", "direction": "DEBIT", "perHouseholdPermille": 1000, "stat": null}]
+    },
+    {
+      "code": "MILITARY_FARM", "name": "둔전", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [
+        {"indicator": "agriculture", "amount": 10, "unit": "ABSOLUTE", "stat": "politics"},
+        {"indicator": "security", "amount": 10, "unit": "ABSOLUTE", "stat": "leadership"}
+      ],
+      "resources": []
+    },
+    {
+      "code": "LEVY", "name": "징발", "status": "PROVISIONAL — 사용자 결정 대기",
+      "indicators": [
+        {"indicator": "trust", "amount": -2, "unit": "ABSOLUTE", "stat": null},
+        {"indicator": "population", "amount": -1, "unit": "PERMILLE_OF_CURRENT", "stat": null}
+      ],
+      "resources": [{"resource": "grain", "direction": "CREDIT", "perHouseholdPermille": 5000, "stat": "leadership"}]
+    }
+  ],
+  "corpsPolicies": [
+    {"code": "DRILL", "name": "조련", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "저장·조회만 한다. 훈련 증가 소비자는 아직 없다."},
+    {"code": "ASSAULT", "name": "공략", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "저장·조회만 한다. 공성 보정 소비자는 아직 없다."},
+    {"code": "DEFEND", "name": "수비", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "방어 측 진형 방침(§6.3). 저장·조회만 한다. 진형 어휘와 전투 소비자는 아직 없다."},
+    {"code": "INTERCEPT", "name": "요격", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "월드 hwihaMarchReactions.interceptions 에 싣는다. 요격 범위·판정은 조우 소비자가 정한다."},
+    {"code": "EVADE", "name": "회피", "status": "PROVISIONAL — 사용자 결정 대기", "effect": "월드 hwihaMarchReactions.avoidanceOrders 에 싣는다. 물러나기 판정은 조우 소비자가 정한다."}
+  ],
+  "works": {
+    "status": "PROVISIONAL — 사용자 결정 대기",
+    "note": "순 경계마다 진척 = progressPerPhase × 배율(지력; 빈자리는 emptySeatPermille) / 1000. 비용은 진척에 비례해 순마다 나눠 낸다: 누적 청구 = 총비용 × 진척 / requiredProgress(내림). 창고가 모자라면 그 순은 진척 없이 멈춤 사유를 남기고 다음 순 다시 시도한다. 縣마다 진행 중인 공사는 maxActiveWorksPerCounty 개, 같은 공사는 한 번만 완공한다.",
+    "maxActiveWorksPerCounty": 1,
+    "progressPerPhase": 100,
+    "kinds": [
+      {"code": "IRRIGATION", "name": "수리", "requiredProgress": 600,
+        "cost": {"money": 60000, "grain": 20000, "iron": 0, "timber": 0, "horses": 0},
+        "completion": [{"indicator": "agriculture", "amount": 300}]},
+      {"code": "MILITARY_FARM", "name": "둔전", "requiredProgress": 600,
+        "cost": {"money": 40000, "grain": 40000, "iron": 0, "timber": 0, "horses": 0},
+        "completion": [{"indicator": "agriculture", "amount": 200}, {"indicator": "security", "amount": 100}]},
+      {"code": "FORTIFICATION", "name": "성방", "requiredProgress": 800,
+        "cost": {"money": 60000, "grain": 0, "iron": 0, "timber": 3000, "horses": 0},
+        "completion": [{"indicator": "defence", "amount": 500}]},
+      {"code": "ROAD", "name": "도로", "requiredProgress": 600,
+        "cost": {"money": 40000, "grain": 0, "iron": 0, "timber": 2000, "horses": 0},
+        "completion": [{"indicator": "commerce", "amount": 100}]},
+      {"code": "POST_STATION", "name": "역참", "requiredProgress": 600,
+        "cost": {"money": 40000, "grain": 0, "iron": 0, "timber": 0, "horses": 100},
+        "completion": []},
+      {"code": "WAREHOUSE", "name": "창고", "requiredProgress": 400,
+        "cost": {"money": 30000, "grain": 0, "iron": 0, "timber": 1000, "horses": 0},
+        "completion": []},
+      {"code": "GRANARY", "name": "곡창", "requiredProgress": 400,
+        "cost": {"money": 30000, "grain": 10000, "iron": 0, "timber": 0, "horses": 0},
+        "completion": []},
+      {"code": "WATCHTOWER_BEACON", "name": "망루봉화", "requiredProgress": 400,
+        "cost": {"money": 20000, "grain": 0, "iron": 0, "timber": 1000, "horses": 0},
+        "completion": []},
+      {"code": "WALL_GATE", "name": "성벽관문", "requiredProgress": 1000,
+        "cost": {"money": 80000, "grain": 0, "iron": 0, "timber": 4000, "horses": 0},
+        "completion": [{"indicator": "wall", "amount": 500}]},
+      {"code": "BARRACKS", "name": "병영", "requiredProgress": 600,
+        "cost": {"money": 50000, "grain": 0, "iron": 0, "timber": 2000, "horses": 0},
+        "completion": []},
+      {"code": "MARKET_WATERWAY", "name": "시장수운", "requiredProgress": 800,
+        "cost": {"money": 60000, "grain": 0, "iron": 0, "timber": 2000, "horses": 0},
+        "completion": [{"indicator": "commerce", "amount": 300}]}
+    ]
+  }
+}
