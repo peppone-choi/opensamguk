@@ -104,6 +104,8 @@ class ScenarioImporter(
         val event: Int,
         /** HWIHA 시드만 0 이 아니다(위치 권위 spec §2.2). */
         val generalPosition: Int = 0,
+        /** HWIHA 시나리오가 선언한 초기 부곡 수. */
+        val bugok: Int = 0,
     )
 
     fun importAll(
@@ -141,6 +143,9 @@ class ScenarioImporter(
         // 4f' — 위치 권위 spec §2.2·§3-3(HWIHA): 전 장수 위치 행. 부팅이 고를 변형과 같은 핀으로.
         val positionCount = if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
 
+        // 4f'' — HWIHA 초기 부곡(시나리오 `hwihaUnits` 선언만). 선언이 없으면 아무 행도 만들지 않는다.
+        val unitCount = insertHwihaUnits(jdbc, general, worldId)
+
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
         val nationTurnCount = insertNationTurns(jdbc, worldId)
 
@@ -167,7 +172,27 @@ class ScenarioImporter(
             ngGames = ngGamesCount,
             event = eventCount,
             generalPosition = positionCount,
+            bugok = unitCount,
         )
+    }
+
+    private fun insertHwihaUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
+        if (scenario.hwihaUnits.isEmpty()) return 0
+        require(scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) { "hwihaUnits requires HWIHA" }
+        val rows = scenario.hwihaUnits.mapIndexed { index, unit ->
+            val owner = generals.singleOrNull { it.src.name == unit.general }
+                ?: throw IllegalArgumentException("hwihaUnits general is not seeded: ${unit.general}")
+            arrayOf<Any>(worldId.value, index + 1, owner.id, unit.name, unit.troops, unit.crewTypeId, unit.training,
+                unit.morale, unit.provisions)
+        }
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_bugok (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, provisions)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            rows,
+        )
+        return rows.size
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
