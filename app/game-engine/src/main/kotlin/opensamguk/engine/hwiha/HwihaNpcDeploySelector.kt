@@ -35,6 +35,8 @@ class HwihaNpcDeploySelector(
     fun choose(world: InMemoryTurnWorld, actorId: Int): DeployInput? {
         val actor = world.getGeneralById(actorId) ?: return null
         if (!isUnowned(actor.userId) || actor.nationId <= 0) return null
+        // A held NPC card moves through its holder's deployment and standing policy.
+        if (world.listRetainers().any { it.generalId == actorId }) return null
         if (HwihaCorpsEncounter.META_KEY in actor.meta || HwihaCountyAssignment.META_KEY in actor.meta) return null
         if (world.listHwihaSieges().any { it.status == HwihaSiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
         val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
@@ -99,6 +101,7 @@ class HwihaNpcDeploySelector(
     fun reliefFor(world: InMemoryTurnWorld, actorId: Int): StrategicNodeRef.LandProvince? {
         val actor = world.getGeneralById(actorId) ?: return null
         if (!isUnowned(actor.userId) || actor.nationId <= 0) return null
+        if (world.listRetainers().any { it.generalId == actorId }) return null
         val troops = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }.sumOf { it.troops.toLong() }
         if (troops <= 0) return null
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null

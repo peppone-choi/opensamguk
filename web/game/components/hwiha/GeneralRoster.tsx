@@ -106,7 +106,7 @@ export default function GeneralRoster() {
                 </div>
                 {retinue.data ? (
                     <Chip tone={retinue.data.overCapacity ? 'rust' : 'bronze'}>
-                        {`⚖ ${retinue.data.costSum} / ${retinue.data.renown ?? '—'}`}
+                        {`⚖ ${retinue.data.costSum ?? '—'} / ${retinue.data.renown ?? '—'}`}
                     </Chip>
                 ) : null}
             </div>

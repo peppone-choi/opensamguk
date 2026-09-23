@@ -12,6 +12,12 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.logic.input.DirectPersonCard
+import opensamguk.logic.input.HwihaEnlistmentBudget
+import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyInput
+import opensamguk.logic.input.RenownBudgetResult
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.retainer.RetainerRules
 import java.time.Instant
 
@@ -63,7 +69,8 @@ class RetainerHandler(
         if (role !in RetainerRules.ROLES) return fail(type, c.generalId, RetainerRules.REASON_INPUT)
 
         val mine = world.retainersOf(me.id)
-        if (mine.size >= RetainerRules.MAX_RETAINERS) return fail(type, c.generalId, RetainerRules.REASON_RETAINERS_FULL)
+        if (world.ruleProfile != RuleProfile.HWIHA && mine.size >= RetainerRules.MAX_RETAINERS)
+            return fail(type, c.generalId, RetainerRules.REASON_RETAINERS_FULL)
         val boundIds = world.listRetainers().mapNotNull { it.generalId }.toSet()
         val candidates = world.listGenerals().filter { candidate ->
             RetainerRules.existingCandidateEligible(me.id, me.nationId, candidate.id, candidate.nationId,
@@ -81,9 +88,54 @@ class RetainerHandler(
         } else candidates.firstOrNull { it.id == c.targetGeneralId }
             ?: return fail(type, c.generalId, RetainerRules.REASON_INVALID_CANDIDATE)
         val name = target.name
-        RetainerRules.pledgeDeny(mine.size, mine.map { it.name }, name, me.gold)?.let { return fail(type, c.generalId, it) }
+        RetainerRules.pledgeDeny(mine.size, mine.map { it.name }, name, me.gold,
+            enforceLegacySlotLimit = world.ruleProfile != RuleProfile.HWIHA)?.let { return fail(type, c.generalId, it) }
+        val joining = if (world.ruleProfile == RuleProfile.HWIHA) {
+            val people = world.listGenerals()
+            val budget = HwihaEnlistmentBudget.assess(target.id, RuleProfile.HWIHA,
+                people.map { general ->
+                    val stats = general.stats
+                    PersonPolicyInput(general.id, general.nationId, stats.leadership, stats.strength,
+                        stats.intelligence, stats.politics, stats.charm, general.meta)
+                }, world.listRetainers().map { DirectPersonCard(it.id, it.masterGeneralId, it.generalId) })
+            val ready = budget as? RenownBudgetResult.Ready
+                ?: return fail(type, c.generalId, "인물 카드의 능력치 출처를 확인할 수 없습니다.")
+            if (me.id in ready.unavailableOwnerReasons) return fail(type, c.generalId, "휘하 명망 사용량을 확인할 수 없습니다.")
+            val capacity = try { HwihaPersonPolicyState.read(me.meta)?.renownCapacity }
+                catch (_: IllegalArgumentException) { null }
+                ?: return fail(type, c.generalId, "주인의 명망 상한을 확인할 수 없습니다.")
+            if ((ready.freeRenownByOwner[me.id] ?: capacity) < ready.actorCardCost)
+                return fail(type, c.generalId, "명망 수용량이 부족합니다.")
+            val children = world.listRetainers().filter { it.generalId != null }
+                .groupBy({ it.masterGeneralId }, { it.generalId!! })
+            val seen = mutableSetOf<Int>()
+            val queue = ArrayDeque<Int>().apply { add(target.id) }
+            val followers = mutableListOf<TurnGeneral>()
+            while (queue.isNotEmpty()) {
+                val id = queue.removeFirst()
+                if (!seen.add(id)) return fail(type, c.generalId, "휘하 관계가 순환합니다.")
+                val follower = world.getGeneralById(id)
+                    ?: return fail(type, c.generalId, "휘하 인물 카드를 찾을 수 없습니다.")
+                if (id == me.id || (id != target.id && follower.userId?.toLongOrNull()?.let { it > 0 } == true))
+                    return fail(type, c.generalId, "사람 장수의 휘하 관계가 올바르지 않습니다.")
+                if (follower.nationId != target.nationId) return fail(type, c.generalId, "휘하 소속이 일치하지 않습니다.")
+                if (id in ready.unavailableOwnerReasons) return fail(type, c.generalId, "휘하 명망 사용량을 확인할 수 없습니다.")
+                followers += follower
+                queue.addAll(children[id].orEmpty())
+            }
+            followers
+        } else emptyList()
 
         applyGeneral(me, me.copy(gold = me.gold - RetainerRules.PLEDGE_COST_GOLD))
+        if (joining.isNotEmpty() && target.nationId != me.nationId) {
+            joining.forEach { applyGeneral(it, it.copy(nationId = me.nationId)) }
+            world.getNationById(me.nationId)?.let { nation ->
+                val count = world.listGenerals().count { it.nationId == nation.id && it.npcState != 5 }
+                val after = nation.copy(meta = nation.meta + ("gennum" to count))
+                recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(after))
+                world.applyNationDirtyFree(after)
+            }
+        }
         val id = world.allocateRetainerId()
         world.createRetainer(
             Retainer(

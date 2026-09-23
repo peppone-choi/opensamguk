@@ -5,8 +5,10 @@ import opensamguk.common.wire.RetainerActionResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.retainer.RetainerMonthlyService
+import opensamguk.engine.hwiha.HwihaCampaignWorldFixture
 import opensamguk.engine.turn.*
 import opensamguk.logic.retainer.RetainerRules
+import opensamguk.logic.input.HwihaPersonPolicyState
 import java.time.Instant
 import kotlin.test.*
 
@@ -28,6 +30,31 @@ class ExistingNpcRetainerTest {
         RetainerHandler(world, ChangeRecorder(), { now }).handlePledge(
             TurnDaemonCommand.RetainerPledge(generalId = master, targetGeneralId = target, random = random, relation = "lieutenant"),
         ) as RetainerActionResult
+
+    private fun hwihaWorld(capacity: Int): InMemoryTurnWorld {
+        val fixture = HwihaCampaignWorldFixture()
+        val route = fixture.route()
+        val owner = fixture.person(10, 1, route.startCity, lord = false).copy(npcState = 0, gold = 5000,
+            meta = mapOf("hwihaLord" to false, HwihaPersonPolicyState.META_KEY to
+                HwihaPersonPolicyState(capacity, true, "verified-fixture", "1", 10).toMetaValue()))
+        val target = fixture.person(20, 0, route.startCity, lord = false).copy(gold = 5000,
+            stats = GeneralStats(80, 70, 60, 50, 50))
+        return fixture.world(listOf(owner to route.first, target to route.first))
+    }
+
+    @Test fun `HWIHA pledge charges the holder for the NPC card and moves its allegiance`() {
+        assertNull(RetainerRules.pledgeDeny(5, emptyList(), "추가", 5000, enforceLegacySlotLimit = false))
+        val insufficient = hwihaWorld(6)
+        assertFalse(pledge(insufficient).ok)
+        assertTrue(insufficient.listRetainers().isEmpty())
+        assertEquals(0, insufficient.getGeneralById(20)!!.nationId)
+        assertEquals(5000, insufficient.getGeneralById(10)!!.gold)
+
+        val enough = hwihaWorld(7)
+        assertTrue(pledge(enough).ok)
+        assertEquals(1, enough.getGeneralById(20)!!.nationId)
+        assertEquals(10, enough.listRetainers().single().masterGeneralId)
+    }
 
     @Test fun `pledge preserves actual character and its army and AI`() {
         val world = world()
