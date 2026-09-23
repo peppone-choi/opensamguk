@@ -100,10 +100,19 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   await terminal(page, await reply);
   await expect.poll(async () => (await read<DispatchPendingResponse>(page, dispatchPath)).dispatches
     .find(d => d.dispatchId === dispatch.dispatchId)?.status).toBe('ACCEPTED');
-  const marchStop = () => sql(`SELECT coalesce(meta->'hwihaMarch'->>'stop','') FROM general
-    WHERE world_id=${worldId} AND id=${generalId};`);
-  // The observed 762 km appointment route takes at least 26 turns at 30 km/turn.
-  await expect.poll(marchStop, { timeout: 2_400_000, intervals: [10_000] }).toBe('ARRIVED');
+  const marchState = () => JSON.parse(sql(`SELECT json_build_object(
+    'stop',meta->'hwihaMarch'->>'stop',
+    'edgeIndex',coalesce((meta->'hwihaMarch'->>'edgeIndex')::integer,0),
+    'paidMm',coalesce((meta->'hwihaMarch'->>'paidMm')::bigint,0),
+    'routeCostMm',(meta->'hwihaMarch'->'path'->>'totalCostMm')::bigint)
+    FROM general WHERE world_id=${worldId} AND id=${generalId};`)) as
+    { stop: string | null; edgeIndex: number; paidMm: number; routeCostMm: number | null };
+  // New characters are born in a random neutral city anywhere in the world.
+  // Appointment travel must advance, while arrival time depends on that draw.
+  await expect.poll(() => {
+    const march = marchState();
+    return march.edgeIndex > 0 || march.paidMm > 0 || march.stop === 'ARRIVED';
+  }, { timeout: 600_000, intervals: [10_000] }).toBe(true);
 
   const siegeSummary = () => JSON.parse(sql(`SELECT json_build_object('active', count(*) FILTER (WHERE status='ACTIVE'),
     'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM hwiha_siege WHERE world_id=${worldId};`)) as
@@ -154,7 +163,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   await testInfo.attach('phase-events', { body: phaseEvents, contentType: 'application/json' });
   const events = JSON.parse(phaseEvents) as { kind: string; refs?: { money?: number; grain?: number } }[];
   expect(events.some(e => e.kind === 'income.monthly' && ((e.refs?.money ?? 0) > 0 || (e.refs?.grain ?? 0) > 0))).toBe(true);
-  await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, marchStop: marchStop(),
+  await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, march: marchState(),
     siege: siegeSummary(), yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);
