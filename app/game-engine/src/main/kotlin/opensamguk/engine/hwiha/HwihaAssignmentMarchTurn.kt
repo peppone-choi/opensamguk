@@ -22,7 +22,12 @@ class HwihaAssignmentMarchTurn(
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
-        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) return
+        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) {
+            // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
+            val siege = HwihaSiegeService(world, recorder, topology, metrics, cells)
+            if (siege.startIfArrived(generalId) && isUnowned(generalId)) siege.npcAct(generalId)
+            return
+        }
         val actor = world.getGeneralById(generalId) ?: return
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }
@@ -59,6 +64,9 @@ class HwihaAssignmentMarchTurn(
             }
         }
     }
+
+    private fun isUnowned(generalId: Int): Boolean = world.getGeneralById(generalId)?.userId
+        .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
 
     private fun log(generalId: Int, text: String) {
         world.pushLog(LogEntryDraft(scope = "general", category = "action", text = text,

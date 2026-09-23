@@ -333,6 +333,7 @@ class DaemonLoopConfig {
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
+            hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -516,6 +517,11 @@ class DaemonLoopConfig {
             recoveryGateProvider = recoveryGateProvider,
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
+            hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
+                opensamguk.engine.hwiha.HwihaPhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
+                    artifacts.provinceCells)
+            } else null,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,
                 bettingFactory = { liveWorld, liveRecorder ->

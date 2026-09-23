@@ -172,6 +172,7 @@ class WorldSnapshotLoader(
         val operations = loadOperations()
         val operationUnits = loadOperationUnits()
         val battlePlans = loadBattlePlans()
+        val hwihaSieges = loadHwihaSieges()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -198,6 +199,7 @@ class WorldSnapshotLoader(
             operations = operations,
             operationUnits = operationUnits,
             battlePlans = battlePlans,
+            hwihaSieges = hwihaSieges,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
@@ -291,6 +293,33 @@ class WorldSnapshotLoader(
                 morale = rs.getInt("morale"), fatigue = rs.getInt("fatigue"), provisions = rs.getInt("provisions"),
                 commanderRetainerId = rs.getObject("commander_retainer_id")?.let { (it as Number).toInt() },
                 commanderBonusApplied = rs.getBoolean("commander_bonus_applied"),
+            )
+        },
+        worldId.value,
+    )
+
+    /** HWIHA 포위(V60) 적재 — 끝난 포위도 조회·기록용으로 싣는다. 행 0 이면 빈 목록. */
+    private fun loadHwihaSieges(): List<opensamguk.engine.turn.HwihaSiege> = jdbc.query(
+        "SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id, " +
+            "defender_nation_id, approach_province_id, started_year, started_month, started_phase, settled_year, settled_month, " +
+            "settled_phase, turns, morale, garrison, end_reason, timeline::text AS timeline " +
+            "FROM hwiha_siege WHERE world_id = ? ORDER BY county_id",
+        { rs, _ ->
+            fun nullableInt(column: String): Int? = rs.getObject(column)?.let { (it as Number).toInt() }
+            @Suppress("UNCHECKED_CAST")
+            val timeline = (opensamguk.infra.persistence.MetaJson.decode("{\"timeline\":${rs.getString("timeline")}}")["timeline"]
+                as? List<Map<String, Any?>>) ?: error("hwiha_siege.timeline is not an array")
+            opensamguk.engine.turn.HwihaSiege(
+                countyId = rs.getInt("county_id"), status = rs.getString("status"),
+                besiegerGeneralId = rs.getInt("besieger_general_id"),
+                besiegerOwnerGeneralId = rs.getInt("besieger_owner_general_id"),
+                besiegerOrderId = rs.getString("besieger_order_id"), besiegerNationId = rs.getInt("besieger_nation_id"),
+                defenderNationId = rs.getInt("defender_nation_id"), approachProvinceId = rs.getString("approach_province_id"),
+                startedYear = rs.getInt("started_year"), startedMonth = rs.getInt("started_month"),
+                startedPhase = rs.getInt("started_phase"), settledYear = nullableInt("settled_year"),
+                settledMonth = nullableInt("settled_month"), settledPhase = nullableInt("settled_phase"),
+                turns = rs.getInt("turns"), morale = rs.getInt("morale"), garrison = rs.getInt("garrison"),
+                endReason = rs.getString("end_reason"), timeline = timeline,
             )
         },
         worldId.value,

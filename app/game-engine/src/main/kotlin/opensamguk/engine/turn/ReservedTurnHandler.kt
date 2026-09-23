@@ -194,6 +194,8 @@ class ReservedTurnHandler(
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
     private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
+    /** HWIHA 강공 격자에 쓰는 핀된 省 칸 색인. 없으면 공성 입력은 상태 없음으로 거절된다. */
+    private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
 ) {
@@ -203,6 +205,8 @@ class ReservedTurnHandler(
     private val deployHandler by lazy { opensamguk.engine.hwiha.HwihaDeployHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
     private val enlistmentHandler by lazy { HwihaEnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
+    private val siegeHandler by lazy { opensamguk.engine.hwiha.HwihaSiegeHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -281,6 +285,9 @@ class ReservedTurnHandler(
             )
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
+            }
+            for (siegeInput in listOf(opensamguk.engine.hwiha.HwihaSiegeHandler.ASSAULT, opensamguk.engine.hwiha.HwihaSiegeHandler.DEMAND_SURRENDER)) {
+                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {

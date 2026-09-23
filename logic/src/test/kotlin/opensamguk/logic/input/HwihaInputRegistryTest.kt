@@ -15,6 +15,7 @@ class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
+        "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 

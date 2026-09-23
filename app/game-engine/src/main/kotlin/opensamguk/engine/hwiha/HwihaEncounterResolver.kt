@@ -75,11 +75,15 @@ class HwihaEncounterResolver(
         val now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase)
         // 1. Losses: subtract the battle's casualties from the live units (never overwrite later changes).
         val finals = result.units.associateBy { it.bugokId }
+        // A unit row cannot hold zero troops (general_bugok_troops_ck): an annihilated unit is removed.
+        val destroyed = sortedSetOf<Int>()
         for (sealedUnit in forces.units.sortedBy { it.bugokId }) {
             val live = world.getBugokById(sealedUnit.bugokId) ?: continue
             val final = finals.getValue(sealedUnit.bugokId)
             val lost = sealedUnit.troops - final.troops
-            val next = live.copy(troops = (live.troops - lost).coerceAtLeast(0), morale = final.morale, fatigue = final.fatigue)
+            val troops = (live.troops - lost).coerceAtLeast(0)
+            if (troops == 0) { world.removeBugok(live.id); destroyed += live.id; continue }
+            val next = live.copy(troops = troops, morale = final.morale, fatigue = final.fatigue)
             if (next != live) world.updateBugok(next)
         }
         val participants = listOf(encounter.attacker) + encounter.defenders
@@ -95,7 +99,20 @@ class HwihaEncounterResolver(
         for (participant in participants.sortedBy { it.commanderGeneralId }) {
             updateMeta(participant.commanderGeneralId) { meta -> meta - SEALED_KEYS + (BATTLE_RECORD_KEY to record) }
         }
-        // 3. Losers end their deployment. The attacker withdraws to the province it came from.
+        // 3. Surviving corps drop annihilated units; a corps with none left ends like a loser.
+        val ended = result.losers.toMutableSet()
+        for (participant in participants.filter { it.commanderGeneralId !in ended }) {
+            if (participant.bugokIds.none { it in destroyed }) continue
+            val remaining = participant.bugokIds.filter { it !in destroyed }
+            if (remaining.isEmpty()) { endDeployment(participant); ended += participant.commanderGeneralId; continue }
+            updateMeta(participant.ownerGeneralId) { meta ->
+                val deployment = HwihaDeploymentState.read(meta) ?: return@updateMeta meta
+                meta + (HwihaDeploymentState.META_KEY to HwihaDeploymentState(deployment.corps.map {
+                    if (it.orderId == participant.orderId) it.copy(bugokIds = remaining.sorted()) else it
+                }).toMetaValue())
+            }
+        }
+        // 4. Losers end their deployment. The attacker withdraws to the province it came from.
         for (loser in result.losers) {
             val participant = participants.single { it.commanderGeneralId == loser }
             endDeployment(participant)
@@ -105,8 +122,8 @@ class HwihaEncounterResolver(
                 }
             }
         }
-        // 4. A victorious attacker keeps its order; its march resumes next turn from the won province.
-        if (encounter.attacker.commanderGeneralId in result.winners) {
+        // 5. A victorious attacker keeps its order; its march resumes next turn from the won province.
+        if (encounter.attacker.commanderGeneralId in result.winners && encounter.attacker.commanderGeneralId !in ended) {
             updateMeta(encounter.attacker.commanderGeneralId) { meta ->
                 val march = try { HwihaCorpsMarchState.read(meta, topology, metrics) }
                     catch (_: IllegalArgumentException) { null } ?: return@updateMeta meta
@@ -116,14 +133,14 @@ class HwihaEncounterResolver(
                 meta + (HwihaCorpsMarchState.META_KEY to march.copy(checkpoint = checkpoint.copy(stop = stop)).toMetaValue())
             }
         }
-        // 5. Renown events (once per kind per month) and the provisional captive marker.
+        // 6. Renown events (once per kind per month) and the provisional captive marker.
         for (winner in result.winners) recordRenown(winner, HwihaRenownEvents.Kind.BATTLE_VICTORY)
         for (loser in result.losers) recordRenown(loser, HwihaRenownEvents.Kind.BATTLE_DEFEAT)
         for ((captive, captor) in result.captives) {
             updateMeta(captive) { meta -> meta + (CAPTIVE_KEY to linkedMapOf("version" to 1, "captorGeneralId" to captor,
                 "encounterId" to encounter.encounterId, "capturedAt" to now.toMetaValue())) }
         }
-        // 6. Private logs, in commander id order.
+        // 7. Private logs, in commander id order.
         val attackerId = encounter.attacker.commanderGeneralId
         for (id in participants.map { it.commanderGeneralId }.sorted()) {
             val won = id in result.winners

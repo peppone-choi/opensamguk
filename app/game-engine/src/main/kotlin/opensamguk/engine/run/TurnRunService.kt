@@ -141,6 +141,8 @@ open class TurnRunService(
     private val commandOutboxRelay: CommandOutboxRelay? = null,
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
     private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
+    /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
+    private val hwihaPhaseBoundary: opensamguk.engine.hwiha.HwihaPhaseBoundary? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -370,6 +372,8 @@ open class TurnRunService(
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                         boundaryDate(nextTurn).let { date ->
                             world.setCurrentDate(date.year, date.month, date.phase)
+                            // §5.2 1·2단계(보급·포위)가 징세보다 먼저다 — 같은 순에 함락된 縣의 월세입은 새 주인에게 간다.
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
@@ -389,6 +393,9 @@ open class TurnRunService(
                 advanceNonMonthlyBoundary = { nextTurn ->
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
+                        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                        }
                         handler.courtHandler.expireDue()
                     }
                 },
