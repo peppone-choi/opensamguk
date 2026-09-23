@@ -141,6 +141,8 @@ open class TurnRunService(
     private val commandOutboxRelay: CommandOutboxRelay? = null,
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
     private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
+    /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
+    private val hwihaPhaseBoundary: opensamguk.engine.hwiha.HwihaPhaseBoundary? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -175,6 +177,7 @@ open class TurnRunService(
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
             v2CityLedger = v2CityLedger,
+            hwihaCourtHandler = handler.courtHandler,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(
                     "year" to world.getState().currentYear,
@@ -326,6 +329,12 @@ open class TurnRunService(
             val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
                 drain = { upto -> handledDuringBoundaries += lifecycle.runTick(upto, generalDrainCohort) },
                 runMonth = { nextTurn ->
+                    if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                        // 치적 창 닫기 — 월간 사건(반기 도시 성장 등) **전** 값으로 지난 달을 잰다.
+                        boundaryDate(nextTurn).let { date ->
+                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder).close(date.year, date.month)
+                        }
+                    }
                     val state = world.getState()
                     val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
                     val startTime = Instant.parse(
@@ -370,17 +379,30 @@ open class TurnRunService(
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                         boundaryDate(nextTurn).let { date ->
                             world.setCurrentDate(date.year, date.month, date.phase)
+                            // §5.2 1·2단계(보급·포위)가 징세보다 먼저다 — 같은 순에 함락된 縣의 월세입은 새 주인에게 간다.
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            // §5.2 3단계 내정 진행(공사·방침·치적) — 포위 정산 뒤(함락된 縣의 공사는 거둔다),
+                            // 4단계 월세입보다 먼저, 한 순에 한 번(도장).
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
                             opensamguk.engine.hwiha.HwihaMonthlyCountyIncome(world, handler.recorder)
                                 .credit(date.year, date.month)
+                            // 녹봉 — 수입 뒤, 월단평 앞(§5.2 4단계). 기존 가신 유지비는 HWIHA 에서 꺼져 있다.
+                            opensamguk.engine.hwiha.HwihaMonthlySalary(world, handler.recorder).pay(date.year, date.month)
+                            opensamguk.engine.hwiha.HwihaUnitResupply(world, handler.recorder).resupply(date.year, date.month)
+                            // 보급선 — 자국 縣 밖의 군단으로 군량을 보낸다(보충 뒤, 같은 창고망).
+                            hwihaPhaseBoundary?.dispatchConvoys(world, handler.recorder, date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.hwiha.HwihaMonthlyAssessment(
                                 world, handler.recorder,
                                 opensamguk.logic.input.HwihaRenownAssessment.CANON,
                             ).assess(date.year, date.month)
+                            // 치적 창 열기 — 월간 사건이 끝난 뒤 값으로 이번 달을 연다.
+                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder)
+                                .open(date.year, date.month)
                         }
                         handler.courtHandler.expireDue()
                     }
@@ -389,6 +411,11 @@ open class TurnRunService(
                 advanceNonMonthlyBoundary = { nextTurn ->
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
+                        if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            // §5.2 3단계 내정 진행 — 포위 정산 뒤, 순 경계마다 한 번(도장).
+                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
+                        }
                         handler.courtHandler.expireDue()
                     }
                 },

@@ -7,6 +7,7 @@ import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.infra.seed.HwihaCountyProductionJson
+import opensamguk.logic.input.HwihaRecordKind
 import opensamguk.logic.input.RuleProfile
 
 /**
@@ -46,6 +47,7 @@ class HwihaMonthlyCountyIncome(
         var invalid = 0
         var overflow = 0
         var total = HwihaResources()
+        val byNation = sortedMapOf<Int, Pair<Int, HwihaResources>>()
         for (countyId in world.administrativeCountyIds.sorted()) {
             val before = world.getCityById(countyId) ?: continue
             val warehouse = try { HwihaCountyWarehouse.read(before.meta, countyId) }
@@ -72,6 +74,18 @@ class HwihaMonthlyCountyIncome(
             checkNotNull(world.applyCityDirtyFree(after))
             credited++
             total = try { total.credit(produced) } catch (_: ArithmeticException) { total }
+            if (before.nationId != 0) {
+                val (count, sum) = byNation[before.nationId] ?: (0 to HwihaResources())
+                byNation[before.nationId] = (count + 1) to (try { sum.credit(produced) } catch (_: ArithmeticException) { sum })
+            }
+        }
+        // Nation-internal (warehouses are the nation's own ledger) — recorded, never put in the nation summary.
+        for ((nationId, entry) in byNation) {
+            val (count, sum) = entry
+            HwihaRecords.nation(world, nationId, HwihaRecordKind.INCOME_MONTHLY,
+                "縣 창고 ${count}곳에 월세입이 들어왔습니다.",
+                linkedMapOf("stamp" to stamp, "counties" to count, "money" to sum.money, "grain" to sum.grain,
+                    "iron" to sum.iron, "timber" to sum.timber, "horses" to sum.horses))
         }
 
         world.setGameEnvValue(STAMP_KEY, stamp)

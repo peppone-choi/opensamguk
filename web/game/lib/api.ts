@@ -446,6 +446,34 @@ export const api = {
     courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
     deployOptions: (generalId: number) => get<import('./types').HwihaDeployOptions>(`/api/hwiha/deploy/options?generalId=${generalId}`),
+    // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
+    stratagemHand: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
+    hwihaYuedan: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaYuedan>(`/api/hwiha/yuedan?generalId=${generalId}`, signal),
+    hwihaWarehouses: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaWarehouses>(`/api/hwiha/warehouses?generalId=${generalId}`, signal),
+    hwihaCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaCounty>(`/api/hwiha/county/${cityId}?generalId=${generalId}`, signal),
+    hwihaRetinue: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaRetinue>(`/api/hwiha/retinue?generalId=${generalId}`, signal),
+    hwihaLastTurns: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaLastTurns>(`/api/hwiha/last-turns?generalId=${generalId}&limit=12`, signal),
+    hwihaVisibility: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaVisibility>(`/api/hwiha/visibility?generalId=${generalId}`, signal),
+    hwihaCorps: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaCorpsList>(`/api/hwiha/corps?generalId=${generalId}`, signal),
+    hwihaScoutOptions: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaScoutOptions>(`/api/hwiha/scout-options?generalId=${generalId}`, signal),
+    hwihaPosts: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaPosts>(`/api/hwiha/posts?generalId=${generalId}`, signal),
+    hwihaPolicies: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaPolicies>(`/api/hwiha/policies?generalId=${generalId}`, signal),
+    hwihaWorks: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaWorks>(`/api/hwiha/works?generalId=${generalId}`, signal),
+    /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
+    hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work', body: unknown) =>
+        post<IntakeOutcome>(`/api/commands/${kind}/${{ placement: 'assign', policy: 'set', work: 'start' }[kind]}?generalId=${generalId}`, body),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),

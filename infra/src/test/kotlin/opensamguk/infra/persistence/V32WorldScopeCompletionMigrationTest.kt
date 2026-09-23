@@ -659,6 +659,7 @@ class V32WorldScopeCompletionMigrationTest {
             "operation_unit", // V56 — 작전 참여 부대(Phase 4X-B)
             "battle_plan", // V57 — 출병 계획(Phase 4X-C)
             "battle_replay", // V57 — 리플레이(Phase 4X-C, INSERT 전용)
+            "hwiha_siege", // V61 — HWIHA 縣城 포위
             "command_inbox",
             "command_result",
             "command_outbox",

@@ -83,6 +83,7 @@ class CommandReserveService(
     private val hwihaAdmission: HwihaEnlistmentAdmission? = null,
     private val hwihaCourtAdmission: HwihaCourtAdmission? = null,
     private val hwihaDeployAdmission: HwihaDeployAdmission? = null,
+    private val hwihaScoutAdmission: HwihaScoutAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -173,7 +174,7 @@ class CommandReserveService(
         if (worldProfile != "SAMMO" && worldProfile != "HWIHA") {
             throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
         }
-        if (worldProfile == "HWIHA" && actionCode !in setOf("action.enlist", "action.deploy")) {
+        if (worldProfile == "HWIHA" && actionCode !in HWIHA_RESERVABLE_ACTIONS) {
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
@@ -184,6 +185,18 @@ class CommandReserveService(
             (hwihaDeployAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == "action.scout") {
+            (hwihaScoutAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
+            // 강공·항복 권고는 인자가 없다. 포위 여부는 실행 턴에 다시 본다(§4 — 조건이 안 맞으면 비용 없이 무효).
+            if (ownerUserId == null || ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            if (argJson != null && argJson.trim() !in setOf("", "{}")) throw HwihaAdmissionDenied("INVALID_REQUEST", "이 입력은 인자를 받지 않습니다.")
+            if (opensamguk.logic.input.HwihaInputCatalog.load()[actionCode]?.deliveryState?.hasHandler != true)
+                throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                    opensamguk.logic.input.InputRejection.NOT_DELIVERED.message)
+            "{}"
         } else argJson
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
@@ -258,7 +271,8 @@ class CommandReserveService(
                     turnIdx = turnIdx,
                     actionCode = actionCode,
                     argJson = canonicalArgs,
-                    brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; else -> registry.resolve(actionCode).name },
+                    brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; "action.scout" -> "첩보";
+                        "action.assault" -> "강공"; "action.demandSurrender" -> "항복 권고"; else -> registry.resolve(actionCode).name },
                     requestId = requestId,
                 )
                 commandResults.insertTerminalResult(
@@ -394,6 +408,14 @@ class CommandReserveService(
         ).joinToString("\u001f")
         val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    companion object {
+        /** HWIHA 강공·항복 권고 — 인자 없는 개인 행동. */
+        val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
+
+        /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
+        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") + HWIHA_SIEGE_ACTIONS
     }
 }
 

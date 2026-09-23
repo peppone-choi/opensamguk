@@ -23,6 +23,11 @@ class ResolvedHanWorldArtifacts internal constructor(
         HanProvinceCellJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
+    /** 郡國 numbering and shared-border graph for HWIHA vision (same numbers as the provinces PNG). */
+    val commanderyIndex: opensamguk.logic.world.HanCommanderyIndex by lazy {
+        HanCommanderyIndexJson.load(projection.topology,
+            artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
+    }
     val cityConst get() = CityConstRegistry.hanWorld(variant)
     init {
         require(cityConst.all().keys == projection.bindingsByCityId.keys) { "Han runtime constants and topology roster differ" }

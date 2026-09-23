@@ -77,6 +77,8 @@ class TurnDaemonLifecycle(
     private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
     /** HWIHA movement stage, after political input and before the one-phase stamp/atomic flush. */
     private val hwihaMovementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.hwiha.HwihaTurnOutcome?) -> Unit = { _, _, _ -> },
+    /** HWIHA NPC input chooser (출병) for a general with no reservation; identity by default. */
+    private val hwihaNpcInputOf: (generalId: Int, reserved: ReservedTurn) -> ReservedTurn = { _, reserved -> reserved },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -181,8 +183,11 @@ class TurnDaemonLifecycle(
                 // Even an undelivered reservation receives a terminal result and consumes one slot.
                 require(state.tickSeconds > 0) { "positive personal-turn interval required" }
                 opensamguk.engine.hwiha.HwihaStratagemDraw(world, handler.recorder).onTurn(g.id)
+                // §5.1 1단계 재검사: 배치·방침은 해당 카드의 다음 턴부터 효력(대기 → 현행).
+                handler.domesticTurn.beforeMovement(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
-                val reserved = opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved)
+                val reserved = hwihaNpcInputOf(g.id,
+                    opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
                 if (world.ruleProfile == RuleProfile.HWIHA) hwihaMovementOf(g.id, reserved, result.hwihaOutcome)

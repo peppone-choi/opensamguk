@@ -54,6 +54,9 @@ export interface IsoCity {
   /** 타일 좌표. 원본 셀 좌표를 rasterGroup 으로 나눈 것. */
   col: number;
   row: number;
+  /** 원본 셀 좌표. 타일로 내리면 성내(원본 칸 단위, buildingFit.ts) 자리를 잃는다. */
+  sourceCol?: number;
+  sourceRow?: number;
 }
 
 /** 縣 인덱스 → 그 縣 治所의 원본 셀 좌표와 지형 cities[] 인덱스. 없으면 -1. */
@@ -251,7 +254,9 @@ function prepareIsoMap(tiles: HanTiles, image: ImageData): IsoMapData {
 
   const cities: IsoCity[] = tiles.cities.map((city, index) => {
     const [col, row] = sourceCellToTile(city.col, city.row, RASTER_GROUP);
-    return { ...city, administrativeSystem: systemByCity.get(index), col, row };
+    return {
+      ...city, administrativeSystem: systemByCity.get(index), col, row, sourceCol: city.col, sourceRow: city.row,
+    };
   });
 
   return { grid, owner, parentOwner, cities, provinceSeatCell,

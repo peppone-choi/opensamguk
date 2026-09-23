@@ -5,13 +5,25 @@ package opensamguk.logic.input
  *
  * 정본 설계 §2.8(명망·월단평), §5.2(순 경계 4번: … 재해 → 월단평 → 코스트 상한을 넘은 장수의 휘하
  * 이탈 판정), §6.6(휘하 규칙). 갱신 방식은 **사건 누적식**이다(2026-09-22 사용자 결정): 지난 달에
- * 일어난 사건을 세어 두고 월단평에서 한 번 적용한다. 가감값·상하한은
+ * 일어난 사건을 세어 두고 월단평에서 한 번 적용한다. 사건 집계는 [HwihaRenownEvents](한 달에 종류당 한 번). 가감값·상하한은
  * `data/curated/han/hwiha-renown-assessment-v1.json` 에 있고 이 객체는 그 값을 받아 쓴다 — 수치를
  * 코드에 박지 않는다.
  *
  * 명망은 **초기화하지 않는다**(§2.8) — 월단평은 기존 값을 보존하며 갱신한다.
  */
 object HwihaRenownAssessment {
+    /** 마지막 월단평 도장(`YYYY-MM`) — `game_env` 키. 엔진이 쓰고 game-api 조회가 읽는다. */
+    const val STAMP_KEY = "hwihaRenownAssessmentStamp"
+
+    /** 마지막 월단평 순위(장수 id 목록, 명망 내림차순) — `game_env` 키. */
+    const val RANKING_KEY = "hwihaRenownRanking"
+
+    /**
+     * 마지막 월단평이 적용한 사유 — `game_env` 키. `{"stamp":"YYYY-MM","byGeneral":{"<id>":[{"kind","count","amount"}]}}`.
+     * 종류·건수·증감만 싣는다(§2.8 발표에 실리는 공개 정보). 사건 원인은 싣지 않는다.
+     */
+    const val REASONS_KEY = "hwihaRenownReasons"
+
     /** 한 장수의 지난 달 사건 집계. 어떤 사건이 어디에 해당하는지는 호출부가 정한다. */
     data class Tally(
         val warMerit: Int = 0,
@@ -129,16 +141,9 @@ object HwihaRenownAssessment {
         require(retinue.all { it.cost >= 0 }) { "retainer cost must be nonnegative" }
         require(retinue.map { it.retainerId }.toSet().size == retinue.size) { "duplicate retainerId in retinue" }
         val next = updatedRenown(renown, tally, curve)
-
-        // 충성 오름차순, 동점은 id 내림차순 — 결정적 순서.
-        val shedOrder = retinue.sortedWith(compareBy({ it.loyalty }, { -it.retainerId }))
-        var cost = retinue.sumOf { it.cost.toLong() }
-        val released = ArrayList<Int>()
-        for (card in shedOrder) {
-            if (cost <= next) break
-            released += card.retainerId
-            cost -= card.cost
-        }
+        val released = departures(next, retinue)
+        val releasedIds = released.toSet()
+        val cost = retinue.filter { it.retainerId !in releasedIds }.sumOf { it.cost.toLong() }
         return Outcome(
             generalId = generalId,
             renown = next,
@@ -146,6 +151,27 @@ object HwihaRenownAssessment {
             released = released,
             retainedCost = cost.toInt(),
         )
+    }
+
+    /**
+     * 명망 [capacity] 를 넘는 휘하가 이탈 판정을 받는 순서 — 충성 오름차순, 동점은 `retainerId` 내림차순.
+     * 코스트 합이 [capacity] 이하가 되면 멈춘다. 넘지 않으면 빈 목록이다.
+     *
+     * [assess] 와 조회 화면(휘하 카드의 「이탈 순번」)이 같은 순서를 쓰도록 여기 한 곳에 둔다.
+     */
+    fun departures(capacity: Int, retinue: List<RetainerCard>): List<Int> {
+        require(retinue.all { it.cost >= 0 }) { "retainer cost must be nonnegative" }
+        require(retinue.map { it.retainerId }.toSet().size == retinue.size) { "duplicate retainerId in retinue" }
+        // 충성 오름차순, 동점은 id 내림차순 — 결정적 순서.
+        val shedOrder = retinue.sortedWith(compareBy({ it.loyalty }, { -it.retainerId }))
+        var cost = retinue.sumOf { it.cost.toLong() }
+        val released = ArrayList<Int>()
+        for (card in shedOrder) {
+            if (cost <= capacity) break
+            released += card.retainerId
+            cost -= card.cost
+        }
+        return released
     }
 
     /**

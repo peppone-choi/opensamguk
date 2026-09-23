@@ -292,6 +292,11 @@ open class JdbcFlushExecutor(
             if (payload.createdBattlePlans.isNotEmpty()) battlePlanCreateMany(payload.worldId, payload.createdBattlePlans)
             if (payload.battleReplayInserts.isNotEmpty()) battleReplayInsertMany(payload.worldId, payload.battleReplayInserts)
 
+            // 8j. HWIHA 포위 채널(V61): 행을 지우지 않는다 — CREATE → UPDATE. 5단계 general DELETE 의 CASCADE 로
+            //     사라진 행은 엔진 메모리에서도 함께 내렸으므로 pending 작업이 남지 않는다.
+            if (payload.createdHwihaSieges.isNotEmpty()) hwihaSiegeCreateMany(payload.worldId, payload.createdHwihaSieges)
+            if (payload.updatedHwihaSieges.isNotEmpty()) hwihaSiegeUpdate(payload.worldId, payload.updatedHwihaSieges)
+
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
             }
@@ -1519,14 +1524,16 @@ open class JdbcFlushExecutor(
                 .addValue("nation_id", l.nationId)
                 .addValue("user_id", l.userId)
                 .addValue("meta", jsonb(MetaJson.encode(l.meta)))
+                .addValue("event_kind", l.eventKind)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO log_entry
-                (world_id, scope, category, sub_type, year, month, phase, text, general_id, nation_id, user_id, meta)
+                (world_id, scope, category, sub_type, year, month, phase, text, general_id, nation_id, user_id, meta,
+                 event_kind)
             VALUES
                 (:world_id, CAST(:scope AS log_scope), CAST(:category AS log_category), :sub_type,
-                 :year, :month, :phase, :text, :general_id, :nation_id, :user_id, :meta)
+                 :year, :month, :phase, :text, :general_id, :nation_id, :user_id, :meta, :event_kind)
             """.trimIndent(),
             batch,
         )
@@ -1830,6 +1837,55 @@ open class JdbcFlushExecutor(
         )
         requireExactlyOneAffected("general_bugok UPDATE", affected)
         lastOps.add(FlushExecOp("general_bugok", FlushVerb.UPDATE, rows.size))
+    }
+
+    // --- step 8j: HWIHA 포위 채널 (V61) --------------------------------------------------------------
+    private fun hwihaSiegeParams(worldId: WorldId, r: HwihaSiegeRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("county_id", r.countyId).addValue("status", r.status)
+        .addValue("besieger_general_id", r.besiegerGeneralId).addValue("besieger_owner_general_id", r.besiegerOwnerGeneralId)
+        .addValue("besieger_order_id", r.besiegerOrderId).addValue("besieger_nation_id", r.besiegerNationId)
+        .addValue("defender_nation_id", r.defenderNationId).addValue("approach_province_id", r.approachProvinceId)
+        .addValue("started_year", r.startedYear).addValue("started_month", r.startedMonth).addValue("started_phase", r.startedPhase)
+        .addValue("settled_year", r.settledYear, java.sql.Types.SMALLINT)
+        .addValue("settled_month", r.settledMonth, java.sql.Types.SMALLINT)
+        .addValue("settled_phase", r.settledPhase, java.sql.Types.SMALLINT)
+        .addValue("turns", r.turns).addValue("morale", r.morale).addValue("garrison", r.garrison)
+        .addValue("end_reason", r.endReason, java.sql.Types.VARCHAR).addValue("timeline", r.timelineJson)
+
+    private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<HwihaSiegeRow>) {
+        jdbc.batchUpdate(
+            """
+            INSERT INTO hwiha_siege
+                (world_id, county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id,
+                 besieger_nation_id, defender_nation_id, approach_province_id, started_year, started_month, started_phase,
+                 settled_year, settled_month, settled_phase, turns, morale, garrison, end_reason, timeline)
+            VALUES
+                (:world_id, :county_id, :status, :besieger_general_id, :besieger_owner_general_id, :besieger_order_id,
+                 :besieger_nation_id, :defender_nation_id, :approach_province_id, :started_year, :started_month, :started_phase,
+                 :settled_year, :settled_month, :settled_phase, :turns, :morale, :garrison, :end_reason, CAST(:timeline AS jsonb))
+            """.trimIndent(),
+            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+        )
+        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<HwihaSiegeRow>) {
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE hwiha_siege
+               SET status = :status, besieger_general_id = :besieger_general_id,
+                   besieger_owner_general_id = :besieger_owner_general_id, besieger_order_id = :besieger_order_id,
+                   besieger_nation_id = :besieger_nation_id, defender_nation_id = :defender_nation_id,
+                   approach_province_id = :approach_province_id, started_year = :started_year,
+                   started_month = :started_month, started_phase = :started_phase, settled_year = :settled_year,
+                   settled_month = :settled_month, settled_phase = :settled_phase, turns = :turns, morale = :morale,
+                   garrison = :garrison, end_reason = :end_reason, timeline = CAST(:timeline AS jsonb), updated_at = now()
+             WHERE world_id = :world_id AND county_id = :county_id
+            """.trimIndent(),
+            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+        )
+        requireExactlyOneAffected("hwiha_siege UPDATE", affected)
+        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 8h: 작전 채널 (Phase 4X-B) ---------------------------------------------------------
@@ -3017,6 +3073,9 @@ data class FlushPayload(
     val updatedBattlePlans: List<BattlePlanRow> = emptyList(),
     val deletedBattlePlanIds: List<Int> = emptyList(),
     val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
+    // --- HWIHA 포위(V61, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
+    val createdHwihaSieges: List<HwihaSiegeRow> = emptyList(),
+    val updatedHwihaSieges: List<HwihaSiegeRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
@@ -3274,6 +3333,8 @@ data class KvWrite(val table: String, val namespace: String, val key: String, va
  * (`log_scope`/`log_category`); they bind through a `CAST(... AS log_scope)` in the INSERT.
  * `year`/`month`/`phase` come from world state (the engine `LogEntryDraft` does not carry them; they are
  * stamped at finalize). `meta` is encoded jsonb via [MetaJson] (insertion-order, PHP-faithful).
+ * `eventKind` is the HWIHA record kind (`log_entry.event_kind`, V60; vocabulary in `HwihaRecordKind`) — null for
+ * every legacy writer.
  */
 data class LogRow(
     val scope: String,
@@ -3288,6 +3349,7 @@ data class LogRow(
     val userId: Int? = null,
     val meta: Map<String, Any?> = linkedMapOf(),
     val flushBeforeArchive: Boolean = false,
+    val eventKind: String? = null,
 )
 
 

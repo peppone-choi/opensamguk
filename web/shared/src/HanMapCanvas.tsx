@@ -9,7 +9,8 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { cityFootprintBlock } from './iso/cityFootprint';
+import { resolveCityFootprints } from './iso/cityFootprint';
+import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 import {
   cellToScreen,
   clampView,
@@ -153,6 +154,11 @@ export interface IsoCityOverlay {
   state?: number;
   supply?: boolean;
   isCapital?: boolean;
+  /**
+   * 휘하 상태 배지 — `isolated`(고립) · `besieged`(포위) · `battle`(전투) · `works`(공사).
+   * 재해·사건(`state`) 배지와 함께 城 그림 왼쪽 위에 줄지어 붙는다. 무엇을 보일지는 호출부(서버 시야)가 정한다.
+   */
+  statusBadges?: readonly CityStatusBadge[];
   jurisdictionId?: string;
   commanderyId?: string;
   interactive?: boolean;
@@ -264,6 +270,9 @@ export type InitialFocusProfile = 'current-city-close' | 'current-commandery';
 /** 시야 단계 — 삼모의 완전·첩보·안개와 같다. */
 export type CommanderyVisibility = 'FULL' | 'INTEL' | 'FOG';
 
+/** `politicalStyle="tint"` 의 영토 색 불투명도 — 지형 결이 비치고 세력은 구분된다. */
+export const POLITICAL_TINT_ALPHA = 0.32;
+
 /** `current-commandery` 목표 배율 — 한 칸이 화면에서 대략 24px 이 되어 격자선이 읽힌다. */
 export const COMMANDERY_FOCUS_SCALE = 24;
 
@@ -322,6 +331,16 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   commanderyVisibility?: ReadonlyMap<number, CommanderyVisibility> | null;
   /** `FOG` 군국을 짙게 덮을지(`dim`), 지형째로 지울지(`hidden`). */
   fogMode?: 'dim' | 'hidden';
+  /**
+   * 군단 겹(#465). 무엇을 보일지는 서버 시야 투영이 정한다 — 이 겹은 받은 것만 그린다.
+   * 내 군단은 행군 경로와 요격 범위까지, 남의 군단은 깃발과 이름표만.
+   */
+  corps?: readonly MapCorpsOverlay[] | null;
+  /**
+   * 세력 영토를 어떻게 칠할지. `fill`(기본)은 불투명하게 덮는다 — 천하 전체를 보는 화면용.
+   * `tint` 는 옅게 얹어 지형이 비친다 — 군국 하나를 당겨 보는 작전실용.
+   */
+  politicalStyle?: 'fill' | 'tint';
   hideCityNames?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -363,6 +382,51 @@ const CITY_MARKER_URLS = CITY_MARKER_ASSET_SCALES.flatMap((assetScale) => (
     url: `/city/${assetScale}x/cast_${level}.png`,
   }))
 ));
+/** 원본에서 크게 뽑은 城 그림(opensamguk-images export). 성내에 맞춰 크게 그릴 때 흐려지지 않게 고른다. */
+const CITY_MARKER_LARGE_SIZES = [128, 256] as const;
+/** opensamguk-images 규칙: `<N>x` = 1x(32px) 의 N 배 — 4x 128px, 8x 256px. */
+const CITY_MARKER_LARGE_URLS = CITY_MARKER_LARGE_SIZES.flatMap((size) => (
+  CITY_LEVELS.map((level) => ({ size, level, url: `/city/${size / 32}x/cast_${level}.png` }))
+));
+
+/** 성내 맞춤으로 그릴 城 그림 — 그릴 폭 이상인 가장 작은 해상도, 없으면 불러온 것 가운데 가장 큰 것. */
+export function cityFitSprite<T>(images: Partial<Record<string, T>>, level: number, drawWidth: number): T | undefined {
+  const sizes: Array<[number, string]> = [
+    [32, cityMarkerImageKey(1, level)],
+    [64, cityMarkerImageKey(2, level)],
+    ...CITY_MARKER_LARGE_SIZES.map((size) => [size, `L${size}:${level}`] as [number, string]),
+  ];
+  const loaded = sizes.filter(([, key]) => images[key] !== undefined);
+  const pick = loaded.find(([size]) => size >= drawWidth) ?? loaded.at(-1);
+  return pick ? images[pick[1]] : undefined;
+}
+
+export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
+
+/** 미리 불러 둘 배지 — 알려진 재해·사건 코드와 휘하 상태. */
+const CITY_STATUS_BADGE_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '32', '34', '43', 'isolated', 'besieged', 'battle', 'works'];
+
+/** 상태 배지 배율 — 1x 16px · 2x 32 · 4x 64 · 8x 128(opensamguk-images `<N>x` 규칙). */
+const CITY_STATUS_BADGE_SCALES = [1, 2, 4, 8] as const;
+
+/** 상태 배지 그림 경로. 재해·사건 코드는 `state-<code>`, 휘하 상태는 `state-<name>`. */
+export function cityStatusBadgeUrl(key: string, scale: number = 1): string {
+  return `/status/${scale}x/state-${key}.png`;
+}
+
+/** 그릴 크기(캔버스 px)보다 작지 않은 가장 작은 배율. 16px 에서 장면형 그림이 뭉개지므로 늘 올려 고른다. */
+export function cityStatusBadgeScale(drawPx: number): number {
+  return CITY_STATUS_BADGE_SCALES.find((scale) => scale * 16 >= drawPx) ?? 8;
+}
+
+/** 이 城 에 붙일 배지 열쇠들 — 재해·사건 먼저, 휘하 상태가 뒤. */
+export function cityStatusBadgeKeys(city: { state?: number; statusBadges?: readonly CityStatusBadge[] }): string[] {
+  const keys: string[] = [];
+  if ((city.state ?? 0) > 0) keys.push(String(city.state));
+  for (const badge of city.statusBadges ?? []) keys.push(badge);
+  return keys;
+}
+
 const CITY_LEVEL_VISUAL_EXTENT: Record<number, number> = {
   1: 42, 2: 40, 3: 44, 4: 40,
   5: 48, 6: 52, 7: 56, 8: 60, 9: 62,
@@ -872,6 +936,29 @@ export function cityMarkerHitBox(level: number, x: number, y: number, dpr: numbe
   };
 }
 
+/**
+ * 城 그림을 **성내에 꽉 맞춘** 자리(2026-09-23 사용자 결정, 모든 지도 화면).
+ *
+ * 실루엣 폭 = 성내 마름모 폭(한 칸 마름모 폭 2·scale × 변 칸 수). 가로 중심은 성내 중심 칸(변이 모두
+ * 홀수라 마커 칸), 그림 바닥 기준점(anchorY)은 성내 마름모의 앞 꼭짓점이다. `scale` 은 캔버스 픽셀 단위다.
+ */
+export function cityFootprintMarkerBox(level: number, col: number, row: number, span: number, view: IsoView) {
+  const spec = CITY_LEVEL_MARKER_SPEC;
+  // 변은 늘 홀수(resolveCityFootprints) — 성내 중심은 마커 칸 그 자체다.
+  const block = { span };
+  const [cx, cy] = cellToScreen(Math.round(col), Math.round(row), view);
+  // 그림 캔버스(64)에는 등급 위계용 여백이 있다 — 실루엣 한 변(VISUAL_EXTENT)이 성내 폭을 채우게 늘린다.
+  const extent = CITY_LEVEL_VISUAL_EXTENT[level] ?? spec.pixelWidth;
+  const width = 2 * view.scale * block.span * (spec.pixelWidth / extent);
+  const height = width * (spec.pixelHeight / spec.pixelWidth);
+  const baseY = cy + (view.scale * block.span) / 2;
+  const x = cx - width * (spec.anchorX / spec.pixelWidth);
+  const y = baseY - height * (spec.anchorY / spec.pixelHeight);
+  // 성내 마름모 폭 — 그림 캔버스가 아니라 실루엣이 차지하는 폭이다. 배지·선택 상자가 여기에 붙는다.
+  const footprintWidth = 2 * view.scale * block.span;
+  return { x, y, width, height, cx, cy, baseY, span: block.span, footprintWidth };
+}
+
 export function cityMarkerRadius(level: number, dpr: number): number {
   const cssRadius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
   return cssRadius * dpr;
@@ -1239,6 +1326,17 @@ function drawCurrentLocationOverlay(
   context.restore();
 }
 
+/** 城 목록마다 한 번만 성내를 푼다 — 그리기는 프레임마다 돌지만 城 목록은 좀처럼 바뀌지 않는다. */
+const FOOTPRINT_CACHE = new WeakMap<readonly unknown[], Map<number, number>>();
+function footprintSpans(cities: readonly { id: number; level: number; col: number; row: number }[]): Map<number, number> {
+  let spans = FOOTPRINT_CACHE.get(cities);
+  if (!spans) {
+    spans = resolveCityFootprints(cities);
+    FOOTPRINT_CACHE.set(cities, spans);
+  }
+  return spans;
+}
+
 function drawScene(
   canvas: HTMLCanvasElement,
   terrain: HTMLCanvasElement,
@@ -1258,6 +1356,7 @@ function drawScene(
   showCellGrid: boolean,
   showCityFootprint: boolean,
   fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
+  politicalAlpha = 1,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -1275,7 +1374,9 @@ function drawScene(
   context.drawImage(terrain, -0.5, -0.5);
   if (political) {
     context.imageSmoothingEnabled = false;
+    context.globalAlpha = politicalAlpha;
     context.drawImage(political, -0.5, -0.5);
+    context.globalAlpha = 1;
   }
   // 전장의 안개 — 못 본 군국을 덮는다. 칸마다 다이아몬드를 채우므로 보이는 범위만 돈다.
   if (fog && provinceMap) {
@@ -1322,10 +1423,12 @@ function drawScene(
   // 한 칸인 城 은 격자와 겹쳐 보이므로 그리지 않는다 — 선이 두 번 겹쳐 지저분해진다.
   if (showCityFootprint && scale >= CELL_GRID_MIN_SCALE) {
     const blocks = new Path2D();
+    const spans = footprintSpans(scene.cities);
     for (const city of scene.cities) {
-      const block = cityFootprintBlock(city.level, Math.round(city.col), Math.round(city.row));
-      if (block.span < 2) continue;
-      blocks.rect(block.col0 - 0.5, block.row0 - 0.5, block.span, block.span);
+      const span = spans.get(city.id) ?? 1;
+      if (span < 2) continue;
+      const back = (span - 1) / 2;
+      blocks.rect(Math.round(city.col) - back - 0.5, Math.round(city.row) - back - 0.5, span, span);
     }
     context.fillStyle = CITY_FOOTPRINT_FILL;
     context.fill(blocks);
@@ -1395,6 +1498,16 @@ function drawScene(
       ?? markerImages[cityMarkerImageKey(assetScale === 2 ? 1 : 2, level)];
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
+    // 당겨 보는 배율에서는 城 을 성내에 꽉 맞춘다 — 깃발·별·이름표·집기 상자도 이 자리를 따른다.
+    const fit = markerZoom === undefined ? null
+      : cityFootprintMarkerBox(city.level, city.col, city.row, footprintSpans(scene.cities).get(city.id) ?? 1, view);
+    // 깃발·별·이름표는 화면 크기로 둔다(아이소 지도와 같은 원칙) — 城 그림만 성내에 맞춰 커진다.
+    // 깃발 기준점은 그림의 지붕 높이(그림 위쪽 절반), 이름표 기준점은 성내 앞 꼭짓점이다.
+    const px = fit ? fit.cx : x;
+    const py = fit ? fit.baseY : y;
+    // 지붕 높이 — 실루엣은 성내 폭에 맞춰져 있으므로 캔버스가 아니라 성내 폭으로 잰다.
+    const fy = fit ? fit.baseY - fit.footprintWidth * 0.3 : y;
+    const r = radius;
 
     if (markerZoom === undefined) {
       const overviewBox = drawOverviewCityGlyph(context, city, x, y, scale, dpr);
@@ -1406,38 +1519,44 @@ function drawScene(
         );
         drawCurrentLocationOverlay(context, x, y, detail, dpr, selfLocationPhase);
       }
-    } else if (marker) {
+    } else if (marker && fit) {
+      // 그릴 폭보다 작지 않은 가장 작은 원본(1x 32 · 2x 64 · 4x 128 · 8x 256)을 쓴다. 불러온 것이 없으면 가장 큰 것.
+      const sprite = cityFitSprite(markerImages, level, fit.width) ?? marker;
       hits.push({
         city,
         provinceId: city.provinceId,
-        ...cityMarkerHitBox(level, x, y, dpr, markerZoom),
+        left: fit.x,
+        top: fit.y,
+        right: fit.x + fit.width,
+        bottom: fit.baseY,
       });
-      const box = cityMarkerDrawBox(level, x, y, dpr, markerZoom);
+      // 그림보다 크게 늘리면 흐려진다 — 늘릴 때만 부드럽게 보간한다.
+      // 픽셀아트라 늘려도 최근접으로 — 흐리게 보간하지 않는다.
       context.imageSmoothingEnabled = false;
-      context.drawImage(marker, box.x, box.y, box.width, box.height);
+      context.drawImage(sprite, fit.x, fit.y, fit.width, fit.height);
     } else {
       hits.push({
         city,
         provinceId: city.provinceId,
-        ...cityFallbackHitBox(x, y, radius),
+        ...cityFallbackHitBox(px, py - r * 0.45, r),
       });
       context.fillStyle = city.iconColor;
       context.strokeStyle = CASTLE_STROKE;
       context.lineWidth = 1.5;
-      context.fillRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
-      context.strokeRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
-      context.fillRect(x - radius * 0.5, y - radius * 0.9, radius * 0.3, radius * 0.5);
-      context.fillRect(x + radius * 0.2, y - radius * 0.9, radius * 0.3, radius * 0.5);
+      context.fillRect(px - r * 0.7, py - r * 0.9, r * 1.4, r * 0.9);
+      context.strokeRect(px - r * 0.7, py - r * 0.9, r * 1.4, r * 0.9);
+      context.fillRect(px - r * 0.5, py - r * 1.35, r * 0.3, r * 0.5);
+      context.fillRect(px + r * 0.2, py - r * 1.35, r * 0.3, r * 0.5);
     }
 
     if (markerZoom !== undefined && owned) {
       context.strokeStyle = '#e8dec5';
       context.beginPath();
-      context.moveTo(x + radius * 0.55, y - radius * 0.45);
-      context.lineTo(x + radius * 0.55, y - radius * 1.65);
+      context.moveTo(px + r * 0.55, fy - r * 0.45);
+      context.lineTo(px + r * 0.55, fy - r * 1.65);
       context.stroke();
       context.fillStyle = city.territoryColor;
-      const cloth = flagClothPoints(x, y, radius, city.supply !== false, flagPhase);
+      const cloth = flagClothPoints(px, fy, r, city.supply !== false, flagPhase);
       context.beginPath();
       context.moveTo(...cloth[0]);
       for (const point of cloth.slice(1)) context.lineTo(...point);
@@ -1452,34 +1571,51 @@ function drawScene(
     }
 
     if (markerZoom !== undefined && city.isCapital) {
-      starPath(context, x + radius * 1.2, y - radius * 1.8, Math.max(4, radius * 0.42));
+      starPath(context, px + r * 1.2, fy - r * 1.8, Math.max(4, r * 0.42));
       context.fillStyle = '#ffd84f';
       context.fill();
       context.strokeStyle = '#6a4b00';
       context.stroke();
     }
 
-    if (markerZoom !== undefined && (city.state ?? 0) > 0) {
-      const badgeX = x - radius * 1.05;
-      const badgeY = y - radius * 0.9;
-      context.fillStyle = '#b72f2f';
-      context.beginPath();
-      context.arc(badgeX, badgeY, Math.max(5, radius * 0.42), 0, Math.PI * 2);
-      context.fill();
-      context.fillStyle = '#fff';
-      context.font = `bold ${Math.max(8, radius * 0.65)}px sans-serif`;
-      context.textAlign = 'center';
-      context.textBaseline = 'middle';
-      context.fillText(String(city.state), badgeX, badgeY);
+    if (markerZoom !== undefined) {
+      // 상태 배지 — 城 그림 왼쪽 위에서 오른쪽으로 줄지어. 픽셀아트라 최근접 확대로 키운다.
+      const keys = cityStatusBadgeKeys(city);
+      const fw = fit ? fit.footprintWidth : r * 2;
+      const size = Math.max(15 * dpr, Math.min(40 * dpr, fw * 0.2));
+      // 실루엣의 왼쪽 위 안쪽 — 성내 마름모 왼쪽 끝에서 조금 안, 건물 윗선 근처. 큰 城 도 이웃을 덮지 않게.
+      let bx = fit ? fit.cx - fw * 0.42 : px - r * 1.3;
+      const by = fit ? fit.baseY - fw * 0.5 - size : py - r * 1.4;
+      for (const key of keys) {
+        const icon = markerImages[`status:${cityStatusBadgeScale(size)}:${key}`]
+          ?? CITY_STATUS_BADGE_SCALES.map((scale) => markerImages[`status:${scale}:${key}`]).find(Boolean);
+        if (icon) {
+          context.imageSmoothingEnabled = false;
+          context.drawImage(icon, bx, by, size, size);
+        } else {
+          // 그림이 아직 없으면 예전처럼 코드 숫자 배지로 둔다 — 상태를 숨기지 않는다.
+          context.fillStyle = '#b72f2f';
+          context.beginPath();
+          context.arc(bx + size / 2, by + size / 2, size / 2, 0, Math.PI * 2);
+          context.fill();
+          context.fillStyle = '#fff';
+          context.font = `bold ${Math.max(8, size * 0.55)}px sans-serif`;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(/^\d+$/.test(key) ? key : '!', bx + size / 2, by + size / 2);
+        }
+        bx += size + 2 * dpr;
+      }
     }
 
     if (markerZoom !== undefined && city.layers.includes('current')) {
-      drawCurrentLocationOverlay(context, x, y, radius, dpr, selfLocationPhase);
+      drawCurrentLocationOverlay(context, px, fit ? fy : py, fit ? Math.max(r, fit.width * 0.3) : r, dpr, selfLocationPhase);
     }
     if (markerZoom !== undefined && city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
       context.lineWidth = 3;
-      context.strokeRect(x - radius, y - radius, radius * 2, radius * 2);
+      if (fit) context.strokeRect(fit.cx - fit.footprintWidth / 2, fit.baseY - fit.footprintWidth * 0.8, fit.footprintWidth, fit.footprintWidth * 0.8);
+      else context.strokeRect(px - r, py - r, r * 2, r * 2);
     }
 
     if (!hideCityNames) {
@@ -1487,7 +1623,7 @@ function drawScene(
       const labelThreshold = labelKind ? labelZoomFor(labelKind, fittedScale, dpr) : undefined;
       const labelVisibleAtZoom = labelThreshold === undefined || scale >= labelThreshold;
       const metrics = cityLabelMetrics(scale, dpr);
-      const labelX = x;
+      const labelX = px;
       context.textAlign = 'center';
       context.textBaseline = 'alphabetic';
       context.font = `bold ${metrics.fontSize}px sans-serif`;
@@ -1495,7 +1631,7 @@ function drawScene(
       context.strokeStyle = 'rgba(0,0,0,0.8)';
       context.fillStyle = '#fff';
       const labelWidth = context.measureText(city.mapLabel).width + 4 * dpr;
-      const labelYs = [y + radius * 1.2, y - radius * 1.8, y + metrics.fontSize * 0.35];
+      const labelYs = [py + r * 1.2, py - r * 1.8, py + metrics.fontSize * 0.35];
       const labelY = labelVisibleAtZoom ? labelYs.find((candidateY) => {
         const labelBox = {
           left: labelX - labelWidth / 2,
@@ -1567,6 +1703,8 @@ export function HanMapCanvas({
   showCityFootprint = false,
   commanderyVisibility = null,
   fogMode = 'dim',
+  corps = null,
+  politicalStyle = 'fill',
   currentCityId,
   selectedCityId,
   hideCityNames = false,
@@ -1888,6 +2026,8 @@ export function HanMapCanvas({
   }) : [], [battlefieldTargets, loadedTiles]);
   const projectedBattlefieldsRef = useRef(projectedBattlefields);
   projectedBattlefieldsRef.current = projectedBattlefields;
+  const corpsRef = useRef(corps);
+  corpsRef.current = corps;
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const terrain = terrainRef.current;
@@ -1912,6 +2052,7 @@ export function HanMapCanvas({
       showCellGrid,
       showCityFootprint,
       commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
+      politicalStyle === 'tint' ? POLITICAL_TINT_ALPHA : 1,
     );
     battlefieldHits.current = [];
     const ctx = canvas.getContext('2d');
@@ -1924,20 +2065,32 @@ export function HanMapCanvas({
       ctx.restore();
       battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
     }
-  }, [administrativeLayer]);
+    if (ctx && corpsRef.current?.length) drawCorpsOverlay(ctx, corpsRef.current, view, sizeRef.current.dpr);
+  }, [administrativeLayer, politicalStyle]);
+
+  // 군단 겹이 바뀌면 다시 그린다 — 순 갱신마다 새 배열이 온다.
+  useEffect(() => {
+    render();
+  }, [corps, render]);
 
   useEffect(() => {
     let alive = true;
-    const pending = CITY_MARKER_URLS.map(({ assetScale, level, url }) => {
+    const load = (key: string, url: string) => {
       const image = new Image();
       image.onload = () => {
         if (!alive) return;
-        markerImagesRef.current[cityMarkerImageKey(assetScale, level)] = image;
+        markerImagesRef.current[key] = image;
         render();
       };
       image.src = url;
       return image;
-    });
+    };
+    const pending = [
+      ...CITY_MARKER_URLS.map(({ assetScale, level, url }) => load(cityMarkerImageKey(assetScale, level), url)),
+      // 크게 뽑은 원본·상태 배지는 없어도 된다(onerror 무시) — 없으면 64px·숫자 배지로 그린다.
+      ...CITY_MARKER_LARGE_URLS.map(({ size, level, url }) => load(`L${size}:${level}`, url)),
+      ...CITY_STATUS_BADGE_SCALES.flatMap((scale) => CITY_STATUS_BADGE_KEYS.map((key) => load(`status:${scale}:${key}`, cityStatusBadgeUrl(key, scale)))),
+    ];
     return () => {
       alive = false;
       for (const image of pending) image.onload = null;
@@ -2432,11 +2585,11 @@ export function HanMapCanvas({
         >
           <button
             type="button"
-            aria-label="프로빈스 지역 레이어"
+            aria-label="구역 레이어"
             aria-pressed={administrativeLayer === 'PROVINCE'}
             onClick={() => setAdministrativeLayer('PROVINCE')}
           >
-            프로빈스(지역)
+            구역
           </button>
           <button
             type="button"
@@ -2448,11 +2601,11 @@ export function HanMapCanvas({
           </button>
           <button
             type="button"
-            aria-label="군국급 도시 레이어"
+            aria-label="군급 도시 레이어"
             aria-pressed={administrativeLayer === 'COMMANDERY'}
             onClick={() => setAdministrativeLayer('COMMANDERY')}
           >
-            군국
+            군
           </button>
         </div>
       ) : null}

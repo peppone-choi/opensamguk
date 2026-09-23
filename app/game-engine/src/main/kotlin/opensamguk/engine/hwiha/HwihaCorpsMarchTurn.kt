@@ -7,7 +7,8 @@ import opensamguk.logic.world.*
 /** Returns whether a deployed corps owns this commander's movement stage. */
 class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex) {
+    private val cells: HanProvinceCellIndex,
+    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING) {
     fun onTurn(commanderId: Int): Boolean {
         val actor = world.getGeneralById(commanderId) ?: return false
         val projection = HwihaDeploymentExecutor(world,recorder,topology,metrics).projection()
@@ -16,10 +17,13 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         val order = try {
             HwihaCorpsOrder.read(actor.meta,topology)?.also { it.requireBinding(requireNotNull(corps),commanderId) }
         } catch (_: IllegalArgumentException) { null }
-        if (order == null) { log(commanderId,"출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다."); return true }
+        if (order == null) { log(commanderId,"출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다.",
+            mapOf("stop" to "ORDER_UNAVAILABLE")); return true }
+        val refs = linkedMapOf<String, Any?>("orderId" to order.orderId, "destination" to order.destination.canonicalKey)
         val edges = try { HwihaLandPassageState.read(world.getState().meta,topology) }
             catch (_: IllegalArgumentException) { null }
-        if (edges == null) { log(commanderId,"육상 통행 상태를 확인할 수 없어 출병 행군을 멈췄습니다."); return true }
+        if (edges == null) { log(commanderId,"육상 통행 상태를 확인할 수 없어 출병 행군을 멈췄습니다.",
+            refs + ("stop" to "PASSAGE_UNAVAILABLE")); return true }
         val before = try { HwihaCorpsMarchState.read(actor.meta,topology,metrics) }
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
@@ -27,7 +31,7 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         var defenders: List<HwihaDeployedCorps>? = null
         when (val result = HwihaCorpsMarchExecutor(world,recorder,topology,metrics,1)
             .advance(order.orderId,commanderId,order.destination,edges) { node ->
-                val entry = military.entryAt(commanderId, node)
+                val entry = military.entryAt(commanderId, node, reactions)
                 if (entry == LandMarchEntry.ENCOUNTER) {
                     defenders = encounters.defendersAt(commanderId, node)
                     if (defenders == null) LandMarchEntry.UNAVAILABLE else entry
@@ -38,11 +42,11 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
                 CorpsMarchFailure.BATTLE_PENDING -> "조우 처리가 끝나지 않아 출병 행군을 재개할 수 없습니다."
                 CorpsMarchFailure.NO_ROUTE -> "출병 목적지까지 통행 가능한 육상 경로가 없습니다."
                 else -> "출병 상태를 확인할 수 없어 이동하지 않았습니다."
-            })
+            }, refs + ("failure" to result.reason.name))
             is CorpsMarchExecution.Applied -> {
-                if (result.state.checkpoint.stop == LandMarchStop.ENCOUNTER) {
+                val encounterId = if (result.state.checkpoint.stop == LandMarchStop.ENCOUNTER) {
                     encounters.record(requireNotNull(corps), requireNotNull(defenders), result.state.checkpoint)
-                }
+                } else null
                 if (before?.checkpoint?.stop == LandMarchStop.ARRIVED && result.state.checkpoint.stop == LandMarchStop.ARRIVED) return true
                 log(commanderId,when(result.state.checkpoint.stop) {
                     LandMarchStop.ARRIVED -> "출병 목적지에 도착했습니다."
@@ -50,11 +54,12 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
                     LandMarchStop.EDGE_BLOCKED -> "통행로가 닫혀 출병 행군을 멈췄습니다."
                     LandMarchStop.ENCOUNTER_UNAVAILABLE -> "진입할 지역의 군사·반응 상태를 확인할 수 없어 출병 행군을 멈췄습니다."
                     LandMarchStop.ENCOUNTER -> "군단이 조우해 출병 행군을 멈췄습니다."
-                })
+                }, refs + ("stop" to result.state.checkpoint.stop.name) +
+                    (encounterId?.let { mapOf("encounterId" to it) } ?: emptyMap()))
             }
         }
         return true
     }
-    private fun log(id:Int,text:String) = world.pushLog(LogEntryDraft(scope="general",category="action",text=text,
-        generalId=id,nationId=world.getGeneralById(id)?.nationId))
+    private fun log(id: Int, text: String, refs: Map<String, Any?>) =
+        HwihaRecords.general(world, id, HwihaRecordKind.MARCH_CORPS, text, refs)
 }

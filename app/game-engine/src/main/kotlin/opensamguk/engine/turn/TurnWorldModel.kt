@@ -161,6 +161,32 @@ data class Bugok(
     val commanderBonusApplied: Boolean = false,
 )
 
+/**
+ * HWIHA 縣城 포위(V61 `hwiha_siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.hwiha.HwihaSiegeRules`,
+ * 저장은 world dirty 집합 → JdbcFlushExecutor. [timeline] 은 순마다 한 줄씩 쌓는 조회용 기록이다.
+ */
+data class HwihaSiege(
+    val countyId: Int,
+    val status: String,
+    val besiegerGeneralId: Int,
+    val besiegerOwnerGeneralId: Int,
+    val besiegerOrderId: String,
+    val besiegerNationId: Int,
+    val defenderNationId: Int,
+    val approachProvinceId: String,
+    val startedYear: Int,
+    val startedMonth: Int,
+    val startedPhase: Int,
+    val settledYear: Int? = null,
+    val settledMonth: Int? = null,
+    val settledPhase: Int? = null,
+    val turns: Int = 0,
+    val morale: Int,
+    val garrison: Int,
+    val endReason: String? = null,
+    val timeline: List<Map<String, Any?>> = emptyList(),
+)
+
 /** Phase 4X-B 작전 이정표 4개(단조 — 한 번 true 면 유지). */
 data class OperationMilestones(
     val departed: Boolean = false,
@@ -251,6 +277,8 @@ data class LogEntryDraft(
     val year: Int? = null,
     val month: Int? = null,
     val phase: Int? = null,
+    /** HWIHA record kind (`log_entry.event_kind`; vocabulary in `HwihaRecordKind`). Null for legacy logs. */
+    val eventKind: String? = null,
 )
 
 data class TurnWorldState(

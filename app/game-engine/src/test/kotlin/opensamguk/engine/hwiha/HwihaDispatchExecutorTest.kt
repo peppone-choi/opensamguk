@@ -43,16 +43,55 @@ class HwihaDispatchExecutorTest {
             HwihaDispatchExecutor(world,recorder).reply(DispatchReplyRequest(2,pending.dispatchId,false))).reason)
         assertEquals(after,world.getGeneralById(2))
     }
-    @Test fun `refusal consumes loyalty and renown exactly once without taking personal turn`() {
+    @Test fun `refusal consumes loyalty at once and tallies renown for the monthly assessment`() {
         val world=world(); val recorder=ChangeRecorder(); val before=world.getGeneralById(2)!!
         issue(world,recorder)
         val executor=HwihaDispatchExecutor(world,recorder)
         assertEquals(DispatchStatus.REFUSED,assertIs<DispatchExecution.Applied>(executor.reply(DispatchReplyRequest(2,"dispatch-1",false))).dispatch.status)
         assertEquals(45,world.getRetainerById(4)!!.loyalty)
-        assertEquals(29,HwihaPersonPolicyState.read(world.getGeneralById(2)!!.meta)!!.renownCapacity)
+        // Renown is not charged here any more (2026-09-23): the assessment applies the tallied -4 once.
+        assertEquals(30,HwihaPersonPolicyState.read(world.getGeneralById(2)!!.meta)!!.renownCapacity)
+        assertEquals(listOf(HwihaRenownEntry(HwihaRenownEventKind.DISPATCH_REFUSAL,"0200-12",HwihaRenownEventSource.DISPATCH_REFUSAL)),
+            HwihaRenownEvents.entries(world.getGeneralById(2)!!.meta))
         assertEquals(before,world.getGeneralById(2)!!.copy(meta=before.meta))
         assertIs<DispatchExecution.Rejected>(executor.reply(DispatchReplyRequest(2,"dispatch-1",false)))
         assertEquals(45,world.getRetainerById(4)!!.loyalty)
+    }
+    @Test fun `a second refusal in the same month costs loyalty again but tallies renown once`() {
+        val world=world(); val recorder=ChangeRecorder(); val executor=HwihaDispatchExecutor(world,recorder)
+        issue(world,recorder); assertIs<DispatchExecution.Applied>(executor.reply(DispatchReplyRequest(2,"dispatch-1",false)))
+        assertIs<DispatchExecution.Applied>(executor.issue("dispatch-2",DispatchRequest(1,2,10)))
+        assertIs<DispatchExecution.Applied>(executor.reply(DispatchReplyRequest(2,"dispatch-2",false)))
+        assertEquals(40,world.getRetainerById(4)!!.loyalty)
+        assertEquals(1,HwihaRenownEvents.entries(world.getGeneralById(2)!!.meta).size)
+        val renownRecords=world.peekLogs().filter { it.eventKind==HwihaRecordKind.RENOWN_EVENT }
+        assertEquals(listOf(2),renownRecords.map { it.generalId },"only the newly tallied event is announced")
+        // Next month: a new refusal is a new event.
+        world.setCurrentDate(201,1,1)
+        assertIs<DispatchExecution.Applied>(executor.issue("dispatch-3",DispatchRequest(1,2,10)))
+        assertIs<DispatchExecution.Applied>(executor.reply(DispatchReplyRequest(2,"dispatch-3",false)))
+        assertEquals(listOf("0200-12","0201-01"),HwihaRenownEvents.entries(world.getGeneralById(2)!!.meta).map { it.stamp })
+    }
+    @Test fun `dispatch records reach only issuer and target with kinds and refs`() {
+        val world=world(); val recorder=ChangeRecorder(); val executor=HwihaDispatchExecutor(world,recorder)
+        world.applyGeneralDirtyFree(world.getGeneralById(1)!!.copy(userId="41"))  // a player lord keeps records
+        issue(world,recorder); executor.reply(DispatchReplyRequest(2,"dispatch-1",true))
+        val records=world.peekLogs().map { Triple(it.generalId,it.eventKind,(it.meta?.get(HwihaRecordKind.REFS_META_KEY) as Map<*,*>)["dispatchId"]) }
+        assertEquals(listOf(
+            Triple(2,HwihaRecordKind.DISPATCH_RECEIVED,"dispatch-1"), Triple(1,HwihaRecordKind.DISPATCH_ISSUED,"dispatch-1"),
+            Triple(2,HwihaRecordKind.DISPATCH_ACCEPTED,"dispatch-1"), Triple(1,HwihaRecordKind.DISPATCH_ACCEPTED,"dispatch-1"),
+        ),records)
+        assertTrue(world.peekLogs().all { it.scope=="general" && it.category=="action" })
+        // The kind reaches the flush row (log_entry.event_kind), refs stay in meta.
+        val rows=DatabaseHooks.toFlushPayload(world,recorder,world.consumeDirtyState()).logEntries
+        assertEquals(records.map { it.second },rows.map { it.eventKind })
+        assertEquals("dispatch-1",(rows.first().meta[HwihaRecordKind.REFS_META_KEY] as Map<*,*>)["dispatchId"])
+        assertEquals(listOf(12),rows.map { it.month }.distinct()); assertEquals(listOf(1),rows.map { it.phase }.distinct())
+    }
+    @Test fun `an NPC lord keeps no dispatch record`() {
+        val world=world(); val recorder=ChangeRecorder()
+        issue(world,recorder); HwihaDispatchExecutor(world,recorder).reply(DispatchReplyRequest(2,"dispatch-1",false))
+        assertEquals(setOf(2),world.peekLogs().map { it.generalId }.toSet())
     }
     @Test fun `deadline is twelve world phases across year and late refusal accepts without cost`() {
         val world=world(); val recorder=ChangeRecorder(); val pending=issue(world,recorder)

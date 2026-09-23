@@ -9,25 +9,22 @@ import {
     hwihaTabLanding,
     type HwihaInputTab,
 } from '../lib/hwiha-screens';
+import { HwihaBlocked, hwihaBlockReason } from './hwiha/HwihaStates';
+import { useHwihaRenown } from '../lib/hwiha-reads';
+import { useHwihaSession } from '../lib/hwiha-session';
 import styles from './HwihaShell.module.css';
-
-export interface HwihaShellIdentity {
-    /** 장수 이름과 소속 — 시안 헤더의 첫 칩. */
-    readonly generalName: string;
-    readonly allegiance: string;
-    /** 명망. 아직 값이 없으면 null — 시안처럼 `[미정]` 으로 보인다. */
-    readonly renown: number | null;
-    /** 「200년 3월 중순」 같은 게임 날짜 문구. */
-    readonly gameDate: string;
-}
 
 export interface HwihaShellProps {
     readonly title: string;
     /** 켜진 입력 탭. 탭에 속하지 않는 화면은 null. */
     readonly tab: HwihaInputTab | null;
-    readonly identity: HwihaShellIdentity;
     /** 작전실 자신에서는 「← 작전실」을 숨긴다. */
     readonly showBack?: boolean;
+    /**
+     * 휘하 규칙 월드에서만 뜻이 있는 화면인지. 참이면 규칙이 다른 월드·장수 없음에서 본문 대신
+     * 사유를 보인다. 작전실은 지도만으로도 쓸모가 있어 거짓이다.
+     */
+    readonly requiresHwiha?: boolean;
     readonly children: React.ReactNode;
 }
 
@@ -38,13 +35,19 @@ export interface HwihaShellProps {
  * 탭, 오른쪽에 장수·명망·날짜 칩. 시안의 탭은 정적 `<span>` 이지만 여기서는 진짜 링크로 만든다.
  * 그 탭에 아직 화면이 없으면 숨기지 않고 점선으로 남긴다(표시 원칙).
  */
-export default function HwihaShell({ title, tab, identity, showBack = true, children }: HwihaShellProps) {
+export default function HwihaShell({ title, tab, showBack = true, requiresHwiha = true, children }: HwihaShellProps) {
+    const session = useHwihaSession();
+    const { frontInfo, serverId } = session;
+    const renown = useHwihaRenown();
+    const generalName = frontInfo?.general.name ?? null;
+    const allegiance = frontInfo?.nation?.name ?? '재야';
+    const blocked = hwihaBlockReason(session);
     return (
         <>
             <div className={styles.head}>
                 <div className={styles.left}>
                     {showBack ? (
-                        <Link className="os-button os-button--ghost os-button--sm" href={hwihaHref(HWIHA_HUB_SLUG)}>
+                        <Link className="os-button os-button--ghost os-button--sm" href={hwihaHref(HWIHA_HUB_SLUG, serverId)}>
                             ← 작전실
                         </Link>
                     ) : null}
@@ -68,7 +71,7 @@ export default function HwihaShell({ title, tab, identity, showBack = true, chil
                                 <Link
                                     key={t}
                                     className={`${styles.tab}${on ? ` ${styles.tabOn}` : ''}`}
-                                    href={hwihaHref(landing.slug)}
+                                    href={hwihaHref(landing.slug, serverId)}
                                     aria-current={on ? 'page' : undefined}
                                 >
                                     {t}
@@ -78,12 +81,16 @@ export default function HwihaShell({ title, tab, identity, showBack = true, chil
                     </nav>
                 </div>
                 <div className={styles.right}>
-                    <Chip>{`${identity.generalName} · ${identity.allegiance}`}</Chip>
-                    <Chip tone="bronze">{`명망 ${identity.renown ?? '[미정]'}`}</Chip>
-                    <Chip>{identity.gameDate}</Chip>
+                    {generalName ? <Chip>{`${generalName} · ${allegiance}`}</Chip> : null}
+                    {session.isHwihaWorld ? (
+                        <Chip tone="bronze">{`명망 ${renown ?? '—'}`}</Chip>
+                    ) : null}
+                    {session.gameDate ? <Chip>{session.gameDate}</Chip> : null}
                 </div>
             </div>
-            <div className={styles.body}>{children}</div>
+            <div className={styles.body}>
+                {requiresHwiha && blocked ? <HwihaBlocked reason={blocked} /> : children}
+            </div>
         </>
     );
 }

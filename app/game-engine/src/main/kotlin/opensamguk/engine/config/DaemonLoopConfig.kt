@@ -313,11 +313,38 @@ class DaemonLoopConfig {
             v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
         )
 
+        // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림의
+        // 월단평 사건(치적)으로 같은 recorder 에 쌓는다 — 기록 스트림 치적 창과 같은 달 도장이라 한 달 한 번으로 접힌다.
+        val domesticContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
+            opensamguk.engine.hwiha.HwihaDomesticContext(
+                geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(artifacts),
+                nativeCounties = opensamguk.logic.input.HwihaNativeCountyLedger.load(),
+                topology = artifacts.projection.topology,
+                metrics = artifacts.landMarchMetrics,
+                merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder),
+            )
+        } else opensamguk.engine.hwiha.HwihaDomesticContext()
+
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
+        // 전쟁 결과 → 명망 사건 경계: 기록 스트림(HwihaRenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
+        val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener =
+            opensamguk.engine.hwiha.HwihaWarOutcomeRenownListener(world, recorder)
+        // 반응 기록(요격·회피·설치 계책) → 행군 진입 판정 경계. 요격·회피 해석기가 아직 없어 NON_BLOCKING 을 유지한다 —
+        // 내정 군단 방침(INTERCEPT/EVADE)이 쓴 반응 목록은 PENDING 으로 읽혀 행군을 막지 않는다.
+        val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = opensamguk.engine.hwiha.HwihaMarchReactionPolicy.NON_BLOCKING
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
+        } else null
+        // The index is loaded lazily from the same pinned tiles; a malformed index fails the scout input only.
+        val visionContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA vision requires pinned Han artifacts" }
+            try {
+                opensamguk.engine.hwiha.HwihaVisionContext(artifacts.projection.topology, artifacts.landMarchMetrics,
+                    artifacts.commanderyIndex)
+            } catch (_: IllegalArgumentException) { null }
         } else null
         val handler = ReservedTurnHandler(
             world = world,
@@ -330,9 +357,14 @@ class DaemonLoopConfig {
             // 군주(officer_level==12) 사망 시 후계 선정/승계 또는 국가 멸망 (func.php:1807 nextRuler).
             nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
             recorder = recorder,
+            // 휘하 내정 입력(배치·방침·공사)의 지리·원장·행군 핀.
+            hwihaDomesticContext = domesticContext,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
+            hwihaVisionContext = visionContext,
+            hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
+            hwihaWarOutcomes = hwihaWarOutcomes,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -479,9 +511,15 @@ class DaemonLoopConfig {
             hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(world, recorder,
-                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells)
+                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
+                    hwihaMarchReactions)
                 movement::onTurn
             } else { _, _, _ -> },
+            hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
+                opensamguk.engine.hwiha.HwihaNpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)::select
+                    .let { select -> { generalId: Int, reserved: ReservedTurnRepository.ReservedTurn -> select(world, generalId, reserved) } }
+            } else { _, reserved -> reserved },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
 
@@ -516,6 +554,11 @@ class DaemonLoopConfig {
             recoveryGateProvider = recoveryGateProvider,
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
+            hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
+                opensamguk.engine.hwiha.HwihaPhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
+                    artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
+            } else null,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,
                 bettingFactory = { liveWorld, liveRecorder ->

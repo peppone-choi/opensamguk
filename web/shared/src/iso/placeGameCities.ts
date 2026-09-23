@@ -34,6 +34,8 @@ import { RASTER_GROUP } from '../isoTileGrid';
 import { isOwnedNationVisual } from '../nationVisual';
 import { externalPlaceLevel } from './externalPlaceTier';
 import { projectBattlefieldTarget, type BattlefieldMapProjection } from '../HanMapCanvas';
+import { resolveCityFootprints } from './cityFootprint';
+import { cellFootprintInTiles } from './buildingFit';
 
 /** 배치 입력. MapPreviewCity 에서 필요한 만큼만 뽑은 모양이다. */
 export interface GameCityInput {
@@ -64,7 +66,7 @@ export interface GameCityInput {
  * 확대했을 때 서로 떨어져 각각 집힌다. 높이를 볼 때만 tile 로 내린다.
  *
  * 다만 **그릴 때는** col/row 를 쓰지 않는다. drawCol/drawRow/drawScale 을 쓴다 —
- * 아래 fitFootprintsInTile 주석 참조.
+ * 아래 fitCityFootprints 주석 참조.
  */
 export interface PlacedCity {
   /** 게임 도시 번호. **음수면 게임 城 이 아니다**(郡國 밖 세력) — isExternalPlace 참조. */
@@ -82,10 +84,10 @@ export interface PlacedCity {
   /** 높이·소유를 읽을 정수 타일. */
   tileCol: number;
   tileRow: number;
-  /** 건물을 세울 자리. 발자국이 제 칸 안에 들도록 눌러 둔 소수 타일 좌표. */
+  /** 건물을 세울 자리 = 성내 중심(소수 타일 좌표). fitCityFootprints 참조. */
   drawCol: number;
   drawRow: number;
-  /** 발자국 배율(타일 폭 = 1). 같은 칸에 여럿이 들면 함께 줄어든다. */
+  /** 성내 한 변(타일 폭 = 1). 실루엣이 이 폭을 채운다. 마커 칸까지 같은 城 이 n 곳이면 1/n. */
   drawScale: number;
   /** 郡治 여부. 축소 상태에서 이것만 남긴다. */
   seat: boolean;
@@ -196,7 +198,7 @@ export function placeGameCities(
   }
 
   placed.push(...placeExternalPlaces(data.cities, grid, covered));
-  fitFootprintsInTile(placed);
+  fitCityFootprints(placed);
   return placed;
 }
 
@@ -245,9 +247,13 @@ function placeExternalPlaces(
   for (let index = 0; index < terrainCities.length; index += 1) {
     const city = terrainCities[index];
     if (city.kind !== 'EXTERNAL_PLACE' || covered.has(index)) continue;
-    // 지형 cities[] 의 col/row 는 이미 **정수 타일**이다(sourceCellToTile).
-    const { col, row } = city;
-    if (col < 0 || col >= grid.cols || row < 0 || row >= grid.rows) continue;
+    // 지형 cities[] 의 col/row 는 이미 **정수 타일**이다(sourceCellToTile). 원본 셀이 실려 있으면
+    // 게임 城 과 같은 소수 타일 좌표로 편다 — 성내가 원본 칸 단위라 타일 구석으로 쏠리지 않게.
+    const tileCol = city.col;
+    const tileRow = city.row;
+    if (tileCol < 0 || tileCol >= grid.cols || tileRow < 0 || tileRow >= grid.rows) continue;
+    const col = city.sourceCol !== undefined ? city.sourceCol / RASTER_GROUP : tileCol;
+    const row = city.sourceRow !== undefined ? city.sourceRow / RASTER_GROUP : tileRow;
     placed.push({
       id: -(index + 1),
       name: city.name,
@@ -257,8 +263,8 @@ function placeExternalPlaces(
       nationId: 0,
       col,
       row,
-      tileCol: col,
-      tileRow: row,
+      tileCol,
+      tileRow,
       drawCol: col,
       drawRow: row,
       drawScale: 1,
@@ -272,48 +278,64 @@ function placeExternalPlaces(
 }
 
 /**
- * 건물 발자국을 제 칸 안에 앉힌다.
+ * 건물을 **성내에 꽉 맞춰** 앉힌다(2026-09-23 사용자 결정 「성내에 꽉 맞춤」, 모든 지도 화면).
  *
- * 두 가지가 겹쳐 있었다.
+ * 성내는 원본 격자 칸으로 정한다 — 등급별 변(cityFootprint.ts)을 이웃과 겹치지 않게 푼
+ * resolveCityFootprints 의 값이다. HanMapCanvas 도 같은 함수로 풀어 세 지도가 같은 땅을 가리킨다.
+ * 아이소 타일 한 칸은 원본 칸 RASTER_GROUP² 개라 성내 폭은 span/G 타일이다(buildingFit.ts).
  *
- *  1) **규약 어긋남.** 렌더러는 정수 (col,row) 를 다이아몬드 **중심**으로 쓴다
- *     (tileToScreen · IsoMap2D 의 세력색 채우기가 x±HALF_W, y±HALF_H 로 칠한다).
- *     그런데 여기서는 원본 셀을 `cell.col / RASTER_GROUP` 으로만 나눠 넘겼다. 그러면
- *     한 타일에 든 셀이 중심 기준 0 … +(1-1/G) 로 **한쪽으로만** 쏠린다
- *     (G=4 면 0 … +0.75, G=2 면 0 … +0.5).
- *  2) **발자국 크기.** 건물 스프라이트·모델의 밑면은 타일 하나 크기다. 중심이 조금만
- *     밀려도 성벽이 옆 칸을 밟는다.
+ *  - drawCol/drawRow = 성내 중심(타일 좌표, 소수). 변이 홀수라 마커 칸의 중심이다.
+ *  - drawScale = 성내 한 변(타일 단위). 렌더러는 실루엣 폭을 이 값에 맞춘다.
  *
- * 실측(han-world-v3, 縣 998 곳): 제자리는 61 곳뿐이고 620 곳(62.1%)은 건물 중심이 아예
- * 제 칸 밖이었다. 세로로 최대 96px(1배율) 밀린다 — 「아이콘이 격자에서 삐져나온다 ·
- * 삐뚤빼뚤하잖아」(2026-09-09).
+ * 예전 규칙(2026-09-09, 「셀과 아이콘이 안 맞는다」)은 **타일**을 발자국으로 보고 한 타일에 든
+ * 城 을 1/n 로 줄여 벌렸다. 이제는 원본 칸이 발자국이라 한 타일 안의 다른 칸에 선 城 들은
+ * 줄이지 않아도 서로 떨어져 선다. 다만 **마커 칸까지 같은** 城 (좌표 폴백·랩의 타일 정수 좌표)은
+ * 겹쳐 두면 뒤엣것을 못 누르므로, 그 무리만 예전처럼 1/n 로 줄여 성내 안에서 벌린다.
  *
- * 그렇다고 소수부를 버리면 안 된다. 같은 칸에 두 城 이 든 자리가 실측 54 칸 있는데
- * 겹쳐 세우면 뒤엣것을 못 누른다. 그래서 **칸 안에서만** 벌린다 — 혼자면 칸 한가운데,
- * n 곳이면 발자국을 1/n 로 줄이고 남는 1-1/n 을 서로 벌리는 데 쓴다. 벌리는 방향은
- * 실제 좌표의 상대 배치를 지키므로 어느 쪽이 동북인지도 그대로 남는다.
+ * 성내 변을 풀 때 게임 城(음수가 아닌 고유 id)은 게임 城 끼리만 푼다 — HanMapCanvas 가 그렇게
+ * 풀기 때문에 같은 城 이 두 지도에서 다른 크기로 서면 안 된다. 郡國 밖 세력은 전체 목록에서
+ * 게임 城 뒤 순서로 푼다.
  */
-export function fitFootprintsInTile(placed: PlacedCity[]): void {
-  const groups = new Map<string, PlacedCity[]>();
-  for (const city of placed) {
-    const key = `${city.tileCol},${city.tileRow}`;
-    const group = groups.get(key);
-    if (group) group.push(city);
-    else groups.set(key, [city]);
-  }
+export function fitCityFootprints(placed: PlacedCity[], group: number = RASTER_GROUP): void {
+  const cells = placed.map((city) => ({
+    col: Math.round(city.col * group),
+    row: Math.round(city.row * group),
+  }));
+  const seen = new Set<number>();
+  const isGame = placed.map((city) => {
+    if (city.id < 0 || seen.has(city.id)) return false;
+    seen.add(city.id);
+    return true;
+  });
+  // 게임 城 이 아닌 항목(음수·중복 id)은 게임 城 번호 뒤로 대리 번호를 준다.
+  let nextId = placed.reduce((max, city, i) => (isGame[i] ? Math.max(max, city.id) : max), -1) + 1;
+  const keys = placed.map((city, i) => (isGame[i] ? city.id : nextId++));
+  const entries = placed.map((city, i) => ({ id: keys[i], level: city.level, ...cells[i] }));
+  const gameSpans = resolveCityFootprints(entries.filter((_, i) => isGame[i]));
+  const allSpans = isGame.every(Boolean) ? gameSpans : resolveCityFootprints(entries);
 
-  for (const group of groups.values()) {
-    const n = group.length;
-    const scale = 1 / n;
-    // 발자국이 1/n 이면 칸 안에서 중심이 움직일 수 있는 한계는 마름모 노름 1-1/n 이다.
-    const budget = 1 - scale;
+  const groups = new Map<string, number[]>();
+  placed.forEach((city, i) => {
+    const span = (isGame[i] ? gameSpans : allSpans).get(keys[i]) ?? 1;
+    const footprint = cellFootprintInTiles(cells[i].col, cells[i].row, span, group);
+    city.drawCol = footprint.centerCol;
+    city.drawRow = footprint.centerRow;
+    city.drawScale = footprint.width;
+    const key = `${cells[i].col},${cells[i].row}`;
+    const members = groups.get(key);
+    if (members) members.push(i);
+    else groups.set(key, [i]);
+  });
 
-    // 칸 중심에서 벗어난 양. 원본 셀 s 의 한가운데는 타일 단위로 (s+0.5)/G 이고,
-    // 타일 t 의 중심은 정수 t 이므로 t 를 빼면 ±(1-1/G)/2 로 퍼진다(G=2 면 -0.25…+0.25).
-    const offsets = group.map((city) => [
-      city.col + 0.5 / RASTER_GROUP - city.tileCol,
-      city.row + 0.5 / RASTER_GROUP - city.tileRow,
-    ] as [number, number]);
+  for (const members of groups.values()) {
+    const n = members.length;
+    if (n < 2) continue;
+    // 가장 작은 성내 안에서 벌린다. 폭 w/n 인 정사각형이 폭 w 안에 들려면 중심이 축마다
+    // (w - w/n)/2 안이어야 하고, 마름모 노름(|dc|+|dr|)을 그 안으로 누르면 충분하다.
+    const smallest = Math.min(...members.map((i) => placed[i].drawScale));
+    const budget = (smallest * (1 - 1 / n)) / 2;
+    // 원좌표의 상대 배치를 지킨다 — 어느 쪽이 동북인지 남는다.
+    const offsets = members.map((i) => [placed[i].col, placed[i].row] as [number, number]);
     const midCol = offsets.reduce((sum, o) => sum + o[0], 0) / n;
     const midRow = offsets.reduce((sum, o) => sum + o[1], 0) / n;
     let peak = 0;
@@ -322,24 +344,26 @@ export function fitFootprintsInTile(placed: PlacedCity[]): void {
       offset[1] -= midRow;
       peak = Math.max(peak, Math.abs(offset[0]) + Math.abs(offset[1]));
     }
-    // 좌표까지 똑같으면 벌릴 방향이 없다 — 마름모 둘레로 돌려세운다. 겹쳐 두면 못 누른다.
-    if (n > 1 && peak < 1e-6) {
-      for (let i = 0; i < n; i += 1) {
-        const angle = (Math.PI * 2 * i) / n;
-        offsets[i][0] = Math.cos(angle);
-        offsets[i][1] = Math.sin(angle);
-        peak = Math.max(peak, Math.abs(offsets[i][0]) + Math.abs(offsets[i][1]));
+    // 좌표까지 똑같으면 벌릴 방향이 없다 — 마름모 둘레로 돌려세운다.
+    if (peak < 1e-6) {
+      peak = 0;
+      for (let j = 0; j < n; j += 1) {
+        const angle = (Math.PI * 2 * j) / n;
+        offsets[j] = [Math.cos(angle), Math.sin(angle)];
+        peak = Math.max(peak, Math.abs(offsets[j][0]) + Math.abs(offsets[j][1]));
       }
     }
-
-    const k = peak > 0 ? budget / peak : 0;
-    for (let i = 0; i < n; i += 1) {
-      group[i].drawCol = group[i].tileCol + offsets[i][0] * k;
-      group[i].drawRow = group[i].tileRow + offsets[i][1] * k;
-      group[i].drawScale = scale;
-    }
+    const k = budget / peak;
+    members.forEach((i, j) => {
+      placed[i].drawCol += offsets[j][0] * k;
+      placed[i].drawRow += offsets[j][1] * k;
+      placed[i].drawScale /= n;
+    });
   }
 }
+
+/** @deprecated 타일이 아니라 성내에 맞춘다 — fitCityFootprints 를 써라. 랩 화면 호환용 이름이다. */
+export const fitFootprintsInTile = fitCityFootprints;
 
 /**
  * 전장 표식. 게임 도시가 아니라 위경도로 오는 진행 중 전투다.

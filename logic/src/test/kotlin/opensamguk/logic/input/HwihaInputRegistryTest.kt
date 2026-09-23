@@ -15,7 +15,9 @@ class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
-        "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {})
+        "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
+        "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
+        "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -67,7 +69,19 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `catalogued input without a handler is NOT_DELIVERED, not success`() {
-        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, "placement.assign"))
+        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, "stratagem.play"))
+    }
+
+    @Test
+    fun `domestic standing inputs are handler ready and must be wired`() {
+        for (id in listOf("placement.assign", "policy.set", "work.start")) {
+            assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState, id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            // Dropping one handler must break construction: a delivered row cannot fall back to NOT_DELIVERED.
+            assertFailsWith<IllegalArgumentException>(id) {
+                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            }
+        }
     }
 
     @Test

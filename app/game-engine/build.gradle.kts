@@ -118,6 +118,11 @@ configurations.named(baseline.runtimeOnlyConfigurationName) {
 // Docker COPY build/libs/*.jar glob stays unambiguous.
 tasks.named("jar") { enabled = false }
 
+// 휘하 내정 입력의 향당(본관 縣) 보너스가 읽는 인물 본관 원장 — 저장소 루트 파일이 정본이다(game-api 와 같은 파일).
+tasks.processResources {
+    from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("hwiha") }
+}
+
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 서버별 fan-out 수집해 어드민에 표시.
 // 멀티서버에서 각 서버의 game-engine은 자기 버전을 보고한다. image.tag는 빌드 시 IMAGE_TAG env로 주입.
 springBoot {
@@ -166,6 +171,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
     // 판별 테스트는 등록된 한 세계 판 번들을 전부 한 JVM 에 올린다. 판마다 원문 ~26MB 와 투영이 캐시에 남아,
     // 다섯 번째 판(han-world-v3-1098)부터 Gradle 기본 512MB 에서 힙이 찼다(PrecheckFullCrossCallSiteTest).
     // 2026-09-23: 열한 번째 판(han-world-v3-1224)이 등록되자 CI 에서 1g 가 OutOfMemoryError 로 실행기를

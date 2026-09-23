@@ -124,14 +124,18 @@ export function drawCityFlag(
   return top;
 }
 
-/** 선택·주둔 표시 테. 城 이 서 있는 칸을 화면 좌표 마름모로 두른다. */
+/**
+ * 선택·주둔 표시 테. 城 이 서 있는 성내를 화면 좌표 마름모로 두른다.
+ * halfWidth 는 성내 마름모의 화면 반폭이다 — 주면 그 크기로 두르되 화면 최소 크기(17·k) 아래로는
+ * 줄이지 않는다. 안 주면 예전처럼 최소 크기로만 두른다.
+ */
 export function drawCityRing(
   context: CanvasRenderingContext2D,
   x: number,
   y: number,
-  { color, k }: { color: string; k: number },
+  { color, k, halfWidth = 0 }: { color: string; k: number; halfWidth?: number },
 ): void {
-  const rx = 17 * k;
+  const rx = Math.max(17 * k, halfWidth);
   const ry = rx / 2;
   context.save();
   context.strokeStyle = color;

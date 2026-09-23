@@ -39,6 +39,7 @@ import {
   luminancePreserving,
   markerScale,
   mixToward,
+  modelFootprintFit,
   nationGlyph,
   ownerTint,
   type IsoMapData,
@@ -545,8 +546,9 @@ export function IsoMap3D({
       //
       // 자리는 **소수** 타일 좌표다. 정수로 내리면 37 곳이 다른 도시와 같은 타일에 겹쳐
       // 통째로 가려지고, 그러면 눌러서 들어갈 수 없다(placeGameCities 주석 참조).
-      // 다만 원좌표(col/row)가 아니라 drawCol/drawRow 를 쓴다 — 밑면이 제 칸을 벗어나지
-      // 않도록 눌러 둔 값이고, 같은 칸에 여럿이면 drawScale 로 함께 줄어든다.
+      // 城 은 **성내에 꽉 맞춘다**(2026-09-23 사용자 결정): drawCol/drawRow 는 성내 중심,
+      // drawScale 은 성내 한 변(타일 단위)이다. 모델 밑면의 긴 변이 그 폭을 채우고 밑면 중심이
+      // 성내 중심에 온다(modelFootprintFit). 2D 판과 같은 값을 쓴다.
       const countyMeshes: THREE.InstancedMesh[] = [];
       const cityMeshes: { mesh: THREE.InstancedMesh; cities: PlacedCity[] }[] = [];
       // 전장은 3D 물체가 아니라 겹판 위 화면 좌표다. drawLabels 가 채우고 집기가 읽는다.
@@ -557,6 +559,23 @@ export function IsoMap3D({
       let countyTotal = 0;
       const inGrid = (city: PlacedCity) => city.col >= 0 && city.col < cols
         && city.row >= 0 && city.row < rows;
+      // 모델 밑면 경계상자(XZ). 등급마다 한 번 읽는다 — 깃대 높이도 같은 상자에서 나온다.
+      const boundsByTier = new Map<string, THREE.Box3>();
+      for (const tier of BUILDING_TIERS) {
+        const geometry = loaded.building.get(tier.name);
+        if (!geometry) continue;
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+        if (geometry.boundingBox) boundsByTier.set(tier.name, geometry.boundingBox);
+      }
+      const tierOf = (city: PlacedCity) => {
+        const iconLevel = cityIconLevel(city);
+        return BUILDING_TIERS.find((t) => iconLevel >= t.from && iconLevel <= t.to);
+      };
+      const fitOf = (city: PlacedCity) => {
+        const tier = tierOf(city);
+        const bounds = tier ? boundsByTier.get(tier.name) : undefined;
+        return bounds ? modelFootprintFit(bounds, city.drawScale) : null;
+      };
       for (const tier of BUILDING_TIERS) {
         const geometry = loaded.building.get(tier.name);
         if (!geometry) continue;
@@ -573,9 +592,14 @@ export function IsoMap3D({
           for (let n = 0; n < placed.length; n += 1) {
             const city = placed[n];
             const i = city.tileRow * cols + city.tileCol;
-            dummy.position.set(city.drawCol - halfCols, y(baseHeight[i]), city.drawRow - halfRows);
+            const fit = fitOf(city) ?? { scale: city.drawScale, offsetX: 0, offsetZ: 0 };
+            dummy.position.set(
+              city.drawCol - halfCols + fit.offsetX,
+              y(baseHeight[i]),
+              city.drawRow - halfRows + fit.offsetZ,
+            );
             dummy.rotation.set(0, 0, 0);
-            dummy.scale.set(city.drawScale, city.drawScale, city.drawScale);
+            dummy.scale.set(fit.scale, fit.scale, fit.scale);
             dummy.updateMatrix();
             mesh.setMatrixAt(n, dummy.matrix);
           }
@@ -592,18 +616,11 @@ export function IsoMap3D({
       // 깃대를 꽂을 지붕 높이(세계 단위). 모델 경계상자에서 바로 읽는다 — 예전에는 모든 城 을
       // 「대략 한 세계 단위」로 보고 같은 높이에 깃발을 띄워서, 장현(지붕 0.31)은 깃발이
       // 지붕 위로 한참 떠 있었다(2026-09-15 「성과 깃발의 위치를 좀 가깝게」).
-      const roofByTier = new Map<string, number>();
-      for (const tier of BUILDING_TIERS) {
-        const geometry = loaded.building.get(tier.name);
-        if (!geometry) continue;
-        if (!geometry.boundingBox) geometry.computeBoundingBox();
-        if (geometry.boundingBox) roofByTier.set(tier.name, geometry.boundingBox.max.y);
-      }
       const roofHeight = (city: PlacedCity): number | null => {
-        const iconLevel = cityIconLevel(city);
-        const tier = BUILDING_TIERS.find((t) => iconLevel >= t.from && iconLevel <= t.to);
-        const roof = tier ? roofByTier.get(tier.name) : undefined;
-        return roof === undefined ? null : roof * city.drawScale;
+        const tier = tierOf(city);
+        const bounds = tier ? boundsByTier.get(tier.name) : undefined;
+        const fit = fitOf(city);
+        return bounds && fit ? bounds.max.y * fit.scale : null;
       };
       // 城 은 세력색을 곱하지 않는다 — 등급별 실루엣이 색에 먹히면 城 크기가 안 읽힌다.
       // 소속은 아래 라벨 층의 색 점이 말한다.
@@ -707,8 +724,9 @@ export function IsoMap3D({
         const k = markerScale(tileWidth / 256);
         // 지붕을 모르는 城 만 예전처럼 「대략 한 세계 단위」 위에 세운다.
         const fallbackLift = Math.max(12, (h / span) * 1.1);
-        const half = Math.max(15 * k, tileWidth * 0.22);
-        const below = Math.max(9, tileWidth * 0.22);
+        // 집기 상자·이름표·테는 성내 마름모를 따른다 — 화면 반폭 = 타일 폭 × drawScale / 2.
+        const halfOf = (city: PlacedCity) => Math.max(15 * k, (tileWidth * city.drawScale) / 2);
+        const belowOf = (city: PlacedCity) => Math.max(9, (tileWidth * city.drawScale) / 4);
 
         // 뱃길 — 깃발·이름보다 먼저(밑에) 긋는다. 축소 상태에서도 남긴다(郡治 뱃길이 대부분이다).
         if (seaRoutes.length > 0) {
@@ -766,7 +784,8 @@ export function IsoMap3D({
           // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —
           // 「중국 바깥엔 툴팁이 안 올라온다」(2026-09-10). 누르는 쪽(광선 집기)에서만
           // firstPickableCity 로 걸러진다.
-          cityHits.push({ city, x0: sx - half, x1: sx + half, y0: top - 2, y1: sy + below });
+          const half = halfOf(city);
+          cityHits.push({ city, x0: sx - half, x1: sx + half, y0: top - 2, y1: sy + belowOf(city) });
         }
 
         // 선택·주둔 테는 깃발 위에 얹는다 — 가려지면 어디가 내 城 인지 못 찾는다.
@@ -774,7 +793,9 @@ export function IsoMap3D({
           const ring = city.id === currentCityId
             ? '#ffd36d' // --focus
             : city.id === selectedCityId ? '#ece6d8' : null; // --text
-          if (ring) drawCityRing(overlayContext, sx, sy, { color: ring, k });
+          if (ring) {
+            drawCityRing(overlayContext, sx, sy, { color: ring, k, halfWidth: (tileWidth * city.drawScale) / 2 });
+          }
         }
 
         // 이름표. 겹치면 뒤엣것을 버린다 — 城 이 몰린 곳(한반도 남부 12 곳)에서
@@ -784,10 +805,10 @@ export function IsoMap3D({
           // 郡縣制 안이면 「뭐뭐현」으로 적는다 — 겹침 판정도 같은 글자로 해야 맞는다.
           const labels = named.map(({ city }) => cityDisplayName(city));
           const keepName = dropOverlappingLabels(
-            named.map(({ sx, sy }, n) => cityLabelBox(sx, sy + below + 2, labels[n], k)),
+            named.map(({ city, sx, sy }, n) => cityLabelBox(sx, sy + belowOf(city) + 2, labels[n], k)),
           );
-          named.forEach(({ sx, sy }, n) => {
-            if (keepName[n]) drawCityName(overlayContext, labels[n], sx, sy + below + 2, k);
+          named.forEach(({ city, sx, sy }, n) => {
+            if (keepName[n]) drawCityName(overlayContext, labels[n], sx, sy + belowOf(city) + 2, k);
           });
         }
 

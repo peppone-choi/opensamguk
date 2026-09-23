@@ -17,6 +17,11 @@ tasks.processResources {
     from(rootProject.file("data/commands/public-alpha-command-catalog.json")) {
         into("command-catalog")
     }
+    // 휘하 조회(현 특산·향당) 원장 — 저장소 루트 파일이 정본이고 여기서는 그대로 싣기만 한다.
+    from(rootProject.file("data/curated/han/hwiha-resource-production-v1.json")) { into("hwiha") }
+    from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("hwiha") }
+    // 지명 대조용 繁→簡 글자표 — tools/map/audit_county_coverage.py make_normalizer 와 같은 표다.
+    from(rootProject.file("data/curated/han/han-name-simplification-v1.json")) { into("hwiha") }
 }
 
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 fan-out 수집해 어드민에 표시.

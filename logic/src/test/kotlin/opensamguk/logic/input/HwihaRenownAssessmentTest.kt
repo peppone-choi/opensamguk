@@ -62,6 +62,24 @@ class HwihaRenownAssessmentTest {
     }
 
     @Test
+    fun `이탈 순번은 assess 와 같은 순서이고 상한 이하면 비어 있다`() {
+        val retinue = listOf(
+            HwihaRenownAssessment.RetainerCard(1, cost = 5, loyalty = 30),
+            HwihaRenownAssessment.RetainerCard(2, cost = 5, loyalty = 10),
+            HwihaRenownAssessment.RetainerCard(3, cost = 5, loyalty = 30),
+            HwihaRenownAssessment.RetainerCard(4, cost = 5, loyalty = 90),
+        )
+        // 합 20, 상한 8 → 충성 10(2), 30 동점은 id 큰 3 먼저, 그다음 1. 5 ≤ 8 에서 멈춘다.
+        assertEquals(listOf(2, 3, 1), HwihaRenownAssessment.departures(8, retinue))
+        assertEquals(
+            HwihaRenownAssessment.assess(9, 12, HwihaRenownAssessment.Tally(betrayal = 1), curve, retinue).released,
+            HwihaRenownAssessment.departures(10, retinue),
+            "월단평(명망 12 → 하한 10)과 조회가 같은 함수를 쓴다",
+        )
+        assertEquals(emptyList(), HwihaRenownAssessment.departures(20, retinue))
+    }
+
+    @Test
     fun `delta 는 자른 뒤 실제 증감을 돌려준다`() {
         val out = HwihaRenownAssessment.assess(
             1, 199, HwihaRenownAssessment.Tally(office = 50), curve, emptyList(),

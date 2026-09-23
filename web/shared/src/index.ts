@@ -197,6 +197,7 @@ export {
   placeGameCities,
   isExternalPlace,
   firstPickableCity,
+  fitCityFootprints,
   fitFootprintsInTile,
   placeBattlefields,
   gameXyToSourceCell,
@@ -226,9 +227,12 @@ export {
 } from './iso/cityName';
 export {
   cityFootprintBlock,
+  resolveCityFootprints,
+  type FootprintCity,
   cityFootprintSpan,
   type CellBlock,
 } from './iso/cityFootprint';
+export { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 export {
   countyGlossForJurisdiction,
   splitCountyGloss,
@@ -269,4 +273,14 @@ export {
   spriteRoofLift,
   cityFlagBase,
 } from './iso/buildingRoof';
+export {
+  SPRITE_SILHOUETTE_PX,
+  cellFootprintInTiles,
+  spriteFootprintFit,
+  modelFootprintFit,
+  type TileFootprint,
+  type SpriteFit,
+  type ModelBounds,
+  type ModelFit,
+} from './iso/buildingFit';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';

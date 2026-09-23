@@ -1,9 +1,9 @@
-// 전장의 안개와 8방향 군국 이동.
+// 8방향 군국 이동.
 //
-// 안개는 **군국 단위**다. 격자는 768×669 = 513,792 칸이라 사람마다 칸을 기억하면 터지지만,
-// 군국은 173 개뿐이라 1인당 들고 있어도 가볍다. 지도도 군국 하나가 화면을 채우는 배율로 열린다.
+// 지도는 군국 하나가 화면을 채우는 배율로 열리고, 화살표로 이웃 군국으로 옮긴다. 군국 표는 서버가
+// 서빙하는 지형의 juns 에서 온다(`hwiha-map.ts` buildCommanderies) — 번호가 식별 PNG 와 같다.
 
-import { HWIHA_COMMANDERIES, type HwihaCommandery } from './hwiha-commanderies';
+import type { HwihaCommanderyCell } from './hwiha-map';
 
 /** 화면의 8방향. 이름은 지도 위 방향 그대로다. */
 export const HWIHA_DIRECTIONS = [
@@ -19,14 +19,9 @@ export const HWIHA_DIRECTIONS = [
 
 export type HwihaDirection = (typeof HWIHA_DIRECTIONS)[number];
 
-const BY_NO = new Map(HWIHA_COMMANDERIES.map((c) => [c.no, c]));
-
-export function commanderyOf(no: number): HwihaCommandery | undefined {
-    return BY_NO.get(no);
-}
-
 /**
- * [from] 에서 [dir] 쪽에 있는 가장 가까운 군국.
+ * [from] 에서 [dir] 쪽에 있는 가장 가까운 군국. 초점 城 이 없는 군국(城 없는 군국)은 옮겨 갈 수
+ * 없으므로 후보에서 뺀다.
  *
  * 방향은 치소 칸 사이의 벡터로 본다. 벡터가 그 방향과 이루는 각이 45° 안일 때만 그 방향의
  * 후보로 세고(코사인 ≥ cos45°), 그중 가장 가까운 것을 고른다. 각을 재지 않고 부호만 보면
@@ -35,14 +30,15 @@ export function commanderyOf(no: number): HwihaCommandery | undefined {
  * 없으면 undefined — 지도 끝이다. 화살표를 숨기지 않고 비활성으로 남긴다(표시 원칙).
  */
 export function neighborInDirection(
-    from: HwihaCommandery,
+    commanderies: readonly HwihaCommanderyCell[],
+    from: HwihaCommanderyCell,
     dir: HwihaDirection,
-): HwihaCommandery | undefined {
+): HwihaCommanderyCell | undefined {
     const dirLen = Math.hypot(dir.dc, dir.dr);
-    let best: HwihaCommandery | undefined;
+    let best: HwihaCommanderyCell | undefined;
     let bestDistance = Infinity;
-    for (const candidate of HWIHA_COMMANDERIES) {
-        if (candidate.no === from.no) continue;
+    for (const candidate of commanderies) {
+        if (candidate.no === from.no || candidate.focusCityId == null) continue;
         const dc = candidate.col - from.col;
         const dr = candidate.row - from.row;
         const len = Math.hypot(dc, dr);
@@ -55,4 +51,13 @@ export function neighborInDirection(
         }
     }
     return best;
+}
+
+/** 城 id 가 속한 군국 — 초점 城 이 같거나, 이름이 같은 군국. */
+export function commanderyOfCity(
+    commanderies: readonly HwihaCommanderyCell[],
+    commanderyName: string | undefined,
+): HwihaCommanderyCell | undefined {
+    if (!commanderyName) return undefined;
+    return commanderies.find((c) => c.name === commanderyName);
 }

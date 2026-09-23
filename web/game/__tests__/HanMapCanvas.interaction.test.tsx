@@ -556,19 +556,21 @@ describe('shared HanMapCanvas viewport interaction', () => {
       const sources = recordFor(canvas).drawImages
         .filter((source): source is LoadedImage => source instanceof LoadedImage)
         .map((source) => source.src);
-      expect(sources).toEqual(expect.arrayContaining([
-        '/city/2x/cast_11.png',
-        '/city/2x/cast_5.png',
-        '/city/2x/cast_9.png',
-      ]));
-      const markerWidths = recordFor(canvas).drawImageCalls
-        .filter(([source]) => source instanceof LoadedImage)
-        .map(([source, , , width]) => [(source as LoadedImage).src, width]);
-      expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/city/2x/cast_11.png', 96],
-        ['/city/2x/cast_5.png', 96],
-        ['/city/2x/cast_9.png', 96],
-      ]));
+      // 城 은 성내에 꽉 맞춘다(2026-09-23) — 등급마다 그림이 있고, 그릴 폭 이상인 가장 작은 해상도를 고른다.
+      const cityDraws = recordFor(canvas).drawImageCalls
+        .filter(([source]) => source instanceof LoadedImage && (source as LoadedImage).src.includes('/city/'))
+        .map(([source, , , width]) => ({ src: (source as LoadedImage).src, width: width as number }));
+      for (const level of [11, 5, 9]) {
+        const draws = cityDraws.filter((d) => d.src.endsWith(`/cast_${level}.png`));
+        expect(draws.length).toBeGreaterThan(0);
+        // 그림을 다 불러온 뒤의 마지막 그리기 — 그릴 폭 이상인 원본이거나, 그보다 큰 원본이 없으면 가장 큰 원본이다.
+        const last = draws.at(-1)!;
+        const pixel = { '1x': 32, '2x': 64, '4x': 128, '8x': 256 }[last.src.split('/')[2]]!;
+        expect(pixel >= last.width || pixel === 256).toBe(true);
+      }
+      // 경(9) 성내가 가장 넓다.
+      const widthOf = (level: number) => cityDraws.filter((d) => d.src.endsWith(`/cast_${level}.png`)).at(-1)!.width;
+      expect(widthOf(9)).toBeGreaterThan(widthOf(5));
       const record = recordFor(canvas);
       record.drawImageCalls.forEach(([source], index) => {
         if (source instanceof LoadedImage) expect(record.drawSmoothing[index]).toBe(false);
@@ -854,11 +856,12 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(main.fills).toContain('#ffd84f');
     expect(selfLabel).toMatchObject({ value: '내 위치', style: '#ffffff' });
     const [selectedX, selectedY] = cellToScreen(3, 2, views.at(-1)!);
+    // 선택 테는 성내 실루엣을 두른다(2026-09-23 성내 맞춤) — 칸 중심에 가로로 맞고 칸 중심을 세로로 품는다.
     const selectedRect = main.strokeRects.find(({ style, values: [left, top, width, height] }) => (
       style === '#ffd84f'
       && Math.abs(left + width / 2 - selectedX) < 1e-6
-      && Math.abs(top + height / 2 - selectedY) < 1e-6
-      && Math.abs(width - height) < 1e-6
+      && top < selectedY
+      && top + height > selectedY
     ));
     expect(selectedRect).toBeDefined();
     expect(main.lineCalls.length).toBeGreaterThan(0);
@@ -1106,9 +1109,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const province = screen.getByRole('button', { name: '프로빈스 지역 레이어' });
+    const province = screen.getByRole('button', { name: '구역 레이어' });
     const county = screen.getByRole('button', { name: '현급 도시 레이어' });
-    const commandery = screen.getByRole('button', { name: '군국급 도시 레이어' });
+    const commandery = screen.getByRole('button', { name: '군급 도시 레이어' });
     expect(province).toHaveAttribute('aria-pressed', 'false');
     expect(county).toHaveAttribute('aria-pressed', 'true');
     expect(commandery).toHaveAttribute('aria-pressed', 'false');
