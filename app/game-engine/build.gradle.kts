@@ -118,6 +118,11 @@ configurations.named(baseline.runtimeOnlyConfigurationName) {
 // Docker COPY build/libs/*.jar glob stays unambiguous.
 tasks.named("jar") { enabled = false }
 
+// 휘하 내정 입력의 향당(본관 縣) 보너스가 읽는 인물 본관 원장 — 저장소 루트 파일이 정본이다(game-api 와 같은 파일).
+tasks.processResources {
+    from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("hwiha") }
+}
+
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 서버별 fan-out 수집해 어드민에 표시.
 // 멀티서버에서 각 서버의 game-engine은 자기 버전을 보고한다. image.tag는 빌드 시 IMAGE_TAG env로 주입.
 springBoot {

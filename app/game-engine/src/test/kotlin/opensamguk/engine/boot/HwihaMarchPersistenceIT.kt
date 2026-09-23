@@ -523,7 +523,7 @@ class HwihaMarchPersistenceIT {
         jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['hwihaLandPassage','edges',?,'blockaded'],'false'::jsonb) WHERE id=?",edgeId,id)
         world=cold(id)
         opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc)).reserve(
-            opensamguk.common.world.WorldId(id),1,0,"placement.assign","{}",requestId="pause-641")
+            opensamguk.common.world.WorldId(id),1,0,"stratagem.play","{}",requestId="pause-641")
         nextPhase(world)
         assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
         world=cold(id)

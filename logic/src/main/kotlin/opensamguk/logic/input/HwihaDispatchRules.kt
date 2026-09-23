@@ -98,8 +98,11 @@ object HwihaDispatchRules {
             val owner = state.counties.singleOrNull { county -> county.id == countyId }?.nationId
             val assignment = HwihaCountyAssignment.read(it.meta)
             val pending = HwihaDispatchState.read(it.meta)
+            // A card placed (or queued) as this county's magistrate also holds the seat (배치 縣令, #193).
+            val placement = HwihaPlacementState.read(it.meta)
             (assignment?.countyId == countyId && assignment.nationId == it.nationId && assignment.nationId == owner) ||
-                (pending?.countyId == countyId && pending.status == DispatchStatus.PENDING && pending.nationId == it.nationId && pending.nationId == owner)
+                (pending?.countyId == countyId && pending.status == DispatchStatus.PENDING && pending.nationId == it.nationId && pending.nationId == owner) ||
+                (placement?.claimsMagistracy(countyId) == true && it.nationId == owner)
         }
 
     private fun reject(reason: DispatchFailure) = DispatchAssessment.Rejected(reason)

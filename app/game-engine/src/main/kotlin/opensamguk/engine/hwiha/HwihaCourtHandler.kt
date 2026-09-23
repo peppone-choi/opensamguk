@@ -8,8 +8,13 @@ import opensamguk.logic.input.*
 /** Deferred results are emitted as sequence 2 in the same flush that consumes the issuer queue. */
 data class HwihaCourtExecution(val requestId: String, val ownerUserId: Int, val result: CommandLifecycleResult)
 
-class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class HwihaCourtHandler(
+    private val world: InMemoryTurnWorld,
+    private val recorder: ChangeRecorder,
+    private val domesticContext: HwihaDomesticContext = HwihaDomesticContext(),
+) {
     private val executor = HwihaDispatchExecutor(world, recorder)
+    private val domestic by lazy { HwihaDomesticHandler(world, recorder, domesticContext) }
     private val executions = mutableListOf<HwihaCourtExecution>()
 
     fun handle(command: HwihaCourtInput): CommandLifecycleResult {
@@ -23,6 +28,10 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
                 "INVALID_INPUT_CHANNEL", "첩보는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
+            // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
+            HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
+            HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
+            HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
         ))
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,

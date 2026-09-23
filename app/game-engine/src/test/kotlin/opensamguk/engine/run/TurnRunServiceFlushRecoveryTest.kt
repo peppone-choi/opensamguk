@@ -374,7 +374,7 @@ class TurnRunServiceFlushRecoveryTest {
             }
         }
         val (service, world) = newFixture(flush, withDueGeneral = true,
-            reservedTurn = ReservedTurn("placement.assign", "{}", requestId = "hwiha-rejected"))
+            reservedTurn = ReservedTurn("stratagem.play", "{}", requestId = "hwiha-rejected"))
         assertFailsWith<QueryTimeoutException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
         val row = payloads.single().commandResults.single()
         assertEquals("hwiha-rejected", row.requestId)
@@ -385,7 +385,7 @@ class TurnRunServiceFlushRecoveryTest {
         val result = (envelope.event as opensamguk.common.wire.TurnDaemonEvent.CommandResult).result
             as opensamguk.common.wire.CommandLifecycleResult
         assertEquals("WRONG_RULE_PROFILE", result.code)
-        assertEquals("placement.assign", result.actionCode)
+        assertEquals("stratagem.play", result.actionCode)
         assertEquals(listOf(10), payloads.single().reservedGeneralTurnPulls.map { it.generalId })
         val afterExecution = world.getGeneralById(10)
         assertTrue(service.retryRetainedFlush())

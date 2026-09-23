@@ -26,6 +26,10 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/hwiha-vision-rules-v1.json")) {
         into("hwiha")
     }
+    // 휘하 내정 입력(배치·방침·공사)의 잠정 수치 — 정본은 저장소 루트 파일 하나다.
+    from(rootProject.file("data/curated/han/hwiha-domestic-v1.json")) {
+        into("hwiha")
+    }
 }
 
 tasks.test { useJUnitPlatform() }
