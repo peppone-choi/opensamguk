@@ -342,13 +342,13 @@ class HwihaCampReaderTest {
         assertEquals(setOf("을"), table.keys, "갑은 두 행이 싣고, 병은 縣이 없다")
     }
 
-    @Test fun `산출 원장은 縣마다 목재(면적 축)이고 철·말은 35 縣이다`() {
+    @Test fun `산출 원장은 縣마다 목재(면적 축)이고 철·말은 36 縣이다`() {
         val table = ledgers.productionByJurisdiction
         // 縣 수는 지도 판마다 바뀐다 — 박지 않고 모든 행에 목재가 있는지만 본다.
         assertTrue(table.values.all { rows -> rows.any { it.resource == "TIMBER" } })
         assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 132)), table["200197"])
         assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE", "TIMBER") })
-        assertEquals(35, table.values.count { rows -> rows.any { it.resource != "TIMBER" } })
+        assertEquals(36, table.values.count { rows -> rows.any { it.resource != "TIMBER" } }, "1224 판: 越巂郡 철 산지가 새 縣에 묶였다")
     }
 
     @Test fun `城 표에서 풀리지 않는 본관은 한글 이름이 null 이고 한자는 남는다`() {
@@ -377,10 +377,12 @@ class HwihaCampReaderTest {
         assertEquals("낭사국 양도현", korean("제갈량"))
         assertNull(korean("전종"), "吳郡 錢唐 — 城 표는 會稽郡 錢唐이다. 郡이 다르면 고르지 않는다")
         assertNull(korean("사마랑"), "河內 溫 — 글자표에 溫→温 이 없어 풀리지 않는다(표 범위 밖, 지어내지 않는다)")
-        // 기준선(2026-09-23 실측 — tools/map/audit_county_coverage.make_normalizer 로 같은 대조를 파이썬에서 돌린 값):
-        // 본관 이름표 120명 중 관할 id 로 91 · (郡, 縣) 쌍으로 2 = 93 명이 풀리고 27 명은 null 이다.
+        // 기준선(2026-09-23 실측): 1168 판에서는 120명 중 93명(관할 id 91 · (郡, 縣) 쌍 2)이 풀렸다
+        // (tools/map/audit_county_coverage.make_normalizer 로 같은 대조를 파이썬에서 돌린 값). 1224 판(#865, 결손 縣 56곳)에서
+        // 새 縣(1342–1397)에 본관이 걸린 7명(여범 세양·주유 서·장료 마읍·서황 양·전예 옹노·진교 동양·가후 고장)이 더 풀려
+        // 100명이다 — null 은 27 → 20 명.
         assertEquals(120, table.size)
-        assertEquals(93, table.values.count { names.korean(it) != null })
+        assertEquals(100, table.values.count { names.korean(it) != null })
     }
 
     @Test fun `지명 정규화는 audit 도구 규칙이다 - 邑·道·國은 이름의 일부`() {
