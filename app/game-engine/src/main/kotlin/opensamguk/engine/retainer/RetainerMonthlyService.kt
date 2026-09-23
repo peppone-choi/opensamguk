@@ -21,6 +21,9 @@ class RetainerMonthlyService {
         val bugoks = world.listBugoks()
         val retainers = world.listRetainers()
         if (bugoks.isEmpty() && retainers.isEmpty()) return
+        // HWIHA 는 기존 개인 재정(부곡 급여·가신 유지비 30/30)을 쓰지 않는다 — 녹봉은 HwihaMonthlySalary 가 창고망에서
+        // 낸다(skipsLegacyFinance 원칙). 끄는 것은 재정 효과뿐이다: 군량 소모·훈련·피로·충성 변동은 그대로 둔다.
+        val skipsLegacyFinance = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA
 
         for (b in bugoks.sortedBy { it.id }) {
             val master = world.getGeneralById(b.masterGeneralId) ?: continue
@@ -28,10 +31,11 @@ class RetainerMonthlyService {
             val out = RetainerRules.settleBugok(
                 RetainerRules.BugokSettleInput(
                     troops = b.troops, provisions = b.provisions, morale = b.morale, fatigue = b.fatigue,
-                    training = b.training, masterGold = master.gold, commanderTask = commanderTask,
+                    training = b.training, masterGold = if (skipsLegacyFinance) Int.MAX_VALUE else master.gold,
+                    commanderTask = commanderTask,
                 ),
             )
-            if (out.goldPaid > 0) applyGeneral(world, recorder, master, master.copy(gold = master.gold - out.goldPaid))
+            if (!skipsLegacyFinance && out.goldPaid > 0) applyGeneral(world, recorder, master, master.copy(gold = master.gold - out.goldPaid))
             val next = b.copy(provisions = out.provisions, morale = out.morale, fatigue = out.fatigue, training = out.training)
             if (next != b) world.updateBugok(next)
         }
@@ -40,7 +44,9 @@ class RetainerMonthlyService {
             val master = world.getGeneralById(r.masterGeneralId) ?: continue
             when (val out = RetainerRules.settleRetainer(
                 RetainerRules.RetainerSettleInput(
-                    loyalty = r.loyalty, task = r.task, origin = r.origin, masterGold = master.gold, masterRice = master.rice,
+                    loyalty = r.loyalty, task = r.task, origin = r.origin,
+                    masterGold = if (skipsLegacyFinance) Int.MAX_VALUE else master.gold,
+                    masterRice = if (skipsLegacyFinance) Int.MAX_VALUE else master.rice,
                 ),
             )) {
                 is RetainerRules.RetainerSettlement.Leave -> {
@@ -54,7 +60,7 @@ class RetainerMonthlyService {
                     )
                 }
                 is RetainerRules.RetainerSettlement.Stay -> {
-                    if (out.goldPaid > 0 || out.ricePaid > 0) {
+                    if (!skipsLegacyFinance && (out.goldPaid > 0 || out.ricePaid > 0)) {
                         applyGeneral(world, recorder, master, master.copy(gold = master.gold - out.goldPaid, rice = master.rice - out.ricePaid))
                     }
                     if (out.loyalty != r.loyalty) world.updateRetainer(r.copy(loyalty = out.loyalty))

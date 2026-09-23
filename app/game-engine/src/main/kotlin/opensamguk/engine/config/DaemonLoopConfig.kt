@@ -520,7 +520,7 @@ class DaemonLoopConfig {
             hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
                 opensamguk.engine.hwiha.HwihaPhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
-                    artifacts.provinceCells)
+                    artifacts.provinceCells, spatialSupplyNetworkProvider)
             } else null,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,

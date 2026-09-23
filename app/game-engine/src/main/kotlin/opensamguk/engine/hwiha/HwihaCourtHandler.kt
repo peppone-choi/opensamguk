@@ -25,6 +25,7 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
                 "INVALID_INPUT_CHANNEL", "항복 권고는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
+            HwihaRewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
         ))
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,
@@ -60,6 +61,18 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
                     is DispatchExecution.Rejected -> deny(applied.reason.name, applied.reason.message)
                 }
             }
+            HwihaRewardInput.INPUT_ID -> {
+                val request = HwihaRewardInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "상사할 카드와 금을 확인해 주세요.")
+                val existing = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
+                    return deny("STATE_UNAVAILABLE", "저장된 상사 대기 상태를 확인할 수 없습니다.")
+                }
+                if (existing != null) return deny("ALREADY_QUEUED", "다음 턴에 실행할 상사가 이미 있습니다.")
+                if (world.getRetainerById(request.retainerId)?.takeIf { it.masterGeneralId == actor.id && it.generalId != null } == null)
+                    return deny(HwihaRewardExecutor.Failure.CARD_UNAVAILABLE.name, HwihaRewardExecutor.Failure.CARD_UNAVAILABLE.message)
+                val queued = HwihaQueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
+                updateMeta(actor, actor.meta + (HwihaQueuedReward.META_KEY to queued.toMetaValue()))
+                result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }
     }
@@ -67,6 +80,7 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
     /** Runs beside, not instead of, the issuer's personal action. Lifecycle controls phase eligibility. */
     fun onIssuerTurn(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
+        runQueuedReward(generalId)
         val actor = world.getGeneralById(generalId) ?: return
         val queued = HwihaQueuedDispatch.read(actor.meta)
         if (queued == null) {
@@ -89,6 +103,21 @@ class HwihaCourtHandler(private val world: InMemoryTurnWorld, private val record
         // The issue can update another general; remove only this issuer's queue from its current metadata.
         val current = world.getGeneralById(generalId)!!
         updateMeta(current, current.meta - HwihaQueuedDispatch.META_KEY)
+        executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, result)
+    }
+
+    /** 상사 대기는 발령 대기와 독립이다 — 결정권자의 턴에 한 건 실행하고 결과를 같은 flush 에 싣는다. */
+    private fun runQueuedReward(generalId: Int) {
+        val actor = world.getGeneralById(generalId) ?: return
+        val queued = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
+            result(generalId, HwihaRewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
+        } else when (val failure = HwihaRewardExecutor(world, recorder).reward(RewardRequest(generalId, queued.retainerId, queued.money))) {
+            null -> result(generalId, HwihaRewardInput.INPUT_ID, true)
+            else -> result(generalId, HwihaRewardInput.INPUT_ID, false, failure.name, failure.message)
+        }
+        val current = world.getGeneralById(generalId)!!
+        updateMeta(current, current.meta - HwihaQueuedReward.META_KEY)
         executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, result)
     }
 

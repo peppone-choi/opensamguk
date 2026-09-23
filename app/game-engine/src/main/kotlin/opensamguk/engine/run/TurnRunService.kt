@@ -379,6 +379,8 @@ open class TurnRunService(
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
                             opensamguk.engine.hwiha.HwihaMonthlyCountyIncome(world, handler.recorder)
                                 .credit(date.year, date.month)
+                            // 녹봉 — 수입 뒤, 월단평 앞(§5.2 4단계). 기존 가신 유지비는 HWIHA 에서 꺼져 있다.
+                            opensamguk.engine.hwiha.HwihaMonthlySalary(world, handler.recorder).pay(date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.hwiha.HwihaMonthlyAssessment(

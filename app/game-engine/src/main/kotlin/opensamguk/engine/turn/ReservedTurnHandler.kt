@@ -282,6 +282,7 @@ class ReservedTurnHandler(
                 },
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
+                "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
             )
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)

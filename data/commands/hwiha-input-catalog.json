@@ -10,6 +10,7 @@
     {"inputId": "action.demandSurrender", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
     {"inputId": "court.dispatch", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_발령"]},
     {"inputId": "court.dispatchReply", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
+    {"inputId": "court.reward", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_포상"]},
     {"inputId": "placement.assign", "kind": "PLACEMENT", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},
     {"inputId": "policy.set", "kind": "POLICY", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},
     {"inputId": "work.start", "kind": "WORK", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []},
