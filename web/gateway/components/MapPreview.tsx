@@ -149,6 +149,7 @@ export default function MapPreview({
             nationColor: nationById.get(owner.nationId)?.color })),
     }) : undefined, [data, nationById]);
     const handlePickCity = useCallback((city: IsoCityOverlay) => setPicked(city), []);
+    const handleMissing = useCallback(() => setFailed(true), []);
     const handleHoverCity = useCallback((city: IsoCityOverlay | null, at?: { x: number; y: number }) => {
         setHover(city && at ? { city, x: at.x, y: at.y } : null);
     }, []);
@@ -186,7 +187,7 @@ export default function MapPreview({
                     showCityFootprint
                     onCityActivate={handlePickCity}
                     onCityHover={handleHoverCity}
-                    onMissing={() => setFailed(true)}
+                    onMissing={handleMissing}
                     ariaLabel={`${data.mapCode} 서버 지도`}
                 />
                 <div className="map-btn-stack">
@@ -225,7 +226,9 @@ export default function MapPreview({
                         {citySnapshotBadges((hover?.city ?? picked)!).map((badge, index) => (
                             <div className="map-preview-tooltip-meta" key={`state-${index}`}>{cityBadgeLabel(badge)}</div>
                         ))}
-                        {(WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []).map((feature) => (
+                        {(data.mapCode === 'han-world-v3'
+                            ? WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []
+                            : []).map((feature) => (
                             <div className="map-preview-tooltip-meta" key={feature}>{feature === 'port' ? '항구' : '나루'}</div>
                         ))}
                     </div>
