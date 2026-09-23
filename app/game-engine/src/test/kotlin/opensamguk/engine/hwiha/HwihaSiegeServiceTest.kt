@@ -46,6 +46,19 @@ class HwihaSiegeServiceTest {
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells, outcomes = outcomes).run(world, recorder)
     }
 
+    @Test fun `a siege settlement stamp is written all at once`() {
+        val (world, recorder) = besieged(grain = 1_000_000)
+        val started = world.getHwihaSiege(county)!!
+        assertEquals(listOf(null, null, null), listOf(started.settledYear, started.settledMonth, started.settledPhase))
+        boundary(world, recorder)
+        val settled = world.getHwihaSiege(county)!!
+        assertEquals(listOf(world.getState().currentYear, world.getState().currentMonth, world.getState().currentPhase),
+            listOf(settled.settledYear, settled.settledMonth, settled.settledPhase))
+        val originalTurns = settled.turns
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder)
+        assertEquals(originalTurns, world.getHwihaSiege(county)!!.turns, "the complete stamp prevents a second settlement")
+    }
+
     @Test fun `a starved county surrenders on the fourth boundary and keeps its warehouse in the county`() {
         val (world, recorder) = besieged()
         boundary(world, recorder, 3)
