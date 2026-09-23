@@ -72,8 +72,8 @@
   "reactions": {
     "status": "CONFIRMED",
     "interceptRangeProvinces": 1,
-    "rule": "반응 기록(설치 계책·요격·회피)을 해석하는 구현이 연결되기 전에는, 틀이 맞는 기록(버전 1, 세 목록)이 쌓여 있어도 행군 진입과 출병 입력을 막지 않는다. 권위가 없거나 틀이 깨졌으면 기존대로 판정 불가다. 이 기본값에서는 요격·회피 효과가 적용되지 않는다.",
-    "interceptNote": "요격 범위는 省 간선 1개로 2026-09-23 확정했다. 행군 반응 해석기(HwihaMarchReactionPolicy)가 읽는다. 보이지 않는 군단은 요격하지 않는다(재설계 spec §7 시야)."
+    "rule": "설치 계책이 있는 적 省에 진입하면 조우한다. 가시성이 FULL인 적 군단은 省 간선 1개 안에서 요격하며, 회피 방침 군단은 인접 자국 省으로 물러나 통행을 내준다. 권위가 없거나 틀이 깨졌으면 판정 불가다.",
+    "interceptNote": "요격 범위는 省 간선 1개로 2026-09-23 확정했다. HwihaMarchReactionInterpreter가 읽는다. 보이지 않는 군단은 요격하지 않는다(재설계 spec §7 시야)."
   },
   "rations": {
     "status": "CONFIRMED",

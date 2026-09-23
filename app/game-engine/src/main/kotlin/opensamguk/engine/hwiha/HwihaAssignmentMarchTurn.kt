@@ -61,6 +61,7 @@ class HwihaAssignmentMarchTurn(
                 }, refs + ("failure" to result.reason.name))
             }
             is AssignmentMarchExecution.Applied -> {
+                result.movement.reachedNodes.forEach { reactions.onEntered(world, recorder, generalId, it) }
                 if (previous?.assignment == result.state.assignment && previous.stop == LandMarchStop.ARRIVED &&
                     result.state.stop == LandMarchStop.ARRIVED) return
                 log(generalId, when (result.state.stop) {

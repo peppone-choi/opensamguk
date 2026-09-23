@@ -79,7 +79,8 @@ class HwihaYuzhouCampaignSimulationTest {
             hwihaWarOutcomes = outcomes)
         val selector = HwihaNpcDeploySelector(topology, metrics)
         val lifecycle = TurnDaemonLifecycle(world, handler,
-            hwihaMovementOf = HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes)::onTurn,
+            hwihaMovementOf = HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
+                reactions = HwihaMarchReactionInterpreter(topology, metrics, bundle.commanderyIndex))::onTurn,
             hwihaNpcInputOf = if (npcDeploy) { id, reserved -> selector.select(world, id, reserved) } else { _, reserved -> reserved },
             reservedActionOf = { HwihaCampaignWorldFixture.NO_INPUT })
         return Campaign(world, lifecycle, HwihaPhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder, outcomes)

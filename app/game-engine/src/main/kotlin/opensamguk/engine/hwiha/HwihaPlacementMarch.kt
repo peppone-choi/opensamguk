@@ -72,6 +72,7 @@ class HwihaPlacementMarchTurn(
             check(recorder.moveGeneral(world, generalId, node) is GeneralPositionChangeResult.Changed) {
                 "Validated placement march position transition was rejected"
             }
+            reactions.onEntered(world, recorder, generalId, node)
         }
         val march = HwihaPlacementMarch(active.order.requestId, HwihaMarchCheckpoint(path, movement.cursor, now, movement.stop))
         val before = checkNotNull(world.getGeneralById(generalId))
