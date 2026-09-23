@@ -356,6 +356,34 @@ def canon_ju() -> dict[str, str]:
     return out
 
 
+def assign_ju_to_juns(juns: list[dict]) -> list[str]:
+    """Return the canonical 13州 assignment (and 東夷) for every 郡 row.
+
+    The tile API and game scenario call this same function so their hierarchy
+    cannot silently diverge when a parent is added to the map.
+    """
+    canon = canon_ju()
+    regions: list[str | None] = [JU_KR[canon[j["nameCh"]]] if j["nameCh"] in canon else None for j in juns]
+    anchored = [i for i, region in enumerate(regions) if region]
+    if not anchored:
+        raise ValueError("No canonical 州 anchors")
+    for i, jun in enumerate(juns):
+        if regions[i]:
+            continue
+        frontier = FRONTIER.get(jun["nameCh"], (None,))[0]
+        if frontier:
+            regions[i] = frontier
+            continue
+        nearest = min(anchored, key=lambda a: (
+            (juns[a]["col"] - jun["col"]) ** 2 + (juns[a]["row"] - jun["row"]) ** 2,
+            a,
+        ))
+        regions[i] = regions[nearest]
+    if any(region is None for region in regions):
+        raise ValueError("Unassigned 郡 州")
+    return [str(region) for region in regions]
+
+
 def level_thresholds(households: list[int]) -> list[int]:
     """戶 백분위 경계 3개 — '소'/'중'/'대'/'특' 를 가른다.
 
@@ -645,21 +673,16 @@ def build_gate_skeleton() -> dict:
     jun_ju = canon_ju()
 
     # --- 州 배정 -------------------------------------------------------------
-    region_of: list[str | None] = [None] * len(juns)
-    for i, j in enumerate(juns):
-        if j["nameCh"] in jun_ju:
-            region_of[i] = JU_KR[jun_ju[j["nameCh"]]]
-    anchored = [i for i, r in enumerate(region_of) if r]
+    region_of = assign_ju_to_juns(juns)
+    anchored = [i for i, j in enumerate(juns) if j["nameCh"] in jun_ju]
     unresolved: list[tuple[str, str]] = []
     for i, j in enumerate(juns):
-        if region_of[i]:
+        if j["nameCh"] in jun_ju:
             continue
         if FRONTIER.get(j["nameCh"], (None,))[0]:
-            region_of[i] = FRONTIER[j["nameCh"]][0]
             continue
-        near = min(anchored, key=lambda a: (juns[a]["col"] - j["col"]) ** 2
-                                           + (juns[a]["row"] - j["row"]) ** 2)
-        region_of[i] = region_of[near]
+        near = min(anchored, key=lambda a: ((juns[a]["col"] - j["col"]) ** 2
+                                           + (juns[a]["row"] - j["row"]) ** 2, a))
         unresolved.append((j["name"], f"{region_of[i]}←{juns[near]['name']}"))
 
     ju_order = [JU_KR[k] for k in

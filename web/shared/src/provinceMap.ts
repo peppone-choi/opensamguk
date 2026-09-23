@@ -128,6 +128,8 @@ export interface ParentRegionRecordDto {
   displayName: string;
   nameCh: string;
   administrativeSystem: string;
+  /** Canonical 州 from build_han_world.assign_ju_to_juns; 東夷 is a peer region. */
+  ju?: string;
   aliases?: readonly string[];
 }
 

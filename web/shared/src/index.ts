@@ -261,6 +261,8 @@ export {
   type CityFlagOptions,
   type LabelBox,
 } from './iso/marker';
+export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
+  type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
 export {
   SPRITE_ROOF_TOP_PX,
   SPRITE_GROUND_CENTER_Y,

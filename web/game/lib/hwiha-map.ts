@@ -14,6 +14,9 @@ import {
     isOwnedNationVisual,
     loadProvinceIdentityMap,
     mapCityToTile,
+    juUrlForTerrain,
+    verifiedJuByParent,
+    type JuIndexResponse,
     type ProvinceIdentityMap,
     parseTerrainEtagHash,
     validStrategicBinding,
@@ -213,6 +216,19 @@ export function useHwihaWorldMap(refreshKey: unknown = 0): HwihaMapState {
             if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
             const hash = parseTerrainEtagHash(response.headers.get('etag'));
             const tiles = (await response.json()) as HanTiles;
+            const juAddress = juUrlForTerrain(hwihaTerrainUrl(base));
+            if (juAddress && tiles.parentRegions) {
+                try {
+                    const juResponse = await fetch(juAddress, { signal: controller.signal });
+                    if (juResponse.ok) {
+                        const assigned = verifiedJuByParent(await juResponse.json() as JuIndexResponse,
+                            hash, tiles.parentRegions.length);
+                        if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({
+                            ...parent, ju: assigned[index],
+                        }));
+                    }
+                } catch { if (controller.signal.aborted) return; }
+            }
             // 구역 식별 PNG 가 없어도 지도는 그린다 — 안개·군단 위치만 빠진다.
             const provinceMap = await loadProvinceIdentityMap(HWIHA_PROVINCES_URL).catch(() => null);
             setRaw({ kind: 'loaded', preview, tiles, hash, provinceMap });
