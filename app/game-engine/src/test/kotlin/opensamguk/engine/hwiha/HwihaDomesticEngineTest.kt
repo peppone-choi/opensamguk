@@ -22,10 +22,10 @@ class HwihaDomesticEngineTest {
             sourceRefs = listOf("qa:ab"), confidence = EvidenceConfidence.REVIEWED)), emptyList(),
         mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
-    private val events = mutableListOf<HwihaGovernanceRenownEvent>()
+    private val events = mutableListOf<HwihaGovernanceMeritEvent>()
     private val context = HwihaDomesticContext(
         geography = HwihaCountyGeography(listOf(HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
-        topology = topology, metrics = metrics, renown = { events += it })
+        topology = topology, metrics = metrics, merit = { events += it })
 
     private fun general(id: Int, node: String, human: Boolean = false, lord: Boolean = false, level: Int = 0,
         stats: GeneralStats = GeneralStats(60, 60, 60, 80, 60)) = TurnGeneral(id = id, name = "G$id", nationId = 1,
@@ -98,6 +98,21 @@ class HwihaDomesticEngineTest {
         assertEquals(logs, world.peekLogs().size)
     }
 
+    @Test fun `scout placement publishes the owner's scout post for the vision reader`() {
+        val world = world(); val recorder = ChangeRecorder()
+        assertTrue(submit(world, recorder, "placement.assign", """{"cardId":5,"post":"SCOUT","provinceId":"A"}""").ok)
+        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
+        fun posts() = world.getGeneralById(1)!!.meta[HwihaScoutPosts.META_KEY]
+        assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "MOVING"))), posts())
+        HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
+        assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "ACTIVE"))), posts())
+        assertTrue(submit(world, recorder, "placement.assign", """{"cardId":5,"post":"NONE"}""").ok)
+        world.setCurrentDate(200, 1, 2)
+        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
+        assertNull(posts())
+        assertNull(HwihaPlacementState.read(world.getGeneralById(3)!!.meta))
+    }
+
     @Test fun `an invalidated pending placement is dropped with a reason and keeps no stale march`() {
         val world = world(); val recorder = ChangeRecorder()
         submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":11}""")
@@ -142,30 +157,35 @@ class HwihaDomesticEngineTest {
     }
 
     @Test fun `works start at the next boundary stop on shortage and complete at the total cost`() {
-        val world = world(); val recorder = ChangeRecorder()
+        val world = world(HwihaResources(money = 1_000_000)); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "work.start", """{"countyId":10,"work":"FORTIFICATION"}""").ok)
         assertEquals(DomesticFailure.WORK_IN_PROGRESS.name, submit(world, recorder, "work.start", """{"countyId":10,"work":"ROAD"}""").code)
+        fun work() = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
+        fun stock() = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+        // Same phase as the order: the boundary does not touch the work at all (§4 「다음 순 경계부터」).
         world.setCurrentDate(200, 1, 1)
         HwihaDomesticBoundary(world, recorder, context).run()
-        assertEquals(0, HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.progress, "no progress in the ordering phase")
+        assertEquals(0, work().progress); assertNull(work().stopReason); assertEquals(1_000_000, stock().money)
+        // Next boundary: money is there but timber is not, so it stops without progress or payment.
         boundary(world, recorder, 200, 1, 2)
-        val stopped = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
-        assertEquals(HwihaDomesticEffects.INSUFFICIENT_STOCK, stopped.stopReason)
-        assertEquals(0, stopped.progress)
-        // Stock the warehouse through the settlement boundary and let the work run to completion.
+        assertEquals(HwihaDomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
+        assertEquals(0, work().progress); assertEquals(1_000_000, stock().money)
         val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder).settle(10, 1, warehouse.revision,
-            HwihaResources(), HwihaResources(money = 1_000_000, timber = 100_000)))
+            HwihaResources(), HwihaResources(timber = 100_000)))
         val spec = context.design.works.getValue(DomesticWork.FORTIFICATION)
         var phase = HwihaPhase(200, 1, 2)
+        var boundaries = 0
         while (HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active != null) {
-            phase = phase.plus(1)
+            phase = phase.plus(1); boundaries++
             boundary(world, recorder, phase.year, phase.month, phase.phase)
+            if (boundaries == 1) assertNull(work().stopReason, "restocking clears the stop on the next boundary")
         }
+        val emptySeatSpeed = context.design.progressPerPhase * context.design.scaling.emptySeatPermille / 1000
+        assertEquals((spec.requiredProgress + emptySeatSpeed - 1) / emptySeatSpeed, boundaries)
         val works = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!
         assertEquals(listOf(DomesticWork.FORTIFICATION), works.completed.map { it.work })
-        assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0),
-            HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
         assertEquals(minOf(1000, 500 + spec.completion.single().amount), world.getCityById(10)!!.defence)
     }
 

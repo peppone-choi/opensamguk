@@ -194,10 +194,10 @@ class ReservedTurnHandler(
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
     private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
-    /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
-    val hwihaDomesticContext: opensamguk.engine.hwiha.HwihaDomesticContext = opensamguk.engine.hwiha.HwihaDomesticContext(),
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
+    /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
+    val hwihaDomesticContext: opensamguk.engine.hwiha.HwihaDomesticContext = opensamguk.engine.hwiha.HwihaDomesticContext(),
 ) {
 
     private val hwihaCatalog by lazy { HwihaInputCatalog.load() }

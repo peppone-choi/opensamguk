@@ -313,12 +313,6 @@ class DaemonLoopConfig {
             v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
         )
 
-        // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
-        // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
-        val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
-            artifacts.projection.topology to artifacts.landMarchMetrics
-        } else null
         // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림 연결 전까지 버린다.
         val domesticContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
@@ -329,6 +323,13 @@ class DaemonLoopConfig {
                 metrics = artifacts.landMarchMetrics,
             )
         } else opensamguk.engine.hwiha.HwihaDomesticContext()
+
+        // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
+        // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
+        val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
+            artifacts.projection.topology to artifacts.landMarchMetrics
+        } else null
         val handler = ReservedTurnHandler(
             world = world,
             registry = registry,
@@ -340,10 +341,11 @@ class DaemonLoopConfig {
             // 군주(officer_level==12) 사망 시 후계 선정/승계 또는 국가 멸망 (func.php:1807 nextRuler).
             nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
             recorder = recorder,
+            // 휘하 내정 입력(배치·방침·공사)의 지리·원장·행군 핀.
+            hwihaDomesticContext = domesticContext,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
             hwihaDeploymentContext = deploymentContext,
-            hwihaDomesticContext = domesticContext,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,

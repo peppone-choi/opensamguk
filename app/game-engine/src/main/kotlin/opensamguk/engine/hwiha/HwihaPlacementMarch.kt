@@ -101,6 +101,7 @@ class HwihaPlacementMarchTurn(
             HwihaPlacementState(active.copy(arrivedAt = at), HwihaPlacementState.read(before.meta)?.pending).toMetaValue())
         if (clearMarch) meta = meta - HwihaPlacementMarch.META_KEY
         world.updateGeneralMeta(recorder, before, meta)
+        world.syncScoutPosts(recorder, active.order.ownerGeneralId)
     }
 
     private fun log(generalId: Int, text: String) {

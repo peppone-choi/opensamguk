@@ -75,9 +75,13 @@ class HwihaDomesticTurn(
 
     private fun write(card: TurnGeneral, active: HwihaActivePlacement?, clearMarch: Boolean) {
         val before = checkNotNull(world.getGeneralById(card.id))
+        val previous = try { HwihaPlacementState.read(before.meta) } catch (_: IllegalArgumentException) { null }
         var meta = before.meta.withKey(HwihaPlacementState.META_KEY, active?.let { HwihaPlacementState(it, null).toMetaValue() })
         if (clearMarch) meta = meta - HwihaPlacementMarch.META_KEY
         world.updateGeneralMeta(recorder, before, meta)
+        // Republish scout posts for every owner this card's placement named (old and new).
+        setOfNotNull(previous?.active?.order?.ownerGeneralId, previous?.pending?.ownerGeneralId, active?.order?.ownerGeneralId)
+            .sorted().forEach { world.syncScoutPosts(recorder, it) }
     }
 
     private fun activateCorpsPolicies(commanderId: Int) {

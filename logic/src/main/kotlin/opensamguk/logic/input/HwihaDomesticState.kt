@@ -14,7 +14,8 @@ import opensamguk.logic.world.StrategicTopologySnapshot
  * | `hwihaPlacement` | 배치된 카드의 장수 meta | 대기·현행 배치, 부임(도착) 순 |
  * | `hwihaPlacementMarch` | 같은 장수 meta | 부임 행군 진행(경로·커서) |
  * | `hwihaCountyPolicy` | 縣治 城 meta | 縣 방침 대기·현행, 마지막 적용 |
- * | `hwihaCountyWorks` | 縣治 城 meta | 진행 중 공사·완공 목록 |
+ * | `hwihaCountyWorks` | 縣治 城 meta | 진행 중 공사·완공 목록(시야 스트림 공개 꼴 `{"version":1,"works":[{kind,status,…}]}`) |
+ * | `hwihaScoutPosts` | 배치 주인 장수 meta | 정찰 배치 공개 투영(시야 스트림이 읽는다, 정본은 `hwihaPlacement`) |
  * | `hwihaCountyMonthly` | 縣治 城 meta | 치적 비교용 지난달 지표 |
  * | `hwihaCommanderyPolicies` | 세력 nation meta | 郡 방침 대기·현행 |
  * | `hwihaCorpsPolicies` | 군단 주인 장수 meta | 군단 방침 대기·현행 |
@@ -298,18 +299,18 @@ data class HwihaActiveWork(
     }
 
     fun toMetaValue(): Map<String, Any?> = linkedMapOf(
-        "work" to work.name, "requestId" to requestId, "actorId" to actorId, "requestedAt" to requestedAt.toMetaValue(),
-        "progress" to progress, "required" to required, "cost" to cost.toMetaValue(), "charged" to charged.toMetaValue(),
-        "lastProgressAt" to lastProgressAt?.toMetaValue(), "stopReason" to stopReason,
+        "kind" to work.name, "status" to HwihaCountyWorks.IN_PROGRESS, "requestId" to requestId, "actorId" to actorId,
+        "requestedAt" to requestedAt.toMetaValue(), "progress" to progress, "required" to required, "cost" to cost.toMetaValue(),
+        "charged" to charged.toMetaValue(), "lastProgressAt" to lastProgressAt?.toMetaValue(), "stopReason" to stopReason,
     )
 
     companion object {
-        private val fields = setOf("work", "requestId", "actorId", "requestedAt", "progress", "required", "cost", "charged",
+        private val fields = setOf("kind", "status", "requestId", "actorId", "requestedAt", "progress", "required", "cost", "charged",
             "lastProgressAt", "stopReason")
         fun read(raw: Any?): HwihaActiveWork {
             val value = raw as? Map<*, *> ?: invalid("active work")
-            require(value.keys == fields) { "invalid HWIHA active work fields" }
-            return HwihaActiveWork(DomesticWork.valueOf(value.string("work", "work")), value.string("requestId", "work"),
+            require(value.keys == fields && value["status"] == HwihaCountyWorks.IN_PROGRESS) { "invalid HWIHA active work fields" }
+            return HwihaActiveWork(DomesticWork.valueOf(value.string("kind", "work")), value.string("requestId", "work"),
                 value.int("actorId", "work"), HwihaPhase.read(value["requestedAt"]), value.int("progress", "work"),
                 value.int("required", "work"), resources(value["cost"]), resources(value["charged"]),
                 value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") })
@@ -325,29 +326,46 @@ data class HwihaActiveWork(
 }
 
 data class HwihaCompletedWork(val work: DomesticWork, val completedAt: HwihaPhase) {
-    fun toMetaValue(): Map<String, Any> = linkedMapOf("work" to work.name, "completedAt" to completedAt.toMetaValue())
+    fun toMetaValue(): Map<String, Any> = linkedMapOf("kind" to work.name, "status" to HwihaCountyWorks.COMPLETE,
+        "completedAt" to completedAt.toMetaValue())
+    companion object {
+        fun read(raw: Any?): HwihaCompletedWork {
+            val row = raw as? Map<*, *> ?: invalid("completed work")
+            require(row.keys == setOf("kind", "status", "completedAt") && row["status"] == HwihaCountyWorks.COMPLETE)
+            return HwihaCompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), HwihaPhase.read(row["completedAt"]))
+        }
+    }
 }
 
+/**
+ * 縣治 城 meta `hwihaCountyWorks` = `{"version":1,"works":[…]}`. 시야 스트림과 맞춘 공개 꼴이다(비전 계약
+ * `2026-09-23-hwiha-vision-contract.md` §3): 항목마다 `kind`(공사 코드)·`status` 가 있고, 완공은 `COMPLETE`, 진행 중은
+ * `IN_PROGRESS`(멈춤 사유는 `stopReason`)다. 망루봉화 시야는 `kind == WATCHTOWER_BEACON && status == COMPLETE` 만 본다.
+ * 완공 항목(완공 순·코드 순)이 앞, 진행 중 항목이 맨 뒤에 한 개 이하다.
+ */
 data class HwihaCountyWorks(val active: HwihaActiveWork?, val completed: List<HwihaCompletedWork>) {
     init {
         require(completed.map { it.work }.distinct().size == completed.size) { "a work completes once per county" }
         require(active == null || completed.none { it.work == active.work })
         require(completed == completed.sortedWith(compareBy({ it.completedAt }, { it.work.ordinal })))
     }
-    fun toMetaValue(): Map<String, Any?> = linkedMapOf("version" to 1, "active" to active?.toMetaValue(),
-        "completed" to completed.map { it.toMetaValue() })
+    fun toMetaValue(): Map<String, Any?> = linkedMapOf("version" to 1,
+        "works" to completed.map { it.toMetaValue() } + listOfNotNull(active?.toMetaValue()))
     companion object {
         const val META_KEY = "hwihaCountyWorks"
+        const val IN_PROGRESS = "IN_PROGRESS"
+        const val COMPLETE = "COMPLETE"
         fun read(meta: Map<String, Any?>): HwihaCountyWorks? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county works")
-            require(value.keys == setOf("version", "active", "completed") && value["version"] == 1) { "invalid HWIHA county works schema" }
-            val done = value["completed"] as? List<*> ?: invalid("county works")
-            return HwihaCountyWorks(value["active"]?.let(HwihaActiveWork::read), done.map { raw ->
-                val row = raw as? Map<*, *> ?: invalid("completed work")
-                require(row.keys == setOf("work", "completedAt"))
-                HwihaCompletedWork(DomesticWork.valueOf(row.string("work", "completed work")), HwihaPhase.read(row["completedAt"]))
-            })
+            require(value.keys == setOf("version", "works") && value["version"] == 1) { "invalid HWIHA county works schema" }
+            val rows = value["works"] as? List<*> ?: invalid("county works")
+            val done = rows.filter { (it as? Map<*, *>)?.get("status") == COMPLETE }.map(HwihaCompletedWork::read)
+            val open = rows.filter { (it as? Map<*, *>)?.get("status") != COMPLETE }.map(HwihaActiveWork::read)
+            require(open.size <= 1) { "one active work per county" }
+            // The in-progress entry, if any, is last (JSON reload widens numbers, so compare positions, not values).
+            require(open.isEmpty() || (rows.last() as Map<*, *>)["status"] != COMPLETE) { "county works out of canonical order" }
+            return HwihaCountyWorks(open.singleOrNull(), done)
         }
     }
 }

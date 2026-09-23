@@ -15,8 +15,8 @@ class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
-        "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {},
-        "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {})
+        "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
+        "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.

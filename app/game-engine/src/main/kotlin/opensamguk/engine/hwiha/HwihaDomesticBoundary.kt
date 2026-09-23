@@ -22,7 +22,7 @@ class HwihaDomesticBoundary(
     private val context: HwihaDomesticContext,
 ) {
     data class Outcome(val stamp: String, val alreadyStamped: Boolean, val worksAdvanced: Int = 0, val worksCompleted: Int = 0,
-        val worksStopped: Int = 0, val renownEvents: Int = 0)
+        val worksStopped: Int = 0, val meritEvents: Int = 0)
 
     fun run(): Outcome? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
@@ -152,7 +152,7 @@ class HwihaDomesticBoundary(
             val current = HwihaDomesticCountyEffects.levelsOf(city).indicators()
             val risen = previous?.indicators?.let { current.risenSince(it) }.orEmpty()
             if (previous != null && risen.isNotEmpty()) {
-                context.renown.recordRenownEvent(HwihaGovernanceRenownEvent(seat.controllerId, seat.personId,
+                context.merit.onCountyIndicatorsRose(HwihaGovernanceMeritEvent(seat.controllerId, seat.personId,
                     checkNotNull(seat.retainerId), county.id, month, previous.indicators, current, risen))
                 events++
             }

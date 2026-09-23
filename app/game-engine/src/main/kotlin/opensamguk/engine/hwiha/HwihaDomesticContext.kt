@@ -11,7 +11,7 @@ import opensamguk.logic.world.StrategicTopologySnapshot
 
 /**
  * 휘하 내정 입력이 읽는 고정 자료. [geography] 가 없으면 郡 방침과 향당 보너스를 판정할 수 없고(STATE_UNAVAILABLE·보너스 없음),
- * [topology]·[metrics] 가 없으면 배치 부임 행군을 하지 않는다. [renown] 은 치적 사건을 받는 자리(기본은 버림).
+ * [topology]·[metrics] 가 없으면 배치 부임 행군을 하지 않는다. [merit] 은 치적 사건을 받는 자리(기본은 버림).
  */
 class HwihaDomesticContext(
     val design: HwihaDomesticDesign = HwihaDomesticDesign.CANON,
@@ -19,7 +19,7 @@ class HwihaDomesticContext(
     val nativeCounties: HwihaNativeCountyLedger? = null,
     val topology: StrategicTopologySnapshot? = null,
     val metrics: LandMarchMetricSnapshot? = null,
-    val renown: HwihaRenownEventSink = HwihaRenownEventSink.NONE,
+    val merit: HwihaGovernanceMeritSink = HwihaGovernanceMeritSink.NONE,
 ) {
     /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */
     fun projection(world: InMemoryTurnWorld): HwihaDomesticProjection {
@@ -78,3 +78,11 @@ internal fun InMemoryTurnWorld.updateNationMeta(recorder: ChangeRecorder, nation
 
 internal fun Map<String, Any?>.withKey(key: String, value: Any?): Map<String, Any?> =
     if (value == null) this - key else LinkedHashMap(this).apply { put(key, value) }
+
+/** 정찰 배치의 공개 투영(주인 meta `hwihaScoutPosts`)을 정본 배치에서 다시 쓴다. 시야 스트림이 이 키를 읽는다. */
+internal fun InMemoryTurnWorld.syncScoutPosts(recorder: ChangeRecorder, ownerId: Int) {
+    val owner = getGeneralById(ownerId) ?: return
+    val cards = listRetainers().map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) }
+    val projected = HwihaScoutPosts.project(ownerId, cards) { getGeneralById(it)?.meta }
+    updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaScoutPosts.META_KEY, projected))
+}
