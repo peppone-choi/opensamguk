@@ -1,0 +1,46 @@
+package opensamguk.gameapi.web
+
+import opensamguk.gameapi.read.HwihaCampForbidden
+import opensamguk.gameapi.read.HwihaCampReader
+import org.springframework.http.CacheControl
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+/**
+ * 휘하 화면 조회(읽기 전용). 경로는 `GameApiSecurityConfig` 에서 permitAll 로 두고 여기서 가른다:
+ * principal 없음·범위 밖이면 401, `?generalId=` 가 본인 장수가 아니면 403, 그 밖의 상태는 200 + `status`.
+ */
+@RestController
+class HwihaCampController(private val reader: HwihaCampReader) {
+    @GetMapping("/api/hwiha/yuedan")
+    fun yuedan(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
+        guarded(userId) { reader.yuedan(generalId, it) }
+
+    @GetMapping("/api/hwiha/warehouses")
+    fun warehouses(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
+        guarded(userId) { reader.warehouses(generalId, it) }
+
+    @GetMapping("/api/hwiha/county/{cityId}")
+    fun county(@AuthenticationPrincipal userId: Long?, @PathVariable cityId: Int, @RequestParam generalId: Int): ResponseEntity<Any> =
+        guarded(userId) { reader.county(cityId, generalId, it) }
+
+    @GetMapping("/api/hwiha/retinue")
+    fun retinue(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
+        guarded(userId) { reader.retinue(generalId, it) }
+
+    private fun guarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<Any> {
+        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return try {
+            val body = read(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noStore()).build()
+            ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body)
+        } catch (_: HwihaCampForbidden) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+}

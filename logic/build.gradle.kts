@@ -18,6 +18,10 @@ tasks.processResources {
     from(rootProject.file("data/commands/hwiha-input-catalog.json")) {
         into("command-catalog")
     }
+    // 휘하 적성 가중식(게임 설계 수치) — 정본은 저장소 루트 파일 하나다.
+    from(rootProject.file("data/curated/han/hwiha-aptitude-weights-v1.json")) {
+        into("hwiha")
+    }
 }
 
 tasks.test { useJUnitPlatform() }

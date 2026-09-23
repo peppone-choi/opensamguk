@@ -12,6 +12,12 @@ package opensamguk.logic.input
  * 명망은 **초기화하지 않는다**(§2.8) — 월단평은 기존 값을 보존하며 갱신한다.
  */
 object HwihaRenownAssessment {
+    /** 마지막 월단평 도장(`YYYY-MM`) — `game_env` 키. 엔진이 쓰고 game-api 조회가 읽는다. */
+    const val STAMP_KEY = "hwihaRenownAssessmentStamp"
+
+    /** 마지막 월단평 순위(장수 id 목록, 명망 내림차순) — `game_env` 키. */
+    const val RANKING_KEY = "hwihaRenownRanking"
+
     /** 한 장수의 지난 달 사건 집계. 어떤 사건이 어디에 해당하는지는 호출부가 정한다. */
     data class Tally(
         val warMerit: Int = 0,
@@ -129,16 +135,9 @@ object HwihaRenownAssessment {
         require(retinue.all { it.cost >= 0 }) { "retainer cost must be nonnegative" }
         require(retinue.map { it.retainerId }.toSet().size == retinue.size) { "duplicate retainerId in retinue" }
         val next = updatedRenown(renown, tally, curve)
-
-        // 충성 오름차순, 동점은 id 내림차순 — 결정적 순서.
-        val shedOrder = retinue.sortedWith(compareBy({ it.loyalty }, { -it.retainerId }))
-        var cost = retinue.sumOf { it.cost.toLong() }
-        val released = ArrayList<Int>()
-        for (card in shedOrder) {
-            if (cost <= next) break
-            released += card.retainerId
-            cost -= card.cost
-        }
+        val released = departures(next, retinue)
+        val releasedIds = released.toSet()
+        val cost = retinue.filter { it.retainerId !in releasedIds }.sumOf { it.cost.toLong() }
         return Outcome(
             generalId = generalId,
             renown = next,
@@ -146,6 +145,27 @@ object HwihaRenownAssessment {
             released = released,
             retainedCost = cost.toInt(),
         )
+    }
+
+    /**
+     * 명망 [capacity] 를 넘는 휘하가 이탈 판정을 받는 순서 — 충성 오름차순, 동점은 `retainerId` 내림차순.
+     * 코스트 합이 [capacity] 이하가 되면 멈춘다. 넘지 않으면 빈 목록이다.
+     *
+     * [assess] 와 조회 화면(휘하 카드의 「이탈 순번」)이 같은 순서를 쓰도록 여기 한 곳에 둔다.
+     */
+    fun departures(capacity: Int, retinue: List<RetainerCard>): List<Int> {
+        require(retinue.all { it.cost >= 0 }) { "retainer cost must be nonnegative" }
+        require(retinue.map { it.retainerId }.toSet().size == retinue.size) { "duplicate retainerId in retinue" }
+        // 충성 오름차순, 동점은 id 내림차순 — 결정적 순서.
+        val shedOrder = retinue.sortedWith(compareBy({ it.loyalty }, { -it.retainerId }))
+        var cost = retinue.sumOf { it.cost.toLong() }
+        val released = ArrayList<Int>()
+        for (card in shedOrder) {
+            if (cost <= capacity) break
+            released += card.retainerId
+            cost -= card.cost
+        }
+        return released
     }
 
     /**

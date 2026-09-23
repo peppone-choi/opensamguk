@@ -7,6 +7,7 @@ import opensamguk.gameapi.dto.RetinueResponse
 import opensamguk.gameapi.dto.RetinueRetainerDto
 import opensamguk.gameapi.dto.RetinueRulesDto
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.GeneralBugokReadEntity
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.RetainerReadRepository
@@ -64,15 +65,7 @@ class RetinueController(
                 hasOwnBugok = it.hasOwnBugok,
             )
         }
-        val bugoks = retinue.bugoksOf(g.id).map {
-            RetinueBugokDto(
-                id = it.id, name = it.name, troops = it.troops, crewTypeId = it.crewTypeId,
-                crewTypeName = crewTypeName(it.crewTypeId), training = it.training, morale = it.morale,
-                fatigue = it.fatigue, provisions = it.provisions,
-                provisionMonths = RetainerRules.provisionMonths(it.provisions, it.troops),
-                commanderRetainerId = it.commanderRetainerId,
-            )
-        }
+        val bugoks = retinue.bugoksOf(g.id).map(::bugokDto)
         val bound = if (includeCandidates) retinue.boundGeneralIds() else emptySet()
         val candidates = if (!includeCandidates || g.npcState >= 2) emptyList() else generals
             .findByNpcStateOrderByIdAsc(2)
@@ -91,11 +84,20 @@ class RetinueController(
         )
     }
 
-    /** `UnitCatalog.byId` 는 id < 1000 에서 던진다(`general.crew_type_id DEFAULT 0`) — CityDetailController 선례 가드. */
-    private fun crewTypeName(crewTypeId: Int): String =
-        if (crewTypeId >= 1000) UnitCatalog.byId(crewTypeId)?.name ?: "-" else "-"
-
     companion object {
+        /** `UnitCatalog.byId` 는 id < 1000 에서 던진다(`general.crew_type_id DEFAULT 0`) — CityDetailController 선례 가드. */
+        private fun crewTypeName(crewTypeId: Int): String =
+            if (crewTypeId >= 1000) UnitCatalog.byId(crewTypeId)?.name ?: "-" else "-"
+
+        /** 부곡 한 행 — `/api/my-retinue` 와 휘하 카드 조회(`/api/hwiha/retinue`)가 같은 모양을 쓴다. */
+        fun bugokDto(it: GeneralBugokReadEntity) = RetinueBugokDto(
+            id = it.id, name = it.name, troops = it.troops, crewTypeId = it.crewTypeId,
+            crewTypeName = crewTypeName(it.crewTypeId), training = it.training, morale = it.morale,
+            fatigue = it.fatigue, provisions = it.provisions,
+            provisionMonths = RetainerRules.provisionMonths(it.provisions, it.troops),
+            commanderRetainerId = it.commanderRetainerId,
+        )
+
         private fun options(labels: Map<String, String>, order: Collection<String>) =
             order.map { mapOf("value" to it, "label" to (labels[it] ?: it)) }
 

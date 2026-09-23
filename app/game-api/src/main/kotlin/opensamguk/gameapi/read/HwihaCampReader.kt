@@ -1,0 +1,191 @@
+package opensamguk.gameapi.read
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.controller.RetinueController
+import opensamguk.gameapi.dto.*
+import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.input.HwihaAptitude
+import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.HwihaRenownAssessment
+import opensamguk.logic.input.HwihaRenownRules
+import opensamguk.logic.retainer.RetainerRules
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
+
+class HwihaCampForbidden : RuntimeException()
+
+/**
+ * 휘하 화면 조회 네 가지(월단평·창고·현 특산·휘하 카드). **읽기만 한다** — 쓰기·ChangeRecorder 없음.
+ *
+ * 인증은 계책 손패([HwihaStratagemHandReader])와 같다: `?generalId=` 장수의 `userId` 가 principal 과
+ * 같아야 하고 아니면 [HwihaCampForbidden](403). 휘하 규칙이 아닌 월드는 200 + `WRONG_RULE_PROFILE` 이다.
+ *
+ * 규칙 수치는 엔진과 같은 함수를 부른다 — 코스트 [HwihaRenownRules.personCost], 이탈 순서
+ * [HwihaRenownAssessment.departures], 월단평 키 [HwihaRenownAssessment.STAMP_KEY]·[HwihaRenownAssessment.RANKING_KEY].
+ */
+@Service
+@Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+class HwihaCampReader(
+    private val generals: GeneralReadRepository,
+    private val worlds: WorldStateReadRepository,
+    private val nations: NationReadRepository,
+    private val cities: CityReadRepository,
+    private val retainers: RetainerReadRepository,
+    private val gameKv: GameKvReadRepository,
+    private val artifacts: ActiveWorldArtifactResolver,
+    private val ledgers: HwihaCampLedgers,
+    private val geography: HwihaCityGeography,
+    private val objectMapper: ObjectMapper,
+) {
+    // ── 월단평 ─────────────────────────────────────────────────────────────
+    fun yuedan(generalId: Int, userId: Long): HwihaYuedanResponse {
+        val actor = owned(generalId, userId)
+        gate(actor)?.let { return HwihaYuedanResponse(it) }
+        val everyone = generals.findAll().associateBy { it.id }
+        val cost = retinueCost(actor.id) { everyone[it] }
+        val renown = renownOf(actor)
+        val self = HwihaYuedanSelf(actor.id, renown, cost, renown != null && cost > renown)
+        val stamp = kv(HwihaRenownAssessment.STAMP_KEY)?.let { node -> if (node.isTextual) node.asText() else node.toString() }
+        val published = kv(HwihaRenownAssessment.RANKING_KEY) ?: return HwihaYuedanResponse("NOT_ASSESSED", stamp, self)
+        if (!published.isArray || !published.all { it.isIntegralNumber && it.canConvertToInt() })
+            return HwihaYuedanResponse("UNAVAILABLE", stamp, self)
+        val nationById = nations.findAll().associateBy { it.id }
+        // 순위는 발표된 자리 그대로다(1부터). 그 뒤 사라졌거나 명망을 읽을 수 없는 장수는 빠지고 자리는 남는다.
+        val ranking = published.map { it.intValue() }.mapIndexedNotNull { index, id ->
+            val general = everyone[id] ?: return@mapIndexedNotNull null
+            val value = renownOf(general) ?: return@mapIndexedNotNull null
+            val nation = nationById[general.nationId]?.takeIf { general.nationId != 0 }
+            HwihaYuedanRow(index + 1, general.id, general.name, general.nationId, nation?.name,
+                nation?.color?.takeIf { it.isNotBlank() }, value)
+        }
+        return HwihaYuedanResponse("READY", stamp, self, ranking)
+    }
+
+    // ── 縣 창고 ────────────────────────────────────────────────────────────
+    fun warehouses(generalId: Int, userId: Long): HwihaWarehousesResponse {
+        val actor = owned(generalId, userId)
+        gate(actor)?.let { return HwihaWarehousesResponse(it) }
+        val scope = if (actor.nationId != 0) cities.findByNationIdOrderByIdAsc(actor.nationId)
+            else listOfNotNull(cities.findById(actor.cityId).orElse(null))
+        val capital = actor.nationId.takeIf { it != 0 }?.let { nations.findById(it).orElse(null)?.capitalCityId }
+        val places = placesOrEmpty()
+        var invalid = 0
+        val rows = scope.mapNotNull { city ->
+            val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) }
+                catch (_: IllegalArgumentException) { invalid++; null } ?: return@mapNotNull null
+            val stock = warehouse.stock
+            HwihaWarehouseDto(city.id, city.name, places[city.id]?.commanderyName, city.id == capital,
+                city.supplyState != 0, HwihaStockDto(stock.money, stock.grain, stock.iron, stock.timber, stock.horses))
+        }.sortedWith(compareBy({ !it.isCapital }, { it.cityId }))
+        return HwihaWarehousesResponse("READY", rows, invalid)
+    }
+
+    // ── 縣 특산 ────────────────────────────────────────────────────────────
+    /** @return 없는 城이면 null(404). */
+    fun county(cityId: Int, generalId: Int, userId: Long): HwihaCountyResponse? {
+        val actor = owned(generalId, userId)
+        val city = cities.findById(cityId).orElse(null) ?: return null
+        gate(actor)?.let { return HwihaCountyResponse(it, city.id, city.name) }
+        // resolve() 는 자체 트랜잭션 프록시다 — 거기서 던진 것을 여기서 삼키면 바깥 트랜잭션이 rollback-only 로
+        // 남아 커밋에서 터진다. 그래서 잡지 않는다. 번들 해석(순수 코드)만 잡는다.
+        val selected = artifacts.resolve()?.artifacts ?: return HwihaCountyResponse("UNAVAILABLE", city.id, city.name)
+        val jurisdiction = try { geography.places(selected)[city.id]?.jurisdictionId }
+            catch (_: RuntimeException) { return HwihaCountyResponse("UNAVAILABLE", city.id, city.name) }
+        val specialties = jurisdiction?.let { ledgers.productionByJurisdiction[it] }.orEmpty().map {
+            // monthly: 엔진 월 세입이 산지 몫을 아직 넣지 않는다(HwihaMonthlyCountyIncome 이 sites 를 넘기지 않음).
+            HwihaSpecialtyDto(it.resource, RESOURCE_LABELS[it.resource] ?: it.resource, monthly = null, ledgerMonthly = it.ledgerMonthly)
+        }
+        return HwihaCountyResponse("READY", city.id, city.name, specialties)
+    }
+
+    // ── 휘하 카드 ──────────────────────────────────────────────────────────
+    fun retinue(generalId: Int, userId: Long): HwihaRetinueResponse {
+        val actor = owned(generalId, userId)
+        gate(actor)?.let { return HwihaRetinueResponse(it) }
+        val renown = renownOf(actor)
+        val cards = retainers.retainersOf(actor.id)
+        val people = cards.associate { card -> card.id to card.generalId?.let { generals.findById(it).orElse(null) } }
+        val costs = cards.associate { card -> card.id to people[card.id]?.let(::personCost) }
+        val costSum = costs.values.filterNotNull().sum()
+        val over = renown != null && costSum > renown
+        val order = if (!over) emptyMap() else HwihaRenownAssessment.departures(requireNotNull(renown),
+            cards.mapNotNull { card -> costs[card.id]?.let { HwihaRenownAssessment.RetainerCard(card.id, it, card.loyalty) } })
+            .withIndex().associate { (index, id) -> id to index + 1 }
+        val lordHome = ledgers.nativeCountyOf(actor)
+        val homes = cards.associate { card -> card.id to people[card.id]?.let(ledgers::nativeCountyOf) }
+        // 한글 이름은 활성 세계 판의 城 표에서 푼다. 향당이 하나도 없으면 번들을 열지 않는다.
+        val countyNames = if (homes.values.none { it != null }) null else countyNamesOrNull()
+        val rows = cards.map { card ->
+            val person = people[card.id]
+            val home = homes[card.id]
+            HwihaPersonCardDto(
+                retainerId = card.id, generalId = card.generalId, name = person?.name ?: card.name,
+                picture = person?.picture, imageServer = person?.imageServer ?: 0, loyalty = card.loyalty,
+                roleLabel = RetainerRules.ROLE_LABELS[card.role] ?: card.role,
+                taskLabel = RetainerRules.TASK_LABELS[card.task] ?: card.task,
+                stats = person?.let { HwihaFiveStatsDto(it.leadership, it.strength, it.intel, it.politics, it.charm) },
+                cost = costs[card.id],
+                aptitudes = person?.let(::aptitudes),
+                bonds = listOfNotNull(home?.let {
+                    HwihaBondDto("HYANGDANG", "향당", nativeCountyName = countyNames?.korean(it), nativeCountyHanja = it.hanja,
+                        sameAsLord = lordHome != null && ledgers.sameHome(it, lordHome))
+                }),
+                departureOrder = order[card.id],
+            )
+        }
+        val units = retainers.bugoksOf(actor.id).map(RetinueController::bugokDto)
+        return HwihaRetinueResponse("READY", renown, costSum, over, rows, units)
+    }
+
+    // ── 공용 ───────────────────────────────────────────────────────────────
+    private fun owned(generalId: Int, userId: Long): GeneralReadEntity {
+        val actor = generals.findById(generalId).orElse(null) ?: throw HwihaCampForbidden()
+        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw HwihaCampForbidden()
+        return actor
+    }
+
+    private fun gate(actor: GeneralReadEntity): String? {
+        val world = worlds.findProcessWorld() ?: return "UNAVAILABLE"
+        if (actor.worldId != world.id) return "UNAVAILABLE"
+        if (world.config["ruleProfile"] != "HWIHA") return "WRONG_RULE_PROFILE"
+        return null
+    }
+
+    private fun renownOf(general: GeneralReadEntity): Int? =
+        try { HwihaPersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }
+
+    /** 월단평과 같은 계산: 사람 장수가 붙은 휘하 카드의 코스트 합. 장수가 없는 카드는 코스트가 없다. */
+    private fun retinueCost(masterId: Int, lookup: (Int) -> GeneralReadEntity?): Int =
+        retainers.retainersOf(masterId).sumOf { card -> card.generalId?.let(lookup)?.let(::personCost) ?: 0 }
+
+    private fun personCost(person: GeneralReadEntity): Int? = try {
+        HwihaRenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
+    } catch (_: IllegalArgumentException) { null }
+
+    private fun aptitudes(person: GeneralReadEntity): HwihaAptitudesDto? = try {
+        HwihaAptitude.compute(HwihaAptitude.Stats(person.leadership, person.strength, person.intel, person.politics, person.charm))
+            .let { HwihaAptitudesDto(it.command, it.administration, it.strategy, it.envoy) }
+    } catch (_: IllegalArgumentException) { null }
+
+    private fun kv(key: String) = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", key)
+        ?.let { row -> runCatching { objectMapper.readTree(row.value) }.getOrNull() }
+        ?.takeUnless { it.isNull || it.isMissingNode }
+
+    /** 郡 이름은 곁들임이다 — 번들 내용을 못 읽어도 창고 목록은 낸다(이름만 null). */
+    private fun placesOrEmpty(): Map<Int, HwihaCityGeography.Place> {
+        val bundle = artifacts.resolve()?.artifacts ?: return emptyMap()
+        return try { geography.places(bundle) } catch (_: RuntimeException) { emptyMap() }
+    }
+
+    /** 한글 지명은 곁들임이다 — 번들 내용을 못 읽으면 이름만 null 이고 결속은 그대로 낸다. */
+    private fun countyNamesOrNull(): HwihaCityGeography.CountyNames? {
+        val bundle = artifacts.resolve()?.artifacts ?: return null
+        return try { geography.countyNames(bundle) } catch (_: RuntimeException) { null }
+    }
+
+    companion object {
+        /** 사용자 확정 표기(2026-09): 전→금, 곡→쌀. */
+        val RESOURCE_LABELS = mapOf("MONEY" to "금", "GRAIN" to "쌀", "IRON" to "철", "TIMBER" to "목재", "HORSE" to "말")
+    }
+}
