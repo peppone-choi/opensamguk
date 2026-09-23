@@ -36,7 +36,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "715fe5b60b7ac5c465931a2ffe511a76d57c33f48a91d9b0a2fd854f09d70620"
+      "sha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012"
     },
     "tools/map/build_han_places.py": {
       "path": "tools/map/build_han_places.py",

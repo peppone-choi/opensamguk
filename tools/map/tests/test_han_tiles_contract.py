@@ -734,7 +734,7 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
             binding["sha256"],
         )
         self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
-        self.assertEqual(1_374, len(binding["landProvinceIds"]))
+        self.assertEqual(1_434, len(binding["landProvinceIds"]))  # 2026-09-23 결손 縣 60곳
 
 
 if __name__ == "__main__":

@@ -405,8 +405,8 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "7ba42382a58a694dd93868bf7a8d32d008fb75e7492c4770a0f15fa166e83f25",
-        "outputDocumentSha256": "e3a6bc5b9b15c2fc125b220a7bfbdfd9d1be10f036220678aad74a05a2f80ba7",
+        "inputDocumentSha256": "9705b064fcef095098544080cf8d77bddc758ec270d71288ebcc4a57a3658ce3",
+        "outputDocumentSha256": "c7ff6107aa9179af6e3984cd6085a57d481272858b1832ae86ecc8d5a44e1a3f",
         "inputTerrainSha256": "2fe011211926b909cb1cfcdf4c77562b89b2bbfab023945661ea25633cf2246c",
         "outputTerrainSha256": "e4a8f68f21f411ab6c80cb0cc42ba3bd877cadcbfa6058697bafb5f7280d7a83",
         "units": [

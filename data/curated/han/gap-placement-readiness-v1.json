@@ -46,8 +46,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.53245,
       "lat": 32.74889,
-      "commanderyCentroidKm": 86,
-      "commanderyCentroidSample": 30,
+      "commanderyCentroidKm": 83,
+      "commanderyCentroidSample": 31,
       "readiness": "READY_TGAZ"
     },
     {
@@ -57,8 +57,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.22923,
       "lat": 33.08096,
-      "commanderyCentroidKm": 119,
-      "commanderyCentroidSample": 30,
+      "commanderyCentroidKm": 115,
+      "commanderyCentroidSample": 31,
       "readiness": "READY_TGAZ"
     },
     {
@@ -90,8 +90,8 @@
       "ledger": "survived-county-adjudications-v1",
       "lon": 111.81372,
       "lat": 37.20595,
-      "commanderyCentroidKm": 62,
-      "commanderyCentroidSample": 14,
+      "commanderyCentroidKm": 67,
+      "commanderyCentroidSample": 13,
       "readiness": "READY_TGAZ"
     },
     {
@@ -172,8 +172,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.44382,
       "lat": 32.63618,
-      "commanderyCentroidKm": 52,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 47,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -183,8 +183,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.36112,
       "lat": 31.71422,
-      "commanderyCentroidKm": 93,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 95,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -194,8 +194,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.205,
       "lat": 32.86466,
-      "commanderyCentroidKm": 82,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 78,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -206,7 +206,7 @@
       "lon": 118.26437,
       "lat": 32.09835,
       "commanderyCentroidKm": 69,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -216,8 +216,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.64022,
       "lat": 32.90163,
-      "commanderyCentroidKm": 81,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 76,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -227,8 +227,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 118.18547,
       "lat": 31.68121,
-      "commanderyCentroidKm": 82,
-      "commanderyCentroidSample": 17,
+      "commanderyCentroidKm": 85,
+      "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
     {
@@ -775,8 +775,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 116.06742,
       "lat": 38.9959,
-      "commanderyCentroidKm": 70,
-      "commanderyCentroidSample": 12,
+      "commanderyCentroidKm": 64,
+      "commanderyCentroidSample": 13,
       "readiness": "READY_TGAZ"
     },
     {

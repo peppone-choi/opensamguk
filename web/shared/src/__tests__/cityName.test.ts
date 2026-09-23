@@ -124,7 +124,7 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 2026-09-15 城 없던 縣 관할 176곳(849–1024) 편입으로 931. 거점 73곳은 縣 꼬리가 없다. 2026-09-16 平陰(1098) +1.
     // 2026-09-17: 같은 縣이 두 번 선 977 汉昌县·989 富平县을 거두어 930.
     const counties = world.cities.filter((c) => c.meta.nameCh.endsWith('县'));
-    expect(counties.length).toBe(930);
+    expect(counties.length).toBe(946);  // 2026-09-23: 결손 縣 60곳 편입.
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
@@ -141,7 +141,7 @@ describe('han-world-v3 의 meta.nameCh', () => {
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
     // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136.
     // 2026-09-21: 조선반도·만주 취락 재검토로 197 → 171. 근거 없는 취락 26 곳을 거두었다(2288e886).
-    expect(outside.length).toBe(171);
+    expect(outside.length).toBe(177);  // 2026-09-23: 결손 縣 60곳 편입.
     const rest = outside
       .filter((c) => c.id <= 1133 && !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
@@ -158,10 +158,15 @@ describe('han-world-v3 의 meta.nameCh', () => {
       // 이름이 바뀌었다 — 같은 城 이고 縣 이 아닌 것도 그대로다(korea-place-corrections-v1).
       '고동람', '본피',
     ].sort());
-    const added = world.cities.filter((c) => c.id > 1133);
+    // 2026-09-23: 「1133 초과는 縣 이 아니다」는 郡國 밖 취락 묶음(1134–1194)에만 참이다. 그 구간으로
+    // 좁히고, 뒤에 붙은 결손 縣 묶음(1195–)에는 반대 단언을 따로 세운다 — 그쪽은 전부 縣 이어야 한다.
+    const settlements = world.cities.filter((c) => c.id > 1133 && c.id <= 1194);
     // 2026-09-21: 61 → 35. 거둔 취락 26 곳이 전부 이 구간(1134–)에 있었다.
-    expect(added).toHaveLength(35);
-    expect(added.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
+    expect(settlements).toHaveLength(35);
+    expect(settlements.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
+    const gapCounties = world.cities.filter((c) => c.id > 1194);
+    expect(gapCounties).toHaveLength(60);
+    expect(gapCounties.filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
   });
 
   it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
@@ -249,7 +254,8 @@ describe('han-world-v3 의 meta.displayName', () => {
       '1080 와구(巴郡): 와구(瓦口)',
     ]);
     // 2026-09-21: 1194 → 1168. 근거 없는 조선반도·만주 취락 26 곳을 거두었다(2288e886).
-    expect(world.cities.length).toBe(1168);
+    // 2026-09-23: 1168 → 1228. 郡國志 표제인데 지도에 없던 결손 縣 60 곳을 세웠다.
+    expect(world.cities.length).toBe(1228);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
@@ -257,7 +263,7 @@ describe('han-world-v3 의 meta.displayName', () => {
     // 834 → 847. 같게 남는 건 704 구자속국 하나뿐이다.
     // 2026-09-15: 1028, 2026-09-16 平陰(1098) +1. 이름이 곧 표기인 城(704 구자속국·867 송공·991 후관 등)만 같게 남는다.
     // 2026-09-17: 977·989 가 縣에서 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-    expect(changed.length).toBe(1030);
+    expect(changed.length).toBe(1090);  // 2026-09-23: 결손 縣 60곳 편입.
   });
 
   it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {

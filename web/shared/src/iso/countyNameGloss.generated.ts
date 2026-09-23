@@ -1,6 +1,6 @@
 // 생성물 — tools/map/build_county_display_name_collisions.py 가 쓴다. 손으로 고치지 마라(--check 가 적색이 된다).
 // 원본 목록: data/curated/han/county-display-name-collisions-v1.json (이슈 #838).
-// han-tiles sha256 fc717af08bf55b748c3ee35701a854a4eec6695c09ad70195ee0e8d24526ebd8
+// han-tiles sha256 d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012
 
 /** 같은 郡 안에서 한글 표시명이 겹치는 관할(jurisdictionId) → 漢字 병기(繁體, 县/縣 꼬리 없음). */
 export const COUNTY_GLOSS_BY_JURISDICTION_ID: Readonly<Record<string, string>> = {
@@ -12,10 +12,8 @@ export const COUNTY_GLOSS_BY_JURISDICTION_ID: Readonly<Record<string, string>> =
   "41996": "營道",
   "43379": "安風",
   "82575": "安豐",
-  "82841": "新成",
   "82893": "陽城",
   "83031": "襄城",
-  "gc-g0000-018": "新城",
 };
 
 /** 같은 목록의 簡體 어간 → 繁體 병기. 서버 표시명 꼬리 「(阳城)」를 병기로 바꿀 때 쓴다. */
@@ -26,8 +24,6 @@ export const COUNTY_GLOSS_BY_SIMPLIFIED_STEM: Readonly<Record<string, string>> =
   "安风": "安風",
   "宛陵": "宛陵",
   "宣城": "宣城",
-  "新城": "新城",
-  "新成": "新成",
   "泠道": "泠道",
   "营道": "營道",
   "襄城": "襄城",

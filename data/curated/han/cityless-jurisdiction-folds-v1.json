@@ -120,13 +120,13 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "ef98e39e244592542912eb1a10a059900aaa791a496df791607385a06c4febd9",
-        "outputDocumentSha256": "7ba42382a58a694dd93868bf7a8d32d008fb75e7492c4770a0f15fa166e83f25",
+        "inputDocumentSha256": "102939b16afd5164e8fc0b8bb5904ee56c60e90262b7e64ea51e327ca45ce83e",
+        "outputDocumentSha256": "9705b064fcef095098544080cf8d77bddc758ec270d71288ebcc4a57a3658ce3",
         "inputCounts": {
           "cities": 1323,
           "seats": 172,
           "regions": 38,
-          "adjCounty": 3664,
+          "adjCounty": 3667,
           "adjCommandery": 410,
           "COUNTY": 1073,
           "EXTERNAL_PLACE": 37,
@@ -7138,7 +7138,8 @@
               "82811",
               "82971",
               "82975",
-              "gc-g0041-032"
+              "gc-g0041-032",
+              "gc-g0041-036"
             ]
           },
           {

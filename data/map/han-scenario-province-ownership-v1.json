@@ -5,8 +5,8 @@
   "generatorPolicyVersion": 1,
   "sources": {
     "claimsSha256": "b9d92d142fc744cdc4dd2f6b2e444e06709e5f532fcabf4702a70424fd02b12c",
-    "mapSha256": "fc717af08bf55b748c3ee35701a854a4eec6695c09ad70195ee0e8d24526ebd8",
-    "scenarioCatalogSha256": "e9b9ae1de6cb00564bc8b90f36d77a8ffb09faad28296b99dd1739b51ec679da"
+    "mapSha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012",
+    "scenarioCatalogSha256": "1625140633e13fe179debddd20480004044648f95c3539c24b7af54e32d15203"
   },
   "scenarios": [
     {
@@ -22644,19 +22644,19 @@
         {
           "scenarioCode": 1010,
           "provinceId": "gc-g0000-003",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1010-N002",
+          "ownerNationId": 1,
+          "ownerNationKey": "S1010-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1010-N002-ADMIN",
+          "winningClaimId": "S1010-N001-ADMIN",
           "claimTrace": [
-            "S1010-N002-ADMIN"
+            "S1010-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1010-N002-PLACEMENT-EVIDENCE"
+            "S1010-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다."
+          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
         },
         {
           "scenarioCode": 1010,
@@ -22882,19 +22882,19 @@
         {
           "scenarioCode": 1010,
           "provinceId": "gc-g0018-003",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1010-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1010-BASELINE",
+          "winningClaimId": "S1010-N001-ADMIN",
           "claimTrace": [
-            "S1010-BASELINE"
+            "S1010-N001-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1010-BASELINE-EVIDENCE"
+            "S1010-N001-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
         },
         {
           "scenarioCode": 1010,
@@ -22984,19 +22984,19 @@
         {
           "scenarioCode": 1010,
           "provinceId": "gc-g0041-036",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1010-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1010-BASELINE",
+          "winningClaimId": "S1010-N002-ADMIN",
           "claimTrace": [
-            "S1010-BASELINE"
+            "S1010-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1010-BASELINE-EVIDENCE"
+            "S1010-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다."
         },
         {
           "scenarioCode": 1010,
@@ -23460,19 +23460,19 @@
         {
           "scenarioCode": 1010,
           "provinceId": "gc-g0081-005",
-          "ownerNationId": 1,
-          "ownerNationKey": "S1010-N001",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1010-N001-ADMIN",
+          "winningClaimId": "S1010-BASELINE",
           "claimTrace": [
-            "S1010-N001-ADMIN"
+            "S1010-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1010-N001-PLACEMENT-EVIDENCE"
+            "S1010-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1010,
@@ -47029,19 +47029,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "gc-g0000-003",
-          "ownerNationId": 20,
-          "ownerNationKey": "S1020-N020",
+          "ownerNationId": 1,
+          "ownerNationKey": "S1020-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1020-N020-ADMIN",
+          "winningClaimId": "S1020-N001-ADMIN",
           "claimTrace": [
-            "S1020-N020-ADMIN"
+            "S1020-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-N020-PLACEMENT-EVIDENCE"
+            "S1020-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷074A 원소유표열전 「初平元年，紹遂以勃海起兵，與從弟後將軍術、冀州牧韓馥、豫州刺史孔伷…同時俱起…紹與王匡屯河內，伷屯穎川，馥屯鄴」 / 資治通鑑 卷059 초평원년 동문 — 孔伷의 위치를 짚는 유일한 기사는 190년 潁川 주둔이다"
+          "rationale": "三國志 卷06 위서 동탁전 「卓自為太尉…遷相國」·「卓遂遷天子都長安」 / 後漢書 卷072 동탁전 「使東中郎將董越屯黽池，中郎將段煨屯華陰，中郎將牛輔屯安邑」(하동·홍농 주둔)"
         },
         {
           "scenarioCode": 1020,
@@ -47267,19 +47267,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "gc-g0018-003",
-          "ownerNationId": 12,
-          "ownerNationKey": "S1020-N012",
+          "ownerNationId": 11,
+          "ownerNationKey": "S1020-N011",
           "controllerCityId": null,
-          "winningClaimId": "S1020-N012-ADMIN",
+          "winningClaimId": "S1020-N011-ADMIN",
           "claimTrace": [
-            "S1020-N012-ADMIN"
+            "S1020-N011-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-N012-PLACEMENT-EVIDENCE"
+            "S1020-N011-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷059 「幽州牧劉虞到部…遣使至鮮卑中」 — 「幽州牧」 명시이므로 州 단위 배정(우북평은 공손찬, 요동은 공손도)"
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "scenarioCode": 1020,
@@ -47369,19 +47369,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "gc-g0041-036",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 6,
+          "ownerNationKey": "S1020-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N006-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N006-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N006-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "scenarioCode": 1020,
@@ -71414,19 +71414,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "gc-g0000-003",
-          "ownerNationId": 21,
-          "ownerNationKey": "S1021-N021",
+          "ownerNationId": 1,
+          "ownerNationKey": "S1021-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1021-N021-ADMIN",
+          "winningClaimId": "S1021-N001-ADMIN",
           "claimTrace": [
-            "S1021-N021-ADMIN"
+            "S1021-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-N021-PLACEMENT-EVIDENCE"
+            "S1021-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "後漢書 卷074A 원소유표열전 「初平元年，紹遂以勃海起兵，與從弟後將軍術、冀州牧韓馥、豫州刺史孔伷…同時俱起…紹與王匡屯河內，伷屯穎川，馥屯鄴」 / 資治通鑑 卷059 초평원년 동문 — 孔伷의 위치를 짚는 유일한 기사는 190년 潁川 주둔이다"
+          "rationale": "三國志 卷06 위서 동탁전 「卓自為太尉…遷相國」·「卓遂遷天子都長安」 / 後漢書 卷072 동탁전 「使東中郎將董越屯黽池，中郎將段煨屯華陰，中郎將牛輔屯安邑」(하동·홍농 주둔)"
         },
         {
           "scenarioCode": 1021,
@@ -71652,19 +71652,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "gc-g0018-003",
-          "ownerNationId": 16,
-          "ownerNationKey": "S1021-N016",
+          "ownerNationId": 12,
+          "ownerNationKey": "S1021-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1021-N016-ADMIN",
+          "winningClaimId": "S1021-N012-ADMIN",
           "claimTrace": [
-            "S1021-N016-ADMIN"
+            "S1021-N012-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-N016-PLACEMENT-EVIDENCE"
+            "S1021-N012-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "資治通鑑 卷059 「幽州牧劉虞到部…遣使至鮮卑中」 — 「幽州牧」 명시이므로 州 단위 배정(우북평은 공손찬, 요동은 공손도)"
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "scenarioCode": 1021,
@@ -71754,19 +71754,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "gc-g0041-036",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 7,
+          "ownerNationKey": "S1021-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N007-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N007-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N007-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "scenarioCode": 1021,
@@ -71839,19 +71839,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 9,
+          "ownerNationKey": "S1021-N009",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N009-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N009-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N009-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "後漢書 卷009 헌제기 초평4년 「三月，袁術殺楊州刺史陳溫，據淮南」 / 後漢書 卷075 「(術)…奔九江，殺楊州刺史陳溫而自領之」 — 刺史라 州 단위 배정은 하지 않고 治所 壽春(九江郡)만 인정"
         },
         {
           "scenarioCode": 1021,
@@ -95816,19 +95816,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "gc-g0000-018",
-          "ownerNationId": 5,
-          "ownerNationKey": "S1030-N005",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1030-N005-ADMIN",
+          "winningClaimId": "S1030-BASELINE",
           "claimTrace": [
-            "S1030-N005-ADMIN"
+            "S1030-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1030-N005-PLACEMENT-EVIDENCE"
+            "S1030-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06 위서 동탁전 — 초평3년 李傕·郭汜가 長安을 함락하고 「傕為車騎將軍，領司隸校尉」 / 後漢書 卷072 동탁전 동문"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1030,
@@ -96224,19 +96224,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 13,
-          "ownerNationKey": "S1030-N013",
+          "ownerNationId": 6,
+          "ownerNationKey": "S1030-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1030-N013-ADMIN",
+          "winningClaimId": "S1030-N006-ADMIN",
           "claimTrace": [
-            "S1030-N013-ADMIN"
+            "S1030-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-N013-PLACEMENT-EVIDENCE"
+            "S1030-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷32 촉서 선주전 「謙表先主為豫州刺史，屯小沛」"
+          "rationale": "後漢書 卷009 헌제기 초평4년 「三月，袁術殺楊州刺史陳溫，據淮南」 / 後漢書 卷075 「(術)…奔九江，殺楊州刺史陳溫而自領之」 — 刺史라 州 단위 배정은 하지 않고 治所 壽春(九江郡)만 인정 / 三國志 卷01 무제기 건안원년 「汝南、潁川黃巾何儀、劉辟、黃邵、何曼等，眾各數萬，初應袁術」"
         },
         {
           "scenarioCode": 1030,
@@ -120201,19 +120201,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "gc-g0000-018",
-          "ownerNationId": 1,
-          "ownerNationKey": "S1031-N001",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1031-N001-ADMIN",
+          "winningClaimId": "S1031-BASELINE",
           "claimTrace": [
-            "S1031-N001-ADMIN"
+            "S1031-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1031-N001-PLACEMENT-EVIDENCE"
+            "S1031-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06 위서 동탁전 — 초평3년 李傕·郭汜가 長安을 함락하고 「傕為車騎將軍，領司隸校尉」 / 後漢書 卷072 동탁전 동문"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1031,
@@ -120609,19 +120609,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 8,
-          "ownerNationKey": "S1031-N008",
+          "ownerNationId": 7,
+          "ownerNationKey": "S1031-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1031-N008-ADMIN",
+          "winningClaimId": "S1031-N007-ADMIN",
           "claimTrace": [
-            "S1031-N008-ADMIN"
+            "S1031-N007-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-N008-PLACEMENT-EVIDENCE"
+            "S1031-N007-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "華陽國志 卷六 유선주지 「先主遂領徐州牧」 / 三國志 卷32 촉서 선주전 「謙病篤…先主遂領徐州」"
+          "rationale": "後漢書 卷009 헌제기 초평4년 「三月，袁術殺楊州刺史陳溫，據淮南」 / 後漢書 卷075 「(術)…奔九江，殺楊州刺史陳溫而自領之」 — 刺史라 州 단위 배정은 하지 않고 治所 壽春(九江郡)만 인정"
         },
         {
           "scenarioCode": 1031,
@@ -144586,19 +144586,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "gc-g0000-018",
-          "ownerNationId": 10,
-          "ownerNationKey": "S1040-N010",
+          "ownerNationId": 1,
+          "ownerNationKey": "S1040-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1040-N010-ADMIN",
+          "winningClaimId": "S1040-N001-ADMIN",
           "claimTrace": [
-            "S1040-N010-ADMIN"
+            "S1040-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-N010-PLACEMENT-EVIDENCE"
+            "S1040-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06 위서 동탁전 — 초평3년 李傕·郭汜가 長安을 함락하고 「傕為車騎將軍，領司隸校尉」 / 後漢書 卷072 동탁전 동문"
+          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시"
         },
         {
           "scenarioCode": 1040,
@@ -144994,19 +144994,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 9,
-          "ownerNationKey": "S1040-N009",
+          "ownerNationId": 6,
+          "ownerNationKey": "S1040-N006",
           "controllerCityId": null,
-          "winningClaimId": "S1040-N009-ADMIN",
+          "winningClaimId": "S1040-N006-ADMIN",
           "claimTrace": [
-            "S1040-N009-ADMIN"
+            "S1040-N006-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-N009-PLACEMENT-EVIDENCE"
+            "S1040-N006-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷32 촉서 선주전 「布…先主還小沛」 / 三國志 卷07 여포전 — 196년 6월 呂布가 下邳를 습격해 서주를 빼앗기 이전(196년 1월) 상태"
+          "rationale": "後漢書 卷009 헌제기 초평4년 「三月，袁術殺楊州刺史陳溫，據淮南」 / 後漢書 卷075 「(術)…奔九江，殺楊州刺史陳溫而自領之」 — 刺史라 州 단위 배정은 하지 않고 治所 壽春(九江郡)만 인정"
         },
         {
           "scenarioCode": 1040,
@@ -168971,19 +168971,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "gc-g0000-018",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1041-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N002-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시"
         },
         {
           "scenarioCode": 1041,
@@ -169294,19 +169294,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "gc-g0041-036",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 5,
+          "ownerNationKey": "S1041-N005",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N005-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N005-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N005-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷10 위서 가후전 「張繡在南陽，詡陰結繡」 / 三國志 卷08 위서 장수전"
         },
         {
           "scenarioCode": 1041,
@@ -169379,19 +169379,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 8,
-          "ownerNationKey": "S1041-N008",
+          "ownerNationId": 7,
+          "ownerNationKey": "S1041-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1041-N008-ADMIN",
+          "winningClaimId": "S1041-N007-ADMIN",
           "claimTrace": [
-            "S1041-N008-ADMIN"
+            "S1041-N007-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-N008-PLACEMENT-EVIDENCE"
+            "S1041-N007-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷32 촉서 선주전 「布…先主還小沛」 / 三國志 卷07 여포전 — 196년 6월 呂布가 下邳를 습격해 서주를 빼앗기 이전(196년 1월) 상태"
+          "rationale": "三國志 卷06 위서 원술전 건안2년 「遂僭號，自稱仲家」 — 세력명 「중(仲)」의 근거"
         },
         {
           "scenarioCode": 1041,
@@ -193682,16 +193682,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-N001-ADMIN",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
+          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시 / 三國志 卷01 무제기 건안3~5년 — 呂布 주멸 후 徐州 확보, 건안4년 「繡率眾降」으로 南陽 확보"
         },
         {
           "scenarioCode": 1050,
@@ -193764,19 +193764,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 1,
-          "ownerNationKey": "S1050-N001",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1050-N001-ADMIN",
+          "winningClaimId": "S1050-BASELINE",
           "claimTrace": [
-            "S1050-N001-ADMIN"
+            "S1050-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1050-N001-PLACEMENT-EVIDENCE"
+            "S1050-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시 / 三國志 卷01 무제기 건안3~5년 — 呂布 주멸 후 徐州 확보, 건안4년 「繡率眾降」으로 南陽 확보"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1050,
@@ -218068,16 +218068,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-005",
+          "winningClaimId": "S1060-N001-ADMIN",
           "claimTrace": [
-            "S1060-CONTINUITY-005"
+            "S1060-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
+          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시"
         },
         {
           "scenarioCode": 1060,
@@ -218150,19 +218150,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 1,
-          "ownerNationKey": "S1060-N001",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1060-N001-ADMIN",
+          "winningClaimId": "S1060-BASELINE",
           "claimTrace": [
-            "S1060-N001-ADMIN"
+            "S1060-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1060-N001-PLACEMENT-EVIDENCE"
+            "S1060-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01 위서 무제기 건안원년 「(太祖)…奉迎天子…遂都許」 / 「二月，太祖進軍討破之(汝南潁川黃巾)，斬辟、邵等」 / 後漢書 卷074上 「臣時輒承製，竊比竇融，以議郎曹操權領兗州牧」(192) — 「領兗州牧」 명시"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1060,
@@ -242453,16 +242453,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-005",
+          "winningClaimId": "S1070-N001-ADMIN",
           "claimTrace": [
-            "S1070-CONTINUITY-005"
+            "S1070-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-005-EVIDENCE"
+            "S1070-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷16 위서 두기전(杜畿) — 건안 연간 河東太守 재임(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷01 무제기 건안13년 — 유종의 항복으로 荊州 북부(남양·양양·남군) 확보"
         },
         {
           "scenarioCode": 1070,
@@ -242535,19 +242535,19 @@
         {
           "scenarioCode": 1070,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 1,
-          "ownerNationKey": "S1070-N001",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1070-N001-ADMIN",
+          "winningClaimId": "S1070-BASELINE",
           "claimTrace": [
-            "S1070-N001-ADMIN"
+            "S1070-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1070-N001-PLACEMENT-EVIDENCE"
+            "S1070-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷16 위서 두기전(杜畿) — 건안 연간 河東太守 재임(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷01 무제기 건안13년 — 유종의 항복으로 荊州 북부(남양·양양·남군) 확보"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1070,
@@ -266838,16 +266838,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1080-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1080-CONTINUITY-004",
+          "winningClaimId": "S1080-N001-ADMIN",
           "claimTrace": [
-            "S1080-CONTINUITY-004"
+            "S1080-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1080-CONTINUITY-004-EVIDENCE"
+            "S1080-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 211년 조조 통제 현역을 배정한다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 무제기 건안16~17년 — 潼關에서 마초·한수를 격파하고 關中 평정"
         },
         {
           "scenarioCode": 1080,
@@ -291223,16 +291223,16 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1090-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1090-CONTINUITY-003",
+          "winningClaimId": "S1090-N001-ADMIN",
           "claimTrace": [
-            "S1090-CONTINUITY-003"
+            "S1090-N001-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1090-CONTINUITY-003-EVIDENCE"
+            "S1090-N001-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 조위 본기·열전과 晉書 卷14·15의 위 설치군·계승 목록을 대조해 223년 위 조정 통제 현역으로 배정한다. 시나리오 실행 세력명은 조조이지만 연도 판정은 위 승계권을 따른다."
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷01 위서 무제기 건안12년 「(公)…出盧龍塞…登白狼山…遼東太守公孫康斬尚、熙」 — 요서(柳城)까지 진출 / 三國志 卷01 위서 무제기 건안20년 「復漢寧郡爲漢中；分漢中之安陽、西城爲西城郡，置太守；分錫、上庸郡，置都尉」 — 서성군 창설(215) / 三國志 卷09 위서 하후연전 — 건안19년 隴右 평정"
         },
         {
           "scenarioCode": 1090,
@@ -364040,36 +364040,36 @@
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0000-003",
-          "ownerNationId": 12,
-          "ownerNationKey": "S1120-N012",
+          "ownerNationId": 4,
+          "ownerNationKey": "S1120-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1120-N012-ADMIN",
+          "winningClaimId": "S1120-N004-ADMIN",
           "claimTrace": [
-            "S1120-N012-ADMIN"
+            "S1120-N004-ADMIN"
           ],
           "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-N012-PLACEMENT-EVIDENCE"
+            "S1120-N004-PLACEMENT-EVIDENCE"
           ],
           "confidence": "IF",
-          "rationale": "IF 시나리오 원본 배치: 공주"
+          "rationale": "IF 시나리오 원본 배치. 남양군·하남윤을 군국급 기반으로 주되, 관도에 해당하는 중모현은 원소의 현 단위 우선 배치가 덮어쓴다."
         },
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0000-018",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1120-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N004-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치. 남양군·하남윤을 군국급 기반으로 주되, 관도에 해당하는 중모현은 원소의 현 단위 우선 배치가 덮어쓴다."
         },
         {
           "scenarioCode": 1120,
@@ -364278,19 +364278,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0018-003",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1120-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N002-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치: 공손찬"
         },
         {
           "scenarioCode": 1120,
@@ -364380,19 +364380,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0041-036",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 4,
+          "ownerNationKey": "S1120-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N004-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N004-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N004-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치. 남양군·하남윤을 군국급 기반으로 주되, 관도에 해당하는 중모현은 원소의 현 단위 우선 배치가 덮어쓴다."
         },
         {
           "scenarioCode": 1120,
@@ -364465,19 +364465,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0048-010",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1120-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1120-N002-ADMIN",
+          "winningClaimId": "S1120-BASELINE",
           "claimTrace": [
-            "S1120-N002-ADMIN"
+            "S1120-BASELINE"
           ],
-          "basisType": "IF_SCENARIO",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1120-N002-PLACEMENT-EVIDENCE"
+            "S1120-BASELINE-EVIDENCE"
           ],
-          "confidence": "IF",
-          "rationale": "IF 시나리오 원본 배치: 공손찬"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1120,
@@ -364856,19 +364856,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "gc-g0081-005",
-          "ownerNationId": 13,
-          "ownerNationKey": "S1120-N013",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1120-N013-ADMIN",
+          "winningClaimId": "S1120-BASELINE",
           "claimTrace": [
-            "S1120-N013-ADMIN"
+            "S1120-BASELINE"
           ],
-          "basisType": "IF_SCENARIO",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1120-N013-PLACEMENT-EVIDENCE"
+            "S1120-BASELINE-EVIDENCE"
           ],
-          "confidence": "IF",
-          "rationale": "IF 시나리오 원본 배치: 장연"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1120,

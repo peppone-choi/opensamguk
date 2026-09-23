@@ -3,17 +3,17 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "c330b92d23e87cbbc4dc6850c1eeb07342fcc1bb5e5ce4f0d4ed39266deccce9",
-    "migrationSha256": "9d547755c4b2416f80e694b6a471723d23065d65200956253d733d570ac50770",
-    "hanTilesSha256": "fc717af08bf55b748c3ee35701a854a4eec6695c09ad70195ee0e8d24526ebd8",
-    "provinceCityAttributionSha256": "d8acdf76e4d7fc19ead1ec6c7785231b58eb5ee52bd7aed8cabdc9bba7faff79",
+    "selectionSha256": "27b831418dfc0536b96194dfffd879debdbb21ec99de0e957e436cda8600d8b9",
+    "migrationSha256": "f05d2fe487bf1d226f01376b3d238f8e802a52b763c63e7acce54a4fd0bab7aa",
+    "hanTilesSha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012",
+    "provinceCityAttributionSha256": "ad9a0bcddf4015a0bf772cbe8b826adbc024a5609ea586fb32f9b7ea7019d02b",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
-    "waterwayNetworkSha256": "c025cf2063e6a971395e102117a175d78b6ee9b04b57b1c49323ba08730cf973"
+    "waterwayNetworkSha256": "9e1dfbd5dd0ccccff372c8420571d5d95f0c4fd6d505e5668f3716035de1d843"
   },
   "outputs": {
-    "worldJsonSha256": "4418097ca1b1a389421c57d89ee8682c162b7e04f1a53475e37f8d77a1a807e2",
-    "cityConstSha256": "2ad123f7d4e7022a7795a845043079ee3e970670156741860eb0c28c409554de",
-    "gateIndexSha256": "9fc65c10320cf2cde040920900f6b704430925b52317d3436f0d6199b312c8ce"
+    "worldJsonSha256": "ec54414ce7ee46825d95ea5c0682b96f65951c334ba3f431f207872d9ce6db59",
+    "cityConstSha256": "94b284bc09c6fe13b65d9b876eceb454275ce0fd97aa08407b33817e6f9832d2",
+    "gateIndexSha256": "22361f33acca3abce0f1f5778870f763ff7fc11115645f5987a1db3c5f9f5f57"
   },
   "routeNodes": [
     {
@@ -6836,7 +6836,7 @@
     {
       "a": 25,
       "b": 58,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 2
     },
     {
       "a": 25,
@@ -6852,6 +6852,11 @@
       "a": 25,
       "b": 1095,
       "sharedBoundaryCells": 8
+    },
+    {
+      "a": 25,
+      "b": 1232,
+      "sharedBoundaryCells": 2
     },
     {
       "a": 26,
@@ -7481,12 +7486,17 @@
     {
       "a": 55,
       "b": 58,
-      "sharedBoundaryCells": 7
+      "sharedBoundaryCells": 5
     },
     {
       "a": 55,
       "b": 857,
       "sharedBoundaryCells": 5
+    },
+    {
+      "a": 55,
+      "b": 1232,
+      "sharedBoundaryCells": 2
     },
     {
       "a": 56,
@@ -7506,11 +7516,6 @@
     {
       "a": 57,
       "b": 131,
-      "sharedBoundaryCells": 8
-    },
-    {
-      "a": 57,
-      "b": 134,
       "sharedBoundaryCells": 3
     },
     {
@@ -7521,12 +7526,12 @@
     {
       "a": 57,
       "b": 852,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 3
     },
     {
-      "a": 58,
-      "b": 857,
-      "sharedBoundaryCells": 3
+      "a": 57,
+      "b": 1231,
+      "sharedBoundaryCells": 5
     },
     {
       "a": 58,
@@ -7536,7 +7541,7 @@
     {
       "a": 58,
       "b": 1232,
-      "sharedBoundaryCells": 1
+      "sharedBoundaryCells": 6
     },
     {
       "a": 59,
@@ -8766,12 +8771,12 @@
     {
       "a": 118,
       "b": 550,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 8
     },
     {
       "a": 118,
       "b": 1201,
-      "sharedBoundaryCells": 8
+      "sharedBoundaryCells": 4
     },
     {
       "a": 119,
@@ -9016,7 +9021,7 @@
     {
       "a": 131,
       "b": 1231,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 5
     },
     {
       "a": 132,
@@ -9052,6 +9057,11 @@
       "a": 134,
       "b": 864,
       "sharedBoundaryCells": 5
+    },
+    {
+      "a": 134,
+      "b": 1231,
+      "sharedBoundaryCells": 3
     },
     {
       "a": 135,
@@ -10331,7 +10341,12 @@
     {
       "a": 198,
       "b": 993,
-      "sharedBoundaryCells": 9
+      "sharedBoundaryCells": 3
+    },
+    {
+      "a": 198,
+      "b": 1234,
+      "sharedBoundaryCells": 12
     },
     {
       "a": 199,
@@ -14066,12 +14081,12 @@
     {
       "a": 421,
       "b": 469,
-      "sharedBoundaryCells": 19
+      "sharedBoundaryCells": 16
     },
     {
       "a": 421,
       "b": 1207,
-      "sharedBoundaryCells": 1
+      "sharedBoundaryCells": 10
     },
     {
       "a": 422,
@@ -14916,7 +14931,7 @@
     {
       "a": 469,
       "b": 1207,
-      "sharedBoundaryCells": 11
+      "sharedBoundaryCells": 4
     },
     {
       "a": 471,
@@ -16421,7 +16436,7 @@
     {
       "a": 550,
       "b": 1201,
-      "sharedBoundaryCells": 6
+      "sharedBoundaryCells": 10
     },
     {
       "a": 551,
@@ -18181,12 +18196,12 @@
     {
       "a": 639,
       "b": 771,
-      "sharedBoundaryCells": 85
+      "sharedBoundaryCells": 80
     },
     {
       "a": 639,
       "b": 1245,
-      "sharedBoundaryCells": 12
+      "sharedBoundaryCells": 5
     },
     {
       "a": 640,
@@ -18916,17 +18931,17 @@
     {
       "a": 682,
       "b": 834,
-      "sharedBoundaryCells": 13
+      "sharedBoundaryCells": 8
     },
     {
       "a": 682,
       "b": 1209,
-      "sharedBoundaryCells": 4
+      "sharedBoundaryCells": 7
     },
     {
       "a": 682,
       "b": 1241,
-      "sharedBoundaryCells": 11
+      "sharedBoundaryCells": 5
     },
     {
       "a": 683,
@@ -20325,6 +20340,11 @@
     },
     {
       "a": 771,
+      "b": 1245,
+      "sharedBoundaryCells": 9
+    },
+    {
+      "a": 771,
       "b": 1246,
       "sharedBoundaryCells": 12
     },
@@ -20994,6 +21014,11 @@
       "sharedBoundaryCells": 46
     },
     {
+      "a": 834,
+      "b": 1241,
+      "sharedBoundaryCells": 9
+    },
+    {
       "a": 835,
       "b": 992,
       "sharedBoundaryCells": 23
@@ -21099,6 +21124,11 @@
       "sharedBoundaryCells": 7
     },
     {
+      "a": 852,
+      "b": 1231,
+      "sharedBoundaryCells": 1
+    },
+    {
       "a": 853,
       "b": 1046,
       "sharedBoundaryCells": 4
@@ -21111,7 +21141,7 @@
     {
       "a": 857,
       "b": 1232,
-      "sharedBoundaryCells": 17
+      "sharedBoundaryCells": 4
     },
     {
       "a": 859,
@@ -21851,17 +21881,12 @@
     {
       "a": 993,
       "b": 994,
-      "sharedBoundaryCells": 10
+      "sharedBoundaryCells": 11
     },
     {
       "a": 993,
       "b": 1234,
-      "sharedBoundaryCells": 13
-    },
-    {
-      "a": 994,
-      "b": 1234,
-      "sharedBoundaryCells": 1
+      "sharedBoundaryCells": 6
     },
     {
       "a": 995,
@@ -22587,11 +22612,6 @@
       "a": 1198,
       "b": 1202,
       "sharedBoundaryCells": 1
-    },
-    {
-      "a": 1209,
-      "b": 1241,
-      "sharedBoundaryCells": 3
     },
     {
       "a": 1216,

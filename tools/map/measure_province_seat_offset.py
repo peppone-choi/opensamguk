@@ -140,6 +140,8 @@ def load_exception_ids(*paths: Path) -> frozenset[str]:
       * 일반 원장의 `rows`
       * 거점 분할 원장(`strategic-site-province-carves-v1`)에서 `displacedFrom` 이 적힌 placements — carve 규칙 5 가
         앵커를 옮긴 거점이다(城 점이 선 칸·기증 省이 갈라지는 칸·물). 옮긴 사유와 거리는 그 원장 행에 있다.
+        같은 원장의 `gapCountyPlacements` 도 같게 읽는다 — 그 단계가 결손 縣 省도 떼어 내고(2026-09-23),
+        郡 경계 기하가 거칠어 투영 칸이 옆 郡에 떨어진 縣은 자기 郡으로 당겼다(PROJECTED_CELL_IN_OTHER_COMMANDERY).
     """
     ids: set[str] = set()
     for path in paths:
@@ -147,7 +149,8 @@ def load_exception_ids(*paths: Path) -> frozenset[str]:
         rows = document.get("seedExceptions", document.get("rows", []))
         ids |= {row["jurisdictionId"] for row in rows}
         for stage in document.get("geometry", {}).get("stages", []):
-            ids |= {row["placeId"] for row in stage.get("placements", []) if "displacedFrom" in row}
+            for key in ("placements", "gapCountyPlacements"):
+                ids |= {row["placeId"] for row in stage.get(key, []) if "displacedFrom" in row}
     return frozenset(ids)
 
 

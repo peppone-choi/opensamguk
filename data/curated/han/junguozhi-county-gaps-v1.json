@@ -5,9 +5,9 @@
  "totals": {
   "counties": 1180,
   "ABSENT": 222,
-  "IN_OTHER_COMMANDERY": 33,
-  "IN_OWN_COMMANDERY": 925,
-  "absentWithNearMatch": 16,
+  "IN_OTHER_COMMANDERY": 26,
+  "IN_OWN_COMMANDERY": 932,
+  "absentWithNearMatch": 15,
   "commanderiesWithAbsentFirstCounty": 14
  },
  "commanderies": [
@@ -39,10 +39,9 @@
     {
      "ordinal": 3,
      "sourceName": "梁",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "潁川郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0000-003"
     },
     {
      "ordinal": 4,
@@ -144,10 +143,9 @@
     {
      "ordinal": 18,
      "sourceName": "新城",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "弘農郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0000-018"
     },
     {
      "ordinal": 19,
@@ -2163,10 +2161,9 @@
     {
      "ordinal": 3,
      "sourceName": "易",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "涿郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0018-003"
     },
     {
      "ordinal": 4,
@@ -4349,10 +4346,9 @@
     {
      "ordinal": 36,
      "sourceName": "丹水",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "南鄉郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0041-036"
     },
     {
      "ordinal": 37,
@@ -5086,10 +5082,9 @@
     {
      "ordinal": 10,
      "sourceName": "鍾離",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "沛國"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0048-010"
     },
     {
      "ordinal": 11,
@@ -7297,10 +7292,9 @@
     {
      "ordinal": 2,
      "sourceName": "表氏",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "張掖郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0074-002"
     },
     {
      "ordinal": 3,
@@ -7581,10 +7575,7 @@
     {
      "ordinal": 1,
      "sourceName": "晋阳",
-     "status": "ABSENT",
-     "nearMatchInOwnCommandery": [
-      "中阳"
-     ]
+     "status": "ABSENT"
     },
     {
      "ordinal": 2,
@@ -7800,10 +7791,9 @@
     {
      "ordinal": 5,
      "sourceName": "中阳",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "太原郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0081-005"
     },
     {
      "ordinal": 6,

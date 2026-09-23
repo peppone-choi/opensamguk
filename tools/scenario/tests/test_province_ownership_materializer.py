@@ -206,7 +206,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertTrue(all(row.claim_trace == ("BASE",) for row in rows))
         self.assertTrue(all(row.confidence == "EXPLICIT_UNOWNED" for row in rows))
 
-    def test_production_document_has_1374_rows_per_active_scenario(self):
+    def test_production_document_has_1434_rows_per_active_scenario(self):
         map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
@@ -235,8 +235,8 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(15, len(generated))
         # 省 수는 data/map/han-tiles.json provinceRecords 실측이다. 현재 판 1,374 × 활성 시나리오 15 = 20,610.
         # 직전 기대값 23,370(=15 × 1,558)은 #848 한반도 임시 거점 정리 이전 판이다.
-        self.assertEqual(20_610, sum(len(rows) for rows in generated.values()))
-        self.assertTrue(all(len(rows) == 1_374 for rows in generated.values()))
+        self.assertEqual(21_510, sum(len(rows) for rows in generated.values()))  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertTrue(all(len(rows) == 1_434 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)
@@ -245,7 +245,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
         self.assertEqual(15, len(first["scenarios"]))
         self.assertEqual(
-            20_610,  # 15 시나리오 × 현재 판 省 1,374 (test_production_document_has_1374_rows_per_active_scenario 와 같은 기준)
+            21_510,  # 15 시나리오 × 현재 판 省 1,434 (test_production_document_has_1434_rows_per_active_scenario 와 같은 기준)
             sum(len(scenario["assignments"]) for scenario in first["scenarios"]),
         )
         self.assertNotIn(str(ROOT), canonical_bytes(first).decode("utf-8"))

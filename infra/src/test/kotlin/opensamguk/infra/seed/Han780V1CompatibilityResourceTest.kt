@@ -14,9 +14,10 @@ class Han780V1CompatibilityResourceTest {
     }
 
     @Test
-    fun `new world v3 resolves its reviewed 1168 city resource`() {
+    fun `new world v3 resolves its reviewed 1228 city resource`() {
         val v3 = MapJson.loadFromClasspath("han-world-v3")
-        assertEquals((1..1194).filterNot { it in setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194) }, v3.cities.map { it.id })
+        // 결손 縣 60 곳은 1195–1254 를 받았다. 은퇴 id 26 개는 계속 비워 둔다.
+        assertEquals((1..1254).filterNot { it in setOf(1143, 1148, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1178, 1179, 1180, 1181, 1182, 1183, 1184, 1185, 1186, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194) }, v3.cities.map { it.id })
     }
 
     @Test

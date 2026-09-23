@@ -1195,7 +1195,8 @@
         58,
         857,
         1041,
-        1095
+        1095,
+        1232
       ],
       "meta": {
         "jun": "홍농군",
@@ -2611,7 +2612,8 @@
         39,
         46,
         58,
-        857
+        857,
+        1232
       ],
       "meta": {
         "jun": "하남윤",
@@ -2699,9 +2701,9 @@
       "connections": [
         46,
         131,
-        134,
         851,
-        852
+        852,
+        1231
       ],
       "meta": {
         "jun": "하남윤",
@@ -2749,7 +2751,6 @@
         39,
         44,
         55,
-        857,
         1041,
         1232
       ],
@@ -6328,11 +6329,11 @@
       },
       "connections": [
         52,
-        57,
         122,
         131,
         852,
-        864
+        864,
+        1231
       ],
       "meta": {
         "jun": "영천군",
@@ -9338,7 +9339,8 @@
         195,
         196,
         199,
-        993
+        993,
+        1234
       ],
       "meta": {
         "jun": "하간국",
@@ -36220,6 +36222,7 @@
         643,
         654,
         1097,
+        1245,
         1246,
         1247,
         1249
@@ -39317,7 +39320,8 @@
         704,
         772,
         856,
-        1133
+        1133,
+        1241
       ],
       "meta": {
         "jun": "서하군",
@@ -40155,7 +40159,8 @@
         134,
         849,
         1046,
-        1086
+        1086,
+        1231
       ],
       "meta": {
         "jun": "하내군",
@@ -40384,7 +40389,6 @@
         25,
         27,
         55,
-        58,
         131,
         1232
       ],
@@ -40395,7 +40399,7 @@
         "seat": "홍농현",
         "nameCh": "新成县",
         "isSeat": false,
-        "displayName": "홍농군 신성현(新成)"
+        "displayName": "홍농군 신성현"
       },
       "provinceId": 628,
       "spatialProvinceId": "82841",
@@ -46860,8 +46864,7 @@
         721,
         725,
         775,
-        993,
-        1234
+        993
       ],
       "meta": {
         "jun": "탁군",
@@ -56099,7 +56102,7 @@
       "x": 427,
       "y": 248,
       "level": 11,
-      "region": 2,
+      "region": 8,
       "max": {
         "population": 58760,
         "agriculture": 1160,
@@ -56121,13 +56124,13 @@
         550
       ],
       "meta": {
-        "jun": "패국",
-        "junCh": "沛國",
-        "ju": "예주",
-        "seat": "상현",
+        "jun": "구강군",
+        "junCh": "九江郡",
+        "ju": "양주",
+        "seat": "음릉현",
         "nameCh": "鍾離縣",
         "isSeat": false,
-        "displayName": "패국 종리현"
+        "displayName": "구강군 종리현"
       },
       "provinceId": 1356,
       "spatialProvinceId": "gc-g0048-010",
@@ -56354,38 +56357,38 @@
     {
       "id": 1207,
       "name": "단수",
-      "x": 320,
-      "y": 244,
-      "level": 11,
+      "x": 321,
+      "y": 243,
+      "level": 10,
       "region": 7,
       "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
+        "population": 146900,
+        "agriculture": 2900,
+        "commerce": 2975,
+        "security": 2000,
+        "defence": 3000,
+        "wall": 2950
       },
       "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
+        "population": 50000,
+        "agriculture": 1000,
+        "commerce": 1000,
+        "security": 1000,
+        "defence": 1500,
+        "wall": 1500
       },
       "connections": [
         421,
         469
       ],
       "meta": {
-        "jun": "남향군",
-        "junCh": "南鄉郡",
+        "jun": "남양군",
+        "junCh": "南陽郡",
         "ju": "형주",
-        "seat": "남향군",
+        "seat": "완현",
         "nameCh": "丹水縣",
         "isSeat": false,
-        "displayName": "남향군 단수현"
+        "displayName": "남양군 단수현"
       },
       "provinceId": 1351,
       "spatialProvinceId": "gc-g0041-036",
@@ -56463,8 +56466,7 @@
       "connections": [
         682,
         683,
-        691,
-        1241
+        691
       ],
       "meta": {
         "jun": "태원군",
@@ -57394,49 +57396,7 @@
     {
       "id": 1231,
       "name": "양(河南尹)",
-      "x": 345,
-      "y": 223,
-      "level": 10,
-      "region": 2,
-      "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
-      },
-      "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
-      },
-      "connections": [
-        131
-      ],
-      "meta": {
-        "jun": "영천군",
-        "junCh": "潁川郡",
-        "ju": "예주",
-        "seat": "양적현",
-        "nameCh": "梁縣",
-        "isSeat": false,
-        "displayName": "영천군 양현"
-      },
-      "provinceId": 1331,
-      "spatialProvinceId": "gc-g0000-003",
-      "spatialProvinceIndex": 1331,
-      "routeNodeKey": "a134b468-8eb3-4ad9-b62f-f23733f1fca6",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-003",
-      "administrativeUnitId": "hhs:109:河南尹:003"
-    },
-    {
-      "id": 1232,
-      "name": "신성(河南尹)",
-      "x": 339,
+      "x": 348,
       "y": 218,
       "level": 11,
       "region": 1,
@@ -57457,17 +57417,64 @@
         "wall": 1000
       },
       "connections": [
+        57,
+        131,
+        134,
+        852
+      ],
+      "meta": {
+        "jun": "하남윤",
+        "junCh": "河南尹",
+        "ju": "사예",
+        "seat": "낙양현",
+        "nameCh": "梁縣",
+        "isSeat": false,
+        "displayName": "하남윤 양현"
+      },
+      "provinceId": 1331,
+      "spatialProvinceId": "gc-g0000-003",
+      "spatialProvinceIndex": 1331,
+      "routeNodeKey": "a134b468-8eb3-4ad9-b62f-f23733f1fca6",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-003",
+      "administrativeUnitId": "hhs:109:河南尹:003"
+    },
+    {
+      "id": 1232,
+      "name": "신성(河南尹)",
+      "x": 338,
+      "y": 216,
+      "level": 11,
+      "region": 1,
+      "max": {
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
+      },
+      "initial": {
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
+      },
+      "connections": [
+        25,
+        55,
         58,
         857
       ],
       "meta": {
-        "jun": "홍농군",
-        "junCh": "弘農郡",
+        "jun": "하남윤",
+        "junCh": "河南尹",
         "ju": "사예",
-        "seat": "홍농현",
+        "seat": "낙양현",
         "nameCh": "新城縣",
         "isSeat": false,
-        "displayName": "홍농군 신성현(新城)"
+        "displayName": "하남윤 신성현"
       },
       "provinceId": 1332,
       "spatialProvinceId": "gc-g0000-018",
@@ -57523,37 +57530,37 @@
       "id": 1234,
       "name": "역(河閒國)",
       "x": 401,
-      "y": 129,
-      "level": 10,
-      "region": 12,
+      "y": 131,
+      "level": 11,
+      "region": 3,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
-        993,
-        994
+        198,
+        993
       ],
       "meta": {
-        "jun": "탁군",
-        "junCh": "涿郡",
-        "ju": "유주",
-        "seat": "탁현",
+        "jun": "하간국",
+        "junCh": "河閒國",
+        "ju": "기주",
+        "seat": "낙성현",
         "nameCh": "易縣",
         "isSeat": false,
-        "displayName": "탁군 역현"
+        "displayName": "하간국 역현"
       },
       "provinceId": 1345,
       "spatialProvinceId": "gc-g0018-003",
@@ -57823,8 +57830,8 @@
     {
       "id": 1241,
       "name": "중양",
-      "x": 329,
-      "y": 166,
+      "x": 325,
+      "y": 164,
       "level": 11,
       "region": 11,
       "max": {
@@ -57845,16 +57852,16 @@
       },
       "connections": [
         682,
-        1209
+        834
       ],
       "meta": {
-        "jun": "태원군",
-        "junCh": "太原郡",
+        "jun": "서하군",
+        "junCh": "西河郡",
         "ju": "병주",
-        "seat": "계휴현",
+        "seat": "이석현",
         "nameCh": "中阳县",
         "isSeat": false,
-        "displayName": "태원군 중양현"
+        "displayName": "서하군 중양현"
       },
       "provinceId": 1379,
       "spatialProvinceId": "gc-g0081-005",
@@ -57993,7 +58000,7 @@
     {
       "id": 1245,
       "name": "표씨",
-      "x": 124,
+      "x": 120,
       "y": 122,
       "level": 11,
       "region": 10,
@@ -58014,16 +58021,17 @@
         "wall": 1000
       },
       "connections": [
-        639
+        639,
+        771
       ],
       "meta": {
-        "jun": "장액군",
-        "junCh": "張掖郡",
+        "jun": "주천군",
+        "junCh": "酒泉郡",
         "ju": "량주",
-        "seat": "역득현",
+        "seat": "옥문현",
         "nameCh": "表氏縣",
         "isSeat": false,
-        "displayName": "장액군 표씨현"
+        "displayName": "주천군 표씨현"
       },
       "provinceId": 1373,
       "spatialProvinceId": "gc-g0074-002",

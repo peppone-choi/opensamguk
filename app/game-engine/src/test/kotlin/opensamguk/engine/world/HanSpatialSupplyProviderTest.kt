@@ -90,8 +90,8 @@ class HanSpatialSupplyProviderTest {
         // 2026-09-18 지리 재분할(GH #806): 郡 안 縣 경계를 城의 실제 위치로 다시 잘라 1,594 → 1,331 省.
         // 2026-09-20 한반도·만주 확장: 1,558개 구획, 대칭 인접 4,167개.
         // 2026-09-21 한반도·만주 임시 거점 정리(#848): 1,558 → 1,374 省.
-        assertEquals(1_374, network.provinceOwners.size)
-        assertEquals(1_374, network.provinceAdjacency.size)
+        assertEquals(1_434, network.provinceOwners.size)  // 2026-09-23 결손 縣 60곳(#): 省 1,374 → 1,434
+        assertEquals(1_434, network.provinceAdjacency.size)
         // 동명이지에 잘못 묶인 縣 4곳을 CHGIS 제자리로 되돌리면서 省 인접이 2간선 늘었다
         // (4,118 → 4,120). 거점 省이 이웃과 새 경계를 내어 4,274 다. han-tiles.json adjacency.county 실측값이다.
         // 2026-09-16 1098: 五原郡 九原·河陰이 南匈奴 땅에서 발자국을 받고 平陰 省이 생기며 4,275.

@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import functools
 import hashlib
 import json
 import math
@@ -130,6 +131,49 @@ def load_gap_counties(ledger: dict) -> list[dict]:
 
 
 MAXIMUM_DISPLACEMENT = 6  # 앵커를 옮겨도 되는 최대 칸 거리(유클리드). 넘으면 세우지 않는다.
+# 결손 縣의 郡 귀속은 郡國志 표제(1차 증거)이고 좌표는 APPROXIMATE 다. 지도의 郡 기하는 NE
+# 폴리곤에서 온 것이라 경계가 거칠어(鄴·安邑은 10–17칸 밀려 있다) 경계 縣의 투영 칸이 옆 郡에
+# 떨어진다 — 그대로 세우면 弘農郡에 河南尹 新城이 붙어 기존 新成과 한글 표기까지 충돌했다.
+# 그럴 때 자기 郡 땅으로 앵커를 당긴다. 실측 필요 거리는 7건 중 최대 6.71칸(河南尹 梁縣)이다.
+MAXIMUM_COMMANDERY_SNAP = 8
+
+
+@functools.lru_cache(maxsize=1)
+def _commandery_normalizer():
+    """繁簡·異體字 접기. 자체 규칙을 쓰면 邑·道·國 접미를 잘라 허위 불일치가 난다 — audit 도구를 쓴다."""
+    from tools.map.audit_county_coverage import make_normalizer
+    return make_normalizer(group=True)
+
+
+def _commandery_fold(name: str) -> str:
+    return _commandery_normalizer()(name)
+
+
+def _commandery_parent_ids(document: dict) -> dict[str, list[str]]:
+    """郡 이름(繁簡·異體 접기) → parentRegion id 들. 원장은 繁體, 지도는 簡體가 섞여 있다."""
+    index: dict[str, list[str]] = {}
+    for row in document["parentRegions"]:
+        index.setdefault(_commandery_fold(row["nameCh"]), []).append(row["id"])
+    return index
+
+
+def _nearest_cell_in_commandery(before: np.ndarray, provinces: list[dict], parent_ids: list[str],
+                                cell: tuple[int, int], rows: int, cols: int):
+    """cell 에서 가장 가까운, parent_ids 郡에 속한 칸. MAXIMUM_COMMANDERY_SNAP 안에서만 본다."""
+    wanted = {index for index, row in enumerate(provinces) if row["parentRegionId"] in parent_ids}
+    if not wanted:
+        return None
+    reach = MAXIMUM_COMMANDERY_SNAP
+    window = before[max(cell[0] - reach, 0):cell[0] + reach + 1,
+                    max(cell[1] - reach, 0):cell[1] + reach + 1]
+    origin = (max(cell[0] - reach, 0), max(cell[1] - reach, 0))
+    best = None
+    for r, c in np.argwhere(np.isin(window, list(wanted))):
+        candidate = (origin[0] + int(r), origin[1] + int(c))
+        distance = (candidate[0] - cell[0]) ** 2 + (candidate[1] - cell[1]) ** 2
+        if distance <= reach ** 2 and (best is None or (distance, candidate) < best[0]):
+            best = ((distance, candidate), candidate)
+    return None if best is None else best[1]
 
 
 def _anchor_candidates(owner: np.ndarray, donor: int, cell: tuple[int, int], taken: set[tuple[int, int]]):
@@ -364,6 +408,7 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
     # ── 결손 縣. 거점 고리 뒤에 따로 돈다 — 거점의 `pending` 예약을 縣이 늘리면 기존 73 건의
     # carve 결과가 달라진다(회귀). 기증 省의 최소 넓이·연결·마른땅 경계 조건은 같은 함수가 지킨다.
     county_placements, county_excluded = [], []
+    commandery_parents = _commandery_parent_ids(document) if counties else {}
     for county in counties or ():
         base = {"countyId": county["canonicalId"], "nameHan": county["nameHan"],
                 "hhsCommanderyHan": county["hhsCommanderyHan"]}
@@ -382,6 +427,24 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
                                         "anchorCell": {"col": cell[1], "row": cell[0]}})
                 continue
             cell = min(land, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
+        # 郡 귀속은 사료가 말하는 것이고 郡 경계 기하는 근사다. 투영 칸이 옆 郡에 떨어지면
+        # 칸을 옮기고(자기 郡 안의 최근접), 자기 郡에 닿지 못하면 세우지 않는다.
+        target_parents = commandery_parents.get(_commandery_fold(county["hhsCommanderyHan"]))
+        if not target_parents:
+            county_excluded.append({**base, "reason": "LEDGER_COMMANDERY_NOT_ON_MAP"})
+            continue
+        commandery_snapped_from = None
+        if provinces[int(before[cell])]["parentRegionId"] not in target_parents:
+            inside = _nearest_cell_in_commandery(before, provinces, target_parents, cell, rows, cols)
+            if inside is None:
+                county_excluded.append({
+                    **base, "reason": "ANCHOR_OUTSIDE_LEDGER_COMMANDERY",
+                    "anchorCell": {"col": cell[1], "row": cell[0]},
+                    "worldCommanderyHan": next(
+                        r["nameCh"] for r in document["parentRegions"]
+                        if r["id"] == provinces[int(before[cell])]["parentRegionId"])})
+                continue
+            commandery_snapped_from, cell = cell, inside
         donor = int(before[cell])
         donor_record = provinces[donor]
         jurisdiction = jurisdictions[donor_record["jurisdictionId"]]
@@ -450,7 +513,8 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
         if anchor != projected_cell:
             placement["displacedFrom"] = {
                 "col": projected_cell[1], "row": projected_cell[0],
-                "reason": ("PROJECTED_CELL_IN_WATER" if projected_cell != cell
+                "reason": ("PROJECTED_CELL_IN_OTHER_COMMANDERY" if commandery_snapped_from is not None
+                           else "PROJECTED_CELL_IN_WATER" if projected_cell != cell
                            else "CITY_POINT_ON_PROJECTED_CELL" if projected_cell in point_cells
                            else "PROJECTED_CELL_WOULD_SPLIT_DONOR"),
                 "cellDistance": round(math.hypot(anchor[0] - projected_cell[0],

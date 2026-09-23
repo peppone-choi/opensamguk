@@ -5,53 +5,24 @@
   "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
   "generator": "tools/map/build_county_display_name_collisions.py",
   "inputs": {
-    "hanTilesSha256": "fc717af08bf55b748c3ee35701a854a4eec6695c09ad70195ee0e8d24526ebd8",
-    "hanWorldV3Sha256": "4418097ca1b1a389421c57d89ee8682c162b7e04f1a53475e37f8d77a1a807e2",
+    "hanTilesSha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012",
+    "hanWorldV3Sha256": "ec54414ce7ee46825d95ea5c0682b96f65951c334ba3f431f207872d9ce6db59",
     "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
     "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
   },
   "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
   "summary": {
     "jurisdictions": 1228,
-    "sameCommanderyCollisionGroups": 6,
-    "sameCommanderyCollidingJurisdictions": 12,
-    "commanderiesWithCollisions": 6,
+    "sameCommanderyCollisionGroups": 5,
+    "sameCommanderyCollidingJurisdictions": 10,
+    "commanderiesWithCollisions": 5,
     "byClassification": {
-      "HOMOPHONE": 4,
+      "HOMOPHONE": 3,
       "TILES_READING_DIVERGES_FROM_RUNTIME": 2
     },
-    "displayNamesSharedAcrossCommanderies": 97
+    "displayNamesSharedAcrossCommanderies": 98
   },
   "collisions": [
-    {
-      "commanderyId": "PARENT-0003",
-      "commanderyDisplayName": "홍농군",
-      "commanderyNameCh": "弘農郡",
-      "displayName": "신성현",
-      "classification": "HOMOPHONE",
-      "members": [
-        {
-          "jurisdictionId": "82841",
-          "kind": "COUNTY",
-          "nameCh": "新成县",
-          "simplifiedStem": "新成",
-          "gloss": "新成",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 857,
-          "runtimeDisplayName": "홍농군 신성현(新成)"
-        },
-        {
-          "jurisdictionId": "gc-g0000-018",
-          "kind": "COUNTY",
-          "nameCh": "新城縣",
-          "simplifiedStem": "新城",
-          "gloss": "新城",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 1232,
-          "runtimeDisplayName": "홍농군 신성현(新城)"
-        }
-      ]
-    },
     {
       "commanderyId": "PARENT-0007",
       "commanderyDisplayName": "영천군",

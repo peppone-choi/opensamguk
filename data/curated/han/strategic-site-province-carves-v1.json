@@ -44,7 +44,7 @@
     "stages": [
       {
         "inputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
-        "outputDocumentSha256": "ef98e39e244592542912eb1a10a059900aaa791a496df791607385a06c4febd9",
+        "outputDocumentSha256": "102939b16afd5164e8fc0b8bb5904ee56c60e90262b7e64ea51e327ca45ce83e",
         "inputCounts": {
           "cities": 1190,
           "seats": 172,
@@ -3525,51 +3525,51 @@
             "after": "gc-g0074-003"
           },
           {
-            "col": 135,
+            "col": 132,
+            "row": 132,
+            "before": "SUB-70459-c86c8fbee593",
+            "after": "gc-g0074-002"
+          },
+          {
+            "col": 131,
             "row": 133,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 136,
+            "col": 132,
             "row": 133,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 137,
-            "row": 133,
-            "before": "70601",
-            "after": "gc-g0074-002"
-          },
-          {
-            "col": 135,
+            "col": 130,
             "row": 134,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 136,
+            "col": 131,
             "row": 134,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 137,
+            "col": 132,
             "row": 134,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 136,
+            "col": 131,
             "row": 135,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
-            "col": 137,
+            "col": 132,
             "row": 135,
-            "before": "70601",
+            "before": "SUB-70459-c86c8fbee593",
             "after": "gc-g0074-002"
           },
           {
@@ -3669,51 +3669,45 @@
             "after": "gc-g0085-001"
           },
           {
-            "col": 439,
-            "row": 140,
-            "before": "87297",
+            "col": 443,
+            "row": 143,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
             "col": 440,
-            "row": 140,
-            "before": "87297",
+            "row": 144,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
             "col": 441,
-            "row": 140,
-            "before": "87297",
+            "row": 144,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
-            "col": 439,
-            "row": 141,
-            "before": "87297",
+            "col": 442,
+            "row": 144,
+            "before": "87326",
+            "after": "gc-g0018-003"
+          },
+          {
+            "col": 443,
+            "row": 144,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
             "col": 440,
-            "row": 141,
-            "before": "87297",
+            "row": 145,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
-            "col": 441,
-            "row": 141,
-            "before": "87297",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 439,
-            "row": 142,
-            "before": "87297",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 441,
-            "row": 142,
-            "before": "87297",
+            "col": 442,
+            "row": 145,
+            "before": "87326",
             "after": "gc-g0018-003"
           },
           {
@@ -3721,6 +3715,12 @@
             "row": 145,
             "before": "fc-liaodong-011",
             "after": "ss-tajin"
+          },
+          {
+            "col": 442,
+            "row": 146,
+            "before": "87326",
+            "after": "gc-g0018-003"
           },
           {
             "col": 533,
@@ -3957,6 +3957,30 @@
             "after": "gc-g0015-007"
           },
           {
+            "col": 356,
+            "row": 178,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
+            "col": 357,
+            "row": 178,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
+            "col": 356,
+            "row": 179,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
+            "col": 357,
+            "row": 179,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
             "col": 361,
             "row": 179,
             "before": "95152",
@@ -3967,6 +3991,24 @@
             "row": 179,
             "before": "95152",
             "after": "gc-g0079-006"
+          },
+          {
+            "col": 355,
+            "row": 180,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
+            "col": 356,
+            "row": 180,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
+          },
+          {
+            "col": 357,
+            "row": 180,
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
+            "after": "gc-g0081-005"
           },
           {
             "col": 361,
@@ -3987,9 +4029,9 @@
             "after": "gc-g0079-006"
           },
           {
-            "col": 360,
+            "col": 356,
             "row": 181,
-            "before": "95152",
+            "before": "DIRECT-PARENT-0081-7a0310a62424",
             "after": "gc-g0081-005"
           },
           {
@@ -4021,30 +4063,6 @@
             "row": 181,
             "before": "87189",
             "after": "ss-boluojin"
-          },
-          {
-            "col": 359,
-            "row": 182,
-            "before": "95152",
-            "after": "gc-g0081-005"
-          },
-          {
-            "col": 360,
-            "row": 182,
-            "before": "95152",
-            "after": "gc-g0081-005"
-          },
-          {
-            "col": 361,
-            "row": 182,
-            "before": "95152",
-            "after": "gc-g0081-005"
-          },
-          {
-            "col": 362,
-            "row": 182,
-            "before": "95152",
-            "after": "gc-g0081-005"
           },
           {
             "col": 421,
@@ -4069,24 +4087,6 @@
             "row": 182,
             "before": "87189",
             "after": "ss-boluojin"
-          },
-          {
-            "col": 360,
-            "row": 183,
-            "before": "95152",
-            "after": "gc-g0081-005"
-          },
-          {
-            "col": 361,
-            "row": 183,
-            "before": "95152",
-            "after": "gc-g0081-005"
-          },
-          {
-            "col": 362,
-            "row": 183,
-            "before": "95152",
-            "after": "gc-g0081-005"
           },
           {
             "col": 421,
@@ -5211,6 +5211,12 @@
             "after": "ss-doujin"
           },
           {
+            "col": 371,
+            "row": 235,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
             "col": 248,
             "row": 236,
             "before": "70060",
@@ -5253,6 +5259,24 @@
             "after": "ss-doujin"
           },
           {
+            "col": 369,
+            "row": 236,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 370,
+            "row": 236,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 371,
+            "row": 236,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
             "col": 248,
             "row": 237,
             "before": "70060",
@@ -5289,6 +5313,54 @@
             "after": "ss-doujin"
           },
           {
+            "col": 368,
+            "row": 237,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 369,
+            "row": 237,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 370,
+            "row": 237,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 371,
+            "row": 237,
+            "before": "82843",
+            "after": "gc-g0000-018"
+          },
+          {
+            "col": 380,
+            "row": 237,
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
+            "col": 381,
+            "row": 237,
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
+            "col": 382,
+            "row": 237,
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
+            "col": 383,
+            "row": 237,
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
             "col": 249,
             "row": 238,
             "before": "70060",
@@ -5325,10 +5397,22 @@
             "after": "ss-yiquanwu"
           },
           {
-            "col": 371,
+            "col": 381,
             "row": 238,
-            "before": "82841",
-            "after": "gc-g0000-018"
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
+            "col": 382,
+            "row": 238,
+            "before": "82852",
+            "after": "gc-g0000-003"
+          },
+          {
+            "col": 383,
+            "row": 238,
+            "before": "82852",
+            "after": "gc-g0000-003"
           },
           {
             "col": 361,
@@ -5349,34 +5433,10 @@
             "after": "ss-yiquanwu"
           },
           {
-            "col": 370,
+            "col": 382,
             "row": 239,
-            "before": "82841",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 371,
-            "row": 239,
-            "before": "82841",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 372,
-            "row": 239,
-            "before": "82841",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 373,
-            "row": 239,
-            "before": "82841",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 374,
-            "row": 239,
-            "before": "82841",
-            "after": "gc-g0000-018"
+            "before": "82852",
+            "after": "gc-g0000-003"
           },
           {
             "col": 225,
@@ -5419,18 +5479,6 @@
             "row": 240,
             "before": "82871",
             "after": "ss-yiquanwu"
-          },
-          {
-            "col": 371,
-            "row": 240,
-            "before": "82841",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 373,
-            "row": 240,
-            "before": "82841",
-            "after": "gc-g0000-018"
           },
           {
             "col": 225,
@@ -5781,24 +5829,6 @@
             "after": "ss-xieguguan"
           },
           {
-            "col": 378,
-            "row": 244,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
-            "col": 379,
-            "row": 244,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
-            "col": 380,
-            "row": 244,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
             "col": 434,
             "row": 244,
             "before": "82072",
@@ -5835,24 +5865,6 @@
             "after": "ss-xieguguan"
           },
           {
-            "col": 378,
-            "row": 245,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
-            "col": 379,
-            "row": 245,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
-            "col": 380,
-            "row": 245,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
             "col": 284,
             "row": 246,
             "before": "70930",
@@ -5869,18 +5881,6 @@
             "row": 246,
             "before": "70930",
             "after": "ss-xieguguan"
-          },
-          {
-            "col": 378,
-            "row": 246,
-            "before": "82901",
-            "after": "gc-g0000-003"
-          },
-          {
-            "col": 379,
-            "row": 246,
-            "before": "82901",
-            "after": "gc-g0000-003"
           },
           {
             "col": 390,
@@ -6111,6 +6111,18 @@
             "after": "gc-g0008-034"
           },
           {
+            "col": 351,
+            "row": 264,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
+            "col": 352,
+            "row": 264,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
             "col": 433,
             "row": 264,
             "before": "43366",
@@ -6121,6 +6133,24 @@
             "row": 264,
             "before": "43366",
             "after": "gc-g0008-016"
+          },
+          {
+            "col": 351,
+            "row": 265,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
+            "col": 352,
+            "row": 265,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
+            "col": 353,
+            "row": 265,
+            "before": "82763",
+            "after": "gc-g0041-036"
           },
           {
             "col": 433,
@@ -6157,6 +6187,24 @@
             "row": 266,
             "before": "71101",
             "after": "ss-yangpingguan"
+          },
+          {
+            "col": 352,
+            "row": 266,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
+            "col": 353,
+            "row": 266,
+            "before": "82763",
+            "after": "gc-g0041-036"
+          },
+          {
+            "col": 354,
+            "row": 266,
+            "before": "82763",
+            "after": "gc-g0041-036"
           },
           {
             "col": 420,
@@ -6207,24 +6255,6 @@
             "after": "ss-yangpingguan"
           },
           {
-            "col": 350,
-            "row": 267,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
-            "col": 351,
-            "row": 267,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
-            "col": 352,
-            "row": 267,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
             "col": 419,
             "row": 267,
             "before": "82047",
@@ -6279,24 +6309,6 @@
             "after": "ss-yangpingguan"
           },
           {
-            "col": 350,
-            "row": 268,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
-            "col": 351,
-            "row": 268,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
-            "col": 352,
-            "row": 268,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
             "col": 419,
             "row": 268,
             "before": "82047",
@@ -6333,18 +6345,6 @@
             "after": "gc-g0010-017"
           },
           {
-            "col": 350,
-            "row": 269,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
-            "col": 351,
-            "row": 269,
-            "before": "71022",
-            "after": "gc-g0041-036"
-          },
-          {
             "col": 459,
             "row": 269,
             "before": "43186",
@@ -6379,24 +6379,6 @@
             "row": 270,
             "before": "43130",
             "after": "ss-guokou"
-          },
-          {
-            "col": 468,
-            "row": 270,
-            "before": "43243",
-            "after": "gc-g0048-010"
-          },
-          {
-            "col": 469,
-            "row": 270,
-            "before": "43243",
-            "after": "gc-g0048-010"
-          },
-          {
-            "col": 470,
-            "row": 270,
-            "before": "43243",
-            "after": "gc-g0048-010"
           },
           {
             "col": 489,
@@ -6459,15 +6441,15 @@
             "after": "ss-guokou"
           },
           {
-            "col": 469,
+            "col": 467,
             "row": 271,
-            "before": "43243",
+            "before": "43130",
             "after": "gc-g0048-010"
           },
           {
-            "col": 470,
+            "col": 468,
             "row": 271,
-            "before": "43243",
+            "before": "43130",
             "after": "gc-g0048-010"
           },
           {
@@ -6537,21 +6519,21 @@
             "after": "ss-guokou"
           },
           {
-            "col": 469,
+            "col": 466,
             "row": 272,
-            "before": "43243",
+            "before": "43130",
             "after": "gc-g0048-010"
           },
           {
-            "col": 470,
+            "col": 467,
             "row": 272,
-            "before": "43243",
+            "before": "43130",
             "after": "gc-g0048-010"
           },
           {
-            "col": 471,
+            "col": 468,
             "row": 272,
-            "before": "43243",
+            "before": "43130",
             "after": "gc-g0048-010"
           },
           {
@@ -6625,6 +6607,24 @@
             "row": 273,
             "before": "43130",
             "after": "gc-g0048-008"
+          },
+          {
+            "col": 467,
+            "row": 273,
+            "before": "43130",
+            "after": "gc-g0048-010"
+          },
+          {
+            "col": 468,
+            "row": 273,
+            "before": "43130",
+            "after": "gc-g0048-010"
+          },
+          {
+            "col": 469,
+            "row": 273,
+            "before": "43130",
+            "after": "gc-g0048-010"
           },
           {
             "col": 491,
@@ -8938,15 +8938,21 @@
             "hhsCommanderyHan": "河南尹",
             "placeId": "gc-g0000-003",
             "provinceIndex": 1331,
-            "donorProvinceId": "82901",
-            "donorJurisdictionId": "82901",
-            "commanderyId": "PARENT-0007",
-            "worldCommanderyHan": "潁川郡",
+            "donorProvinceId": "82852",
+            "donorJurisdictionId": "82852",
+            "commanderyId": "PARENT-0000",
+            "worldCommanderyHan": "河南尹",
             "anchorCell": {
-              "col": 379,
-              "row": 245
+              "col": 382,
+              "row": 239
             },
-            "carvedCellCount": 8
+            "carvedCellCount": 8,
+            "displacedFrom": {
+              "col": 379,
+              "row": 245,
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 6.71
+            }
           },
           {
             "countyId": "hhs:109:河南尹:018",
@@ -8954,20 +8960,20 @@
             "hhsCommanderyHan": "河南尹",
             "placeId": "gc-g0000-018",
             "provinceIndex": 1332,
-            "donorProvinceId": "82841",
-            "donorJurisdictionId": "82841",
-            "commanderyId": "PARENT-0003",
-            "worldCommanderyHan": "弘農郡",
+            "donorProvinceId": "82843",
+            "donorJurisdictionId": "82843",
+            "commanderyId": "PARENT-0000",
+            "worldCommanderyHan": "河南尹",
             "anchorCell": {
-              "col": 372,
-              "row": 239
+              "col": 371,
+              "row": 237
             },
             "carvedCellCount": 8,
             "displacedFrom": {
               "col": 372,
               "row": 240,
-              "reason": "CITY_POINT_ON_PROJECTED_CELL",
-              "cellDistance": 1.0
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 3.16
             }
           },
           {
@@ -9174,20 +9180,20 @@
             "hhsCommanderyHan": "河閒國",
             "placeId": "gc-g0018-003",
             "provinceIndex": 1345,
-            "donorProvinceId": "87297",
-            "donorJurisdictionId": "87297",
-            "commanderyId": "PARENT-0087",
-            "worldCommanderyHan": "涿郡",
+            "donorProvinceId": "87326",
+            "donorJurisdictionId": "87326",
+            "commanderyId": "PARENT-0018",
+            "worldCommanderyHan": "河閒國",
             "anchorCell": {
               "col": 440,
-              "row": 141
+              "row": 144
             },
             "carvedCellCount": 8,
             "displacedFrom": {
               "col": 440,
               "row": 142,
-              "reason": "CITY_POINT_ON_PROJECTED_CELL",
-              "cellDistance": 1.0
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 2.0
             }
           },
           {
@@ -9288,15 +9294,21 @@
             "hhsCommanderyHan": "南陽郡",
             "placeId": "gc-g0041-036",
             "provinceIndex": 1351,
-            "donorProvinceId": "71022",
-            "donorJurisdictionId": "71022",
-            "commanderyId": "PARENT-0113",
-            "worldCommanderyHan": "南鄉郡",
+            "donorProvinceId": "82763",
+            "donorJurisdictionId": "82763",
+            "commanderyId": "PARENT-0041",
+            "worldCommanderyHan": "南陽郡",
             "anchorCell": {
-              "col": 351,
-              "row": 268
+              "col": 352,
+              "row": 266
             },
-            "carvedCellCount": 8
+            "carvedCellCount": 8,
+            "displacedFrom": {
+              "col": 351,
+              "row": 268,
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 2.24
+            }
           },
           {
             "countyId": "hhs:112:九江郡:001",
@@ -9368,15 +9380,21 @@
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-010",
             "provinceIndex": 1356,
-            "donorProvinceId": "43243",
-            "donorJurisdictionId": "43243",
-            "commanderyId": "PARENT-0010",
-            "worldCommanderyHan": "沛國",
+            "donorProvinceId": "43130",
+            "donorJurisdictionId": "43130",
+            "commanderyId": "PARENT-0048",
+            "worldCommanderyHan": "九江郡",
             "anchorCell": {
-              "col": 469,
+              "col": 468,
               "row": 272
             },
-            "carvedCellCount": 8
+            "carvedCellCount": 8,
+            "displacedFrom": {
+              "col": 469,
+              "row": 272,
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 1.0
+            }
           },
           {
             "countyId": "hhs:112:九江郡:011",
@@ -9652,15 +9670,21 @@
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-002",
             "provinceIndex": 1373,
-            "donorProvinceId": "70601",
-            "donorJurisdictionId": "70601",
-            "commanderyId": "PARENT-0073",
-            "worldCommanderyHan": "張掖郡",
+            "donorProvinceId": "SUB-70459-c86c8fbee593",
+            "donorJurisdictionId": "70459",
+            "commanderyId": "PARENT-0074",
+            "worldCommanderyHan": "酒泉郡",
             "anchorCell": {
-              "col": 136,
+              "col": 132,
               "row": 134
             },
-            "carvedCellCount": 8
+            "carvedCellCount": 8,
+            "displacedFrom": {
+              "col": 136,
+              "row": 134,
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 4.0
+            }
           },
           {
             "countyId": "hhs:113:酒泉郡:003",
@@ -9748,15 +9772,21 @@
             "hhsCommanderyHan": "西河郡",
             "placeId": "gc-g0081-005",
             "provinceIndex": 1379,
-            "donorProvinceId": "95152",
-            "donorJurisdictionId": "95152",
-            "commanderyId": "PARENT-0079",
-            "worldCommanderyHan": "太原郡",
+            "donorProvinceId": "DIRECT-PARENT-0081-7a0310a62424",
+            "donorJurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
+            "commanderyId": "PARENT-0081",
+            "worldCommanderyHan": "西河郡",
             "anchorCell": {
-              "col": 361,
-              "row": 182
+              "col": 357,
+              "row": 180
             },
-            "carvedCellCount": 8
+            "carvedCellCount": 8,
+            "displacedFrom": {
+              "col": 361,
+              "row": 182,
+              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
+              "cellDistance": 4.47
+            }
           },
           {
             "countyId": "hhs:113:五原郡:002",

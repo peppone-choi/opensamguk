@@ -12,7 +12,7 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 61,
+  "linkCount": 62,
   "medianKm": 74.8,
   "p90Km": 456.6,
   "maxKm": 1049.3
@@ -468,6 +468,14 @@
    "fromCityName": "좌성",
    "toCityName": "안미",
    "distanceKm": 32.8
+  },
+  {
+   "canonicalGroup": "酒泉郡",
+   "fromProvinceIndex": 1373,
+   "toProvinceIndex": 1375,
+   "fromCityName": "표씨",
+   "toCityName": "회수",
+   "distanceKm": 56.6
   },
   {
    "canonicalGroup": "酒泉郡",
