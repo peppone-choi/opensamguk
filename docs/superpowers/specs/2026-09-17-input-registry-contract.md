@@ -237,6 +237,6 @@ HWIHA 시드의 개인 예약은 빈 큐로 시작한다. 예약된 행의 실�
 - 권한: 縣令·사자 자리는 주공, 정찰·군단장은 카드 주인. 縣 방침·공사는 그 세력 군주 또는 그 縣의 현령 자리 주인(발령된 사람 장수 본인·배치 카드의 주인). 郡 방침은 군주만(太守·刺史는 2층 관직). 郡 방침이 걸린 縣은 군주가 아니면 縣 방침을 바꿀 수 없다. 군단 방침은 출전 군단 주인.
 - 효력: 접수는 대기만 저장한다. 배치·縣 방침·군단 방침은 해당 카드(배치 카드·앉은 縣令·지휘 장수)의 다음 턴 첫 단계에서 재검사 후 현행이 되고, 郡 방침은 다음 순 경계에서 현행이 된다. 공사는 다음 순 경계부터 진척한다. 縣 방침의 지표 효과는 순 경계마다 縣 번호 순으로 한 번 적용한다(2026-09-23 사용자 결정, 도장 `hwihaDomesticPhase`, 월세입 앞).
 - 결과 봉투: commandKind `PLACEMENT`·`POLICY`·`WORK`, 접수 성공 type `reservationAccepted`(대기 저장, 결과 조회에서 최종), 거절 `executionRejected` + 공통 code/reason.
-- 잠정 수치의 정본은 `data/curated/han/hwiha-domestic-v1.json` 하나이며 모든 항목이 `PROVISIONAL — 사용자 결정 대기` 다.
-- 요격·회피 현행은 월드 `hwihaMarchReactions.interceptions/avoidanceOrders` 에 싣는다(game_env 영속). 조우 소비자가 이 기록을 해결하기 전에는 기존 계약대로 진입 판정이 「확인 불가」로 멈춘다.
+- 내정 효과·비용·기간 수치의 정본은 `data/curated/han/hwiha-domestic-v1.json` 하나이며 2026-09-23 사용자 결정으로 모든 항목을 `CONFIRMED`로 확정했다.
+- 요격·회피 현행은 월드 `hwihaMarchReactions.interceptions/avoidanceOrders` 에 싣는다(game_env 영속). 행군 진입에서 `HwihaMarchReactionInterpreter`가 확정 범위 1省, FULL 시야와 회피 철수를 판정한다. 반응 권위가 없거나 틀이 깨졌으면 진입 판정은 「확인 불가」다.
 - 시야 스트림 공개 꼴: 정찰 = 주인 meta `hwihaScoutPosts`, 망루봉화 = 縣 meta `hwihaCountyWorks` 의 `{kind:"WATCHTOWER_BEACON",status:"COMPLETE"}`.
