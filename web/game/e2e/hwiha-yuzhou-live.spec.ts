@@ -68,11 +68,12 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   const generalId = front.general.generalId;
   expect(Number.isSafeInteger(generalId) && generalId > 0).toBe(true);
 
+  // Stop the snapshot writer before the only post-seed SQL write. Restarting
+  // after the update races with the departing engine's final snapshot flush.
+  compose(['stop', 'game-engine']);
   // The only post-seed SQL write in this test keeps the newly created human alive during the long QA run.
   expect(sql(`UPDATE general SET meta=jsonb_set(meta, '{killturn}', '96'::jsonb) WHERE world_id=${worldId} AND id=${generalId} RETURNING id;`)).toBe(String(generalId));
-  // The running engine keeps a world snapshot in memory; reload it before the
-  // next phase so its snapshot cannot overwrite the one allowed SQL adjustment.
-  compose(['restart', 'game-engine']);
+  compose(['start', 'game-engine']);
   const engineHealthUrl = process.env.E2E_GAME_ENGINE_HEALTH_URL ?? '';
   expect(engineHealthUrl).toMatch(/^http:\/\/localhost:\d+\/actuator\/health$/);
   await expect.poll(async () => {
