@@ -132,6 +132,55 @@ class CommandReserveServiceTest {
         }
     }
 
+    @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
+        val reader = mock(opensamguk.gameapi.read.HwihaDomesticReader::class.java)
+        val now = opensamguk.logic.input.HwihaPhase(200, 1, 1)
+        fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.input.DomesticPerson(id, "G$id", 1, human,
+            if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
+        val state = opensamguk.logic.input.HwihaDomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
+            listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.input.DomesticCard(5, 10, 20, "staff")),
+            listOf(opensamguk.logic.input.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
+            listOf(opensamguk.logic.input.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
+        `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state))
+        val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
+        val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),
+            HwihaDomesticAdmission(reader, catalog), catalog)
+        val inbox = RecordingInbox()
+        val turns = RecordingReservedTurns()
+        val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
+            GameApiProcessWorld(1), "fixture", requestIds = { "domestic-req" }, transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = court)
+        service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("client", 10, 999,
+            "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
+        val stored = inbox.accepted.single()
+        assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, stored.commandKind)
+        assertEquals(42, stored.ownerUserId)
+        assertEquals(0, turns.reserves.size)
+        val envelope = opensamguk.common.wire.WireJson.decodeFromString(opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(),
+            stored.payloadJson)
+        assertEquals(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("domestic-req", 10, 42, "placement.assign",
+            """{"cardId":5,"post":"MAGISTRATE","countyId":7}"""), envelope.command)
+        // Shared-rule rejections and malformed bodies never reach the inbox.
+        for ((input, body, code) in listOf(
+            Triple("placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":8}""", "INVALID_COUNTY"),
+            Triple("policy.set", """{"scope":"COUNTY","countyId":7,"policy":"NONE"}""", "NOTHING_TO_CLEAR"),
+            Triple("work.start", """{"countyId":7,"work":"ROAD"}""", "WAREHOUSE_NOT_READY"),
+            Triple("work.start", """{"countyId":7,"work":"ROAD","x":1}""", "INVALID_REQUEST"),
+        )) {
+            assertEquals(code, assertFailsWith<HwihaAdmissionDenied> {
+                service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("c", 10, 42, input, body), 42)
+            }.code, body)
+        }
+        assertEquals(1, inbox.accepted.size)
+        // A ledger that still says PLANNED keeps the input undelivered even when the rules pass.
+        val planned = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
+            {"inputId":"policy.set","kind":"POLICY","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}""")
+        assertEquals("NOT_DELIVERED", assertFailsWith<HwihaAdmissionDenied> {
+            HwihaDomesticAdmission(reader, planned).canonicalArguments(10, 42, "policy.set",
+                """{"scope":"COUNTY","countyId":7,"policy":"COMMERCE"}""")
+        }.code)
+    }
+
     private class RecordingReservedTurns :
         ReservedTurnRepository(mock(NamedParameterJdbcTemplate::class.java)) {
         data class ReserveCall(
