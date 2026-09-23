@@ -6254,6 +6254,342 @@
       "initialAdministrativeUnitId": "han-tiles-external-settlement:X108",
       "issuanceReason": "EXTERNAL_SETTLEMENT_ROUTE_CLAIM_V1_APPEND",
       "numericCityId": 1177
+    },
+    {
+      "routeNodeKey": "8cc66718-9327-4be0-b1ce-4a3677b63db8",
+      "initialAdministrativeUnitId": "hhs:113:上谷郡:005",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1342
+    },
+    {
+      "routeNodeKey": "85a9f425-d072-46d0-8b51-90e68a13e8cb",
+      "initialAdministrativeUnitId": "hhs:112:丹陽郡:011",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1343
+    },
+    {
+      "routeNodeKey": "18d3abac-13a2-4267-a97e-a1aa1bba08fd",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1344
+    },
+    {
+      "routeNodeKey": "0a8e5832-9a38-4e6e-855c-ba04f6c3d045",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1345
+    },
+    {
+      "routeNodeKey": "9bf9a0ab-1485-42c2-aea2-e845a6d64ec2",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:008",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1346
+    },
+    {
+      "routeNodeKey": "2364d3e8-298b-4c6e-9c20-702648054848",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:009",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1347
+    },
+    {
+      "routeNodeKey": "bcddec6b-1d1e-4667-9b91-2c0606189c8c",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:010",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1348
+    },
+    {
+      "routeNodeKey": "ff15f341-840b-4598-90bc-8f7f96ad5c66",
+      "initialAdministrativeUnitId": "hhs:112:九江郡:011",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1349
+    },
+    {
+      "routeNodeKey": "9d583831-3b5e-497d-8272-c0be574aa290",
+      "initialAdministrativeUnitId": "hhs:113:五原郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1350
+    },
+    {
+      "routeNodeKey": "eeab279b-5d30-40f6-9a92-fb5fe66e25bc",
+      "initialAdministrativeUnitId": "hhs:113:代郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1351
+    },
+    {
+      "routeNodeKey": "7ebc4814-52c5-49d8-bfe6-ddff7ec59dcf",
+      "initialAdministrativeUnitId": "hhs:113:南海郡:003",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1352
+    },
+    {
+      "routeNodeKey": "28c64855-af74-43dc-a3da-8a150fbb8587",
+      "initialAdministrativeUnitId": "hhs:112:南陽郡:032",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1353
+    },
+    {
+      "routeNodeKey": "18f6f318-32ea-4370-87e8-dc2c3a6e1f17",
+      "initialAdministrativeUnitId": "hhs:112:南陽郡:036",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1354
+    },
+    {
+      "routeNodeKey": "805f79b8-df6a-49f1-b874-08b7046d0afa",
+      "initialAdministrativeUnitId": "hhs:109:右扶風:013",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1355
+    },
+    {
+      "routeNodeKey": "9a889342-09d4-459a-8ade-2a8517b44416",
+      "initialAdministrativeUnitId": "hhs:113:太原郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1356
+    },
+    {
+      "routeNodeKey": "f4ff0085-36e1-4e1f-8736-8b11e679d6d9",
+      "initialAdministrativeUnitId": "hhs:113:安定郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1357
+    },
+    {
+      "routeNodeKey": "05e23993-d0ef-4507-a3c1-5988165a7f86",
+      "initialAdministrativeUnitId": "hhs:111:山陽郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1358
+    },
+    {
+      "routeNodeKey": "85ddd522-ae2f-4117-924b-f3a3096eba62",
+      "initialAdministrativeUnitId": "hhs:109:左馮翊:012",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1359
+    },
+    {
+      "routeNodeKey": "38de2661-ebad-43dd-a38f-5f116057a307",
+      "initialAdministrativeUnitId": "hhs:110:常山國:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1360
+    },
+    {
+      "routeNodeKey": "90ffb4fc-3b7f-4f46-a77f-1aafb4d22e4f",
+      "initialAdministrativeUnitId": "hhs:111:廣陵郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1361
+    },
+    {
+      "routeNodeKey": "3b21f669-6686-4bc3-9fab-67d0bb929371",
+      "initialAdministrativeUnitId": "hhs:112:廬江郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1362
+    },
+    {
+      "routeNodeKey": "12237bc7-6047-4aa4-bb10-e491ab3fef2a",
+      "initialAdministrativeUnitId": "hhs:112:廬江郡:005",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1363
+    },
+    {
+      "routeNodeKey": "f639fe28-7ff1-4bba-bdf6-79be1af0046d",
+      "initialAdministrativeUnitId": "hhs:112:廬江郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1364
+    },
+    {
+      "routeNodeKey": "0519eb70-b0e2-497b-8459-b356d47edeef",
+      "initialAdministrativeUnitId": "hhs:112:廬江郡:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1365
+    },
+    {
+      "routeNodeKey": "09badb7c-d5dd-49f6-a19e-6329c5679275",
+      "initialAdministrativeUnitId": "hhs:110:梁國:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1366
+    },
+    {
+      "routeNodeKey": "62d58b76-47c0-4567-af91-5634df3d03dc",
+      "initialAdministrativeUnitId": "hhs:110:梁國:009",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1367
+    },
+    {
+      "routeNodeKey": "15116c0a-035d-47ad-ba5f-75b7b9086fd8",
+      "initialAdministrativeUnitId": "hhs:113:武威郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1368
+    },
+    {
+      "routeNodeKey": "67009117-b4d2-45f8-be3f-8aab4f4130fa",
+      "initialAdministrativeUnitId": "hhs:113:武威郡:009",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1369
+    },
+    {
+      "routeNodeKey": "89fd8d15-1bca-4e3c-b19e-d212c2a53cda",
+      "initialAdministrativeUnitId": "hhs:113:永昌郡:005",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1370
+    },
+    {
+      "routeNodeKey": "d32d56f2-bfaa-45ad-b3e3-e97d3936c85a",
+      "initialAdministrativeUnitId": "hhs:110:汝南郡:009",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1371
+    },
+    {
+      "routeNodeKey": "1d844850-cee0-4cb0-aa11-bef563a05c6d",
+      "initialAdministrativeUnitId": "hhs:110:汝南郡:016",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1372
+    },
+    {
+      "routeNodeKey": "f709515a-24cb-4604-bd71-eb0941f821bc",
+      "initialAdministrativeUnitId": "hhs:110:汝南郡:019",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1373
+    },
+    {
+      "routeNodeKey": "9d5ca558-4c57-4760-980d-b89c44118dbd",
+      "initialAdministrativeUnitId": "hhs:110:汝南郡:034",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1374
+    },
+    {
+      "routeNodeKey": "d14beade-15eb-443d-b77a-2c8f2b3f5ed0",
+      "initialAdministrativeUnitId": "hhs:110:汝南郡:035",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1375
+    },
+    {
+      "routeNodeKey": "4753e930-94e5-4946-9789-be5194c755a4",
+      "initialAdministrativeUnitId": "hhs:110:沛國:017",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1376
+    },
+    {
+      "routeNodeKey": "12c63ba0-6476-4a96-809c-756bf3f63ed5",
+      "initialAdministrativeUnitId": "hhs:109:河南尹:003",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1377
+    },
+    {
+      "routeNodeKey": "5dd6bc4f-2222-4138-9dd4-d25ad81504d7",
+      "initialAdministrativeUnitId": "hhs:109:河東郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1378
+    },
+    {
+      "routeNodeKey": "814d8c10-15d8-472f-98ac-8c0919198953",
+      "initialAdministrativeUnitId": "hhs:113:漁陽郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1379
+    },
+    {
+      "routeNodeKey": "c47e9dca-6d72-41d7-8ed2-abc3912ef768",
+      "initialAdministrativeUnitId": "hhs:113:漁陽郡:004",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1380
+    },
+    {
+      "routeNodeKey": "dd2051ff-a47e-4cf4-a61e-0cfc89d2ef7d",
+      "initialAdministrativeUnitId": "hhs:113:漁陽郡:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1381
+    },
+    {
+      "routeNodeKey": "d2ccf495-47db-4609-8c4e-a0309d7ed6b6",
+      "initialAdministrativeUnitId": "hhs:113:漢陽郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1382
+    },
+    {
+      "routeNodeKey": "23150d89-e6a9-4e94-8f20-12ab8b2d81ec",
+      "initialAdministrativeUnitId": "hhs:113:漢陽郡:012",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1383
+    },
+    {
+      "routeNodeKey": "d75817b3-8977-44f4-be13-01dffdcbefa7",
+      "initialAdministrativeUnitId": "hhs:113:益州郡:003",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1384
+    },
+    {
+      "routeNodeKey": "4c77100a-2ba8-4849-832d-e8ea8317c3cf",
+      "initialAdministrativeUnitId": "hhs:113:西河郡:005",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1385
+    },
+    {
+      "routeNodeKey": "78c48c87-6352-42c3-8c16-7dba271125bf",
+      "initialAdministrativeUnitId": "hhs:113:越巂郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1386
+    },
+    {
+      "routeNodeKey": "6be6d4c9-d4e0-4d6c-a22f-ac9d6b1b1b73",
+      "initialAdministrativeUnitId": "hhs:113:越巂郡:008",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1387
+    },
+    {
+      "routeNodeKey": "de714361-10d5-408f-a3f2-ddc3ae2b6da3",
+      "initialAdministrativeUnitId": "hhs:113:酒泉郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1388
+    },
+    {
+      "routeNodeKey": "007909b8-f2dc-4106-8ff5-f90bc6bc04bb",
+      "initialAdministrativeUnitId": "hhs:113:酒泉郡:003",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1389
+    },
+    {
+      "routeNodeKey": "21c5bf30-e602-4d30-b704-5e713b9434fe",
+      "initialAdministrativeUnitId": "hhs:113:酒泉郡:005",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1390
+    },
+    {
+      "routeNodeKey": "53c19151-9c65-45d2-b3ea-9028a3e14543",
+      "initialAdministrativeUnitId": "hhs:113:酒泉郡:006",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1391
+    },
+    {
+      "routeNodeKey": "b22b45a2-bc28-4c5b-817a-77c0924bbe9b",
+      "initialAdministrativeUnitId": "hhs:113:酒泉郡:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1392
+    },
+    {
+      "routeNodeKey": "c701160b-f660-4c49-bf31-f4abfd24cbc2",
+      "initialAdministrativeUnitId": "hhs:111:陳留郡:008",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1393
+    },
+    {
+      "routeNodeKey": "6ba63571-6974-4703-9c00-058a0ea7503e",
+      "initialAdministrativeUnitId": "hhs:113:鴈門郡:001",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1394
+    },
+    {
+      "routeNodeKey": "c990f662-64ec-4715-a543-7bc1b8d54c2e",
+      "initialAdministrativeUnitId": "hhs:113:鴈門郡:002",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1395
+    },
+    {
+      "routeNodeKey": "76630d69-b3b0-432b-8c6f-2c87ea1f7b69",
+      "initialAdministrativeUnitId": "hhs:113:鴈門郡:007",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1396
+    },
+    {
+      "routeNodeKey": "30bbd8d9-10f0-4391-9d7e-7705a19dea3d",
+      "initialAdministrativeUnitId": "hhs:113:鴈門郡:010",
+      "issuanceReason": "GAP_COUNTY_V1_APPEND",
+      "numericCityId": 1397
     }
   ]
 }

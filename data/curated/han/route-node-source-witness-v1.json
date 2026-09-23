@@ -639,6 +639,566 @@
       "sourceBook": "後漢書",
       "verbatim": "〖平阴〗",
       "volume": 109
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0090-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 780,
+      "lineStart": 780,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖居庸〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0049-011",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 492,
+      "lineStart": 492,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "秣陵，{{*|其地本名金陵，秦始皇改。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-001",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 440,
+      "lineStart": 440,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "陰陵，",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-007",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 452,
+      "lineStart": 452,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "歷陽，侯國，刺史治。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-008",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 454,
+      "lineStart": 454,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "當塗，有馬丘聚，徐鳳反-{於}-此。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-009",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 456,
+      "lineStart": 456,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "全椒，",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-010",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 458,
+      "lineStart": 458,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "-{鍾}-離，侯國。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0048-011",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 460,
+      "lineStart": 460,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "阜陵，",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0082-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 617,
+      "lineStart": 617,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖五原〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0089-001",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 748,
+      "lineStart": 748,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖高柳〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0098-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 929,
+      "lineStart": 929,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖中宿〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-032",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 236,
+      "lineStart": 236,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "順陽，侯國，故博山。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-036",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 244,
+      "lineStart": 244,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "丹水，故屬弘農。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0006-013",
+      "corpusPath": "data/corpus/hhs-109.txt",
+      "lineEnd": 248,
+      "lineStart": 248,
+      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+      "sourceBook": "後漢書",
+      "verbatim": "〖美阳〗",
+      "volume": 109
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0079-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 541,
+      "lineStart": 541,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖兹氏〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0070-001",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 370,
+      "lineStart": 370,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖临泾〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0028-002",
+      "corpusPath": "data/corpus/hhs-111.txt",
+      "lineEnd": 161,
+      "lineStart": 161,
+      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+      "sourceBook": "後漢書",
+      "verbatim": "〖東緡〗",
+      "volume": 111
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0005-012",
+      "corpusPath": "data/corpus/hhs-109.txt",
+      "lineEnd": 216,
+      "lineStart": 216,
+      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+      "sourceBook": "後漢書",
+      "verbatim": "〖衙〗",
+      "volume": 109
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0015-007",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 322,
+      "lineStart": 322,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "欒城，{{*|〔在平棘〕縣西北四十里。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0033-006",
+      "corpusPath": "data/corpus/hhs-111.txt",
+      "lineEnd": 303,
+      "lineStart": 303,
+      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+      "sourceBook": "後漢書",
+      "verbatim": "〖東陽〗",
+      "volume": 111
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-001",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 508,
+      "lineStart": 508,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "舒，有桐鄉。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-005",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 516,
+      "lineStart": 516,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "臨湖，侯國。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-006",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 518,
+      "lineStart": 518,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "龍舒，侯國。",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0050-007",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 520,
+      "lineStart": 520,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "襄安，",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-006",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 142,
+      "lineStart": 142,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "-{穀}-熟，有新城。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-009",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 148,
+      "lineStart": 148,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "薄，故屬山陽，湯所都。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0072-001",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 402,
+      "lineStart": 402,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖姑臧〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0072-009",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 418,
+      "lineStart": 418,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖宣威〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0062-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 243,
+      "lineStart": 243,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖邪龙〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-009",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 70,
+      "lineStart": 70,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "北宜春，",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-016",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 84,
+      "lineStart": 84,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "細陽，",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-019",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 90,
+      "lineStart": 90,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "鮦陽，侯國。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-034",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 120,
+      "lineStart": 120,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "定潁，侯國。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0008-035",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 122,
+      "lineStart": 122,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "固始，侯國。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0010-017",
+      "corpusPath": "data/corpus/hhs-110.txt",
+      "lineEnd": 186,
+      "lineStart": 186,
+      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
+      "sourceBook": "後漢書",
+      "verbatim": "向，本國。",
+      "volume": 110
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-003",
+      "corpusPath": "data/corpus/hhs-109.txt",
+      "lineEnd": 22,
+      "lineStart": 22,
+      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+      "sourceBook": "後漢書",
+      "verbatim": "〖梁〗",
+      "volume": 109
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0002-002",
+      "corpusPath": "data/corpus/hhs-109.txt",
+      "lineEnd": 106,
+      "lineStart": 106,
+      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
+      "sourceBook": "後漢書",
+      "verbatim": "〖杨〗",
+      "volume": 109
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 792,
+      "lineStart": 792,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖狐奴〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-004",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 796,
+      "lineStart": 796,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖雍奴〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 802,
+      "lineStart": 802,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖安乐〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0067-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 314,
+      "lineStart": 314,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖成纪〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0067-012",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 326,
+      "lineStart": 326,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖上邽〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0061-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 203,
+      "lineStart": 203,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖俞元〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0081-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 595,
+      "lineStart": 595,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖中阳〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0060-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 179,
+      "lineStart": 179,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖卑水〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0060-008",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 183,
+      "lineStart": 183,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖会无〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 452,
+      "lineStart": 452,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖表氏〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-003",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 454,
+      "lineStart": 454,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖乐涫〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-005",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 458,
+      "lineStart": 458,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖会水〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-006",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 460,
+      "lineStart": 460,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖沙头〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0074-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 462,
+      "lineStart": 462,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖安弥〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0022-008",
+      "corpusPath": "data/corpus/hhs-111.txt",
+      "lineEnd": 31,
+      "lineStart": 31,
+      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+      "sourceBook": "後漢書",
+      "verbatim": "〖東昬〗",
+      "volume": 111
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-001",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 673,
+      "lineStart": 673,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖阴馆〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-002",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 675,
+      "lineStart": 675,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖繁畤〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-007",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 685,
+      "lineStart": 685,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖崞〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-010",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 691,
+      "lineStart": 691,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖马邑〗",
+      "volume": 113
     }
   ],
   "schemaVersion": 1

@@ -1,0 +1,3147 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "jinshu-survival-sweep-v1",
+  "note": "결손 후보 282 건을 晉書 地理志(卷014·015) 속현 목록에 대조한 결과다. TGAZ 존속구간은 이름만 맞춘 것이라 同名異地와 레코드 분할로 무너진다 — 이 축이 그것을 대신한다. TOKEN 은 　 로 구분된 목록에서 토큰으로 맞은 것이고, SUBSTRING_ONLY 는 붙여 쓴 목록의 부분일치라 읽어야 하는 것이며(「鄱陽樂安」 이 陽樂 을 물어온다), ABSENT 는 이 표기로 晉書 地理志에 없다는 뜻일 뿐 폐지의 증명이 아니다.",
+  "method": {
+    "blocksRead": 155,
+    "tokenizableBlocks": 88,
+    "runTogetherBlocks": 67,
+    "normalizer": "tools/map/audit_county_coverage.make_normalizer (공용 繁簡·異體字 표)",
+    "foldTableScope": "표의 범위는 기존 원장에 쓰인 글자 한정이다. 晉書 쪽 이문은 표 밖일 수 있으므로 ABSENT 를 부재로 읽지 말 것."
+  },
+  "totals": {
+    "OTHER_ERA_HOMONYM_ONLY/TOKEN": 22,
+    "OTHER_ERA_HOMONYM_ONLY/ABSENT": 31,
+    "ABOLISHED_BEFORE_220/SUBSTRING_ONLY": 19,
+    "SURVIVED_TO_220/TOKEN": 5,
+    "ABOLISHED_BEFORE_220/ABSENT": 47,
+    "NOT_IN_TGAZ/ABSENT": 107,
+    "NOT_IN_TGAZ/TOKEN": 28,
+    "NOT_IN_TGAZ/SUBSTRING_ONLY": 9,
+    "ABOLISHED_BEFORE_220/TOKEN": 5,
+    "SURVIVED_TO_220/ABSENT": 3,
+    "OTHER_ERA_HOMONYM_ONLY/SUBSTRING_ONLY": 4,
+    "SURVIVED_TO_220/SUBSTRING_ONLY": 2
+  },
+  "counties": [
+    {
+      "commandery": "河南尹",
+      "name": "梁",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "河南郡"
+        }
+      ],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "邵陵郡",
+          "context": "邵陵都梁夫夷建興邵陽"
+        }
+      ]
+    },
+    {
+      "commandery": "河南尹",
+      "name": "巩",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "河南尹",
+      "name": "新城",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "河南郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "河南尹",
+      "name": "平",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "濟南郡",
+          "context": "平壽下密膠東即"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "城陽郡",
+          "context": "高密壯武黔陬平昌昌安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "江夏郡",
+          "context": "安陸雲杜曲陵平春鄳竟陵南新"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "義陽郡",
+          "context": "安昌棘陽厥西平氏義陽平林朝"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "湘東郡",
+          "context": "烝利陽陰山新平新寧"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "邵陵郡",
+          "context": "夷建興邵陽高平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "桂陽郡",
+          "context": "便臨武晉寧南平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "安成郡",
+          "context": "平都宜春新諭永"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "丹陽郡",
+          "context": "為建業。武帝平吳，以為秣陵"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "蔡義城西曲陽平阿歷陽全椒阜"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "建安郡",
+          "context": "建安吳興東平建陽將樂邵武"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "晉安郡",
+          "context": "原豐新羅宛平同安候官羅江"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "豫章郡",
+          "context": "蔡永修建昌吳平豫章彭澤艾康"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "廬陵郡",
+          "context": "昌遂興吉陽興平陽豐"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "南康郡",
+          "context": "贛雩都平固南康揭陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "合浦郡",
+          "context": "合浦南平蕩昌徐聞毒質"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "交趾郡",
+          "context": "徐安定南定海平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "南海郡",
+          "context": "增城博羅龍川平夷"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "始安郡",
+          "context": "始安始陽平樂荔浦常安熙"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "蒼梧郡",
+          "context": "陵新寧猛陵鄣平農城元谿臨允"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "郁林郡",
+          "context": "山阿林新邑晉平始建鬱平領方"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "桂林郡",
+          "context": "潭中武豐粟平羊平龍剛夾陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "高涼郡",
+          "context": "安寧高涼思平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "高興郡",
+          "context": "廣化海安化平黃陽西平"
+        }
+      ]
+    },
+    {
+      "commandery": "河東郡",
+      "name": "杨",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "平陽郡"
+        }
+      ],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "丹陽郡",
+          "context": "鄴置。}}丹楊于湖蕪湖永世"
+        }
+      ]
+    },
+    {
+      "commandery": "河東郡",
+      "name": "绛",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "河東郡",
+      "name": "蒲子",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "平陽郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "京兆尹",
+      "name": "霸陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "京兆尹",
+      "name": "阳陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "高陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "祋祤",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "频阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "莲勺",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "左馮翊",
+      "name": "衙",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "安陵",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "平陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "茂陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "汧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "扶風郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "雍",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "扶風郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "美阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "扶風郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右扶風",
+      "name": "杜阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "潁川郡",
+      "name": "襄",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "東海郡",
+          "context": "郯祝其朐襄賁利城贛榆厚"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "襄陽郡",
+          "context": "城中廬臨沮邔襄陽山都鄧城鄾"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "尋陽居巢臨湖襄安龍舒六"
+        }
+      ]
+    },
+    {
+      "commandery": "潁川郡",
+      "name": "焉陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "新陽",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "天水郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "北宜春",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "汝南郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "㶏強",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "灌陽",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "細陽",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "鮦陽",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "汝陰郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "宜祿",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "召陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "思善",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "定潁",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "汝南郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "汝南郡",
+      "name": "固始",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "汝陰郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "碭山",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "穀熟",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "焉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "梁國",
+      "name": "薄",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "沛國",
+      "name": "鄲",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "沛國",
+      "name": "臨睢",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "沛國",
+      "name": "向",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "沛國",
+      "name": "太丘",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "陳國",
+      "name": "寧平",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "魯國",
+      "name": "魯國",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "魯國",
+      "name": "騶",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "魏郡",
+      "name": "沙",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "建平郡",
+          "context": "興山建始秭歸沙渠"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "武昌郡",
+          "context": "武昌柴桑陽新沙羨沙陽鄂官陵"
+        }
+      ]
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "name": "陶",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "name": "南〈糸言糸〉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "常山國",
+      "name": "都鄉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "常山國",
+      "name": "欒城",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安平國",
+      "name": "南深",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "河閒國",
+      "name": "易",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "勃海郡",
+      "name": "脩",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "豫章郡",
+          "context": "淦建城望蔡永修建昌吳平豫章"
+        }
+      ]
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "東昬",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "平丘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "陳留郡",
+      "name": "長垣",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "陳留國"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "東郡",
+      "name": "濮陽",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "濮陽國"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "東郡",
+      "name": "衞",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "東平國",
+      "name": "富成",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "泰山郡",
+      "name": "山茌",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "泰山郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "山陽郡",
+      "name": "東緡",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "山陽郡",
+      "name": "防東",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "濟陰郡",
+      "name": "離狐",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "濟陰郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "東海郡",
+      "name": "郯",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "東海郡",
+          "context": "郯祝其朐襄賁利"
+        }
+      ]
+    },
+    {
+      "commandery": "東海郡",
+      "name": "陰平",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "陰平郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "東海郡",
+      "name": "合鄕",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "東海郡",
+          "context": "丘蘭陵承昌慮合鄉戚"
+        }
+      ]
+    },
+    {
+      "commandery": "琅邪國",
+      "name": "西海",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "彭城國",
+      "name": "梧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "彭城國",
+          "context": "戚傅陽武原呂梧"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "九真郡",
+          "context": "胥浦移風津梧建初常樂扶樂"
+        }
+      ]
+    },
+    {
+      "commandery": "彭城國",
+      "name": "菑丘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣陵郡",
+      "name": "東陽",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "臨淮郡",
+          "context": "盱眙東陽高山贅其潘旌"
+        }
+      ]
+    },
+    {
+      "commandery": "廣陵郡",
+      "name": "輿",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "廣陵郡",
+          "context": "淮陰射陽輿海陵廣陵鹽瀆"
+        }
+      ]
+    },
+    {
+      "commandery": "下邳國",
+      "name": "盱臺",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "下邳國",
+      "name": "髙山",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "臨淮郡",
+          "context": "盱眙東陽高山贅其潘旌高郵"
+        }
+      ]
+    },
+    {
+      "commandery": "下邳國",
+      "name": "潘旌",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "臨淮郡",
+          "context": "東陽高山贅其潘旌高郵淮陵司吾"
+        }
+      ]
+    },
+    {
+      "commandery": "下邳國",
+      "name": "東成",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "平原郡",
+      "name": "濕陰",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "樂安國",
+      "name": "蓼城",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "樂安國",
+          "context": "臨濟博昌利益蓼城鄒壽光東朝陽"
+        }
+      ]
+    },
+    {
+      "commandery": "北海國",
+      "name": "平昌",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "城陽郡",
+          "context": "高密壯武黔陬平昌昌安"
+        }
+      ]
+    },
+    {
+      "commandery": "北海國",
+      "name": "壯武",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "城陽郡",
+          "context": "淳于東武高密壯武黔陬平昌昌安"
+        }
+      ]
+    },
+    {
+      "commandery": "東萊郡",
+      "name": "惤",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "東萊國",
+          "context": "利廬鄉曲城黃惤"
+        }
+      ]
+    },
+    {
+      "commandery": "東萊郡",
+      "name": "葛盧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "順陽",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "順陽郡",
+          "context": "酂順陽南鄉丹水武當"
+        }
+      ]
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "襄鄉",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "南陽郡",
+      "name": "丹水",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "順陽郡",
+          "context": "酂順陽南鄉丹水武當陰筑陽析"
+        }
+      ]
+    },
+    {
+      "commandery": "南郡",
+      "name": "中盧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "九江郡",
+      "name": "陰陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "鍾離合肥逡遒陰陵當塗東城烏江"
+        }
+      ]
+    },
+    {
+      "commandery": "九江郡",
+      "name": "浚遒",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "九江郡",
+      "name": "歷陽",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "城西曲陽平阿歷陽全椒阜陵鍾離"
+        }
+      ]
+    },
+    {
+      "commandery": "九江郡",
+      "name": "當塗",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "合肥逡遒陰陵當塗東城烏江"
+        }
+      ]
+    },
+    {
+      "commandery": "九江郡",
+      "name": "全椒",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "曲陽平阿歷陽全椒阜陵鍾離合肥"
+        }
+      ]
+    },
+    {
+      "commandery": "九江郡",
+      "name": "鍾離",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "歷陽全椒阜陵鍾離合肥逡遒陰陵"
+        }
+      ]
+    },
+    {
+      "commandery": "九江郡",
+      "name": "阜陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "淮南郡",
+          "context": "平阿歷陽全椒阜陵鍾離合肥逡遒"
+        }
+      ]
+    },
+    {
+      "commandery": "丹陽郡",
+      "name": "秣陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "丹陽郡",
+          "context": "鄴{{*|本秣陵，孫氏改為建"
+        }
+      ]
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "舒",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "陽泉舒灊皖尋陽居巢"
+        }
+      ]
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "潛",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "吳興郡",
+          "context": "杭武康東遷於潛故鄣安吉原鄉"
+        }
+      ]
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "臨湖",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "灊皖尋陽居巢臨湖襄安龍舒六"
+        }
+      ]
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "龍舒",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "居巢臨湖襄安龍舒六"
+        }
+      ]
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "襄安",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "尋陽居巢臨湖襄安龍舒六"
+        }
+      ]
+    },
+    {
+      "commandery": "會稽郡",
+      "name": "東部",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "吳郡",
+      "name": "安",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "城陽郡",
+          "context": "武黔陬平昌昌安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "琅邪國",
+          "context": "繒即丘華費東安蒙陰"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "東莞郡",
+          "context": "東莞朱虛營陵安丘蓋臨朐劇廣"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "江夏郡",
+          "context": "安陸雲杜曲陵平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "義陽郡",
+          "context": "野穰鄧蔡陽隨安昌棘陽厥西平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "魏興郡",
+          "context": "晉興安康西城錫長利"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "上庸郡",
+          "context": "上庸安富北巫武陵上"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "南平郡",
+          "context": "作唐孱陵南安江安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "衡陽郡",
+          "context": "湘鄉重安湘南湘西烝陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "安成郡",
+          "context": "宜春新諭永新安復萍鄉廣興"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "宣城郡",
+          "context": "宛陵宣城陵陽安吳臨城石城涇"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "廬江郡",
+          "context": "陽居巢臨湖襄安龍舒六"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "吳興郡",
+          "context": "烏程臨安余杭武康東遷"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "東陽郡",
+          "context": "傷吳寧太末信安豐安定陽遂昌"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "新安郡",
+          "context": "始新遂安黝歙海甯黎陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "臨海郡",
+          "context": "章安臨海始豐永甯"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "建安郡",
+          "context": "建安吳興東平建陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "晉安郡",
+          "context": "豐新羅宛平同安候官羅江晉安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "臨川郡",
+          "context": "南豐永成宜黃安浦西寧新建"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "鄱陽郡",
+          "context": "廣晉鄱陽樂安餘汗鄡陽歷陵"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "交趾郡",
+          "context": "交興北帶稽徐安定南定海平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "武平郡",
+          "context": "武興進山根甯安武扶安封溪"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "臨賀郡",
+          "context": "沐馮乘封陽興安富川"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "始安郡",
+          "context": "始安始陽平樂荔浦"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "郁林郡",
+          "context": "鬱平領方武熙安廣"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "高涼郡",
+          "context": "安寧高涼思平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "高興郡",
+          "context": "廣化海安化平黃陽西平"
+        }
+      ]
+    },
+    {
+      "commandery": "豫章郡",
+      "name": "廬陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "巴郡",
+      "name": "涪陵",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "涪陵郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "巴郡",
+      "name": "充国",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "白水",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "梓潼郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "葭萌",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢郡",
+      "name": "广汉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "廣漢郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "蜀郡",
+      "name": "湔氐道",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "蜀郡",
+      "name": "八陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "平夷",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "牂柯郡"
+        }
+      ],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "南海郡",
+          "context": "增城博羅龍川平夷"
+        }
+      ]
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "同并",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "漏江",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "建寧郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "进乘",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "牂牁郡",
+      "name": "西随",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "灵关道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "卑水",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "越巂郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "三缝",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "会无",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "越巂郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "苏示",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "大莋",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "越巂郡",
+      "name": "姑复",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "雲南郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "胜休",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "俞元",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "建寧郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "律高",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "興古郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "毋棳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "梇栋",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "益州郡",
+      "name": "秦臧",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "建寧郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "永昌郡",
+      "name": "邪龙",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "雲南郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "阴平道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "甸氐道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣漢屬國",
+      "name": "刚氐道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "蜀郡屬國",
+      "name": "旄牛",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "漢嘉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "犍為屬國",
+      "name": "汉阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "朱提郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "安故",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "氐道",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "大夏",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "隴西郡",
+      "name": "河关",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "望恒",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "阿阳",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "略阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "略陽郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "勇士",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "成纪",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "天水郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "陇",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "豲道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "兰干",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "平襄",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "略陽郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "显亲",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漢陽郡",
+      "name": "上邽",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "天水郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "下辨",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "武都道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "上禄",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "河池",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "武都郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武都郡",
+      "name": "羌道",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "允吾",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "浩亹",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "金城郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "令居",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "枝阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "金城郡",
+      "name": "允街",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "金城郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "临泾",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "安定郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "乌枝",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "三水",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "彭阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "安定郡",
+      "name": "鹑觚",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "北地郡",
+      "name": "参[�]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "北地郡",
+      "name": "灵州",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "姑臧",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "武威郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "张掖",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "武威",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "休屠",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "揟次",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "鸾鸟",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "朴[B459]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "媪围",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "宣威",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "武威郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "仓松",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "鹯阴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "租厉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "武威郡",
+      "name": "左骑",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "福禄",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "表氏",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "乐涫",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "会水",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "沙头",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "安弥",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "酒泉郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "酒泉郡",
+      "name": "乾齐",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "敦煌郡",
+      "name": "拼泉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "敦煌郡",
+      "name": "广至",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "敦煌郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "左骑",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "千人",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "司马官",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "張掖屬國",
+      "name": "千人官",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "太原郡",
+      "name": "晋阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "太原郡",
+      "name": "于离",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "太原國"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "太原郡",
+      "name": "兹氏",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "太原郡",
+      "name": "平陶",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "太原國"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "肤施",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "白土",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "金城郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "漆垣",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "奢延",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "桢林",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上郡",
+      "name": "高奴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平定",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "美稷",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "乐街",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "中阳",
+      "priorVerdict": "SURVIVED_TO_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "西河國"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "皋狼",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平周",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "平陆",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "益兰",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "圜阴",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "蔺",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "圜阳",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "西河郡",
+      "name": "广衍",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "五原",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "临沃",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "文国",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "武都",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "武都郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "宜梁",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "曼柏",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "五原郡",
+      "name": "成宜",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "臨川郡",
+          "context": "城東興南豐永成宜黃安浦西寧新"
+        }
+      ]
+    },
+    {
+      "commandery": "五原郡",
+      "name": "西安阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "咸阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "箕陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "沙陵",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "沙南",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "北舆",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "武泉",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "原阳",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "成乐",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "武进",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "桐过",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "武成",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "骆",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "定襄郡",
+      "name": "中陵",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "阴馆",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "繁畤",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "雁門郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "楼烦",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "武州",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "汪陶",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "崞",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "雁門郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "埒",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "马邑",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "雁門郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "彊阴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "三封",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "朔方",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "沃野",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "广牧",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "新興郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "朔方郡",
+      "name": "大城",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "蓟",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "广阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "汶山郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "昌平",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "廣陽郡",
+      "name": "军都",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "高柳",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "道人",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "马城",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "班氏",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "代郡",
+      "name": "东安阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "甯",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "長沙郡",
+          "context": "雋醴陵劉陽建甯吳昌羅蒲沂巴"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "湘東郡",
+          "context": "陽陰山新平新寧"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "桂陽郡",
+          "context": "耒陽便臨武晉寧南平"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "丹陽郡",
+          "context": "為鄴。}}江甯{{*|，分"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "宣城郡",
+          "context": "城涇春谷廣德甯國懷安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "會稽郡",
+          "context": "姚句章鄞鄮始甯剡永興諸暨"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "東陽郡",
+          "context": "山永康烏傷吳寧太末信安豐安"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "新安郡",
+          "context": "新遂安黝歙海甯黎陽"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "臨海郡",
+          "context": "安臨海始豐永甯甯海松陽安固"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "臨川郡",
+          "context": "成宜黃安浦西寧新建"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "交趾郡",
+          "context": "海𨏩𨻻西于武甯朱鳶曲昜交興"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "新昌郡",
+          "context": "麋泠嘉甯吳定封山臨西"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "武平郡",
+          "context": "武甯武興進山根甯"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "蒼梧郡",
+          "context": "溪高要建陵新寧猛陵鄣平農城"
+        },
+        {
+          "volume": "卷015",
+          "commandery": "高涼郡",
+          "context": "安寧高涼思平"
+        }
+      ]
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "居庸",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "上谷郡"
+        }
+      ],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "雊瞀",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "下落",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "渔阳",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "狐奴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "雍奴",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "泉州",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "平谷",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "安乐",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "傂奚",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "漁陽郡",
+      "name": "犷平",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "右北平郡",
+      "name": "无终",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "遼西郡",
+      "name": "阳乐",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "TOKEN",
+      "strongMatches": [
+        {
+          "volume": "卷014",
+          "commandery": "遼西郡"
+        }
+      ],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "鄱陽郡",
+          "context": "廣晉鄱陽樂安餘汗鄡陽歷"
+        }
+      ]
+    },
+    {
+      "commandery": "樂浪郡",
+      "name": "𧦦邯",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "樂浪郡",
+      "name": "乐都",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "遼東屬國",
+      "name": "险渎",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "南海郡",
+      "name": "中宿",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "始興郡",
+          "context": "始興含洭湞陽中宿陽山"
+        }
+      ]
+    },
+    {
+      "commandery": "蒼梧郡",
+      "name": "鄣平",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "SUBSTRING_ONLY",
+      "strongMatches": [],
+      "weakMatches": [
+        {
+          "volume": "卷015",
+          "commandery": "蒼梧郡",
+          "context": "建陵新寧猛陵鄣平農城元谿臨允"
+        }
+      ]
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "广郁",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "桂林",
+      "priorVerdict": "OTHER_ERA_HOMONYM_ONLY",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "临尘",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "定周",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "鬱林郡",
+      "name": "增食",
+      "priorVerdict": "ABOLISHED_BEFORE_220",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "合浦郡",
+      "name": "临元",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    },
+    {
+      "commandery": "交趾郡",
+      "name": "朱[B42B]",
+      "priorVerdict": "NOT_IN_TGAZ",
+      "jinshu": "ABSENT",
+      "strongMatches": [],
+      "weakMatches": []
+    }
+  ]
+}

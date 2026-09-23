@@ -36,7 +36,8 @@ object HistoricalBattlefieldCatalog {
             // 그 점이 선 郡 직할 省(DIRECT-…)에 앉는다 — build_han_world.stand_in_seat_provinces.
             val physical = row.get("physicalPlaceRef").textValue()
             val sameId = physical in setOf("chgis:v6:cnty:$province", "chgis:v6:pref:$province", "external:v1:$province",
-                "curated:frontier-county-v1:$province", "curated:strategic-site-v1:$province")
+                "curated:frontier-county-v1:$province", "curated:strategic-site-v1:$province",
+                "curated:gap-county-v1:$province")
             val standInSeat = province.startsWith("DIRECT-") &&
                 listOf("chgis:v6:cnty:", "chgis:v6:pref:", "external:v1:").any { physical.startsWith(it) }
             // Repartitioning preserves old province IDs. An external settlement may

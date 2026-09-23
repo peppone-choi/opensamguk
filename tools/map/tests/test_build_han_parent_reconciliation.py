@@ -403,7 +403,10 @@ class HanParentReconciliationTest(unittest.TestCase):
         site_classes = {"FERRY_NODE", "FORT_NODE", "PASS_NODE"}
         for route_node in selection["routeNodes"]:
             terminal = route_node["physicalPlaceRef"].rsplit(":", 1)[-1]
-            if route_node.get("nodeClass") in site_classes or terminal in self.ledger.get("koreaPlaceProjection", {}).get("addedPlaceIds", []):
+            # 결손 縣(2026-09-23)도 같은 분할 단계가 떼어 낸 省이라 분할 전 문서에 점이 없다 — 같은 이유로 뺀다.
+            if (route_node.get("nodeClass") in site_classes
+                    or route_node["physicalPlaceRef"].startswith("curated:gap-county-v1:")
+                    or terminal in self.ledger.get("koreaPlaceProjection", {}).get("addedPlaceIds", [])):
                 continue
             if route_node["reviewState"] == "APPROVED" and terminal in tile_city_ids:
                 expected[terminal] = {

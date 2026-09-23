@@ -251,10 +251,11 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
         # 2026-09-15: 수·진·관 거점이 들어오며 「와구」(渦口·瓦口) 한 이름이 새로 겹쳤다.
-        self.assertEqual(96, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(217, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        # 2026-09-23: 결손 縣 56곳이 들어오며 겹치는 이름이 늘었다(96 → 102). 키 표면은 여전히 郡뿐이라 안전 근거는 그대로다.
+        self.assertEqual(102, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(231, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            79, len(different),
+            85, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 

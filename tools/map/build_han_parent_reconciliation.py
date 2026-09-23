@@ -47,13 +47,15 @@ REFERENCE_YEAR = 220
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS).
 # 2026-09-17: w2 중 같은 縣이 두 번 선 977·989 를 거두어 174곳, 그 두 번호와 1099–1133 에
 # 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
+# 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 56곳 (w1-gap-county-location, HHS) —
+# 1342–1397. 은퇴·철회 예약 번호 173개(1195–1341 포함)를 비워 두므로 번호가 명부 수보다 크다.
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
 # 2026-09-21: retire 26 unsupported locality proxies from the 98-row release.
 EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 72
 CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 174
 JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
                                   + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
-HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1
+HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 56
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
@@ -557,6 +559,7 @@ def _validate_review_chain(
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 11,
             "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": 1,
+            "gapCountyClaimCount": 56,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT - JURISDICTION_ROUTE_CLAIM_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
@@ -571,7 +574,7 @@ def _validate_review_chain(
     batches = policy.get("selectionBatches")
     if (
         not isinstance(batches, list)
-        or len(batches) != 9
+        or len(batches) != 10
         or not all(isinstance(row, dict) for row in batches)
         or {
         (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
@@ -587,6 +590,7 @@ def _validate_review_chain(
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w4-vacated-county-location", 1, "APPROVED"),
             ("w5-external-settlement-route-claim", EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT, "APPROVED"),
+            ("w1-gap-county-location", 56, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")
@@ -641,7 +645,7 @@ def _validate_review_chain(
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "batchId",
-        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim", "w4-vacated-county-location", "w5-external-settlement-route-claim"},
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity", "w1-frontier-county-location", "w1-script-variant-county-join", "w2-cityless-jurisdiction-route-claim", "w3-strategic-site-route-claim", "w4-vacated-county-location", "w5-external-settlement-route-claim", "w1-gap-county-location"},
         "approved route-node selection rationale",
     )
     _require_closed_enum(
@@ -1470,7 +1474,10 @@ def build_ledger(
         # 무엇을 바꿨는지는 투영 요약으로만 싣는다. 경로 노드가 거점 점을 가리키면 분할 전 문서에는
         # 그 점이 없으므로 absent 로 잡혀야 정상이다.
         stage = carving.stage_for(documents["data/map/han-tiles.json"], carved)
-        site_ids = frozenset(row["placeId"] for row in stage["placements"])
+        # 이 단계는 거점 省과 함께 결손 縣 省도 떼어 낸다(2026-09-23). 두 종류 모두 분할 전
+        # 문서에는 점이 없으므로 absent 로 잡혀야 정상이고, 결과에서는 함께 빼야 한다.
+        site_ids = frozenset(row["placeId"] for row in stage["placements"]) | frozenset(
+            row["placeId"] for row in stage.get("gapCountyPlacements", ()))
         prior_records = copy.deepcopy(input_records)
         prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
             (json.dumps(peeled_tiles, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
@@ -1490,6 +1497,7 @@ def build_ledger(
             "inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"],
             "outputDocumentSha256": stage["outputDocumentSha256"],
             "placedSiteCount": len(stage["placements"]),
+            "placedGapCountyCount": len(stage.get("gapCountyPlacements", ())),
             "changedCellCount": len(stage["ownerDelta"]),
         }
         return prior

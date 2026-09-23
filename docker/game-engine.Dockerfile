@@ -23,6 +23,7 @@ COPY data/map/han-world-v3-1141-artifacts-v1 /app/data/map/han-world-v3-1141-art
 COPY data/map/han-world-v3-1341-artifacts-v1 /app/data/map/han-world-v3-1341-artifacts-v1
 COPY data/map/han-world-v3-1194-artifacts-v1 /app/data/map/han-world-v3-1194-artifacts-v1
 COPY data/map/han-world-v3-1168-artifacts-v1 /app/data/map/han-world-v3-1168-artifacts-v1
+COPY data/map/han-world-v3-1224-artifacts-v1 /app/data/map/han-world-v3-1224-artifacts-v1
 COPY data/map/han-water-topology-v1.json /app/data/map/han-water-topology-v1.json
 COPY data/map/han-strategic-topology-manifest-v1.json /app/data/map/han-strategic-topology-manifest-v1.json
 COPY data/curated/han/route-node-selection-v1.json /app/data/curated/han/route-node-selection-v1.json

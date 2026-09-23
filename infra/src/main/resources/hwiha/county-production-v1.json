@@ -5,10 +5,10 @@
  "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 HwihaCountyIncome 의 식이 만든다.",
  "sourceLedger": "data/curated/han/hwiha-resource-production-v1.json",
  "counts": {
-  "counties": 1164,
+  "counties": 1217,
   "monthlyTotals": {
    "HORSE": 600,
-   "IRON": 29000,
+   "IRON": 30000,
    "TIMBER": 197466
   }
  },
@@ -76,7 +76,7 @@
   {
    "countyId": 11,
    "monthly": {
-    "timber": 107
+    "timber": 99
    }
   },
   {
@@ -130,7 +130,7 @@
   {
    "countyId": 20,
    "monthly": {
-    "timber": 253
+    "timber": 245
    }
   },
   {
@@ -353,7 +353,7 @@
   {
    "countyId": 57,
    "monthly": {
-    "timber": 19
+    "timber": 11
    }
   },
   {
@@ -446,7 +446,7 @@
   {
    "countyId": 72,
    "monthly": {
-    "timber": 96
+    "timber": 88
    }
   },
   {
@@ -501,7 +501,7 @@
   {
    "countyId": 81,
    "monthly": {
-    "timber": 56
+    "timber": 48
    }
   },
   {
@@ -646,13 +646,13 @@
    "countyId": 105,
    "monthly": {
     "iron": 1000,
-    "timber": 43
+    "timber": 35
    }
   },
   {
    "countyId": 106,
    "monthly": {
-    "timber": 97
+    "timber": 89
    }
   },
   {
@@ -670,7 +670,7 @@
   {
    "countyId": 109,
    "monthly": {
-    "timber": 20
+    "timber": 12
    }
   },
   {
@@ -839,7 +839,7 @@
   {
    "countyId": 137,
    "monthly": {
-    "timber": 14
+    "timber": 8
    }
   },
   {
@@ -1080,7 +1080,7 @@
   {
    "countyId": 177,
    "monthly": {
-    "timber": 46
+    "timber": 38
    }
   },
   {
@@ -1778,7 +1778,7 @@
   {
    "countyId": 293,
    "monthly": {
-    "timber": 48
+    "timber": 41
    }
   },
   {
@@ -1900,7 +1900,7 @@
    "countyId": 313,
    "monthly": {
     "iron": 1000,
-    "timber": 210
+    "timber": 202
    }
   },
   {
@@ -2492,7 +2492,7 @@
   {
    "countyId": 411,
    "monthly": {
-    "timber": 73
+    "timber": 65
    }
   },
   {
@@ -2552,7 +2552,7 @@
   {
    "countyId": 421,
    "monthly": {
-    "timber": 182
+    "timber": 174
    }
   },
   {
@@ -3069,7 +3069,7 @@
   {
    "countyId": 507,
    "monthly": {
-    "timber": 44
+    "timber": 36
    }
   },
   {
@@ -3105,7 +3105,7 @@
   {
    "countyId": 513,
    "monthly": {
-    "timber": 362
+    "timber": 338
    }
   },
   {
@@ -3207,7 +3207,7 @@
   {
    "countyId": 530,
    "monthly": {
-    "timber": 369
+    "timber": 346
    }
   },
   {
@@ -3327,7 +3327,7 @@
   {
    "countyId": 550,
    "monthly": {
-    "timber": 252
+    "timber": 228
    }
   },
   {
@@ -3782,7 +3782,7 @@
   {
    "countyId": 625,
    "monthly": {
-    "timber": 494
+    "timber": 486
    }
   },
   {
@@ -3905,7 +3905,7 @@
   {
    "countyId": 647,
    "monthly": {
-    "timber": 1189
+    "timber": 1181
    }
   },
   {
@@ -3918,13 +3918,13 @@
    "countyId": 649,
    "monthly": {
     "horses": 100,
-    "timber": 367
+    "timber": 359
    }
   },
   {
    "countyId": 650,
    "monthly": {
-    "timber": 195
+    "timber": 187
    }
   },
   {
@@ -4105,7 +4105,7 @@
   {
    "countyId": 680,
    "monthly": {
-    "timber": 52
+    "timber": 44
    }
   },
   {
@@ -4117,7 +4117,7 @@
   {
    "countyId": 682,
    "monthly": {
-    "timber": 84
+    "timber": 76
    }
   },
   {
@@ -4227,7 +4227,7 @@
   {
    "countyId": 700,
    "monthly": {
-    "timber": 254
+    "timber": 238
    }
   },
   {
@@ -4245,20 +4245,20 @@
   {
    "countyId": 703,
    "monthly": {
-    "timber": 213
+    "timber": 197
    }
   },
   {
    "countyId": 705,
    "monthly": {
-    "timber": 321
+    "timber": 313
    }
   },
   {
    "countyId": 706,
    "monthly": {
     "iron": 1000,
-    "timber": 48
+    "timber": 40
    }
   },
   {
@@ -4282,7 +4282,7 @@
   {
    "countyId": 710,
    "monthly": {
-    "timber": 338
+    "timber": 330
    }
   },
   {
@@ -4378,7 +4378,7 @@
   {
    "countyId": 726,
    "monthly": {
-    "timber": 1496
+    "timber": 1472
    }
   },
   {
@@ -4618,7 +4618,7 @@
   {
    "countyId": 766,
    "monthly": {
-    "timber": 833
+    "timber": 827
    }
   },
   {
@@ -4648,7 +4648,7 @@
   {
    "countyId": 771,
    "monthly": {
-    "timber": 1513
+    "timber": 1491
    }
   },
   {
@@ -4685,7 +4685,7 @@
   {
    "countyId": 777,
    "monthly": {
-    "timber": 339
+    "timber": 331
    }
   },
   {
@@ -5030,7 +5030,7 @@
    "countyId": 834,
    "monthly": {
     "horses": 100,
-    "timber": 740
+    "timber": 732
    }
   },
   {
@@ -5228,7 +5228,7 @@
   {
    "countyId": 867,
    "monthly": {
-    "timber": 104
+    "timber": 96
    }
   },
   {
@@ -5240,7 +5240,7 @@
   {
    "countyId": 869,
    "monthly": {
-    "timber": 52
+    "timber": 44
    }
   },
   {
@@ -5258,7 +5258,7 @@
   {
    "countyId": 872,
    "monthly": {
-    "timber": 49
+    "timber": 41
    }
   },
   {
@@ -5439,7 +5439,7 @@
   {
    "countyId": 902,
    "monthly": {
-    "timber": 31
+    "timber": 23
    }
   },
   {
@@ -5685,7 +5685,7 @@
   {
    "countyId": 943,
    "monthly": {
-    "timber": 235
+    "timber": 227
    }
   },
   {
@@ -5919,7 +5919,7 @@
   {
    "countyId": 982,
    "monthly": {
-    "timber": 881
+    "timber": 873
    }
   },
   {
@@ -5955,7 +5955,7 @@
   {
    "countyId": 988,
    "monthly": {
-    "timber": 421
+    "timber": 413
    }
   },
   {
@@ -7030,6 +7030,325 @@
    "countyId": 1177,
    "monthly": {
     "timber": 134
+   }
+  },
+  {
+   "countyId": 1342,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1343,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1344,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1345,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1346,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1347,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1348,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1349,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1350,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1351,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1352,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1353,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1354,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1355,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1356,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1357,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1358,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1359,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1360,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1361,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1362,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1363,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1364,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1365,
+   "monthly": {
+    "timber": 7
+   }
+  },
+  {
+   "countyId": 1366,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1367,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1368,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1370,
+   "monthly": {
+    "timber": 6
+   }
+  },
+  {
+   "countyId": 1371,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1372,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1373,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1374,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1375,
+   "monthly": {
+    "timber": 6
+   }
+  },
+  {
+   "countyId": 1376,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1377,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1378,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1379,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1380,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1381,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1382,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1383,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1384,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1385,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1386,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1387,
+   "monthly": {
+    "iron": 1000,
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1388,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1389,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1392,
+   "monthly": {
+    "timber": 6
+   }
+  },
+  {
+   "countyId": 1393,
+   "monthly": {
+    "timber": 7
+   }
+  },
+  {
+   "countyId": 1394,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1395,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1396,
+   "monthly": {
+    "timber": 8
+   }
+  },
+  {
+   "countyId": 1397,
+   "monthly": {
+    "timber": 8
    }
   }
  ]

@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "abolished-verdict-corrections-v1",
+  "note": "gap-snapshot-reconciliation-v1 의 ABOLISHED_BEFORE_220 71 건을 晉書 地理志로 다시 건 결과 24 건이 걸렸고, 그중 20 건은 220 년 이후까지 살아 있어 **진짜 결손**이다. 기존 판정은 TGAZ 존속구간에 기댔는데 그 구간은 이름만 맞춰 붙인 것이라 同名異地(遼西 陽樂)와 레코드 분할(全椒 는 같은 좌표에 -202~48·67~125·136~212·280~310 네 개)로 무너진다. **정정**: 이 원장이 「판정은 맞고 구간만 틀림」 으로 남긴 5 건 중 梁國 穀熟은 실제로 실결손이다 — 宋書 卷035 「穀熟令，前漢無，後漢、晉屬梁」. songshu-provenance-adjudications-v1 을 보라. 나머지 넷(宜祿·充國·全椒·阜陵) 중 全椒·阜陵은 이미 이 원장 안에서 晉 淮南郡 소속으로 되살렸다.",
+  "method": {
+    "axis": "晉書 地理志(卷014·015) 속현 목록. 晉 太康 편제는 魏 를 이어받으므로 여기 이름이 있으면 220 년에 있었다고 볼 근거가 된다.",
+    "control": "손으로 심사한 SURVIVED_TO_220 10 건을 같은 조회에 넣었다. 晉書에 없어야 하는 것이 정확히 셋 — 魯國(정본 縣명은 魯)·氐道(280 년 폐지)·茲氏(晉이 隰城으로 개명) — 으로 나와 조회가 살아 있음을 확인했다.",
+    "substringDiscipline": "붙여 쓴 목록(67 郡)의 부분일치는 그 자체로 판정이 아니다. 郡 연속성이 확인될 때만 SUBSTRING_CONFIRMED 로 올렸고, 한 글자 이름이 남의 縣 이름 속에 걸린 4 건은 SUBSTRING_REJECTED 로 내렸다.",
+    "limits": "繁簡 접기 표의 범위는 기존 원장에 쓰인 글자 한정이다. 晉書 쪽 이문은 표 밖일 수 있으므로 나머지 47 건의 ABSENT 를 폐지의 증명으로 읽으면 안 된다."
+  },
+  "totals": {
+    "REAL_GAP": 20,
+    "FALSE_MATCH_UNRESOLVED": 4
+  },
+  "corrections": [
+    {
+      "commandery": "汝南郡",
+      "name": "固始",
+      "verdict": "REAL_GAP",
+      "axis": "TOKEN",
+      "jinshu": "晉書 卷014 汝陰郡 — 「汝陰　慎　原鹿　固始　鮦陽　新蔡　宋　褒信」",
+      "junguozhi": "後漢書 卷110 汝南郡 — 「固始，侯國。故寢也，光武中興更名。有寢丘。」",
+      "reading": "같은 汝陰郡 목록에 이미 실결손으로 판정된 鮦陽 과 나란히 있다. 汝南 동부가 晉 汝陰郡 으로 갈린 것이다."
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "繁畤",
+      "verdict": "REAL_GAP",
+      "axis": "TOKEN",
+      "jinshu": "晉書 卷014 雁門郡 — 「廣武　崞　𣳫陶　平城　葰人　繁畤　原平　馬邑」",
+      "junguozhi": "後漢書 卷113 鴈門郡 표제 縣",
+      "reading": "郡 이 그대로 이어지고 이름도 그대로다."
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "崞",
+      "verdict": "REAL_GAP",
+      "axis": "TOKEN",
+      "jinshu": "晉書 卷014 雁門郡 — 「廣武　崞　𣳫陶…」",
+      "junguozhi": "後漢書 卷113 鴈門郡 표제 縣",
+      "reading": "한 글자 이름이지만 구분된 목록의 토큰 일치라 부분일치가 아니다."
+    },
+    {
+      "commandery": "鴈門郡",
+      "name": "馬邑",
+      "verdict": "REAL_GAP",
+      "axis": "TOKEN",
+      "jinshu": "晉書 卷014 雁門郡 — 「…原平　馬邑」",
+      "junguozhi": "後漢書 卷113 鴈門郡 표제 縣",
+      "reading": "郡 이 그대로 이어진다."
+    },
+    {
+      "commandery": "遼西郡",
+      "name": "陽樂",
+      "verdict": "REAL_GAP",
+      "axis": "TOKEN",
+      "jinshu": "晉書 卷014 遼西郡 — 「秦置。統縣三。陽樂　肥如　海陽」",
+      "junguozhi": "後漢書 卷113 遼西郡 — 「〖阳乐〗」",
+      "reading": "遼西郡의 治所 縣이고 晉 遼西郡 統縣三의 첫 번째다. 이전 대조가 읽은 TGAZ 23~29 는 좌표가 산동(119.81,37.15)인 同名異地였고, 遼西 陽樂은 hvd_87636(119.04,39.77) 이다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "陰陵",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 陰陵",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "歷陽",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 歷陽",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "當塗",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 當塗",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "全椒",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 全椒",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "鍾離",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 鍾離",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "九江郡",
+      "name": "阜陵",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 淮南郡 — 「壽春成德下蔡義城西曲陽平阿歷陽全椒阜陵鍾離合肥逡遒陰陵當塗東城烏江」 중 阜陵",
+      "junguozhi": "後漢書 卷112 九江郡 표제 縣",
+      "reading": "晉 淮南郡은 九江郡의 직계 후신이다 — 같은 블록 머리글이 「置九江郡。漢以為淮南國，漢武帝置為九江郡。武帝改為淮南郡」 이라고 적는다. 붙여 쓴 목록이라 토큰으로는 못 잡지만 郡 연속성이 확인되므로 부분일치가 아니다."
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "舒",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 廬江郡 — 「陽泉舒灊皖尋陽居巢臨湖襄安龍舒六」 중 舒",
+      "junguozhi": "後漢書 卷112 廬江郡 표제 縣",
+      "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "臨湖",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 廬江郡 — 「陽泉舒灊皖尋陽居巢臨湖襄安龍舒六」 중 臨湖",
+      "junguozhi": "後漢書 卷112 廬江郡 표제 縣",
+      "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "龍舒",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 廬江郡 — 「陽泉舒灊皖尋陽居巢臨湖襄安龍舒六」 중 龍舒",
+      "junguozhi": "後漢書 卷112 廬江郡 표제 縣",
+      "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+    },
+    {
+      "commandery": "廬江郡",
+      "name": "襄安",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 廬江郡 — 「陽泉舒灊皖尋陽居巢臨湖襄安龍舒六」 중 襄安",
+      "junguozhi": "後漢書 卷112 廬江郡 표제 縣",
+      "reading": "郡 이름이 그대로 이어지고 같은 목록에 이 네 縣이 연달아 있다."
+    },
+    {
+      "commandery": "東海郡",
+      "name": "合鄕",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 東海郡 — 「…丘蘭陵承昌慮合鄉戚…」",
+      "junguozhi": "後漢書 卷111 東海郡 표제 縣",
+      "reading": "郡 이름이 그대로다."
+    },
+    {
+      "commandery": "北海國",
+      "name": "平昌",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 城陽郡 — 「…高密壯武黔陬平昌昌安」",
+      "junguozhi": "後漢書 卷112 北海國 — 「平昌，侯國，故屬琅邪，有蔞鄉。」",
+      "reading": "郡國志가 「故屬琅邪」 라 적었고 晉 城陽郡은 琅邪 계열이다 — 이관 경로가 맞는다. TGAZ 에는 이 시대 北海 平昌 레코드가 아예 없다."
+    },
+    {
+      "commandery": "南海郡",
+      "name": "中宿",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 始興郡 — 「始興含洭湞陽中宿陽山」",
+      "junguozhi": "後漢書 卷113 南海郡 표제 縣",
+      "reading": "始興郡은 南海 북부에서 갈라진 郡이다."
+    },
+    {
+      "commandery": "廣陵郡",
+      "name": "東陽",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 臨淮郡 — 「盱眙東陽高山贅其潘旌」",
+      "junguozhi": "後漢書 卷111 廣陵郡 표제 縣",
+      "reading": "臨淮郡은 廣陵 서북에 접한다. 다만 東陽은 흔한 이름이라 이 건은 郡 인접에 기댄 판정이다."
+    },
+    {
+      "commandery": "丹陽郡",
+      "name": "秣陵",
+      "verdict": "REAL_GAP",
+      "axis": "SUBSTRING_CONFIRMED",
+      "jinshu": "晉書 卷015 丹陽郡 — 「建鄴{{*|本秣陵，孫氏改爲建業…}}」",
+      "junguozhi": "後漢書 卷111 丹陽郡 표제 縣",
+      "reading": "폐지가 아니라 개명이다 — 孫氏가 秣陵을 建業으로 고쳤다. 220년 단면에서는 秣陵이 맞다."
+    },
+    {
+      "commandery": "河南尹",
+      "name": "平",
+      "verdict": "FALSE_MATCH_UNRESOLVED",
+      "axis": "SUBSTRING_REJECTED",
+      "jinshu": "濟南郡 平壽·城陽郡 平昌 의 「平」 — 이름이 다른 縣 이름 속 조각으로 걸렸을 뿐이다",
+      "junguozhi": "後漢書 郡國志 河南尹 표제 縣",
+      "reading": "한 글자(또는 흔한 두 글자) 이름이라 붙여 쓴 목록에서 부분일치가 난다. 220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "魏郡",
+      "name": "沙",
+      "verdict": "FALSE_MATCH_UNRESOLVED",
+      "axis": "SUBSTRING_REJECTED",
+      "jinshu": "建平郡 沙渠·武昌郡 沙羨 의 「沙」 — 이름이 다른 縣 이름 속 조각으로 걸렸을 뿐이다",
+      "junguozhi": "後漢書 郡國志 魏郡 표제 縣",
+      "reading": "한 글자(또는 흔한 두 글자) 이름이라 붙여 쓴 목록에서 부분일치가 난다. 220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "勃海郡",
+      "name": "脩",
+      "verdict": "FALSE_MATCH_UNRESOLVED",
+      "axis": "SUBSTRING_REJECTED",
+      "jinshu": "豫章郡 永修 의 「修」 — 이름이 다른 縣 이름 속 조각으로 걸렸을 뿐이다",
+      "junguozhi": "後漢書 郡國志 勃海郡 표제 縣",
+      "reading": "한 글자(또는 흔한 두 글자) 이름이라 붙여 쓴 목록에서 부분일치가 난다. 220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    },
+    {
+      "commandery": "上谷郡",
+      "name": "甯",
+      "verdict": "FALSE_MATCH_UNRESOLVED",
+      "axis": "SUBSTRING_REJECTED",
+      "jinshu": "長沙郡 建甯·湘東郡 新寧 의 「甯」 — 이름이 다른 縣 이름 속 조각으로 걸렸을 뿐이다",
+      "junguozhi": "後漢書 郡國志 上谷郡 표제 縣",
+      "reading": "한 글자(또는 흔한 두 글자) 이름이라 붙여 쓴 목록에서 부분일치가 난다. 220년 존속 여부는 이 축으로 판정되지 않는다 — UNKNOWN 이다."
+    }
+  ]
+}

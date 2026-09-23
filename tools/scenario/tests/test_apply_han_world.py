@@ -100,13 +100,13 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
         # 849–1024 는 城 없던 han-tiles 縣 관할 176곳(w2), 1025–1097 은 수·진·관 거점 73곳(w3)이다.
         # 2026-09-17: 同縣 중복 977·989 를 거두고 그 번호와 1099–1133 에 郡國 밖 취락 37곳(w5)이 섰다.
-        self.assertEqual(1168, len({city for group in by_jun.values() for city in group}))
+        self.assertEqual(1224, len({city for group in by_jun.values() for city in group}))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         self.assertIn(781, by_jun["제남국"])
 
     def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
         self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        known = set(active_numeric_ids(1168))
+        known = set(active_numeric_ids(1224))
         ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
         che2jun = {
             key: value["jun"]
@@ -143,7 +143,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         # 같은 append-only 규약으로 붙은 행이다 — 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고,
         # 1025–1097 거점 73곳까지 총 317행, 2026-09-16 河南尹 平陰(1098) 을 더해 318행이어야 한다(귀속 충돌 5곳은 defer).
         # 2026-09-17: 郡國 밖 취락 37곳 중 새 번호 35곳(1099–1133)이 더해져 353행이다 — 977·989 는 기존 행을 재결속한다.
-        self.assertEqual(388, len(migration_doc["appendedRows"]))
+        self.assertEqual(444, len(migration_doc["appendedRows"]))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         self.assertEqual(
             {
                 "administrativeUnitId": "hhs:112:濟南國:010",
@@ -155,7 +155,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             migration_doc["appendedRows"][0],
         )
         self.assertEqual(
-            [i for i in active_numeric_ids(1168) if i > 780],  # 1098 = 河南尹 平陰(w4), 1099–1133 = 郡國 밖 취락(w5)
+            [i for i in active_numeric_ids(1224) if i > 780],  # 1098 = 河南尹 平陰(w4), 1099–1133 = 郡國 밖 취락(w5)
             [row["newCityId"] for row in migration_doc["appendedRows"]],
         )
         self.assertEqual(
