@@ -65,6 +65,16 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
 
   // The only post-seed SQL write in this test keeps the newly created human alive during the long QA run.
   expect(sql(`UPDATE general SET meta=jsonb_set(meta, '{killturn}', '96'::jsonb) WHERE world_id=${worldId} AND id=${generalId} RETURNING id;`)).toBe(String(generalId));
+  // The running engine keeps a world snapshot in memory; reload it before the
+  // next phase so its snapshot cannot overwrite the one allowed SQL adjustment.
+  compose(['restart', 'game-engine']);
+  const engineHealthUrl = process.env.E2E_GAME_ENGINE_HEALTH_URL ?? '';
+  expect(engineHealthUrl).toMatch(/^http:\/\/localhost:\d+\/actuator\/health$/);
+  await expect.poll(async () => {
+    try { return (await page.request.get(engineHealthUrl, { timeout: 5_000 })).status(); }
+    catch { return 0; }
+  }, { timeout: 300_000, intervals: [3000, 5000] }).toBe(200);
+  expect(sql(`SELECT meta->>'killturn' FROM general WHERE world_id=${worldId} AND id=${generalId};`)).toBe('96');
 
   await page.goto(`${gameUrl}/game`);
   await page.getByRole('button', { name: '명령 추가 · 편집', exact: true }).click();
