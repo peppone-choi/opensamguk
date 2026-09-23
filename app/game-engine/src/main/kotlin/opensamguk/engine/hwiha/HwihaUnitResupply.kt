@@ -9,7 +9,8 @@ import opensamguk.logic.war.hwiha.HwihaS3Provisional
 /**
  * 월 경계 부곡 군량 보충(재설계 spec §5.2 1단계의 「군량」과 §9.2 「부대 유지비는 카드가 있는 곳의 망에서」의 임시 구현).
  * 부곡 휴대 군량을 병력 × [HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS] 개월까지 창고망 곡으로 채운다.
- * 부곡 위치는 출전 중이면 지휘 장수, 아니면 주인 장수의 기준 城이다. 주인 세력 縣이 아니면(적지 포위군) 채우지 않는다.
+ * 부곡 위치는 출전 중이면 지휘 장수, 아니면 주인 장수의 **실제 위치**(위치 정본 `positionOf`)다. 기준 城 id 는 城 없는 省에
+ * 들어가도 이전 값으로 남으므로 쓰지 않는다. 위치가 城 없는 省이거나 주인 세력 縣이 아니면(적지 포위군) 채우지 않는다.
  * 도장([STAMP_KEY])으로 한 달에 한 번만 돈다.
  */
 class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
@@ -27,7 +28,8 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
             val target = unit.troops.toLong() * HwihaS3Provisional.UNIT_RESUPPLY_TARGET_MONTHS
             if (unit.provisions >= target) continue
             val holder = world.getGeneralById(commanderOf[unit.id] ?: owner.id) ?: continue
-            val counties = network.countiesFor(owner.nationId, holder.cityId)
+            val here = cityAt(holder.id, holder.cityId) ?: continue
+            val counties = network.countiesFor(owner.nationId, here)
             if (counties.isEmpty()) continue
             val available = network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION
             val add = minOf(target - unit.provisions, available)
@@ -39,6 +41,13 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
         world.setGameEnvValue(STAMP_KEY, stamp)
         recorder.recordKv("game_env", "game_env", STAMP_KEY, stamp)
         return filled
+    }
+
+    /** 장수가 실제로 선 省의 城. 기준 城이 그 省이면 그것을, 아니면 그 省의 城을, 城 없는 省이면 null. */
+    private fun cityAt(generalId: Int, referenceCityId: Int): Int? {
+        val node = world.positionOf(generalId) ?: return null
+        if (world.landNodeOfCity(referenceCityId) == node) return referenceCityId
+        return world.cityOfLandNode(node)
     }
 
     companion object {

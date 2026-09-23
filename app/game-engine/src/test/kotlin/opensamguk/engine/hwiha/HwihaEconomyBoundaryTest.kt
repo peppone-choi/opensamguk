@@ -112,6 +112,19 @@ class HwihaEconomyBoundaryTest {
         assertEquals(50, abroad.getBugokById(7)!!.provisions)
     }
 
+    @Test fun `a unit whose holder stands in a cityless province draws nothing though the reference city is home`() {
+        // 城 없는 省에 들어가도 기준 城 id 는 이전 값(수도)으로 남는다 — 실제 위치로 판정해야 한다.
+        val cityless = (fixture.topology.landProvinceIds - fixture.bundle.projection.bindingsByCityId.values.mapNotNull { it.landProvinceId }.toSet()).min()
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
+            people = listOf(fixture.person(1, 1, capital, userId = "42") to opensamguk.logic.world.StrategicNodeRef.LandProvince(cityless)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        assertEquals(capital, world.getGeneralById(1)!!.cityId, "the reference city still points home")
+        assertEquals(0, HwihaUnitResupply(world, ChangeRecorder()).resupply(200, 2))
+        assertEquals(50, world.getBugokById(7)!!.provisions)
+        assertEquals(1_000_000L, HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+    }
+
     @Test fun `reward is a queued court decision paid from the warehouse raising loyalty and one bond event a month`() {
         val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
         val world = realm(capitalMoney = 2000, card = card)
