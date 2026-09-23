@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    border-bottom: 1px solid var(--line, #3d4740);
+    border-bottom: 1px solid var(--line-2);
     background: linear-gradient(180deg, #232a26, #1b201d);
     flex-shrink: 0;
     gap: 12px;
@@ -38,7 +38,7 @@
     align-items: center;
     height: 44px;
     padding: 0 10px;
-    color: var(--muted, #8a8477);
+    color: var(--muted);
     font-size: 13px;
     white-space: nowrap;
     text-decoration: none;
@@ -46,13 +46,13 @@
 }
 
 .tab:hover {
-    color: var(--fg, #ece6d8);
+    color: var(--text);
 }
 
 .tabOn {
-    color: var(--fg, #ece6d8);
+    color: var(--text);
     font-weight: 700;
-    border-bottom-color: var(--bronze, #c9a656);
+    border-bottom-color: var(--bronze);
 }
 
 /* 화면이 없는 탭은 숨기지 않고 사유를 남긴다(OPENSAM-113 표시 원칙). */

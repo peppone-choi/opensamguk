@@ -1106,9 +1106,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const province = screen.getByRole('button', { name: '프로빈스 지역 레이어' });
+    const province = screen.getByRole('button', { name: '구역 레이어' });
     const county = screen.getByRole('button', { name: '현급 도시 레이어' });
-    const commandery = screen.getByRole('button', { name: '군국급 도시 레이어' });
+    const commandery = screen.getByRole('button', { name: '군급 도시 레이어' });
     expect(province).toHaveAttribute('aria-pressed', 'false');
     expect(county).toHaveAttribute('aria-pressed', 'true');
     expect(commandery).toHaveAttribute('aria-pressed', 'false');

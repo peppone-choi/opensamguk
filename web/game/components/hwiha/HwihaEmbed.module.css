@@ -1,0 +1,42 @@
+/* 명령 창용 폼(cmd-form)을 휘하 화면 패널 안에 끼울 때의 보정. 명령 창 밖에서는 제목이 패널 머리와
+   겹치고, 확인란이 글자 위로 떨어진다. */
+.embed :global(.cmd-form) {
+    padding: 8px 0 0;
+}
+
+.embed :global(.cmd-form) > h3 {
+    display: none;
+}
+
+.embed :global(.cmd-form) p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-2);
+}
+
+.embed fieldset {
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    padding: 8px 10px;
+    margin: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.embed legend {
+    padding: 0 4px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.embed fieldset label {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    color: var(--text);
+}
+
+.embed select {
+    min-height: 44px;
+}

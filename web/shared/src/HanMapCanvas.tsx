@@ -2432,11 +2432,11 @@ export function HanMapCanvas({
         >
           <button
             type="button"
-            aria-label="프로빈스 지역 레이어"
+            aria-label="구역 레이어"
             aria-pressed={administrativeLayer === 'PROVINCE'}
             onClick={() => setAdministrativeLayer('PROVINCE')}
           >
-            프로빈스(지역)
+            구역
           </button>
           <button
             type="button"
@@ -2448,11 +2448,11 @@ export function HanMapCanvas({
           </button>
           <button
             type="button"
-            aria-label="군국급 도시 레이어"
+            aria-label="군급 도시 레이어"
             aria-pressed={administrativeLayer === 'COMMANDERY'}
             onClick={() => setAdministrativeLayer('COMMANDERY')}
           >
-            군국
+            군
           </button>
         </div>
       ) : null}

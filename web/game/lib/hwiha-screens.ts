@@ -5,8 +5,10 @@
 //
 // 탭 여섯은 정본 설계 §4 「입력 여섯 가지」다. 시안 헤더의 탭 바가 곧 그 여섯이며, 화면이 어느
 // 입력에 속하는지는 시안의 `head(title, on)` 두 번째 인자가 정한다. 시안이 탭을 지정하지 않은
-// 화면(공성·포로·지도 레이어 등)은 맥락에서 들어가는 화면이므로 `tab: null` 로 둔다 — 없는 배정을
+// 화면(지도 레이어 등)은 맥락에서 들어가는 화면이므로 `tab: null` 로 둔다 — 없는 배정을
 // 지어내면 그것이 스펙으로 굳는다.
+
+import { resolveServerGamePath } from './serverGameUrl';
 
 /** 정본 설계 §4 입력 여섯 가지. 시안 헤더 탭 바와 같은 순서·같은 라벨이다. */
 export const HWIHA_INPUT_TABS = [
@@ -23,7 +25,7 @@ export type HwihaInputTab = (typeof HWIHA_INPUT_TABS)[number];
 export interface HwihaScreen {
     /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
     readonly board: string;
-    /** URL 조각. `/hwiha/<slug>`. 목 데이터 단계라 인증 게이트(/game/**) 밖에 둔다. */
+    /** URL 조각. `/game/<서버>/hwiha/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. */
     readonly slug: string;
     /** 시안 제목 그대로. */
     readonly title: string;
@@ -56,16 +58,17 @@ export const HWIHA_SCREENS: readonly HwihaScreen[] = [
     { board: 'Plan', slug: 'plan', title: '전투 계획 봉인', tab: '방침', onHub: false },
 
     // 계책
-    { board: 'Hand', slug: 'hand', title: '계책 손패', tab: '계책', onHub: true },
+    { board: 'Hand', slug: 'hand', title: '계책 덱', tab: '계책', onHub: true },
 
     // 조정 결정
-    { board: 'Court', slug: 'court', title: '조정 — 관직 · 외교 · 천도', tab: '조정 결정', onHub: true },
+    // 탭 첫 화면은 실제 결정이 있는 발령이다(조정은 아직 틀만 있다).
     { board: 'Orders', slug: 'orders', title: '발령 · 포상', tab: '조정 결정', onHub: true },
+    { board: 'Court', slug: 'court', title: '조정 — 관직 · 외교 · 천도', tab: '조정 결정', onHub: true },
     { board: 'Unification', slug: 'unification', title: '천하 형세 — 통일 판정', tab: '조정 결정', onHub: false },
 
-    // 시안이 탭을 지정하지 않은 화면 — 맥락에서 들어간다.
-    { board: 'Siege', slug: 'siege', title: '공성', tab: null, onHub: false },
-    { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: null, onHub: false },
+    // 맥락에서 들어가는 화면. 공성·포로는 시안이 탭을 켜 두었으므로(방침·장수 행동) 그대로 옮긴다.
+    { board: 'Siege', slug: 'siege', title: '공성', tab: '방침', onHub: false },
+    { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
     { board: 'CommandMap', slug: 'command-map', title: '옛 명령 → 새 자리', tab: null, onHub: false },
     { board: 'MapLayers', slug: 'map-layers', title: '천하 지도 — 레이어', tab: null, onHub: false },
 
@@ -74,20 +77,45 @@ export const HWIHA_SCREENS: readonly HwihaScreen[] = [
     { board: 'Join', slug: 'join', title: '난세 개막 — 서버 입장', tab: null, onHub: false },
 ];
 
-export function hwihaHref(slug: string): string {
-    return `/hwiha/${slug}`;
+/**
+ * 휘하 화면 주소. 서버 식별자가 있으면 `/game/<서버>/hwiha/<slug>` 로 만든다 — 미들웨어가 그 경로를
+ * `/game/hwiha/<slug>` 로 되쓰고 `sam_server` 쿠키를 심는다(기존 게임 링크와 같은 규칙).
+ */
+export function hwihaHref(slug: string, serverId?: string): string {
+    const child = `hwiha/${slug}`;
+    return serverId ? resolveServerGamePath(undefined, serverId, '/game', child) : `/game/${child}`;
 }
 
 export function hwihaScreenOf(slug: string): HwihaScreen | undefined {
     return HWIHA_SCREENS.find((s) => s.slug === slug);
 }
 
-/** 한 입력 탭에 속한 화면들 — 시안 순서를 지킨다. */
+/**
+ * 실제로 페이지가 있는 화면. 등록부는 시안 전체를 담지만 링크는 여기 있는 것만 건다 — 없는 화면으로
+ * 가는 링크는 404 다. 페이지를 새로 만들면 여기에 더한다.
+ */
+export const HWIHA_BUILT_SLUGS: ReadonlySet<string> = new Set([
+    'war-room',
+    'yuedan',
+    'posts',
+    'retinue',
+    'supply',
+    'hand',
+    'orders',
+    'court',
+    'siege',
+]);
+
+export function isHwihaBuilt(slug: string): boolean {
+    return HWIHA_BUILT_SLUGS.has(slug);
+}
+
+/** 한 입력 탭에 속한 화면들 — 시안 순서를 지킨다. 아직 없는 화면도 포함한다. */
 export function hwihaScreensOfTab(tab: HwihaInputTab): readonly HwihaScreen[] {
     return HWIHA_SCREENS.filter((s) => s.tab === tab);
 }
 
-/** 탭을 눌렀을 때 갈 첫 화면. 그 탭에 화면이 없으면 undefined. */
+/** 탭을 눌렀을 때 갈 첫 화면 — 페이지가 있는 것 가운데 첫째. 없으면 undefined. */
 export function hwihaTabLanding(tab: HwihaInputTab): HwihaScreen | undefined {
-    return hwihaScreensOfTab(tab)[0];
+    return hwihaScreensOfTab(tab).find((s) => isHwihaBuilt(s.slug));
 }
