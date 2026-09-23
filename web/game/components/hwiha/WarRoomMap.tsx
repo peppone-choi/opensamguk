@@ -85,6 +85,7 @@ export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPendi
                             showCityFootprint
                             commanderyVisibility={visibility}
                             fogMode="dim"
+                            politicalStyle="tint"
                             ariaLabel={`천하 형세 — ${focus.name}`}
                             style={{ width: '100%', height: 560 }}
                         />

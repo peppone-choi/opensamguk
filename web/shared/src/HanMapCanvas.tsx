@@ -265,6 +265,9 @@ export type InitialFocusProfile = 'current-city-close' | 'current-commandery';
 /** 시야 단계 — 삼모의 완전·첩보·안개와 같다. */
 export type CommanderyVisibility = 'FULL' | 'INTEL' | 'FOG';
 
+/** `politicalStyle="tint"` 의 영토 색 불투명도 — 지형 결이 비치고 세력은 구분된다. */
+export const POLITICAL_TINT_ALPHA = 0.32;
+
 /** `current-commandery` 목표 배율 — 한 칸이 화면에서 대략 24px 이 되어 격자선이 읽힌다. */
 export const COMMANDERY_FOCUS_SCALE = 24;
 
@@ -328,6 +331,11 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
    * 내 군단은 행군 경로와 요격 범위까지, 남의 군단은 깃발과 이름표만.
    */
   corps?: readonly MapCorpsOverlay[] | null;
+  /**
+   * 세력 영토를 어떻게 칠할지. `fill`(기본)은 불투명하게 덮는다 — 천하 전체를 보는 화면용.
+   * `tint` 는 옅게 얹어 지형이 비친다 — 군국 하나를 당겨 보는 작전실용.
+   */
+  politicalStyle?: 'fill' | 'tint';
   hideCityNames?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -1264,6 +1272,7 @@ function drawScene(
   showCellGrid: boolean,
   showCityFootprint: boolean,
   fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
+  politicalAlpha = 1,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -1281,7 +1290,9 @@ function drawScene(
   context.drawImage(terrain, -0.5, -0.5);
   if (political) {
     context.imageSmoothingEnabled = false;
+    context.globalAlpha = politicalAlpha;
     context.drawImage(political, -0.5, -0.5);
+    context.globalAlpha = 1;
   }
   // 전장의 안개 — 못 본 군국을 덮는다. 칸마다 다이아몬드를 채우므로 보이는 범위만 돈다.
   if (fog && provinceMap) {
@@ -1574,6 +1585,7 @@ export function HanMapCanvas({
   commanderyVisibility = null,
   fogMode = 'dim',
   corps = null,
+  politicalStyle = 'fill',
   currentCityId,
   selectedCityId,
   hideCityNames = false,
@@ -1921,6 +1933,7 @@ export function HanMapCanvas({
       showCellGrid,
       showCityFootprint,
       commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
+      politicalStyle === 'tint' ? POLITICAL_TINT_ALPHA : 1,
     );
     battlefieldHits.current = [];
     const ctx = canvas.getContext('2d');
@@ -1934,7 +1947,7 @@ export function HanMapCanvas({
       battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
     }
     if (ctx && corpsRef.current?.length) drawCorpsOverlay(ctx, corpsRef.current, view, sizeRef.current.dpr);
-  }, [administrativeLayer]);
+  }, [administrativeLayer, politicalStyle]);
 
   // 군단 겹이 바뀌면 다시 그린다 — 순 갱신마다 새 배열이 온다.
   useEffect(() => {
