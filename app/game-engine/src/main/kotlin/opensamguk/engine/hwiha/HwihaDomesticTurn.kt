@@ -153,21 +153,20 @@ internal class HwihaDomesticCountyEffects(
         val levels = levelsOf(city)
         val outcome = HwihaDomesticEffects.applyPolicy(context.design, effective.policy, levels, seat)
         var resultCode = "APPLIED"
-        var nextMeta = city.meta
         if (outcome.credit != HwihaResources() || outcome.debit != HwihaResources()) {
+            // Resource flows go through the warehouse settlement boundary (owner and revision rechecked).
             val warehouse = try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
-            if (warehouse == null) resultCode = "WAREHOUSE_NOT_READY"
-            else {
-                val remaining = warehouse.stock.debit(outcome.debit)
-                val next = remaining?.let { try { warehouse.replace(it.credit(outcome.credit)) } catch (_: ArithmeticException) { null } }
-                if (remaining == null) resultCode = HwihaDomesticEffects.INSUFFICIENT_STOCK
-                else if (next == null) resultCode = "OVERFLOW"
-                else nextMeta = nextMeta.withKey(HwihaCountyWarehouse.META_KEY, next.toMetaValue())
+            resultCode = if (warehouse == null) "WAREHOUSE_NOT_READY" else when (val settled = HwihaWarehouseSettlement(world, recorder)
+                .settle(countyId, city.nationId, warehouse.revision, outcome.debit, outcome.credit)) {
+                HwihaWarehouseSettlement.Result.APPLIED -> "APPLIED"
+                HwihaWarehouseSettlement.Result.NOT_READY -> "WAREHOUSE_NOT_READY"
+                else -> settled.name
             }
         }
+        val current = checkNotNull(world.getCityById(countyId))
         val application = HwihaPolicyApplication(state.now, effective.policy.name, if (seat == null) "EMPTY" else "SEATED", resultCode)
         val record = stored != null || seat != null || resultCode != "APPLIED"
-        write(city, if (resultCode == "APPLIED") outcome.levels else levels, nextMeta, stored, application.takeIf { record })
+        write(current, if (resultCode == "APPLIED") outcome.levels else levels, current.meta, stored, application.takeIf { record })
     }
 
     private fun write(before: City, levels: HwihaCountyLevels, baseMeta: Map<String, Any?>, stored: HwihaCountyPolicyState?,

@@ -145,6 +145,27 @@ class HwihaDomesticEngineTest {
         assertFalse(HwihaCountyPolicyState.META_KEY in world.getCityById(11)!!.meta)
     }
 
+    @Test fun `policy resource flows settle through the county warehouse or record why they could not`() {
+        val world = world(); val recorder = ChangeRecorder()
+        submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")
+        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
+        HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
+        submit(world, recorder, "policy.set", """{"scope":"COUNTY","countyId":10,"policy":"RELIEF"}""")
+        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
+        boundary(world, recorder, 200, 1, 2)
+        // Relief costs grain the empty warehouse does not have: no indicator moves, the reason is recorded.
+        assertEquals("INSUFFICIENT_STOCK", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
+        assertEquals(80.0, world.getCityById(10)!!.meta["trust"])
+        val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
+        assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder)
+            .settle(10, 1, warehouse.revision, HwihaResources(), HwihaResources(grain = 1_000_000)))
+        boundary(world, recorder, 200, 1, 3)
+        val households = 50_000L / 5
+        assertEquals(1_000_000 - households, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock.grain)
+        assertEquals(82.0, world.getCityById(10)!!.meta["trust"])
+        assertEquals("APPLIED", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
+    }
+
     @Test fun `commandery policy activates at the next boundary and overrides every county in it`() {
         val world = world(); val recorder = ChangeRecorder()
         val accepted = submit(world, recorder, "policy.set", """{"scope":"COMMANDERY","commanderyId":"甲郡","policy":"MILITARY_FARM"}""")
