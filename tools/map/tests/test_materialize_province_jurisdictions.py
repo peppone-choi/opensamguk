@@ -65,11 +65,8 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertEqual(1_447, len(tiles["jurisdictionRecords"]))
         self.assertEqual(173, len(tiles["commanderyRecords"]))
         # Preserve the original Licheng geometry proof before the separate Geuk stage.
-        from tools.map import materialize_frontier_counties as frontier
-        from tools.map import relocate_han_province as relocation
-        prior = relocation.restore_document(
-            frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
-        )
+        from tools.map.tests.frozen_geuk_map import input_bytes
+        prior = json.loads(input_bytes())
         geometry_hashes = {
             key: hashlib.sha256(
                 json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()

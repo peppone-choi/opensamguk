@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import {
   SPRITE_SILHOUETTE_PX,
   cellFootprintInTiles,
-  modelFootprintFit,
   spriteFootprintFit,
 } from '../iso/buildingFit';
 import { SPRITE_GROUND_CENTER_Y } from '../iso/buildingRoof';
@@ -67,28 +66,5 @@ describe('spriteFootprintFit', () => {
 
   it('모르는 그림이면 캔버스 폭 전체를 실루엣으로 본다', () => {
     expect(spriteFootprintFit('없는-그림', 1, 176)).toEqual({ scale: 1, originX: 128, originY: 176 });
-  });
-});
-
-describe('modelFootprintFit', () => {
-  it('밑면 긴 변이 성내 한 변을 채우고, 밑면 중심이 성내 중심에 온다', () => {
-    // tribal.gltf 실측 경계상자 — 가운데가 조금 비껴 있다.
-    const bounds = { min: { x: -0.35, z: -0.302 }, max: { x: 0.31, z: 0.35 } };
-    const fit = modelFootprintFit(bounds, 1.5);
-    expect(fit.scale).toBeCloseTo(1.5 / 0.66);
-    const minX = bounds.min.x * fit.scale + fit.offsetX;
-    const maxX = bounds.max.x * fit.scale + fit.offsetX;
-    const minZ = bounds.min.z * fit.scale + fit.offsetZ;
-    const maxZ = bounds.max.z * fit.scale + fit.offsetZ;
-    expect(maxX - minX).toBeCloseTo(1.5);
-    expect((minX + maxX) / 2).toBeCloseTo(0);
-    expect((minZ + maxZ) / 2).toBeCloseTo(0);
-    expect(maxZ - minZ).toBeLessThanOrEqual(1.5 + 1e-9);
-  });
-
-  it('관문처럼 가늘고 긴 모델은 긴 변만 채운다 — 짧은 변을 늘려 찌그러뜨리지 않는다', () => {
-    const fit = modelFootprintFit({ min: { x: -0.49, z: -0.175 }, max: { x: 0.49, z: 0.175 } }, 0.5);
-    expect(fit.scale).toBeCloseTo(0.5 / 0.98);
-    expect(0.35 * fit.scale).toBeLessThan(0.5);
   });
 });

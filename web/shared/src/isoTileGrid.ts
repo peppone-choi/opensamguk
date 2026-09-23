@@ -1,14 +1,14 @@
-// 아이소메트릭 지도 타일 격자 파생 — 2D 스프라이트 렌더러와 3D glTF 렌더러가 함께 쓴다.
+// 아이소메트릭 지도 타일 격자 파생 — 2D 스프라이트 렌더러의 데이터 계약.
 //
 // 입력이 둘이다.
 //   1. /api/game/api/map/terrain 의 `terrain` — 768×669 지형 코드 문자열 669줄.
 //   2. /map/elevation/han-world-v3-levels.png — 384×334 DEM 단차 레벨(0..6).
 //      tools/map/build_elevation_grid.py 가 NOAA ETOPO1 에서 뽑아 같은 투영으로 리샘플한 것이다.
 //
-// 세 애셋 매니페스트(iso2d·iso3d·elevation)가 tileGrid 를 384×334 로 못박아 뒀다.
+// iso2d·elevation 애셋 매니페스트가 tileGrid 를 384×334 로 못박아 뒀다.
 // 768/2 = 384, 669/2 = 334.5 이므로 마지막 부분 행은 버린다(채우면 인덱스가 한 줄 어긋난다).
 //
-// React 도, three 도, DOM 도 쓰지 않는다. 순수 함수만 둔다.
+// React 도 DOM 도 쓰지 않는다. 순수 함수만 둔다.
 
 import { connectRivers, inlandWaterSystems } from './riverContinuity';
 
@@ -27,7 +27,7 @@ export const TERRAIN = {
 
 export type TerrainCode = (typeof TERRAIN)[keyof typeof TERRAIN];
 
-/** 애셋 파일명 순서. iso2d/iso3d 매니페스트의 terrain 목록과 같은 철자를 쓴다. */
+/** 애셋 파일명 순서. iso2d 매니페스트의 terrain 목록과 같은 철자를 쓴다. */
 export const TERRAIN_ASSET_NAME: readonly string[] = [
   'sea', 'plain', 'mountain', 'river', 'lake', 'desert', 'plateau', 'basin', 'hill', '',
 ];
@@ -434,7 +434,7 @@ export interface TileHeights {
   * 어긋나 배경이 새어 나온다. 렌더러가 아니라 검사용으로 남겨 둔 값이다.
   */
   cliff: Uint8Array;
-  /** 코너 높이 넷을 그대로 담은 사본. 순서는 N, E, S, W. 3D 렌더러가 정점에 그대로 쓴다. */
+  /** 코너 높이 넷을 그대로 담은 사본. 순서는 N, E, S, W. */
   cornerNESW: Uint8Array;
 }
 
@@ -601,27 +601,6 @@ export function pickTileAtScreen(
     return playable[i] === 1 ? { col, row } : null;
   }
   return null;
-}
-
-// ── 3D 세계 좌표 ────────────────────────────────────────────────────────────
-// iso3d 계약: 타일은 XZ 평면 1×1, Y 가 위. 아이소 다이아몬드는 카메라가 만든다.
-//
-// 2:1 픽셀 아이소와 눈금을 맞추려면 카메라 고도가 30°(sin=0.5)여야 하고,
-// 그때 세로 한 칸이 화면에서 차지하는 길이는 y·cos30°다. 타일 폭은 화면에서 √2 이므로
-//   step / width = 32 / 256 = 0.125  →  y·cos30° / √2 = 0.125  →  y ≈ 0.2041.
-export const CAMERA_ELEVATION_RAD = Math.PI / 6;
-export const CAMERA_AZIMUTH_RAD = Math.PI / 4;
-export const HEIGHT_STEP_WORLD = (STEP_SCREEN_PIXELS / TILE_SCREEN_WIDTH) * Math.SQRT2
-  / Math.cos(CAMERA_ELEVATION_RAD);
-
-/** 타일 (c,r) 의 세계 중심. 격자 중앙이 원점에 오도록 옮긴다. */
-export function tileToWorld(
-  col: number,
-  row: number,
-  cols: number,
-  rows: number,
-): [number, number] {
-  return [col - (cols - 1) / 2, row - (rows - 1) / 2];
 }
 
 // ── 소유 격자 ───────────────────────────────────────────────────────────────

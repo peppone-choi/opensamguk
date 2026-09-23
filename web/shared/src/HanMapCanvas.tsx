@@ -10,6 +10,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { resolveCityFootprints } from './iso/cityFootprint';
+import { drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
+import { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+import { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 import {
   cellToScreen,
@@ -159,6 +162,8 @@ export interface IsoCityOverlay {
    * 재해·사건(`state`) 배지와 함께 城 그림 왼쪽 위에 줄지어 붙는다. 무엇을 보일지는 호출부(서버 시야)가 정한다.
    */
   statusBadges?: readonly CityStatusBadge[];
+  /** 공사 9종·포위처럼 상세 내용이 있는 별도 지도 배지. */
+  cityBadges?: readonly IsoCityBadge[];
   jurisdictionId?: string;
   commanderyId?: string;
   interactive?: boolean;
@@ -388,9 +393,25 @@ const CITY_MARKER_LARGE_SIZES = [128, 256] as const;
 const CITY_MARKER_LARGE_URLS = CITY_MARKER_LARGE_SIZES.flatMap((size) => (
   CITY_LEVELS.map((level) => ({ size, level, url: `/city/${size / 32}x/cast_${level}.png` }))
 ));
+const REGIONAL_MARKER_STYLES = [...new Set(Object.values(ARCHITECTURE_BY_JU))];
+const REGIONAL_MARKER_LEVELS = [5, 6, 7, 8, 9, 10, 11] as const;
+const REGIONAL_MARKER_SIZES = [32, 64, 128, 256] as const;
+const REGIONAL_MARKER_URLS = REGIONAL_MARKER_STYLES.flatMap((style) =>
+  REGIONAL_MARKER_LEVELS.flatMap((level) => REGIONAL_MARKER_SIZES.map((size) => ({
+    style, level, size, url: `/city/regional/${style}/${size / 32}x/cast_${level}.png`,
+  }))));
+const regionalMarkerKey = (style: RegionalArchitecture, size: number, level: number) =>
+  `R${size}:${style}:${level}`;
 
 /** 성내 맞춤으로 그릴 城 그림 — 그릴 폭 이상인 가장 작은 해상도, 없으면 불러온 것 가운데 가장 큰 것. */
-export function cityFitSprite<T>(images: Partial<Record<string, T>>, level: number, drawWidth: number): T | undefined {
+export function cityFitSprite<T>(images: Partial<Record<string, T>>, level: number, drawWidth: number,
+  style: RegionalArchitecture = 'neutral'): T | undefined {
+  if (style !== 'neutral' && REGIONAL_MARKER_LEVELS.some((candidate) => candidate === level)) {
+    const regional = REGIONAL_MARKER_SIZES.map((size) => [size, regionalMarkerKey(style, size, level)] as const)
+      .filter(([, key]) => images[key] !== undefined);
+    const selected = regional.find(([size]) => size >= drawWidth) ?? regional.at(-1);
+    if (selected) return images[selected[1]];
+  }
   const sizes: Array<[number, string]> = [
     [32, cityMarkerImageKey(1, level)],
     [64, cityMarkerImageKey(2, level)],
@@ -1356,6 +1377,7 @@ function drawScene(
   showCellGrid: boolean,
   showCityFootprint: boolean,
   fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
+  mapCode: string,
   politicalAlpha = 1,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
@@ -1494,7 +1516,9 @@ function drawScene(
     );
     const radius = cityMarkerRadius(level, dpr) * (markerZoom ?? 0.5);
     const assetScale = cityMarkerAssetScale(dpr);
-    const marker = markerImages[cityMarkerImageKey(assetScale, level)]
+    const style = architectureForJu(city.regionName);
+    const marker = markerImages[regionalMarkerKey(style, assetScale * 32, level)]
+      ?? markerImages[cityMarkerImageKey(assetScale, level)]
       ?? markerImages[cityMarkerImageKey(assetScale === 2 ? 1 : 2, level)];
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
@@ -1521,7 +1545,7 @@ function drawScene(
       }
     } else if (marker && fit) {
       // 그릴 폭보다 작지 않은 가장 작은 원본(1x 32 · 2x 64 · 4x 128 · 8x 256)을 쓴다. 불러온 것이 없으면 가장 큰 것.
-      const sprite = cityFitSprite(markerImages, level, fit.width) ?? marker;
+      const sprite = cityFitSprite(markerImages, level, fit.width, style) ?? marker;
       hits.push({
         city,
         provinceId: city.provinceId,
@@ -1605,6 +1629,21 @@ function drawScene(
           context.fillText(/^\d+$/.test(key) ? key : '!', bx + size / 2, by + size / 2);
         }
         bx += size + 2 * dpr;
+      }
+      const waterwayBadges: IsoCityBadge[] = mapCode === 'han-world-v3'
+        ? (WATERWAY_SITE_ROLES[city.id] ?? []).map((feature) => ({ kind: 'waterway', feature })) : [];
+      const detailedBadges = [...waterwayBadges, ...(city.cityBadges ?? [])];
+      if (detailedBadges.length) {
+        const badgeImages = new Map<string, HTMLImageElement>();
+        for (const key of ['works', 'besieged', 'isolated']) {
+          const image = markerImages[`status:4:${key}`] ?? markerImages[`status:2:${key}`];
+          if (image) badgeImages.set(key, image);
+        }
+        context.save();
+        context.scale(dpr, dpr);
+        drawCityBadgeLayer(context, detailedBadges, badgeImages,
+          (fit ? fit.cx + fw * 0.4 : px + r * 1.3) / dpr, by / dpr);
+        context.restore();
       }
     }
 
@@ -2052,6 +2091,7 @@ export function HanMapCanvas({
       showCellGrid,
       showCityFootprint,
       commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
+      mapCode,
       politicalStyle === 'tint' ? POLITICAL_TINT_ALPHA : 1,
     );
     battlefieldHits.current = [];
@@ -2066,7 +2106,7 @@ export function HanMapCanvas({
       battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
     }
     if (ctx && corpsRef.current?.length) drawCorpsOverlay(ctx, corpsRef.current, view, sizeRef.current.dpr);
-  }, [administrativeLayer, politicalStyle]);
+  }, [administrativeLayer, mapCode, politicalStyle]);
 
   // 군단 겹이 바뀌면 다시 그린다 — 순 갱신마다 새 배열이 온다.
   useEffect(() => {
@@ -2075,12 +2115,17 @@ export function HanMapCanvas({
 
   useEffect(() => {
     let alive = true;
+    let paintFrame = 0;
+    const schedulePaint = () => {
+      if (paintFrame) return;
+      paintFrame = requestAnimationFrame(() => { paintFrame = 0; render(); });
+    };
     const load = (key: string, url: string) => {
       const image = new Image();
       image.onload = () => {
         if (!alive) return;
         markerImagesRef.current[key] = image;
-        render();
+        schedulePaint();
       };
       image.src = url;
       return image;
@@ -2089,10 +2134,12 @@ export function HanMapCanvas({
       ...CITY_MARKER_URLS.map(({ assetScale, level, url }) => load(cityMarkerImageKey(assetScale, level), url)),
       // 크게 뽑은 원본·상태 배지는 없어도 된다(onerror 무시) — 없으면 64px·숫자 배지로 그린다.
       ...CITY_MARKER_LARGE_URLS.map(({ size, level, url }) => load(`L${size}:${level}`, url)),
+      ...REGIONAL_MARKER_URLS.map(({ style, size, level, url }) => load(regionalMarkerKey(style, size, level), url)),
       ...CITY_STATUS_BADGE_SCALES.flatMap((scale) => CITY_STATUS_BADGE_KEYS.map((key) => load(`status:${scale}:${key}`, cityStatusBadgeUrl(key, scale)))),
     ];
     return () => {
       alive = false;
+      if (paintFrame) cancelAnimationFrame(paintFrame);
       for (const image of pending) image.onload = null;
     };
   }, [render]);

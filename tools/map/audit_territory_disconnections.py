@@ -637,6 +637,25 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
                 raise ValueError("prior territory review fails before relocation: " + repr(prior["errors"]))
             rows = relocation.project_territory_rows(before, document, rows, later)
             return rows, later["territoryProjection"]
+        # The 1447 城 release reissued the frozen frontier input after adding gap
+        # counties. The Geuk relocation's reviewed residual component is still
+        # byte-for-byte the same. Carry that single verdict only for the exact
+        # pinned frontier input; _check_rows validates every remaining component.
+        if frontier.PLACEMENTS.exists():
+            frontier_stage = json.loads(frontier.PLACEMENTS.read_text(encoding="utf-8")).get("priorStage", {})
+            if relocation.digest(document) == frontier_stage.get("inputDocumentSha256"):
+                projection = later["territoryProjection"]
+                source = next(row for row in rows if row["componentKey"] == projection["sourceComponentKey"])
+                if relocation.digest(source) != projection["sourceRowSha256"]:
+                    raise ValueError("frozen territory source row changed before frontier counties")
+                current = next(row for row in inventory(document)
+                               if row["componentKey"] == projection["afterComponent"]["componentKey"])
+                if current != projection["afterComponent"]:
+                    raise ValueError("frozen Geuk residual component changed before frontier counties")
+                projected = [dict(row) for row in rows]
+                row = next(row for row in projected if row["componentKey"] == projection["sourceComponentKey"])
+                row.update({key: value for key, value in current.items() if key in row})
+                return projected, projection
     return rows, None
 
 

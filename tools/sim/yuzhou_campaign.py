@@ -68,7 +68,7 @@ def run():
     parents = {p['id'] for p in tiles['commanderyRecords'] if canon.get(p['nameCh']) == '豫州'}
     jurs = {j['id']: j for j in tiles['jurisdictionRecords'] if j['commanderyId'] in parents and j['kind'] == 'COUNTY'}
     rows = {r['jurisdictionId']: r for r in economy['jurisdictions'] if r['jurisdictionId'] in jurs}
-    assert len(rows) == 81
+    assert rows and set(rows) == set(jurs)
     seats = {}
     for jid, j in jurs.items():
         hits = [i for i, p in enumerate(tiles['provinceRecords']) if p['id'] == j['seatPlaceId']]
@@ -162,7 +162,7 @@ def run():
         captureTurns=sorted({r['county']['capture']['turn'] for r in results if r.get('mode')==mode and r['county']['capture']}))
         for mode in ('baseline','relief','army_starved','encounter')}
     summary['noSingleCountyForce']=sum(r['status']=='NO_SINGLE_COUNTY_FORCE' for r in results)
-    result=dict(scope='Yuzhou81 counties; integrated recruitment/march/army rations/passage/finite convoy/capture/monthly tax, independent scenarios',
+    result=dict(scope=f'Yuzhou {len(rows)} counties; integrated recruitment/march/army rations/passage/finite convoy/capture/monthly tax, independent scenarios',
         summary=summary,cases=results,numericalBaselineWithinApprovedTargets=True,
         limitations=['Not runtime or full S3 play. Tactical approach control is a scenario input; encounter halts without fabricating battle.',
             'Initial defender stock includes explicitly accounted travel consumption plus18 ration-turn siege reserve; never reset at arrival.',

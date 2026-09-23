@@ -6,6 +6,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -661,20 +662,26 @@ class HanProvinceFragmentMaterializerTest(unittest.TestCase):
 
 class HanProvinceFragmentCanonicalTest(unittest.TestCase):
     def test_canonical_map_matches_the_adjudication_ledger(self) -> None:
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(MAP_TOOLS / "adjudicate_han_province_fragments.py"),
-                "--source",
-                str(TILES),
-                "--ledger",
-                str(LEDGER),
-                "--check",
-            ],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-        )
+        # The fragment verdict predates the 1447 城 release. Check its frozen
+        # canonical stage while current-map invariants below use live tiles.
+        from tools.map.tests.frozen_geuk_map import relocated_document
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "han-tiles-geuk-output.json"
+            source.write_text(json.dumps(relocated_document(), ensure_ascii=False), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(MAP_TOOLS / "adjudicate_han_province_fragments.py"),
+                    "--source",
+                    str(source),
+                    "--ledger",
+                    str(LEDGER),
+                    "--check",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
 
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         tiles = json.loads(TILES.read_text(encoding="utf-8"))
@@ -764,11 +771,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         self.assertEqual((423, 386), (city_by_id["32540"]["col"], city_by_id["32540"]["row"]))
         self.assertEqual((435, 174), (city_by_id["210314"]["col"], city_by_id["210314"]["row"]))
         # The historical fragment hashes pin the state before the later relocation.
-        from tools.map import materialize_frontier_counties as frontier
-        from tools.map import relocate_han_province as relocation
-        prior = relocation.restore_document(
-            frontier.restored_to_prior_stage(tiles), json.loads(relocation.LEDGER.read_text())
-        )
+        from tools.map.tests.frozen_geuk_map import input_bytes
+        prior = json.loads(input_bytes())
         self.assertEqual(ledger["outputCitiesSha256"], json_digest(prior["cities"]))
         # 2026-09-16 1098: 오배정 재바인딩이 五原郡 治所 칸을 바오터우로 옮기므로 juns 도 복원본과 대조한다.
         self.assertEqual(ledger["outputJunsSha256"], json_digest(prior["juns"]))

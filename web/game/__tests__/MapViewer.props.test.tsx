@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
-import type IsoWorldMapType from '@/components/iso/IsoWorldMap';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { STRATEGIC_BINDING, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
@@ -10,11 +9,15 @@ const mocks = vi.hoisted(() => ({
   mapPreview: vi.fn(),
   worldMap: vi.fn(),
   strategicTopology: vi.fn(),
+  frontInfo: vi.fn(),
+  hwihaWorks: vi.fn(),
+  hwihaSieges: vi.fn(),
   props: null as ComponentProps<typeof HanMapCanvasType> | null,
-  iso: null as ComponentProps<typeof IsoWorldMapType> | null,
 }));
 
-vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap, strategicTopology: mocks.strategicTopology } }));
+vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap,
+  strategicTopology: mocks.strategicTopology, frontInfo: mocks.frontInfo,
+  hwihaWorks: mocks.hwihaWorks, hwihaSieges: mocks.hwihaSieges } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
@@ -22,15 +25,6 @@ vi.mock('@opensamguk/ui', async () => {
     return <div data-testid="shared-iso-map" />;
   } };
 });
-// 지도는 아이소가 정본이다. HanMapCanvas 는 legacyCanvas 를 켠 자리에서만 나온다
-// (전략 경로선 하나 때문에 남아 있다 — MapViewer 의 legacyCanvas 주석 참조).
-vi.mock('@/components/iso/IsoWorldMap', () => ({
-  default: (props: ComponentProps<typeof IsoWorldMapType>) => {
-    mocks.iso = props;
-    return <div data-testid="iso-world-map" data-terrain={props.terrainUrl} />;
-  },
-}));
-
 import MapViewer, { mapTitleClass, mapTitleTooltip, seasonOf } from '@/components/game/MapViewer';
 
 const MAP: MapPreviewResponse = {
@@ -48,10 +42,12 @@ const WORLD: WorldMapResponse = {
 beforeEach(() => {
   document.cookie = 'sam_server=; Max-Age=0; path=/';
   mocks.props = null;
-  mocks.iso = null;
   mocks.mapPreview.mockReset().mockResolvedValue(MAP);
   mocks.worldMap.mockReset().mockResolvedValue(WORLD);
   mocks.strategicTopology.mockReset().mockResolvedValue(STRATEGIC_TOPOLOGY);
+  mocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: null } });
+  mocks.hwihaWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
+  mocks.hwihaSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
   vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
   Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
@@ -78,17 +74,17 @@ describe('MapViewer pure title contracts', () => {
 describe('MapViewer data props', () => {
   it('requests fresh terrain only when the V3 base byte pin changes, not during control refresh', async () => {
     mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
-    const { rerender } = render(<MapViewer legacyCanvas />);
+    const { rerender } = render(<MapViewer />);
     await waitFor(() => expect(mocks.props?.strategicTopology).toEqual(STRATEGIC_TOPOLOGY));
     const firstUrl = mocks.props?.terrainUrl as (mapCode: string) => string;
     expect(firstUrl('han-world-v3')).toContain(`baseTilesSha256=${STRATEGIC_BINDING.baseTilesSha256}`);
-    rerender(<MapViewer legacyCanvas refreshKey={1} />);
+    rerender(<MapViewer refreshKey={1} />);
     await waitFor(() => expect(mocks.strategicTopology).toHaveBeenCalledTimes(2));
     expect(mocks.props?.terrainUrl).toBe(firstUrl);
     const nextBinding = { ...STRATEGIC_BINDING, baseTilesSha256: 'e'.repeat(64), topologyHash: 'f'.repeat(64) };
     mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: nextBinding });
     mocks.strategicTopology.mockResolvedValue({ ...STRATEGIC_TOPOLOGY, binding: nextBinding });
-    rerender(<MapViewer legacyCanvas refreshKey={2} />);
+    rerender(<MapViewer refreshKey={2} />);
     await waitFor(() => expect(mocks.props?.strategicTopology?.binding).toEqual(nextBinding));
     expect((mocks.props?.terrainUrl as (mapCode: string) => string)('han-world-v3'))
       .toContain(`baseTilesSha256=${nextBinding.baseTilesSha256}`);
@@ -97,10 +93,10 @@ describe('MapViewer data props', () => {
   it('immediately hides old control and clears the route binding if a refresh fails', async () => {
     const onBinding = vi.fn();
     mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
-    const { rerender } = render(<MapViewer legacyCanvas onStrategicBindingChange={onBinding} />);
+    const { rerender } = render(<MapViewer onStrategicBindingChange={onBinding} />);
     await waitFor(() => expect(mocks.props?.strategicTopology).toEqual(STRATEGIC_TOPOLOGY));
     mocks.mapPreview.mockRejectedValueOnce(new Error('offline'));
-    rerender(<MapViewer legacyCanvas refreshKey={1} onStrategicBindingChange={onBinding} />);
+    rerender(<MapViewer refreshKey={1} onStrategicBindingChange={onBinding} />);
     expect(mocks.props?.strategicTopology).toBeUndefined();
     await waitFor(() => expect(onBinding).toHaveBeenLastCalledWith(null));
     expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
@@ -112,7 +108,7 @@ describe('MapViewer data props', () => {
     let finish!: (value: typeof STRATEGIC_TOPOLOGY) => void;
     mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
     mocks.strategicTopology.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
-    render(<MapViewer legacyCanvas />);
+    render(<MapViewer />);
     await waitFor(() => expect(finish).toBeTypeOf('function'));
     document.cookie = 'sam_server=other; path=/';
     finish(STRATEGIC_TOPOLOGY);
@@ -121,7 +117,7 @@ describe('MapViewer data props', () => {
   });
   it('fetches the matching V3 topology and redacted control without changing map ownership', async () => {
     mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
-    render(<MapViewer legacyCanvas />);
+    render(<MapViewer />);
     await waitFor(() => expect(mocks.props).toMatchObject({ strategicTopology: STRATEGIC_TOPOLOGY }));
     expect(mocks.props?.cities?.[0].nationColor).toBe('#ff0000');
   });
@@ -130,7 +126,7 @@ describe('MapViewer data props', () => {
     mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
     mocks.strategicTopology.mockResolvedValueOnce({ ...STRATEGIC_TOPOLOGY,
       binding: { ...STRATEGIC_BINDING, topologyHash: 'd'.repeat(64) } });
-    render(<MapViewer legacyCanvas />);
+    render(<MapViewer />);
     expect(await screen.findByText(/수역.*일치하지/)).toBeInTheDocument();
     expect(mocks.props?.cities?.[0].id).toBe(11);
     expect(mocks.props).not.toHaveProperty('strategicTopology', STRATEGIC_TOPOLOGY);
@@ -141,27 +137,27 @@ describe('MapViewer data props', () => {
     expect(mocks.strategicTopology).not.toHaveBeenCalled();
   });
 
-  it('mapData skips self-fetch and renders the title above the iso map', () => {
+  it('mapData skips self-fetch and renders the title above the default 2D map', () => {
     render(<MapViewer mapData={MAP} />);
     expect(screen.getByText('200년 5월 상순')).toBeInTheDocument();
-    expect(screen.getByTestId('iso-world-map')).toBeInTheDocument();
-    expect(screen.queryByTestId('shared-iso-map')).toBeNull();
+    expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
     expect(mocks.mapPreview).not.toHaveBeenCalled();
   });
 
-  it('self-fetch loads preview data and hands the iso map the encoded terrain url', async () => {
+  it('self-fetch loads preview data and hands the 2D map the encoded terrain url', async () => {
     const mapCode = 'ha n&?';
     mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode });
     render(<MapViewer />);
-    await screen.findByTestId('iso-world-map');
+    await screen.findByTestId('shared-iso-map');
     expect(mocks.mapPreview).toHaveBeenCalledTimes(1);
-    expect(mocks.iso?.terrainUrl).toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
+    expect((mocks.props?.terrainUrl as (mapCode: string) => string)(mapCode))
+      .toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
   });
 
-  it('legacyCanvas 를 켜면 옛 평면 캔버스가 province PNG 까지 그대로 받는다', async () => {
+  it('기본 2D 지도가 province PNG 까지 그대로 받는다', async () => {
     const mapCode = 'ha n&?';
     mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode });
-    render(<MapViewer legacyCanvas />);
+    render(<MapViewer />);
     await screen.findByTestId('shared-iso-map');
     expect(mocks.props?.mapCode).toBe(mapCode);
     const provinceUrl = typeof mocks.props?.provinceUrl === 'function'
@@ -172,9 +168,10 @@ describe('MapViewer data props', () => {
 
   it('live mode merges state, owner, supply, capital and my city', async () => {
     render(<MapViewer live />);
-    await waitFor(() => expect(mocks.iso?.nations).toContainEqual({ id: 2, name: '오', color: '#0000ff' }));
-    expect(mocks.iso?.cities?.[0]).toMatchObject({ id: 11, level: 6, nationId: 2, state: 9, supply: false, isCapital: true });
-    expect(mocks.iso?.currentCityId).toBe(11);
+    await waitFor(() => expect(mocks.props?.cities?.[0]).toMatchObject({
+      id: 11, level: 6, nationId: 2, state: 9, supply: false, isCapital: true,
+    }));
+    expect(mocks.props?.currentCityId).toBe(11);
   });
 
   it('requests preview and world in parallel instead of serially (§4 initial loading)', async () => {
@@ -188,17 +185,30 @@ describe('MapViewer data props', () => {
     expect(mocks.worldMap).toHaveBeenCalledTimes(1);
     resolveWorld(WORLD);
     resolvePreview(MAP);
-    await waitFor(() => expect(mocks.iso?.nations).toContainEqual({ id: 2, name: '오', color: '#0000ff' }));
+    await waitFor(() => expect(mocks.props?.cities?.[0].nationColor).toBe('#0000ff'));
   });
 
   it('falls back to preview-only when the parallel world request fails', async () => {
     mocks.worldMap.mockRejectedValueOnce(new Error('offline'));
     render(<MapViewer live />);
-    await waitFor(() => expect(mocks.iso?.cities?.[0]).toMatchObject({ id: 11, nationId: 1 }));
+    await waitFor(() => expect(mocks.props?.cities?.[0]).toMatchObject({ id: 11, nationId: 1 }));
+  });
+
+  it('shows nine-kind work and siege details on the default 2D city layer', async () => {
+    mocks.frontInfo.mockResolvedValueOnce({ general: { generalId: 7 } });
+    mocks.hwihaWorks.mockResolvedValueOnce({ status: 'READY', counties: [{ countyId: 11,
+      active: { work: 'ROAD', label: '도로', percent: 35 }, completed: [] }] });
+    mocks.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [{ countyId: 11, status: 'ACTIVE' }] });
+    render(<MapViewer live />);
+    await waitFor(() => expect(mocks.props?.cities?.[0].cityBadges).toEqual([
+      { kind: 'supply', supplied: false },
+      { kind: 'work', work: 'ROAD', label: '도로', phase: 'active', percent: 35 },
+      { kind: 'siege' },
+    ]));
   });
 
   it('forwards the optional initial focus profile unchanged', () => {
-    render(<MapViewer legacyCanvas mapData={MAP} initialFocus="current-city-close" />);
+    render(<MapViewer mapData={MAP} initialFocus="current-city-close" />);
     expect(mocks.props?.initialFocus).toBe('current-city-close');
   });
 
@@ -214,9 +224,9 @@ describe('MapViewer data props', () => {
   it('keeps the existing canvas visible while refreshKey reloads', async () => {
     const pending = new Promise<MapPreviewResponse>(() => {});
     const { rerender } = render(<MapViewer />);
-    await screen.findByTestId('iso-world-map');
+    await screen.findByTestId('shared-iso-map');
     mocks.mapPreview.mockReturnValueOnce(pending);
     rerender(<MapViewer refreshKey={1} />);
-    expect(screen.getByTestId('iso-world-map')).toBeInTheDocument();
+    expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
   });
 });

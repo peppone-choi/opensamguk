@@ -1,0 +1,2247 @@
+{
+ "schemaVersion": 1,
+ "sourceLedgerId": "territory-disconnection-adjudications-partition-v1",
+ "sourcePartitionStageOutputSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+ "scope": "Partition carry review proposals only; draftVerdict is not an adopted ruling.",
+ "counts": {
+  "rows": 67,
+  "humanDecisionRequired": 15,
+  "currentExact": 52,
+  "currentChanged": 11,
+  "currentAbsent": 4
+ },
+ "rows": [
+  {
+   "componentKey": "40165@483:451",
+   "unitId": "40165",
+   "unitNameCh": "东部侯官县",
+   "memberIds": [
+    "SUB-40165-39a88c0543b5"
+   ],
+   "cellCountAtPartition": 9,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-40165-39a88c0543b5"
+   ],
+   "currentCellCount": 9,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 40165@483:451 9칸 col 481–484 / row 451–453, 육지 이웃 없음, 음수 경계 {'SEA': 14}"
+   ]
+  },
+  {
+   "componentKey": "40426@535:296",
+   "unitId": "40426",
+   "unitNameCh": "娄县",
+   "memberIds": [
+    "SUB-40426-900f77eff5b7"
+   ],
+   "cellCountAtPartition": 39,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-40426-900f77eff5b7"
+   ],
+   "currentCellCount": 39,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志 郡國四 靑州 荊州 揚州「婁　殿本考證謂監本脫此一縣，依宋本添。按：前安縣即婁縣之誤，後人不曉，增此一縣，説見上」",
+    "shiliao:讀史方輿紀要/卷024 南直六 蘇州府 松江府「唐武德間吳郡城東三百餘里忽湧二洲，謂之東西二沙，漸積高廣，漁樵者依之，遂成田廬，楊吳因置崇明鎮於西沙」",
+    "shiliao:讀史方輿紀要/卷129 川瀆六 漕河 海運「崇明縣則孤懸海渚」",
+    "shiliao:讀史方輿紀要/卷024 南直六 蘇州府 松江府「秦婁縣地。漢因之。梁天監中，置信義縣」",
+    "shiliao:元和郡縣圖志/卷25 江南道一 浙西觀察使「昆山縣，緊。西至州八十里。本秦、漢婁縣，其城吳子壽夢所築」",
+    "chgis:hvd_40426 source note「治所在今江苏昆山县城东北侧」",
+    "chgis:hvd_40426 source note「顺帝永建四年（129）析会稽郡浙江以西地区置吴郡，地属吴郡」",
+    "map:han-tiles _meta.projection = {cell 0.04690971, k 0.866025, x0 80.540363, y1 45.0, pad 0.69282}; 조각 39셀 = col 535–547 / row 296–303 → 121.21–121.86E, 31.46–31.78N (崇明島 윤곽)",
+    "map:han-tiles cities[40426] 婁縣 col 535 row 292 인데 lon 120.953649 / lat 31.394462 를 같은 투영으로 환산하면 col 530 row 304 (앵커 +5열 / −12행 이탈)",
+    "map:han-tiles 조각 이웃 42셀 전부 terrain 0(SEA), 揚子江 하구 채널이 col 533–538 구간에서 본토 육지와 조각을 가른다",
+    "map:han-tiles cell identity - 40426@535:296 의 셀 집합이 PARENT-0052@535:296 (吳郡) 와 정확히 같다 (39셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "40740@549:331",
+   "unitId": "40740",
+   "unitNameCh": "鄮县",
+   "memberIds": [
+    "SUB-40740-3a5b5675f605"
+   ],
+   "cellCountAtPartition": 30,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-40740-3a5b5675f605"
+   ],
+   "currentCellCount": 30,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 40740@549:331 30칸 col 549–557 / row 331–337, 육지 이웃 없음, 음수 경계 {'SEA': 34}"
+   ]
+  },
+  {
+   "componentKey": "41154@442:340",
+   "unitId": "41154",
+   "unitNameCh": "彭泽县",
+   "memberIds": [
+    "41154"
+   ],
+   "cellCountAtPartition": 3,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "41154"
+   ],
+   "currentCellCount": 3,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志 郡國四「彭澤，彭蠡澤在西」",
+    "shiliao:後漢書/卷112 郡國志 郡國四「柴桑」",
+    "shiliao:三國志/卷47 吳書·吳主傳「以武昌、下雉、尋陽、陽新、柴桑、沙羨六縣爲武昌郡」",
+    "shiliao:三國志/卷47 吳書·吳主傳「十五年，分豫章爲鄱陽郡」",
+    "shiliao:讀史方輿紀要/卷085 江西三 九江府「九江左挾彭蠡，右傍通川」",
+    "chgis:hvd_41145 source note「治今江西九江市西南二十里」",
+    "chgis:hvd_41145 partOf「210-220 豫章郡」",
+    "map:han-tiles 조각1 = (442,340),(442,341),(442,342) 세 칸, 세 칸 모두 terrain=3 RIVER",
+    "map:han-tiles 조각1 4방 이웃 = LAKE 7 + 寻阳县 1, 본체와는 (443,339)-(442,340) 대각 접촉",
+    "map:han-tiles _meta.projection cell=0.04690971 k=0.866025 x0=80.540363 pad=0.69282 y1=45.0 → 조각1 ≈ 116.17E, 29.62–29.72N (湖口 일대)",
+    "map:han-tiles terrain 출처 tools/map/build_terrain_grid.py:1309-1310 ne_50m_lakes.geojson→LAKE, ne_50m_rivers_lake_centerlines.geojson→RIVER"
+   ]
+  },
+  {
+   "componentKey": "41194@446:346",
+   "unitId": "41194",
+   "unitNameCh": "鄡阳县",
+   "memberIds": [
+    "41194"
+   ],
+   "cellCountAtPartition": 20,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "41194"
+   ],
+   "currentCellCount": 20,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 41194@446:346 20칸 col 442–448 / row 346–350, 육지 이웃 ['41154', '41165', '41195'], 음수 경계 {'LAKE': 12}"
+   ]
+  },
+  {
+   "componentKey": "42301@379:509",
+   "unitId": "42301",
+   "unitNameCh": "安宁县",
+   "memberIds": [
+    "SUB-42301-7104ff31657a"
+   ],
+   "cellCountAtPartition": 16,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "PARENT_MISASSIGNMENT",
+   "sourceReviewState": "CORRECTED_BY_2_REFUTERS",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-42301-7104ff31657a"
+   ],
+   "currentCellCount": 16,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles PARENT-0169@379:509 16셀 전부 terrain=1(PLAIN), negativeBoundary SEA 28, 셀범위 col 375–381 / row 509–513 → lon 112.54–112.86 / lat 21.60–21.79 (上川島·下川島)",
+    "map:han-tiles 조각→본체 최소 체비셰프 간격 2셀 (377,511)→(376,509), 사이 셀은 terrain=0(SEA)",
+    "chgis:hvd_42277 source note「汉元鼎六年（前111年）置，属合浦郡…治所即今广东省新兴县里洞镇」",
+    "shiliao:後漢書/卷113 郡國志五「三五三一頁一二行　臨元　前志作「臨允」。按：漢書補注王先謙謂「元」乃「允」字之訛」",
+    "shiliao:晉書/卷015 志第五 地理下「高涼郡{吳置。統縣三，戶二千。}：安寧高涼…」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「高涼太守，二漢有高涼縣，屬合浦」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「臨允令，漢舊縣，屬合浦，晉太康地志屬蒼梧」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「合浦太守，漢武帝立，孫權黃武七年，更名珠官」",
+    "shiliao:晉書/卷015 志第五 地理下「廣信端溪高要建陵新寧猛陵鄣平農城元谿臨允都羅武城」",
+    "shiliao:晉書/卷015 志第五 地理下「安寧高涼思平」",
+    "shiliao:漢書/卷028 地理志 第八「縣五：徐聞，高涼，合浦，臨允，朱盧」",
+    "map:han-tiles PARENT-0169@379:509 16셀 owner=DIRECT-PARENT-0169-eba33ce69960(jurisdictionId 42277), terrain 전부 1, 8이웃 66면 전부 SEA/무소유, col 375–381 / row 509–513 → lon 112.513–112.892 / lat 21.581–21.816",
+    "map:han-tiles PARENT-0169@379:509 최근접 육지 셀 (376,509)=高凉县/PARENT-0169, 체비셰프 2셀, 사이 전부 SEA",
+    "map:han-tiles 투영 역산식 근거 tools/map/validate_han_strategic_site_anchors.py:453-454 (col=floor((lon·k−x0+pad)/cell), row=floor((y1+pad−lat)/cell))",
+    "shiliao:宋書/卷038 志第二十八 州郡四「臨允令，漢舊縣，屬合浦，晉太康地志屬蒼梧。何志，吳度蒼梧」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「二漢有高涼縣，屬合浦」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「安寧令，吳立」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「合浦太守，漢武帝立，孫權黃武七年，更名珠官，孫亮復舊」",
+    "shiliao:三國志/卷60 吳書·賀全呂周鍾離傳「以博為高涼西部都尉」",
+    "shiliao:讀史方輿紀要/卷003 歷代州域形勢三 晉 十六國「漢置，領安寧等縣三。安寧，在今肇慶府陽江縣境」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「桓帝置高涼郡，領高梁等縣」",
+    "chgis:hvd_42277 source note「吴永安六年（263年）属苍梧郡，东晋永和七年（351年）属新宁郡」",
+    "map:han-tiles cell identity - 42277@379:509 의 셀 집합이 PARENT-0169@379:509 (高涼郡) 와 정확히 같다 (16셀). 같은 단절을 縣 층위에서 본 것이다.",
+    "shiliao:宋書/卷038 志第二十八 州郡四「高涼太守，二漢有高涼縣，屬合浦，漢獻帝建安二十三年〔校勘: 續漢書郡國志作「二十五年」。按建安二十五年，即魏黃初元年〕，吳分立，治思平縣」",
+    "shiliao:宋書/卷038 志第二十八 州郡四 高涼太守 領縣七의 첫 縣「思平令，晉太康地志有」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 合浦郡 五城「〖合浦〗〖徐闻〗〖高凉〗〖临元〗〖朱崖〗」(临元=臨允, 卷113 校勘記)"
+   ]
+  },
+  {
+   "componentKey": "42524@367:500",
+   "unitId": "42524",
+   "unitNameCh": "合浦县",
+   "memberIds": [
+    "SUB-42524-622c0a56ef76"
+   ],
+   "cellCountAtPartition": 67,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "SUB-42524-622c0a56ef76"
+   ],
+   "currentCellCount": 59,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「合浦郡武帝置。雒阳南九千一百九十一里。五城」",
+    "shiliao:漢書/卷028 地理志 第八「縣五：徐聞，高涼，合浦，臨允，朱盧」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「高涼太守，二漢有高涼縣，屬合浦」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「臨允令，漢舊縣，屬合浦」",
+    "shiliao:晉書/卷015 志第五 地理下「安寧高涼思平」",
+    "shiliao:晉書/卷015 志第五 地理下「合浦南平蕩昌徐聞毒質珠官」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「桓帝置高涼郡，領高梁等縣」",
+    "shiliao:讀史方輿紀要/卷003 歷代州域形勢三 晉 十六國「漢置，領安寧等縣三。安寧，在今肇慶府陽江縣境」",
+    "shiliao:讀史方輿紀要/卷005 歷代州域形勢五 唐上「漢合浦郡地」",
+    "shiliao:三國志/卷47 吳書·吳主傳「爲珠官郡」",
+    "chgis:hvd_42524 source note「治所即今广西浦北县南旧州村」",
+    "chgis:hvd_42300 source note「治所在今广东省阳江市北大八镇」",
+    "chgis:hvd_42277 source note「治所即今广东省新兴县里洞镇」",
+    "chgis:hvd_42301 source note「后汉建安二十五年（220年）分高凉县置，属高凉郡」",
+    "map:han-tiles 조각 67셀 col363-378 row500-506, 4-이웃 46셀은 高凉县 25 · 临允县 21 뿐으로 合浦县 본체와 맞닿지 않는다"
+   ]
+  },
+  {
+   "componentKey": "43138@463:286",
+   "unitId": "43138",
+   "unitNameCh": "六安县",
+   "memberIds": [
+    "43138"
+   ],
+   "cellCountAtPartition": 38,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "43138"
+   ],
+   "currentCellCount": 30,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 43138@463:286 38칸 col 461–468 / row 286–294, 육지 이웃 ['43057', '43121', '43130'], 음수 경계 {}"
+   ]
+  },
+  {
+   "componentKey": "43252@480:266",
+   "unitId": "43252",
+   "unitNameCh": "徐县",
+   "memberIds": [
+    "SUB-43252-2d3b29ad3f33"
+   ],
+   "cellCountAtPartition": 9,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-43252-2d3b29ad3f33"
+   ],
+   "currentCellCount": 9,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 43252@480:266 9칸 col 480–483 / row 266–269, 육지 이웃 없음, 음수 경계 {'LAKE': 16}"
+   ]
+  },
+  {
+   "componentKey": "44580@246:300",
+   "unitId": "44580",
+   "unitNameCh": "汉昌县",
+   "memberIds": [
+    "SUB-44580-4cf3b7cc1de8"
+   ],
+   "cellCountAtPartition": 81,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "ABSENT",
+   "currentMemberIds": null,
+   "currentCellCount": null,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 44580@246:300 81칸 col 244–254 / row 300–311, 육지 이웃 ['44558', '44564', '44570', '96113', '96341'], 음수 경계 {}"
+   ]
+  },
+  {
+   "componentKey": "85217@484:185",
+   "unitId": "85217",
+   "unitNameCh": "东安平县",
+   "memberIds": [
+    "85217"
+   ],
+   "cellCountAtPartition": 13,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "85217"
+   ],
+   "currentCellCount": 13,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 85217@484:185 13칸 col 483–486 / row 185–189, 육지 이웃 ['85216', '85222', '85234', '85240', '85262', '85280', '85281'], 음수 경계 {}"
+   ]
+  },
+  {
+   "componentKey": "85344@515:208",
+   "unitId": "85344",
+   "unitNameCh": "琅邪县",
+   "memberIds": [
+    "85344"
+   ],
+   "cellCountAtPartition": 3,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "85344"
+   ],
+   "currentCellCount": 3,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷111 郡國志 郡國三 兗州 徐州「十三城，戸二萬八百四」",
+    "shiliao:後漢書/卷112 郡國志 郡國四 靑州 荊州 揚州「侯國，故屬琅邪。有介亭」",
+    "shiliao:讀史方輿紀要/卷035 山東六 青州府「漢置東武縣，爲琅邪郡」",
+    "shiliao:三國志/卷01 魏書•武帝紀「分琅邪、東海、北海爲城陽、利城、昌慮郡」",
+    "chgis:hvd_85337 source note「治今山东诸城市」",
+    "chgis:hvd_85386 source note「治今山东平度市西北长乐」",
+    "map:han-tiles 85337 owner cells — comp1 = (515,208)(516,208)(517,208), comp0 최근접 = (514,209): 대각 접촉(체비셰프 거리 1)",
+    "map:han-tiles 병목 셀 — (514,208)=黔陬县/85481, (515,209)=SEA(terrain 0)",
+    "map:han-tiles 85386 卢乡县 타일 bbox col 511-518 row 201-207 vs TGAZ 앵커 투영 col 510.5 row 185.6",
+    "shiliao:晉書/卷015 志第五 地理下「漢置，屬北海，自魏至晉，分北海而立焉」",
+    "shiliao:晉書/卷015 志第五 地理下「東武高密」",
+    "shiliao:後漢書/卷111 郡國志 郡國三 兗州 徐州「建安十一年，省昌慮幷東海」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「後漢并入琅邪郡，建安中，魏武復分置」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「又平昌郡，黃初三年魏文帝分城陽郡置」",
+    "shiliao:讀史方輿紀要/卷035 山東六 青州府「三年，曹操析置城陽郡」",
+    "shiliao:資治通鑑/卷062 第六十二卷 漢紀五十四「悉以霸等為守、相」",
+    "shiliao:三國志/卷18 魏書·二李臧文吕许典二庞阎传「太祖以霸為琅邪相，敦利城、禮東莞、觀北海、康城陽太守」",
+    "shiliao:三國志/卷28 魏書·王、毌丘、諸葛、鄧、鍾傳「黃初中，利城郡反」",
+    "shiliao:宋書/卷036 志第二十六 州郡二「二漢屬琅邪，晉太康地志屬東莞」",
+    "chgis:hvd_85337 source note「建安三年（198年）为城阳郡治」",
+    "chgis:hvd_85481 source note「建安三年（198年）属城阳郡」",
+    "chgis:hvd_85350 source note「建安三年（198年）属城阳郡」",
+    "chgis:hvd_85496 source note「建安三年（198年）属城阳郡，三国魏因之」"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0000@401:224",
+   "unitId": "PARENT-0000",
+   "unitNameCh": "河南尹",
+   "memberIds": [
+    "44320",
+    "44356",
+    "44384",
+    "44385",
+    "82458",
+    "82461",
+    "82465",
+    "82523",
+    "82525",
+    "82531"
+   ],
+   "cellCountAtPartition": 271,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "44320",
+    "44356",
+    "44384",
+    "44385",
+    "82458",
+    "82461",
+    "82465",
+    "82523",
+    "82525",
+    "82531",
+    "gc-g0000-014",
+    "ss-guandu"
+   ],
+   "currentCellCount": 271,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷109 郡國志 郡國一 司隷「二十一城，永和五年户二十万八千四百八十六」",
+    "shiliao:後漢書/卷109 郡國志 郡國一 司隷「有寻谷水」",
+    "shiliao:後漢書/卷109 郡國志 郡國一 司隷「有旃然水」",
+    "shiliao:後漢書/卷109 郡國志 郡國一 司隷「有太行山」",
+    "shiliao:後漢書/卷109 郡國志 郡國一 司隷「苏子所都」",
+    "shiliao:晉書/卷014 志第四 地理志 上「分河南立滎陽」",
+    "shiliao:晉書/卷014 志第四 地理志 上「地名敖，秦置敖倉者」",
+    "shiliao:晉書/卷014 志第四 地理志 上「有關，鄭之武牢」",
+    "shiliao:晉書/卷014 志第四 地理志 上「故國也，蘇忿生封」",
+    "shiliao:讀史方輿紀要/卷125 川瀆二 大河上「又東經鞏縣北，洛水入焉」",
+    "shiliao:讀史方輿紀要/卷125 川瀆二 大河上「又東經汜水縣北，又東經滎陽縣北」",
+    "shiliao:讀史方輿紀要/卷125 川瀆二 大河上「河之北岸，爲溫縣之境」",
+    "shiliao:讀史方輿紀要/卷049 河南四 懷慶府 衛輝府 彰德府「漢爲野王縣，屬河內郡」",
+    "chgis:hvd_44385 source note「魏正始三年，岁在甲子，被癸丑诏书，割河南郡，自巩、阙以东，创建荥阳郡」",
+    "chgis:hvd_82520 source note「约秦始皇二十六年（前221年）置，属河内郡」",
+    "map:han-tiles 두 조각에 동시에 접하는 유일한 관할은 野王县(82487, PARENT-0001 河內郡) — comp0 접촉 13셀, comp1 접촉 12셀, 폴리곤 col 383–390 / row 230–238",
+    "map:han-tiles 河南尹(PARENT-0000) 縣 목록에 鞏縣·平陰縣이 없고 成皋縣(82439)은 PARENT-0001 河內郡에 배정돼 있다"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0012@460:225",
+   "unitId": "PARENT-0012",
+   "unitNameCh": "魯國",
+   "memberIds": [
+    "45203",
+    "45210"
+   ],
+   "cellCountAtPartition": 19,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "45203",
+    "45210"
+   ],
+   "currentCellCount": 19,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷110 郡國志 豫州 魯國「魯國，秦薛郡，高后改。本屬徐州，光武改屬豫州。六城」",
+    "shiliao:後漢書/卷110 郡國志 豫州 魯國「薛，本國」",
+    "shiliao:後漢書/卷110 郡國志 豫州 魯國「六國時曰徐州」",
+    "shiliao:後漢書/卷110 郡國志 豫州 魯國「蕃，有南梁水」",
+    "shiliao:後漢書/卷110 郡國志 豫州 魯國「騶，本邾國」",
+    "shiliao:後漢書/卷110 郡國志 豫州 沛國「公丘，本滕國」",
+    "shiliao:後漢書/卷111 郡國志 徐州 東海郡「合鄕」注「漷水自此南至湖陸」",
+    "shiliao:後漢書/卷001A 光武帝紀上 注「昌慮，縣，屬東海郡，故城在今徐州滕縣東南」",
+    "shiliao:後漢書/卷001A 光武帝紀上 注「縣名，屬魯國，故城在今徐州滕縣。蕃音皮」",
+    "shiliao:晉書/卷014 地理志上 豫州 魯郡「漢置。統縣七」",
+    "shiliao:晉書/卷014 地理志上 豫州 魯郡「魯 汶陽 卞 鄒」",
+    "shiliao:晉書/卷014 地理志上 豫州 魯郡「薛 公丘」",
+    "shiliao:讀史方輿紀要/卷032 山東三 兗州府 滕縣「漢置薛縣，屬魯國。晉屬魯郡，劉宋屬彭城郡」",
+    "shiliao:讀史方輿紀要/卷032 山東三 兗州府 滕縣「薛城，縣南四十里。夏車正奚仲國也」",
+    "shiliao:讀史方輿紀要/卷032 山東三 兗州府 滕縣「漢置蕃縣，屬魯國。蕃讀若翻。晉屬魯郡。元康中改屬彭城郡」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「曰魯郡，曰汝南，皆故郡也；曰譙郡，建安中魏武分沛郡置」",
+    "shiliao:宋書/卷035 州郡志一「蕃令，漢舊縣，屬魯。晉惠帝元康中度」",
+    "shiliao:三國志/卷01 魏書 武帝紀「分琅邪、東海、北海爲城陽、利城、昌慮郡」",
+    "chgis:hvd_45210 source note「治今滕县东南官桥西南约2公里」",
+    "chgis:hvd_45210 source note「三国魏黄初元年（220年）属鲁郡」",
+    "chgis:hvd_45203 source note「治今滕县」",
+    "chgis:hvd_45203 source note「三国魏黄初元年（220年）属鲁郡」",
+    "repo:data/map/han-tiles.json cities id=45203 蕃县 col=463 row=218 lat=35.08502 lon=117.15701 (이웃 縣 오프셋 기준 기대 row≈225)",
+    "repo:data/map/han-tiles.json cities id=45210 薛县 col=461 row=229 lat=34.91616 lon=117.21185",
+    "chgis:hvd_45192 source note「《后汉书志》第20《续汉书·郡国志二》：鲁国，县六，其一驺县」",
+    "chgis:hvd_45192 source note「三国魏黄初元年（220年）属鲁郡」",
+    "chgis:hvd_45192 source note「治今邹县东南纪王城」",
+    "shiliao:後漢書/卷111 郡國志 兗州 山陽郡「〖南平陽〗侯國。有漆亭」",
+    "shiliao:後漢書/卷064 吳延史盧趙列傳「前書龔遂，山陽南平陽人，為勃海太守」",
+    "shiliao:讀史方輿紀要/卷001 歷代州域形勢一 秦「今滕縣西南四十里有薛城」",
+    "map:han-tiles _meta.projection(k=0.866025,x0=80.540363,y1=45.0,pad=0.69282,cell=0.04690971) 로 蕃县(45203) lat=35.08502 lon=117.15701 재계산 → 셀 (460,226), 저장값 (463,218), 편차 (+3,-8)",
+    "map:han-tiles 셀 (460,226) 의 현재 owner = 薛县(45210) — 蕃县의 투영 셀이 薛 조각 내부다",
+    "map:han-tiles 蕃县(45203) 투영 셀 (460,226) 에서 魯國 본체(45180·45199·45290·85669) 최근접 셀 (456,217) 까지 체비셰프 9칸",
+    "map:han-tiles 蕃县(45203) 현재 영역 셀 rows 214–218 · 魯縣(45180) 셀 rows 212–217 로 서로 접함 (예 (460,217)–(459,217))",
+    "map:han-tiles 魯縣 최남단 row=217, 薛县 최북단 row=225 · 사이 rows 218–224 소유 = 南平陽(45188 山陽)·邹县(45192 山陽)·合城(45299 東海)·公丘(45294 沛)",
+    "map:han-tiles jurisdictionRecords id=45192 邹县 commanderyId=PARENT-0028 (山陽郡)",
+    "map:han-tiles 창 cols 445–485 / rows 200–245 의 66개 city 중 투영 대비 행 편차 |Δrow|≥8 은 蕃县(45203) 뿐 (薛县 45210·邹县 45192·合城 45299·公丘 45294 는 Δ=0)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0013@413:190",
+   "unitId": "PARENT-0013",
+   "unitNameCh": "魏郡",
+   "memberIds": [
+    "87505"
+   ],
+   "cellCountAtPartition": 14,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "87505"
+   ],
+   "currentCellCount": 14,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「有九侯城。{{*|徐廣曰一作「鬼侯」。與文王為紂三公。}}　　繁陽，　　內黃，」",
+    "shiliao:後漢書/卷026 伏侯宋蔡馮趙牟韋列傳 第十六「馮勤字偉伯，魏郡繁陽人也」",
+    "shiliao:後漢書/卷056 張王種陳陳列傳 第四十六「稍遷繁陽令。時魏郡太守諷縣求納貨賄，球不與之」",
+    "shiliao:三國志/卷02 魏書·文帝紀「以魏郡東部爲陽平郡，西部爲廣平郡」",
+    "shiliao:三國志/卷01 魏書•武帝紀「割河內之蕩陰、朝歌、林慮，東郡之衞國、頓丘、東武陽、發干，鉅鹿之廮陶、曲周、南和，廣平之任城，趙之襄國、邯鄲、易陽以益魏郡」",
+    "shiliao:晉書/卷014 志第四 地理志 上「頓丘郡 泰始二年置。統縣四，戶六千三百。頓丘　繁陽　陰安　衛」",
+    "shiliao:讀史方輿紀要/卷016 北直七 大名府「繁陽城，縣東北二十七里。戰國時魏地。《史記》：「趙孝成王二十一年廉頗攻魏繁陽，拔之。」漢置縣，屬魏郡。應劭曰：「在繁水之陽也。後漢因之。晉屬頓丘郡」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「魏文皇帝登禪于曲蠡之繁陽亭，為縣曰繁昌」",
+    "chgis:hvd_82247 source note「东汉（4）、三国魏同（5），晋泰始二年（266年）属顿丘郡（6）」",
+    "chgis:hvd_82247 source note「治今河南内黄北楚旺镇附近」",
+    "chgis:hvd_82247 partOf「212–265 魏郡 hvd_87141; 266–444 顿丘郡 hvd_115204」",
+    "shiliao:三國志/卷01 魏書•武帝紀「之廮陶、曲周、南和，廣平之任城，趙之襄國、邯鄲、易陽以益魏郡」",
+    "shiliao:晉書/卷014 志第四 地理志 上「廣平郡{{*|魏置。統縣十五，戶三萬五千二百。}}　廣平　邯鄲　易陽　武安　涉　襄國　南和　任　曲梁　列人」",
+    "shiliao:後漢書/卷056 張王種陳列傳 第四十六「魏郡十五城，獨繁陽有異政」",
+    "map:han-tiles 易陽縣(87036) 하나만 魏郡으로 재배정하면 魏郡 셀이 711셀 단일 연결성분이 되어 繁陽 14셀 조각이 소멸한다(현재 658+14, 繁陽 치소 셀 불변)",
+    "map:han-tiles 繁陽 치소 셀의 _meta.projection 잔차 12.3셀은 魏郡 16縣 중 5위이며 曲梁 13.6·梁期 13.3·武安 12.6·斥丘 12.5 가 더 크게 어긋났는데도 끊기지 않았다(전체 1138 城 중앙값 1.97·p90 13.1)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0014@414:180",
+   "unitId": "PARENT-0014",
+   "unitNameCh": "鉅鹿郡",
+   "memberIds": [
+    "85186",
+    "87051",
+    "87177",
+    "87200",
+    "87489",
+    "87490",
+    "87491",
+    "87494",
+    "87495",
+    "87499",
+    "87506",
+    "87510",
+    "87513"
+   ],
+   "cellCountAtPartition": 165,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "TIEBREAK_RESOLVED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "85186",
+    "87051",
+    "87177",
+    "87200",
+    "87489",
+    "87490",
+    "87491",
+    "87494",
+    "87495",
+    "87499",
+    "87506",
+    "87510",
+    "87513",
+    "gc-g0014-001",
+    "gc-g0014-015"
+   ],
+   "currentCellCount": 165,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷01 魏書•武帝紀「鉅鹿之廮陶、曲周、南和，廣平之任城」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「鉅鹿之廮陶、曲〔周〕、南和、廣平、任」",
+    "shiliao:讀史方輿紀要/卷016 北直七 大名府「割河內、東郡、鉅鹿、廣平、趙國十四縣」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「鉅鹿郡，秦置」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「省廣平國，以其縣屬」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「南〈糸言糸〉」",
+    "shiliao:後漢書/卷001A 上‧光武帝紀第一上「屬鉅鹿郡，故城在今邢州柏人縣東北」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「堂陽，故屬鉅鹿」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「清淵，　平恩」",
+    "shiliao:晉書/卷014 志第四 地理志 上「統縣二，戶一萬四十」",
+    "shiliao:晉書/卷014 志第四 地理志 上「廮陶　鉅鹿」",
+    "shiliao:晉書/卷014 志第四 地理志 上「中丘　柏人　平鄉」",
+    "shiliao:晉書/卷014 志第四 地理志 上「扶柳　廣宗」",
+    "shiliao:晉書/卷014 志第四 地理志 上「南和　任　曲梁　列人」",
+    "shiliao:讀史方輿紀要/卷015 北直六 順德府 廣平府「魏黃初二年以魏郡西部爲廣平郡」",
+    "shiliao:三國志/卷12 魏書·崔毛徐何邢鮑司馬傳「太子郭夫人弟爲曲周縣吏」",
+    "map:han-tiles parentOwner 를 펼치면 PARENT-0014 는 293칸이 [165(row180-196,col413-431), 128(row157-175,col417-428)] 두 4-이웃 성분이다",
+    "map:han-tiles 南䜌縣(87055) 25칸(row176-181, col418-423)이 PARENT-0017 安平國 소유이며, 이 縣만 PARENT-0014 로 되돌리면 165+128 이 318칸 단일 성분이 된다",
+    "map:han-tiles 틈새 인접 12縣 단독 복원 실험 — 高邑[174,165]·堂陽[165,155]·扶柳[165,151]·信都[165,128,30]·棗強[165,128,26]·柏人[205,128]·南宮[192,128]·東武城[208,128]·經縣[191,128]·襄國[209,128]·廣平[173,128] 은 합쳐지지 않고 南䜌[318]만 합쳐진다",
+    "map:han-tiles 巨鹿縣(87051) lon114.91842 lat36.98014 는 (col418,row173), 平鄉縣(87510) 은 동일 좌표인데 (col425,row185) — 12행 7열 떨어져 서로 다른 성분에 있다",
+    "map:han-tiles 조각0의 9縣을 魏郡으로 옮겨도 鉅鹿郡은 [128, 21], 平鄉만 남기고 나머지 9縣을 빼도 [128, 11] 로 절단이 남는다",
+    "chgis:hvd_87055 source note「南䜌县（公元22年-公元264年）…治所在今河北巨鹿县巨鹿镇北。⑵东汉属巨鹿郡。⑶三国魏属巨鹿郡。⑷西晋时废。⑸」",
+    "repo:data/map/han-tiles.json 이 縣名을 「南?县」(U+FFFD 대체문자)로 적어 後漢書 郡國志「南〈糸言糸〉」와 이름으로 조인되지 않는다 — 판정관이 CHGIS 註를 「없음」으로 읽은 원인이며, 註 자체는 존재한다",
+    "chgis:hvd_87510 source note「东汉属巨鹿郡。⑷三国魏因之。⑸西晋因之。⑹」",
+    "chgis:hvd_87200 source note「同年国除为县。属巨鹿郡。⑶三国魏属安平郡。⑷西晋属安平国。⑸」",
+    "chgis:hvd_85186 source note「刘玄更始元年（23年）改延平侯国置，属魏郡。东汉同。」",
+    "chgis:hvd_87489 source note「西汉初置。⑴治所在今河北任县任城镇西南。⑵属广平国。⑶」",
+    "chgis:hvd_87506 source note「西汉初置。⑴治所在今河北任县任城镇西。⑵属广平国。⑶」",
+    "repo:data/curated/han/administrative-parent-reconciliation-v1.json cityId 87055 decision=PROPOSED_GEOMETRIC, nearestCandidates anchorCityId 87188 hhs-group:110:安平國 squaredGridDistance 32, approvedAdministrativeGroupIds=[安平國, 清河國]"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0023@437:191",
+   "unitId": "PARENT-0023",
+   "unitNameCh": "東郡",
+   "memberIds": [
+    "45123",
+    "45295",
+    "45303",
+    "45318",
+    "45323",
+    "45326",
+    "45339",
+    "85093",
+    "85692"
+   ],
+   "cellCountAtPartition": 250,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "45123",
+    "45295",
+    "45303",
+    "45318",
+    "45323",
+    "45326",
+    "45339",
+    "85093",
+    "85692",
+    "ss-cangtingjin"
+   ],
+   "currentCellCount": 250,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷111 郡國志 郡國三 兗州 徐州「有夷儀聚」",
+    "shiliao:後漢書/卷111 郡國志 郡國三 兗州 徐州「東武陽〗濕水出」",
+    "shiliao:後漢書/卷110 郡國志 郡國二 豫州 冀州「以益魏郡。十八年，分置東西都尉」",
+    "shiliao:三國志/卷01 魏書•武帝紀「東郡之衞國、頓丘、東武陽、發干」",
+    "shiliao:三國志/卷02 魏書·文帝紀「以魏郡東部爲陽平郡」",
+    "shiliao:讀史方輿紀要/卷034 山東五 東昌府「漯水出朝城縣」",
+    "shiliao:讀史方輿紀要/卷034 山東五 東昌府「發干縣及清縣地」",
+    "shiliao:元和郡縣圖志/卷16 河北道一「漢為陽平縣，屬東郡」",
+    "shiliao:魏書/卷106A 地形志二上第五「二漢屬東郡」",
+    "shiliao:宋書/卷035 志第二十五 州郡一「永初郡國有臨邑」",
+    "shiliao:宋書/卷035 志第二十五 州郡一「穀城令，前漢無，後漢屬東郡」",
+    "shiliao:晉書/卷014 志第四 地理志 上「臨邑　東阿　穀城」",
+    "shiliao:晉書/卷014 志第四 地理志 上「博平　聊城」",
+    "shiliao:晉書/卷014 志第四 地理志 上「發干　東武陽　陽平　樂平」",
+    "chgis:hvd_45318 source note「东汉建初四年（79年）改清县置乐平侯国，属东郡（1）。治今聊城市西南张炉集（2）。」",
+    "chgis:hvd_45323 source note「东汉因之（3），建武十七年（41年）改属魏郡（4）」(주: 註(4)가 인용한 원문은 三國志 建安十七年=212년이며 干支年 표기가 뒤바뀐 TGAZ 서술 오류)",
+    "chgis:hvd_45339 source note「西汉高帝十一年（公元前196年）置，属东郡（1）。即今莘县（2）。」",
+    "map:han-tiles 조각0 centroid (436.2,200.5) 대 본체 centroid (415.7,217.2), 두 조각 최근접쌍 發干(428.6,204.9)–陽平(418.7,210.8) 약 11.5셀",
+    "map:han-tiles 東郡 12縣 TGAZ 위경도→centroid 아핀 최소제곱 적합 잔차: 陽平 (-10.6,+5.3), 東武陽 (-4.1,+5.7), 나머지 10縣 |잔차| ≤ 6.1셀",
+    "map:han-tiles 조각0 neighbouringCommanderies 魏郡 24셀 / 조각1 魏郡 29셀, noneBoundaryTerrain 비어 있음(수계 분리 없음)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0031@515:208",
+   "unitId": "PARENT-0031",
+   "unitNameCh": "琅邪國",
+   "memberIds": [
+    "85344"
+   ],
+   "cellCountAtPartition": 3,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "85344"
+   ],
+   "currentCellCount": 3,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles PARENT-0031 조각 셀 (515,208)·(516,208)·(517,208) — 본체 최근접 셀 (514,209)과 대각으로만 접함, (515,209)=SEA, (514,208)=黔陬縣(PARENT-0039 東萊郡); 8-이웃 재계산 시 컴포넌트 1개",
+    "map:han-tiles 조각 셀 중심 경위도 (120.123,35.9121)·(120.1771,35.9121)·(120.2313,35.9121), _meta.projection 역산",
+    "shiliao:後漢書/卷112 郡國志 郡國四 靑州 荊州 揚州「黔陬，侯國，故屬琅邪。有介亭。」",
+    "shiliao:後漢書/卷112 郡國志 郡國四 靑州 荊州 揚州「不其，侯國，故屬琅邪。」",
+    "shiliao:後漢書/卷010B 皇后紀第十下「獻帝伏皇后諱壽，琅邪東武人」「東武，今密州諸城縣。」",
+    "shiliao:讀史方輿紀要/卷035 山東六 青州府「漢置東武縣，爲琅邪郡，高帝封功臣郭蒙爲侯邑。後漢屬琅邪國」",
+    "shiliao:三國志/卷01 魏書•武帝紀「分琅邪、東海、北海爲城陽、利城、昌慮郡」",
+    "shiliao:三國志/卷18 魏書·二李臧文吕许典二庞阎传「太祖以霸為琅邪相，敦利城、禮東莞、觀北海、康城陽太守」",
+    "shiliao:後漢書/卷111 郡國志 郡國三 兗州 徐州「初平三年，分琅邪、東海爲城陽、（新）〔利〕城、昌慮郡。建安十一年，省昌慮幷東海。」",
+    "shiliao:三國志/卷01 魏書•武帝紀「割東海之襄賁、郯、戚以益琅邪，省昌慮郡。」",
+    "shiliao:晉書/卷015 志第五 地理下「故淳于公國」（城陽郡 統縣十 목록 중 姑幕·諸·淳于·東武·高密）",
+    "chgis:hvd_85337 source note「建安三年（198年）为城阳郡治」",
+    "chgis:hvd_85616 source note「城阳得琅邪之东武、莒、姑幕三县，东莞得琅邪之东莞、东安二县」",
+    "shiliao:後漢書/卷118 百官志 百官五 州郡 縣鄕 亭里 注 引 獻帝起居注「建安十八年三月庚寅，省州幷郡，復禹貢之九州。……徐州部郡得下邳、廣陵、彭城、東海、琅邪、利城、城陽、東莞，凡八郡。」",
+    "shiliao:晉書/卷015 志第五 地理下「城陽郡（漢置，屬北海，自魏至晉，分北海而立焉。郡統縣十，戶一萬二千。）」— 이어지는 統縣 목록에 莒·姑幕·諸·淳于·東武·高密·壯武·黔陬·平昌·昌安",
+    "shiliao:資治通鑑/卷062 漢紀五十四「操乃分琅邪、東海為城陽、利城、昌慮郡，悉以霸等為守、相。」",
+    "map:han-tiles commanderyRecords 172개 중 PARENT-0105 東莞郡·PARENT-0110 利城郡 은 존재하나 城陽郡(城阳)은 전무 — 東武縣·莒縣·姑幕縣·諸縣 4縣이 모두 PARENT-0031 琅邪國 jurisdictionIds 에 남아 있다",
+    "map:han-tiles PARENT-0031 606셀 재계산 — 4-이웃 컴포넌트 [3, 603], 8-이웃 [606]; 조각 (515,208)·(516,208)·(517,208) 의 4-이웃은 (515,207)·(514,208) 黔陬縣, (516,207)·(517,207) 盧鄉縣(둘 다 PARENT-0039 東萊郡), 나머지 SEA; 유일한 琅邪國 접촉은 대각 (514,209) 東武縣",
+    "map:han-tiles _meta.projection 역산 lon=(col*cell+x0-pad)/k, lat=y1+pad-row*cell (tools/map/validate_han_strategic_site_anchors.py:453-454 의 정방향식 역) → 120.1229·120.1771·120.2312E, 35.9121N"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0034@495:242",
+   "unitId": "PARENT-0034",
+   "unitNameCh": "下邳國",
+   "memberIds": [
+    "42746",
+    "42760",
+    "42878"
+   ],
+   "cellCountAtPartition": 231,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "42746",
+    "42760",
+    "42878",
+    "gc-g0034-009",
+    "gc-g0034-010",
+    "ss-sikou"
+   ],
+   "currentCellCount": 231,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷111 郡國志三 兗州 徐州「十七城，戸十三萬六千三百八十九」",
+    "shiliao:後漢書/卷111 郡國志三 兗州 徐州「〖司吾〗侯國，故屬東海」",
+    "shiliao:讀史方輿紀要/卷022 南直四 淮安府「下相城，在縣西北七十里」",
+    "shiliao:讀史方輿紀要/卷022 南直四 淮安府「司吾城，在縣西北」",
+    "shiliao:讀史方輿紀要/卷022 南直四 淮安府「淩城，縣東南五十里」",
+    "shiliao:讀史方輿紀要/卷022 南直四 淮安府「良城，州北六十里」",
+    "shiliao:讀史方輿紀要/卷022 南直四 淮安府「漢淮浦縣地，屬臨淮郡。後漢屬下邳郡。晉屬廣陵郡」",
+    "shiliao:晉書/卷015 志第五 地理下「淮陰射陽輿海陵」",
+    "shiliao:讀史方輿紀要/卷031 山東二 濟南府「魏黃初中改封曲陽王茂爲樂陵王」",
+    "chgis:hvd_42847 source note「治今江苏宿迁市西南古城」",
+    "chgis:hvd_42852 source note「治今江苏新沂市南司吾」",
+    "map:han-tiles 下相 치소 셀 (490,249)·司吾 (490,247) 대 등적투영 환산 col 481.5·483.0 (淩縣 치소 (488,255)는 환산 488.4 로 일치)",
+    "map:han-tiles comp0↔comp1 최소 간격 1셀 — (488,248) 良成 ↔ (490,247) 司吾, 사이 (489,247)·(489,248) 은 東海郡 襄賁縣",
+    "map:han-tiles comp1 육지 경계 이웃 — 廣陵郡 淩縣 20셀·平安縣 31셀·射陽縣 23셀, 東海郡 襄賁縣 4셀·郯城縣 4셀·厚丘縣 6셀"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0038@484:185",
+   "unitId": "PARENT-0038",
+   "unitNameCh": "北海國",
+   "memberIds": [
+    "85217"
+   ],
+   "cellCountAtPartition": 13,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "85217"
+   ],
+   "currentCellCount": 13,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志四 靑州「朱虛，侯國，故屬琅邪」",
+    "shiliao:三國志/卷11 魏書·袁張涼國田王邴管傳「邴原字根矩，北海朱虛人也」",
+    "shiliao:後漢書/卷070 鄭孔荀列傳「北海邴原清高直亮」",
+    "shiliao:讀史方輿紀要/卷035 山東六 青州府「朱虛城，縣東六十里。漢縣，屬琅邪郡」",
+    "shiliao:三國志/卷01 魏書•武帝紀「分琅邪、東海、北海爲城陽、利城、昌慮郡」",
+    "chgis:hvd_85300 source note「三国魏黄初元年（220年）后朱虚为县，仍属北海郡」",
+    "chgis:hvd_85300 source note「治今山东临朐县东南城头」",
+    "chgis:hvd_85272 source note「治今山东昌乐县西董家庄」",
+    "map:han-tiles cities 朱虚县85300 col=486 row=189 lon=118.783 lat=36.406 · 益都县85281 col=488 row=187 lon=118.736 lat=36.840 · 剧县85272 col=462 lon=118.775",
+    "map:han-tiles 朱虚县 셀의 4-인접 = 临淄县(齊國)7·益都县(樂安國)7·乐安县(樂安國)3·西安县(齊國)1 (북해 縣 0)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0038@534:171",
+   "unitId": "PARENT-0038",
+   "unitNameCh": "北海國",
+   "memberIds": [
+    "85385",
+    "85393"
+   ],
+   "cellCountAtPartition": 168,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "85385",
+    "85393",
+    "gc-g0038-015"
+   ],
+   "currentCellCount": 168,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志四 靑州「省菑川、高密、膠東三國，以其縣屬。十八城」",
+    "shiliao:後漢書/卷017 馮岑賈列傳「十三年，定封膠東侯，食郁秩、壯武、下密、即墨、梃、觀陽，凡六縣」",
+    "shiliao:後漢書/卷009 孝獻帝紀「齊、北海、阜陵、下邳、常山、甘陵、濟陰、平原八國皆除」",
+    "shiliao:讀史方輿紀要/卷036 萊州府 登州府「挺城，縣南七里。漢置挺縣，屬膠東國」",
+    "shiliao:讀史方輿紀要/卷036 萊州府 登州府「觀陽城，在縣東南三十里。漢縣，屬膠東國。後漢屬北海國」",
+    "shiliao:讀史方輿紀要/卷036 萊州府 登州府「長廣城，在縣西五十里。漢縣，屬琅邪郡。後漢屬東萊郡」",
+    "chgis:hvd_85454 source note「治今山东平度市」",
+    "chgis:hvd_85459 source note「治今山东平度市东南大朱毛」",
+    "chgis:hvd_85393 source note「建安十一年（206年）属北海郡」",
+    "chgis:hvd_85385 source note「治今山东莱阳市南古柳树」",
+    "map:han-tiles cities 胶东县85454 col=531 row=189 lon=119.948 · 即墨县85459 col=521 row=193 lon=120.264 · 掖县200036 col=512 lon=119.938 · 当利县85441 col=522 lon=119.812",
+    "map:han-tiles 胶东县 셀의 4-인접 = 观阳县(北海)21·当利县(東萊)12·黄县(東萊)1·바다10 (即墨과 0)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0039@518:198",
+   "unitId": "PARENT-0039",
+   "unitNameCh": "東萊郡",
+   "memberIds": [
+    "85481",
+    "85505"
+   ],
+   "cellCountAtPartition": 131,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "HISTORICAL_EXCLAVE",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "85481",
+    "85505"
+   ],
+   "currentCellCount": 131,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志四「長廣，故屬琅邪。黔陬，侯國，故屬琅邪。有介亭。」",
+    "shiliao:後漢書/卷112 郡國志四「東萊郡，高帝置。雒陽東三千一百二十八」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「建武中封賈復爲侯邑，屬北海國」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「在州西北五十里，漢縣，屬東萊郡，晉、宋及後魏因之」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「漢屬琅邪郡。後漢屬東萊郡，晉屬城陽郡」",
+    "shiliao:三國志/卷18 魏書 臧霸傳「太祖以霸為琅邪相，敦利城、禮東莞、觀北海、康城陽太守」",
+    "shiliao:宋書/卷036 州郡志二「黔陬令，前漢屬琅邪，後漢屬東萊，晉太康地志屬城陽」",
+    "shiliao:晉書/卷015 地理志下 城陽郡「壯武黔陬平昌昌安」",
+    "chgis:hvd_85505 source note「建安三年（198年）改属长广郡，建安十八年（213年）复属东莱郡（4）」",
+    "chgis:hvd_85481 source note「建安三年（198年）属城阳郡（7）」",
+    "chgis:hvd_85376 source note「至献帝建安末，东莱郡当领十二县，即《续汉志·郡国志》所领十三县中除去黔陬一县所余之目」",
+    "chgis:hvd_85386 source note「治今山东平度市西北长乐（2）」",
+    "map:han-tiles 조각2 육지 경계 = 琅邪國 東武 21셀, 北海國 夷安 10·高密 10·即墨 8셀 (東萊 본체와 접촉 0셀)",
+    "map:han-tiles 盧鄉縣(85386) 城 좌표 col513,row201 — 掖縣(85376 아님, 200036) col512,row181 · 當利縣(85441) col522,row185 에서 16행 남쪽"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0039@540:174",
+   "unitId": "PARENT-0039",
+   "unitNameCh": "東萊郡",
+   "memberIds": [
+    "85381",
+    "85410"
+   ],
+   "cellCountAtPartition": 270,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "85381",
+    "85410",
+    "gc-g0039-003"
+   ],
+   "currentCellCount": 270,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志四「東萊郡，高帝置。雒陽東三千一百二十八」",
+    "shiliao:後漢書/卷112 郡國志四「長廣，故屬琅邪。黔陬，侯國，故屬琅邪。有介亭。」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「縣南七里。漢置挺縣，屬膠東國。後漢屬北海國。」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「漢縣，屬膠東國。後漢屬北海國，建武中封賈復爲食邑」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「附郭。漢黃縣地，武帝於此望海中蓬萊山，因築城以爲名」",
+    "shiliao:讀史方輿紀要/卷036 山東七 萊州府 登州府「漢縣，屬東萊郡，武帝封齊孝王子渫爲侯邑」",
+    "shiliao:資治通鑑/卷063 漢紀五十五「長廣太守何夔言於操曰」",
+    "shiliao:晉書/卷015 地理志下「咸寧三年置。統縣三」",
+    "shiliao:宋書/卷036 州郡志二「以齊東部縣為長廣郡」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二「魏武分東萊郡置，治不其縣」",
+    "chgis:hvd_85401 source note「建安十八年（213年）复属东莱郡，三国魏因之（4）」",
+    "chgis:hvd_85385 tgaz 挺縣 36.93383N/120.70013E",
+    "map:han-tiles owner row174 col523-532=黃縣(85371), col533-539=挺縣(85385, 北海國), col540-541=牟平縣(85401)",
+    "map:han-tiles 조각1 육지 경계는 北海國 觀陽縣 14셀·挺縣 11셀뿐이고 나머지 71셀은 바다"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0042@407:300",
+   "unitId": "PARENT-0042",
+   "unitNameCh": "南郡",
+   "memberIds": [
+    "43421",
+    "43497"
+   ],
+   "cellCountAtPartition": 336,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "43421",
+    "43497",
+    "gc-g0042-004",
+    "ss-lukou"
+   ],
+   "currentCellCount": 336,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 PARENT-0042@407:300 336칸 col 391–414 / row 300–339, 육지 이웃 ['PARENT-0043', 'PARENT-0047'], 음수 경계 {'LAKE': 49}"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0050@463:286",
+   "unitId": "PARENT-0050",
+   "unitNameCh": "廬江郡",
+   "memberIds": [
+    "43138"
+   ],
+   "cellCountAtPartition": 38,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "43138",
+    "gc-g0050-004"
+   ],
+   "currentCellCount": 38,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志 郡國四「陽泉，侯國。{{*|廣志曰有陽泉湖。}}　　安風，侯國。」",
+    "shiliao:後漢書/卷023 竇融列傳 第十三「帝高融功，下詔以安豐、陽泉、蓼、安風四縣封融為安豐侯」",
+    "shiliao:晉書/卷015 志第五 地理下「廬江郡{{*|漢置。統縣十，戶四千二百。}}陽泉 舒{{*|故國，有桐鄉。}}灊」",
+    "shiliao:晉書/卷014 志第四 地理志上「安豐郡{{*|魏置。統縣五，戶一千二百。}}」(다섯 縣 안에 '雩婁安豐'·'蓼松滋' 연쇄가 있고 陽泉은 없다)",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「曰廬江，漢故郡，建安中魏武省入淮南，後復置，治陽泉縣，蓋與吳分置郡也，陽泉故城，在今壽州霍丘縣西」",
+    "shiliao:讀史方輿紀要/卷003 歷代州域形勢三 晉 十六國「廬江郡，漢郡，領陽泉等縣十。陽泉即曹魏廬江郡治。」",
+    "shiliao:讀史方輿紀要/卷026 南直八 廬州府 安慶府「三國，魏移郡治陽泉而虚其地」",
+    "shiliao:讀史方輿紀要/卷021 南直三 鳳陽府「陽泉城在縣西九十里。漢縣，屬六安國。後漢屬廬江郡。靈帝封黃宛為侯邑。三國魏為廬江郡治。晉因之，後廢。」",
+    "chgis:hvd_43337 presentLocation「安徽寿县正阳镇西南」(latLon 32.40933/116.49408, source note 는 「待补」라 연혁 근거 없음)",
+    "chgis:hvd_43379 presentLocation「安徽霍邱县治西南」(latLon 32.31417/116.23528) — 陽泉과 淮水 남안에서 인접",
+    "map:han-tiles 陽泉縣(43337) 治所 셀 col 461/row 287, 주변 87城 (lon,lat)→(col,row) 회귀 예측 col 448.5/row 284.1, 잔차 12.8칸(주변 88개 중 2위, 중앙값 2.0)",
+    "map:han-tiles 陽泉 38셀 조각의 경계 이웃 전부가 九江郡 — 成德縣 25셀·壽春縣 9셀, 廬江 본체 접점 0",
+    "map:han-tiles 동서 역전 — 陽泉 lon 116.494 → col 461 인데 壽春 lon 116.777 → col 454, 下蔡 lon 116.720 → col 452"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0053@442:340",
+   "unitId": "PARENT-0053",
+   "unitNameCh": "豫章郡",
+   "memberIds": [
+    "41154"
+   ],
+   "cellCountAtPartition": 3,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "41154"
+   ],
+   "currentCellCount": 3,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:宋書/卷036 州郡二 尋陽太守「柴桑男相，二漢屬豫章，晉屬武昌」",
+    "shiliao:三國志/卷47 吳書 吳主傳「權自公安都鄂，改名武昌，以武昌、下雉、尋陽、陽新、柴桑、沙羨六縣爲」",
+    "shiliao:後漢書/卷112 郡國志四 揚州 豫章郡「彭澤，彭蠡澤在西」",
+    "chgis:hvd_41145 source note「约刘玄更始元年（23年）复改九江亭为柴桑，属豫章郡」",
+    "map:han-tiles 柴桑 3셀 조각 경계 — LAKE 7셀, 廬江郡 1셀, 조각1(같은 縣 본체)과 공유 셀 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0053@446:337",
+   "unitId": "PARENT-0053",
+   "unitNameCh": "豫章郡",
+   "memberIds": [
+    "41154",
+    "41194"
+   ],
+   "cellCountAtPartition": 72,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "41154",
+    "41194"
+   ],
+   "currentCellCount": 72,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷112 郡國志四 揚州 豫章郡「彭澤，彭蠡澤在西」",
+    "shiliao:宋書/卷036 州郡二 尋陽太守「柴桑男相，二漢屬豫章，晉屬武昌」",
+    "shiliao:三國志/卷47 吳書 吳主傳「權自公安都鄂，改名武昌，以武昌、下雉、尋陽、陽新、柴桑、沙羨六縣爲」",
+    "shiliao:三國志/卷56 吳書 呂範傳「領彭澤太守，以彭澤、柴桑、歷陽為奉邑」",
+    "shiliao:讀史方輿紀要/卷085 江西三 九江府「漢爲歷陵縣，屬豫章郡，後漢因之」",
+    "chgis:hvd_41145 source note「约刘玄更始元年（23年）复改九江亭为柴桑，属豫章郡」",
+    "map:han-tiles 柴桑 조각(72셀) 경계 구성 — LAKE 23셀, 鄱陽郡 15셀, 廬江郡 8셀, 豫章 소속 縣 0셀",
+    "map:han-tiles 柴桑 총 75셀(豫章 31縣 평균 약 220셀), 歷陵 중심[432.7,349.1]과 柴桑 중심[445.5,343.3] 거리 약 14셀",
+    "shiliao:讀史方輿紀要/卷085 江西三 九江府 饒州府 廣信府「漢爲歷陵縣，屬豫章郡，後漢因之。晉屬鄱陽郡。宋元嘉初省」",
+    "shiliao:三國志/卷47 吳書·吳主傳「十五年，分豫章爲」鄱陽郡",
+    "shiliao:後漢書/卷112 郡國志 郡國四 揚州 豫章郡「建安十五年，孫權分立鄱陽郡，治縣」",
+    "shiliao:晉書/卷015 志第五 地理下 鄱陽郡(吳置，統縣八)「廣晉鄱陽樂安餘汗鄡陽歷陵葛陽晉興」",
+    "shiliao:宋書/卷036 志第二十六 州郡二 鄱陽太守「永初郡國有歷陵縣，漢舊縣。何志無」",
+    "shiliao:三國志/卷56 吳書·三朱吕範傳「以彭澤、柴桑、歷陽為奉邑」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國 彭澤郡「領彭澤、柴桑、尋陽三縣」",
+    "shiliao:讀史方輿紀要/卷003 歷代州域形勢三 晉 十六國 尋陽郡「永嘉初又以豫章之彭澤縣屬焉」",
+    "shiliao:資治通鑑/卷069 魏紀一「孫權自公安徙都鄂，更名鄂曰武昌」",
+    "chgis:hvd_41244 source note「东汉建安十五年（210年）属鄱阳郡」",
+    "chgis:hvd_41194 source note「东汉建安十五年（210年）属鄱阳郡」",
+    "chgis:hvd_41154 source note「东汉建安十四年（209年）为彭泽郡治，约次年仍属豫章郡」",
+    "map:han-tiles 柴桑 조각(72셀) 인접 縣 — 廣昌縣 12셀, 尋陽縣 8셀, 鄱陽縣 3셀, LAKE 23셀 (歷陵 인접 0셀)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0055@246:300",
+   "unitId": "PARENT-0055",
+   "unitNameCh": "巴郡",
+   "memberIds": [
+    "44580"
+   ],
+   "cellCountAtPartition": 81,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "PARENT_MISASSIGNMENT",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "CHANGED",
+   "currentMemberIds": [
+    "44621"
+   ],
+   "currentCellCount": 81,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷051 李陳龐陳橋列傳 第四十一「陳禪字紀山，巴郡安漢人也」",
+    "shiliao:讀史方輿紀要/卷068 四川三 保寧府 順慶府「劉璋乃改永寧爲巴郡，固陵爲巴東郡，前巴郡爲巴西郡」",
+    "shiliao:晉書/卷014 志第四 地理志 上「劉璋改永寧爲巴東郡，分巴郡墊江置巴西郡」",
+    "shiliao:晉書/卷014 志第四 地理志 上「宕渠　安漢　平州」",
+    "shiliao:三國志/卷45 蜀書十五 鄧張宗楊傳「德緒名祿，巴西安漢人也」",
+    "shiliao:華陽國志/卷一 巴志「安漢縣　　號出人士」",
+    "shiliao:華陽國志/卷一 巴志「以墊江以上為巴郡」",
+    "chgis:hvd_44553 source note「建安六年（201年）属巴西郡」",
+    "chgis:hvd_44553 partOf「201-552 巴西郡 hvd_115028」",
+    "map:han-tiles 조각1 접경 巴西郡 28셀·廣漢郡 12셀·犍爲郡 6셀, 巴郡 본체와 공유 경계 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0071@250:129",
+   "unitId": "PARENT-0071",
+   "unitNameCh": "北地郡",
+   "memberIds": [
+    "70524",
+    "70610"
+   ],
+   "cellCountAtPartition": 2736,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "CORRECTED_BY_3_REFUTERS",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "ABSENT",
+   "currentMemberIds": null,
+   "currentCellCount": null,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「北地郡秦置」",
+    "shiliao:後漢書/卷113 郡國志 郡國五「泥阳有五柞亭弋居有铁廉」",
+    "shiliao:後漢書/卷047 班梁列傳 第三十七「北地弋居人也」",
+    "shiliao:後漢書/卷090 烏桓鮮卑列傳第八十「廉縣名屬北地郡」",
+    "shiliao:宋書/卷048 列傳第八「漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣靈州廢不立」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「富平寄治安定郡彭陽縣界」",
+    "shiliao:三國志/卷26 魏書二十六 滿田牽郭傳「比能至故北地石城」",
+    "shiliao:晉書/卷014 志第四 地理志上「北地郡秦置統縣二」",
+    "chgis:hvd_70610 source note「前214年，置廉县，属北地郡，治所在今宁夏银川市北」",
+    "chgis:hvd_70524 source note「东汉永建4年（126），富平县治所迁回今宁夏灵武县西南」",
+    "chgis:hvd_70523 source note「东汉永初5年（111），富平县治所移往当时的池阳县，即今陕西泾阳县西北，属北地郡」",
+    "map:han-tiles PARENT-0071 조각0(2736칸, col236-293/row129-188)과 조각1(633칸, col283-310/row185-224)은 row184의 安定郡(PARENT-0070)·上郡(PARENT-0080) 경계선으로 4방향 연결이 끊긴다",
+    "map:han-tiles 조각1의 633칸은 전부 DIRECT-PARENT-0071-30be7d10aefe(310)·b74003c1e28f(323) 채움칸이고 실제 縣 셀은 하나도 없다",
+    "shiliao:後漢書/卷007 帝紀第七 孝桓皇帝「廉縣屬北地郡也」",
+    "shiliao:後漢書/卷047 班梁列傳 第三十七「弋居，縣名。〈郡國志〉曰有鐵官」",
+    "shiliao:魏書/卷106B 地形志二下第七「北地郡，魏文帝分馮翊之祋祤置。領縣七。富平：真君八年罷泥陽、弋居屬焉」",
+    "shiliao:讀史方輿紀要/卷054 陝西三 西安府下「魏收曰：魏文帝分馮翊之祋祤置北地郡。晉北地郡治泥陽，即故祋祤也」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「破先零叛羌狼莫於富平河上，是也。中平中，以羌亂，富平寄治安定郡彭陽縣界。自晉以後，益徙而南，故城遂廢」",
+    "shiliao:晉書/卷014 志第四 地理志上「北地郡 秦置。統縣二，戶二千六百。泥陽　富平」(corpus/js-014.txt 330-332행)",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳「靈帝末年數爲寇鈔，攻北地，北地庶人善弩射者射中和連」",
+    "map:han-tiles PARENT-0071 조각0(2736칸)과 조각1(633칸)은 (row184,col288) 安定郡 단 한 칸으로만 끊긴다 — 한 칸 간격 쌍 정확히 1개, 대각 접촉 0개",
+    "map:han-tiles 조각1의 633칸은 jurisdictionId 70613(泥阳) 310칸 + 70523(富平 郡治) 323칸의 BALANCED_PARENT_PARTITION 채움칸이다 — 泥阳县 영역 627칸이 조각0(8+309)과 조각1(310)로 절단됐고, 富平 郡治 영역 366칸도 조각2(43)와 조각1(323)로 절단됐다",
+    "map:han-tiles PARENT-0071 조각0과 조각1을 가르는 단일 칸은 (row184,col288) 하나뿐이며 그 칸은 安定郡 朝那縣(70178)의 채움 province DIRECT-PARENT-0070-20129a3a0e44(240칸, row184-203/col269-288)의 북동 모서리다 — 4방향 최단거리 1칸, 대각 접촉 0, 체비쇼프 2 이내 쌍 5개",
+    "map:han-tiles 泥陽縣(70613) 627칸이 절단선 양쪽으로 갈린다 — seat province 70613(8칸, row181-183/col286-289)과 DIRECT-PARENT-0071-41b4a240df0e(309칸, row168-184/col269-293)는 조각0, DIRECT-PARENT-0071-30be7d10aefe(310칸, row185-223/col283-295)는 조각1",
+    "map:han-tiles 조각1(633칸)은 jurisdictionRecords 상 富平縣 70523(DIRECT-PARENT-0071-b74003c1e28f 323칸) + 泥陽縣 70613(DIRECT-PARENT-0071-30be7d10aefe 310칸) 소속이다 — 판정문의 「실제 縣 셀은 하나도 없다」는 성립하지 않는다",
+    "map:han-tiles 富平縣(70523)도 seat province 70523(43칸, 조각2, row228-237/col301-308)과 DIRECT-PARENT-0071-b74003c1e28f(323칸, 조각1)로 갈려 있고 그 사이는 左馮翊 池陽縣(70671) 4칸(row224-227, col308)이다",
+    "map:han-tiles 조각0/조각1 절단 경로 3칸(row183·184·185, col288)의 terrain 코드는 모두 6=PLATEAU 로 水系·해안 요인이 없다",
+    "shiliao:宋書/卷048 列傳第八 朱齡石 毛脩之 傅弘之「北地泥陽人傅氏舊屬靈州漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣靈州廢不立故傅氏悉屬泥陽」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「中平中以羌亂富平寄治安定郡彭陽縣界」",
+    "shiliao:後漢書/卷006 帝紀第六 孝順 孝沖 孝質皇帝「北地居馮翊」",
+    "shiliao:後漢書/卷087 西羌傳第七十七「北地居馮翊」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「永初五年亦嘗徙治池陽」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「曰安定，曰北地，皆故郡也」",
+    "shiliao:讀史方輿紀要/卷053 陝西二 西安府「後漢徙治今慶陽府之廢彭原縣界」",
+    "shiliao:讀史方輿紀要/卷054 陝西三 西安府下「魏以泥陽縣寄治祋祤」",
+    "shiliao:三國志/卷21 魏書·王衞二劉傅傳「北地泥陽人」",
+    "chgis:hvd_70523 source note「东汉永建4年（126），迁回原址」",
+    "map:han-tiles row184 col283-288 이 전부 安定郡 채움칸 한 줄이고, 바로 위 row181-183 col286-289 는 泥陽縣 셀, 바로 아래 row185- 는 北地郡 채움칸이다 — 조각0/조각1 분리는 이 한 줄이 전부이며 대각 연결도 上郡 채움칸에 막힌다",
+    "map:han-tiles 조각0의 실제 縣 셀은 廉县 243·弋居县 243·富平县(70524) 242·泥阳县 8 = 736칸, 조각1(633칸)은 縣 셀 0칸의 순수 北地郡 채움칸, 조각2(43칸)만 富平县(70523)",
+    "map:han-tiles 富平县(70523) 43칸(col301-308/row228-237)은 左馮翊 池阳县(70671, col306-314/row217-232) 셀과 맨해튼 1칸 거리로 인접 — 同一 池陽 땅이 두 郡에 이중 계상"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0071@288:185",
+   "unitId": "PARENT-0071",
+   "unitNameCh": "北地郡",
+   "memberIds": [
+    "70613",
+    "70614"
+   ],
+   "cellCountAtPartition": 633,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "CORRECTED_BY_3_REFUTERS",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "70613",
+    "70614"
+   ],
+   "currentCellCount": 633,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「北地郡秦置」",
+    "shiliao:後漢書/卷113 郡國志 郡國五「泥阳有五柞亭弋居有铁廉」",
+    "shiliao:後漢書/卷047 班梁列傳 第三十七「北地弋居人也」",
+    "shiliao:後漢書/卷090 烏桓鮮卑列傳第八十「廉縣名屬北地郡」",
+    "shiliao:宋書/卷048 列傳第八「漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣靈州廢不立」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「富平寄治安定郡彭陽縣界」",
+    "shiliao:三國志/卷26 魏書二十六 滿田牽郭傳「比能至故北地石城」",
+    "shiliao:晉書/卷014 志第四 地理志上「北地郡秦置統縣二」",
+    "chgis:hvd_70610 source note「前214年，置廉县，属北地郡，治所在今宁夏银川市北」",
+    "chgis:hvd_70524 source note「东汉永建4年（126），富平县治所迁回今宁夏灵武县西南」",
+    "chgis:hvd_70523 source note「东汉永初5年（111），富平县治所移往当时的池阳县，即今陕西泾阳县西北，属北地郡」",
+    "map:han-tiles PARENT-0071 조각0(2736칸, col236-293/row129-188)과 조각1(633칸, col283-310/row185-224)은 row184의 安定郡(PARENT-0070)·上郡(PARENT-0080) 경계선으로 4방향 연결이 끊긴다",
+    "map:han-tiles 조각1의 633칸은 전부 DIRECT-PARENT-0071-30be7d10aefe(310)·b74003c1e28f(323) 채움칸이고 실제 縣 셀은 하나도 없다",
+    "shiliao:後漢書/卷007 帝紀第七 孝桓皇帝「廉縣屬北地郡也」",
+    "shiliao:後漢書/卷047 班梁列傳 第三十七「弋居，縣名。〈郡國志〉曰有鐵官」",
+    "shiliao:魏書/卷106B 地形志二下第七「北地郡，魏文帝分馮翊之祋祤置。領縣七。富平：真君八年罷泥陽、弋居屬焉」",
+    "shiliao:讀史方輿紀要/卷054 陝西三 西安府下「魏收曰：魏文帝分馮翊之祋祤置北地郡。晉北地郡治泥陽，即故祋祤也」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「破先零叛羌狼莫於富平河上，是也。中平中，以羌亂，富平寄治安定郡彭陽縣界。自晉以後，益徙而南，故城遂廢」",
+    "shiliao:晉書/卷014 志第四 地理志上「北地郡 秦置。統縣二，戶二千六百。泥陽　富平」(corpus/js-014.txt 330-332행)",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳「靈帝末年數爲寇鈔，攻北地，北地庶人善弩射者射中和連」",
+    "map:han-tiles PARENT-0071 조각0(2736칸)과 조각1(633칸)은 (row184,col288) 安定郡 단 한 칸으로만 끊긴다 — 한 칸 간격 쌍 정확히 1개, 대각 접촉 0개",
+    "map:han-tiles 조각1의 633칸은 jurisdictionId 70613(泥阳) 310칸 + 70523(富平 郡治) 323칸의 BALANCED_PARENT_PARTITION 채움칸이다 — 泥阳县 영역 627칸이 조각0(8+309)과 조각1(310)로 절단됐고, 富平 郡治 영역 366칸도 조각2(43)와 조각1(323)로 절단됐다",
+    "map:han-tiles PARENT-0071 조각0과 조각1을 가르는 단일 칸은 (row184,col288) 하나뿐이며 그 칸은 安定郡 朝那縣(70178)의 채움 province DIRECT-PARENT-0070-20129a3a0e44(240칸, row184-203/col269-288)의 북동 모서리다 — 4방향 최단거리 1칸, 대각 접촉 0, 체비쇼프 2 이내 쌍 5개",
+    "map:han-tiles 泥陽縣(70613) 627칸이 절단선 양쪽으로 갈린다 — seat province 70613(8칸, row181-183/col286-289)과 DIRECT-PARENT-0071-41b4a240df0e(309칸, row168-184/col269-293)는 조각0, DIRECT-PARENT-0071-30be7d10aefe(310칸, row185-223/col283-295)는 조각1",
+    "map:han-tiles 조각1(633칸)은 jurisdictionRecords 상 富平縣 70523(DIRECT-PARENT-0071-b74003c1e28f 323칸) + 泥陽縣 70613(DIRECT-PARENT-0071-30be7d10aefe 310칸) 소속이다 — 판정문의 「실제 縣 셀은 하나도 없다」는 성립하지 않는다",
+    "map:han-tiles 富平縣(70523)도 seat province 70523(43칸, 조각2, row228-237/col301-308)과 DIRECT-PARENT-0071-b74003c1e28f(323칸, 조각1)로 갈려 있고 그 사이는 左馮翊 池陽縣(70671) 4칸(row224-227, col308)이다",
+    "map:han-tiles 조각0/조각1 절단 경로 3칸(row183·184·185, col288)의 terrain 코드는 모두 6=PLATEAU 로 水系·해안 요인이 없다",
+    "shiliao:宋書/卷048 列傳第八 朱齡石 毛脩之 傅弘之「北地泥陽人傅氏舊屬靈州漢末郡境為虜所侵失土寄寓馮翊置泥陽富平二縣靈州廢不立故傅氏悉屬泥陽」",
+    "shiliao:讀史方輿紀要/卷062 陝西十一 寧夏鎮「中平中以羌亂富平寄治安定郡彭陽縣界」",
+    "shiliao:後漢書/卷006 帝紀第六 孝順 孝沖 孝質皇帝「北地居馮翊」",
+    "shiliao:後漢書/卷087 西羌傳第七十七「北地居馮翊」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「永初五年亦嘗徙治池陽」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「曰安定，曰北地，皆故郡也」",
+    "shiliao:讀史方輿紀要/卷053 陝西二 西安府「後漢徙治今慶陽府之廢彭原縣界」",
+    "shiliao:讀史方輿紀要/卷054 陝西三 西安府下「魏以泥陽縣寄治祋祤」",
+    "shiliao:三國志/卷21 魏書·王衞二劉傅傳「北地泥陽人」",
+    "chgis:hvd_70523 source note「东汉永建4年（126），迁回原址」",
+    "map:han-tiles row184 col283-288 이 전부 安定郡 채움칸 한 줄이고, 바로 위 row181-183 col286-289 는 泥陽縣 셀, 바로 아래 row185- 는 北地郡 채움칸이다 — 조각0/조각1 분리는 이 한 줄이 전부이며 대각 연결도 上郡 채움칸에 막힌다",
+    "map:han-tiles 조각0의 실제 縣 셀은 廉县 243·弋居县 243·富平县(70524) 242·泥阳县 8 = 736칸, 조각1(633칸)은 縣 셀 0칸의 순수 北地郡 채움칸, 조각2(43칸)만 富平县(70523)",
+    "map:han-tiles 富平县(70523) 43칸(col301-308/row228-237)은 左馮翊 池阳县(70671, col306-314/row217-232) 셀과 맨해튼 1칸 거리로 인접 — 同一 池陽 땅이 두 郡에 이중 계상",
+    "repo:data/curated/han/cityless-jurisdiction-fold-decisions-v1.json 70523→70524 (北地郡 富平 중복 城 989 를 거두고 寄治 땅을 같은 縣 富平 관할에 접음, 2026-09-17)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0101@340:544",
+   "unitId": "PARENT-0101",
+   "unitNameCh": "合浦郡",
+   "memberIds": [
+    "42444"
+   ],
+   "cellCountAtPartition": 1199,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "42444"
+   ],
+   "currentCellCount": 1199,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「合浦郡武帝置」",
+    "shiliao:後漢書/卷086 南蠻西南夷列傳「珠崖、儋耳二郡在海洲上」",
+    "shiliao:晉書/卷015 志第五 地理下「復置珠崖部」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「徐聞，今雷州府屬縣」",
+    "shiliao:讀史方輿紀要/卷100 廣東一 封域 山川險要「遂溪縣，徐聞縣」",
+    "chgis:hvd_42444 source note「后汉建武元年（25年）以朱庐县更名，属合浦郡遥领」",
+    "chgis:hvd_42424 source note「治所即今广东省徐闻县南五里镇」",
+    "map:han-tiles comp0 = row 544-585 / col 303-347 (lat 18.25~20.17N, lon 108.61~111.00E), 육지 이웃 0 · 경계 SEA 182",
+    "map:han-tiles 徐聞縣 치소 province(42424) 셀 row 556-569 (약 19.0~19.6N) — CHGIS 20.26N 과 약 17행 어긋남",
+    "shiliao:後漢書/卷113 郡國志 郡國五「〖合浦〗〖徐闻〗〖高凉〗〖临元〗〖朱崖〗」",
+    "shiliao:漢書/卷028 地理志第八「縣五：徐聞，高涼，合浦，臨允，朱盧」",
+    "shiliao:讀史方輿紀要/卷129 川瀆六 漕河 海運「今雷州東西南三面皆環海，東面去海僅十里，所領縣三，徐聞一縣尤逼海濱矣」",
+    "shiliao:三國志/卷49 吳書四 劉繇太史慈士燮傳「燮乃表壹領合浦太守，次弟徐聞令䵋領九真太守」",
+    "shiliao:宋書/卷038 州郡志四「徐聞令，故屬朱崖。晉平吳，省朱崖，屬合浦」",
+    "map:han-tiles cities[42424 徐闻县] 레코드 좌표 lon110.156526/lat20.261126, 배치 col326/row559 = lon109.885/lat19.447 — 자기 좌표에서 95km 남쪽, 瓊州海峽 건너 海南島 중부",
+    "map:han-tiles 徐闻 진짜 좌표 반경 2.5° 마커 8개 배치오차 — 高凉县2km·朱崖县3km·临允县8km·高凉郡9km·合浦郡10km·安宁县21km vs 徐闻县95km·合浦县249km (국소 왜곡 아님, 레코드 단위 결함)",
+    "map:han-tiles cities[34235 合浦郡] 와 cities[42524 合浦县] 는 동일 좌표(109.47007/21.913258)인데 배치 col317/row505(10km) 대 col363/row504(249km)",
+    "map:han-tiles 徐闻县 진짜 좌표 셀 (row542,col331)=SEA, 바로 북쪽 (row541,col331)=육지(현재 朱崖县 소유) — 해안선 반올림은 1행인데 배치는 18행 남쪽",
+    "map:han-tiles 雷州半島 row507-542 (lat20.24~21.89, lon109.67~110.54) 374셀이 朱崖县 소유 — 徐聞(본토)과 朱崖(섬)가 해협을 사이에 두고 전치",
+    "map:han-tiles PARENT-0101@340:544 구성 = 徐闻县 793셀(66%) + 朱崖县 406셀(34%), row543(lat20.197) 한 줄이 해협, 육지 이웃 0 · 경계 SEA 182",
+    "map:han-tiles PARENT-0101#1(본체) row493-542 lat20.24~22.54, 이웃 鬱林郡/安广县 72 · 高涼郡/安宁县 20 — 徐聞이 제자리(20.26N)면 雷州半島로 본체와 연결"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0102@280:528",
+   "unitId": "PARENT-0102",
+   "unitNameCh": "交趾郡",
+   "memberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "cellCountAtPartition": 2,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "currentCellCount": 2,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。〖龙编〗〖羸𨻻〗〖安定〗」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「交趾刺史治龍編」",
+    "chgis:hvd_112852 交趾郡(西漢 郡) xy coordinates「106.10250, 21.12340」",
+    "map:han-tiles PARENT-0102@280:528 cells (row,col)=(528,280),(528,281) terrain PLAIN, 사방 SEA 6셀; #1 의 (527,282) 와 대각 접촉(4-이웃이라 분리), 본체 최근접 셀 (526,277)·(524,281) 와 SEA 2셀 이상 간격",
+    "map:han-tiles _meta.projection 역산 → 조각 centroid ≈ 107.42E 20.90N (셀 폭 ≈0.054° lon / 0.047° lat)",
+    "https://nominatim.openstreetmap.org/reverse?lat=20.901&lon=107.421&format=json&zoom=12 → 「Vân Đồn, Việt Nam」"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0102@283:525",
+   "unitId": "PARENT-0102",
+   "unitNameCh": "交趾郡",
+   "memberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "cellCountAtPartition": 4,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "currentCellCount": 4,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。〖龙编〗〖羸𨻻〗〖安定〗」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「交趾刺史治龍編」",
+    "shiliao:三國志/卷49 吳書四 士燮傳「遷衛將軍，封龍編侯」",
+    "shiliao:晉書/卷015 志第五 地理下「龍編苟漏望海𨏩𨻻西于武甯朱鳶曲昜交興北帶稽徐安定南定海平」",
+    "chgis:hvd_112852 交趾郡(西漢 郡) xy coordinates「106.10250, 21.12340」",
+    "map:han-tiles PARENT-0102@283:525 cells (row,col)=(525,283),(526,282),(526,283),(527,282) terrain PLAIN, 사방 SEA 10셀; 본체 최근접 셀 (524,281)·(523,282) 와 SEA 1셀 간격",
+    "map:han-tiles _meta.projection cell=0.04690971 k=0.866025 x0=80.540363 y1=45.0 pad=0.69282 → 조각 centroid ≈ 107.53E 20.99N, 본체 centroid ≈ 105.60E 21.39N, 治所 X000 ≈ 106.09E 21.09N",
+    "https://nominatim.openstreetmap.org/reverse?lat=20.995&lon=107.529&format=json&zoom=12 → 「Đặc khu Vân Đồn, Thành phố Quảng Ninh, Việt Nam」",
+    "https://nominatim.openstreetmap.org/reverse?lat=21.089&lon=107.448&format=json&zoom=12 → 「Đặc khu Vân Đồn, Thành phố Quảng Ninh, Vân Đồn, Việt Nam」(본체 최근접 셀)"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0130@598:164",
+   "unitId": "PARENT-0130",
+   "unitNameCh": "帶方郡",
+   "memberIds": [
+    "fc-lelang-010"
+   ],
+   "cellCountAtPartition": 7,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-lelang-010"
+   ],
+   "currentCellCount": 7,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「分屯有縣以南荒地爲帶方郡」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「建安中公孫度分樂浪置」",
+    "shiliao:讀史方輿紀要/卷038 山東九 朝鮮等「樂浪郡南部」",
+    "map:han-tiles PARENT-0130 조각 7셀 = rows 164–165 / cols 598–601, terrain 전부 1(PLAIN), negativeBoundary SEA 12",
+    "map:han-tiles rows 162–163 / cols 598–601 이 terrain 0(SEA) — 본체 최서단 육지셀 (row 161, col 599) 과 2행(약 10km) 이격",
+    "map:han-tiles 투영 cell=0.04690971 x0=80.540363 y1=45.0 k=0.866025 pad=0.69282 → 조각 lon 124.59–124.75E, lat 37.95–38.00N"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@681:267",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X051"
+   ],
+   "cellCountAtPartition": 15,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X051"
+   ],
+   "currentCellCount": 15,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又渡一海，千餘里至」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「末盧國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「依山島爲國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X052 중심 col/row (679.5,272.3) → 약 동경129.0·북위32.9, 경계 접촉 SEA 24, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@692:252",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X051"
+   ],
+   "cellCountAtPartition": 9,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X051"
+   ],
+   "currentCellCount": 9,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「兕馬觚」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「建武中元二年，倭奴國奉貢朝賀」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X054 중심 col/row (713.2,271.2) → 약 동경130.8·북위33.0, 경계 접촉 SEA 16, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@698:280",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X055"
+   ],
+   "cellCountAtPartition": 41,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X055"
+   ],
+   "currentCellCount": 41,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「兕馬觚」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「建武中元二年，倭奴國奉貢朝賀」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X054 중심 col/row (713.2,271.2) → 약 동경130.8·북위33.0, 경계 접촉 SEA 42, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@736:262",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 4,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 4,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又南渡一海千餘里，名曰瀚海」",
+    "shiliao:隋書/卷081 列傳第四十六 東夷 (高麗 百濟 新羅 靺鞨 流求國 倭國)「一支國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「依山島爲國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X051 중심 col/row (750.6,250.4) → 약 동경132.9·북위33.9, 경계 접촉 SEA 10, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@744:245",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 6,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 6,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「東南陸行五百里」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「伊都國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X053 중심 col/row (729.5,243.1) → 약 동경131.7·북위34.3, 경계 접촉 SEA 12, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@745:222",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 611,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 611,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又南渡一海千餘里，名曰瀚海」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「東南陸行五百里」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「依山島爲國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles 조각 중심 col/row (743.5,247.9) → 약 동경132.5·북위34.1, 경계 접촉 SEA 150·OUT_OF_SCOPE 34, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0165@767:243",
+   "unitId": "PARENT-0165",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 480,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 480,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又南渡一海千餘里，名曰瀚海」",
+    "shiliao:隋書/卷081 列傳第四十六 東夷 (高麗 百濟 新羅 靺鞨 流求國 倭國)「一支國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X051 중심 col/row (750.6,250.4) → 약 동경132.9·북위33.9, 경계 접촉 SEA 123, 인접 郡國 0"
+   ]
+  },
+  {
+   "componentKey": "PARENT-0169@379:509",
+   "unitId": "PARENT-0169",
+   "unitNameCh": "高涼郡",
+   "memberIds": [
+    "42301"
+   ],
+   "cellCountAtPartition": 16,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "PARENT_MISASSIGNMENT",
+   "sourceReviewState": "CORRECTED_BY_2_REFUTERS",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "42301"
+   ],
+   "currentCellCount": 16,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles PARENT-0169@379:509 16셀 전부 terrain=1(PLAIN), negativeBoundary SEA 28, 셀범위 col 375–381 / row 509–513 → lon 112.54–112.86 / lat 21.60–21.79 (上川島·下川島)",
+    "map:han-tiles 조각→본체 최소 체비셰프 간격 2셀 (377,511)→(376,509), 사이 셀은 terrain=0(SEA)",
+    "chgis:hvd_42277 source note「汉元鼎六年（前111年）置，属合浦郡…治所即今广东省新兴县里洞镇」",
+    "shiliao:後漢書/卷113 郡國志五「三五三一頁一二行　臨元　前志作「臨允」。按：漢書補注王先謙謂「元」乃「允」字之訛」",
+    "shiliao:晉書/卷015 志第五 地理下「高涼郡{吳置。統縣三，戶二千。}：安寧高涼…」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「高涼太守，二漢有高涼縣，屬合浦」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「臨允令，漢舊縣，屬合浦，晉太康地志屬蒼梧」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「合浦太守，漢武帝立，孫權黃武七年，更名珠官」",
+    "shiliao:晉書/卷015 志第五 地理下「廣信端溪高要建陵新寧猛陵鄣平農城元谿臨允都羅武城」",
+    "shiliao:晉書/卷015 志第五 地理下「安寧高涼思平」",
+    "shiliao:漢書/卷028 地理志 第八「縣五：徐聞，高涼，合浦，臨允，朱盧」",
+    "map:han-tiles PARENT-0169@379:509 16셀 owner=DIRECT-PARENT-0169-eba33ce69960(jurisdictionId 42277), terrain 전부 1, 8이웃 66면 전부 SEA/무소유, col 375–381 / row 509–513 → lon 112.513–112.892 / lat 21.581–21.816",
+    "map:han-tiles PARENT-0169@379:509 최근접 육지 셀 (376,509)=高凉县/PARENT-0169, 체비셰프 2셀, 사이 전부 SEA",
+    "map:han-tiles 투영 역산식 근거 tools/map/validate_han_strategic_site_anchors.py:453-454 (col=floor((lon·k−x0+pad)/cell), row=floor((y1+pad−lat)/cell))",
+    "shiliao:宋書/卷038 志第二十八 州郡四「臨允令，漢舊縣，屬合浦，晉太康地志屬蒼梧。何志，吳度蒼梧」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「二漢有高涼縣，屬合浦」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「安寧令，吳立」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「合浦太守，漢武帝立，孫權黃武七年，更名珠官，孫亮復舊」",
+    "shiliao:三國志/卷60 吳書·賀全呂周鍾離傳「以博為高涼西部都尉」",
+    "shiliao:讀史方輿紀要/卷003 歷代州域形勢三 晉 十六國「漢置，領安寧等縣三。安寧，在今肇慶府陽江縣境」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「桓帝置高涼郡，領高梁等縣」",
+    "chgis:hvd_42277 source note「吴永安六年（263年）属苍梧郡，东晋永和七年（351年）属新宁郡」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「高涼太守，二漢有高涼縣，屬合浦，漢獻帝建安二十三年〔校勘: 續漢書郡國志作「二十五年」。按建安二十五年，即魏黃初元年〕，吳分立，治思平縣」",
+    "shiliao:宋書/卷038 志第二十八 州郡四 高涼太守 領縣七의 첫 縣「思平令，晉太康地志有」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 合浦郡 五城「〖合浦〗〖徐闻〗〖高凉〗〖临元〗〖朱崖〗」(临元=臨允, 卷113 校勘記)"
+   ]
+  },
+  {
+   "componentKey": "X040@629:193",
+   "unitId": "X040",
+   "unitNameCh": "目支國",
+   "memberIds": [
+    "SUB-X040-541a9c6ebb19"
+   ],
+   "cellCountAtPartition": 9,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "ABSENT",
+   "currentMemberIds": null,
+   "currentCellCount": null,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷085 东夷列传第七十五「馬韓最大，共立其種為辰王，都目支國，尽王三韓之地。其諸國王先皆是馬韓種人焉」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「辰王治月支國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「韓在帶方之南，東西以海爲限，南與倭接，方可四千里」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「散在山海間，無城郭。有爰襄國、牟水國、桑外國、小石索國、大石索國…」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「馬韓之西，海島上有州胡國」",
+    "map:han-tiles parentRegions PARENT-0156 nameCh=目支國 administrativeSystem=MAHAN",
+    "map:han-tiles PARENT-0156@629:193 9셀 (row193-197, col629-631) lon 126.29–126.40 / lat 36.45–36.64, 경계 SEA 16, 본체와 col632(lon≈126.45) 한 칸 바다로 분리",
+    "map:han-tiles cell identity - X040@629:193 의 셀 집합이 PARENT-0156@629:193 (目支國) 와 정확히 같다 (9셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X041@625:229",
+   "unitId": "X041",
+   "unitNameCh": "辟卑離國",
+   "memberIds": [
+    "SUB-X041-17b9700aed53"
+   ],
+   "cellCountAtPartition": 14,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "ABSENT",
+   "currentMemberIds": null,
+   "currentCellCount": null,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「萬盧國、辟卑離國、臼斯烏旦國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「凡五十餘國。大國萬餘家，小國數千家，總十餘萬戶。辰王治月支國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「韓在帶方之南，東西以海爲限，南與倭接，方可四千里。有三種，一曰馬韓，二曰辰韓，三曰弁韓」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「馬韓在西，有五十四國，其北與樂浪，南與倭接」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「馬韓之西，海島上有州胡國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又有州胡在馬韓之西海中大島上」",
+    "map:han-tiles parentRegions[164] 辟卑離國 administrativeSystem=MAHAN",
+    "map:han-tiles PARENT-0164@625:229 14셀 row229-234 col624-627 = lat 34.716-34.951N lon 126.000-126.163E, 직교 이웃 전부 terrain 0(海), 본체와는 (233,627)-(234,628) 대각 접촉만",
+    "map:han-tiles cell identity - X041@625:229 의 셀 집합이 PARENT-0164@625:229 (辟卑離國) 와 정확히 같다 (14셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X046@643:236",
+   "unitId": "X046",
+   "unitNameCh": "古資彌凍國",
+   "memberIds": [
+    "X046"
+   ],
+   "cellCountAtPartition": 1,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X046"
+   ],
+   "currentCellCount": 1,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁辰古資彌凍國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁、辰韓合二十四國」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「凡七十八國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「郡縣不能制」",
+    "map:han-tiles X046 조각 col 643 row 236 (lon 127.06 lat 34.60) 4변 중 2변 辟卑離國 2변 바다, 본체 최서단 col 644와 비인접",
+    "map:han-tiles X046 province record DIRECT-PARENT-0116-8a985f732c47 geometryBasis=BALANCED_PARENT_PARTITION assignmentBasis=MAX_SHARED_BOUNDARY confidence=INFERRED"
+   ]
+  },
+  {
+   "componentKey": "X046@656:234",
+   "unitId": "X046",
+   "unitNameCh": "古資彌凍國",
+   "memberIds": [
+    "X046"
+   ],
+   "cellCountAtPartition": 2,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X046"
+   ],
+   "currentCellCount": 2,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁辰古資彌凍國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「其瀆盧國與倭接界」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「其十二國屬辰王」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「弁辰在辰韓之南」",
+    "map:han-tiles X046 조각 col 656 row 234-235 (lon 127.76 lat 34.65~34.69) 육지 이웃 0 바다 경계 6",
+    "map:han-tiles X046 province record administrativeSystem=BYEONHAN kind=EXTERNAL_PLACE"
+   ]
+  },
+  {
+   "componentKey": "X046@657:236",
+   "unitId": "X046",
+   "unitNameCh": "古資彌凍國",
+   "memberIds": [
+    "X046"
+   ],
+   "cellCountAtPartition": 1,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X046"
+   ],
+   "currentCellCount": 1,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁辰古資彌凍國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁辰亦十二國，又有諸小別邑，各有渠帥，大者名臣智」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「其瀆盧國與倭接界」",
+    "map:han-tiles PARENT-0116@657:236 cells=1 centroidColRow=(657.0,236.0) negativeBoundary SEA=4 육지 이웃 0",
+    "map:han-tiles cell identity - X046@657:236 의 셀 집합이 PARENT-0116@657:236 (古資彌凍國) 와 정확히 같다 (1셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X046@659:229",
+   "unitId": "X046",
+   "unitNameCh": "古資彌凍國",
+   "memberIds": [
+    "SUB-X046-763d3a08775b"
+   ],
+   "cellCountAtPartition": 22,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X046-763d3a08775b"
+   ],
+   "currentCellCount": 22,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「弁辰古資彌凍國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「其十二國屬辰王」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「弁辰在辰韓之南」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「凡七十八國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「分屯有縣以南荒地爲帶方郡」",
+    "map:han-tiles X046 조각 col 657-662 row 229-234 (lon 127.81~128.09 lat 34.69~34.93) 육지 이웃 0 바다 경계 24, 본체와 바다 1셀로 분리",
+    "map:han-tiles X046 province record geometryBasis=BALANCED_PARENT_PARTITION assignmentBasis=MAX_SHARED_BOUNDARY administrativeSystem=BYEONHAN"
+   ]
+  },
+  {
+   "componentKey": "X051@692:252",
+   "unitId": "X051",
+   "unitNameCh": "一大國",
+   "memberIds": [
+    "X051"
+   ],
+   "cellCountAtPartition": 9,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X051"
+   ],
+   "currentCellCount": 9,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「兕馬觚」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「建武中元二年，倭奴國奉貢朝賀」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X054 중심 col/row (713.2,271.2) → 약 동경130.8·북위33.0, 경계 접촉 SEA 16, 인접 郡國 0",
+    "map:han-tiles cell identity - X054@692:252 의 셀 집합이 PARENT-0165@692:252 (邪馬壹國) 와 정확히 같다 (9셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X052@673:275",
+   "unitId": "X052",
+   "unitNameCh": "末盧國",
+   "memberIds": [
+    "SUB-X052-9097a8854a1f"
+   ],
+   "cellCountAtPartition": 20,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X052-9097a8854a1f"
+   ],
+   "currentCellCount": 20,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 X052@673:275 20칸 col 672–677 / row 275–279, 육지 이웃 없음, 음수 경계 {'SEA': 22}"
+   ]
+  },
+  {
+   "componentKey": "X052@687:263",
+   "unitId": "X052",
+   "unitNameCh": "末盧國",
+   "memberIds": [
+    "SUB-X052-e2019b23588b"
+   ],
+   "cellCountAtPartition": 8,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X052-e2019b23588b"
+   ],
+   "currentCellCount": 8,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又渡一海，千餘里至」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「依山島爲國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X052 중심 col/row (679.5,272.3) → 약 동경129.0·북위32.9, 경계 접촉 SEA 14, 인접 郡國 0",
+    "map:han-tiles cell identity - X052@687:263 의 셀 집합이 PARENT-0165@687:263 (邪馬壹國) 와 정확히 같다 (8셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X054@711:250",
+   "unitId": "X054",
+   "unitNameCh": "奴國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 208,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "GEOMETRY_DEFECT",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 208,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 X054@711:250 208칸 col 704–729 / row 250–262, 육지 이웃 ['X053', 'X055'], 음수 경계 {'SEA': 53}"
+   ]
+  },
+  {
+   "componentKey": "X054@736:262",
+   "unitId": "X054",
+   "unitNameCh": "奴國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 4,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "UPHELD",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 4,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「所居絶島」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「又南渡一海千餘里，名曰瀚海」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「方可三百里」",
+    "shiliao:後漢書/卷085 東夷列傳第七十五「倭在韓東南大海中」",
+    "shiliao:讀史方輿紀要/卷094 浙江六 處州府 溫州府「大倭王居邪馬臺國」"
+   ]
+  },
+  {
+   "componentKey": "X054@744:245",
+   "unitId": "X054",
+   "unitNameCh": "奴國",
+   "memberIds": [
+    "X054"
+   ],
+   "cellCountAtPartition": 6,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X054"
+   ],
+   "currentCellCount": 6,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「東南陸行五百里」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「伊都國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X053 중심 col/row (729.5,243.1) → 약 동경131.7·북위34.3, 경계 접촉 SEA 12, 인접 郡國 0",
+    "map:han-tiles cell identity - X053@744:245 의 셀 집합이 PARENT-0165@744:245 (邪馬壹國) 와 정확히 같다 (6셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X054@767:243",
+   "unitId": "X054",
+   "unitNameCh": "奴國",
+   "memberIds": [
+    "SUB-X054-05d9b93dfd00"
+   ],
+   "cellCountAtPartition": 480,
+   "carryMode": "NEW_UNVERIFIED",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "UNVERIFIED",
+   "sourceConfidence": "LOW",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X054-05d9b93dfd00"
+   ],
+   "currentCellCount": 480,
+   "status": "HUMAN_DECISION_REQUIRED",
+   "decision": null,
+   "evidenceRefs": [
+    "map:han-tiles(★ 뒤) 조각 X054@767:243 480칸 col 738–767 / row 243–275, 육지 이웃 없음, 음수 경계 {'SEA': 123}"
+   ]
+  },
+  {
+   "componentKey": "X055@693:296",
+   "unitId": "X055",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "X055"
+   ],
+   "cellCountAtPartition": 7,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "X055"
+   ],
+   "currentCellCount": 7,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「女王之所都，水行十日，陸行一月」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「卑彌呼」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「其大倭王居邪馬臺國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X055 중심 col/row (710.9,301.2) → 약 동경130.7·북위31.6, 경계 접촉 SEA 14, 인접 郡國 0",
+    "map:han-tiles cell identity - X055@693:296 의 셀 집합이 PARENT-0165@693:296 (邪馬壹國) 와 정확히 같다 (7셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X055@698:280",
+   "unitId": "X055",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "SUB-X055-0deaa9deddaa"
+   ],
+   "cellCountAtPartition": 41,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X055-0deaa9deddaa"
+   ],
+   "currentCellCount": 41,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「兕馬觚」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「建武中元二年，倭奴國奉貢朝賀」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「增地」",
+    "map:han-tiles X054 중심 col/row (713.2,271.2) → 약 동경130.8·북위33.0, 경계 접촉 SEA 42, 인접 郡國 0",
+    "map:han-tiles cell identity - X054@698:280 의 셀 집합이 PARENT-0165@698:280 (邪馬壹國) 와 정확히 같다 (41셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X055@707:324",
+   "unitId": "X055",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "SUB-X055-f9c61192fa78"
+   ],
+   "cellCountAtPartition": 19,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X055-f9c61192fa78"
+   ],
+   "currentCellCount": 19,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「女王之所都，水行十日，陸行一月」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「其大倭王居邪馬臺國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「今使譯所通三十國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X055 중심 col/row (710.9,301.2) → 약 동경130.7·북위31.6, 경계 접촉 SEA 24, 인접 郡國 0",
+    "map:han-tiles cell identity - X055@707:324 의 셀 집합이 PARENT-0165@707:324 (邪馬壹國) 와 정확히 같다 (19셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X055@717:316",
+   "unitId": "X055",
+   "unitNameCh": "邪馬壹國",
+   "memberIds": [
+    "SUB-X055-42319b3daf6c"
+   ],
+   "cellCountAtPartition": 28,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X055-42319b3daf6c"
+   ],
+   "currentCellCount": 28,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「女王之所都，水行十日，陸行一月」",
+    "shiliao:後漢書/卷085 东夷列传第七十五「其大倭王居邪馬臺國」",
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「依山島爲國」",
+    "shiliao:後漢書/卷113 郡國志 郡國五 益州 涼州 并州 幽州 交州「列口」",
+    "map:han-tiles X055 중심 col/row (710.9,301.2) → 약 동경130.7·북위31.6, 경계 접촉 SEA 32, 인접 郡國 0",
+    "map:han-tiles cell identity - X055@717:316 의 셀 집합이 PARENT-0165@717:316 (邪馬壹國) 와 정확히 같다 (28셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X056@582:453",
+   "unitId": "X056",
+   "unitNameCh": "夷洲",
+   "memberIds": [
+    "SUB-X056-c4d35e38f118"
+   ],
+   "cellCountAtPartition": 15,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X056-c4d35e38f118"
+   ],
+   "currentCellCount": 15,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷085 东夷列传第七十五「會稽海外有東鯷人，分為二十餘國。又有夷洲及澶洲」",
+    "shiliao:三國志/卷47 吳書·吳主傳 (孫權)「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」",
+    "shiliao:三國志/卷58 吴書·陆逊传 (陆逊)「權欲遣偏師取夷州及朱崖」",
+    "shiliao:資治通鑑/卷072 魏紀四「亶洲絕遠，卒不可得至，得夷洲數千人還」",
+    "shiliao:讀史方輿紀要/卷094 浙江六 處州府 溫州府「沈瑩《臨海水土志》：「夷洲在臨海東，去郡二千里」」(後代 지리지의 佚書 인용, 정사와 등급 구분)",
+    "shiliao:隋書/卷081 列傳第四十六 東夷「流求國，居海島之中，當建安郡東，水行五日而至」(隋代 기록, 220년 근거 아님)",
+    "map:han-tiles PARENT-0123@582:453 = 15셀 전부 terrain PLAIN, 경계 SEA 18칸, bbox lon 123.698–123.915 / lat 24.279–24.419, centroid (583.1,454.9)→(123.81E,24.33N) = 西表島",
+    "map:han-tiles PARENT-0123 본체 1311셀 bbox lon 120.069–121.910 / lat 21.933–25.264 = 臺灣 본섬 (centroid 120.97E, 23.74N)",
+    "map:han-tiles 동일 해역 육지 컴포넌트 parentOwner — 沖縄本島 71셀(127.65–128.36E)·石垣島 19셀(124.08–124.35E)·宮古島 11셀(125.27–125.43E) 은 모두 流求(PARENT-0149)",
+    "map:han-tiles cell identity - X056@582:453 의 셀 집합이 PARENT-0123@582:453 (夷洲) 와 정확히 같다 (15셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X057@592:449",
+   "unitId": "X057",
+   "unitNameCh": "流求",
+   "memberIds": [
+    "SUB-X057-6e514a3d0138"
+   ],
+   "cellCountAtPartition": 19,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X057-6e514a3d0138"
+   ],
+   "currentCellCount": 19,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:隋書/卷081 列傳第四十六 東夷「居海島之中」",
+    "shiliao:隋書/卷064 列傳第二十九「擊流求國，月餘而至」",
+    "shiliao:後漢書/卷085 東夷列傳第七十五「會稽海外有東鯷人，分為二十餘國」",
+    "map:han-tiles jurisdictionRecords X057 kind=EXTERNAL_SETTLEMENT commanderyId=PARENT-0149 nameCh=流求",
+    "map:han-tiles PARENT-0149@592:449 centroid col590.5/row452.3 → lon124.214 lat24.454, 경계 26셀 전부 SEA(terrain 0), 육지 이웃 0",
+    "map:han-tiles cell identity - X057@592:449 의 셀 집합이 PARENT-0149@592:449 (流求) 와 정확히 같다 (19셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X057@610:443",
+   "unitId": "X057",
+   "unitNameCh": "流求",
+   "memberIds": [
+    "SUB-X057-f6cdaf119bf2"
+   ],
+   "cellCountAtPartition": 11,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X057-f6cdaf119bf2"
+   ],
+   "currentCellCount": 11,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:隋書/卷081 列傳第四十六 東夷「居海島之中」",
+    "shiliao:隋書/卷064 列傳第二十九「擊流求國，月餘而至」",
+    "shiliao:後漢書/卷085 東夷列傳第七十五「會稽海外有東鯷人，分為二十餘國」",
+    "map:han-tiles jurisdictionRecords X057 kind=EXTERNAL_SETTLEMENT commanderyId=PARENT-0149 nameCh=流求",
+    "map:han-tiles PARENT-0149@610:443 centroid col611.1/row445.2 → lon125.328 lat24.786, 경계 18셀 전부 SEA(terrain 0), 육지 이웃 0",
+    "map:han-tiles cell identity - X057@610:443 의 셀 집합이 PARENT-0149@610:443 (流求) 와 정확히 같다 (11셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X057@677:379",
+   "unitId": "X057",
+   "unitNameCh": "流求",
+   "memberIds": [
+    "SUB-X057-583a342f4480"
+   ],
+   "cellCountAtPartition": 12,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X057-583a342f4480"
+   ],
+   "currentCellCount": 12,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:隋書/卷081 列傳第四十六 東夷「居海島之中」",
+    "shiliao:隋書/卷064 列傳第二十九「擊流求國，月餘而至」",
+    "shiliao:後漢書/卷085 東夷列傳第七十五「會稽海外有東鯷人，分為二十餘國」",
+    "map:han-tiles jurisdictionRecords X057 kind=EXTERNAL_SETTLEMENT commanderyId=PARENT-0149 nameCh=流求",
+    "map:han-tiles PARENT-0149@677:379 centroid col677.9/row381.1 → lon128.948 lat27.793, 경계 16셀 전부 SEA(terrain 0), 육지 이웃 0",
+    "map:han-tiles cell identity - X057@677:379 의 셀 집합이 PARENT-0149@677:379 (流求) 와 정확히 같다 (12셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "X057@692:366",
+   "unitId": "X057",
+   "unitNameCh": "流求",
+   "memberIds": [
+    "SUB-X057-ef85eaeea522"
+   ],
+   "cellCountAtPartition": 42,
+   "carryMode": "CARRIED_MEMBERS",
+   "draftVerdict": "EXTERNAL_POLITY",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "SUB-X057-ef85eaeea522"
+   ],
+   "currentCellCount": 42,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:隋書/卷081 列傳第四十六 東夷「居海島之中」",
+    "shiliao:隋書/卷064 列傳第二十九「擊流求國，月餘而至」",
+    "shiliao:後漢書/卷085 東夷列傳第七十五「會稽海外有東鯷人，分為二十餘國」",
+    "map:han-tiles jurisdictionRecords X057 kind=EXTERNAL_SETTLEMENT commanderyId=PARENT-0149 nameCh=流求",
+    "map:han-tiles PARENT-0149@692:366 centroid col686.3/row370.7 → lon129.400 lat28.280, 경계 46셀 전부 SEA(terrain 0), 육지 이웃 0",
+    "map:han-tiles cell identity - X057@692:366 의 셀 집합이 PARENT-0149@692:366 (流求) 와 정확히 같다 (42셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "fc-jiaozhi-006@280:528",
+   "unitId": "fc-jiaozhi-006",
+   "unitNameCh": "曲陽縣",
+   "memberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "cellCountAtPartition": 2,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "MEDIUM",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "currentCellCount": 2,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。〖龙编〗〖羸𨻻〗〖安定〗」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「交趾刺史治龍編」",
+    "chgis:hvd_112852 交趾郡(西漢 郡) xy coordinates「106.10250, 21.12340」",
+    "map:han-tiles PARENT-0102@280:528 cells (row,col)=(528,280),(528,281) terrain PLAIN, 사방 SEA 6셀; #1 의 (527,282) 와 대각 접촉(4-이웃이라 분리), 본체 최근접 셀 (526,277)·(524,281) 와 SEA 2셀 이상 간격",
+    "map:han-tiles _meta.projection 역산 → 조각 centroid ≈ 107.42E 20.90N (셀 폭 ≈0.054° lon / 0.047° lat)",
+    "https://nominatim.openstreetmap.org/reverse?lat=20.901&lon=107.421&format=json&zoom=12 → 「Vân Đồn, Việt Nam」",
+    "map:han-tiles cell identity - JURISDICTION-PARENT-0102-SEAT@280:528 의 셀 집합이 PARENT-0102@280:528 (交趾郡) 와 정확히 같다 (2셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "fc-jiaozhi-006@283:525",
+   "unitId": "fc-jiaozhi-006",
+   "unitNameCh": "曲陽縣",
+   "memberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "cellCountAtPartition": 4,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-jiaozhi-006"
+   ],
+   "currentCellCount": 4,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:後漢書/卷113 郡國志 郡國五「交趾郡武帝置。即安阳王国。雒阳南万一千里。十二城。〖龙编〗〖羸𨻻〗〖安定〗」",
+    "shiliao:宋書/卷038 志第二十八 州郡四「交趾刺史治龍編」",
+    "shiliao:三國志/卷49 吳書四 士燮傳「遷衛將軍，封龍編侯」",
+    "shiliao:晉書/卷015 志第五 地理下「龍編苟漏望海𨏩𨻻西于武甯朱鳶曲昜交興北帶稽徐安定南定海平」",
+    "chgis:hvd_112852 交趾郡(西漢 郡) xy coordinates「106.10250, 21.12340」",
+    "map:han-tiles PARENT-0102@283:525 cells (row,col)=(525,283),(526,282),(526,283),(527,282) terrain PLAIN, 사방 SEA 10셀; 본체 최근접 셀 (524,281)·(523,282) 와 SEA 1셀 간격",
+    "map:han-tiles _meta.projection cell=0.04690971 k=0.866025 x0=80.540363 y1=45.0 pad=0.69282 → 조각 centroid ≈ 107.53E 20.99N, 본체 centroid ≈ 105.60E 21.39N, 治所 X000 ≈ 106.09E 21.09N",
+    "https://nominatim.openstreetmap.org/reverse?lat=20.995&lon=107.529&format=json&zoom=12 → 「Đặc khu Vân Đồn, Thành phố Quảng Ninh, Việt Nam」",
+    "https://nominatim.openstreetmap.org/reverse?lat=21.089&lon=107.448&format=json&zoom=12 → 「Đặc khu Vân Đồn, Thành phố Quảng Ninh, Vân Đồn, Việt Nam」(본체 최근접 셀)",
+    "map:han-tiles cell identity - JURISDICTION-PARENT-0102-SEAT@283:525 의 셀 집합이 PARENT-0102@283:525 (交趾郡) 와 정확히 같다 (4셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  },
+  {
+   "componentKey": "fc-lelang-010@598:164",
+   "unitId": "fc-lelang-010",
+   "unitNameCh": "海冥縣",
+   "memberIds": [
+    "fc-lelang-010"
+   ],
+   "cellCountAtPartition": 7,
+   "carryMode": "CARRIED_SAME_CELLS",
+   "draftVerdict": "WATER_SEPARATED",
+   "sourceReviewState": "INHERITED",
+   "sourceConfidence": "HIGH",
+   "currentGeometry": "EXACT",
+   "currentMemberIds": [
+    "fc-lelang-010"
+   ],
+   "currentCellCount": 7,
+   "status": "DRAFT_RECHECK_GEOMETRY",
+   "decision": null,
+   "evidenceRefs": [
+    "shiliao:三國志/卷30 魏書三十 烏丸鮮卑東夷傳第三十「分屯有縣以南荒地爲帶方郡」",
+    "shiliao:讀史方輿紀要/卷002 歷代州域形勢二 兩漢 三國「建安中公孫度分樂浪置」",
+    "shiliao:讀史方輿紀要/卷038 山東九 朝鮮等「樂浪郡南部」",
+    "map:han-tiles PARENT-0130 조각 7셀 = rows 164–165 / cols 598–601, terrain 전부 1(PLAIN), negativeBoundary SEA 12",
+    "map:han-tiles rows 162–163 / cols 598–601 이 terrain 0(SEA) — 본체 최서단 육지셀 (row 161, col 599) 과 2행(약 10km) 이격",
+    "map:han-tiles 투영 cell=0.04690971 x0=80.540363 y1=45.0 k=0.866025 pad=0.69282 → 조각 lon 124.59–124.75E, lat 37.95–38.00N",
+    "map:han-tiles cell identity - JURISDICTION-PARENT-0130-SEAT@598:164 의 셀 집합이 PARENT-0130@598:164 (帶方郡) 와 정확히 같다 (7셀). 같은 단절을 縣 층위에서 본 것이다."
+   ]
+  }
+ ]
+}
