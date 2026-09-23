@@ -21,6 +21,7 @@
 // 그쪽은 원 이름 그대로 나간다 — "감릉현" 같은 縣 을 새로 만들지 않는다.
 
 /** cityDisplayName 이 보는 만큼. MapPreviewCity·PlacedCity 둘 다 이 모양을 만족한다. */
+
 export interface CityNameInput {
   /** 게임 城 번호. **음수면 郡國 밖 세력**이라 縣 이 아니다. */
   id: number;

@@ -1,0 +1,76 @@
+/* 시안 헤더(ui.py head())를 그대로 옮긴 것. 높이 56, 좌우 패딩 20, 아래 1px 경계. */
+.head {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line, #3d4740);
+    background: linear-gradient(180deg, #232a26, #1b201d);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.title {
+    font-family: var(--font-serif, 'Noto Serif KR', serif);
+    font-size: 18px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+}
+
+/* 탭은 진짜 링크다 — 시안의 <span> 은 정적 시안이라 그랬을 뿐이다. */
+.tab {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 10px;
+    color: var(--muted, #8a8477);
+    font-size: 13px;
+    white-space: nowrap;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    color: var(--fg, #ece6d8);
+}
+
+.tabOn {
+    color: var(--fg, #ece6d8);
+    font-weight: 700;
+    border-bottom-color: var(--bronze, #c9a656);
+}
+
+/* 화면이 없는 탭은 숨기지 않고 사유를 남긴다(OPENSAM-113 표시 원칙). */
+.tabEmpty {
+    color: #5d6460;
+    border-bottom: 2px dotted #3d4740;
+    cursor: default;
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}

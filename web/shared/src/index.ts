@@ -79,6 +79,7 @@ export {
   TIER2_MARKER_ZOOM,
   type AdjEdge,
   type HanMapCanvasProps,
+  type CommanderyVisibility,
   type InitialFocusProfile,
   type HanTiles,
   type IsoCityOverlay,
@@ -223,6 +224,11 @@ export {
   cityDisplayName,
   type CityNameInput,
 } from './iso/cityName';
+export {
+  cityFootprintBlock,
+  cityFootprintSpan,
+  type CellBlock,
+} from './iso/cityFootprint';
 export {
   countyGlossForJurisdiction,
   splitCountyGloss,
