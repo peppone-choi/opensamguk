@@ -12,6 +12,8 @@ import {
 import { resolveCityFootprints } from './iso/cityFootprint';
 import { drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 import { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+import { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, type JuIndexResponse, type JuLayer } from './iso/juLod';
+import { dropOverlappingLabels } from './iso/marker';
 import { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 import {
@@ -851,6 +853,15 @@ interface PoliticalPaths {
   commandery: Path2D;
 }
 
+function juPath(layer: JuLayer): Path2D {
+  const path = new Path2D();
+  for (const edge of layer.edges) {
+    path.moveTo(edge.x1, edge.y1);
+    path.lineTo(edge.x2, edge.y2);
+  }
+  return path;
+}
+
 function pathFromEdges(edges: readonly ProvinceEdge[]): Path2D {
   const path = new Path2D();
   for (const edge of edges) {
@@ -1378,6 +1389,8 @@ function drawScene(
   showCityFootprint: boolean,
   fog: { visibility: ReadonlyMap<number, CommanderyVisibility>; mode: 'dim' | 'hidden' } | null,
   mapCode: string,
+  juLayer: JuLayer | null,
+  manualAdministrativeLayer: boolean,
   politicalAlpha = 1,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
@@ -1385,6 +1398,10 @@ function drawScene(
   const width = canvas.width;
   const height = canvas.height;
   const scale = view.scale;
+  const selectedLod = manualAdministrativeLayer
+    ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
+    : mapLod(2 * scale / dpr);
+  const lod = selectedLod === 'JU' && !juLayer ? 'COMMANDERY' : selectedLod;
   const fittedScale = provinceMap
     ? fitScale(width, height, { cols: provinceMap.width, rows: provinceMap.height })
     : 0;
@@ -1473,12 +1490,16 @@ function drawScene(
       }
     }
   }
-  if (paths) {
-    if (administrativeLayer === 'PROVINCE') {
+  if (lod === 'JU' && juLayer) {
+    context.strokeStyle = 'rgba(249,232,173,0.92)';
+    context.lineWidth = 3.5 * dpr / scale;
+    context.stroke(juPath(juLayer));
+  } else if (paths) {
+    if (lod === 'COUNTY' && administrativeLayer === 'PROVINCE') {
       context.strokeStyle = PROVINCE_BORDER;
       context.lineWidth = dpr / scale;
       context.stroke(paths.province);
-    } else if (administrativeLayer === 'JURISDICTION') {
+    } else if (lod === 'COUNTY') {
       context.strokeStyle = PROVINCE_BORDER;
       context.lineWidth = 1.5 * dpr / scale;
       context.stroke(paths.jurisdiction);
@@ -1492,6 +1513,30 @@ function drawScene(
     }
   }
   context.restore();
+
+  if (lod === 'JU' && juLayer) {
+    context.save();
+    const fontSize = 15 * dpr;
+    context.font = `bold ${fontSize}px sans-serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    const labels = juLayer.labels.map((label) => {
+      const [x, y] = cellToScreen(label.col, label.row, view);
+      const half = context.measureText(label.name).width / 2 + 4 * dpr;
+      return { label, x, y, box: { x0: x - half, x1: x + half, y0: y - fontSize / 2, y1: y + fontSize / 2 } };
+    });
+    const keep = dropOverlappingLabels(labels.map(({ box }) => box));
+    context.lineWidth = 3 * dpr;
+    context.strokeStyle = 'rgba(15,19,20,0.9)';
+    context.fillStyle = '#fff0c5';
+    labels.forEach(({ label, x, y }, index) => {
+      if (!keep[index]) return;
+      context.strokeText(label.name, x, y);
+      context.fillText(label.name, x, y);
+    });
+    context.restore();
+    return [];
+  }
 
   if (strategic?.route) {
     context.save();
@@ -1761,6 +1806,7 @@ export function HanMapCanvas({
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
+  const juLayerRef = useRef<JuLayer | null>(null);
   const provinceMapRef = useRef<ProvinceIdentityMap | null>(null);
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
@@ -1784,6 +1830,7 @@ export function HanMapCanvas({
   }>({ url: '', map: null });
   const [missing, setMissing] = useState(false);
   const [administrativeLayer, setAdministrativeLayer] = useState<AdministrativeLayer>('JURISDICTION');
+  const manualAdministrativeLayerRef = useRef(false);
 
   useEffect(() => {
     if (suppliedTiles !== undefined) {
@@ -1795,11 +1842,27 @@ export function HanMapCanvas({
     let alive = true;
     setMissing(false);
     setTerrainIdentity(null);
-    fetch(resolveTerrainUrl(terrainUrl, mapCode))
+    const terrainAddress = resolveTerrainUrl(terrainUrl, mapCode);
+    fetch(terrainAddress)
       .then((response) => {
         if (!response.ok) throw new Error(`terrain fetch failed: ${response.status}`);
         const hash = parseTerrainEtagHash(response.headers?.get('etag') ?? null);
-        return (response.json() as Promise<HanTiles>).then(tiles => ({ tiles, hash }));
+        return (response.json() as Promise<HanTiles>).then(async (tiles) => {
+          const juAddress = mapCode === 'han-world-v3' ? juUrlForTerrain(terrainAddress) : null;
+          if (juAddress && tiles.parentRegions) {
+            try {
+              const juResponse = await fetch(juAddress);
+              if (juResponse.ok) {
+                const assignment = verifiedJuByParent(await juResponse.json() as JuIndexResponse,
+                  hash, tiles.parentRegions.length);
+                if (assignment) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({
+                  ...parent, ju: assignment[index],
+                }));
+              }
+            } catch { /* Historical map still renders if the optional 州 layer is unavailable. */ }
+          }
+          return { tiles, hash };
+        });
       })
       .then(({ tiles, hash }) => {
         if (alive) {
@@ -2052,11 +2115,15 @@ export function HanMapCanvas({
     viewRef.current = null;
     userModifiedViewRef.current = false;
     initialFocusAppliedRef.current = false;
+    manualAdministrativeLayerRef.current = false;
   }, [loadedTiles, mapCode]);
 
   useEffect(() => {
     politicalPathsRef.current = provinceMap ? bakePoliticalPaths(provinceMap, countyIndex) : null;
-  }, [countyIndex, provinceMap]);
+    juLayerRef.current = provinceMap && loadedTiles?.parentRegions?.every((parent) => parent.ju)
+      ? buildJuLayer(provinceMap.commanderies, provinceMap.width, provinceMap.height, loadedTiles.parentRegions)
+      : null;
+  }, [countyIndex, loadedTiles?.parentRegions, provinceMap]);
 
   const battlefieldHits = useRef<Array<{ target: BattlefieldMapTarget; x: number; y: number; radius: number }>>([]);
   const projectedBattlefields = useMemo(() => loadedTiles ? battlefieldTargets.flatMap(target => {
@@ -2073,6 +2140,10 @@ export function HanMapCanvas({
     const view = viewRef.current;
     const latestScene = sceneRef.current;
     if (!canvas || !terrain || !latestScene || !view) return;
+    const selectedLod = manualAdministrativeLayerRef.current
+      ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
+      : mapLod(2 * view.scale / sizeRef.current.dpr);
+    canvas.dataset.mapLod = selectedLod === 'JU' && !juLayerRef.current ? 'COMMANDERY' : selectedLod;
     hitRef.current = drawScene(
       canvas,
       terrain,
@@ -2092,6 +2163,8 @@ export function HanMapCanvas({
       showCityFootprint,
       commanderyVisibility ? { visibility: commanderyVisibility, mode: fogMode } : null,
       mapCode,
+      juLayerRef.current,
+      manualAdministrativeLayerRef.current,
       politicalStyle === 'tint' ? POLITICAL_TINT_ALPHA : 1,
     );
     battlefieldHits.current = [];
@@ -2246,6 +2319,11 @@ export function HanMapCanvas({
         if (currentPosition !== undefined) initialFocusAppliedRef.current = true;
       }
       if (viewChanged) onViewChange?.(viewRef.current);
+      const nextLod = mapLod(2 * viewRef.current.scale / dpr);
+      if (!manualAdministrativeLayerRef.current) setAdministrativeLayer((previous) => {
+        const next = nextLod === 'COUNTY' ? 'JURISDICTION' : 'COMMANDERY';
+        return previous === next ? previous : next;
+      });
       render();
     };
     fit();
@@ -2274,6 +2352,11 @@ export function HanMapCanvas({
   const updateView = useCallback((next: IsoView) => {
     userModifiedViewRef.current = true;
     viewRef.current = next;
+    const nextLod = mapLod(2 * next.scale / sizeRef.current.dpr);
+    if (!manualAdministrativeLayerRef.current) setAdministrativeLayer((previous) => {
+      const layer = nextLod === 'COUNTY' ? 'JURISDICTION' : 'COMMANDERY';
+      return previous === layer ? previous : layer;
+    });
     onViewChange?.(next);
     render();
   }, [onViewChange, render]);
@@ -2634,7 +2717,7 @@ export function HanMapCanvas({
             type="button"
             aria-label="구역 레이어"
             aria-pressed={administrativeLayer === 'PROVINCE'}
-            onClick={() => setAdministrativeLayer('PROVINCE')}
+            onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('PROVINCE'); render(); }}
           >
             구역
           </button>
@@ -2642,7 +2725,7 @@ export function HanMapCanvas({
             type="button"
             aria-label="현급 도시 레이어"
             aria-pressed={administrativeLayer === 'JURISDICTION'}
-            onClick={() => setAdministrativeLayer('JURISDICTION')}
+            onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('JURISDICTION'); render(); }}
           >
             현
           </button>
@@ -2650,7 +2733,7 @@ export function HanMapCanvas({
             type="button"
             aria-label="군급 도시 레이어"
             aria-pressed={administrativeLayer === 'COMMANDERY'}
-            onClick={() => setAdministrativeLayer('COMMANDERY')}
+            onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('COMMANDERY'); render(); }}
           >
             군
           </button>

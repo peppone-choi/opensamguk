@@ -34,6 +34,7 @@ COPY --from=build /src/app/game-api/build/libs/*.jar app.jar
 # 후한 군현 타일맵(ADR-LITE-040). jar 리소스가 아니라 파일로 두는 건 그대로다 —
 # 내리고 싶으면 이 한 줄을 지우면 되고, 그러면 /api/map/terrain 이 404 로 폴백한다.
 COPY data/map/han-tiles.json /app/data/map/han-tiles.json
+COPY data/map/han-ju-index-v1.json /app/data/map/han-ju-index-v1.json
 COPY data/map/han-tiles.json /app/data/map/han-world-v2-tiles.json
 COPY data/map/han-tiles.json /app/data/map/han-world-v3-tiles.json
 COPY data/map/han-scenario-province-ownership-v1.json /app/data/map/han-scenario-province-ownership-v1.json
