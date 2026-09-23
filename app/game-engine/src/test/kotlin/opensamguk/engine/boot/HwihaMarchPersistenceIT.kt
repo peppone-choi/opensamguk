@@ -685,10 +685,15 @@ class HwihaMarchPersistenceIT {
         jdbc.update("UPDATE general SET turn_time='0200-01-01T00:00:00Z' WHERE world_id=? AND id IN (100,101)",id)
         world=cold(id);runDeploymentTurn(id,world,published);world=cold(id)
         assertEquals(before,world.listGenerals().associate { it.id to world.positionOf(it.id) })
-        assertEquals(encounter.toMetaValue(),HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta,topology)?.toMetaValue())
+        assertTrue(listOf(1,100,101).all { commander ->
+            HwihaCorpsEncounter.read(world.getGeneralById(commander)!!.meta,topology)==null
+        }, "unsupported unit profile ends the sealed encounter on the next attacker turn")
+        assertTrue(listOf(1,100,101).all { commander ->
+            world.getGeneralById(commander)!!.meta[HwihaEncounterResolver.DISBAND_RECORD_KEY]!=null
+        }, "the no-battle disband is persisted for every participant")
+        assertTrue(HwihaDeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection()?.people
+            ?.none { it.id in setOf(1,100,101) && it.inBattle } == true)
         assertEquals(listOf("encounter-$id"),published)
-        jdbc.update("UPDATE general SET meta=meta-'hwihaCorpsEncounter' WHERE world_id=? AND id=100",id)
-        assertNull(HwihaDeploymentExecutor(cold(id),ChangeRecorder(),topology,metrics).projection())
     }
 
     @Test fun `real personal entry seals occupied cells and detects stored placement tampering`() {

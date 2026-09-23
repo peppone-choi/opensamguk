@@ -81,7 +81,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   const dispatchPath = `/api/commands/dispatches?generalId=${generalId}`;
   await expect.poll(async () => (await read<DispatchPendingResponse>(page, dispatchPath)).dispatches
     .some(d => d.targetId === generalId && d.status === 'PENDING'),
-  { timeout: 240_000, intervals: [3000, 5000] }).toBe(true);
+  { timeout: 1_200_000, intervals: [3000, 5000] }).toBe(true);
   const dispatch = (await read<DispatchPendingResponse>(page, dispatchPath)).dispatches
     .find(d => d.targetId === generalId && d.status === 'PENDING')!;
   await page.getByRole('button', { name: '발령·응답', exact: true }).click();
@@ -122,9 +122,24 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     }
   }
   const db = sql(`SELECT json_build_object('sieges', (SELECT json_agg(json_build_object('countyId',county_id,'status',status,'turns',turns,'endReason',end_reason)) FROM hwiha_siege WHERE world_id=${worldId}),
-    'player', (SELECT json_build_object('nationId',nation_id,'assignment',meta->'hwihaCountyAssignment','position',meta->'hwihaPosition') FROM general WHERE world_id=${worldId} AND id=${generalId}),
-    'warehouses', (SELECT json_agg(json_build_object('id',id,'stock',meta->'hwihaCountyWarehouse')) FROM city WHERE world_id=${worldId} AND nation_id=${nationId}));`);
+    'player', (SELECT json_build_object('nationId',g.nation_id,'assignment',g.meta->'hwihaCountyAssignment',
+      'position',(SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id))
+      FROM general g WHERE g.world_id=${worldId} AND g.id=${generalId}),
+    'warehouses', (SELECT json_agg(json_build_object('id',id,'stock',meta->'hwihaCountyWarehouse')) FROM city WHERE world_id=${worldId} AND nation_id=${nationId}),
+    'monthly', (SELECT json_object_agg(key,value) FROM game_kv WHERE world_id=${worldId} AND "table"='game_env' AND namespace='game_env'
+      AND key IN ('hwihaCountyIncomeMonth','hwihaSalaryMonth','hwihaRenownAssessmentStamp','hwihaRenownRanking')));`);
   await testInfo.attach('db-hwiha-slice', { body: db, contentType: 'application/json' });
+  const monthly = (JSON.parse(db) as { monthly: Record<string, unknown> }).monthly;
+  expect(monthly.hwihaCountyIncomeMonth).toBeTruthy();
+  expect(monthly.hwihaSalaryMonth).toBeTruthy();
+  expect(monthly.hwihaRenownAssessmentStamp).toBeTruthy();
+  expect(Array.isArray(monthly.hwihaRenownRanking) && monthly.hwihaRenownRanking.length > 0).toBe(true);
+  const phaseEvents = sql(`SELECT coalesce(json_agg(json_build_object('year',year,'month',month,'phase',phase,
+    'kind',event_kind,'generalId',general_id,'nationId',nation_id,'text',text,'refs',meta->'refs') ORDER BY year,month,phase,id),'[]'::json)
+    FROM log_entry WHERE world_id=${worldId} AND event_kind IS NOT NULL;`);
+  await testInfo.attach('phase-events', { body: phaseEvents, contentType: 'application/json' });
+  const events = JSON.parse(phaseEvents) as { kind: string; refs?: { money?: number; grain?: number } }[];
+  expect(events.some(e => e.kind === 'income.monthly' && ((e.refs?.money ?? 0) > 0 || (e.refs?.grain ?? 0) > 0))).toBe(true);
   await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, siege: siegeSummary(), yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);

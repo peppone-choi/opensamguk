@@ -349,6 +349,16 @@ jobs:
           path: |
             app/game-engine/build/reports/tests/
             app/game-engine/build/test-results/test/
+      - name: Upload HWIHA S3 gate traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hwiha-s3-gate-traces
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            app/game-engine/build/test-results/test/TEST-*HwihaS3PassChain*.xml
+            app/game-engine/build/test-results/test/TEST-*HwihaYuzhouCampaignSimulationTest.xml
 
   web:
     runs-on: ubuntu-latest

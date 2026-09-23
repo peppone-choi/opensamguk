@@ -18,7 +18,7 @@ class HwihaS3ProvisionalTest {
     @Test fun `every section is marked provisional pending the user's decision`() {
         val marker = "PROVISIONAL — 사용자 결정 대기"
         assertEquals(marker, root.getValue("status").jsonPrimitive.content)
-        for (section in listOf("encounter", "encounterRecovery", "siege", "salary", "reward", "npcDeploy", "reactions", "resupply"))
+        for (section in listOf("encounter", "encounterRecovery", "siege", "salary", "reward", "npcDeploy", "reactions", "rations", "resupply"))
             assertEquals(marker, root.getValue(section).jsonObject.getValue("status").jsonPrimitive.content, section)
     }
 

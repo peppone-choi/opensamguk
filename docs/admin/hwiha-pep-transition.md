@@ -8,7 +8,7 @@
 |---|---|---|
 | 서버 | `pep` (`spep` 내부 스택) | `GET /admin/env/servers/pep`의 서버 ID와 현재 시나리오 |
 | 새 시나리오 | `scenario_990002` — 휘하 豫州 조각, 합성 QA 데이터 | 운영 카탈로그와 이미지 내부 시나리오 파일의 제목·해시 일치 |
-| 지도 판 | `han-world-v3` 1168 城 | #865가 먼저 병합되면 1224 城으로 다시 고정하고 시나리오 생성 테스트·창고 전 縣 검사를 재실행 |
+| 지도 판 | `han-world-v3` 1224 城 (#865 병합) | 시나리오 생성 테스트·창고 전 縣 검사와 API 城 수 대조 |
 | 승격 SHA | W0–W4 통과 후 `main`의 정확한 커밋 SHA를 기록 | game-api·game-engine·web-game·gateway 이미지의 출처가 같은 SHA인지 확인 |
 | 시계 | 현재 pep의 `turnTerm`을 읽은 뒤 `turn_term=current` | 관리 API 값과 서버 환경값 일치, 실제 틱 진행 확인 |
 | 세대 | 현재 pep의 `generation`을 읽은 뒤 `generation=current` | 기존 세대와 전환 의도를 기록 |
@@ -25,7 +25,7 @@
 | `scenario_code` | `scenario_990002` |
 | `generation` | `current` (실측값과 의미를 확인) |
 | `turn_term` | `current` (실측값과 의미를 확인) |
-| `expected_city_count` | `1168` (#865 병합 시 `1224`로 재검증) |
+| `expected_city_count` | `1224` |
 | `expected_first_city` | `경조윤 장안현` (승격 지도 API로 재검증) |
 
 워크플로 기본값 `scenario_1020`은 이 전환의 대상이 아니다. 실행 전 입력 화면의 여덟 값을 모두 직접 대조한다. `reset-game-server.yml`은 외부 시나리오 디렉터리를 재생성하거나 기존 파일을 유지할 수 있으므로, 이미지의 `scenario_990002`가 실제 시드에 사용될 경로까지 확인한다.

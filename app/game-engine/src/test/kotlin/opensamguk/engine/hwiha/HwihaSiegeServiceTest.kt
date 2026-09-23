@@ -15,12 +15,18 @@ class HwihaSiegeServiceTest {
     private val county = route.destinationCounty
 
     private fun besieged(troops: Int = 1000, provisions: Int = 100_000, grain: Long = 0, userId: String? = "42",
-        trust: Double = 50.0, defence: Int = 100): Pair<InMemoryTurnWorld, ChangeRecorder> {
-        val world = fixture.world(listOf(fixture.person(1, 1, route.startCity, userId = userId) to route.first),
-            bugoks = listOf(fixture.unit(7, 1, troops, provisions = provisions)),
+        trust: Double = 50.0, defence: Int = 100, reverse: Boolean = false): Pair<InMemoryTurnWorld, ChangeRecorder> {
+        val reserveCounty = fixture.bundle.projection.administrativeCountyIds.first { it != county }
+        val people = listOf(fixture.person(1, 1, route.startCity, userId = userId) to route.first) +
+            if (reverse) listOf(fixture.person(2, 2, route.startCity, userId = "43") to route.first) else emptyList()
+        val units = listOf(fixture.unit(7, 1, troops, provisions = provisions)) +
+            if (reverse) listOf(fixture.unit(8, 2, 1000)) else emptyList()
+        val world = fixture.world(people,
+            bugoks = units,
             nations = listOf(opensamguk.engine.turn.Nation(1, "N1", "#111111"),
-                opensamguk.engine.turn.Nation(2, "N2", "#222222", chiefGeneralId = null)),
-            cityChanges = { city -> if (city.id != county) city else city.copy(nationId = 2, defence = defence,
+                opensamguk.engine.turn.Nation(2, "N2", "#222222", capitalCityId = if (reverse) reserveCounty else null, chiefGeneralId = null)),
+            cityChanges = { city -> if (reverse && city.id == reserveCounty) city.copy(nationId = 2)
+                else if (city.id != county) city else city.copy(nationId = 2, defence = defence,
                 meta = city.meta + mapOf("trust" to trust,
                     HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(county, 0, HwihaResources(grain = grain)).toMetaValue())) })
         val recorder = ChangeRecorder()
@@ -144,5 +150,32 @@ class HwihaSiegeServiceTest {
         val (world, _) = besieged(defence = 0)
         assertEquals(1, world.getCityById(county)!!.nationId)
         assertEquals("UNDEFENDED", world.getHwihaSiege(county)!!.endReason)
+    }
+
+    @Test fun `a counter siege after capture faces the occupation garrison instead of retaking at arrival`() {
+        val (world, recorder) = besieged(reverse = true)
+        boundary(world, recorder, 4)
+        assertEquals(1, world.getCityById(county)!!.nationId)
+        assertTrue(world.getCityById(county)!!.defence > 0)
+        recorder.moveGeneral(world, 1, route.first)
+        fixture.deploy(world, recorder, 2, listOf(8), route.destination)
+        fixture.nextPhase(world)
+        fixture.movement(world, recorder).onTurn(2, HwihaCampaignWorldFixture.NO_INPUT)
+        assertEquals(route.destination, world.positionOf(2), "counter corps reached the captured county")
+        assertEquals(1, world.getCityById(county)!!.nationId, "arrival does not auto recapture a defended county")
+        assertEquals(HwihaSiegeService.ACTIVE, world.getHwihaSiege(county)?.status,
+            world.listHwihaSieges().map { "${it.countyId}:${it.status}:${it.endReason}" }.joinToString())
+    }
+
+    @Test fun `red probe removing the occupation garrison restores immediate recapture`() {
+        val (world, recorder) = besieged(reverse = true)
+        boundary(world, recorder, 4)
+        world.updateCity(world.getCityById(county)!!.copy(defence = 0))
+        recorder.moveGeneral(world, 1, route.first)
+        fixture.deploy(world, recorder, 2, listOf(8), route.destination)
+        fixture.nextPhase(world)
+        fixture.movement(world, recorder).onTurn(2, HwihaCampaignWorldFixture.NO_INPUT)
+        assertEquals(2, world.getCityById(county)!!.nationId)
+        assertEquals("UNDEFENDED", world.getHwihaSiege(county)?.endReason)
     }
 }

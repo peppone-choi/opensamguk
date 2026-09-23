@@ -95,8 +95,29 @@ internal object HwihaS3ChainSupport {
     }
 
     /** One tick per phase, so each personal turn and each world boundary runs exactly once. */
-    fun run(service: TurnRunService, phases: Int = PHASES) {
-        for (k in 1..phases) service.runTick(START.plusSeconds(3600L * k))
+    fun run(service: TurnRunService, phases: Int = PHASES, measuredWorld: InMemoryTurnWorld? = null) {
+        val first = linkedMapOf<String, Int>()
+        for (k in 1..phases) {
+            service.runTick(START.plusSeconds(3600L * k))
+            val world = measuredWorld ?: continue
+            val human = world.getGeneralById(HUMAN)
+            val sieges = world.listHwihaSieges()
+            val meta = world.getState().meta
+            val links = linkedMapOf(
+                "enlist" to ((human?.nationId ?: 0) > 0),
+                "dispatch" to (human?.meta?.containsKey(HwihaCountyAssignment.META_KEY) == true),
+                "march" to (world.listGenerals().any { HwihaCorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } || sieges.isNotEmpty()),
+                "encounter" to world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta },
+                "siege" to sieges.isNotEmpty(),
+                "capture" to sieges.any { it.status == HwihaSiegeService.FALLEN },
+                "income" to (meta[HwihaMonthlyCountyIncome.STAMP_KEY] != null),
+                "salary" to (meta[HwihaMonthlySalary.STAMP_KEY] != null),
+                "assessment" to (meta[HwihaMonthlyAssessment.STAMP_KEY] != null),
+                "ranking" to ((meta[HwihaMonthlyAssessment.RANKING_KEY] as? List<*>).orEmpty().isNotEmpty()),
+            )
+            links.forEach { (name, met) -> if (met && name !in first) first[name] = k }
+        }
+        if (measuredWorld != null) println("s3-first-phase " + first.entries.joinToString(" ") { "${it.key}=${it.value}" })
     }
 
     /** The S3 gate. Each assertion names its link so a red run says which link broke. */
