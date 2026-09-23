@@ -313,7 +313,8 @@ class DaemonLoopConfig {
             v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
         )
 
-        // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림 연결 전까지 버린다.
+        // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림의
+        // 월단평 사건(치적)으로 같은 recorder 에 쌓는다 — 기록 스트림 치적 창과 같은 달 도장이라 한 달 한 번으로 접힌다.
         val domesticContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
             opensamguk.engine.hwiha.HwihaDomesticContext(
@@ -321,6 +322,7 @@ class DaemonLoopConfig {
                 nativeCounties = opensamguk.logic.input.HwihaNativeCountyLedger.load(),
                 topology = artifacts.projection.topology,
                 metrics = artifacts.landMarchMetrics,
+                merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder),
             )
         } else opensamguk.engine.hwiha.HwihaDomesticContext()
 
