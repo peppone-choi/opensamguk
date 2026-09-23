@@ -3,12 +3,31 @@ package opensamguk.gameapi.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 휘하 조회 네 경로의 응답(`/api/hwiha/yuedan` · `warehouses` · `county/{cityId}` · `retinue`).
+ * 휘하 조회 경로의 응답(`/api/hwiha/yuedan` · `warehouses` · `county/{cityId}` · `retinue` · `last-turns`).
  *
  * 부드러운 상태는 HTTP 오류가 아니라 [status] 로 알린다:
  * `READY` · `NOT_ASSESSED`(월단평 전) · `UNAVAILABLE`(월드·원장을 읽지 못함) · `WRONG_RULE_PROFILE`(휘하 규칙 아님).
  */
 data class HwihaYuedanSelf(val generalId: Int, val renown: Int?, val retinueCost: Int, val overCapacity: Boolean)
+
+/**
+ * 월단평 사유 한 줄 — 마지막 월단평이 그 장수에게 적용한 사건 **종류**와 건수·증감(§2.8 발표, 공개 정보).
+ * 사건 원인(어느 조우·어느 縣)은 싣지 않는다(#343).
+ */
+data class HwihaRenownReasonDto(val kind: String, val label: String, val count: Int, val amount: Int)
+
+/**
+ * 본인에게만 보이는 대기 사건 — 아직 월단평이 적용하지 않은 집계. [stamp] 달의 사건이며, [amount] 는 지금
+ * 곡선 기준 예상 증감이다. 원인([source]·[sourceLabel])은 본인 정보라 싣는다.
+ */
+data class HwihaRenownPendingEventDto(
+    val kind: String,
+    val label: String,
+    val stamp: String,
+    val source: String?,
+    val sourceLabel: String?,
+    val amount: Int,
+)
 
 data class HwihaYuedanRow(
     val rank: Int,
@@ -18,6 +37,8 @@ data class HwihaYuedanRow(
     val nationName: String?,
     val nationColor: String?,
     val renown: Int,
+    /** 마지막 월단평이 적용한 사유. 사건이 없던 장수는 빈 목록이다. */
+    val reasons: List<HwihaRenownReasonDto> = emptyList(),
 )
 
 data class HwihaYuedanResponse(
@@ -25,6 +46,8 @@ data class HwihaYuedanResponse(
     val stamp: String? = null,
     val self: HwihaYuedanSelf? = null,
     val ranking: List<HwihaYuedanRow> = emptyList(),
+    /** 본인의 다음 월단평 대기 사건(한 달에 종류당 한 건). */
+    val selfPendingEvents: List<HwihaRenownPendingEventDto> = emptyList(),
 )
 
 data class HwihaStockDto(val money: Long, val grain: Long, val iron: Long, val timber: Long, val horses: Long)
@@ -105,4 +128,34 @@ data class HwihaRetinueResponse(
     val overCapacity: Boolean = false,
     val people: List<HwihaPersonCardDto> = emptyList(),
     val units: List<RetinueBugokDto> = emptyList(),
+)
+
+/** 「지난 순」 기록 한 줄. [kind] 는 `HwihaRecordKind`, [refs] 는 종류마다 다른 식별자 묶음이다. */
+data class HwihaRecordEntryDto(val kind: String, val text: String, val refs: Map<String, Any?>)
+
+/** 지난 순 하나(연·월·순). 기록이 없던 순도 빈 [entries] 로 싣는다 — 명령 목록 12순과 같은 칸 수다. */
+data class HwihaLastTurnDto(
+    val year: Int,
+    val month: Int,
+    val phase: Int,
+    val phaseLabel: String,
+    val entries: List<HwihaRecordEntryDto>,
+)
+
+/** 세력 요약 한 줄 — 본인 세력의 공개 사건(縣 점령·상실)과 세계 공개 사건(월단평 발표)만. */
+data class HwihaNationSummaryEntryDto(
+    val year: Int,
+    val month: Int,
+    val phase: Int,
+    val phaseLabel: String,
+    val kind: String,
+    val text: String,
+    val refs: Map<String, Any?>,
+)
+
+/** `/api/hwiha/last-turns` 응답. [turns] 는 최근 순부터다. */
+data class HwihaLastTurnsResponse(
+    val status: String,
+    val turns: List<HwihaLastTurnDto> = emptyList(),
+    val nationSummary: List<HwihaNationSummaryEntryDto> = emptyList(),
 )

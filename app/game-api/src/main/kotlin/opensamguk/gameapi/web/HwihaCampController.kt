@@ -33,14 +33,20 @@ class HwihaCampController(private val reader: HwihaCampReader) {
     fun retinue(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.retinue(generalId, it) }
 
-    private fun guarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<Any> {
-        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        return try {
-            val body = read(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noStore()).build()
-            ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body)
-        } catch (_: HwihaCampForbidden) {
-            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        }
+    private fun guarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<Any> = hwihaGuarded(userId, read)
+}
+
+/**
+ * 휘하 조회 공통 응답 규칙: principal 없음·범위 밖 401, 남의 장수 403([HwihaCampForbidden]), 없는 대상 404,
+ * 그 밖은 200 — 모두 `Cache-Control: no-store`(200·404). 부드러운 상태는 본문 `status` 로 알린다.
+ */
+internal fun hwihaGuarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<Any> {
+    if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+    return try {
+        val body = read(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noStore()).build()
+        ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body)
+    } catch (_: HwihaCampForbidden) {
+        ResponseEntity.status(HttpStatus.FORBIDDEN).build()
     }
 }
