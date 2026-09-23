@@ -26,12 +26,41 @@ class HwihaResourceProductionTest(unittest.TestCase):
             else:
                 self.assertTrue(entry["id"] in carried or entry["id"] in skipped, entry["id"])
 
-    def test_wood_and_salt_are_not_production_sources(self):
-        # 목재 後漢 항목은 1건뿐이라 「분산」 설계를 못 받치고, 소금은 5자원에 없다.
+    def test_site_ledger_only_drives_iron_and_horse(self):
+        # 목재 後漢 항목은 1건뿐이라 산지 원장으로는 「분산」을 못 받친다. 소금은 5자원에 없다.
         self.assertNotIn("WOOD", tool.RATES)
         self.assertNotIn("SALT", tool.RATES)
+        self.assertEqual({"HORSE", "IRON"}, set(tool.RATES))
+        sited = {s["resource"] for row in self.built["counties"] for s in row["sites"]}
+        self.assertEqual({"HORSE", "IRON"}, sited)
         resources = {r for row in self.built["counties"] for r in row["monthly"]}
-        self.assertEqual({"HORSE", "IRON"}, resources)
+        self.assertEqual({"HORSE", "IRON", "TIMBER"}, resources)
+
+    def test_timber_is_distributed_not_concentrated(self):
+        """「목재는 분산」(2026-09-21 결정)이 실제로 분산인지 본다."""
+        producing = [row for row in self.built["counties"] if "TIMBER" in row["monthly"]]
+        total = len(self.tiles["jurisdictionRecords"])
+        self.assertGreaterEqual(len(producing), total * 95 // 100,
+                                "목재가 일부 縣에만 나면 분산이 아니다")
+        # 山地+丘陵만 쓰면 29% 뿐이라 분산이 아니었다 — 그 축으로 되돌아가지 않는다.
+        self.assertLess(total * 50 // 100, len(producing))
+
+    def test_timber_is_wooded_cells_times_the_rate(self):
+        for row in self.built["counties"]:
+            if "TIMBER" not in row["monthly"]:
+                self.assertNotIn("woodedCells", row)
+                continue
+            self.assertEqual(row["woodedCells"] * tool.TIMBER_PER_CELL, row["monthly"]["TIMBER"])
+            self.assertGreater(row["woodedCells"], 0)
+
+    def test_timber_axis_excludes_water_and_desert(self):
+        # 바다·강·호수·사막·범위밖에는 삼림이 서지 않는다.
+        legend = self.tiles["_meta"]["terrainLegend"]
+        excluded = {code for code, name in legend.items()
+                    if name in {"SEA", "RIVER", "LAKE", "DESERT", "OUT_OF_SCOPE"}}
+        self.assertTrue(excluded)
+        self.assertEqual(set(), excluded & tool.WOODED_TERRAIN)
+        self.assertEqual(set(legend) - excluded, set(tool.WOODED_TERRAIN))
 
     def test_horse_rows_sit_on_their_commandery_seat(self):
         seat_of = {c["id"]: c.get("seatJurisdictionId") for c in self.tiles["commanderyRecords"]}
@@ -62,11 +91,15 @@ class HwihaResourceProductionTest(unittest.TestCase):
             expected = {}
             for site in row["sites"]:
                 expected[site["resource"]] = expected.get(site["resource"], 0) + tool.RATES[site["resource"]]
+            if "woodedCells" in row:
+                expected["TIMBER"] = row["woodedCells"] * tool.TIMBER_PER_CELL
             self.assertEqual(expected, row["monthly"], row["jurisdictionId"])
 
     def test_rates_are_recorded_in_the_artifact(self):
         # 수치는 게임 설계다. 산출물에 적혀 있어야 코드를 읽지 않고도 검토·변경할 수 있다.
         self.assertEqual(dict(sorted(tool.RATES.items())), self.built["rates"])
+        self.assertEqual(tool.TIMBER_PER_CELL, self.built["timber"]["perWoodedCell"])
+        self.assertEqual(sorted(tool.WOODED_TERRAIN), self.built["timber"]["woodedTerrainCodes"])
 
     def test_unbound_entries_are_skipped_not_guessed(self):
         for row in self.built["skipped"]:
