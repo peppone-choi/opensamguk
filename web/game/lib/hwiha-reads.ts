@@ -367,3 +367,7 @@ export interface HwihaWorks {
     readonly status: HwihaReadStatus;
     readonly counties: readonly HwihaCountyWorks[];
 }
+export interface HwihaSieges {
+    readonly status: HwihaReadStatus;
+    readonly sieges: readonly { readonly countyId: number; readonly status: string }[];
+}

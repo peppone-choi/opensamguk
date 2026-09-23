@@ -471,6 +471,8 @@ export const api = {
         get<import('./hwiha-reads').HwihaPolicies>(`/api/hwiha/policies?generalId=${generalId}`, signal),
     hwihaWorks: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaWorks>(`/api/hwiha/works?generalId=${generalId}`, signal),
+    hwihaSieges: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaSieges>(`/api/hwiha/sieges?generalId=${generalId}`, signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
     hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind}/${{ placement: 'assign', policy: 'set', work: 'start' }[kind]}?generalId=${generalId}`, body),

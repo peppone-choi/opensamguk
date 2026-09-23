@@ -25,8 +25,7 @@ const RELATION: Record<number, { label: string; tone: ChipTone }> = {
     7: { label: '불가침', tone: 'moss' },
 };
 
-// 지도 보기. 옛 평면 캔버스는 없다 — 아이소가 지도 그 자체다. 3D·2D 는 같은 격자·같은
-// 데이터를 다른 렌더러로 그린 것이고, 城 선택·이동은 양쪽 다 된다.
+// 2D 는 작전실과 같은 HanMapCanvas, 3D 는 IsoMap3D 다.
 const VIEWS: { key: IsoView; label: string }[] = [
     { key: 'iso3d', label: '3D' },
     { key: 'iso2d', label: '2D' },
@@ -51,7 +50,7 @@ export default function GameMapPage() {
     const [troops, setTroops] = useState<TroopInfo[] | null>(null);
     const [troopsError, setTroopsError] = useState<string | null>(null);
     const [selected, setSelected] = useState<IsoCityOverlay | null>(null);
-    const [view, setView] = useState<IsoView>('iso3d');
+    const [view, setView] = useState<IsoView>('iso2d');
 
     // background=true(턴 갱신)면 로딩 문구를 다시 띄우지 않는다(OPENSAM-196).
     const fetchLog = useCallback(async (background = false) => {

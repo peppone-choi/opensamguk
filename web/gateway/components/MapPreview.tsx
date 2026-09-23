@@ -1,17 +1,15 @@
 'use client';
 
-// 로비·로그인 화면의 지도. 게임창과 같은 아이소 지형판을 쓴다.
-//
-// 여기서는 2D(스프라이트) 판만 쓴다. 3D 는 three 를 끌고 오는데, 로비는 보기만 하는
-// 화면이라 600KB 짜리 런타임을 번들에 들일 이유가 없다. 격자·좌표·세력색 합성은
-// 게임창과 완전히 같은 코드(@opensamguk/ui/iso)를 쓴다.
+// 로비·로그인 화면의 지도. 작전실과 같은 2D 지도판을 쓴다.
 import {
-    IsoMap2D,
+    HanMapCanvas,
     cityDisplayName,
+    cityBadgeLabel,
+    citySnapshotBadges,
+    isUprisingNation,
+    WATERWAY_SITE_ROLES,
     isOwnedNationVisual,
-    placeGameCities,
-    useIsoTileGrid,
-    type PlacedCity,
+    type IsoCityOverlay,
 } from '@opensamguk/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -91,9 +89,9 @@ export default function MapPreview({
     const [data, setData] = useState<MapData | null>(null);
     const [failed, setFailed] = useState(false);
     const [hideCityName, setHideCityName] = useState(false);
-    const [picked, setPicked] = useState<PlacedCity | null>(null);
+    const [picked, setPicked] = useState<IsoCityOverlay | null>(null);
     // 마우스를 얹은 城. 툴팁은 이걸로 뜬다 — 눌러야 나오는 건 지도가 아니다.
-    const [hover, setHover] = useState<{ city: PlacedCity; x: number; y: number } | null>(null);
+    const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
 
     useEffect(() => {
         if (mapData != null) {
@@ -132,46 +130,37 @@ export default function MapPreview({
         height: data?.height || 610,
     }), [data?.height, data?.width]);
 
-    // 縣 → 국가색. 서버가 판정한 provinceOccupancy 가 정본이고, 없으면 도시 소속에서 짓는다.
-    const nationColorByOwner = useMemo(() => {
-        const table: Record<number, string> = {};
-        const occupancy = data?.provinceOccupancy ?? [];
-        // 城 과 같은 규칙이다 — 소유가 확실할 때만 칠한다(placeGameCities 참조).
-        const put = (provinceIndex: number | null | undefined, nationId: number) => {
-            const color = nationById.get(nationId)?.color;
-            if (!isOwnedNationVisual(nationId, color) || provinceIndex == null || provinceIndex < 0) return;
-            table[provinceIndex] = color;
-        };
-        if (occupancy.length > 0) {
-            for (const owner of occupancy) put(owner.provinceIndex, owner.nationId);
-        } else {
-            for (const city of data?.cities ?? []) put(city.provinceId, city.nationId);
-        }
-        return table;
-    }, [data, nationById]);
-
-    const terrainUrl = data
-        ? `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`
-        : '';
-    const grid = useIsoTileGrid(terrainUrl);
-    const placed = useMemo<PlacedCity[]>(() => (
-        grid.data && data
-            ? placeGameCities(data.cities, grid.data, { sourceSize, nations: nationById })
-            : []
-    ), [data, grid.data, nationById, sourceSize]);
-    const handlePickCity = useCallback((city: PlacedCity) => setPicked(city), []);
-    const handleHoverCity = useCallback((city: PlacedCity | null, at: { x: number; y: number }) => {
-        setHover(city ? { city, x: at.x, y: at.y } : null);
+    const cities = useMemo<IsoCityOverlay[]>(() => (data?.cities ?? []).map((city) => {
+        const nation = nationById.get(city.nationId);
+        const owned = isOwnedNationVisual(city.nationId, nation?.color);
+        return { ...city, nationName: owned ? nation?.name : undefined,
+            nationColor: owned ? nation?.color : undefined,
+            cityBadges: citySnapshotBadges(city).filter((badge) => badge.kind === 'supply') };
+    }), [data, nationById]);
+    const ownership = useMemo(() => data ? ({
+        provinceOccupancy: (data.provinceOccupancy ?? []).map((owner) => ({ ...owner,
+            nationName: nationById.get(owner.nationId)?.name,
+            nationColor: nationById.get(owner.nationId)?.color })),
+        jurisdictionOwnership: (data.jurisdictionOwnership ?? []).map((owner) => ({ ...owner,
+            nationName: nationById.get(owner.nationId)?.name,
+            nationColor: nationById.get(owner.nationId)?.color })),
+        commanderyControl: (data.commanderyControl ?? []).map((owner) => ({ ...owner,
+            nationName: nationById.get(owner.nationId)?.name,
+            nationColor: nationById.get(owner.nationId)?.color })),
+    }) : undefined, [data, nationById]);
+    const handlePickCity = useCallback((city: IsoCityOverlay) => setPicked(city), []);
+    const handleHoverCity = useCallback((city: IsoCityOverlay | null, at?: { x: number; y: number }) => {
+        setHover(city && at ? { city, x: at.x, y: at.y } : null);
     }, []);
 
-    if (failed || grid.status === 'error' || (data && data.cities.length === 0)) {
+    if (failed || (data && data.cities.length === 0)) {
         return (
             <div className="map-preview" aria-label="서버 지도 프리뷰">
                 <div className="map-preview-ph">맵 프리뷰 (준비 중)</div>
             </div>
         );
     }
-    if (!data || grid.status !== 'ready') {
+    if (!data) {
         return (
             <div className="map-preview" aria-label="서버 지도 프리뷰">
                 <div className="map-preview-ph"><div className="spinner" /></div>
@@ -182,19 +171,23 @@ export default function MapPreview({
     return (
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div className="map-preview-canvas">
-                <IsoMap2D
-                    className="map-preview-iso"
-                    data={grid.data}
-                    cities={placed}
-                    tintMode="nation"
-                    tintStrength={0.55}
-                    nationColorByOwner={nationColorByOwner}
+                <HanMapCanvas
+                    className="map-preview-han"
+                    mapCode={data.mapCode}
+                    terrainUrl={`/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`}
+                    provinceUrl={`/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`}
+                    cities={cities}
+                    administrativeOwnership={ownership}
+                    sourceSize={sourceSize}
                     currentCityId={currentCityId}
                     selectedCityId={picked?.id ?? null}
                     hideCityNames={hideCityName}
-                    onPickCity={handlePickCity}
-                    onHoverCity={handleHoverCity}
-                    ariaLabel={`${data.mapCode} 서버 아이소 지도`}
+                    politicalStyle="tint"
+                    showCityFootprint
+                    onCityActivate={handlePickCity}
+                    onCityHover={handleHoverCity}
+                    onMissing={() => setFailed(true)}
+                    ariaLabel={`${data.mapCode} 서버 지도`}
                 />
                 <div className="map-btn-stack">
                     <button
@@ -222,12 +215,19 @@ export default function MapPreview({
                         {/* 주인이 없으면 국가 줄을 내지 않는다 — 공백지에 「재야」라고 적지 않는다(2026-09-10). */}
                         {((hover?.city ?? picked)!.nationName || (hover?.city ?? picked)!.isCapital) && (
                             <div className="map-preview-tooltip-meta">
+                                {isUprisingNation((hover?.city ?? picked)!.nationName) ? '봉기 세력 · ' : ''}
                                 {(hover?.city ?? picked)!.nationName ?? ''}
                                 {(hover?.city ?? picked)!.isCapital
                                     ? `${(hover?.city ?? picked)!.nationName ? ' · ' : ''}수도`
                                     : ''}
                             </div>
                         )}
+                        {citySnapshotBadges((hover?.city ?? picked)!).map((badge, index) => (
+                            <div className="map-preview-tooltip-meta" key={`state-${index}`}>{cityBadgeLabel(badge)}</div>
+                        ))}
+                        {(WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []).map((feature) => (
+                            <div className="map-preview-tooltip-meta" key={feature}>{feature === 'port' ? '항구' : '나루'}</div>
+                        ))}
                     </div>
                 )}
             </div>

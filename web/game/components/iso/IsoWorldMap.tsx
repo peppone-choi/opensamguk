@@ -14,13 +14,17 @@
 // 과거 스냅샷(전투 기록 화면)처럼 provinceOccupancy 가 없을 수도 있다. 그때는 그 시점
 // 도시의 provinceId → nationId 로 縣 색을 짓는다. 살아 있는 값만 쓰고, 없으면 비운다.
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   IsoMap2D,
   PillTabs,
   TERRAIN_ASSET_NAME,
   cityDisplayName,
+  cityBadgeAssetKey,
+  cityBadgeLabel,
+  WATERWAY_SITE_ROLES,
   isOwnedNationVisual,
+  isUprisingNation,
   placeBattlefields,
   placeGameCities,
   useIsoTileGrid,
@@ -30,6 +34,8 @@ import {
   type TintMode,
 } from '@opensamguk/ui';
 import IsoMap3D from './IsoMap3D';
+import { cityBadgesById } from '@/lib/iso-city-badges';
+import type { HwihaSieges, HwihaWorks } from '@/lib/hwiha-reads';
 
 export type IsoView = 'iso3d' | 'iso2d';
 
@@ -65,6 +71,8 @@ export interface IsoWorldMapBattlefield {
 export interface IsoWorldMapProps {
   terrainUrl: string;
   cities: readonly GameCityInput[];
+  works?: HwihaWorks | null;
+  sieges?: HwihaSieges | null;
   nations: readonly IsoWorldMapNation[];
   /** 게임 좌표계 크기(MapPreviewResponse.width/height). 縣 판정이 없는 도시의 폴백에 쓴다. */
   sourceSize: { width: number; height: number };
@@ -92,6 +100,8 @@ export interface IsoWorldMapProps {
 export default function IsoWorldMap({
   terrainUrl,
   cities,
+  works = null,
+  sieges = null,
   nations,
   sourceSize,
   provinceOccupancy,
@@ -112,6 +122,27 @@ export default function IsoWorldMap({
   const [picked, setPicked] = useState<{ col: number; row: number } | null>(null);
   // 마우스를 얹은 城. 눌러야 나오는 게 아니라 얹으면 나온다.
   const [hover, setHover] = useState<{ city: PlacedCity; x: number; y: number } | null>(null);
+  const [badgeImages, setBadgeImages] = useState<ReadonlyMap<string, HTMLImageElement>>(new Map());
+  const cityBadges = useMemo(() => cityBadgesById(cities, works, sieges), [cities, works, sieges]);
+  const badgeKeys = useMemo(() => [...new Set([...cityBadges.values()].flatMap((list) => list.map(cityBadgeAssetKey)))].sort(), [cityBadges]);
+  const badgeKey = badgeKeys.join(',');
+
+  useEffect(() => {
+    if (!badgeKey) { setBadgeImages(new Map()); return; }
+    let live = true;
+    const loaded = new Map<string, HTMLImageElement>();
+    const images = badgeKey.split(',').map((key) => {
+      const image = new Image();
+      image.onload = () => {
+        if (!live) return;
+        loaded.set(key, image);
+        setBadgeImages(new Map(loaded));
+      };
+      image.src = `/status/4x/state-${key}.png`;
+      return image;
+    });
+    return () => { live = false; for (const image of images) image.onload = null; };
+  }, [badgeKey]);
 
   const view = controlledView ?? ownView;
   const setView = useCallback((next: IsoView) => {
@@ -206,6 +237,8 @@ export default function IsoWorldMap({
     tintStrength: 0.55,
     nationColorByOwner: paint.colorByProvince,
     cities: placed,
+    cityBadges,
+    badgeImages,
     hideCityNames,
     currentCityId,
     selectedCityId,
@@ -226,6 +259,20 @@ export default function IsoWorldMap({
             <PillTabs tabs={VIEWS} value={view} onChange={setView} label="지도 보기" />
           )}
           <PillTabs tabs={TINTS} value={tintMode} onChange={setTintMode} label="세력색" />
+          {onCityActivate && (
+            <label>
+              城 선택{' '}
+              <select aria-label="지도에서 城 선택" value="" onChange={(event) => {
+                const city = placed.find((item) => item.id === Number(event.target.value));
+                if (city) onCityActivate(city, { pointerType: 'keyboard' });
+              }}>
+                <option value="">도시를 선택하세요</option>
+                {placed.filter((city) => city.id > 0).map((city) => (
+                  <option key={city.id} value={city.id}>{cityDisplayName(city)}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <span className="text-muted">
             끌어서 이동 · 휠로 확대(郡治를 당기면 縣이 나온다) · 城을 눌러 도시로
           </span>
@@ -240,10 +287,16 @@ export default function IsoWorldMap({
                 공백지는 비어 있다는 것이 사실이고, 「재야」는 주군 없는 **장수**를 가리키는 말이다. */}
             {(hover.city.nationName || hover.city.isCapital) && (
               <span>
-                {hover.city.nationName ?? ''}
+                {isUprisingNation(hover.city.nationName) ? '봉기 세력 · ' : ''}{hover.city.nationName ?? ''}
                 {hover.city.isCapital ? `${hover.city.nationName ? ' · ' : ''}수도` : ''}
               </span>
             )}
+            {(cityBadges.get(hover.city.id) ?? []).map((badge, index) => (
+              <span key={`${cityBadgeAssetKey(badge)}-${index}`}>{cityBadgeLabel(badge)}</span>
+            ))}
+            {(WATERWAY_SITE_ROLES[hover.city.id] ?? []).map((feature) => (
+              <span key={feature}>{feature === 'port' ? '항구' : '나루'}</span>
+            ))}
           </div>
         )}
         {fields.length > 0 && (

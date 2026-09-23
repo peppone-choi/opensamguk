@@ -44,7 +44,12 @@ function glyphLetters(name: string | null | undefined): string[] {
  * 가리키는 표식이지 식별자가 아니다.
  */
 export function nationGlyph(name: string | null | undefined): string | null {
+  if (isUprisingNation(name)) return '起';
   return glyphLetters(name)[0] ?? null;
+}
+
+export function isUprisingNation(name: string | null | undefined): boolean {
+  return /황건|黃巾|黄巾|yellow\s*turban/i.test(name ?? '');
 }
 
 /** 깃발 바탕 위 글자색. 밝은 깃발엔 잉크, 어두운 깃발엔 --text. */

@@ -325,7 +325,7 @@ export interface MapPreviewCity {
   x: number;
   y: number;
   region?: number;
-  regionName?: string;
+  regionName?: string; // 지도 정본 meta.ju의 州 이름. city.region 8권역과 별개.
   commanderyName?: string;
   isCommanderySeat?: boolean;
   provinceId?: number;

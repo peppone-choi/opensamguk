@@ -31,6 +31,8 @@ import {
   drawCityFlag,
   drawCityName,
   drawCityRing,
+  drawCityBadgeLayer,
+  WATERWAY_SITE_ROLES,
   dropOverlappingLabels,
   firstPickableCity,
   isAchromaticNationColor,
@@ -45,6 +47,7 @@ import {
   type IsoMapData,
   type IsoBattlefieldMarker,
   type IsoSeaRoute,
+  type IsoCityBadge,
   type PlacedCity,
   type Rgb,
   type TintMode,
@@ -82,6 +85,8 @@ export type { TintMode };
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 const EMPTY_SEA_ROUTES: readonly IsoSeaRoute[] = [];
+const EMPTY_BADGES: ReadonlyMap<number, readonly IsoCityBadge[]> = new Map();
+const EMPTY_BADGE_IMAGES: ReadonlyMap<string, HTMLImageElement> = new Map();
 
 export interface IsoMap3DProps {
   data: IsoMapData;
@@ -92,6 +97,8 @@ export interface IsoMap3DProps {
   nationColorByOwner?: Record<number, string>;
   /** 격자에 앉힌 게임 도시. 이게 있어야 눌러서 도시로 들어갈 수 있다. */
   cities?: readonly PlacedCity[];
+  cityBadges?: ReadonlyMap<number, readonly IsoCityBadge[]>;
+  badgeImages?: ReadonlyMap<string, HTMLImageElement>;
   hideCityNames?: boolean;
   currentCityId?: number | null;
   selectedCityId?: number | null;
@@ -176,6 +183,8 @@ export function IsoMap3D({
   tintMode,
   nationColorByOwner,
   cities = EMPTY_CITIES,
+  cityBadges = EMPTY_BADGES,
+  badgeImages = EMPTY_BADGE_IMAGES,
   hideCityNames = false,
   currentCityId = null,
   selectedCityId = null,
@@ -684,7 +693,7 @@ export function IsoMap3D({
       let span = Math.max(cols, rows) * 0.9;
 
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
       canvas.style.width = '100%';
       canvas.style.height = '100%';
       canvas.style.display = 'block';
@@ -707,7 +716,8 @@ export function IsoMap3D({
 
       const drawLabels = (seatOnly: boolean) => {
         if (!overlayContext) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const layerImages = new Map(badgeImages);
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
         const w = host.clientWidth || 1;
         const h = host.clientHeight || 1;
         if (overlay.width !== Math.round(w * dpr) || overlay.height !== Math.round(h * dpr)) {
@@ -771,7 +781,6 @@ export function IsoMap3D({
         }
         // 뒤쪽 城 부터 그린다 — 화면 아래일수록 앞이다.
         drawn.sort((a, b) => a.sy - b.sy);
-
         cityHits.length = 0;
         for (const { city, sx, sy, flagY } of drawn) {
           const top = drawCityFlag(overlayContext, sx, flagY, {
@@ -786,6 +795,11 @@ export function IsoMap3D({
           // firstPickableCity 로 걸러진다.
           const half = halfOf(city);
           cityHits.push({ city, x0: sx - half, x1: sx + half, y0: top - 2, y1: sy + belowOf(city) });
+          const badges: IsoCityBadge[] = [
+            ...(WATERWAY_SITE_ROLES[city.id] ?? []).map((feature) => ({ kind: 'waterway' as const, feature })),
+            ...(cityBadges.get(city.id) ?? []),
+          ];
+          if (badges.length) drawCityBadgeLayer(overlayContext, badges, layerImages, sx + half + 2, sy - 12);
         }
 
         // 선택·주둔 테는 깃발 위에 얹는다 — 가려지면 어디가 내 城 인지 못 찾는다.
@@ -984,6 +998,12 @@ export function IsoMap3D({
         // 여기서도 건너뛴다. 앞에 서 있다고 뒤의 城 까지 못 집게 만들면 안 되므로
         // 제일 가까운 것 하나만 보지 않고 城 이 나올 때까지 훑는다.
         if (onPickCity) {
+          const px = e.clientX - rect.left;
+          const py = e.clientY - rect.top;
+          const screenCity = firstPickableCity(cityHits.slice().reverse()
+            .filter((hit) => px >= hit.x0 && px <= hit.x1 && py >= hit.y0 && py <= hit.y1)
+            .map((hit) => hit.city));
+          if (screenCity) { onPickCity(screenCity, { pointerType: lastPointerType }); return; }
           const visibleCityMeshes = cityMeshes.filter((entry) => entry.mesh.visible);
           const meshHits = raycaster.intersectObjects(
             visibleCityMeshes.map((entry) => entry.mesh), false,
@@ -1059,7 +1079,7 @@ export function IsoMap3D({
       for (const item of disposables) item.dispose();
       renderer?.dispose();
     };
-  }, [data, cities, hideCityNames, currentCityId, selectedCityId, onPickTile, onPickCity,
+  }, [data, cities, cityBadges, badgeImages, hideCityNames, currentCityId, selectedCityId, onPickTile, onPickCity,
     onHoverCity, battlefields, onPickBattlefield, seaRoutes]);
 
   // 색 세기·모드만 바뀌면 씬을 다시 짓지 않고 instanceColor 만 갈아 끼운다.

@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
+import { cityBadgeLabel, formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, isUprisingNation, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import IsoWorldMap, { type IsoView } from '../iso/IsoWorldMap';
 import type { PlacedCity } from '@opensamguk/ui';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
+import type { HwihaSieges, HwihaWorks } from '@/lib/hwiha-reads';
+import { cityBadgesById } from '@/lib/iso-city-badges';
 
 const NEUTRAL_NAME = '공 백 지';
 const DEFAULT_PHASES_PER_MONTH = 3;
@@ -107,17 +109,10 @@ export interface MapViewerProps {
     /** 선택 모드의 확장 콜백 — 클릭한 도시 오버레이(국가명·국가색 포함)를 통째로 받는다(05 천하 지도 레일). */
     onCityPick?: (city: IsoCityOverlay) => void;
     onNavigate?: (href: string) => void;
-    /** 아이소 지도의 시점. 주지 않으면 지도가 스스로 3D·2D 를 고른다. */
+    /** 2D 는 작전실과 같은 HanMapCanvas, 3D 는 IsoMap3D. 기본값은 2D. */
     view?: IsoView;
     onViewChange?: (view: IsoView) => void;
-    /**
-     * 기존 평면 캔버스(HanMapCanvas)로 되돌린다.
-     *
-     * 지도는 전부 아이소로 갈았다. 이 문은 **전략 경로선** 하나 때문에 남는다 —
-     * selectedServerRoute 는 routeNodeKey 로 이어지는 경로이고, 그 키는 지도 응답에
-     * 실려 오지 않아 아이소 격자 위에서 되살릴 방법이 아직 없다. 없는 대조표를
-     * 지어내는 대신, 경로를 그려야 하는 화면(도시 수송)만 옛 캔버스에 남긴다.
-     */
+    /** 전략 경로선 화면은 보기 설정과 관계없이 작전실 지도에 고정한다. */
     legacyCanvas?: boolean;
 }
 
@@ -187,6 +182,9 @@ export default function MapViewer({
     const [touchDevice, setTouchDevice] = useState(false);
     const [strategicTopology, setStrategicTopology] = useState<StrategicMapSnapshot | null>(null);
     const [strategicError, setStrategicError] = useState<string | null>(null);
+    const [worksRead, setWorksRead] = useState<HwihaWorks | null>(null);
+    const [siegesRead, setSiegesRead] = useState<HwihaSieges | null>(null);
+    const [hoverCity, setHoverCity] = useState<IsoCityOverlay | null>(null);
     const strategicCache = useRef<{ server: string | undefined; snapshot: StrategicMapSnapshot } | null>(null);
     const bindingCallback = useRef(onStrategicBindingChange);
     bindingCallback.current = onStrategicBindingChange;
@@ -198,6 +196,28 @@ export default function MapViewer({
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
+
+    useEffect(() => {
+        if (!live || mapData != null) {
+            setWorksRead(null);
+            setSiegesRead(null);
+            return;
+        }
+        const controller = new AbortController();
+        api.frontInfo(controller.signal).then((front) => {
+            const generalId = front.general.generalId;
+            if (generalId == null || controller.signal.aborted) return;
+            void api.hwihaWorks(generalId, controller.signal).then(setWorksRead).catch(() => {
+                if (!controller.signal.aborted) setWorksRead(null);
+            });
+            void api.hwihaSieges(generalId, controller.signal).then(setSiegesRead).catch(() => {
+                if (!controller.signal.aborted) setSiegesRead(null);
+            });
+        }).catch(() => {
+            if (!controller.signal.aborted) { setWorksRead(null); setSiegesRead(null); }
+        });
+        return () => controller.abort();
+    }, [live, mapData, refreshKey]);
 
     useEffect(() => {
         if (mapData != null) {
@@ -300,6 +320,8 @@ export default function MapViewer({
     const nationById = useMemo(() => new Map(
         data?.nations.map((nation) => [nation.id, nation]) ?? [],
     ), [data]);
+    const serverBadges = useMemo(() => cityBadgesById(data?.cities ?? [], worksRead, siegesRead),
+        [data?.cities, worksRead, siegesRead]);
     const cities = useMemo<IsoCityOverlay[]>(() => data?.cities.map((city) => {
         const nation = nationById.get(city.nationId);
         const owned = isOwnedNationVisual(city.nationId, nation?.color);
@@ -307,8 +329,9 @@ export default function MapViewer({
             ...city,
             nationName: owned ? nation?.name : NEUTRAL_NAME,
             nationColor: owned ? nation.color : undefined,
+            cityBadges: (serverBadges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
         };
-    }) ?? [], [data, nationById]);
+    }) ?? [], [data, nationById, serverBadges]);
     const sourceSize = useMemo(() => ({
         width: data?.width || 700,
         height: data?.height || 610,
@@ -391,15 +414,18 @@ export default function MapViewer({
         return <section className="map-viewer" aria-label="세계 지도"><div className="map-viewer-ph"><div className="spinner" /></div></section>;
     }
 
+    const useFlatCanvas = legacyCanvas || view !== 'iso3d';
     const title = `${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`;
     const tooltip = mapTitleTooltip(data.startYear, data.year, data.month, data.turnPhase ?? 1, gameConst);
     const legacyHoverOwnerName = hoverCounty?.nationName
         && (isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
             || hoverCounty.nationName !== NEUTRAL_NAME)
         ? hoverCounty.nationName : undefined;
+    const displayedOwnerName = hoverCounty?.displayedOwnerNationName ?? legacyHoverOwnerName;
     const hoverMeta = formatCompactMapTooltipMeta({
         hierarchyPath: hoverCounty?.hierarchyPath,
-        displayedOwnerName: hoverCounty?.displayedOwnerNationName ?? legacyHoverOwnerName,
+        displayedOwnerName: isUprisingNation(displayedOwnerName)
+            ? `봉기 세력 · ${displayedOwnerName}` : displayedOwnerName,
         ownershipMismatch: hoverCounty?.ownershipMismatch,
         provinceOccupantNationName: hoverCounty?.provinceOccupantNationName,
         jurisdictionOwnerNationName: hoverCounty?.jurisdictionOwnerNationName,
@@ -414,8 +440,8 @@ export default function MapViewer({
             >
                 {title}
             </div>
-            <div className={`map-viewer-canvas${legacyCanvas ? '' : ' map-viewer-canvas--iso'}`}>
-                {legacyCanvas ? (
+            <div className={`map-viewer-canvas${useFlatCanvas ? '' : ' map-viewer-canvas--iso'}`}>
+                {useFlatCanvas ? (
                     <HanMapCanvas
                         mapCode={data.mapCode}
                         terrainUrl={terrainUrl}
@@ -432,8 +458,14 @@ export default function MapViewer({
                             && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
                         currentServerId={readServerCookie()}
                         hideCityNames={hideCityNames}
+                        showCityFootprint
+                        politicalStyle="tint"
                         ariaLabel={`${data.mapCode} 세계 지도`}
                         onCountyHover={handleCountyHover}
+                        onCityHover={(city, point) => {
+                            setHoverCity(city);
+                            if (point) setCursor(point);
+                        }}
                         onCityActivate={activateCity}
                         onMissing={handleMissing}
                     />
@@ -441,6 +473,8 @@ export default function MapViewer({
                     <IsoWorldMap
                         terrainUrl={terrainUrl(data.mapCode)}
                         cities={data.cities}
+                        works={worksRead}
+                        sieges={siegesRead}
                         seaRoutes={data.seaRoutes}
                         nations={data.nations}
                         sourceSize={sourceSize}
@@ -470,6 +504,9 @@ export default function MapViewer({
                         />
                     </div>
                     {hoverMeta && <div className="map-tooltip-meta">{hoverMeta}</div>}
+                    {hoverCity?.cityBadges?.map((badge, index) => (
+                        <div className="map-tooltip-meta" key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>
+                    ))}
                 </div>
             )}
         </section>

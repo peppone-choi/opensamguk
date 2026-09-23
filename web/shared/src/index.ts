@@ -284,3 +284,7 @@ export {
   type ModelFit,
 } from './iso/buildingFit';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';
+export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
+export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
+export { isUprisingNation } from './iso/marker';
+export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';

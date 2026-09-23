@@ -41,6 +41,8 @@ import { cellFootprintInTiles } from './buildingFit';
 export interface GameCityInput {
   id: number;
   name: string;
+  /** 州 이름. 건축 양식을 고르는 데만 쓰며 소속 판정은 바꾸지 않는다. */
+  regionName?: string;
   /** han.json meta.nameCh. 縣 판정에만 쓴다 — cityName.ts 참조. */
   nameCh?: string;
   /** 서버가 계산한 화면 이름(meta.displayName). 오면 그대로 쓴다 — cityName.ts 참조. */
@@ -72,6 +74,7 @@ export interface PlacedCity {
   /** 게임 도시 번호. **음수면 게임 城 이 아니다**(郡國 밖 세력) — isExternalPlace 참조. */
   id: number;
   name: string;
+  regionName?: string;
   /** 행정 단위가 붙은 원 표기("长安县"). 화면 이름을 「뭐뭐현」으로 짓는 데 쓴다. */
   nameCh?: string;
   /** 서버가 계산한 화면 이름. cityDisplayName 이 그대로 쓴다. */
@@ -92,6 +95,8 @@ export interface PlacedCity {
   /** 郡治 여부. 축소 상태에서 이것만 남긴다. */
   seat: boolean;
   isCapital: boolean;
+  supply?: boolean;
+  state?: number;
   /** 정규화 전 자유 hex. 중립(무소속)이면 undefined. */
   nationColor?: string;
   nationName?: string;
@@ -176,6 +181,7 @@ export function placeGameCities(
     placed.push({
       id: city.id,
       name: city.name,
+      regionName: city.regionName,
       nameCh: city.nameCh,
       displayName: city.displayName,
       level: city.level,
@@ -191,6 +197,8 @@ export function placeGameCities(
       drawScale: 1,
       seat: city.isCommanderySeat === true,
       isCapital: city.isCapital === true,
+      supply: city.supply,
+      state: city.state,
       nationColor: nation?.color,
       nationName: nation?.name,
       exact,
