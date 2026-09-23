@@ -75,8 +75,9 @@ class HwihaAssignmentMarchTurn(
         }
     }
 
-    private fun isUnowned(generalId: Int): Boolean = world.getGeneralById(generalId)?.userId
-        .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
+    private fun isUnowned(generalId: Int): Boolean =
+        world.listRetainers().none { it.generalId == generalId } && world.getGeneralById(generalId)?.userId
+            .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
 
     private fun log(generalId: Int, text: String, refs: Map<String, Any?>) =
         HwihaRecords.general(world, generalId, HwihaRecordKind.MARCH_ASSIGNMENT, text, refs)

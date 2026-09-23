@@ -68,7 +68,7 @@ class HwihaCampReader(
         val everyone = generals.findAll().associateBy { it.id }
         val cost = retinueCost(actor.id) { everyone[it] }
         val renown = renownOf(actor)
-        val self = HwihaYuedanSelf(actor.id, renown, cost, renown != null && cost > renown)
+        val self = HwihaYuedanSelf(actor.id, renown, cost, renown != null && cost != null && cost > renown)
         val pending = pendingEvents(actor)
         val stamp = kv(HwihaRenownAssessment.STAMP_KEY)?.let { node -> if (node.isTextual) node.asText() else node.toString() }
         val published = kv(HwihaRenownAssessment.RANKING_KEY)
@@ -183,8 +183,8 @@ class HwihaCampReader(
         val cards = retainers.retainersOf(actor.id)
         val people = cards.associate { card -> card.id to card.generalId?.let { generals.findById(it).orElse(null) } }
         val costs = cards.associate { card -> card.id to people[card.id]?.let(::personCost) }
-        val costSum = costs.values.filterNotNull().sum()
-        val over = renown != null && costSum > renown
+        val costSum = if (costs.values.any { it == null }) null else costs.values.sumOf { requireNotNull(it) }
+        val over = renown != null && costSum != null && costSum > renown
         val order = if (!over) emptyMap() else HwihaRenownAssessment.departures(requireNotNull(renown),
             cards.mapNotNull { card -> costs[card.id]?.let { HwihaRenownAssessment.RetainerCard(card.id, it, card.loyalty) } })
             .withIndex().associate { (index, id) -> id to index + 1 }
@@ -223,12 +223,15 @@ class HwihaCampReader(
     private fun renownOf(general: GeneralReadEntity): Int? =
         try { HwihaPersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }
 
-    /** 월단평과 같은 계산: 사람 장수가 붙은 휘하 카드의 코스트 합. 장수가 없는 카드는 코스트가 없다. */
-    private fun retinueCost(masterId: Int, lookup: (Int) -> GeneralReadEntity?): Int =
-        retainers.retainersOf(masterId).sumOf { card -> card.generalId?.let(lookup)?.let(::personCost) ?: 0 }
+    /** 결손 카드가 하나라도 있으면 총합은 미상이다. 검증되지 않은 능력치를 0 코스트로 취급하지 않는다. */
+    private fun retinueCost(masterId: Int, lookup: (Int) -> GeneralReadEntity?): Int? {
+        val costs = retainers.retainersOf(masterId).map { card -> card.generalId?.let(lookup)?.let(::personCost) }
+        return if (costs.any { it == null }) null else costs.sumOf { requireNotNull(it) }
+    }
 
     private fun personCost(person: GeneralReadEntity): Int? = try {
-        HwihaRenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
+        if (HwihaPersonPolicyState.read(person.meta) == null) null else
+            HwihaRenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
     } catch (_: IllegalArgumentException) { null }
 
     private fun aptitudes(person: GeneralReadEntity): HwihaAptitudesDto? = try {

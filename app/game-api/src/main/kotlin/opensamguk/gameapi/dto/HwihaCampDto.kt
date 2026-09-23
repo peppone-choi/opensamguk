@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * 부드러운 상태는 HTTP 오류가 아니라 [status] 로 알린다:
  * `READY` · `NOT_ASSESSED`(월단평 전) · `UNAVAILABLE`(월드·원장을 읽지 못함) · `WRONG_RULE_PROFILE`(휘하 규칙 아님).
  */
-data class HwihaYuedanSelf(val generalId: Int, val renown: Int?, val retinueCost: Int, val overCapacity: Boolean)
+data class HwihaYuedanSelf(val generalId: Int, val renown: Int?, val retinueCost: Int?, val overCapacity: Boolean)
 
 /**
  * 월단평 사유 한 줄 — 마지막 월단평이 그 장수에게 적용한 사건 **종류**와 건수·증감(§2.8 발표, 공개 정보).
@@ -126,7 +126,7 @@ data class HwihaPersonCardDto(
 data class HwihaRetinueResponse(
     val status: String,
     val renown: Int? = null,
-    val costSum: Int = 0,
+    val costSum: Int? = null,
     val overCapacity: Boolean = false,
     val people: List<HwihaPersonCardDto> = emptyList(),
     val units: List<RetinueBugokDto> = emptyList(),

@@ -42,7 +42,7 @@ export interface HwihaYuedan {
     readonly self: {
         readonly generalId: number;
         readonly renown: number | null;
-        readonly retinueCost: number;
+        readonly retinueCost: number | null;
         readonly overCapacity: boolean;
     } | null;
     readonly ranking: readonly HwihaYuedanRow[];
@@ -138,7 +138,7 @@ export interface HwihaUnitCard {
 export interface HwihaRetinue {
     readonly status: HwihaReadStatus;
     readonly renown: number | null;
-    readonly costSum: number;
+    readonly costSum: number | null;
     readonly overCapacity: boolean;
     readonly people: readonly HwihaPersonCard[];
     readonly units: readonly HwihaUnitCard[];

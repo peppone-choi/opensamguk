@@ -105,8 +105,9 @@ object RetainerRules {
     // ── 상태 게이트 (§4 순서 고정; ③ 입력은 호출자가 먼저 통과시킨다) ──
 
     /** 서약: 상한 → 중복 이름 → 자금. */
-    fun pledgeDeny(retainerCount: Int, existingNames: Collection<String>, name: String, gold: Int): String? = when {
-        retainerCount >= MAX_RETAINERS -> REASON_RETAINERS_FULL
+    fun pledgeDeny(retainerCount: Int, existingNames: Collection<String>, name: String, gold: Int,
+                   enforceLegacySlotLimit: Boolean = true): String? = when {
+        enforceLegacySlotLimit && retainerCount >= MAX_RETAINERS -> REASON_RETAINERS_FULL
         name in existingNames -> REASON_DUP_NAME
         gold < PLEDGE_COST_GOLD -> REASON_NO_GOLD
         else -> null

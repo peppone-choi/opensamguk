@@ -128,7 +128,7 @@ export default function RetinuePage() {
                             actions={
                                 read.data ? (
                                     <Chip tone={read.data.overCapacity ? 'rust' : 'bronze'}>
-                                        {`⚖ ${read.data.costSum} / ${read.data.renown ?? '—'}`}
+                                        {`⚖ ${read.data.costSum ?? '—'} / ${read.data.renown ?? '—'}`}
                                     </Chip>
                                 ) : null
                             }

@@ -37,6 +37,7 @@ object HwihaEnlistmentPrecheck {
             ?: return deny(EnlistmentFailure.ACTOR_NOT_FOUND)
         if (budget is RenownBudgetResult.Unavailable) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
         budget as RenownBudgetResult.Ready
+        if (request.actorId in budget.unavailableOwnerReasons) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
         val generals = try {
             state.persons.map { person ->
                 EnlistmentGeneral(person.policy.id, person.policy.nationId, HwihaLordStatus.read(person.policy.meta),
@@ -55,6 +56,9 @@ object HwihaEnlistmentPrecheck {
             budget.unavailableLordReasons.keys,
         )
         val assessed = HwihaEnlistmentRules.assess(request, snapshot)
+        if (assessed is EnlistmentAssessment.Eligible && assessed.choices.any { plan ->
+                plan.joiningGeneralIds.any { it in budget.unavailableOwnerReasons }
+            }) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
         if (assessed is EnlistmentAssessment.Eligible && assessed.choices.any { it.nationId !in state.nationIds }) {
             return deny(EnlistmentFailure.TARGET_NOT_FOUND)
         }

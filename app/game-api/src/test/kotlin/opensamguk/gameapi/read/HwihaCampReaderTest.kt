@@ -45,12 +45,14 @@ class HwihaCampReaderTest {
         leadership = 100, strength = 80, intel = 95, politics = 90, charm = 95,
         meta = mapOf("npc_org" to 1, HwihaPersonPolicyState.META_KEY to policy(30)))
     private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, cityId = 2, npcState = 2,
-        leadership = 90, strength = 90, intel = 60, politics = 60, charm = 70, meta = mapOf("npc_org" to 2))
+        leadership = 90, strength = 90, intel = 60, politics = 60, charm = 70,
+        meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(30)))
     private val liubei = GeneralReadEntity(id = 3, worldId = 1, name = "유비", nationId = 0, npcState = 2,
         leadership = 80, strength = 70, intel = 70, politics = 70, charm = 99,
         meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(40)))
     private val dingfeng = GeneralReadEntity(id = 4, worldId = 1, name = "정봉", nationId = 1, npcState = 2,
-        leadership = 70, strength = 77, intel = 64, politics = 50, charm = 50, meta = mapOf("npc_org" to 2))
+        leadership = 70, strength = 77, intel = 64, politics = 50, charm = 50,
+        meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(30)))
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", userId = "42")
 
     private fun setup(profile: String = "HWIHA") {
@@ -132,9 +134,9 @@ class HwihaCampReaderTest {
         setup()
         val out = reader.yuedan(1, 41)
         assertEquals("NOT_ASSESSED", out.status); assertNull(out.stamp); assertTrue(out.ranking.isEmpty())
-        // 하후돈 370→8, 유비 389→8, 정봉 311→7 = 23. 장수 없는 카드는 코스트가 없다.
+        // 무명 카드는 검증된 5스탯이 없으므로 총합도 미상이다.
         val self = assertNotNull(out.self)
-        assertEquals(30, self.renown); assertEquals(23, self.retinueCost); assertFalse(self.overCapacity)
+        assertEquals(30, self.renown); assertNull(self.retinueCost); assertFalse(self.overCapacity)
     }
 
     @Test fun `월단평 순위는 발표된 자리대로 싣고 사라진 장수는 뺀다`() {
@@ -143,11 +145,11 @@ class HwihaCampReaderTest {
         kv(HwihaRenownAssessment.RANKING_KEY, "[3, 99, 1, 2]")
         val out = reader.yuedan(1, 41)
         assertEquals("READY", out.status); assertEquals("0190-03", out.stamp)
-        // 99 는 없는 장수, 2(하후돈)는 명망 정책이 없다 — 둘 다 빠지고 자리 번호는 발표 그대로다.
-        assertEquals(listOf(1 to 3, 3 to 1), out.ranking.map { it.rank to it.generalId })
+        // 99 는 없는 장수; 발표된 자리 번호는 그대로다.
+        assertEquals(listOf(1 to 3, 3 to 1, 4 to 2), out.ranking.map { it.rank to it.generalId })
         val liu = out.ranking.first()
         assertEquals("유비", liu.name); assertEquals(40, liu.renown); assertNull(liu.nationName); assertNull(liu.nationColor)
-        val cao = out.ranking.last()
+        val cao = out.ranking[1]
         assertEquals("위", cao.nationName); assertEquals("#1A4E8C", cao.nationColor); assertEquals(30, cao.renown)
     }
 
@@ -264,7 +266,7 @@ class HwihaCampReaderTest {
     @Test fun `휘하 카드는 코스트·적성·향당을 싣고 상한 이하면 이탈 순번이 없다`() {
         setup()
         val out = reader.retinue(1, 41)
-        assertEquals("READY", out.status); assertEquals(30, out.renown); assertEquals(23, out.costSum); assertFalse(out.overCapacity)
+        assertEquals("READY", out.status); assertEquals(30, out.renown); assertNull(out.costSum); assertFalse(out.overCapacity)
         assertEquals(listOf(11, 12, 13, 14), out.people.map { it.retainerId })
         assertTrue(out.people.all { it.departureOrder == null })
 
@@ -295,11 +297,23 @@ class HwihaCampReaderTest {
 
     @Test fun `상한을 넘으면 충성 낮은 쪽부터 동점은 id 큰 쪽부터 이탈 순번을 단다`() {
         setup()
+        val namedCards = retainers.retainersOf(1).filter { it.generalId != null }
+        `when`(retainers.retainersOf(1)).thenReturn(namedCards)
         lord.meta = lord.meta + (HwihaPersonPolicyState.META_KEY to policy(15))
         val out = reader.retinue(1, 41)
         assertTrue(out.overCapacity)
         // 23 > 15: 충성 20 동점(12 유비, 13 정봉) → 13 먼저(-7 → 16), 그다음 12(-8 → 8 ≤ 15) 에서 멈춘다.
-        assertEquals(mapOf(11 to null, 12 to 2, 13 to 1, 14 to null), out.people.associate { it.retainerId to it.departureOrder })
+        assertEquals(23, out.costSum)
+        assertEquals(mapOf(11 to null, 12 to 2, 13 to 1), out.people.associate { it.retainerId to it.departureOrder })
+    }
+
+    @Test fun `능력치 출처가 없는 인물은 코스트를 계산하지 않는다`() {
+        setup()
+        xiahou.meta = mapOf("npc_org" to 2)
+        val out = reader.retinue(1, 41)
+        assertNull(out.people.first { it.generalId == 2 }.cost)
+        assertNull(out.costSum)
+        assertNull(reader.yuedan(1, 41).self?.retinueCost)
     }
 
     @Test fun `사람이 만든 장수는 이름이 같아도 본관을 받지 않는다`() {

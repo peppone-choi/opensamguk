@@ -47,4 +47,17 @@ class HwihaStratagemHandTest {
             assertFailsWith<IllegalArgumentException> { read(bad) }
         for(v in listOf<Any>(1L,1.0,"1",true)) assertFailsWith<IllegalArgumentException> { read(raw+("hand" to listOf(v,2))) }
     }
+    @Test fun `NPC contributed instances join and leave the same owned deck across cold reads`() {
+        val joined = initial().withContributions(mapOf("20:hwiha-stratagem-insight" to HwihaStratagemCardType.INSIGHT))
+        assertEquals(listOf(3, 4, -1), joined.drawPile)
+        assertEquals(HwihaStratagemCardType.INSIGHT, joined.cardType(-1))
+        val cold = assertNotNull(read(joined.toMetaValue()))
+        assertEquals(2, cold.toMetaValue()["version"])
+        assertEquals(joined.toMetaValue(), cold.toMetaValue())
+        assertSame(cold, cold.withContributions(mapOf("20:hwiha-stratagem-insight" to HwihaStratagemCardType.INSIGHT)))
+        val released = cold.withContributions(emptyMap())
+        assertEquals(listOf(3, 4), released.drawPile)
+        assertEquals(1, released.toMetaValue()["version"])
+        assertFailsWith<IllegalArgumentException> { released.cardType(-1) }
+    }
 }
