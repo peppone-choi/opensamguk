@@ -13,6 +13,7 @@ class HwihaAssignmentMarchTurn(
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
     private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING,
 ) {
     fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: HwihaTurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
@@ -23,7 +24,7 @@ class HwihaAssignmentMarchTurn(
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
-        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells).onTurn(generalId)) {
+        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
             val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
             if (siege.startIfArrived(generalId) && isUnowned(generalId)) siege.npcAct(generalId)
@@ -42,7 +43,7 @@ class HwihaAssignmentMarchTurn(
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
         // One is the minimum positive passage threshold, not one soldier or one unit card.
         when (val result = HwihaAssignmentMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
-            .advance(generalId, edges) { node -> military.entryAt(generalId, node) }) {
+            .advance(generalId, edges) { node -> military.entryAt(generalId, node, reactions) }) {
             AssignmentMarchExecution.NoAssignment, AssignmentMarchExecution.AlreadyProcessed -> Unit
             is AssignmentMarchExecution.Rejected -> if (result.reason != AssignmentMarchFailure.CORPS_DEPLOYED) {
                 log(generalId, when (result.reason) {

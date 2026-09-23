@@ -18,7 +18,7 @@ class HwihaS3ProvisionalTest {
     @Test fun `every section is marked provisional pending the user's decision`() {
         val marker = "PROVISIONAL — 사용자 결정 대기"
         assertEquals(marker, root.getValue("status").jsonPrimitive.content)
-        for (section in listOf("encounter", "siege", "salary", "reward", "npcDeploy"))
+        for (section in listOf("encounter", "siege", "salary", "reward", "npcDeploy", "reactions"))
             assertEquals(marker, root.getValue(section).jsonObject.getValue("status").jsonPrimitive.content, section)
     }
 
@@ -43,6 +43,7 @@ class HwihaS3ProvisionalTest {
         assertEquals(p.REWARD_MAX_LOYALTY_GAIN.toLong(), long("reward", "rewardMaxLoyaltyGain"))
         assertEquals(p.NPC_DEPLOY_MAX_EDGES.toLong(), long("npcDeploy", "npcDeployMaxEdges"))
         assertEquals(p.NPC_DEPLOY_MIN_RATIO.toLong(), long("npcDeploy", "npcDeployMinRatio"))
+        assertEquals(p.NPC_RELIEF_MIN_RATIO_PERCENT, long("npcDeploy", "npcReliefMinRatioPercent"))
     }
 
     @Test fun `npc deployment never asks for less than the approved encirclement ratio`() {

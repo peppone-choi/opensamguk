@@ -62,4 +62,7 @@ object HwihaS3Provisional {
 
     /** NPC 가 출병하려면 수비병 대비 가져야 하는 병력비. 포위 유지 최소비(2, 승인값)보다 낮게 두지 않는다. */
     const val NPC_DEPLOY_MIN_RATIO = 2
+
+    /** NPC 구원 출병: 자기 병력이 포위 군단 병력의 이 백분율 이상이면 포위된 자국 縣으로 간다. */
+    const val NPC_RELIEF_MIN_RATIO_PERCENT = 100L
 }

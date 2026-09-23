@@ -35,6 +35,7 @@ class HwihaSiegeService(
         BATTLEFIELD_UNAVAILABLE("이 縣의 전장을 만들 수 없어 강공할 수 없습니다."),
         UNIT_UNAVAILABLE("강공에 쓸 수 있는 병종이 아닌 부대가 있습니다."),
         REFUSED("성 안의 사기와 민심이 아직 높아 항복 권고를 거절했습니다."),
+        BATTLE_PENDING("포위 군단이 조우 전투 중이라 공성 행동을 할 수 없습니다."),
     }
 
     private fun now() = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
@@ -51,6 +52,9 @@ class HwihaSiegeService(
 
     private fun corpsOf(commanderId: Int): HwihaDeployedCorps? =
         projection()?.deployed?.singleOrNull { it.commanderGeneralId == commanderId }
+
+    private fun inBattle(commanderId: Int): Boolean =
+        projection()?.people?.singleOrNull { it.id == commanderId }?.inBattle ?: true
 
     private fun activeSiegeOf(commanderId: Int): HwihaSiege? =
         world.listHwihaSieges().singleOrNull { it.status == ACTIVE && it.besiegerGeneralId == commanderId }
@@ -107,6 +111,7 @@ class HwihaSiegeService(
     /** NPC 포위 지휘관: 항복 권고가 통하면 권고, 병력비가 충분하면 강공, 아니면 포위 유지. */
     fun npcAct(commanderId: Int) {
         val siege = activeSiegeOf(commanderId) ?: return
+        if (inBattle(commanderId)) return
         val started = HwihaPhase(siege.startedYear, siege.startedMonth, siege.startedPhase)
         if (started >= now()) return // 포위를 건 턴에는 더 하지 않는다
         val city = world.getCityById(siege.countyId) ?: return
@@ -119,6 +124,7 @@ class HwihaSiegeService(
     fun demandSurrender(actorId: Int): Failure? {
         if (world.ruleProfile != RuleProfile.HWIHA) return Failure.WRONG_RULE_PROFILE
         val siege = activeSiegeOf(actorId) ?: return Failure.NOT_BESIEGING
+        if (inBattle(actorId)) return Failure.BATTLE_PENDING
         val city = world.getCityById(siege.countyId) ?: return Failure.STATE_UNAVAILABLE
         val accepted = HwihaSiegeRules.surrenderDemandAccepted(siege.morale, trustOf(city))
         val next = siege.copy(timeline = appendEntry(siege.timeline, entry(now(), if (accepted) "DEMAND_ACCEPTED" else "DEMAND_REFUSED",
@@ -134,6 +140,7 @@ class HwihaSiegeService(
     fun assault(actorId: Int): Failure? {
         if (world.ruleProfile != RuleProfile.HWIHA) return Failure.WRONG_RULE_PROFILE
         val siege = activeSiegeOf(actorId) ?: return Failure.NOT_BESIEGING
+        if (inBattle(actorId)) return Failure.BATTLE_PENDING
         val corps = corpsOf(actorId)?.takeIf { it.orderId == siege.besiegerOrderId } ?: return Failure.STATE_UNAVAILABLE
         val city = world.getCityById(siege.countyId) ?: return Failure.STATE_UNAVAILABLE
         val node = world.landNodeOfCity(siege.countyId) as? StrategicNodeRef.LandProvince ?: return Failure.STATE_UNAVAILABLE

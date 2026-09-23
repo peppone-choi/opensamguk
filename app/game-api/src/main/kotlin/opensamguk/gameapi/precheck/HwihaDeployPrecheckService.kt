@@ -40,7 +40,8 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         return try {
             // Missing authority is not an implicit clear map, even before a destination is selected.
             require(HwihaLandPassageState.read(ready.selected.world.meta, topology) != null)
-            require(HwihaMarchReactions.read(ready.selected.world.meta) != null)
+            require(HwihaMarchReactions.presence(ready.selected.world.meta).let {
+                it == HwihaMarchReactions.Presence.EMPTY || it == HwihaMarchReactions.Presence.PENDING })
             require(ready.state.deployed.filter { it.ownerGeneralId == actorId }.all {
                 HwihaDeploymentRules.assessActive(it, ready.state) is DeploymentAssessment.Eligible
             }) { "Owned deployment relationships are no longer valid" }

@@ -14,8 +14,10 @@ import opensamguk.logic.world.*
  * 고르는 규칙(임시, `hwiha-s3-provisional-v1.json` npcDeploy): 세력에 속했고, 출전·조우·포위 중이 아니며,
  * 직속(부장 지휘 아님) 부곡이 있는 NPC 가 현재 省에서 간선 [HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES] 개 이내의
  * 적대(교전 중 또는 무주) 縣治 가운데 병력이 수비병 × [HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO] 이상인 곳을
- * 경로 비용 → 縣 id 순으로 하나 고른다. 다른 아군 군단이 이미 향하거나 포위 중인 縣은 뺀다. 같은 입력이면
- * 같은 선택이다 — 난수·벽시계·맵 순회 순서를 쓰지 않는다.
+ * 경로 비용 → 縣 id 순으로 하나 고른다. 다른 아군 군단이 이미 향하거나 포위 중인 縣은 뺀다.
+ *
+ * **구원이 먼저다**: 자국 縣이 적에게 포위돼 있고 그 포위 군단 병력 이하로 갈 수 있으면 그 縣으로 출병한다
+ * (포위 군단이 있는 省에 들어가면 조우가 일어난다). 같은 입력이면 같은 선택이다 — 난수·벽시계·맵 순회 순서를 쓰지 않는다.
  */
 class HwihaNpcDeploySelector(
     private val topology: StrategicTopologySnapshot,
@@ -48,6 +50,21 @@ class HwihaNpcDeploySelector(
                     ?.destination?.let { node -> world.administrativeCountyIds.filter { world.landNodeOfCity(it) == node } }
             }.flatten()
         val near = provincesWithin(position, HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES)
+        fun route(node: StrategicNodeRef.LandProvince) = (StrategicPathResolver.resolveLandMarch(topology,
+            StrategicPathRequest(position, node, 1), edges, metrics) as? LandMarchPathResult.Resolved)?.path
+            ?.takeIf { it.edgeIds.size <= HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES }
+        // Relief first: an own county under enemy siege that this army can at least match.
+        val relief = world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
+            val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == actor.nationId } ?: return@mapNotNull null
+            val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
+            if (node == position || node.id !in near) return@mapNotNull null
+            val besieger = projection.deployed.singleOrNull { it.orderId == siege.besiegerOrderId } ?: return@mapNotNull null
+            val besiegers = besieger.bugokIds.sumOf { (world.getBugokById(it)?.troops ?: 0).toLong() }
+            if (troops * HwihaS3Provisional.NPC_RELIEF_MIN_RATIO_PERCENT < besiegers * 100) return@mapNotNull null
+            val path = route(node) ?: return@mapNotNull null
+            Triple(path.totalCostMm, city.id, node)
+        }.minWithOrNull(compareBy({ it.first }, { it.second }))
+        if (relief != null) return DeployInput(actorId, units.map { it.id }.sorted(), relief.third)
         val candidates = world.administrativeCountyIds.sorted().mapNotNull { countyId ->
             val node = world.landNodeOfCity(countyId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (node == position || node.id !in near || countyId in claimed) return@mapNotNull null
@@ -55,9 +72,7 @@ class HwihaNpcDeploySelector(
             val hostile = city.nationId != actor.nationId && (city.nationId == 0 ||
                 (actor.nationId to city.nationId) in wars || (city.nationId to actor.nationId) in wars)
             if (!hostile || troops < city.defence.coerceAtLeast(0).toLong() * HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO) return@mapNotNull null
-            val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(position, node, 1), edges, metrics)
-                as? LandMarchPathResult.Resolved)?.path ?: return@mapNotNull null
-            if (path.edgeIds.size > HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES) return@mapNotNull null
+            val path = route(node) ?: return@mapNotNull null
             Triple(path.totalCostMm, countyId, node)
         }
         val (_, _, destination) = candidates.minWithOrNull(compareBy({ it.first }, { it.second })) ?: return null

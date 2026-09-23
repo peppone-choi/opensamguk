@@ -25,6 +25,14 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
         return entryAt(actorId, node, LandMarchEntry.CLEAR)
     }
 
+    /** Production march entry: reaction records are judged by [reactions] instead of stalling on any record. */
+    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, reactions: HwihaMarchReactionPolicy): LandMarchEntry {
+        if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
+        val hazard = reactions.entryHazard(world, actorId, node)
+        if (hazard == LandMarchEntry.UNAVAILABLE) return LandMarchEntry.UNAVAILABLE
+        return entryAt(actorId, node, hazard)
+    }
+
     /** Other encounter authorities (installed schemes, interception, avoidance) are mandatory. */
     fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, otherHazards: LandMarchEntry): LandMarchEntry {
         if (!topology.containsNode(node)) return LandMarchEntry.UNAVAILABLE
