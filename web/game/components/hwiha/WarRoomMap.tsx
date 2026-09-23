@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Chip, HanMapCanvas, Panel, SectionHeader, type CommanderyVisibility } from '@opensamguk/ui';
+import { Chip, HanMapCanvas, Panel, SectionHeader, type CommanderyVisibility, type MapCorpsOverlay } from '@opensamguk/ui';
 import { HWIHA_DIRECTIONS, commanderyOfCity, neighborInDirection } from '@/lib/hwiha-fog';
 import { HWIHA_MAP_CODE, HWIHA_PROVINCES_URL, useHwihaWorldMap } from '@/lib/hwiha-map';
+import type { HwihaCorps } from '@/lib/hwiha-reads';
 import { HwihaEmpty } from './HwihaStates';
 
 /** 3×3 배치 — 가운데는 「여기」다. */
@@ -33,16 +34,22 @@ export interface WarRoomMapProps {
      * 아직 없을 때다. 안개를 지어내지 않는다.
      */
     readonly visibility: ReadonlyMap<number, CommanderyVisibility> | null;
-    /** 안개 군국에서 「첩보 보내기」를 눌렀을 때. 없으면 버튼을 보이지 않는다. */
+    /** 안개·첩보 군국에서 「첩보 보내기」를 눌렀을 때. 없으면 버튼을 보이지 않는다. */
     readonly onScout?: (commanderyNo: number) => void;
     readonly scoutPending?: boolean;
+    /** 첩보를 보낼 수 있는 군국 번호(지금 선 군국과 맞닿은 곳). 없으면 모든 안개 군국에 버튼. */
+    readonly scoutable?: ReadonlySet<number>;
+    /** 첩보 시야의 「N순 전」. */
+    readonly intelAge?: ReadonlyMap<number, number>;
+    /** 서버 시야 투영이 허락한 군단만 온다(#343). */
+    readonly corps?: readonly HwihaCorps[];
 }
 
 /**
  * 작전실 지도 — 실제 지형·구역·세력. 군국 하나가 화면을 채우는 배율로 열고, 화살표로 이웃 군국에
  * 옮긴다. 칸이 게임 단위이므로 칸 경계선과 성내 칸을 그린다.
  */
-export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending }: WarRoomMapProps) {
+export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable, intelAge, corps }: WarRoomMapProps) {
     const map = useHwihaWorldMap();
     const [focusNo, setFocusNo] = useState<number | null>(null);
 
@@ -57,6 +64,25 @@ export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPendi
         : undefined;
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const tier: CommanderyVisibility | null = visibility && focus ? visibility.get(focus.no) ?? 'FOG' : null;
+    const corpsOverlay = useMemo<MapCorpsOverlay[]>(() => {
+        if (!ready || !corps) return [];
+        return corps.flatMap((c) => {
+            const at = ready.provinceCenter(c.provinceId);
+            if (!at) return [];
+            const path = c.marchPath?.map((id) => ready.provinceCenter(id)).filter((p): p is { col: number; row: number } => p != null);
+            return [{
+                id: c.corpsId,
+                col: at.col,
+                row: at.row,
+                label: c.commanderName ?? c.ownerName ?? '군단',
+                troopsLabel: c.troops != null ? `${c.troops.toLocaleString('ko-KR')}명` : c.troopsBand?.label,
+                color: c.nationColor,
+                own: c.own,
+                stale: c.visibility === 'INTEL',
+                path,
+            } satisfies MapCorpsOverlay];
+        });
+    }, [corps, ready]);
 
     return (
         <Panel style={{ padding: 12 }}>
@@ -74,7 +100,9 @@ export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPendi
                             mapCode={HWIHA_MAP_CODE}
                             tiles={ready.tiles}
                             tilesSha256={ready.tilesSha256}
-                            provinceUrl={HWIHA_PROVINCES_URL}
+                            provinceMap={ready.provinceMap ?? undefined}
+                            provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
+                            corps={corpsOverlay}
                             cities={ready.cities}
                             administrativeOwnership={ready.administrativeOwnership}
                             sourceSize={ready.sourceSize}
@@ -144,7 +172,10 @@ export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPendi
                         <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{focus.name}</span>
                         {home && focus.no === home.no ? <Chip tone="info">지금 여기</Chip> : null}
                         {tier ? <Chip tone={VISIBILITY_TONE[tier]}>{VISIBILITY_LABEL[tier]}</Chip> : null}
-                        {tier === 'FOG' && onScout ? (
+                        {tier === 'INTEL' && intelAge?.get(focus.no) != null ? (
+                            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{`${intelAge.get(focus.no)}순 전 정보`}</span>
+                        ) : null}
+                        {tier && tier !== 'FULL' && onScout && (!scoutable || scoutable.has(focus.no)) ? (
                             <button
                                 type="button"
                                 className="os-button os-button--primary os-button--sm"

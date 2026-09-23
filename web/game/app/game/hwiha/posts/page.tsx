@@ -1,25 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Chip, Panel, SectionHeader, Table } from '@opensamguk/ui';
+import { Panel, SectionHeader } from '@opensamguk/ui';
 import HwihaShell from '@/components/HwihaShell';
 import Toast from '@/components/Toast';
 import HwihaDeployForm from '@/components/command/HwihaDeployForm';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import { PlacementPanel, PolicyPanel, WorksPanel } from '@/components/hwiha/DomesticPanels';
+import { HwihaEmpty } from '@/components/hwiha/HwihaStates';
 import embed from '@/components/hwiha/HwihaEmbed.module.css';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 const HWIHA_SLOTS = 12;
-const NOT_YET = '아직 이 입력이 없습니다';
 
 /**
  * 배치 · 방침 · 공사 — 시안 Posts.
  *
- * 지금 서버에 있는 입력은 **군단 출병**(부곡을 골라 목적지 구역으로)뿐이다. 인물 카드를 자리에 앉히는
- * 배치, 자리·군단의 방침, 공사는 입력이 아직 없어 현재 자리만 보이고 바꾸기는 비활성으로 둔다.
+ * 배치·방침·공사는 12순 슬롯을 쓰지 않는 지속 입력이다(`POST /api/commands/{placement|policy|work}/…`).
+ * 출병은 직접 행동이라 명령 목록의 빈 순에 한 건 예약한다.
  */
 export default function PostsPage() {
     const { generalId } = useHwihaSession();
@@ -27,8 +26,6 @@ export default function PostsPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [turnIdx, setTurnIdx] = useState<number | null>(null);
     const [freeSlots, setFreeSlots] = useState<number[] | null>(null);
-    const retinue = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal), [refreshKey]);
-    const people = retinue.data?.people ?? [];
 
     // 출병은 명령 목록 12순 가운데 빈 순에 한 건 예약한다.
     useEffect(() => {
@@ -52,34 +49,8 @@ export default function PostsPage() {
         <HwihaShell title="배치 · 방침 · 공사" tab="배치">
             <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 400px', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-                    <Panel style={{ padding: 12 }}>
-                        <SectionHeader title="배치" sub="카드는 자기 턴마다 지도 위를 실제로 이동해 부임한다" />
-                        {hwihaReadNotice(retinue, retinue.data?.status) ? (
-                            <HwihaEmpty>{hwihaReadNotice(retinue, retinue.data?.status)}</HwihaEmpty>
-                        ) : people.length === 0 ? (
-                            <HwihaEmpty>앉힐 인물 카드가 없습니다.</HwihaEmpty>
-                        ) : (
-                            <Table
-                                headers={['인물', '자리', '임무', '']}
-                                rows={people.map((p) => [
-                                    <span key="n" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{p.name}</span>,
-                                    p.roleLabel ?? <Chip key="r" tone="rust">미배치</Chip>,
-                                    p.taskLabel ?? '—',
-                                    <button key="b" type="button" className="os-button os-button--ghost os-button--sm" disabled title={NOT_YET}>
-                                        바꾸기
-                                    </button>,
-                                ])}
-                            />
-                        )}
-                        <p style={{ fontSize: 12, color: 'var(--muted)', padding: '8px 0 0', margin: 0 }}>
-                            사람 장수를 자리에 앉히는 것은 배치가 아니라 발령(조정 결정)입니다.
-                        </p>
-                    </Panel>
-
-                    <Panel style={{ padding: 12 }}>
-                        <SectionHeader title="방침" sub="자리나 군단에 걸어 두는 지속 규칙" />
-                        <HwihaEmpty>방침 입력이 아직 없습니다. 권농·휼민·조련·공략·수비·요격·회피가 여기에 걸립니다.</HwihaEmpty>
-                    </Panel>
+                    <PlacementPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />
+                    <PolicyPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />
                 </div>
 
                 <div style={{ display: 'grid', gap: 12 }}>
@@ -122,10 +93,7 @@ export default function PostsPage() {
                         )}
                     </Panel>
 
-                    <Panel style={{ padding: 12 }}>
-                        <SectionHeader title="공사" sub="순 경계마다 진척" />
-                        <HwihaEmpty>공사 입력이 아직 없습니다. 수리·둔전·성방·도로·역참·창고가 여기에 걸립니다.</HwihaEmpty>
-                    </Panel>
+                    <WorksPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />
                 </div>
             </div>
             <Toast toasts={toasts} onRemove={remove} />

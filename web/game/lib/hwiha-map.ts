@@ -12,7 +12,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
     isOwnedNationVisual,
+    loadProvinceIdentityMap,
     mapCityToTile,
+    type ProvinceIdentityMap,
     parseTerrainEtagHash,
     validStrategicBinding,
     type HanTiles,
@@ -57,6 +59,9 @@ export type HwihaMapState =
         readonly preview: MapPreviewResponse;
         readonly tiles: HanTiles;
         readonly tilesSha256: string | undefined;
+        /** 칸 → 구역·군국 식별. 지도에 그대로 넘기고, 구역 중심 칸(군단 위치)도 여기서 잰다. */
+        readonly provinceMap: ProvinceIdentityMap | null;
+        readonly provinceCenter: (provinceId: string) => { col: number; row: number } | undefined;
         readonly cities: readonly IsoCityOverlay[];
         readonly markerPositions: ReadonlyMap<number, { col: number; row: number }>;
         readonly commanderies: readonly HwihaCommanderyCell[];
@@ -130,6 +135,53 @@ export function buildCommanderies(tiles: HanTiles, preview: MapPreviewResponse):
     });
 }
 
+/**
+ * 구역 id → 그 구역 안의 대표 칸. 칸들의 무게중심에 가장 가까운 **구역 안** 칸을 고른다 — 초승달 꼴
+ * 구역의 무게중심은 밖에 떨어질 수 있다. 처음 물을 때 한 번 훑고 담아 둔다.
+ */
+export function buildProvinceCenters(
+    tiles: HanTiles,
+    provinceMap: ProvinceIdentityMap | null,
+): (provinceId: string) => { col: number; row: number } | undefined {
+    const records = tiles.provinceRecords ?? [];
+    const indexById = new Map(records.map((record, index) => [record.id, index]));
+    let centers: Map<number, { col: number; row: number }> | null = null;
+    const compute = () => {
+        const out = new Map<number, { col: number; row: number }>();
+        if (!provinceMap) return out;
+        const { width, provinces } = provinceMap;
+        const sum = new Map<number, { c: number; r: number; n: number }>();
+        for (let i = 0; i < provinces.length; i += 1) {
+            const p = provinces[i];
+            if (p < 0) continue;
+            const acc = sum.get(p) ?? { c: 0, r: 0, n: 0 };
+            acc.c += i % width;
+            acc.r += Math.floor(i / width);
+            acc.n += 1;
+            sum.set(p, acc);
+        }
+        const best = new Map<number, { col: number; row: number; d: number }>();
+        for (let i = 0; i < provinces.length; i += 1) {
+            const p = provinces[i];
+            if (p < 0) continue;
+            const acc = sum.get(p)!;
+            const col = i % width;
+            const row = Math.floor(i / width);
+            const d = (col - acc.c / acc.n) ** 2 + (row - acc.r / acc.n) ** 2;
+            const cur = best.get(p);
+            if (!cur || d < cur.d) best.set(p, { col, row, d });
+        }
+        for (const [p, v] of best) out.set(p, { col: v.col, row: v.row });
+        return out;
+    };
+    return (provinceId: string) => {
+        const index = indexById.get(provinceId);
+        if (index === undefined) return undefined;
+        centers ??= compute();
+        return centers.get(index);
+    };
+}
+
 export function buildLegend(preview: MapPreviewResponse): HwihaLegendEntry[] {
     const counts = new Map<number, number>();
     for (const city of preview.cities) counts.set(city.nationId, (counts.get(city.nationId) ?? 0) + 1);
@@ -144,7 +196,7 @@ export function useHwihaWorldMap(refreshKey: unknown = 0): HwihaMapState {
         | { kind: 'loading' }
         | { kind: 'error'; message: string }
         | { kind: 'unsupported'; mapCode: string }
-        | { kind: 'loaded'; preview: MapPreviewResponse; tiles: HanTiles; hash: string | null }
+        | { kind: 'loaded'; preview: MapPreviewResponse; tiles: HanTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null }
     >({ kind: 'loading' });
 
     useEffect(() => {
@@ -161,7 +213,9 @@ export function useHwihaWorldMap(refreshKey: unknown = 0): HwihaMapState {
             if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
             const hash = parseTerrainEtagHash(response.headers.get('etag'));
             const tiles = (await response.json()) as HanTiles;
-            setRaw({ kind: 'loaded', preview, tiles, hash });
+            // 구역 식별 PNG 가 없어도 지도는 그린다 — 안개·군단 위치만 빠진다.
+            const provinceMap = await loadProvinceIdentityMap(HWIHA_PROVINCES_URL).catch(() => null);
+            setRaw({ kind: 'loaded', preview, tiles, hash, provinceMap });
         })().catch((e: unknown) => {
             if (controller.signal.aborted) return;
             setRaw({ kind: 'error', message: e instanceof Error ? e.message : '지도를 불러오지 못했습니다.' });
@@ -171,7 +225,7 @@ export function useHwihaWorldMap(refreshKey: unknown = 0): HwihaMapState {
 
     return useMemo<HwihaMapState>(() => {
         if (raw.kind !== 'loaded') return raw;
-        const { preview, tiles, hash } = raw;
+        const { preview, tiles, hash, provinceMap } = raw;
         const nations = new Map(preview.nations.map((n) => [n.id, n]));
         const colorOf = (nationId: number) => ({
             nationColor: nations.get(nationId)?.color,
@@ -184,6 +238,8 @@ export function useHwihaWorldMap(refreshKey: unknown = 0): HwihaMapState {
             preview,
             tiles,
             tilesSha256: hash ?? undefined,
+            provinceMap,
+            provinceCenter: buildProvinceCenters(tiles, provinceMap),
             cities,
             markerPositions: buildMarkerPositions(cities, tiles, sourceSize),
             commanderies: buildCommanderies(tiles, preview),

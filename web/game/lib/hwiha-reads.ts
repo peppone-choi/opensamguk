@@ -33,6 +33,8 @@ export interface HwihaYuedanRow {
     readonly nationName: string | null;
     readonly nationColor: string | null;
     readonly renown: number;
+    /** 지난 월단평이 적용한 사건 종류(원인은 싣지 않는다). */
+    readonly reasons?: readonly HwihaRenownReason[];
 }
 export interface HwihaYuedan {
     readonly status: HwihaReadStatus;
@@ -44,6 +46,8 @@ export interface HwihaYuedan {
         readonly overCapacity: boolean;
     } | null;
     readonly ranking: readonly HwihaYuedanRow[];
+    /** 다음 월단평에 반영될 내 사건 — 본인에게만 온다. */
+    readonly selfPendingEvents?: readonly HwihaRenownPendingEvent[];
 }
 
 // ── 창고 (`GET /api/hwiha/warehouses`) ───────────────────────────────────────
@@ -192,3 +196,174 @@ export const HWIHA_RESOURCE_LABELS: ReadonlyArray<{ key: keyof HwihaStock; label
     { key: 'timber', label: '목재' },
     { key: 'horses', label: '말' },
 ];
+
+// ── 지난 순 (`GET /api/hwiha/last-turns`) ────────────────────────────────────
+export interface HwihaLastTurnEntry {
+    readonly kind: string;
+    readonly text: string;
+    readonly refs?: Record<string, unknown>;
+}
+export interface HwihaLastTurn {
+    readonly year: number;
+    readonly month: number;
+    readonly phase: number;
+    readonly phaseLabel: string;
+    readonly entries: readonly HwihaLastTurnEntry[];
+}
+export interface HwihaNationSummaryEntry extends HwihaLastTurnEntry {
+    readonly year: number;
+    readonly month: number;
+    readonly phase: number;
+    readonly phaseLabel: string;
+}
+export interface HwihaLastTurns {
+    readonly status: HwihaReadStatus;
+    readonly turns: readonly HwihaLastTurn[];
+    readonly nationSummary: readonly HwihaNationSummaryEntry[];
+}
+
+// ── 월단평 사유(추가 필드) ────────────────────────────────────────────────────
+export interface HwihaRenownReason {
+    readonly kind: string;
+    readonly label: string;
+    readonly count: number;
+    readonly amount: number;
+}
+export interface HwihaRenownPendingEvent {
+    readonly kind: string;
+    readonly label: string;
+    readonly stamp: string;
+    readonly source?: string;
+    readonly sourceLabel?: string;
+    readonly amount: number;
+}
+
+// ── 시야 (`GET /api/hwiha/visibility` · `corps` · `scout-options`) ─────────────
+export interface HwihaStamp {
+    readonly year: number;
+    readonly month: number;
+    readonly phase: number;
+}
+export type HwihaVisionTier = 'FULL' | 'INTEL' | 'FOG';
+export interface HwihaVisibilityCommandery {
+    readonly no: number;
+    readonly id: string;
+    readonly name: string;
+    readonly tier: HwihaVisionTier;
+    readonly seenAtStamp?: HwihaStamp;
+    readonly ageTurns?: number;
+}
+export interface HwihaVisibility {
+    readonly status: HwihaReadStatus;
+    readonly stamp?: HwihaStamp;
+    readonly commanderies?: readonly HwihaVisibilityCommandery[];
+}
+export interface HwihaCorps {
+    readonly corpsId: string;
+    readonly ownerGeneralId: number;
+    readonly ownerName?: string;
+    readonly commanderGeneralId: number;
+    readonly commanderName?: string;
+    readonly nationId: number;
+    readonly nationColor?: string;
+    readonly provinceId: string;
+    readonly commanderyNo: number;
+    readonly visibility: HwihaVisionTier;
+    readonly own: boolean;
+    readonly troops?: number;
+    readonly troopsBand?: { code: string; label: string };
+    readonly marchPath?: readonly string[];
+    readonly destinationProvinceId?: string;
+    readonly lastSeenStamp?: HwihaStamp;
+    readonly ageTurns?: number;
+}
+export interface HwihaCorpsList {
+    readonly status: HwihaReadStatus;
+    readonly corps?: readonly HwihaCorps[];
+}
+export interface HwihaScoutOption {
+    readonly no: number;
+    readonly id: string;
+    readonly name: string;
+    readonly tier: HwihaVisionTier;
+    readonly available: boolean;
+    readonly code?: string;
+    readonly reason?: string;
+    readonly ageTurns?: number;
+}
+export interface HwihaScoutOptions {
+    readonly status: HwihaReadStatus;
+    readonly inputId?: string;
+    readonly available?: boolean;
+    readonly code?: string;
+    readonly reason?: string;
+    readonly options?: readonly HwihaScoutOption[];
+}
+
+// ── 배치·방침·공사 (`GET /api/hwiha/posts` · `policies` · `works`) ──────────────
+export interface HwihaCodeLabel {
+    readonly code: string;
+    readonly label: string;
+}
+export interface HwihaBlocked {
+    readonly code: string;
+    readonly reason: string;
+}
+export interface HwihaPlacementCard {
+    readonly cardId: number;
+    readonly generalId: number | null;
+    readonly name: string;
+    readonly relation: string;
+    readonly provinceId: string | null;
+    readonly placeable: boolean;
+    readonly blocked: HwihaBlocked | null;
+    readonly active: { post: string; postLabel: string; target: { label?: string | null }; state: string } | null;
+    readonly pending: { post: string; postLabel: string; target: { label?: string | null } } | null;
+}
+export interface HwihaPostOption {
+    readonly post: string;
+    readonly label: string;
+    readonly available: boolean;
+    readonly blocked: HwihaBlocked | null;
+    readonly targets: readonly { countyId?: number | null; nationId?: number | null; name: string; commanderyName?: string | null; occupied: boolean }[] | null;
+}
+export interface HwihaPosts {
+    readonly status: HwihaReadStatus;
+    readonly cards: readonly HwihaPlacementCard[];
+    readonly posts: readonly HwihaPostOption[];
+}
+export interface HwihaCountyPolicy {
+    readonly countyId: number;
+    readonly name: string;
+    readonly commanderyName: string | null;
+    readonly active: { policy: string; label: string } | null;
+    readonly pending: { policy: string | null; label: string | null } | null;
+    readonly effective: { policy: string; label: string; source: string } | null;
+    readonly seat: { generalId: number; name: string; placed: boolean } | null;
+    readonly settable: boolean;
+    readonly blocked: HwihaBlocked | null;
+}
+export interface HwihaPolicies {
+    readonly status: HwihaReadStatus;
+    readonly countyOptions: readonly HwihaCodeLabel[];
+    readonly corpsOptions: readonly HwihaCodeLabel[];
+    readonly defaultPolicy: HwihaCodeLabel | null;
+    readonly counties: readonly HwihaCountyPolicy[];
+    readonly corps: readonly { orderId: string; commanderName: string | null; active: { policy: string; label: string } | null; pending: { policy: string | null; label: string | null } | null; settable: boolean; blocked: HwihaBlocked | null }[];
+}
+export interface HwihaCountyWorks {
+    readonly countyId: number;
+    readonly name: string;
+    readonly commanderyName: string | null;
+    readonly warehouse: HwihaStock | null;
+    readonly active: {
+        work: string; label: string; percent: number; remainingPhases: number;
+        remainingCost: HwihaStock; stopReasonText: string | null; startsAtNextBoundary: boolean;
+    } | null;
+    readonly completed: readonly { work: string; label: string }[];
+    readonly startable: readonly { work: string; label: string; available: boolean; blocked: HwihaBlocked | null; cost: HwihaStock; estimatedPhases: number }[];
+}
+export interface HwihaWorks {
+    readonly status: HwihaReadStatus;
+    readonly counties: readonly HwihaCountyWorks[];
+}

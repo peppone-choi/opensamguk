@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import type { CommanderyVisibility } from '@opensamguk/ui';
 import { Panel } from '@opensamguk/ui';
 import HwihaShell from '@/components/HwihaShell';
 import Toast from '@/components/Toast';
@@ -8,10 +9,13 @@ import MainRecordZone from '@/components/game/MainRecordZone';
 import MessagePanel from '@/components/game/MessagePanel';
 import CountyPanel from '@/components/hwiha/CountyPanel';
 import GeneralRoster from '@/components/hwiha/GeneralRoster';
+import LastTurnPanel from '@/components/hwiha/LastTurnPanel';
 import StandingBar from '@/components/hwiha/StandingBar';
 import TurnList from '@/components/hwiha/TurnList';
 import WarRoomMap from '@/components/hwiha/WarRoomMap';
 import { useToast } from '@/hooks/useToast';
+import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import { useHwihaRead } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 /**
@@ -33,6 +37,48 @@ export default function WarRoomPage() {
         refresh();
     };
 
+    // 시야·군단·첩보 — 서버 투영이 정한다. 휘하 규칙이 아니면 안개가 없다(null).
+    const vision = useHwihaRead((id, signal) => api.hwihaVisibility(id, signal), [refreshKey]);
+    const corps = useHwihaRead((id, signal) => api.hwihaCorps(id, signal), [refreshKey]);
+    const scout = useHwihaRead((id, signal) => api.hwihaScoutOptions(id, signal), [refreshKey]);
+    const visibility = useMemo(() => {
+        const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
+        return list ? new Map<number, CommanderyVisibility>(list.map((c) => [c.no, c.tier])) : null;
+    }, [vision.data]);
+    const intelAge = useMemo(
+        () => new Map((vision.data?.commanderies ?? []).filter((c) => c.ageTurns != null).map((c) => [c.no, c.ageTurns!])),
+        [vision.data],
+    );
+    const scoutable = useMemo(
+        () => new Set((scout.data?.options ?? []).filter((o) => o.available).map((o) => o.no)),
+        [scout.data],
+    );
+    const [scoutPending, setScoutPending] = useState(false);
+    // 첩보는 직접 행동 — 명령 목록 12순의 첫 빈 순에 예약한다.
+    const sendScout = async (commanderyNo: number) => {
+        const option = scout.data?.options?.find((o) => o.no === commanderyNo);
+        if (generalId == null || !option) return;
+        setScoutPending(true);
+        try {
+            const reserved = await api.reservedCommands(generalId);
+            const used = new Set(reserved.slots.map((slot) => slot.turnIdx));
+            const turnIdx = Array.from({ length: 12 }, (_, i) => i).find((i) => !used.has(i));
+            if (turnIdx === undefined) {
+                show('명령 목록 12순이 모두 찼습니다.', 'error');
+                return;
+            }
+            const out = await api.command('action.scout', { commanderyId: option.id }, generalId, turnIdx);
+            if (isIntakeQueued(out)) {
+                show(`${option.name}에 첩보를 ${turnIdx + 1}순에 예약했습니다.`, 'success');
+                bump();
+            } else if (isIntakeDenied(out)) show(out.reason ?? '첩보를 예약할 수 없습니다.', 'error');
+        } catch (e) {
+            show(e instanceof Error ? e.message : '첩보를 예약하지 못했습니다.', 'error');
+        } finally {
+            setScoutPending(false);
+        }
+    };
+
     return (
         <HwihaShell title="작전실" tab={null} showBack={false} requiresHwiha={false}>
             <div
@@ -45,12 +91,21 @@ export default function WarRoomPage() {
                 }}
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-                    {/* 시야 조회가 붙기 전에는 안개를 그리지 않는다 — 없는 시야를 지어내지 않는다. */}
-                    <WarRoomMap homeCityId={frontInfo?.city?.id ?? null} visibility={null} />
+                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다 — 휘하 월드가 아니면 없다. */}
+                    <WarRoomMap
+                        homeCityId={frontInfo?.city?.id ?? null}
+                        visibility={visibility}
+                        intelAge={intelAge}
+                        corps={corps.data?.corps}
+                        scoutable={scoutable}
+                        onScout={isHwihaWorld ? (no) => void sendScout(no) : undefined}
+                        scoutPending={scoutPending}
+                    />
                     {frontInfo && generalId != null ? (
                         <>
                             <CountyPanel city={frontInfo.city} isHwihaWorld={isHwihaWorld} />
                             <StandingBar />
+                            {isHwihaWorld ? <LastTurnPanel /> : null}
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
                                 <Panel style={{ padding: 0, minWidth: 0 }}>
                                     <MainRecordZone recentRecord={frontInfo.recentRecord} />

@@ -457,6 +457,23 @@ export const api = {
         get<import('./hwiha-reads').HwihaCounty>(`/api/hwiha/county/${cityId}?generalId=${generalId}`, signal),
     hwihaRetinue: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaRetinue>(`/api/hwiha/retinue?generalId=${generalId}`, signal),
+    hwihaLastTurns: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaLastTurns>(`/api/hwiha/last-turns?generalId=${generalId}&limit=12`, signal),
+    hwihaVisibility: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaVisibility>(`/api/hwiha/visibility?generalId=${generalId}`, signal),
+    hwihaCorps: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaCorpsList>(`/api/hwiha/corps?generalId=${generalId}`, signal),
+    hwihaScoutOptions: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaScoutOptions>(`/api/hwiha/scout-options?generalId=${generalId}`, signal),
+    hwihaPosts: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaPosts>(`/api/hwiha/posts?generalId=${generalId}`, signal),
+    hwihaPolicies: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaPolicies>(`/api/hwiha/policies?generalId=${generalId}`, signal),
+    hwihaWorks: (generalId: number, signal?: AbortSignal) =>
+        get<import('./hwiha-reads').HwihaWorks>(`/api/hwiha/works?generalId=${generalId}`, signal),
+    /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
+    hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work', body: unknown) =>
+        post<IntakeOutcome>(`/api/commands/${kind}/${{ placement: 'assign', policy: 'set', work: 'start' }[kind]}?generalId=${generalId}`, body),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),
