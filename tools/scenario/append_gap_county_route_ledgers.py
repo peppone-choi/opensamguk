@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""결손 縣 60 곳을 W0 경로 노드 원장에 append-only 로 등록한다.
+"""결손 縣 56 곳을 W0 경로 노드 원장에 append-only 로 등록한다.
 
 `tools/map/carve_strategic_site_provinces.py` 가 han-tiles 에 국소 carve 로 세운 물리 지점
 (`curated:gap-county-v1:gc-…`)을 route-node 선정 사슬이 알아보게 하는 원장 갱신이다.
@@ -234,7 +234,7 @@ def update_policy(document: dict, rows: list[dict]) -> None:
             ),
         })
     # expectedSelection 의 정본은 코드의 EXPECTED_SELECTION 이다 — 배치 합으로 직접 계산하면
-    # HHS 결합 수(909)와 총 노드 수(1228)를 구분하지 못해 「policy count drift」 로 걸린다.
+    # HHS 결합 수(909)와 총 노드 수(1224)를 구분하지 못해 「policy count drift」 로 걸린다.
     from tools.scenario.han_route_node_selection import EXPECTED_SELECTION
     document["expectedSelection"] = dict(EXPECTED_SELECTION)
     inputs = document["inputs"]

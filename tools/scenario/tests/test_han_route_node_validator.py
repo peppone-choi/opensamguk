@@ -437,11 +437,11 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         # + 849–1024 城 없던 縣 관할 176 곳(w2-cityless-jurisdiction-route-claim)
         # + 1025–1097 수·진·관 거점 73 곳(w3-strategic-site-route-claim). 전부 append-only 다.
         # + 1098 河南尹 平陰(w4) + 2026-09-17 郡國 밖 취락 37곳(w5: 977·989 재결속 + 1099–1133), 同縣 중복 977·989 는 거두었다.
-        self.assertEqual(1228, report.approved_count)  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertEqual(1224, report.approved_count)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         append = documents.migration["appendedRows"]
-        self.assertEqual(448, len(append))  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertEqual(444, len(append))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         self.assertEqual(781, append[0]["newCityId"])
-        self.assertEqual(1254, append[-1]["newCityId"])  # 은퇴 id 26 개를 비워 두므로 1228 번째 번호는 1254 다
+        self.assertEqual(1397, append[-1]["newCityId"])  # 예약 번호 173 개를 비워 두므로 1224 번째 번호는 1397 이다
         self.assertEqual(319, sum(1 for row in append if "sourceClaimId" in row))
         self.assertEqual({"APPENDED_NEW_WORLD_IDENTITY"}, {row["disposition"] for row in append})
 
@@ -1230,7 +1230,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         extra["locationResolution"]["physicalPlaceId"] = "external:v1:X999"
         documents.external_claims["claims"].append(extra)
 
-        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 123|unused"):
+        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 119|unused"):
             MODULE.validate_documents(documents)
 
     def test_location_claim_source_snapshot_hash_is_verified(self) -> None:

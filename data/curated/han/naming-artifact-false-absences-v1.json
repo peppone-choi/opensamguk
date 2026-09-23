@@ -54,7 +54,8 @@
     "CATALOG_TRUNCATION": 3,
     "POST_220_RENAME_ON_MAP": 1,
     "VARIANT_GLYPH": 3,
-    "MISSING_GLYPH_PLACEHOLDER": 1
+    "MISSING_GLYPH_PLACEHOLDER": 1,
+    "SAME_POINT_UNDER_OTHER_NAME": 4
   },
   "falseAbsences": [
     {
@@ -120,6 +121,38 @@
       "cause": "MISSING_GLYPH_PLACEHOLDER",
       "evidence": "정본 카탈로그가 결자를 [B42B] 로 싣고 지도는 朱䳒縣 으로 싣는다. 交趾郡 12 縣 중 나머지 11 이 그대로 맞는다",
       "reading": "결자 표기 때문에 생긴 허위 부재다."
+    },
+    {
+      "commandery": "東海郡",
+      "canonName": "合鄕",
+      "mapName": "合城",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "evidence": "결손 원장의 좌표(35.09516, 117.21945, READY_TGAZ)가 han-tiles 의 기존 城 45299 合城县(경로 노드 906, 귀속 東海郡)와 0 km 로 같다.",
+      "reading": "같은 장소다. 결손이 아니다 — absent-county-adjudications-v1 이 이미 「지도의 合城 은 코퍼스 근거가 없는 표기, 정본은 合鄕」으로 판정했다. 2026-09-23 배치 뒤 좌표 대조에서 드러나 결손 縣에서 뺐다."
+    },
+    {
+      "commandery": "河南尹",
+      "canonName": "新城",
+      "mapName": "新成",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "evidence": "결손 원장의 좌표(34.39771, 112.39502, READY_NAMU)가 han-tiles 의 기존 城 82841 新成县(경로 노드 857, 귀속 弘農郡)와 0 km 로 같다.",
+      "reading": "같은 장소다. 결손이 아니다 — 前漢 河南郡 新成 → 後漢 河南尹 新城. 기존 城은 弘農郡으로 오귀속돼 제 郡에서 보이지 않았다. 2026-09-23 배치 뒤 좌표 대조에서 드러나 결손 縣에서 뺐다."
+    },
+    {
+      "commandery": "河閒國",
+      "canonName": "易",
+      "mapName": "易城",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "evidence": "결손 원장의 좌표(38.9959, 116.06742, READY_TGAZ)가 han-tiles 의 기존 城 87297 易城县(경로 노드 993, 귀속 涿郡)와 0 km 로 같다.",
+      "reading": "같은 장소다. 결손이 아니다 — 기존 城은 涿郡으로 오귀속돼 제 郡에서 보이지 않았다. 2026-09-23 배치 뒤 좌표 대조에서 드러나 결손 縣에서 뺐다."
+    },
+    {
+      "commandery": "豫章郡",
+      "canonName": "廬陵",
+      "mapName": "高昌",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "evidence": "결손 원장의 좌표(26.93722, 114.83273, READY_TGAZ)가 han-tiles 의 기존 城 40885 高昌县(경로 노드 960, 귀속 豫章郡)와 0 km 로 같다.",
+      "reading": "같은 장소다. 결손이 아니다 — 지도는 같은 점을 후대 이름 高昌 으로 싣는다. 2026-09-23 배치 뒤 좌표 대조에서 드러나 결손 縣에서 뺐다."
     }
   ]
 }

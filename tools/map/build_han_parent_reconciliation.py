@@ -47,15 +47,15 @@ REFERENCE_YEAR = 220
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS).
 # 2026-09-17: w2 중 같은 縣이 두 번 선 977·989 를 거두어 174곳, 그 두 번호와 1099–1133 에
 # 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
-# 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 60곳 (w1-gap-county-location, HHS) —
-# 1195–1254. 은퇴 id 26개는 계속 비워 두므로 번호가 명부 수보다 크다.
+# 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 56곳 (w1-gap-county-location, HHS) —
+# 1342–1397. 은퇴·철회 예약 번호 173개(1195–1341 포함)를 비워 두므로 번호가 명부 수보다 크다.
 STRATEGIC_SITE_ROUTE_CLAIM_COUNT = 73
 # 2026-09-21: retire 26 unsupported locality proxies from the 98-row release.
 EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 72
 CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 174
 JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
                                   + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
-HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 60
+HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 56
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
@@ -559,7 +559,7 @@ def _validate_review_chain(
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 11,
             "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": 1,
-            "gapCountyClaimCount": 60,
+            "gapCountyClaimCount": 56,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT - JURISDICTION_ROUTE_CLAIM_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
@@ -590,7 +590,7 @@ def _validate_review_chain(
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w4-vacated-county-location", 1, "APPROVED"),
             ("w5-external-settlement-route-claim", EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT, "APPROVED"),
-            ("w1-gap-county-location", 60, "APPROVED"),
+            ("w1-gap-county-location", 56, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")

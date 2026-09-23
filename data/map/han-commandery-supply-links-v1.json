@@ -271,8 +271,8 @@
   },
   {
    "canonicalGroup": "國內城",
-   "fromProvinceIndex": 1393,
-   "toProvinceIndex": 1394,
+   "fromProvinceIndex": 1389,
+   "toProvinceIndex": 1390,
    "fromCityName": "주나",
    "toCityName": "개마",
    "distanceKm": 137.5
@@ -288,7 +288,7 @@
   {
    "canonicalGroup": "安定郡",
    "fromProvinceIndex": 514,
-   "toProvinceIndex": 1370,
+   "toProvinceIndex": 1366,
    "fromCityName": "음반",
    "toCityName": "임경",
    "distanceKm": 215.5
@@ -320,7 +320,7 @@
   {
    "canonicalGroup": "廣陵郡",
    "fromProvinceIndex": 223,
-   "toProvinceIndex": 1349,
+   "toProvinceIndex": 1346,
    "fromCityName": "능",
    "toCityName": "동양(廣陵郡)",
    "distanceKm": 86.0
@@ -376,7 +376,7 @@
   {
    "canonicalGroup": "汝南郡",
    "fromProvinceIndex": 536,
-   "toProvinceIndex": 1340,
+   "toProvinceIndex": 1339,
    "fromCityName": "여양(汝南郡)",
    "toCityName": "고시",
    "distanceKm": 36.1
@@ -464,31 +464,31 @@
   {
    "canonicalGroup": "酒泉郡",
    "fromProvinceIndex": 1330,
-   "toProvinceIndex": 1377,
+   "toProvinceIndex": 1373,
    "fromCityName": "좌성",
    "toCityName": "안미",
    "distanceKm": 32.8
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1373,
-   "toProvinceIndex": 1375,
+   "fromProvinceIndex": 1369,
+   "toProvinceIndex": 1371,
    "fromCityName": "표씨",
    "toCityName": "회수",
    "distanceKm": 56.6
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1374,
-   "toProvinceIndex": 1377,
+   "fromProvinceIndex": 1370,
+   "toProvinceIndex": 1373,
    "fromCityName": "낙관",
    "toCityName": "안미",
    "distanceKm": 22.6
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1375,
-   "toProvinceIndex": 1377,
+   "fromProvinceIndex": 1371,
+   "toProvinceIndex": 1373,
    "fromCityName": "회수",
    "toCityName": "안미",
    "distanceKm": 49.2

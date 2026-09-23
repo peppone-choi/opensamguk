@@ -476,6 +476,20 @@
       "toCommanderyId": "PARENT-0094",
       "reason": "SOURCE_ATTESTED_COMMANDERY",
       "basis": "安平口 거점 원장(strategic-strongholds-v1 anpingkou)은 anchorCounty 를 遼東郡 西安平縣으로 적고 「투영 셀은 郡國 밖 卒本 관할로 떨어진다」고 밝혀 두었다. 그 기증 省(1304)이 西安平 관할로 옮겨지면서 安平口 省만 卒本 郡의 섬으로 남으므로, 거점 관할을 遼東郡으로 옮긴다. 근거: 三國志 卷47 吳主傳 裴注 「恂等到安平口」, 漢書 卷28 地理志 「馬訾水西南至遼東郡西安平縣入海」."
+    },
+    {
+      "jurisdictionId": "82841",
+      "fromCommanderyId": "PARENT-0003",
+      "toCommanderyId": "PARENT-0000",
+      "reason": "SOURCE_ATTESTED_COMMANDERY",
+      "basis": "新成(경로 노드 857)은 前漢 河南郡 新成 → 後漢 河南尹 新城이다. 漢書 卷28 地理志 河南郡 「縣二十二：雒陽，滎陽，偃師，…密，新成，開封，成皋，苑陵，梁，新鄭」, 後漢書 卷109 郡國志 河南尹 「〖新城〗有高都城。有广成聚」, 晉書 卷014 地理志 河南郡 「洛陽 河南 鞏 河陰 新安 成皋 緱氏 陽城 新城 陸渾 梁 陽翟」 — 세 사서가 모두 河南에 싣는다. 郡國志 弘農郡 九城(弘农 陕 黾池 新安 宜阳 陆浑 卢氏 湖 华阴)·漢書 弘農郡 十一縣 어디에도 없다. 220년 郡 래스터가 씨앗칸에 弘農郡을 씌운 것이고, 이 관할 省은 河南尹 관할과 맞닿는다(9변). 결손 縣 河南尹 新城의 원장 좌표가 이 城과 0 km 로 같아 드러났다(naming-artifact-false-absences-v1 SAME_POINT_UNDER_OTHER_NAME)."
+    },
+    {
+      "jurisdictionId": "87297",
+      "fromCommanderyId": "PARENT-0087",
+      "toCommanderyId": "PARENT-0018",
+      "reason": "SOURCE_ATTESTED_COMMANDERY",
+      "basis": "易城(경로 노드 993)은 後漢 河閒國 易이다. 後漢書 卷110 郡國志 河閒國 十一城 「易，故屬涿。」 — 前漢 涿郡 縣(漢書 卷28 地理志 涿郡 「…容城，易，廣望…」)이 後漢에 河閒國으로 옮겨졌다고 郡國志가 주를 달았다. 晉書 卷014 地理志 河間國 「樂城 武垣 鄚 易城 中水 成平」도 河間에 싣는다. 郡國志 涿郡 七城(涿 逎 故安 范阳 良乡 北新城 方城)에는 없다. 220년 郡 래스터가 씨앗칸에 涿郡을 씌운 것이고, 이 관할 省은 河閒國 관할과 맞닿는다(13변). 결손 縣 河閒國 易의 원장 좌표가 이 城과 0 km 로 같아 드러났다(naming-artifact-false-absences-v1 SAME_POINT_UNDER_OTHER_NAME)."
     }
   ]
 }

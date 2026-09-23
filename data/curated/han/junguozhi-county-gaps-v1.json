@@ -4,10 +4,10 @@
  "note": "이름 대조 결과다. ABSENT 는 「지도에 없다」의 후보이지 판정이 아니다 — 개명·僑置·220년 단면 차이를 郡별로 심사해야 한다.",
  "totals": {
   "counties": 1180,
-  "ABSENT": 222,
+  "ABSENT": 226,
   "IN_OTHER_COMMANDERY": 26,
-  "IN_OWN_COMMANDERY": 932,
-  "absentWithNearMatch": 15,
+  "IN_OWN_COMMANDERY": 928,
+  "absentWithNearMatch": 18,
   "commanderiesWithAbsentFirstCounty": 14
  },
  "commanderies": [
@@ -16,7 +16,7 @@
    "commandery": "河南尹",
    "inTiles": true,
    "declaredCounties": 21,
-   "absent": 2,
+   "absent": 3,
    "firstListedCounty": {
     "sourceName": "雒阳",
     "status": "IN_OWN_COMMANDERY"
@@ -143,9 +143,10 @@
     {
      "ordinal": 18,
      "sourceName": "新城",
-     "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0000-018"
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "新成"
+     ]
     },
     {
      "ordinal": 19,
@@ -2138,7 +2139,7 @@
    "commandery": "河閒國",
    "inTiles": true,
    "declaredCounties": 11,
-   "absent": 0,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "樂成",
     "status": "IN_OWN_COMMANDERY"
@@ -2161,9 +2162,10 @@
     {
      "ordinal": 3,
      "sourceName": "易",
-     "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0018-003"
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "易城"
+     ]
     },
     {
      "ordinal": 4,
@@ -3070,7 +3072,7 @@
    "commandery": "東海郡",
    "inTiles": true,
    "declaredCounties": 13,
-   "absent": 2,
+   "absent": 3,
    "firstListedCounty": {
     "sourceName": "郯",
     "status": "ABSENT"
@@ -3144,9 +3146,10 @@
     {
      "ordinal": 10,
      "sourceName": "合鄕",
-     "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0030-010"
+     "status": "ABSENT",
+     "nearMatchInOwnCommandery": [
+      "合城"
+     ]
     },
     {
      "ordinal": 11,
@@ -5572,7 +5575,7 @@
    "commandery": "豫章郡",
    "inTiles": true,
    "declaredCounties": 21,
-   "absent": 0,
+   "absent": 1,
    "firstListedCounty": {
     "sourceName": "南昌",
     "status": "IN_OWN_COMMANDERY"
@@ -5609,9 +5612,7 @@
     {
      "ordinal": 5,
      "sourceName": "廬陵",
-     "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0053-005"
+     "status": "ABSENT"
     },
     {
      "ordinal": 6,

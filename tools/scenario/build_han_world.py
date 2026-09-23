@@ -83,8 +83,8 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # 2026-09-17: 같은 縣이 두 번 선 977·989 를 거두고 그 번호와 1099..1133 에 城 없던 郡國 밖 취락 관할 37 곳
 # (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
 from tools.scenario.han_active_city_ids import active_numeric_ids
-# 결손 縣 60 곳을 더해 1168 → 1228. 명부 수가 늘면 같이 움직이는 실측 기준선이다.
-V3_ROUTE_NODE_COUNT = 1228
+# 결손 縣 56 곳을 더해 1168 → 1224. 명부 수가 늘면 같이 움직이는 실측 기준선이다.
+V3_ROUTE_NODE_COUNT = 1224
 # 縣이 아닌 거점의 城 등급 — ADR-LITE-052 가 기존 사다리 수 1·진 2·관 3 아래에 두기로 했다.
 STRATEGIC_SITE_LEVEL_BY_NODE_CLASS = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
 # 이 번호까지는 앞선 판(848)에서 런타임 이름이 이미 정해졌다 — 새 城과의 이름 충돌로 바꾸지 않는다.
@@ -1621,7 +1621,9 @@ def build_v3() -> tuple[str, str, str, str]:
         if name_counts[row["name"]] > 1 and not (
             row["id"] <= V3_STABLE_NAME_MAX_ID and stable_names[row["name"]] == 1
         ):
-            row["name"] = f'{row["name"]}({node_by_id[row["id"]]["parentName"]})'
+            # 郡 표기는 meta.junCh 와 같은 축(world_parent_ch)이다 — 781 번 이후 城은 선정 원장의
+            # parentName 이 아니라 han-tiles 관할의 郡이다(新成 857 이 「신성(弘農郡)」으로 남았다).
+            row["name"] = f'{row["name"]}({world_parent_ch(node_by_id[row["id"]])})'
     qualified_counts = Counter(row["name"] for row in out_cities)
     for row in out_cities:
         if qualified_counts[row["name"]] > 1:

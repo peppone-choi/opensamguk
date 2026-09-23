@@ -36,11 +36,11 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012"
+      "sha256": "99829b28075ec06e835f6f66d4233f5030a9b201a4184348ec282900afc67f09"
     },
     "tools/map/build_han_places.py": {
       "path": "tools/map/build_han_places.py",
-      "sha256": "e0758e0d543ee9a89e5a6e64744dafdf6b8bed6b7a5b35988f06f5c6fcfc6c8f"
+      "sha256": "cbe7790f322dc9c6ff5db8350d0b73eb66fc7b4fa204ca9467e5fa38fd0abec7"
     }
   },
   "evidenceSources": [

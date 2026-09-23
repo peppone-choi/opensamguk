@@ -282,8 +282,8 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.21945,
       "lat": 35.09516,
-      "commanderyCentroidKm": 82,
-      "commanderyCentroidSample": 12,
+      "commanderyCentroidKm": 90,
+      "commanderyCentroidSample": 11,
       "readiness": "READY_TGAZ"
     },
     {
@@ -829,8 +829,8 @@
       "ledger": "dushi-disposition-adjudications-v1",
       "lon": 114.83273,
       "lat": 26.93722,
-      "commanderyCentroidKm": 126,
-      "commanderyCentroidSample": 33,
+      "commanderyCentroidKm": 130,
+      "commanderyCentroidSample": 32,
       "readiness": "READY_TGAZ"
     },
     {

@@ -18,7 +18,7 @@ LEGACY_SELECTION_COUNT = 780
 # 변경 縣 51 곳(frontier-counties-v1)은 CHGIS 점이 없는 HHS 단위라 郡治 8 곳과 같은 LOCATION_ONLY claim 으로
 # 결합하되, 별도 batch 로 센다 — physicalPlaceId 이름공간이 둘을 가른다(tools/map/materialize_frontier_counties.py).
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
-# 결손 縣 60 곳(gap-counties-v1). 변경 縣과 같은 LOCATION_ONLY 규약이고 등록 도구는
+# 결손 縣 56 곳(gap-counties-v1). 변경 縣과 같은 LOCATION_ONLY 규약이고 등록 도구는
 # tools/scenario/append_gap_county_route_ledgers.py 다. 실체화는 거점 분할 단계의 국소 carve 가 한다.
 GAP_COUNTY_BATCH = "w1-gap-county-location"
 FRONTIER_COUNTY_PLACE_PREFIX = "curated:frontier-county-v1:"
@@ -94,7 +94,7 @@ CLAIM_BATCH_BY_ID = {batch.batch_id: batch for batch in CLAIM_BATCHES}
 APPEND_ISSUANCE_REASONS = {"LICHENG_MOVEMENT_V2_APPEND", "FRONTIER_COUNTY_V1_APPEND", "CITYLESS_COMMANDERY_SEAT_V1_APPEND", "SCRIPT_VARIANT_COUNTY_JOIN_V1_APPEND", "GAP_COUNTY_V1_APPEND", VACATED_LOCATION_ISSUANCE} | {batch.issuance_reason for batch in CLAIM_BATCHES}
 # 邊郡 8곳 + 城을 하나도 못 받던 朔方·西河·定襄 3곳 = 11. 셋 다 같은 external:v1 이름공간이라
 # 같은 batch 로 센다(tools/scenario/append_cityless_commandery_seat_ledgers.py).
-EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 60, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
+EXPECTED_HHS_BATCH_COUNTS = {"w0b-overlay-unique-220": 723, "w0c-reviewed-ambiguity": 50, EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 56, SCRIPT_VARIANT_BATCH: 13, VACATED_LOCATION_BATCH: len(VACATED_LOCATION_UNITS)}
 EXPECTED_JURISDICTION_CLAIM_COUNT = sum(batch.expected_count for batch in CLAIM_BATCHES)
 EXPECTED_BATCH_COUNTS = {**EXPECTED_HHS_BATCH_COUNTS, **{batch.batch_id: batch.expected_count for batch in CLAIM_BATCHES}}
 EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] + EXPECTED_BATCH_COUNTS[FRONTIER_COUNTY_BATCH]
@@ -102,7 +102,7 @@ EXPECTED_LOCATION_CLAIM_COUNT = (EXPECTED_BATCH_COUNTS[EXTERNAL_LOCATION_BATCH] 
                                  + EXPECTED_BATCH_COUNTS[VACATED_LOCATION_BATCH])
 HHS_SELECTION_COUNT = sum(EXPECTED_HHS_BATCH_COUNTS.values())
 SELECTION_COUNT = sum(EXPECTED_BATCH_COUNTS.values())
-EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "gapCountyClaimCount": 60, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
+EXPECTED_SELECTION = {"routeNodeCount": SELECTION_COUNT, "hhsAdministrativeBindingCount": HHS_SELECTION_COUNT, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 723, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 11, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0, "frontierCountyClaimCount": 51, "gapCountyClaimCount": 56, "vacatedCountyLocationClaimCount": len(VACATED_LOCATION_UNITS), "reviewedSourceClaimBindingCount": EXPECTED_JURISDICTION_CLAIM_COUNT}
 EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
     "historicalConflictDecisionSet": {
         "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
@@ -581,7 +581,7 @@ def build_outputs(
     claim_numeric_ids = {subject: appended_ids.pop(subject) for subject in claim_subjects}
     # 늦게 덧붙인 HHS 추가분은 floor 에서 뺀다. 이 계약은 「HHS 추가분이 claim 배치보다 먼저 번호를
     # 받는다」를 가정하는데, 나중에 추가된 것은 그럴 수 없다 — 은퇴 번호를 되쓸 수 없기 때문이다.
-    # VACATED_LOCATION_UNITS 가 이미 같은 이유로 빠져 있고, 결손 縣 60 곳(GAP_COUNTY_BATCH)도 같다.
+    # VACATED_LOCATION_UNITS 가 이미 같은 이유로 빠져 있고, 결손 縣 56 곳(GAP_COUNTY_BATCH)도 같다.
     # 대신 아래에서 「늦은 추가분은 앞선 모든 추가분 뒤에 온다」를 따로 단언한다.
     late_batches = {GAP_COUNTY_BATCH}
     late_units = {unit_id for unit_id, value in selected.items() if value[1] in late_batches}

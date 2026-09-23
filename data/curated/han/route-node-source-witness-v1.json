@@ -881,16 +881,6 @@
       "volume": 112
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-010",
-      "corpusPath": "data/corpus/hhs-111.txt",
-      "lineEnd": 231,
-      "lineStart": 231,
-      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-      "sourceBook": "後漢書",
-      "verbatim": "〖合鄕〗",
-      "volume": 111
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-006",
       "corpusPath": "data/corpus/hhs-110.txt",
       "lineEnd": 142,
@@ -1011,16 +1001,6 @@
       "volume": 109
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-018",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 52,
-      "lineStart": 52,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖新城{{*|左傳曰文十七年周敗戎于邥垂，杜預曰縣北有垂亭。史記秦遷西周公於{單心}狐，徐廣曰「與陽人聚相近，在雒陽南百五十里梁、新城之閒」。}}〗",
-      "volume": 109
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0002-002",
       "corpusPath": "data/corpus/hhs-109.txt",
       "lineEnd": 106,
@@ -1029,16 +1009,6 @@
       "sourceBook": "後漢書",
       "verbatim": "〖杨〗",
       "volume": 109
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0018-003",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 402,
-      "lineStart": 402,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "易，故屬涿。",
-      "volume": 110
     },
     {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-002",
@@ -1109,16 +1079,6 @@
       "sourceBook": "後漢書",
       "verbatim": "〖中阳〗",
       "volume": 113
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0053-005",
-      "corpusPath": "data/corpus/hhs-112.txt",
-      "lineEnd": 610,
-      "lineStart": 610,
-      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
-      "sourceBook": "後漢書",
-      "verbatim": "廬陵，{{*|興平元年，孫策分立廬陵郡。",
-      "volume": 112
     },
     {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0060-006",

@@ -611,13 +611,6 @@
       "wikidataId": null
     },
     {
-      "canonicalName": "合鄕",
-      "physicalPlaceId": "curated:gap-county-v1:gc-g0030-010",
-      "recordId": "gc-g0030-010",
-      "subjectKey": "hhs:111:東海郡:010",
-      "wikidataId": null
-    },
-    {
       "canonicalName": "穀熟",
       "physicalPlaceId": "curated:gap-county-v1:gc-g0009-006",
       "recordId": "gc-g0009-006",
@@ -702,24 +695,10 @@
       "wikidataId": null
     },
     {
-      "canonicalName": "新城",
-      "physicalPlaceId": "curated:gap-county-v1:gc-g0000-018",
-      "recordId": "gc-g0000-018",
-      "subjectKey": "hhs:109:河南尹:018",
-      "wikidataId": null
-    },
-    {
       "canonicalName": "杨",
       "physicalPlaceId": "curated:gap-county-v1:gc-g0002-002",
       "recordId": "gc-g0002-002",
       "subjectKey": "hhs:109:河東郡:002",
-      "wikidataId": null
-    },
-    {
-      "canonicalName": "易",
-      "physicalPlaceId": "curated:gap-county-v1:gc-g0018-003",
-      "recordId": "gc-g0018-003",
-      "subjectKey": "hhs:110:河閒國:003",
       "wikidataId": null
     },
     {
@@ -769,13 +748,6 @@
       "physicalPlaceId": "curated:gap-county-v1:gc-g0081-005",
       "recordId": "gc-g0081-005",
       "subjectKey": "hhs:113:西河郡:005",
-      "wikidataId": null
-    },
-    {
-      "canonicalName": "廬陵",
-      "physicalPlaceId": "curated:gap-county-v1:gc-g0053-005",
-      "recordId": "gc-g0053-005",
-      "subjectKey": "hhs:112:豫章郡:005",
       "wikidataId": null
     },
     {

@@ -13,7 +13,7 @@
     },
     "gapCounties": {
       "path": "data/curated/han/gap-counties-v1.json",
-      "sha256": "acb68fa139fe797d64711ac2e9b1f046ee1384c7065f5b33e0a2c0afa4c09b0b"
+      "sha256": "76d35bf2b288755ed53a50cc1fea182ea8538d7ef9db950448db3bfc7e4bcf08"
     }
   },
   "rule": {
@@ -44,7 +44,7 @@
     "stages": [
       {
         "inputDocumentSha256": "d02f8709feeabd1901756d98f27067e4a9e5dd529455c431ab68d7f18a39f20c",
-        "outputDocumentSha256": "102939b16afd5164e8fc0b8bb5904ee56c60e90262b7e64ea51e327ca45ce83e",
+        "outputDocumentSha256": "604df72d2898f76d4f9fdf0f22879d8d202df0124f45d24fd6695c9ff79f0ba5",
         "inputCounts": {
           "cities": 1190,
           "seats": 172,
@@ -1326,7 +1326,6 @@
           "ss-zhanyinkou",
           "ss-zuocheng",
           "gc-g0000-003",
-          "gc-g0000-018",
           "gc-g0002-002",
           "gc-g0005-012",
           "gc-g0006-013",
@@ -1339,10 +1338,8 @@
           "gc-g0009-009",
           "gc-g0010-017",
           "gc-g0015-007",
-          "gc-g0018-003",
           "gc-g0022-008",
           "gc-g0028-002",
-          "gc-g0030-010",
           "gc-g0033-006",
           "gc-g0041-032",
           "gc-g0041-036",
@@ -1357,7 +1354,6 @@
           "gc-g0050-005",
           "gc-g0050-006",
           "gc-g0050-007",
-          "gc-g0053-005",
           "gc-g0060-006",
           "gc-g0060-008",
           "gc-g0061-003",
@@ -3669,58 +3665,10 @@
             "after": "gc-g0085-001"
           },
           {
-            "col": 443,
-            "row": 143,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 440,
-            "row": 144,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 441,
-            "row": 144,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 442,
-            "row": 144,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 443,
-            "row": 144,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 440,
-            "row": 145,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
-            "col": 442,
-            "row": 145,
-            "before": "87326",
-            "after": "gc-g0018-003"
-          },
-          {
             "col": 534,
             "row": 145,
             "before": "fc-liaodong-011",
             "after": "ss-tajin"
-          },
-          {
-            "col": 442,
-            "row": 146,
-            "before": "87326",
-            "after": "gc-g0018-003"
           },
           {
             "col": 533,
@@ -4569,12 +4517,6 @@
             "after": "gc-g0005-012"
           },
           {
-            "col": 461,
-            "row": 222,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
             "col": 247,
             "row": 223,
             "before": "70040",
@@ -4591,24 +4533,6 @@
             "row": 223,
             "before": "85158",
             "after": "gc-g0028-002"
-          },
-          {
-            "col": 460,
-            "row": 223,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
-            "col": 461,
-            "row": 223,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
-            "col": 462,
-            "row": 223,
-            "before": "45299",
-            "after": "gc-g0030-010"
           },
           {
             "col": 248,
@@ -4645,30 +4569,6 @@
             "row": 224,
             "before": "85158",
             "after": "gc-g0028-002"
-          },
-          {
-            "col": 460,
-            "row": 224,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
-            "col": 461,
-            "row": 224,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
-            "col": 462,
-            "row": 224,
-            "before": "45299",
-            "after": "gc-g0030-010"
-          },
-          {
-            "col": 463,
-            "row": 224,
-            "before": "45299",
-            "after": "gc-g0030-010"
           },
           {
             "col": 248,
@@ -5211,12 +5111,6 @@
             "after": "ss-doujin"
           },
           {
-            "col": 371,
-            "row": 235,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
             "col": 248,
             "row": 236,
             "before": "70060",
@@ -5259,24 +5153,6 @@
             "after": "ss-doujin"
           },
           {
-            "col": 369,
-            "row": 236,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 370,
-            "row": 236,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 371,
-            "row": 236,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
             "col": 248,
             "row": 237,
             "before": "70060",
@@ -5311,30 +5187,6 @@
             "row": 237,
             "before": "83053",
             "after": "ss-doujin"
-          },
-          {
-            "col": 368,
-            "row": 237,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 369,
-            "row": 237,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 370,
-            "row": 237,
-            "before": "82843",
-            "after": "gc-g0000-018"
-          },
-          {
-            "col": 371,
-            "row": 237,
-            "before": "82843",
-            "after": "gc-g0000-018"
           },
           {
             "col": 380,
@@ -8643,54 +8495,6 @@
             "after": "gc-g0060-006"
           },
           {
-            "col": 416,
-            "row": 397,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 417,
-            "row": 397,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 418,
-            "row": 397,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 416,
-            "row": 398,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 417,
-            "row": 398,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 418,
-            "row": 398,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 416,
-            "row": 399,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
-            "col": 418,
-            "row": 399,
-            "before": "40885",
-            "after": "gc-g0053-005"
-          },
-          {
             "col": 394,
             "row": 401,
             "before": "41770",
@@ -8955,33 +8759,11 @@
             }
           },
           {
-            "countyId": "hhs:109:河南尹:018",
-            "nameHan": "新城縣",
-            "hhsCommanderyHan": "河南尹",
-            "placeId": "gc-g0000-018",
-            "provinceIndex": 1332,
-            "donorProvinceId": "82843",
-            "donorJurisdictionId": "82843",
-            "commanderyId": "PARENT-0000",
-            "worldCommanderyHan": "河南尹",
-            "anchorCell": {
-              "col": 371,
-              "row": 237
-            },
-            "carvedCellCount": 8,
-            "displacedFrom": {
-              "col": 372,
-              "row": 240,
-              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
-              "cellDistance": 3.16
-            }
-          },
-          {
             "countyId": "hhs:109:河東郡:002",
             "nameHan": "杨县",
             "hhsCommanderyHan": "河東郡",
             "placeId": "gc-g0002-002",
-            "provinceIndex": 1333,
+            "provinceIndex": 1332,
             "donorProvinceId": "95443",
             "donorJurisdictionId": "95443",
             "commanderyId": "PARENT-0002",
@@ -8997,7 +8779,7 @@
             "nameHan": "衙縣",
             "hhsCommanderyHan": "左馮翊",
             "placeId": "gc-g0005-012",
-            "provinceIndex": 1334,
+            "provinceIndex": 1333,
             "donorProvinceId": "70340",
             "donorJurisdictionId": "70340",
             "commanderyId": "PARENT-0005",
@@ -9013,7 +8795,7 @@
             "nameHan": "美阳县",
             "hhsCommanderyHan": "右扶風",
             "placeId": "gc-g0006-013",
-            "provinceIndex": 1335,
+            "provinceIndex": 1334,
             "donorProvinceId": "70249",
             "donorJurisdictionId": "70249",
             "commanderyId": "PARENT-0006",
@@ -9029,7 +8811,7 @@
             "nameHan": "北宜春縣",
             "hhsCommanderyHan": "汝南郡",
             "placeId": "gc-g0008-009",
-            "provinceIndex": 1336,
+            "provinceIndex": 1335,
             "donorProvinceId": "83168",
             "donorJurisdictionId": "83168",
             "commanderyId": "PARENT-0008",
@@ -9045,7 +8827,7 @@
             "nameHan": "細陽縣",
             "hhsCommanderyHan": "汝南郡",
             "placeId": "gc-g0008-016",
-            "provinceIndex": 1337,
+            "provinceIndex": 1336,
             "donorProvinceId": "43366",
             "donorJurisdictionId": "43366",
             "commanderyId": "PARENT-0008",
@@ -9061,7 +8843,7 @@
             "nameHan": "鮦陽縣",
             "hhsCommanderyHan": "汝南郡",
             "placeId": "gc-g0008-019",
-            "provinceIndex": 1338,
+            "provinceIndex": 1337,
             "donorProvinceId": "82047",
             "donorJurisdictionId": "82047",
             "commanderyId": "PARENT-0008",
@@ -9077,7 +8859,7 @@
             "nameHan": "定潁縣",
             "hhsCommanderyHan": "汝南郡",
             "placeId": "gc-g0008-034",
-            "provinceIndex": 1339,
+            "provinceIndex": 1338,
             "donorProvinceId": "83167",
             "donorJurisdictionId": "83167",
             "commanderyId": "PARENT-0008",
@@ -9093,7 +8875,7 @@
             "nameHan": "固始縣",
             "hhsCommanderyHan": "汝南郡",
             "placeId": "gc-g0008-035",
-            "provinceIndex": 1340,
+            "provinceIndex": 1339,
             "donorProvinceId": "82003",
             "donorJurisdictionId": "82003",
             "commanderyId": "PARENT-0008",
@@ -9115,7 +8897,7 @@
             "nameHan": "穀熟縣",
             "hhsCommanderyHan": "梁國",
             "placeId": "gc-g0009-006",
-            "provinceIndex": 1341,
+            "provinceIndex": 1340,
             "donorProvinceId": "82072",
             "donorJurisdictionId": "82072",
             "commanderyId": "PARENT-0009",
@@ -9131,7 +8913,7 @@
             "nameHan": "薄縣",
             "hhsCommanderyHan": "梁國",
             "placeId": "gc-g0009-009",
-            "provinceIndex": 1342,
+            "provinceIndex": 1341,
             "donorProvinceId": "85047",
             "donorJurisdictionId": "85047",
             "commanderyId": "PARENT-0009",
@@ -9147,7 +8929,7 @@
             "nameHan": "向縣",
             "hhsCommanderyHan": "沛國",
             "placeId": "gc-g0010-017",
-            "provinceIndex": 1343,
+            "provinceIndex": 1342,
             "donorProvinceId": "43186",
             "donorJurisdictionId": "43186",
             "commanderyId": "PARENT-0010",
@@ -9163,7 +8945,7 @@
             "nameHan": "欒城縣",
             "hhsCommanderyHan": "常山國",
             "placeId": "gc-g0015-007",
-            "provinceIndex": 1344,
+            "provinceIndex": 1343,
             "donorProvinceId": "87217",
             "donorJurisdictionId": "87217",
             "commanderyId": "PARENT-0015",
@@ -9175,33 +8957,11 @@
             "carvedCellCount": 8
           },
           {
-            "countyId": "hhs:110:河閒國:003",
-            "nameHan": "易縣",
-            "hhsCommanderyHan": "河閒國",
-            "placeId": "gc-g0018-003",
-            "provinceIndex": 1345,
-            "donorProvinceId": "87326",
-            "donorJurisdictionId": "87326",
-            "commanderyId": "PARENT-0018",
-            "worldCommanderyHan": "河閒國",
-            "anchorCell": {
-              "col": 440,
-              "row": 144
-            },
-            "carvedCellCount": 8,
-            "displacedFrom": {
-              "col": 440,
-              "row": 142,
-              "reason": "PROJECTED_CELL_IN_OTHER_COMMANDERY",
-              "cellDistance": 2.0
-            }
-          },
-          {
             "countyId": "hhs:111:陳留郡:008",
             "nameHan": "東昬縣",
             "hhsCommanderyHan": "陳留郡",
             "placeId": "gc-g0022-008",
-            "provinceIndex": 1346,
+            "provinceIndex": 1344,
             "donorProvinceId": "44379",
             "donorJurisdictionId": "44379",
             "commanderyId": "PARENT-0022",
@@ -9217,7 +8977,7 @@
             "nameHan": "東緡縣",
             "hhsCommanderyHan": "山陽郡",
             "placeId": "gc-g0028-002",
-            "provinceIndex": 1347,
+            "provinceIndex": 1345,
             "donorProvinceId": "85158",
             "donorJurisdictionId": "85158",
             "commanderyId": "PARENT-0028",
@@ -9235,33 +8995,11 @@
             }
           },
           {
-            "countyId": "hhs:111:東海郡:010",
-            "nameHan": "合鄕縣",
-            "hhsCommanderyHan": "東海郡",
-            "placeId": "gc-g0030-010",
-            "provinceIndex": 1348,
-            "donorProvinceId": "45299",
-            "donorJurisdictionId": "45299",
-            "commanderyId": "PARENT-0030",
-            "worldCommanderyHan": "東海郡",
-            "anchorCell": {
-              "col": 461,
-              "row": 224
-            },
-            "carvedCellCount": 8,
-            "displacedFrom": {
-              "col": 461,
-              "row": 225,
-              "reason": "CITY_POINT_ON_PROJECTED_CELL",
-              "cellDistance": 1.0
-            }
-          },
-          {
             "countyId": "hhs:111:廣陵郡:006",
             "nameHan": "東陽縣",
             "hhsCommanderyHan": "廣陵郡",
             "placeId": "gc-g0033-006",
-            "provinceIndex": 1349,
+            "provinceIndex": 1346,
             "donorProvinceId": "40556",
             "donorJurisdictionId": "40556",
             "commanderyId": "PARENT-0033",
@@ -9277,7 +9015,7 @@
             "nameHan": "順陽縣",
             "hhsCommanderyHan": "南陽郡",
             "placeId": "gc-g0041-032",
-            "provinceIndex": 1350,
+            "provinceIndex": 1347,
             "donorProvinceId": "45751",
             "donorJurisdictionId": "45751",
             "commanderyId": "PARENT-0041",
@@ -9293,7 +9031,7 @@
             "nameHan": "丹水縣",
             "hhsCommanderyHan": "南陽郡",
             "placeId": "gc-g0041-036",
-            "provinceIndex": 1351,
+            "provinceIndex": 1348,
             "donorProvinceId": "82763",
             "donorJurisdictionId": "82763",
             "commanderyId": "PARENT-0041",
@@ -9315,7 +9053,7 @@
             "nameHan": "陰陵縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-001",
-            "provinceIndex": 1352,
+            "provinceIndex": 1349,
             "donorProvinceId": "43130",
             "donorJurisdictionId": "43130",
             "commanderyId": "PARENT-0048",
@@ -9331,7 +9069,7 @@
             "nameHan": "歷陽縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-007",
-            "provinceIndex": 1353,
+            "provinceIndex": 1350,
             "donorProvinceId": "43057",
             "donorJurisdictionId": "43057",
             "commanderyId": "PARENT-0048",
@@ -9347,7 +9085,7 @@
             "nameHan": "當塗縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-008",
-            "provinceIndex": 1354,
+            "provinceIndex": 1351,
             "donorProvinceId": "43130",
             "donorJurisdictionId": "43130",
             "commanderyId": "PARENT-0048",
@@ -9363,7 +9101,7 @@
             "nameHan": "全椒縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-009",
-            "provinceIndex": 1355,
+            "provinceIndex": 1352,
             "donorProvinceId": "43057",
             "donorJurisdictionId": "43057",
             "commanderyId": "PARENT-0048",
@@ -9379,7 +9117,7 @@
             "nameHan": "鍾離縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-010",
-            "provinceIndex": 1356,
+            "provinceIndex": 1353,
             "donorProvinceId": "43130",
             "donorJurisdictionId": "43130",
             "commanderyId": "PARENT-0048",
@@ -9401,7 +9139,7 @@
             "nameHan": "阜陵縣",
             "hhsCommanderyHan": "九江郡",
             "placeId": "gc-g0048-011",
-            "provinceIndex": 1357,
+            "provinceIndex": 1354,
             "donorProvinceId": "43057",
             "donorJurisdictionId": "43057",
             "commanderyId": "PARENT-0048",
@@ -9417,7 +9155,7 @@
             "nameHan": "秣陵縣",
             "hhsCommanderyHan": "丹陽郡",
             "placeId": "gc-g0049-011",
-            "provinceIndex": 1358,
+            "provinceIndex": 1355,
             "donorProvinceId": "40512",
             "donorJurisdictionId": "40512",
             "commanderyId": "PARENT-0049",
@@ -9433,7 +9171,7 @@
             "nameHan": "舒縣",
             "hhsCommanderyHan": "廬江郡",
             "placeId": "gc-g0050-001",
-            "provinceIndex": 1359,
+            "provinceIndex": 1356,
             "donorProvinceId": "43032",
             "donorJurisdictionId": "43032",
             "commanderyId": "PARENT-0050",
@@ -9449,7 +9187,7 @@
             "nameHan": "臨湖縣",
             "hhsCommanderyHan": "廬江郡",
             "placeId": "gc-g0050-005",
-            "provinceIndex": 1360,
+            "provinceIndex": 1357,
             "donorProvinceId": "43032",
             "donorJurisdictionId": "43032",
             "commanderyId": "PARENT-0050",
@@ -9465,7 +9203,7 @@
             "nameHan": "龍舒縣",
             "hhsCommanderyHan": "廬江郡",
             "placeId": "gc-g0050-006",
-            "provinceIndex": 1361,
+            "provinceIndex": 1358,
             "donorProvinceId": "43134",
             "donorJurisdictionId": "43134",
             "commanderyId": "PARENT-0050",
@@ -9481,7 +9219,7 @@
             "nameHan": "襄安縣",
             "hhsCommanderyHan": "廬江郡",
             "placeId": "gc-g0050-007",
-            "provinceIndex": 1362,
+            "provinceIndex": 1359,
             "donorProvinceId": "43032",
             "donorJurisdictionId": "43032",
             "commanderyId": "PARENT-0050",
@@ -9493,33 +9231,11 @@
             "carvedCellCount": 8
           },
           {
-            "countyId": "hhs:112:豫章郡:005",
-            "nameHan": "廬陵縣",
-            "hhsCommanderyHan": "豫章郡",
-            "placeId": "gc-g0053-005",
-            "provinceIndex": 1363,
-            "donorProvinceId": "40885",
-            "donorJurisdictionId": "40885",
-            "commanderyId": "PARENT-0053",
-            "worldCommanderyHan": "豫章郡",
-            "anchorCell": {
-              "col": 417,
-              "row": 398
-            },
-            "carvedCellCount": 8,
-            "displacedFrom": {
-              "col": 417,
-              "row": 399,
-              "reason": "CITY_POINT_ON_PROJECTED_CELL",
-              "cellDistance": 1.0
-            }
-          },
-          {
             "countyId": "hhs:113:越巂郡:006",
             "nameHan": "卑水縣",
             "hhsCommanderyHan": "越巂郡",
             "placeId": "gc-g0060-006",
-            "provinceIndex": 1364,
+            "provinceIndex": 1360,
             "donorProvinceId": "200289",
             "donorJurisdictionId": "200289",
             "commanderyId": "PARENT-0060",
@@ -9535,7 +9251,7 @@
             "nameHan": "会无县",
             "hhsCommanderyHan": "越巂郡",
             "placeId": "gc-g0060-008",
-            "provinceIndex": 1365,
+            "provinceIndex": 1361,
             "donorProvinceId": "200284",
             "donorJurisdictionId": "200284",
             "commanderyId": "PARENT-0060",
@@ -9551,7 +9267,7 @@
             "nameHan": "俞元縣",
             "hhsCommanderyHan": "益州郡",
             "placeId": "gc-g0061-003",
-            "provinceIndex": 1366,
+            "provinceIndex": 1362,
             "donorProvinceId": "45514",
             "donorJurisdictionId": "45514",
             "commanderyId": "PARENT-0061",
@@ -9567,7 +9283,7 @@
             "nameHan": "邪龙县",
             "hhsCommanderyHan": "永昌郡",
             "placeId": "gc-g0062-005",
-            "provinceIndex": 1367,
+            "provinceIndex": 1363,
             "donorProvinceId": "45372",
             "donorJurisdictionId": "45372",
             "commanderyId": "PARENT-0062",
@@ -9583,7 +9299,7 @@
             "nameHan": "成纪县",
             "hhsCommanderyHan": "漢陽郡",
             "placeId": "gc-g0067-006",
-            "provinceIndex": 1368,
+            "provinceIndex": 1364,
             "donorProvinceId": "70040",
             "donorJurisdictionId": "70040",
             "commanderyId": "PARENT-0067",
@@ -9599,7 +9315,7 @@
             "nameHan": "上邽縣",
             "hhsCommanderyHan": "漢陽郡",
             "placeId": "gc-g0067-012",
-            "provinceIndex": 1369,
+            "provinceIndex": 1365,
             "donorProvinceId": "70060",
             "donorJurisdictionId": "70060",
             "commanderyId": "PARENT-0067",
@@ -9615,7 +9331,7 @@
             "nameHan": "临泾县",
             "hhsCommanderyHan": "安定郡",
             "placeId": "gc-g0070-001",
-            "provinceIndex": 1370,
+            "provinceIndex": 1366,
             "donorProvinceId": "70186",
             "donorJurisdictionId": "70186",
             "commanderyId": "PARENT-0070",
@@ -9631,7 +9347,7 @@
             "nameHan": "姑臧縣",
             "hhsCommanderyHan": "武威郡",
             "placeId": "gc-g0072-001",
-            "provinceIndex": 1371,
+            "provinceIndex": 1367,
             "donorProvinceId": "70609",
             "donorJurisdictionId": "70609",
             "commanderyId": "PARENT-0072",
@@ -9653,7 +9369,7 @@
             "nameHan": "宣威縣",
             "hhsCommanderyHan": "武威郡",
             "placeId": "gc-g0072-009",
-            "provinceIndex": 1372,
+            "provinceIndex": 1368,
             "donorProvinceId": "70609",
             "donorJurisdictionId": "70609",
             "commanderyId": "PARENT-0072",
@@ -9669,7 +9385,7 @@
             "nameHan": "表氏縣",
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-002",
-            "provinceIndex": 1373,
+            "provinceIndex": 1369,
             "donorProvinceId": "SUB-70459-c86c8fbee593",
             "donorJurisdictionId": "70459",
             "commanderyId": "PARENT-0074",
@@ -9691,7 +9407,7 @@
             "nameHan": "乐涫县",
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-003",
-            "provinceIndex": 1374,
+            "provinceIndex": 1370,
             "donorProvinceId": "SUB-70459-c86c8fbee593",
             "donorJurisdictionId": "70459",
             "commanderyId": "PARENT-0074",
@@ -9707,7 +9423,7 @@
             "nameHan": "会水县",
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-005",
-            "provinceIndex": 1375,
+            "provinceIndex": 1371,
             "donorProvinceId": "SUB-70459-c86c8fbee593",
             "donorJurisdictionId": "70459",
             "commanderyId": "PARENT-0074",
@@ -9723,7 +9439,7 @@
             "nameHan": "沙头县",
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-006",
-            "provinceIndex": 1376,
+            "provinceIndex": 1372,
             "donorProvinceId": "70598",
             "donorJurisdictionId": "70598",
             "commanderyId": "PARENT-0074",
@@ -9739,7 +9455,7 @@
             "nameHan": "安弥县",
             "hhsCommanderyHan": "酒泉郡",
             "placeId": "gc-g0074-007",
-            "provinceIndex": 1377,
+            "provinceIndex": 1373,
             "donorProvinceId": "SUB-70459-c86c8fbee593",
             "donorJurisdictionId": "70459",
             "commanderyId": "PARENT-0074",
@@ -9755,7 +9471,7 @@
             "nameHan": "兹氏县",
             "hhsCommanderyHan": "太原郡",
             "placeId": "gc-g0079-006",
-            "provinceIndex": 1378,
+            "provinceIndex": 1374,
             "donorProvinceId": "95152",
             "donorJurisdictionId": "95152",
             "commanderyId": "PARENT-0079",
@@ -9771,7 +9487,7 @@
             "nameHan": "中阳县",
             "hhsCommanderyHan": "西河郡",
             "placeId": "gc-g0081-005",
-            "provinceIndex": 1379,
+            "provinceIndex": 1375,
             "donorProvinceId": "DIRECT-PARENT-0081-7a0310a62424",
             "donorJurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
             "commanderyId": "PARENT-0081",
@@ -9793,7 +9509,7 @@
             "nameHan": "五原縣",
             "hhsCommanderyHan": "五原郡",
             "placeId": "gc-g0082-002",
-            "provinceIndex": 1380,
+            "provinceIndex": 1376,
             "donorProvinceId": "95698",
             "donorJurisdictionId": "95698",
             "commanderyId": "PARENT-0082",
@@ -9809,7 +9525,7 @@
             "nameHan": "阴馆县",
             "hhsCommanderyHan": "鴈門郡",
             "placeId": "gc-g0085-001",
-            "provinceIndex": 1381,
+            "provinceIndex": 1377,
             "donorProvinceId": "95096",
             "donorJurisdictionId": "95096",
             "commanderyId": "PARENT-0085",
@@ -9825,7 +9541,7 @@
             "nameHan": "繁畤縣",
             "hhsCommanderyHan": "鴈門郡",
             "placeId": "gc-g0085-002",
-            "provinceIndex": 1382,
+            "provinceIndex": 1378,
             "donorProvinceId": "95093",
             "donorJurisdictionId": "95093",
             "commanderyId": "PARENT-0085",
@@ -9841,7 +9557,7 @@
             "nameHan": "崞縣",
             "hhsCommanderyHan": "鴈門郡",
             "placeId": "gc-g0085-007",
-            "provinceIndex": 1383,
+            "provinceIndex": 1379,
             "donorProvinceId": "95093",
             "donorJurisdictionId": "95093",
             "commanderyId": "PARENT-0085",
@@ -9857,7 +9573,7 @@
             "nameHan": "马邑县",
             "hhsCommanderyHan": "鴈門郡",
             "placeId": "gc-g0085-010",
-            "provinceIndex": 1384,
+            "provinceIndex": 1380,
             "donorProvinceId": "95096",
             "donorJurisdictionId": "95096",
             "commanderyId": "PARENT-0085",
@@ -9873,7 +9589,7 @@
             "nameHan": "高柳县",
             "hhsCommanderyHan": "代郡",
             "placeId": "gc-g0089-001",
-            "provinceIndex": 1385,
+            "provinceIndex": 1381,
             "donorProvinceId": "95010",
             "donorJurisdictionId": "95010",
             "commanderyId": "PARENT-0089",
@@ -9889,7 +9605,7 @@
             "nameHan": "居庸縣",
             "hhsCommanderyHan": "上谷郡",
             "placeId": "gc-g0090-005",
-            "provinceIndex": 1386,
+            "provinceIndex": 1382,
             "donorProvinceId": "87111",
             "donorJurisdictionId": "87111",
             "commanderyId": "PARENT-0090",
@@ -9905,7 +9621,7 @@
             "nameHan": "狐奴縣",
             "hhsCommanderyHan": "漁陽郡",
             "placeId": "gc-g0091-002",
-            "provinceIndex": 1387,
+            "provinceIndex": 1383,
             "donorProvinceId": "87436",
             "donorJurisdictionId": "87436",
             "commanderyId": "PARENT-0091",
@@ -9921,7 +9637,7 @@
             "nameHan": "雍奴縣",
             "hhsCommanderyHan": "漁陽郡",
             "placeId": "gc-g0091-004",
-            "provinceIndex": 1388,
+            "provinceIndex": 1384,
             "donorProvinceId": "87436",
             "donorJurisdictionId": "87436",
             "commanderyId": "PARENT-0091",
@@ -9937,7 +9653,7 @@
             "nameHan": "安乐县",
             "hhsCommanderyHan": "漁陽郡",
             "placeId": "gc-g0091-007",
-            "provinceIndex": 1389,
+            "provinceIndex": 1385,
             "donorProvinceId": "87436",
             "donorJurisdictionId": "87436",
             "commanderyId": "PARENT-0091",
@@ -9953,7 +9669,7 @@
             "nameHan": "中宿縣",
             "hhsCommanderyHan": "南海郡",
             "placeId": "gc-g0098-003",
-            "provinceIndex": 1390,
+            "provinceIndex": 1386,
             "donorProvinceId": "42269",
             "donorJurisdictionId": "42269",
             "commanderyId": "PARENT-0098",

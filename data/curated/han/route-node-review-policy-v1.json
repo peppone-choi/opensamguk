@@ -1,7 +1,7 @@
 {
   "expectedSelection": {
-    "routeNodeCount": 1228,
-    "hhsAdministrativeBindingCount": 909,
+    "routeNodeCount": 1224,
+    "hhsAdministrativeBindingCount": 905,
     "externalHistoricalBindingCount": 0,
     "overlayUniqueCount": 723,
     "reviewedAmbiguousCount": 50,
@@ -10,7 +10,7 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "frontierCountyClaimCount": 51,
-    "gapCountyClaimCount": 60,
+    "gapCountyClaimCount": 56,
     "vacatedCountyLocationClaimCount": 1,
     "reviewedSourceClaimBindingCount": 319
   },
@@ -29,7 +29,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "2ea7ec77bf53e28a45ab376da256d950d3b037620699b6ecefa8151c1701aff3"
+      "sha256": "83c95e2048965a92b9e5d1bfc5b1e84fe90110e0a40eaad17d87a8ccd0c235ac"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -38,11 +38,11 @@
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "d80ba0f9dd3c417a89901c0e707fbc0b7670314c915b7c0dd31a0832b6c81d5e"
+      "sha256": "891158598108c400537dffc24b1487fd92946ec311f0595863b11c21f68402f6"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "b7f9d36301debca7773bdf95c6eee54e4a2fa9ebb2a0739b3866555436ee28bf"
+      "sha256": "63bed4552baaa2cf85fe9c75a7be38842b6ca358f7841c42f170ebdca8cec659"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
@@ -383,7 +383,7 @@
     {
       "batchId": "w1-gap-county-location",
       "criteria": "HHS gap county identity (gap-counties-v1) with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
-      "expectedCount": 60,
+      "expectedCount": 56,
       "reviewState": "APPROVED",
       "selectionRationale": "續漢書 郡國志가 적었는데 지도에 없던 縣 가운데 220 년 존속이 사료로 확정되고 좌표까지 확보된 60 곳이다(확정 실결손 110 중 60). 존속 판정은 晉書 地理志·讀史方輿紀要·宋書 州郡志·魏書 地形志 네 축의 여섯 원장에, 좌표 확보와 同名異地 기각은 gap-placement-readiness-v1 에 있다. 역사 binding 은 모두 HHS identity 다."
     }

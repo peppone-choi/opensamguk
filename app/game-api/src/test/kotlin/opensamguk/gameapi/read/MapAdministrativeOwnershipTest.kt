@@ -250,7 +250,7 @@ class MapAdministrativeOwnershipTest {
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
             // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
             // 2026-09-21 #848 한반도 임시 거점 정리: 1,558 → data/map/han-tiles.json provinceRecords 1,374.
-            assertEquals(1_434, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 2026-09-23 결손 縣 60곳(#): 省 1,374 → 1,434
+            assertEquals(1_430, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 2026-09-23 결손 縣 56곳: 省 1,374 → 1,430
             // 1,071 에서 1,070 으로 — 南鄉郡(PARENT-0113)의 합성 치소 관할
             // JURISDICTION-PARENT-0113-SEAT 하나가 접혔다. 동명이지(漢中 南鄉縣)에 잘못
             // 묶여 있던 진짜 南鄉縣(71022)이 제자리로 돌아와 그 임시 관할과 같은 칸에
@@ -261,7 +261,8 @@ class MapAdministrativeOwnershipTest {
             // 2026-09-16 1098: + 平陰 관할 1 + 거점 관할 73 = 1,144.
             // 2026-09-17: 城 없던 관할 11곳 접기 → 1,133.
             // 2026-09-21 #848: 1,194 → jurisdictionRecords 1,168 (임시 거점 26곳 폐기).
-            assertEquals(1_168, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
+            // 2026-09-23: 결손 縣 56곳이 제 관할을 받아 1,168 → 1,224.
+            assertEquals(1_224, snapshot.jurisdictionOwnership.size, "scenario $scenarioCode jurisdictions")
             // 2026-09-21 #848: 176 → commanderyRecords 173.
             assertEquals(173, snapshot.commanderyControl.size, "scenario $scenarioCode commanderies")
             assertEquals(

@@ -52,7 +52,7 @@ class HanStrategicSupplyProviderTest {
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
-        assertEquals(1434, network.provinceOwners.size)  // 2026-09-21 임시 거점 정리(#848): 1,558 → 1,374; 2026-09-23 결손 縣 60곳: → 1,434
+        assertEquals(1430, network.provinceOwners.size)  // 2026-09-21 임시 거점 정리(#848): 1,558 → 1,374; 2026-09-23 결손 縣 56곳: → 1,434
         // 省 1,593(수·진·관 거점 省 73 포함) · 郡縣 인접 4,274(han-tiles adjacency.county 실측) 중 물을 건너는
         // 60 간선이 v3 에서 빠져 4,214 다. v2 는 그 걸러내기가 없어 아래에서 4,274 그대로다.
         // 2026-09-18 지리 재분할(GH #806) 실측: 縣 인접 3,551 중 물을 건너는 51 간선이 v3 에서 빠져 3,500 (앞 판 4,215).

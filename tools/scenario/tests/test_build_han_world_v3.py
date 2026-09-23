@@ -258,8 +258,13 @@ class HanWorldV3Test(unittest.TestCase):
             )
         # 2026-09-17(ADR-LITE-056): 安平口 거점 관할을 거점 원장의 anchorCounty(遼東郡 西安平縣)로 옮겼다.
         expected_reassigned.add(("curated:strategic-site-v1:ss-anpingkou", "卒本", "遼東郡"))
+        # 2026-09-23: 郡 래스터가 씨앗칸에 옆 郡을 씌웠던 두 縣을 郡國志 소속으로 옮겼다
+        # (cityless-jurisdiction-fold-decisions-v1 jurisdictionCommanderyMoves · SOURCE_ATTESTED_COMMANDERY).
+        # 선정 원장의 parentName 은 옛 값 그대로라 어긋남으로 남는다.
+        expected_reassigned.add(("chgis:v6:cnty:82841", "弘農郡", "河南尹"))
+        expected_reassigned.add(("chgis:v6:cnty:87297", "涿郡", "河閒國"))
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(1228, len(actual))  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertEqual(1224, len(actual))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -435,11 +440,11 @@ class HanWorldV3Test(unittest.TestCase):
             self.assertEqual(expected_max, city["max"], city["name"])
             self.assertEqual(expected_initial, city["initial"], city["name"])
         # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
-        self.assertEqual(105, seats)  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입. 治所 城이 6곳 늘었다.
+        self.assertEqual(105, seats)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 治所 城이 6곳 늘었다.
         self.assertEqual(72, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
         # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
-        self.assertEqual(978, counties)  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입. 縣 등급이 54곳 늘었다(나머지 6곳은 治所).
+        self.assertEqual(974, counties)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 縣 등급이 50곳 늘었다(나머지 6곳은 治所).
         self.assertEqual(73, sites)
         # '이'(이민족)는 郡國 밖 이민족 거점 7곳만 단다(2026-09-17 w5) — 漢 縣에는 한 곳도 없다.
         self.assertEqual(
@@ -474,7 +479,7 @@ class HanWorldV3Test(unittest.TestCase):
         # 2026-09-15 거점 편입으로 郡 3 곳(卒本·宜都·蘄春)이 거점 城만 갖고 더해져 126 / 27 이다.
         # 2026-09-17: 郡國 밖 취락 37곳(w5)이 제 세력 이름 29개를 郡으로 더하고, 卒本·鮮卑가 치소 城을 받아 155 / 25 다.
         self.assertEqual(156, len(by_parent))
-        # 2026-09-23: 결손 縣 60곳이 서면서 治所 없는 郡이 25 → 19 로 줄었다(개선).
+        # 2026-09-23: 결손 縣 56곳이 서면서 治所 없는 郡이 25 → 19 로 줄었다(개선).
         self.assertEqual(19, len(seatless))
         self.assertIn("太原郡", seatless)
         self.assertIn("齊國", seatless)
@@ -571,9 +576,9 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(1228, len(world["cities"]))  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertEqual(1224, len(world["cities"]))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
         # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-        self.assertEqual(1090, len(changed))  # 2026-09-23: 결손 縣 60곳(城 1195–1254) 편입.
+        self.assertEqual(1086, len(changed))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

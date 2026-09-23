@@ -15,8 +15,8 @@
     "noAutomaticRepair": true
   },
   "counts": {
-    "province": 1434,
-    "jurisdiction": 1228,
+    "province": 1430,
+    "jurisdiction": 1224,
     "commandery": 173
   },
   "provinceTopology": {
@@ -562,7 +562,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 38,
+    "fullyEnclosedCount": 37,
     "fullyEnclosed": [
       {
         "id": "96107",
@@ -628,17 +628,6 @@
         ],
         "surroundingDisplayNames": [
           "첨현"
-        ]
-      },
-      {
-        "id": "gc-g0053-005",
-        "displayName": "여릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40885"
-        ],
-        "surroundingDisplayNames": [
-          "고창현"
         ]
       },
       {
@@ -1797,7 +1786,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 39,
+    "fullyEnclosedCount": 38,
     "fullyEnclosed": [
       {
         "id": "96107",
@@ -1881,20 +1870,6 @@
         ],
         "commanderyId": "PARENT-0050",
         "surroundingCommanderyId": "PARENT-0050",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0053-005",
-        "displayName": "여릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40885"
-        ],
-        "surroundingDisplayNames": [
-          "고창현"
-        ],
-        "commanderyId": "PARENT-0053",
-        "surroundingCommanderyId": "PARENT-0053",
         "sameCommandery": true
       },
       {
@@ -2355,7 +2330,7 @@
         "displayName": "하남윤",
         "componentCellCounts": [
           271,
-          133
+          177
         ],
         "components": [
           {
@@ -2375,17 +2350,17 @@
             ]
           },
           {
-            "cellCount": 133,
+            "cellCount": 177,
             "memberIds": [
               "82520",
               "82828",
               "82830",
+              "82841",
               "82843",
               "82846",
               "82852",
               "82879",
               "gc-g0000-003",
-              "gc-g0000-018",
               "ss-hanguguan",
               "ss-mengjin",
               "ss-xiaopingjin"
@@ -3223,7 +3198,6 @@
               "41220",
               "41224",
               "41244",
-              "gc-g0053-005",
               "ss-jiaoqiucheng"
             ]
           },
@@ -7033,7 +7007,7 @@
         "currentCommanderyDisplayName": "홍농군",
         "currentCommanderyNameCh": "弘農郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 13,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 109,
         "sourceEnumeratedUnitCount": 9,
@@ -7357,7 +7331,7 @@
         "currentCommanderyDisplayName": "동해군",
         "currentCommanderyNameCh": "東海郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 12,
+        "currentJurisdictionCount": 11,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 13,
@@ -7633,7 +7607,7 @@
         "currentCommanderyDisplayName": "예장군",
         "currentCommanderyNameCh": "豫章郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 33,
+        "currentJurisdictionCount": 32,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 21,
@@ -8041,7 +8015,7 @@
         "currentCommanderyDisplayName": "탁군",
         "currentCommanderyNameCh": "涿郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 9,
+        "currentJurisdictionCount": 8,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 113,
         "sourceEnumeratedUnitCount": 7,
@@ -9165,7 +9139,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012"
+      "sha256": "99829b28075ec06e835f6f66d4233f5030a9b201a4184348ec282900afc67f09"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

@@ -528,7 +528,7 @@
         595,
         862,
         973,
-        1208
+        1355
       ],
       "meta": {
         "jun": "우부풍",
@@ -577,7 +577,7 @@
         1040,
         1082,
         1088,
-        1208
+        1355
       ],
       "meta": {
         "jun": "우부풍",
@@ -959,7 +959,7 @@
         630,
         773,
         860,
-        1212
+        1359
       ],
       "meta": {
         "jun": "좌풍익",
@@ -1195,8 +1195,7 @@
         58,
         857,
         1041,
-        1095,
-        1232
+        1095
       ],
       "meta": {
         "jun": "홍농군",
@@ -2612,8 +2611,7 @@
         39,
         46,
         58,
-        857,
-        1232
+        857
       ],
       "meta": {
         "jun": "하남윤",
@@ -2657,7 +2655,7 @@
       "connections": [
         680,
         1133,
-        1203
+        1350
       ],
       "meta": {
         "jun": "오원군",
@@ -2703,7 +2701,7 @@
         131,
         851,
         852,
-        1231
+        1377
       ],
       "meta": {
         "jun": "하남윤",
@@ -2751,8 +2749,8 @@
         39,
         44,
         55,
-        1041,
-        1232
+        857,
+        1041
       ],
       "meta": {
         "jun": "하남윤",
@@ -3080,7 +3078,7 @@
         691,
         834,
         856,
-        1233
+        1378
       ],
       "meta": {
         "jun": "하동군",
@@ -3409,7 +3407,7 @@
         69,
         675,
         854,
-        1233
+        1378
       ],
       "meta": {
         "jun": "하동군",
@@ -3831,7 +3829,7 @@
         100,
         140,
         873,
-        1220
+        1366
       ],
       "meta": {
         "jun": "양국",
@@ -3927,7 +3925,7 @@
         84,
         295,
         872,
-        1221
+        1367
       ],
       "meta": {
         "jun": "양국",
@@ -3975,7 +3973,7 @@
         100,
         283,
         872,
-        1220
+        1366
       ],
       "meta": {
         "jun": "양국",
@@ -4024,7 +4022,7 @@
         99,
         101,
         869,
-        1227
+        1373
       ],
       "meta": {
         "jun": "여남군",
@@ -4396,7 +4394,7 @@
         104,
         105,
         132,
-        1228
+        1374
       ],
       "meta": {
         "jun": "여남군",
@@ -4537,7 +4535,7 @@
         115,
         117,
         550,
-        1230
+        1376
       ],
       "meta": {
         "jun": "패국",
@@ -4681,7 +4679,7 @@
         102,
         106,
         868,
-        1227
+        1373
       ],
       "meta": {
         "jun": "여남군",
@@ -4824,7 +4822,7 @@
         106,
         866,
         867,
-        1226
+        1372
       ],
       "meta": {
         "jun": "여남군",
@@ -4965,7 +4963,7 @@
         124,
         128,
         132,
-        1228
+        1374
       ],
       "meta": {
         "jun": "여남군",
@@ -5014,7 +5012,7 @@
         141,
         142,
         867,
-        1227
+        1373
       ],
       "meta": {
         "jun": "여남군",
@@ -5155,7 +5153,7 @@
         550,
         563,
         1039,
-        1230
+        1376
       ],
       "meta": {
         "jun": "구강군",
@@ -5201,7 +5199,7 @@
         150,
         244,
         901,
-        1219
+        906
       ],
       "meta": {
         "jun": "패국",
@@ -5530,7 +5528,7 @@
         115,
         120,
         121,
-        1230
+        1376
       ],
       "meta": {
         "jun": "패국",
@@ -5577,7 +5575,7 @@
         305,
         308,
         550,
-        1201
+        1348
       ],
       "meta": {
         "jun": "패국",
@@ -5720,7 +5718,7 @@
         525,
         563,
         866,
-        1230
+        1376
       ],
       "meta": {
         "jun": "패국",
@@ -6192,7 +6190,7 @@
         434,
         857,
         864,
-        1231
+        1377
       ],
       "meta": {
         "jun": "영천군",
@@ -6239,7 +6237,7 @@
         105,
         123,
         124,
-        1228
+        1374
       ],
       "meta": {
         "jun": "영천군",
@@ -6333,7 +6331,7 @@
         131,
         852,
         864,
-        1231
+        1377
       ],
       "meta": {
         "jun": "영천군",
@@ -6472,7 +6470,7 @@
         101,
         139,
         143,
-        1229
+        1375
       ],
       "meta": {
         "jun": "진국",
@@ -6565,7 +6563,7 @@
         137,
         141,
         144,
-        1229
+        1375
       ],
       "meta": {
         "jun": "진국",
@@ -6751,7 +6749,7 @@
         125,
         137,
         138,
-        1229
+        1375
       ],
       "meta": {
         "jun": "진국",
@@ -6800,7 +6798,7 @@
         287,
         296,
         896,
-        1229
+        1375
       ],
       "meta": {
         "jun": "진국",
@@ -7029,8 +7027,7 @@
         110,
         150,
         331,
-        906,
-        1219
+        906
       ],
       "meta": {
         "jun": "노국",
@@ -8356,7 +8353,7 @@
         183,
         884,
         998,
-        1213
+        1360
       ],
       "meta": {
         "jun": "상산국",
@@ -8452,7 +8449,7 @@
         182,
         212,
         837,
-        1213
+        1360
       ],
       "meta": {
         "jun": "상산국",
@@ -9339,8 +9336,7 @@
         195,
         196,
         199,
-        993,
-        1234
+        993
       ],
       "meta": {
         "jun": "하간국",
@@ -11271,7 +11267,7 @@
         240,
         243,
         902,
-        1211
+        1358
       ],
       "meta": {
         "jun": "임성국",
@@ -11365,7 +11361,7 @@
         283,
         902,
         904,
-        1211
+        1358
       ],
       "meta": {
         "jun": "산양군",
@@ -11459,7 +11455,7 @@
         239,
         244,
         280,
-        1211
+        1358
       ],
       "meta": {
         "jun": "산양군",
@@ -13194,7 +13190,7 @@
         241,
         243,
         283,
-        1211
+        1358
       ],
       "meta": {
         "jun": "제음군",
@@ -13572,7 +13568,7 @@
         295,
         296,
         298,
-        1250
+        1393
       ],
       "meta": {
         "jun": "진류군",
@@ -13806,7 +13802,7 @@
         289,
         291,
         295,
-        1250
+        1393
       ],
       "meta": {
         "jun": "진류군",
@@ -14738,7 +14734,7 @@
         909,
         934,
         1075,
-        1214
+        1361
       ],
       "meta": {
         "jun": "광릉군",
@@ -14831,7 +14827,7 @@
         313,
         314,
         911,
-        1214
+        1361
       ],
       "meta": {
         "jun": "광릉군",
@@ -19307,7 +19303,7 @@
         423,
         427,
         438,
-        1206
+        1353
       ],
       "meta": {
         "jun": "남양군",
@@ -19402,7 +19398,7 @@
         431,
         469,
         920,
-        1206
+        1353
       ],
       "meta": {
         "jun": "남양군",
@@ -19775,7 +19771,7 @@
         431,
         433,
         469,
-        1207
+        1354
       ],
       "meta": {
         "jun": "남양군",
@@ -19871,7 +19867,7 @@
         469,
         597,
         1008,
-        1206
+        1353
       ],
       "meta": {
         "jun": "남양군",
@@ -22044,7 +22040,7 @@
         421,
         423,
         431,
-        1207
+        1354
       ],
       "meta": {
         "jun": "남양군",
@@ -23830,7 +23826,7 @@
         508,
         569,
         934,
-        1196
+        1343
       ],
       "meta": {
         "jun": "단양군",
@@ -24125,9 +24121,9 @@
         1075,
         1077,
         1087,
-        1198,
-        1200,
-        1202
+        1345,
+        1347,
+        1349
       ],
       "meta": {
         "jun": "구강군",
@@ -24920,9 +24916,9 @@
         1072,
         1081,
         1084,
-        1215,
-        1216,
-        1218
+        1362,
+        1363,
+        1365
       ],
       "meta": {
         "jun": "여강군",
@@ -25860,9 +25856,9 @@
         549,
         563,
         1039,
-        1197,
-        1199,
-        1201
+        1344,
+        1346,
+        1348
       ],
       "meta": {
         "jun": "구강군",
@@ -26471,7 +26467,7 @@
         543,
         550,
         1039,
-        1199
+        1346
       ],
       "meta": {
         "jun": "구강군",
@@ -26752,7 +26748,7 @@
         934,
         1031,
         1066,
-        1196
+        1343
       ],
       "meta": {
         "jun": "단양군",
@@ -29383,7 +29379,7 @@
         651,
         697,
         981,
-        1243
+        1386
       ],
       "meta": {
         "jun": "월휴군",
@@ -30037,7 +30033,7 @@
         637,
         656,
         771,
-        1245
+        1388
       ],
       "meta": {
         "jun": "장액군",
@@ -30405,8 +30401,8 @@
         833,
         987,
         1127,
-        1222,
-        1223
+        1368,
+        1369
       ],
       "meta": {
         "jun": "무위군",
@@ -30504,8 +30500,8 @@
         988,
         1055,
         1089,
-        1238,
-        1239
+        1382,
+        1383
       ],
       "meta": {
         "jun": "한양군",
@@ -30556,7 +30552,7 @@
         1003,
         1055,
         1057,
-        1239
+        1383
       ],
       "meta": {
         "jun": "한양군",
@@ -30742,7 +30738,7 @@
         643,
         771,
         990,
-        1248
+        1391
       ],
       "meta": {
         "jun": "주천군",
@@ -31356,7 +31352,7 @@
         718,
         760,
         762,
-        1240
+        1384
       ],
       "meta": {
         "jun": "장가군",
@@ -31962,7 +31958,7 @@
       "connections": [
         56,
         1133,
-        1203
+        1350
       ],
       "meta": {
         "jun": "오원군",
@@ -32056,8 +32052,8 @@
         685,
         691,
         834,
-        1209,
-        1241
+        1356,
+        1385
       ],
       "meta": {
         "jun": "태원군",
@@ -32103,7 +32099,7 @@
         684,
         685,
         691,
-        1209
+        1356
       ],
       "meta": {
         "jun": "태원군",
@@ -32475,7 +32471,7 @@
         682,
         683,
         684,
-        1209
+        1356
       ],
       "meta": {
         "jun": "태원군",
@@ -32755,7 +32751,7 @@
         625,
         981,
         982,
-        1243
+        1386
       ],
       "meta": {
         "jun": "월휴군",
@@ -32898,8 +32894,8 @@
         711,
         713,
         992,
-        1252,
-        1253
+        1395,
+        1396
       ],
       "meta": {
         "jun": "안문군",
@@ -33042,8 +33038,8 @@
         700,
         701,
         992,
-        1251,
-        1254
+        1394,
+        1397
       ],
       "meta": {
         "jun": "안문군",
@@ -33138,7 +33134,7 @@
         726,
         996,
         1132,
-        1195
+        1342
       ],
       "meta": {
         "jun": "상곡군",
@@ -33185,7 +33181,7 @@
         727,
         760,
         763,
-        1240
+        1384
       ],
       "meta": {
         "jun": "익주군",
@@ -33370,8 +33366,8 @@
         713,
         1024,
         1132,
-        1204,
-        1253
+        1351,
+        1396
       ],
       "meta": {
         "jun": "대군",
@@ -33788,7 +33784,7 @@
         723,
         724,
         726,
-        1237
+        1381
       ],
       "meta": {
         "jun": "광양군",
@@ -34132,9 +34128,9 @@
         723,
         1131,
         1132,
-        1235,
-        1236,
-        1237
+        1379,
+        1380,
+        1381
       ],
       "meta": {
         "jun": "어양군",
@@ -35991,7 +35987,7 @@
         612,
         765,
         983,
-        1224
+        1370
       ],
       "meta": {
         "jun": "영창군",
@@ -36222,10 +36218,10 @@
         643,
         654,
         1097,
-        1245,
-        1246,
-        1247,
-        1249
+        1388,
+        1389,
+        1390,
+        1392
       ],
       "meta": {
         "jun": "주천군",
@@ -36513,7 +36509,7 @@
         749,
         752,
         997,
-        1205
+        1352
       ],
       "meta": {
         "jun": "남해군",
@@ -39321,7 +39317,7 @@
         772,
         856,
         1133,
-        1241
+        1385
       ],
       "meta": {
         "jun": "서하군",
@@ -39457,7 +39453,7 @@
         184,
         186,
         884,
-        1213
+        1360
       ],
       "meta": {
         "jun": "상산국",
@@ -40160,7 +40156,7 @@
         849,
         1046,
         1086,
-        1231
+        1377
       ],
       "meta": {
         "jun": "하내군",
@@ -40364,7 +40360,7 @@
     },
     {
       "id": 857,
-      "name": "신성(弘農郡)",
+      "name": "신성",
       "x": 339,
       "y": 219,
       "level": 11,
@@ -40389,17 +40385,17 @@
         25,
         27,
         55,
-        131,
-        1232
+        58,
+        131
       ],
       "meta": {
-        "jun": "홍농군",
-        "junCh": "弘農郡",
+        "jun": "하남윤",
+        "junCh": "河南尹",
         "ju": "사예",
-        "seat": "홍농현",
+        "seat": "낙양현",
         "nameCh": "新成县",
         "isSeat": false,
-        "displayName": "홍농군 신성현"
+        "displayName": "하남윤 신성현"
       },
       "provinceId": 628,
       "spatialProvinceId": "82841",
@@ -40865,7 +40861,7 @@
         102,
         106,
         142,
-        1226
+        1372
       ],
       "meta": {
         "jun": "여남군",
@@ -40960,7 +40956,7 @@
         92,
         145,
         870,
-        1225
+        1371
       ],
       "meta": {
         "jun": "여남군",
@@ -41101,7 +41097,7 @@
         279,
         283,
         295,
-        1221
+        1367
       ],
       "meta": {
         "jun": "양국",
@@ -41658,7 +41654,7 @@
         186,
         837,
         998,
-        1213
+        1360
       ],
       "meta": {
         "jun": "상산국",
@@ -42457,8 +42453,7 @@
         242,
         244,
         245,
-        906,
-        1219
+        906
       ],
       "meta": {
         "jun": "산양군",
@@ -42504,7 +42499,7 @@
         240,
         241,
         904,
-        1211
+        1358
       ],
       "meta": {
         "jun": "산양군",
@@ -42687,13 +42682,13 @@
         "wall": 1500
       },
       "connections": [
+        110,
         149,
         242,
         263,
         264,
         331,
-        901,
-        1219
+        901
       ],
       "meta": {
         "jun": "동해군",
@@ -44006,7 +44001,7 @@
         569,
         1072,
         1075,
-        1196
+        1343
       ],
       "meta": {
         "jun": "단양군",
@@ -44429,7 +44424,7 @@
         530,
         533,
         571,
-        1217
+        1364
       ],
       "meta": {
         "jun": "여강군",
@@ -45218,8 +45213,7 @@
         564,
         928,
         961,
-        1004,
-        1242
+        1004
       ],
       "meta": {
         "jun": "예장군",
@@ -46276,7 +46270,7 @@
         697,
         734,
         981,
-        1244
+        1387
       ],
       "meta": {
         "jun": "월휴군",
@@ -46560,7 +46554,7 @@
         649,
         650,
         863,
-        1210
+        1357
       ],
       "meta": {
         "jun": "안정군",
@@ -46675,7 +46669,7 @@
         633,
         643,
         654,
-        1248
+        1391
       ],
       "meta": {
         "jun": "주천군",
@@ -46768,9 +46762,9 @@
         703,
         835,
         1133,
-        1251,
-        1252,
-        1254
+        1394,
+        1395,
+        1397
       ],
       "meta": {
         "jun": "안문군",
@@ -46790,26 +46784,26 @@
     },
     {
       "id": 993,
-      "name": "역성(涿郡)",
+      "name": "역성(河閒國)",
       "x": 401,
       "y": 129,
-      "level": 10,
-      "region": 12,
+      "level": 11,
+      "region": 3,
       "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
+        "population": 58760,
+        "agriculture": 1160,
+        "commerce": 1190,
+        "security": 800,
+        "defence": 1200,
+        "wall": 1180
       },
       "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
+        "population": 20000,
+        "agriculture": 500,
+        "commerce": 500,
+        "security": 500,
+        "defence": 1000,
+        "wall": 1000
       },
       "connections": [
         195,
@@ -46817,17 +46811,16 @@
         199,
         721,
         723,
-        994,
-        1234
+        994
       ],
       "meta": {
-        "jun": "탁군",
-        "junCh": "涿郡",
-        "ju": "유주",
-        "seat": "탁현",
+        "jun": "하간국",
+        "junCh": "河閒國",
+        "ju": "기주",
+        "seat": "낙성현",
         "nameCh": "易城县",
         "isSeat": false,
-        "displayName": "탁군 역성현"
+        "displayName": "하간국 역성현"
       },
       "provinceId": 821,
       "spatialProvinceId": "87297",
@@ -48583,7 +48576,7 @@
         569,
         1033,
         1066,
-        1198
+        1345
       ],
       "meta": {
         "jun": "구강군",
@@ -48674,7 +48667,7 @@
         1031,
         1043,
         1066,
-        1198
+        1345
       ],
       "meta": {
         "jun": "구강군",
@@ -48935,7 +48928,7 @@
         109,
         550,
         563,
-        1199
+        1346
       ],
       "meta": {
         "jun": "구강군",
@@ -49111,8 +49104,8 @@
       "connections": [
         513,
         1033,
-        1198,
-        1202
+        1345,
+        1349
       ],
       "meta": {
         "jun": "구강군",
@@ -50877,7 +50870,7 @@
       },
       "connections": [
         530,
-        1215
+        1362
       ],
       "meta": {
         "jun": "여강군",
@@ -51092,7 +51085,7 @@
       },
       "connections": [
         649,
-        1238
+        1382
       ],
       "meta": {
         "jun": "한양군",
@@ -53393,9 +53386,9 @@
         },
         "displayName": "비류"
       },
-      "provinceId": 1391,
+      "provinceId": 1387,
       "spatialProvinceId": "KOR-X065-X028",
-      "spatialProvinceIndex": 1391,
+      "spatialProvinceIndex": 1387,
       "routeNodeKey": "a51ee01b-c80b-4c65-933d-0cfeab070be5",
       "physicalPlaceRef": "external:v1:X065",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X065"
@@ -53464,9 +53457,9 @@
         },
         "displayName": "조나"
       },
-      "provinceId": 1392,
+      "provinceId": 1388,
       "spatialProvinceId": "KOR-X066-X028",
-      "spatialProvinceIndex": 1392,
+      "spatialProvinceIndex": 1388,
       "routeNodeKey": "ae6c3dc0-1100-427e-97b6-3c6072046f5a",
       "physicalPlaceRef": "external:v1:X066",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X066"
@@ -53538,9 +53531,9 @@
         },
         "displayName": "주나"
       },
-      "provinceId": 1393,
+      "provinceId": 1389,
       "spatialProvinceId": "KOR-X067-X028",
-      "spatialProvinceIndex": 1393,
+      "spatialProvinceIndex": 1389,
       "routeNodeKey": "f23f1a9f-4311-4251-b8e7-98df64a53511",
       "physicalPlaceRef": "external:v1:X067",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X067"
@@ -53608,9 +53601,9 @@
         },
         "displayName": "개마"
       },
-      "provinceId": 1394,
+      "provinceId": 1390,
       "spatialProvinceId": "KOR-X068-SUB-X028-7238a630ea3c",
-      "spatialProvinceIndex": 1394,
+      "spatialProvinceIndex": 1390,
       "routeNodeKey": "2f1090e4-4785-4cfd-8df5-bf86c5455a23",
       "physicalPlaceRef": "external:v1:X068",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X068"
@@ -53676,9 +53669,9 @@
         },
         "displayName": "구다"
       },
-      "provinceId": 1399,
+      "provinceId": 1395,
       "spatialProvinceId": "KOR-X069-X037",
-      "spatialProvinceIndex": 1399,
+      "spatialProvinceIndex": 1395,
       "routeNodeKey": "b5debc13-8123-4bf0-9524-3083bf21748d",
       "physicalPlaceRef": "external:v1:X069",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X069"
@@ -53743,9 +53736,9 @@
         },
         "displayName": "행인"
       },
-      "provinceId": 1401,
+      "provinceId": 1397,
       "spatialProvinceId": "KOR-X070-SUB-X030-b78cb489a20c",
-      "spatialProvinceIndex": 1401,
+      "spatialProvinceIndex": 1397,
       "routeNodeKey": "332c651d-184b-4cd6-8c2f-45e9cfb45fe7",
       "physicalPlaceRef": "external:v1:X070",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X070"
@@ -53812,9 +53805,9 @@
         },
         "displayName": "양맥"
       },
-      "provinceId": 1402,
+      "provinceId": 1398,
       "spatialProvinceId": "KOR-X071-X029",
-      "spatialProvinceIndex": 1402,
+      "spatialProvinceIndex": 1398,
       "routeNodeKey": "a8201d08-f08d-46d7-be26-a824101604e9",
       "physicalPlaceRef": "external:v1:X071",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X071"
@@ -53884,9 +53877,9 @@
         },
         "displayName": "소수맥"
       },
-      "provinceId": 1405,
+      "provinceId": 1401,
       "spatialProvinceId": "KOR-X072-SUB-X029-f447e36b3ebd",
-      "spatialProvinceIndex": 1405,
+      "spatialProvinceIndex": 1401,
       "routeNodeKey": "18d6a7cb-a582-4719-a9d7-9aa0c098aff8",
       "physicalPlaceRef": "external:v1:X072",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X072"
@@ -53958,9 +53951,9 @@
         },
         "displayName": "고원"
       },
-      "provinceId": 1406,
+      "provinceId": 1402,
       "spatialProvinceId": "KOR-X073-X040",
-      "spatialProvinceIndex": 1406,
+      "spatialProvinceIndex": 1402,
       "routeNodeKey": "dbc9351c-933d-462e-8f45-9ba4b2857153",
       "physicalPlaceRef": "external:v1:X073",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X073"
@@ -54033,9 +54026,9 @@
         },
         "displayName": "염로"
       },
-      "provinceId": 1407,
+      "provinceId": 1403,
       "spatialProvinceId": "KOR-X075-X040",
-      "spatialProvinceIndex": 1407,
+      "spatialProvinceIndex": 1403,
       "routeNodeKey": "8609ddf9-b404-4490-bef7-4876d3c6efdb",
       "physicalPlaceRef": "external:v1:X075",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X075"
@@ -54107,9 +54100,9 @@
         },
         "displayName": "감해비리"
       },
-      "provinceId": 1408,
+      "provinceId": 1404,
       "spatialProvinceId": "KOR-X076-X040",
-      "spatialProvinceIndex": 1408,
+      "spatialProvinceIndex": 1404,
       "routeNodeKey": "b90837d6-917e-47fd-b246-e4219c54ed0e",
       "physicalPlaceRef": "external:v1:X076",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X076"
@@ -54180,9 +54173,9 @@
         },
         "displayName": "치리국"
       },
-      "provinceId": 1409,
+      "provinceId": 1405,
       "spatialProvinceId": "KOR-X077-X040",
-      "spatialProvinceIndex": 1409,
+      "spatialProvinceIndex": 1405,
       "routeNodeKey": "402d0581-1e13-4c54-8d55-de0643586c47",
       "physicalPlaceRef": "external:v1:X077",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X077"
@@ -54252,9 +54245,9 @@
         },
         "displayName": "신소도"
       },
-      "provinceId": 1410,
+      "provinceId": 1406,
       "spatialProvinceId": "KOR-X078-X040",
-      "spatialProvinceIndex": 1410,
+      "spatialProvinceIndex": 1406,
       "routeNodeKey": "5d931ddb-a06b-454b-b92b-8be86d90a28b",
       "physicalPlaceRef": "external:v1:X078",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X078"
@@ -54327,9 +54320,9 @@
         },
         "displayName": "불운"
       },
-      "provinceId": 1411,
+      "provinceId": 1407,
       "spatialProvinceId": "KOR-X080-X040",
-      "spatialProvinceIndex": 1411,
+      "spatialProvinceIndex": 1407,
       "routeNodeKey": "6e6f3043-2fc0-4104-a73b-52ca4ecdbc7c",
       "physicalPlaceRef": "external:v1:X080",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X080"
@@ -54400,9 +54393,9 @@
         },
         "displayName": "지반"
       },
-      "provinceId": 1413,
+      "provinceId": 1409,
       "spatialProvinceId": "KOR-X081-X041",
-      "spatialProvinceIndex": 1413,
+      "spatialProvinceIndex": 1409,
       "routeNodeKey": "04c6c835-44f8-401b-84e2-f946c1bbb7c0",
       "physicalPlaceRef": "external:v1:X081",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X081"
@@ -54476,9 +54469,9 @@
         },
         "displayName": "고랍"
       },
-      "provinceId": 1414,
+      "provinceId": 1410,
       "spatialProvinceId": "KOR-X082-X041",
-      "spatialProvinceIndex": 1414,
+      "spatialProvinceIndex": 1410,
       "routeNodeKey": "0b8bef5a-bff0-4be6-868f-4226dec0156c",
       "physicalPlaceRef": "external:v1:X082",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X082"
@@ -54552,9 +54545,9 @@
         },
         "displayName": "초산도비리"
       },
-      "provinceId": 1415,
+      "provinceId": 1411,
       "spatialProvinceId": "KOR-X083-X041",
-      "spatialProvinceIndex": 1415,
+      "spatialProvinceIndex": 1411,
       "routeNodeKey": "708ca542-adde-4bcf-bf04-9e43ebd255d4",
       "physicalPlaceRef": "external:v1:X083",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X083"
@@ -54624,9 +54617,9 @@
         },
         "displayName": "모로비리"
       },
-      "provinceId": 1416,
+      "provinceId": 1412,
       "spatialProvinceId": "KOR-X084-X041",
-      "spatialProvinceIndex": 1416,
+      "spatialProvinceIndex": 1412,
       "routeNodeKey": "94a0809d-c95e-4e2a-aa67-1396346d1166",
       "physicalPlaceRef": "external:v1:X084",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X084"
@@ -54699,9 +54692,9 @@
         },
         "displayName": "불사분사"
       },
-      "provinceId": 1417,
+      "provinceId": 1413,
       "spatialProvinceId": "KOR-X085-X041",
-      "spatialProvinceIndex": 1417,
+      "spatialProvinceIndex": 1413,
       "routeNodeKey": "737690ed-4d6d-43b6-9e3c-3d5ebd90a183",
       "physicalPlaceRef": "external:v1:X085",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X085"
@@ -54773,9 +54766,9 @@
         },
         "displayName": "만로"
       },
-      "provinceId": 1412,
+      "provinceId": 1408,
       "spatialProvinceId": "KOR-X086-X040",
-      "spatialProvinceIndex": 1412,
+      "spatialProvinceIndex": 1408,
       "routeNodeKey": "8e687c26-62b5-45ec-b28c-8ebce1f3e3db",
       "physicalPlaceRef": "external:v1:X086",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X086"
@@ -54848,9 +54841,9 @@
         },
         "displayName": "불미"
       },
-      "provinceId": 1418,
+      "provinceId": 1414,
       "spatialProvinceId": "KOR-X087-X041",
-      "spatialProvinceIndex": 1418,
+      "spatialProvinceIndex": 1414,
       "routeNodeKey": "f2ac429d-520f-4b94-88a2-800d270e8e11",
       "physicalPlaceRef": "external:v1:X087",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X087"
@@ -54920,9 +54913,9 @@
         },
         "displayName": "침미다례 권역"
       },
-      "provinceId": 1419,
+      "provinceId": 1415,
       "spatialProvinceId": "KOR-X089-X041",
-      "spatialProvinceIndex": 1419,
+      "spatialProvinceIndex": 1415,
       "routeNodeKey": "57ba7f66-804d-44d1-ace3-ba92d498639d",
       "physicalPlaceRef": "external:v1:X089",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X089"
@@ -54990,9 +54983,9 @@
         },
         "displayName": "골벌"
       },
-      "provinceId": 1420,
+      "provinceId": 1416,
       "spatialProvinceId": "KOR-X096-X033",
-      "spatialProvinceIndex": 1420,
+      "spatialProvinceIndex": 1416,
       "routeNodeKey": "1361d8d2-764b-4532-99b2-306e2b40415a",
       "physicalPlaceRef": "external:v1:X096",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X096"
@@ -55063,9 +55056,9 @@
         },
         "displayName": "이서"
       },
-      "provinceId": 1421,
+      "provinceId": 1417,
       "spatialProvinceId": "KOR-X097-X033",
-      "spatialProvinceIndex": 1421,
+      "spatialProvinceIndex": 1417,
       "routeNodeKey": "36bd58f3-5463-438a-a9af-71f394069844",
       "physicalPlaceRef": "external:v1:X097",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X097"
@@ -55131,9 +55124,9 @@
         },
         "displayName": "감문"
       },
-      "provinceId": 1422,
+      "provinceId": 1418,
       "spatialProvinceId": "KOR-X098-X048",
-      "spatialProvinceIndex": 1422,
+      "spatialProvinceIndex": 1418,
       "routeNodeKey": "99f64074-3eee-4b80-8bf3-859731ac6f2c",
       "physicalPlaceRef": "external:v1:X098",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X098"
@@ -55198,9 +55191,9 @@
         },
         "displayName": "우유"
       },
-      "provinceId": 1423,
+      "provinceId": 1419,
       "spatialProvinceId": "KOR-X099-X032",
-      "spatialProvinceIndex": 1423,
+      "spatialProvinceIndex": 1419,
       "routeNodeKey": "c87e9851-adff-4fca-9f7b-04e4d2154cc6",
       "physicalPlaceRef": "external:v1:X099",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X099"
@@ -55266,9 +55259,9 @@
         },
         "displayName": "근기"
       },
-      "provinceId": 1424,
+      "provinceId": 1420,
       "spatialProvinceId": "KOR-X100-X044",
-      "spatialProvinceIndex": 1424,
+      "spatialProvinceIndex": 1420,
       "routeNodeKey": "a25b91fc-3bbf-4c23-adfb-f43f4cc296ca",
       "physicalPlaceRef": "external:v1:X100",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X100"
@@ -55335,9 +55328,9 @@
         },
         "displayName": "우시산"
       },
-      "provinceId": 1425,
+      "provinceId": 1421,
       "spatialProvinceId": "KOR-X101-X044",
-      "spatialProvinceIndex": 1425,
+      "spatialProvinceIndex": 1421,
       "routeNodeKey": "02c2b89a-ae59-43e0-967f-fd7a919b4766",
       "physicalPlaceRef": "external:v1:X101",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X101"
@@ -55407,9 +55400,9 @@
         },
         "displayName": "미리미동"
       },
-      "provinceId": 1426,
+      "provinceId": 1422,
       "spatialProvinceId": "KOR-X102-X045",
-      "spatialProvinceIndex": 1426,
+      "spatialProvinceIndex": 1422,
       "routeNodeKey": "683115df-cd7e-4dc4-896f-bc6619c64cfd",
       "physicalPlaceRef": "external:v1:X102",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X102"
@@ -55476,9 +55469,9 @@
         },
         "displayName": "독로"
       },
-      "provinceId": 1427,
+      "provinceId": 1423,
       "spatialProvinceId": "KOR-X103-X045",
-      "spatialProvinceIndex": 1427,
+      "spatialProvinceIndex": 1423,
       "routeNodeKey": "11aa3d58-0a48-4889-a32d-704a6b829a29",
       "physicalPlaceRef": "external:v1:X103",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X103"
@@ -55545,9 +55538,9 @@
         },
         "displayName": "접도"
       },
-      "provinceId": 1428,
+      "provinceId": 1424,
       "spatialProvinceId": "KOR-X104-X045",
-      "spatialProvinceIndex": 1428,
+      "spatialProvinceIndex": 1424,
       "routeNodeKey": "4e63fb72-70b9-4269-a432-a1878742d79e",
       "physicalPlaceRef": "external:v1:X104",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X104"
@@ -55613,9 +55606,9 @@
         },
         "displayName": "다라 권역"
       },
-      "provinceId": 1429,
+      "provinceId": 1425,
       "spatialProvinceId": "KOR-X105-X047",
-      "spatialProvinceIndex": 1429,
+      "spatialProvinceIndex": 1425,
       "routeNodeKey": "d8505f47-79f9-41ca-9b7e-c83fb3468df9",
       "physicalPlaceRef": "external:v1:X105",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X105"
@@ -55681,9 +55674,9 @@
         },
         "displayName": "맥"
       },
-      "provinceId": 1431,
+      "provinceId": 1427,
       "spatialProvinceId": "KOR-X106-SUB-X042-1f00b3225ad9",
-      "spatialProvinceIndex": 1431,
+      "spatialProvinceIndex": 1427,
       "routeNodeKey": "241ef21b-c1ec-436c-b136-4d2b4f0eb341",
       "physicalPlaceRef": "external:v1:X106",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X106"
@@ -55751,9 +55744,9 @@
         },
         "displayName": "불내"
       },
-      "provinceId": 1432,
+      "provinceId": 1428,
       "spatialProvinceId": "KOR-X107-fc-lelang-015",
-      "spatialProvinceIndex": 1432,
+      "spatialProvinceIndex": 1428,
       "routeNodeKey": "12d3e33e-5191-48a3-92fe-b46ca7e3ba13",
       "physicalPlaceRef": "external:v1:X107",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X107"
@@ -55829,15 +55822,15 @@
         },
         "displayName": "화려"
       },
-      "provinceId": 1433,
+      "provinceId": 1429,
       "spatialProvinceId": "KOR-X108-fc-lelang-006",
-      "spatialProvinceIndex": 1433,
+      "spatialProvinceIndex": 1429,
       "routeNodeKey": "6c8b8181-4f85-46c6-8132-deb44a227b64",
       "physicalPlaceRef": "external:v1:X108",
       "sourceClaimId": "han-external-settlement-route-claim-v1-X108"
     },
     {
-      "id": 1195,
+      "id": 1342,
       "name": "거용",
       "x": 399,
       "y": 101,
@@ -55871,15 +55864,15 @@
         "isSeat": false,
         "displayName": "상곡군 거용현"
       },
-      "provinceId": 1386,
+      "provinceId": 1382,
       "spatialProvinceId": "gc-g0090-005",
-      "spatialProvinceIndex": 1386,
-      "routeNodeKey": "d4ee75a7-54ac-4f5c-9def-b1a895452757",
+      "spatialProvinceIndex": 1382,
+      "routeNodeKey": "8cc66718-9327-4be0-b1ce-4a3677b63db8",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0090-005",
       "administrativeUnitId": "hhs:113:上谷郡:005"
     },
     {
-      "id": 1196,
+      "id": 1343,
       "name": "말릉",
       "x": 448,
       "y": 269,
@@ -55915,15 +55908,15 @@
         "isSeat": false,
         "displayName": "단양군 말릉현"
       },
-      "provinceId": 1358,
+      "provinceId": 1355,
       "spatialProvinceId": "gc-g0049-011",
-      "spatialProvinceIndex": 1358,
-      "routeNodeKey": "a750778e-0712-45f3-beda-c964beeb1f58",
+      "spatialProvinceIndex": 1355,
+      "routeNodeKey": "85a9f425-d072-46d0-8b51-90e68a13e8cb",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0049-011",
       "administrativeUnitId": "hhs:112:丹陽郡:011"
     },
     {
-      "id": 1197,
+      "id": 1344,
       "name": "음릉",
       "x": 425,
       "y": 253,
@@ -55957,15 +55950,15 @@
         "isSeat": true,
         "displayName": "구강군 음릉현"
       },
-      "provinceId": 1352,
+      "provinceId": 1349,
       "spatialProvinceId": "gc-g0048-001",
-      "spatialProvinceIndex": 1352,
-      "routeNodeKey": "5886a85e-f3f7-4fa8-9dab-c3f02519c6b8",
+      "spatialProvinceIndex": 1349,
+      "routeNodeKey": "18d3abac-13a2-4267-a97e-a1aa1bba08fd",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-001",
       "administrativeUnitId": "hhs:112:九江郡:001"
     },
     {
-      "id": 1198,
+      "id": 1345,
       "name": "역양(九江郡)",
       "x": 439,
       "y": 271,
@@ -55992,7 +55985,7 @@
         1031,
         1033,
         1043,
-        1202
+        1349
       ],
       "meta": {
         "jun": "구강군",
@@ -56003,15 +55996,15 @@
         "isSeat": false,
         "displayName": "구강군 역양현"
       },
-      "provinceId": 1353,
+      "provinceId": 1350,
       "spatialProvinceId": "gc-g0048-007",
-      "spatialProvinceIndex": 1353,
-      "routeNodeKey": "ebcbd8b9-7bb5-4804-9582-1185ad910e6b",
+      "spatialProvinceIndex": 1350,
+      "routeNodeKey": "0a8e5832-9a38-4e6e-855c-ba04f6c3d045",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-007",
       "administrativeUnitId": "hhs:112:九江郡:007"
     },
     {
-      "id": 1199,
+      "id": 1346,
       "name": "당도",
       "x": 420,
       "y": 249,
@@ -56047,15 +56040,15 @@
         "isSeat": false,
         "displayName": "구강군 당도현"
       },
-      "provinceId": 1354,
+      "provinceId": 1351,
       "spatialProvinceId": "gc-g0048-008",
-      "spatialProvinceIndex": 1354,
-      "routeNodeKey": "18d73efe-7468-4aa8-950b-9b550a3e12b2",
+      "spatialProvinceIndex": 1351,
+      "routeNodeKey": "9bf9a0ab-1485-42c2-aea2-e845a6d64ec2",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-008",
       "administrativeUnitId": "hhs:112:九江郡:008"
     },
     {
-      "id": 1200,
+      "id": 1347,
       "name": "전초",
       "x": 438,
       "y": 264,
@@ -56089,15 +56082,15 @@
         "isSeat": false,
         "displayName": "구강군 전초현"
       },
-      "provinceId": 1355,
+      "provinceId": 1352,
       "spatialProvinceId": "gc-g0048-009",
-      "spatialProvinceIndex": 1355,
-      "routeNodeKey": "c3b13605-7de6-4fd4-83a0-6f1ea9fa1fea",
+      "spatialProvinceIndex": 1352,
+      "routeNodeKey": "2364d3e8-298b-4c6e-9c20-702648054848",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-009",
       "administrativeUnitId": "hhs:112:九江郡:009"
     },
     {
-      "id": 1201,
+      "id": 1348,
       "name": "종리",
       "x": 427,
       "y": 248,
@@ -56132,15 +56125,15 @@
         "isSeat": false,
         "displayName": "구강군 종리현"
       },
-      "provinceId": 1356,
+      "provinceId": 1353,
       "spatialProvinceId": "gc-g0048-010",
-      "spatialProvinceIndex": 1356,
-      "routeNodeKey": "935f6f85-c067-4426-90de-940ae82c7be5",
+      "spatialProvinceIndex": 1353,
+      "routeNodeKey": "bcddec6b-1d1e-4667-9b91-2c0606189c8c",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-010",
       "administrativeUnitId": "hhs:112:九江郡:010"
     },
     {
-      "id": 1202,
+      "id": 1349,
       "name": "부릉",
       "x": 437,
       "y": 272,
@@ -56165,7 +56158,7 @@
       "connections": [
         513,
         1043,
-        1198
+        1345
       ],
       "meta": {
         "jun": "구강군",
@@ -56176,15 +56169,15 @@
         "isSeat": false,
         "displayName": "구강군 부릉현"
       },
-      "provinceId": 1357,
+      "provinceId": 1354,
       "spatialProvinceId": "gc-g0048-011",
-      "spatialProvinceIndex": 1357,
-      "routeNodeKey": "5b85ae33-a259-4adb-a7fc-0f000a6c1f1d",
+      "spatialProvinceIndex": 1354,
+      "routeNodeKey": "ff15f341-840b-4598-90bc-8f7f96ad5c66",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0048-011",
       "administrativeUnitId": "hhs:112:九江郡:011"
     },
     {
-      "id": 1203,
+      "id": 1350,
       "name": "오원",
       "x": 293,
       "y": 97,
@@ -56219,15 +56212,15 @@
         "isSeat": false,
         "displayName": "오원군 오원현"
       },
-      "provinceId": 1380,
+      "provinceId": 1376,
       "spatialProvinceId": "gc-g0082-002",
-      "spatialProvinceIndex": 1380,
-      "routeNodeKey": "34545352-533d-42b2-87cf-f4bf6045d863",
+      "spatialProvinceIndex": 1376,
+      "routeNodeKey": "9d583831-3b5e-497d-8272-c0be574aa290",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0082-002",
       "administrativeUnitId": "hhs:113:五原郡:002"
     },
     {
-      "id": 1204,
+      "id": 1351,
       "name": "고류",
       "x": 362,
       "y": 103,
@@ -56261,15 +56254,15 @@
         "isSeat": true,
         "displayName": "대군 고류현"
       },
-      "provinceId": 1385,
+      "provinceId": 1381,
       "spatialProvinceId": "gc-g0089-001",
-      "spatialProvinceIndex": 1385,
-      "routeNodeKey": "0cf856d5-65c9-4ebc-b0c6-e561e7d4a996",
+      "spatialProvinceIndex": 1381,
+      "routeNodeKey": "eeab279b-5d30-40f6-9a92-fb5fe66e25bc",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0089-001",
       "administrativeUnitId": "hhs:113:代郡:001"
     },
     {
-      "id": 1205,
+      "id": 1352,
       "name": "중숙",
       "x": 347,
       "y": 423,
@@ -56303,15 +56296,15 @@
         "isSeat": false,
         "displayName": "남해군 중숙현"
       },
-      "provinceId": 1390,
+      "provinceId": 1386,
       "spatialProvinceId": "gc-g0098-003",
-      "spatialProvinceIndex": 1390,
-      "routeNodeKey": "d5293afb-e126-4443-a603-8a1859cb82cf",
+      "spatialProvinceIndex": 1386,
+      "routeNodeKey": "7ebc4814-52c5-49d8-bfe6-ddff7ec59dcf",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0098-003",
       "administrativeUnitId": "hhs:113:南海郡:003"
     },
     {
-      "id": 1206,
+      "id": 1353,
       "name": "순양",
       "x": 324,
       "y": 251,
@@ -56347,15 +56340,15 @@
         "isSeat": false,
         "displayName": "남양군 순양현"
       },
-      "provinceId": 1350,
+      "provinceId": 1347,
       "spatialProvinceId": "gc-g0041-032",
-      "spatialProvinceIndex": 1350,
-      "routeNodeKey": "6bd9f29e-c5f7-48df-b66d-157798f3b0e5",
+      "spatialProvinceIndex": 1347,
+      "routeNodeKey": "28c64855-af74-43dc-a3da-8a150fbb8587",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0041-032",
       "administrativeUnitId": "hhs:112:南陽郡:032"
     },
     {
-      "id": 1207,
+      "id": 1354,
       "name": "단수",
       "x": 321,
       "y": 243,
@@ -56390,15 +56383,15 @@
         "isSeat": false,
         "displayName": "남양군 단수현"
       },
-      "provinceId": 1351,
+      "provinceId": 1348,
       "spatialProvinceId": "gc-g0041-036",
-      "spatialProvinceIndex": 1351,
-      "routeNodeKey": "aac6f8c2-a410-44ff-837b-55c1f13e0d47",
+      "spatialProvinceIndex": 1348,
+      "routeNodeKey": "18f6f318-32ea-4370-87e8-dc2c3a6e1f17",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0041-036",
       "administrativeUnitId": "hhs:112:南陽郡:036"
     },
     {
-      "id": 1208,
+      "id": 1355,
       "name": "미양",
       "x": 266,
       "y": 221,
@@ -56433,15 +56426,15 @@
         "isSeat": false,
         "displayName": "우부풍 미양현"
       },
-      "provinceId": 1335,
+      "provinceId": 1334,
       "spatialProvinceId": "gc-g0006-013",
-      "spatialProvinceIndex": 1335,
-      "routeNodeKey": "8258af04-24d4-4e13-8bc1-bddc8abd8365",
+      "spatialProvinceIndex": 1334,
+      "routeNodeKey": "805f79b8-df6a-49f1-b874-08b7046d0afa",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0006-013",
       "administrativeUnitId": "hhs:109:右扶風:013"
     },
     {
-      "id": 1209,
+      "id": 1356,
       "name": "자씨",
       "x": 330,
       "y": 164,
@@ -56477,15 +56470,15 @@
         "isSeat": false,
         "displayName": "태원군 자씨현"
       },
-      "provinceId": 1378,
+      "provinceId": 1374,
       "spatialProvinceId": "gc-g0079-006",
-      "spatialProvinceIndex": 1378,
-      "routeNodeKey": "865a95b5-8764-4ab7-9b5d-c6d3a99db30b",
+      "spatialProvinceIndex": 1374,
+      "routeNodeKey": "9a889342-09d4-459a-8ade-2a8517b44416",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0079-006",
       "administrativeUnitId": "hhs:113:太原郡:006"
     },
     {
-      "id": 1210,
+      "id": 1357,
       "name": "임경",
       "x": 254,
       "y": 197,
@@ -56519,15 +56512,15 @@
         "isSeat": true,
         "displayName": "안정군 임경현"
       },
-      "provinceId": 1370,
+      "provinceId": 1366,
       "spatialProvinceId": "gc-g0070-001",
-      "spatialProvinceIndex": 1370,
-      "routeNodeKey": "855aba72-fb3e-43c4-9542-44df9add2020",
+      "spatialProvinceIndex": 1366,
+      "routeNodeKey": "f4ff0085-36e1-4e1f-8736-8b11e679d6d9",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0070-001",
       "administrativeUnitId": "hhs:113:安定郡:001"
     },
     {
-      "id": 1211,
+      "id": 1358,
       "name": "동민",
       "x": 406,
       "y": 207,
@@ -56565,15 +56558,15 @@
         "isSeat": false,
         "displayName": "산양군 동민현"
       },
-      "provinceId": 1347,
+      "provinceId": 1345,
       "spatialProvinceId": "gc-g0028-002",
-      "spatialProvinceIndex": 1347,
-      "routeNodeKey": "9a6780b2-c87e-487c-9269-b09f54456617",
+      "spatialProvinceIndex": 1345,
+      "routeNodeKey": "05e23993-d0ef-4507-a3c1-5988165a7f86",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0028-002",
       "administrativeUnitId": "hhs:111:山陽郡:002"
     },
     {
-      "id": 1212,
+      "id": 1359,
       "name": "아",
       "x": 293,
       "y": 202,
@@ -56607,15 +56600,15 @@
         "isSeat": false,
         "displayName": "좌풍익 아현"
       },
-      "provinceId": 1334,
+      "provinceId": 1333,
       "spatialProvinceId": "gc-g0005-012",
-      "spatialProvinceIndex": 1334,
-      "routeNodeKey": "a217762f-8717-417d-aab3-3a21c7afd819",
+      "spatialProvinceIndex": 1333,
+      "routeNodeKey": "85ddd522-ae2f-4117-924b-f3a3096eba62",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0005-012",
       "administrativeUnitId": "hhs:109:左馮翊:012"
     },
     {
-      "id": 1213,
+      "id": 1360,
       "name": "난성",
       "x": 376,
       "y": 150,
@@ -56652,15 +56645,15 @@
         "isSeat": false,
         "displayName": "상산국 난성현"
       },
-      "provinceId": 1344,
+      "provinceId": 1343,
       "spatialProvinceId": "gc-g0015-007",
-      "spatialProvinceIndex": 1344,
-      "routeNodeKey": "4e0d8ad8-1063-4280-a602-3e5436839b62",
+      "spatialProvinceIndex": 1343,
+      "routeNodeKey": "38de2661-ebad-43dd-a38f-5f116057a307",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0015-007",
       "administrativeUnitId": "hhs:110:常山國:007"
     },
     {
-      "id": 1214,
+      "id": 1361,
       "name": "동양(廣陵郡)",
       "x": 448,
       "y": 247,
@@ -56695,15 +56688,15 @@
         "isSeat": false,
         "displayName": "광릉군 동양현"
       },
-      "provinceId": 1349,
+      "provinceId": 1346,
       "spatialProvinceId": "gc-g0033-006",
-      "spatialProvinceIndex": 1349,
-      "routeNodeKey": "def7eae2-dca5-452d-a8f1-84e7a646634f",
+      "spatialProvinceIndex": 1346,
+      "routeNodeKey": "90ffb4fc-3b7f-4f46-a77f-1aafb4d22e4f",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0033-006",
       "administrativeUnitId": "hhs:111:廣陵郡:006"
     },
     {
-      "id": 1215,
+      "id": 1362,
       "name": "서(廬江郡)",
       "x": 420,
       "y": 282,
@@ -56738,15 +56731,15 @@
         "isSeat": true,
         "displayName": "여강군 서현"
       },
-      "provinceId": 1359,
+      "provinceId": 1356,
       "spatialProvinceId": "gc-g0050-001",
-      "spatialProvinceIndex": 1359,
-      "routeNodeKey": "f2140c72-f339-44b3-bb5e-7b065323a8c5",
+      "spatialProvinceIndex": 1356,
+      "routeNodeKey": "3b21f669-6686-4bc3-9fab-67d0bb929371",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0050-001",
       "administrativeUnitId": "hhs:112:廬江郡:001"
     },
     {
-      "id": 1216,
+      "id": 1363,
       "name": "임호",
       "x": 428,
       "y": 283,
@@ -56770,7 +56763,7 @@
       },
       "connections": [
         530,
-        1218
+        1365
       ],
       "meta": {
         "jun": "여강군",
@@ -56781,15 +56774,15 @@
         "isSeat": false,
         "displayName": "여강군 임호현"
       },
-      "provinceId": 1360,
+      "provinceId": 1357,
       "spatialProvinceId": "gc-g0050-005",
-      "spatialProvinceIndex": 1360,
-      "routeNodeKey": "11c64869-c31c-4bbd-9250-689c19a5f8c9",
+      "spatialProvinceIndex": 1357,
+      "routeNodeKey": "12237bc7-6047-4aa4-bb10-e491ab3fef2a",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0050-005",
       "administrativeUnitId": "hhs:112:廬江郡:005"
     },
     {
-      "id": 1217,
+      "id": 1364,
       "name": "용서",
       "x": 410,
       "y": 278,
@@ -56823,15 +56816,15 @@
         "isSeat": false,
         "displayName": "여강군 용서현"
       },
-      "provinceId": 1361,
+      "provinceId": 1358,
       "spatialProvinceId": "gc-g0050-006",
-      "spatialProvinceIndex": 1361,
-      "routeNodeKey": "9e104a34-3cd8-4b8d-bbc1-4e093634bea1",
+      "spatialProvinceIndex": 1358,
+      "routeNodeKey": "f639fe28-7ff1-4bba-bdf6-79be1af0046d",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0050-006",
       "administrativeUnitId": "hhs:112:廬江郡:006"
     },
     {
-      "id": 1218,
+      "id": 1365,
       "name": "양안(廬江郡)",
       "x": 430,
       "y": 282,
@@ -56855,7 +56848,7 @@
       },
       "connections": [
         530,
-        1216
+        1363
       ],
       "meta": {
         "jun": "여강군",
@@ -56866,60 +56859,15 @@
         "isSeat": false,
         "displayName": "여강군 양안현"
       },
-      "provinceId": 1362,
+      "provinceId": 1359,
       "spatialProvinceId": "gc-g0050-007",
-      "spatialProvinceIndex": 1362,
-      "routeNodeKey": "00f77a9e-611a-46ad-9c9f-21db1edc0a96",
+      "spatialProvinceIndex": 1359,
+      "routeNodeKey": "0519eb70-b0e2-497b-8459-b356d47edeef",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0050-007",
       "administrativeUnitId": "hhs:112:廬江郡:007"
     },
     {
-      "id": 1219,
-      "name": "합향",
-      "x": 420,
-      "y": 204,
-      "level": 10,
-      "region": 5,
-      "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
-      },
-      "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
-      },
-      "connections": [
-        110,
-        149,
-        901,
-        906
-      ],
-      "meta": {
-        "jun": "동해군",
-        "junCh": "東海郡",
-        "ju": "서주",
-        "seat": "난릉현",
-        "nameCh": "合鄕縣",
-        "isSeat": false,
-        "displayName": "동해군 합향현"
-      },
-      "provinceId": 1348,
-      "spatialProvinceId": "gc-g0030-010",
-      "spatialProvinceIndex": 1348,
-      "routeNodeKey": "b301f81f-acca-4af2-b188-c09482190816",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-010",
-      "administrativeUnitId": "hhs:111:東海郡:010"
-    },
-    {
-      "id": 1220,
+      "id": 1366,
       "name": "곡숙",
       "x": 396,
       "y": 222,
@@ -56954,15 +56902,15 @@
         "isSeat": false,
         "displayName": "양국 곡숙현"
       },
-      "provinceId": 1341,
+      "provinceId": 1340,
       "spatialProvinceId": "gc-g0009-006",
-      "spatialProvinceIndex": 1341,
-      "routeNodeKey": "29c4459a-0aa5-40ae-b265-85f498b21964",
+      "spatialProvinceIndex": 1340,
+      "routeNodeKey": "09badb7c-d5dd-49f6-a19e-6329c5679275",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0009-006",
       "administrativeUnitId": "hhs:110:梁國:006"
     },
     {
-      "id": 1221,
+      "id": 1367,
       "name": "박(梁國)",
       "x": 392,
       "y": 212,
@@ -56997,15 +56945,15 @@
         "isSeat": false,
         "displayName": "양국 박현"
       },
-      "provinceId": 1342,
+      "provinceId": 1341,
       "spatialProvinceId": "gc-g0009-009",
-      "spatialProvinceIndex": 1342,
-      "routeNodeKey": "b875c1a8-122c-45d1-a295-3b1c4f3da12f",
+      "spatialProvinceIndex": 1341,
+      "routeNodeKey": "62d58b76-47c0-4567-af91-5634df3d03dc",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0009-009",
       "administrativeUnitId": "hhs:110:梁國:009"
     },
     {
-      "id": 1222,
+      "id": 1368,
       "name": "고장(武威郡)",
       "x": 175,
       "y": 150,
@@ -57039,15 +56987,15 @@
         "isSeat": true,
         "displayName": "무위군 고장현"
       },
-      "provinceId": 1371,
+      "provinceId": 1367,
       "spatialProvinceId": "gc-g0072-001",
-      "spatialProvinceIndex": 1371,
-      "routeNodeKey": "504b7496-bebd-47c8-b92d-6102e3fd7662",
+      "spatialProvinceIndex": 1367,
+      "routeNodeKey": "15116c0a-035d-47ad-ba5f-75b7b9086fd8",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0072-001",
       "administrativeUnitId": "hhs:113:武威郡:001"
     },
     {
-      "id": 1223,
+      "id": 1369,
       "name": "선위",
       "x": 181,
       "y": 140,
@@ -57081,15 +57029,15 @@
         "isSeat": false,
         "displayName": "무위군 선위현"
       },
-      "provinceId": 1372,
+      "provinceId": 1368,
       "spatialProvinceId": "gc-g0072-009",
-      "spatialProvinceIndex": 1372,
-      "routeNodeKey": "e1984d6a-1324-44b1-b21a-6a81378dc541",
+      "spatialProvinceIndex": 1368,
+      "routeNodeKey": "67009117-b4d2-45f8-be3f-8aab4f4130fa",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0072-009",
       "administrativeUnitId": "hhs:113:武威郡:009"
     },
     {
-      "id": 1224,
+      "id": 1370,
       "name": "사룡",
       "x": 136,
       "y": 398,
@@ -57123,15 +57071,15 @@
         "isSeat": false,
         "displayName": "영창군 사룡현"
       },
-      "provinceId": 1367,
+      "provinceId": 1363,
       "spatialProvinceId": "gc-g0062-005",
-      "spatialProvinceIndex": 1367,
-      "routeNodeKey": "57502021-a9eb-4583-93fa-2e3c61fa6172",
+      "spatialProvinceIndex": 1363,
+      "routeNodeKey": "89fd8d15-1bca-4e3c-b19e-d212c2a53cda",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0062-005",
       "administrativeUnitId": "hhs:113:永昌郡:005"
     },
     {
-      "id": 1225,
+      "id": 1371,
       "name": "북의춘",
       "x": 371,
       "y": 250,
@@ -57165,15 +57113,15 @@
         "isSeat": false,
         "displayName": "여남군 북의춘현"
       },
-      "provinceId": 1336,
+      "provinceId": 1335,
       "spatialProvinceId": "gc-g0008-009",
-      "spatialProvinceIndex": 1336,
-      "routeNodeKey": "24791ee9-dd5d-4b70-bd96-dffe35e38b2f",
+      "spatialProvinceIndex": 1335,
+      "routeNodeKey": "d32d56f2-bfaa-45ad-b3e3-e97d3936c85a",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0008-009",
       "administrativeUnitId": "hhs:110:汝南郡:009"
     },
     {
-      "id": 1226,
+      "id": 1372,
       "name": "세양",
       "x": 396,
       "y": 243,
@@ -57208,15 +57156,15 @@
         "isSeat": false,
         "displayName": "여남군 세양현"
       },
-      "provinceId": 1337,
+      "provinceId": 1336,
       "spatialProvinceId": "gc-g0008-016",
-      "spatialProvinceIndex": 1337,
-      "routeNodeKey": "eb9cb75c-555c-461f-9e02-3e597dcd1b13",
+      "spatialProvinceIndex": 1336,
+      "routeNodeKey": "1d844850-cee0-4cb0-aa11-bef563a05c6d",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0008-016",
       "administrativeUnitId": "hhs:110:汝南郡:016"
     },
     {
-      "id": 1227,
+      "id": 1373,
       "name": "동양(汝南郡)",
       "x": 383,
       "y": 244,
@@ -57252,15 +57200,15 @@
         "isSeat": false,
         "displayName": "여남군 동양현"
       },
-      "provinceId": 1338,
+      "provinceId": 1337,
       "spatialProvinceId": "gc-g0008-019",
-      "spatialProvinceIndex": 1338,
-      "routeNodeKey": "e6cd5f49-6ade-4ec5-af67-46d244b16089",
+      "spatialProvinceIndex": 1337,
+      "routeNodeKey": "f709515a-24cb-4604-bd71-eb0941f821bc",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0008-019",
       "administrativeUnitId": "hhs:110:汝南郡:019"
     },
     {
-      "id": 1228,
+      "id": 1374,
       "name": "정영",
       "x": 367,
       "y": 239,
@@ -57296,15 +57244,15 @@
         "isSeat": false,
         "displayName": "여남군 정영현"
       },
-      "provinceId": 1339,
+      "provinceId": 1338,
       "spatialProvinceId": "gc-g0008-034",
-      "spatialProvinceIndex": 1339,
-      "routeNodeKey": "7232335e-fb4a-4501-b713-4506553e57b8",
+      "spatialProvinceIndex": 1338,
+      "routeNodeKey": "9d5ca558-4c57-4760-980d-b89c44118dbd",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0008-034",
       "administrativeUnitId": "hhs:110:汝南郡:034"
     },
     {
-      "id": 1229,
+      "id": 1375,
       "name": "고시",
       "x": 379,
       "y": 228,
@@ -57341,15 +57289,15 @@
         "isSeat": false,
         "displayName": "여남군 고시현"
       },
-      "provinceId": 1340,
+      "provinceId": 1339,
       "spatialProvinceId": "gc-g0008-035",
-      "spatialProvinceIndex": 1340,
-      "routeNodeKey": "039ffc23-ae30-49aa-98ed-b81504c635ed",
+      "spatialProvinceIndex": 1339,
+      "routeNodeKey": "d14beade-15eb-443d-b77a-2c8f2b3f5ed0",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0008-035",
       "administrativeUnitId": "hhs:110:汝南郡:035"
     },
     {
-      "id": 1230,
+      "id": 1376,
       "name": "향",
       "x": 419,
       "y": 244,
@@ -57386,15 +57334,15 @@
         "isSeat": false,
         "displayName": "패국 향현"
       },
-      "provinceId": 1343,
+      "provinceId": 1342,
       "spatialProvinceId": "gc-g0010-017",
-      "spatialProvinceIndex": 1343,
-      "routeNodeKey": "0c5d124e-7ce2-42d3-afd0-af2704220607",
+      "spatialProvinceIndex": 1342,
+      "routeNodeKey": "4753e930-94e5-4946-9789-be5194c755a4",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0010-017",
       "administrativeUnitId": "hhs:110:沛國:017"
     },
     {
-      "id": 1231,
+      "id": 1377,
       "name": "양(河南尹)",
       "x": 348,
       "y": 218,
@@ -57434,57 +57382,12 @@
       "provinceId": 1331,
       "spatialProvinceId": "gc-g0000-003",
       "spatialProvinceIndex": 1331,
-      "routeNodeKey": "a134b468-8eb3-4ad9-b62f-f23733f1fca6",
+      "routeNodeKey": "12c63ba0-6476-4a96-809c-756bf3f63ed5",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-003",
       "administrativeUnitId": "hhs:109:河南尹:003"
     },
     {
-      "id": 1232,
-      "name": "신성(河南尹)",
-      "x": 338,
-      "y": 216,
-      "level": 11,
-      "region": 1,
-      "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
-      },
-      "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
-      },
-      "connections": [
-        25,
-        55,
-        58,
-        857
-      ],
-      "meta": {
-        "jun": "하남윤",
-        "junCh": "河南尹",
-        "ju": "사예",
-        "seat": "낙양현",
-        "nameCh": "新城縣",
-        "isSeat": false,
-        "displayName": "하남윤 신성현"
-      },
-      "provinceId": 1332,
-      "spatialProvinceId": "gc-g0000-018",
-      "spatialProvinceIndex": 1332,
-      "routeNodeKey": "e15933fa-b788-4d82-82f2-313f576e9635",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-018",
-      "administrativeUnitId": "hhs:109:河南尹:018"
-    },
-    {
-      "id": 1233,
+      "id": 1378,
       "name": "양(河東郡)",
       "x": 328,
       "y": 183,
@@ -57519,58 +57422,15 @@
         "isSeat": false,
         "displayName": "하동군 양현"
       },
-      "provinceId": 1333,
+      "provinceId": 1332,
       "spatialProvinceId": "gc-g0002-002",
-      "spatialProvinceIndex": 1333,
-      "routeNodeKey": "290ec7a2-d492-4862-82e7-b6ac3858acdb",
+      "spatialProvinceIndex": 1332,
+      "routeNodeKey": "5dd6bc4f-2222-4138-9dd4-d25ad81504d7",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0002-002",
       "administrativeUnitId": "hhs:109:河東郡:002"
     },
     {
-      "id": 1234,
-      "name": "역(河閒國)",
-      "x": 401,
-      "y": 131,
-      "level": 11,
-      "region": 3,
-      "max": {
-        "population": 58760,
-        "agriculture": 1160,
-        "commerce": 1190,
-        "security": 800,
-        "defence": 1200,
-        "wall": 1180
-      },
-      "initial": {
-        "population": 20000,
-        "agriculture": 500,
-        "commerce": 500,
-        "security": 500,
-        "defence": 1000,
-        "wall": 1000
-      },
-      "connections": [
-        198,
-        993
-      ],
-      "meta": {
-        "jun": "하간국",
-        "junCh": "河閒國",
-        "ju": "기주",
-        "seat": "낙성현",
-        "nameCh": "易縣",
-        "isSeat": false,
-        "displayName": "하간국 역현"
-      },
-      "provinceId": 1345,
-      "spatialProvinceId": "gc-g0018-003",
-      "spatialProvinceIndex": 1345,
-      "routeNodeKey": "8fed8ae6-7a65-4702-b396-1f10a931b5c4",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0018-003",
-      "administrativeUnitId": "hhs:110:河閒國:003"
-    },
-    {
-      "id": 1235,
+      "id": 1379,
       "name": "호노",
       "x": 413,
       "y": 107,
@@ -57594,7 +57454,7 @@
       },
       "connections": [
         726,
-        1237
+        1381
       ],
       "meta": {
         "jun": "어양군",
@@ -57605,15 +57465,15 @@
         "isSeat": false,
         "displayName": "어양군 호노현"
       },
-      "provinceId": 1387,
+      "provinceId": 1383,
       "spatialProvinceId": "gc-g0091-002",
-      "spatialProvinceIndex": 1387,
-      "routeNodeKey": "7b4de27a-5d65-4a8e-a991-5fe591a9d63e",
+      "spatialProvinceIndex": 1383,
+      "routeNodeKey": "814d8c10-15d8-472f-98ac-8c0919198953",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0091-002",
       "administrativeUnitId": "hhs:113:漁陽郡:002"
     },
     {
-      "id": 1236,
+      "id": 1380,
       "name": "옹노",
       "x": 417,
       "y": 119,
@@ -57647,15 +57507,15 @@
         "isSeat": false,
         "displayName": "어양군 옹노현"
       },
-      "provinceId": 1388,
+      "provinceId": 1384,
       "spatialProvinceId": "gc-g0091-004",
-      "spatialProvinceIndex": 1388,
-      "routeNodeKey": "9ff5cfb8-713a-4de3-8fd4-ea15fea61fe1",
+      "spatialProvinceIndex": 1384,
+      "routeNodeKey": "c47e9dca-6d72-41d7-8ed2-abc3912ef768",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0091-004",
       "administrativeUnitId": "hhs:113:漁陽郡:004"
     },
     {
-      "id": 1237,
+      "id": 1381,
       "name": "안락",
       "x": 410,
       "y": 107,
@@ -57680,7 +57540,7 @@
       "connections": [
         719,
         726,
-        1235
+        1379
       ],
       "meta": {
         "jun": "어양군",
@@ -57691,15 +57551,15 @@
         "isSeat": false,
         "displayName": "어양군 안락현"
       },
-      "provinceId": 1389,
+      "provinceId": 1385,
       "spatialProvinceId": "gc-g0091-007",
-      "spatialProvinceIndex": 1389,
-      "routeNodeKey": "e2dfe2ad-07c3-48e2-bfbc-29c2211638c6",
+      "spatialProvinceIndex": 1385,
+      "routeNodeKey": "dd2051ff-a47e-4cf4-a61e-0cfc89d2ef7d",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0091-007",
       "administrativeUnitId": "hhs:113:漁陽郡:007"
     },
     {
-      "id": 1238,
+      "id": 1382,
       "name": "성기",
       "x": 226,
       "y": 202,
@@ -57734,15 +57594,15 @@
         "isSeat": false,
         "displayName": "한양군 성기현"
       },
-      "provinceId": 1368,
+      "provinceId": 1364,
       "spatialProvinceId": "gc-g0067-006",
-      "spatialProvinceIndex": 1368,
-      "routeNodeKey": "35a3492e-e790-424c-a3e2-581cc837ae4e",
+      "spatialProvinceIndex": 1364,
+      "routeNodeKey": "d2ccf495-47db-4609-8c4e-a0309d7ed6b6",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0067-006",
       "administrativeUnitId": "hhs:113:漢陽郡:006"
     },
     {
-      "id": 1239,
+      "id": 1383,
       "name": "상규",
       "x": 227,
       "y": 215,
@@ -57777,15 +57637,15 @@
         "isSeat": false,
         "displayName": "한양군 상규현"
       },
-      "provinceId": 1369,
+      "provinceId": 1365,
       "spatialProvinceId": "gc-g0067-012",
-      "spatialProvinceIndex": 1369,
-      "routeNodeKey": "be7021b3-2659-4144-9382-247cdc44e980",
+      "spatialProvinceIndex": 1365,
+      "routeNodeKey": "23150d89-e6a9-4e94-8f20-12ab8b2d81ec",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0067-012",
       "administrativeUnitId": "hhs:113:漢陽郡:012"
     },
     {
-      "id": 1240,
+      "id": 1384,
       "name": "유원",
       "x": 180,
       "y": 408,
@@ -57820,15 +57680,15 @@
         "isSeat": false,
         "displayName": "익주군 유원현"
       },
-      "provinceId": 1366,
+      "provinceId": 1362,
       "spatialProvinceId": "gc-g0061-003",
-      "spatialProvinceIndex": 1366,
-      "routeNodeKey": "177d1e2f-285e-4854-810f-ad5dc8617fe0",
+      "spatialProvinceIndex": 1362,
+      "routeNodeKey": "d75817b3-8977-44f4-be13-01dffdcbefa7",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0061-003",
       "administrativeUnitId": "hhs:113:益州郡:003"
     },
     {
-      "id": 1241,
+      "id": 1385,
       "name": "중양",
       "x": 325,
       "y": 164,
@@ -57863,57 +57723,15 @@
         "isSeat": false,
         "displayName": "서하군 중양현"
       },
-      "provinceId": 1379,
+      "provinceId": 1375,
       "spatialProvinceId": "gc-g0081-005",
-      "spatialProvinceIndex": 1379,
-      "routeNodeKey": "fa0d2961-b00e-4f26-9d28-06dbee79aad6",
+      "spatialProvinceIndex": 1375,
+      "routeNodeKey": "4c77100a-2ba8-4849-832d-e8ea8317c3cf",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0081-005",
       "administrativeUnitId": "hhs:113:西河郡:005"
     },
     {
-      "id": 1242,
-      "name": "여릉",
-      "x": 380,
-      "y": 363,
-      "level": 10,
-      "region": 8,
-      "max": {
-        "population": 146900,
-        "agriculture": 2900,
-        "commerce": 2975,
-        "security": 2000,
-        "defence": 3000,
-        "wall": 2950
-      },
-      "initial": {
-        "population": 50000,
-        "agriculture": 1000,
-        "commerce": 1000,
-        "security": 1000,
-        "defence": 1500,
-        "wall": 1500
-      },
-      "connections": [
-        960
-      ],
-      "meta": {
-        "jun": "예장군",
-        "junCh": "豫章郡",
-        "ju": "양주",
-        "seat": "남창현",
-        "nameCh": "廬陵縣",
-        "isSeat": false,
-        "displayName": "예장군 여릉현"
-      },
-      "provinceId": 1363,
-      "spatialProvinceId": "gc-g0053-005",
-      "spatialProvinceIndex": 1363,
-      "routeNodeKey": "11aca040-c56b-4512-9d46-2312ecf76e3b",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0053-005",
-      "administrativeUnitId": "hhs:112:豫章郡:005"
-    },
-    {
-      "id": 1243,
+      "id": 1386,
       "name": "비수",
       "x": 179,
       "y": 337,
@@ -57948,15 +57766,15 @@
         "isSeat": false,
         "displayName": "월휴군 비수현"
       },
-      "provinceId": 1364,
+      "provinceId": 1360,
       "spatialProvinceId": "gc-g0060-006",
-      "spatialProvinceIndex": 1364,
-      "routeNodeKey": "07f88ebd-b40e-44f2-a5aa-91c50974f5f3",
+      "spatialProvinceIndex": 1360,
+      "routeNodeKey": "78c48c87-6352-42c3-8c16-7dba271125bf",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0060-006",
       "administrativeUnitId": "hhs:113:越巂郡:006"
     },
     {
-      "id": 1244,
+      "id": 1387,
       "name": "회무",
       "x": 169,
       "y": 369,
@@ -57990,15 +57808,15 @@
         "isSeat": false,
         "displayName": "월휴군 회무현"
       },
-      "provinceId": 1365,
+      "provinceId": 1361,
       "spatialProvinceId": "gc-g0060-008",
-      "spatialProvinceIndex": 1365,
-      "routeNodeKey": "76fc598e-1c46-4750-a059-7bfea2ec7289",
+      "spatialProvinceIndex": 1361,
+      "routeNodeKey": "6be6d4c9-d4e0-4d6c-a22f-ac9d6b1b1b73",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0060-008",
       "administrativeUnitId": "hhs:113:越巂郡:008"
     },
     {
-      "id": 1245,
+      "id": 1388,
       "name": "표씨",
       "x": 120,
       "y": 122,
@@ -58033,15 +57851,15 @@
         "isSeat": false,
         "displayName": "주천군 표씨현"
       },
-      "provinceId": 1373,
+      "provinceId": 1369,
       "spatialProvinceId": "gc-g0074-002",
-      "spatialProvinceIndex": 1373,
-      "routeNodeKey": "82be2ef9-1043-4305-ac02-b8c41536e606",
+      "spatialProvinceIndex": 1369,
+      "routeNodeKey": "de714361-10d5-408f-a3f2-ddc3ae2b6da3",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0074-002",
       "administrativeUnitId": "hhs:113:酒泉郡:002"
     },
     {
-      "id": 1246,
+      "id": 1389,
       "name": "낙관",
       "x": 113,
       "y": 119,
@@ -58075,15 +57893,15 @@
         "isSeat": false,
         "displayName": "주천군 낙관현"
       },
-      "provinceId": 1374,
+      "provinceId": 1370,
       "spatialProvinceId": "gc-g0074-003",
-      "spatialProvinceIndex": 1374,
-      "routeNodeKey": "c7be5a2c-b0a5-4042-9bdc-48ebe7ba1d83",
+      "spatialProvinceIndex": 1370,
+      "routeNodeKey": "007909b8-f2dc-4106-8ff5-f90bc6bc04bb",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0074-003",
       "administrativeUnitId": "hhs:113:酒泉郡:003"
     },
     {
-      "id": 1247,
+      "id": 1390,
       "name": "회수",
       "x": 120,
       "y": 113,
@@ -58117,15 +57935,15 @@
         "isSeat": false,
         "displayName": "주천군 회수현"
       },
-      "provinceId": 1375,
+      "provinceId": 1371,
       "spatialProvinceId": "gc-g0074-005",
-      "spatialProvinceIndex": 1375,
-      "routeNodeKey": "8bb19c16-d6a7-49d6-851c-41ad6c51fd07",
+      "spatialProvinceIndex": 1371,
+      "routeNodeKey": "21c5bf30-e602-4d30-b704-5e713b9434fe",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0074-005",
       "administrativeUnitId": "hhs:113:酒泉郡:005"
     },
     {
-      "id": 1248,
+      "id": 1391,
       "name": "사두",
       "x": 80,
       "y": 102,
@@ -58160,15 +57978,15 @@
         "isSeat": false,
         "displayName": "주천군 사두현"
       },
-      "provinceId": 1376,
+      "provinceId": 1372,
       "spatialProvinceId": "gc-g0074-006",
-      "spatialProvinceIndex": 1376,
-      "routeNodeKey": "22de61b8-99f5-4f4d-8313-8ad6a0644e8c",
+      "spatialProvinceIndex": 1372,
+      "routeNodeKey": "53c19151-9c65-45d2-b3ea-9028a3e14543",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0074-006",
       "administrativeUnitId": "hhs:113:酒泉郡:006"
     },
     {
-      "id": 1249,
+      "id": 1392,
       "name": "안미",
       "x": 111,
       "y": 116,
@@ -58202,15 +58020,15 @@
         "isSeat": false,
         "displayName": "주천군 안미현"
       },
-      "provinceId": 1377,
+      "provinceId": 1373,
       "spatialProvinceId": "gc-g0074-007",
-      "spatialProvinceIndex": 1377,
-      "routeNodeKey": "93a52f1f-94a5-43ab-b977-63a1c0cf8285",
+      "spatialProvinceIndex": 1373,
+      "routeNodeKey": "b22b45a2-bc28-4c5b-817a-77c0924bbe9b",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0074-007",
       "administrativeUnitId": "hhs:113:酒泉郡:007"
     },
     {
-      "id": 1250,
+      "id": 1393,
       "name": "동혼",
       "x": 381,
       "y": 209,
@@ -58245,15 +58063,15 @@
         "isSeat": false,
         "displayName": "진류군 동혼현"
       },
-      "provinceId": 1346,
+      "provinceId": 1344,
       "spatialProvinceId": "gc-g0022-008",
-      "spatialProvinceIndex": 1346,
-      "routeNodeKey": "9cd86bbd-3eda-4add-b858-184648715777",
+      "spatialProvinceIndex": 1344,
+      "routeNodeKey": "c701160b-f660-4c49-bf31-f4abfd24cbc2",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0022-008",
       "administrativeUnitId": "hhs:111:陳留郡:008"
     },
     {
-      "id": 1251,
+      "id": 1394,
       "name": "음관",
       "x": 345,
       "y": 125,
@@ -58288,15 +58106,15 @@
         "isSeat": true,
         "displayName": "안문군 음관현"
       },
-      "provinceId": 1381,
+      "provinceId": 1377,
       "spatialProvinceId": "gc-g0085-001",
-      "spatialProvinceIndex": 1381,
-      "routeNodeKey": "6e44b59e-0d17-4342-af89-076f66f129b7",
+      "spatialProvinceIndex": 1377,
+      "routeNodeKey": "6ba63571-6974-4703-9c00-058a0ea7503e",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-001",
       "administrativeUnitId": "hhs:113:鴈門郡:001"
     },
     {
-      "id": 1252,
+      "id": 1395,
       "name": "번치",
       "x": 354,
       "y": 119,
@@ -58331,15 +58149,15 @@
         "isSeat": false,
         "displayName": "안문군 번치현"
       },
-      "provinceId": 1382,
+      "provinceId": 1378,
       "spatialProvinceId": "gc-g0085-002",
-      "spatialProvinceIndex": 1382,
-      "routeNodeKey": "274747bb-f4ea-4583-9abc-11e1da817024",
+      "spatialProvinceIndex": 1378,
+      "routeNodeKey": "c990f662-64ec-4715-a543-7bc1b8d54c2e",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-002",
       "administrativeUnitId": "hhs:113:鴈門郡:002"
     },
     {
-      "id": 1253,
+      "id": 1396,
       "name": "곽",
       "x": 359,
       "y": 116,
@@ -58374,15 +58192,15 @@
         "isSeat": false,
         "displayName": "안문군 곽현"
       },
-      "provinceId": 1383,
+      "provinceId": 1379,
       "spatialProvinceId": "gc-g0085-007",
-      "spatialProvinceIndex": 1383,
-      "routeNodeKey": "3c5b7a44-5e79-46da-8880-7fb25a34774d",
+      "spatialProvinceIndex": 1379,
+      "routeNodeKey": "76630d69-b3b0-432b-8c6f-2c87ea1f7b69",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-007",
       "administrativeUnitId": "hhs:113:鴈門郡:007"
     },
     {
-      "id": 1254,
+      "id": 1397,
       "name": "마읍",
       "x": 340,
       "y": 124,
@@ -58417,10 +58235,10 @@
         "isSeat": false,
         "displayName": "안문군 마읍현"
       },
-      "provinceId": 1384,
+      "provinceId": 1380,
       "spatialProvinceId": "gc-g0085-010",
-      "spatialProvinceIndex": 1384,
-      "routeNodeKey": "0cba1288-b734-4886-86a7-1f6d8d445d29",
+      "spatialProvinceIndex": 1380,
+      "routeNodeKey": "30bbd8d9-10f0-4391-9d7e-7705a19dea3d",
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-010",
       "administrativeUnitId": "hhs:113:鴈門郡:010"
     }

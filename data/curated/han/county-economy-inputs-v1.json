@@ -3,9 +3,9 @@
  "paramsStatus": "EXPLORATORY",
  "source": "後漢書 郡國志 郡 戶數 × 治所 위계·지형 가중; 三國志 東夷傳 권역 경제는 historicalEconomy로 별도 보존",
  "counts": {
-  "jurisdictions": 1228,
-  "withHouseholds": 1076,
-  "zeroArable": 165,
+  "jurisdictions": 1224,
+  "withHouseholds": 1072,
+  "zeroArable": 164,
   "commanderiesWithFewerCountiesThanSource": 50
  },
  "limitations": [
@@ -590,7 +590,7 @@
    "terrainScore": 103.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14056,
+   "households": 13320,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -1790,7 +1790,7 @@
    "terrainScore": 32.8,
    "wetAdjacentCells": 18,
    "connections": 7,
-   "households": 9894,
+   "households": 10223,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -2264,16 +2264,16 @@
    "cityId": 960,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 50,
+   "landCells": 58,
    "terrainCells": {
-    "PLAIN": 45,
+    "PLAIN": 53,
     "RIVER": 5
    },
-   "arableCells": 45,
-   "terrainScore": 47.5,
+   "arableCells": 53,
+   "terrainScore": 55.5,
    "wetAdjacentCells": 14,
-   "connections": 6,
-   "households": 3315,
+   "connections": 5,
+   "households": 3873,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -7931,7 +7931,7 @@
    "arableCells": 21,
    "terrainScore": 21.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
+   "connections": 6,
    "households": 11042,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -7988,7 +7988,7 @@
    "arableCells": 7,
    "terrainScore": 7.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
+   "connections": 4,
    "households": 3520,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -8304,15 +8304,15 @@
    "cityId": 906,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 16,
+   "landCells": 24,
    "terrainCells": {
-    "PLAIN": 16
+    "PLAIN": 24
    },
-   "arableCells": 16,
-   "terrainScore": 16.0,
+   "arableCells": 24,
+   "terrainScore": 24.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 4728,
+   "households": 7092,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -9775,7 +9775,7 @@
    "terrainScore": 21.0,
    "wetAdjacentCells": 7,
    "connections": 7,
-   "households": 6335,
+   "households": 6545,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10432,7 +10432,7 @@
    "terrainScore": 9.1,
    "wetAdjacentCells": 11,
    "connections": 6,
-   "households": 2745,
+   "households": 2836,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12830,15 +12830,15 @@
    "arableCells": 2,
    "terrainScore": 3.9,
    "wetAdjacentCells": 1,
-   "connections": 5,
+   "connections": 4,
    "households": 2584,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
    "jurisdictionId": "82841",
    "nameCh": "新成县",
-   "commanderyId": "PARENT-0003",
-   "commanderyNameCh": "弘農郡",
+   "commanderyId": "PARENT-0000",
+   "commanderyNameCh": "河南尹",
    "cityId": 857,
    "cityLevel": 11,
    "isCommanderySeat": false,
@@ -12850,7 +12850,7 @@
    "terrainScore": 4.4,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 1508,
+   "households": 2584,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12861,17 +12861,17 @@
    "cityId": 58,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 23,
+   "landCells": 31,
    "terrainCells": {
-    "MOUNTAIN": 20,
+    "MOUNTAIN": 28,
     "PLAIN": 1,
     "RIVER": 2
    },
    "arableCells": 1,
-   "terrainScore": 4.0,
+   "terrainScore": 4.8,
    "wetAdjacentCells": 7,
    "connections": 8,
-   "households": 2584,
+   "households": 2583,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12929,8 +12929,8 @@
    "arableCells": 0,
    "terrainScore": 4.1,
    "wetAdjacentCells": 0,
-   "connections": 8,
-   "households": 1508,
+   "connections": 7,
+   "households": 1558,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13030,7 +13030,7 @@
    "terrainScore": 14.9,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 4495,
+   "households": 4644,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13049,7 +13049,7 @@
    "terrainScore": 11.3,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 3409,
+   "households": 3522,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13320,7 +13320,7 @@
    "terrainScore": 18.1,
    "wetAdjacentCells": 9,
    "connections": 8,
-   "households": 5460,
+   "households": 5641,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13340,7 +13340,7 @@
    "terrainScore": 5.9,
    "wetAdjacentCells": 6,
    "connections": 6,
-   "households": 3559,
+   "households": 3678,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13593,7 +13593,7 @@
    "terrainScore": 21.1,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 6365,
+   "households": 6577,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15676,7 +15676,7 @@
    "terrainScore": 24.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 3275,
+   "households": 3104,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16444,7 +16444,7 @@
    "terrainScore": 53.0,
    "wetAdjacentCells": 0,
    "connections": 9,
-   "households": 21698,
+   "households": 20561,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16482,7 +16482,7 @@
    "terrainScore": 48.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 6550,
+   "households": 6207,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16501,16 +16501,16 @@
    "terrainScore": 21.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 4234,
+   "households": 4577,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
    "jurisdictionId": "87297",
    "nameCh": "易城县",
-   "commanderyId": "PARENT-0087",
-   "commanderyNameCh": "涿郡",
+   "commanderyId": "PARENT-0018",
+   "commanderyNameCh": "河閒國",
    "cityId": 993,
-   "cityLevel": 10,
+   "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 38,
    "terrainCells": {
@@ -16519,8 +16519,8 @@
    "arableCells": 38,
    "terrainScore": 38.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "households": 7661,
+   "connections": 6,
+   "households": 4914,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16539,7 +16539,7 @@
    "terrainScore": 29.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 5847,
+   "households": 6321,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16558,7 +16558,7 @@
    "terrainScore": 44.0,
    "wetAdjacentCells": 0,
    "connections": 7,
-   "households": 17742,
+   "households": 19179,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16577,7 +16577,7 @@
    "terrainScore": 61.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 12298,
+   "households": 13295,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16616,7 +16616,7 @@
    "terrainScore": 99.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 19960,
+   "households": 21577,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16635,7 +16635,7 @@
    "terrainScore": 60.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 12097,
+   "households": 13077,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16684,15 +16684,15 @@
    "cityId": 198,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 25,
+   "landCells": 33,
    "terrainCells": {
-    "PLAIN": 25
+    "PLAIN": 33
    },
-   "arableCells": 25,
-   "terrainScore": 25.0,
+   "arableCells": 33,
+   "terrainScore": 33.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "households": 3412,
+   "connections": 5,
+   "households": 4267,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16711,7 +16711,7 @@
    "terrainScore": 71.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 14315,
+   "households": 15474,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16749,7 +16749,7 @@
    "terrainScore": 12.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 1638,
+   "households": 1552,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16844,7 +16844,7 @@
    "terrainScore": 46.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 6278,
+   "households": 5949,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16863,7 +16863,7 @@
    "terrainScore": 109.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 14875,
+   "households": 14095,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16901,7 +16901,7 @@
    "terrainScore": 51.0,
    "wetAdjacentCells": 0,
    "connections": 6,
-   "households": 6960,
+   "households": 6595,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17341,7 +17341,7 @@
    "terrainScore": 40.0,
    "wetAdjacentCells": 0,
    "connections": 8,
-   "households": 8064,
+   "households": 8718,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17512,7 +17512,7 @@
    "terrainScore": 48.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 6550,
+   "households": 6207,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17550,7 +17550,7 @@
    "terrainScore": 29.0,
    "wetAdjacentCells": 0,
    "connections": 5,
-   "households": 3958,
+   "households": 3750,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17626,7 +17626,7 @@
    "terrainScore": 25.0,
    "wetAdjacentCells": 0,
    "connections": 4,
-   "households": 3412,
+   "households": 3233,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -23655,26 +23655,7 @@
    "nameCh": "梁縣",
    "commanderyId": "PARENT-0000",
    "commanderyNameCh": "河南尹",
-   "cityId": 1231,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 8,
-   "terrainCells": {
-    "MOUNTAIN": 8
-   },
-   "arableCells": 0,
-   "terrainScore": 0.8,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "households": 2583,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0000-018",
-   "nameCh": "新城縣",
-   "commanderyId": "PARENT-0000",
-   "commanderyNameCh": "河南尹",
-   "cityId": 1232,
+   "cityId": 1377,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23693,7 +23674,7 @@
    "nameCh": "杨县",
    "commanderyId": "PARENT-0002",
    "commanderyNameCh": "河東郡",
-   "cityId": 1233,
+   "cityId": 1378,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23713,7 +23694,7 @@
    "nameCh": "衙縣",
    "commanderyId": "PARENT-0005",
    "commanderyNameCh": "左馮翊",
-   "cityId": 1212,
+   "cityId": 1359,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23732,7 +23713,7 @@
    "nameCh": "美阳县",
    "commanderyId": "PARENT-0006",
    "commanderyNameCh": "右扶風",
-   "cityId": 1208,
+   "cityId": 1355,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23752,7 +23733,7 @@
    "nameCh": "北宜春縣",
    "commanderyId": "PARENT-0008",
    "commanderyNameCh": "汝南郡",
-   "cityId": 1225,
+   "cityId": 1371,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23772,7 +23753,7 @@
    "nameCh": "細陽縣",
    "commanderyId": "PARENT-0008",
    "commanderyNameCh": "汝南郡",
-   "cityId": 1226,
+   "cityId": 1372,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23791,7 +23772,7 @@
    "nameCh": "鮦陽縣",
    "commanderyId": "PARENT-0008",
    "commanderyNameCh": "汝南郡",
-   "cityId": 1227,
+   "cityId": 1373,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23810,7 +23791,7 @@
    "nameCh": "定潁縣",
    "commanderyId": "PARENT-0008",
    "commanderyNameCh": "汝南郡",
-   "cityId": 1228,
+   "cityId": 1374,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23829,7 +23810,7 @@
    "nameCh": "固始縣",
    "commanderyId": "PARENT-0008",
    "commanderyNameCh": "汝南郡",
-   "cityId": 1229,
+   "cityId": 1375,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 6,
@@ -23848,7 +23829,7 @@
    "nameCh": "穀熟縣",
    "commanderyId": "PARENT-0009",
    "commanderyNameCh": "梁國",
-   "cityId": 1220,
+   "cityId": 1366,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23867,7 +23848,7 @@
    "nameCh": "薄縣",
    "commanderyId": "PARENT-0009",
    "commanderyNameCh": "梁國",
-   "cityId": 1221,
+   "cityId": 1367,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23886,7 +23867,7 @@
    "nameCh": "向縣",
    "commanderyId": "PARENT-0010",
    "commanderyNameCh": "沛國",
-   "cityId": 1230,
+   "cityId": 1376,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23905,7 +23886,7 @@
    "nameCh": "欒城縣",
    "commanderyId": "PARENT-0015",
    "commanderyNameCh": "常山國",
-   "cityId": 1213,
+   "cityId": 1360,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23920,30 +23901,11 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0018-003",
-   "nameCh": "易縣",
-   "commanderyId": "PARENT-0018",
-   "commanderyNameCh": "河閒國",
-   "cityId": 1234,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 8,
-   "terrainCells": {
-    "PLAIN": 8
-   },
-   "arableCells": 8,
-   "terrainScore": 8.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "households": 1092,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0022-008",
    "nameCh": "東昬縣",
    "commanderyId": "PARENT-0022",
    "commanderyNameCh": "陳留郡",
-   "cityId": 1250,
+   "cityId": 1393,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23963,7 +23925,7 @@
    "nameCh": "東緡縣",
    "commanderyId": "PARENT-0028",
    "commanderyNameCh": "山陽郡",
-   "cityId": 1211,
+   "cityId": 1358,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -23978,30 +23940,11 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0030-010",
-   "nameCh": "合鄕縣",
-   "commanderyId": "PARENT-0030",
-   "commanderyNameCh": "東海郡",
-   "cityId": 1219,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 8,
-   "terrainCells": {
-    "PLAIN": 8
-   },
-   "arableCells": 8,
-   "terrainScore": 8.0,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "households": 2364,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0033-006",
    "nameCh": "東陽縣",
    "commanderyId": "PARENT-0033",
    "commanderyNameCh": "廣陵郡",
-   "cityId": 1214,
+   "cityId": 1361,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24020,7 +23963,7 @@
    "nameCh": "順陽縣",
    "commanderyId": "PARENT-0041",
    "commanderyNameCh": "南陽郡",
-   "cityId": 1206,
+   "cityId": 1353,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24040,7 +23983,7 @@
    "nameCh": "丹水縣",
    "commanderyId": "PARENT-0041",
    "commanderyNameCh": "南陽郡",
-   "cityId": 1207,
+   "cityId": 1354,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24059,7 +24002,7 @@
    "nameCh": "陰陵縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1197,
+   "cityId": 1344,
    "cityLevel": 6,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24078,7 +24021,7 @@
    "nameCh": "歷陽縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1198,
+   "cityId": 1345,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24097,7 +24040,7 @@
    "nameCh": "當塗縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1199,
+   "cityId": 1346,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24116,7 +24059,7 @@
    "nameCh": "全椒縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1200,
+   "cityId": 1347,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24135,7 +24078,7 @@
    "nameCh": "鍾離縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1201,
+   "cityId": 1348,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24154,7 +24097,7 @@
    "nameCh": "阜陵縣",
    "commanderyId": "PARENT-0048",
    "commanderyNameCh": "九江郡",
-   "cityId": 1202,
+   "cityId": 1349,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24173,7 +24116,7 @@
    "nameCh": "秣陵縣",
    "commanderyId": "PARENT-0049",
    "commanderyNameCh": "丹陽郡",
-   "cityId": 1196,
+   "cityId": 1343,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24192,7 +24135,7 @@
    "nameCh": "舒縣",
    "commanderyId": "PARENT-0050",
    "commanderyNameCh": "廬江郡",
-   "cityId": 1215,
+   "cityId": 1362,
    "cityLevel": 6,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24212,7 +24155,7 @@
    "nameCh": "臨湖縣",
    "commanderyId": "PARENT-0050",
    "commanderyNameCh": "廬江郡",
-   "cityId": 1216,
+   "cityId": 1363,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24231,7 +24174,7 @@
    "nameCh": "龍舒縣",
    "commanderyId": "PARENT-0050",
    "commanderyNameCh": "廬江郡",
-   "cityId": 1217,
+   "cityId": 1364,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24250,7 +24193,7 @@
    "nameCh": "襄安縣",
    "commanderyId": "PARENT-0050",
    "commanderyNameCh": "廬江郡",
-   "cityId": 1218,
+   "cityId": 1365,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24266,30 +24209,11 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0053-005",
-   "nameCh": "廬陵縣",
-   "commanderyId": "PARENT-0053",
-   "commanderyNameCh": "豫章郡",
-   "cityId": 1242,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 8,
-   "terrainCells": {
-    "PLAIN": 8
-   },
-   "arableCells": 8,
-   "terrainScore": 8.0,
-   "wetAdjacentCells": 0,
-   "connections": 1,
-   "households": 558,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0060-006",
    "nameCh": "卑水縣",
    "commanderyId": "PARENT-0060",
    "commanderyNameCh": "越巂郡",
-   "cityId": 1243,
+   "cityId": 1386,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24308,7 +24232,7 @@
    "nameCh": "会无县",
    "commanderyId": "PARENT-0060",
    "commanderyNameCh": "越巂郡",
-   "cityId": 1244,
+   "cityId": 1387,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24327,7 +24251,7 @@
    "nameCh": "俞元縣",
    "commanderyId": "PARENT-0061",
    "commanderyNameCh": "益州郡",
-   "cityId": 1240,
+   "cityId": 1384,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24346,7 +24270,7 @@
    "nameCh": "邪龙县",
    "commanderyId": "PARENT-0062",
    "commanderyNameCh": "永昌郡",
-   "cityId": 1224,
+   "cityId": 1370,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24366,7 +24290,7 @@
    "nameCh": "成纪县",
    "commanderyId": "PARENT-0067",
    "commanderyNameCh": "漢陽郡",
-   "cityId": 1238,
+   "cityId": 1382,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24385,7 +24309,7 @@
    "nameCh": "上邽縣",
    "commanderyId": "PARENT-0067",
    "commanderyNameCh": "漢陽郡",
-   "cityId": 1239,
+   "cityId": 1383,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24405,7 +24329,7 @@
    "nameCh": "临泾县",
    "commanderyId": "PARENT-0070",
    "commanderyNameCh": "安定郡",
-   "cityId": 1210,
+   "cityId": 1357,
    "cityLevel": 5,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24424,7 +24348,7 @@
    "nameCh": "姑臧縣",
    "commanderyId": "PARENT-0072",
    "commanderyNameCh": "武威郡",
-   "cityId": 1222,
+   "cityId": 1368,
    "cityLevel": 5,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24444,7 +24368,7 @@
    "nameCh": "宣威縣",
    "commanderyId": "PARENT-0072",
    "commanderyNameCh": "武威郡",
-   "cityId": 1223,
+   "cityId": 1369,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24463,7 +24387,7 @@
    "nameCh": "表氏縣",
    "commanderyId": "PARENT-0074",
    "commanderyNameCh": "酒泉郡",
-   "cityId": 1245,
+   "cityId": 1388,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24482,7 +24406,7 @@
    "nameCh": "乐涫县",
    "commanderyId": "PARENT-0074",
    "commanderyNameCh": "酒泉郡",
-   "cityId": 1246,
+   "cityId": 1389,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24501,7 +24425,7 @@
    "nameCh": "会水县",
    "commanderyId": "PARENT-0074",
    "commanderyNameCh": "酒泉郡",
-   "cityId": 1247,
+   "cityId": 1390,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24520,7 +24444,7 @@
    "nameCh": "沙头县",
    "commanderyId": "PARENT-0074",
    "commanderyNameCh": "酒泉郡",
-   "cityId": 1248,
+   "cityId": 1391,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24539,7 +24463,7 @@
    "nameCh": "安弥县",
    "commanderyId": "PARENT-0074",
    "commanderyNameCh": "酒泉郡",
-   "cityId": 1249,
+   "cityId": 1392,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24561,7 +24485,7 @@
    "nameCh": "兹氏县",
    "commanderyId": "PARENT-0079",
    "commanderyNameCh": "太原郡",
-   "cityId": 1209,
+   "cityId": 1356,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24581,7 +24505,7 @@
    "nameCh": "中阳县",
    "commanderyId": "PARENT-0081",
    "commanderyNameCh": "西河郡",
-   "cityId": 1241,
+   "cityId": 1385,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24600,7 +24524,7 @@
    "nameCh": "五原縣",
    "commanderyId": "PARENT-0082",
    "commanderyNameCh": "五原郡",
-   "cityId": 1203,
+   "cityId": 1350,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24619,7 +24543,7 @@
    "nameCh": "阴馆县",
    "commanderyId": "PARENT-0085",
    "commanderyNameCh": "鴈門郡",
-   "cityId": 1251,
+   "cityId": 1394,
    "cityLevel": 5,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24639,7 +24563,7 @@
    "nameCh": "繁畤縣",
    "commanderyId": "PARENT-0085",
    "commanderyNameCh": "鴈門郡",
-   "cityId": 1252,
+   "cityId": 1395,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24658,7 +24582,7 @@
    "nameCh": "崞縣",
    "commanderyId": "PARENT-0085",
    "commanderyNameCh": "鴈門郡",
-   "cityId": 1253,
+   "cityId": 1396,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24677,7 +24601,7 @@
    "nameCh": "马邑县",
    "commanderyId": "PARENT-0085",
    "commanderyNameCh": "鴈門郡",
-   "cityId": 1254,
+   "cityId": 1397,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24696,7 +24620,7 @@
    "nameCh": "高柳县",
    "commanderyId": "PARENT-0089",
    "commanderyNameCh": "代郡",
-   "cityId": 1204,
+   "cityId": 1351,
    "cityLevel": 5,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24715,7 +24639,7 @@
    "nameCh": "居庸縣",
    "commanderyId": "PARENT-0090",
    "commanderyNameCh": "上谷郡",
-   "cityId": 1195,
+   "cityId": 1342,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24734,7 +24658,7 @@
    "nameCh": "狐奴縣",
    "commanderyId": "PARENT-0091",
    "commanderyNameCh": "漁陽郡",
-   "cityId": 1235,
+   "cityId": 1379,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24753,7 +24677,7 @@
    "nameCh": "雍奴縣",
    "commanderyId": "PARENT-0091",
    "commanderyNameCh": "漁陽郡",
-   "cityId": 1236,
+   "cityId": 1380,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24772,7 +24696,7 @@
    "nameCh": "安乐县",
    "commanderyId": "PARENT-0091",
    "commanderyNameCh": "漁陽郡",
-   "cityId": 1237,
+   "cityId": 1381,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24791,7 +24715,7 @@
    "nameCh": "中宿縣",
    "commanderyId": "PARENT-0098",
    "commanderyNameCh": "南海郡",
-   "cityId": 1205,
+   "cityId": 1352,
    "cityLevel": 10,
    "isCommanderySeat": false,
    "landCells": 8,
@@ -24996,7 +24920,7 @@
    "terrainScore": 2.4,
    "wetAdjacentCells": 6,
    "connections": 2,
-   "households": 452,
+   "households": 468,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -25775,7 +25699,7 @@
    "terrainScore": 7.0,
    "wetAdjacentCells": 3,
    "connections": 2,
-   "households": 633,
+   "households": 655,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -26180,7 +26104,7 @@
    "terrainScore": 0.8,
    "wetAdjacentCells": 0,
    "connections": 2,
-   "households": 452,
+   "households": 468,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {

@@ -54,11 +54,11 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
 from tools.scenario.han_active_city_ids import active_numeric_ids
 
-# 결손 縣 60 곳을 더해 han-world-v3 는 1168 → 1228. 명부 수와 같이 움직이는 실측 기준선이다.
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1228}
+# 결손 縣 56 곳을 더해 han-world-v3 는 1168 → 1224. 명부 수와 같이 움직이는 실측 기준선이다.
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 1224}
 EXTERNAL_LOCATION_BATCH = "w0c-hhs-external-location"
 FRONTIER_COUNTY_BATCH = "w1-frontier-county-location"
-# 결손 縣 60 곳. 이 검증기는 선정 모듈과 **독립 사본**으로 상수를 들고 있으므로 여기에도 적는다.
+# 결손 縣 56 곳. 이 검증기는 선정 모듈과 **독립 사본**으로 상수를 들고 있으므로 여기에도 적는다.
 GAP_COUNTY_BATCH = "w1-gap-county-location"
 SCRIPT_VARIANT_BATCH = "w1-script-variant-county-join"
 JURISDICTION_CLAIM_BATCH = "w2-cityless-jurisdiction-route-claim"
@@ -93,7 +93,7 @@ GAP_COUNTY_PLACE_PREFIX = "curated:gap-county-v1:"
 # 이 정하고, 판을 벗어난 batch 는 fail-closed 다.
 EXPECTED_LOCATION_CLAIM_COUNTS_BY_WORLD: dict[str, dict[str, int]] = {
     "han-780-v1": {EXTERNAL_LOCATION_BATCH: 8},
-    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 60, VACATED_LOCATION_BATCH: 1},
+    "han-world-v3": {EXTERNAL_LOCATION_BATCH: 11, FRONTIER_COUNTY_BATCH: 51, GAP_COUNTY_BATCH: 56, VACATED_LOCATION_BATCH: 1},
 }
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
@@ -151,11 +151,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "b7f9d36301debca7773bdf95c6eee54e4a2fa9ebb2a0739b3866555436ee28bf"
-PINNED_SOURCE_WITNESS_SHA256 = "a31ae11b4d61735572420b6fcfa9780c3c5a435a21ccbe9161b479fb3ae27f53"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "63bed4552baaa2cf85fe9c75a7be38842b6ca358f7841c42f170ebdca8cec659"
+PINNED_SOURCE_WITNESS_SHA256 = "bae024b59b368b3338ba6545c1f1ee3fcf171e5f48adfbac82216e9bb031180f"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "2ea7ec77bf53e28a45ab376da256d950d3b037620699b6ecefa8151c1701aff3"
-PINNED_REVIEW_POLICY_SHA256 = "a2200370e9683903f712e1e9c29c0d2a6b6b0e34077f37a5d28b8bd67755b1fa"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "83c95e2048965a92b9e5d1bfc5b1e84fe90110e0a40eaad17d87a8ccd0c235ac"
+PINNED_REVIEW_POLICY_SHA256 = "b91832c6adfcbb9c5312db039a98f297bcde63b618c567aed6abd2f05cc85441"
 PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"

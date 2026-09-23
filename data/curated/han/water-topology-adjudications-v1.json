@@ -14,8 +14,8 @@
   "barrierAdjudications": [],
   "base": {
     "path": "data/map/han-tiles.json",
-    "sha256": "d2a8f95ec22c9839be3025602e5773982647304e0f95e7fc0981193393fb5012",
-    "bytes": 2294801,
+    "sha256": "99829b28075ec06e835f6f66d4233f5030a9b201a4184348ec282900afc67f09",
+    "bytes": 2291614,
     "cols": 768,
     "rows": 669,
     "projection": {
@@ -1343,7 +1343,6 @@
       "fc-xuantu-005",
       "fc-xuantu-006",
       "gc-g0000-003",
-      "gc-g0000-018",
       "gc-g0002-002",
       "gc-g0005-012",
       "gc-g0006-013",
@@ -1356,10 +1355,8 @@
       "gc-g0009-009",
       "gc-g0010-017",
       "gc-g0015-007",
-      "gc-g0018-003",
       "gc-g0022-008",
       "gc-g0028-002",
-      "gc-g0030-010",
       "gc-g0033-006",
       "gc-g0041-032",
       "gc-g0041-036",
@@ -1374,7 +1371,6 @@
       "gc-g0050-005",
       "gc-g0050-006",
       "gc-g0050-007",
-      "gc-g0053-005",
       "gc-g0060-006",
       "gc-g0060-008",
       "gc-g0061-003",
@@ -1476,7 +1472,7 @@
       "ss-zhanyinkou",
       "ss-zuocheng"
     ],
-    "landProvinceIdsSha256": "b4ebbc9809e499e6a8bcf0e2915c4a559b89726ef233f57953739fb2958a8043"
+    "landProvinceIdsSha256": "c7bc3b01f12b25fc15bf5d5b41c680b08ae35e4c33c5a5cb8ad2af758b8b07b7"
   },
   "edgeAdjudications": [],
   "ledgerId": "han-water-topology-adjudications-v1",
