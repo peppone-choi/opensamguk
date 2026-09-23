@@ -119,8 +119,8 @@ class HwihaMonthlyAssessment(
     }
 
     companion object {
-        const val STAMP_KEY = "hwihaRenownAssessmentStamp"
-        const val RANKING_KEY = "hwihaRenownRanking"
+        const val STAMP_KEY = HwihaRenownAssessment.STAMP_KEY
+        const val RANKING_KEY = HwihaRenownAssessment.RANKING_KEY
         const val TALLY_META_KEY = "hwihaRenownTally"
 
         fun stampOf(year: Int, month: Int): String = "%04d-%02d".format(year, month)
