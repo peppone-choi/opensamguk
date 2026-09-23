@@ -6,17 +6,23 @@
   "三國志",
   "後漢書",
   "晉書",
-  "華陽國志"
+  "華陽國志",
+  "三國演義"
  ],
  "forms": {
   "A": "X字Y，郡縣人也",
   "B": "X，郡縣人也",
   "D": "X字Y，郡縣人[，。]",
   "E": "姓X，諱Y(，字Z)，郡縣人",
-  "F": "郡縣人也，姓X，諱Y"
+  "F": "郡縣人也，姓X，諱Y",
+  "G": "郡縣人也，姓X，名Y",
+  "H": "X(字Y)，郡縣人也"
  },
- "volumesScanned": 369,
- "unknownTemplatesDropped": {},
+ "volumesScanned": 489,
+ "unknownTemplatesDropped": {
+  "Novel": 120,
+  "noteTA": 1
+ },
  "hits": [
   {
    "nameKanjiTraditional": "丁奉",
@@ -503,6 +509,17 @@
    "volumeSha256": "d5a3b8f8197bbc12b4dd45f1a024442f8d175084bed83e3c988393228970e572"
   },
   {
+   "nameKanjiTraditional": "孔融",
+   "courtesyName": "文舉",
+   "placeText": "魯國曲阜",
+   "form": "H",
+   "book": "三國演義",
+   "volume": "卷011",
+   "title": "第十一回 劉皇叔北海救孔融 呂溫侯濮陽破曹操",
+   "quote": "孔融，字文舉，魯國曲阜人也",
+   "volumeSha256": "03e002b8e74b33e7657206493f20aefc21ff8e7db04aeed256af95d3f045b8de"
+  },
+  {
    "nameKanjiTraditional": "孫乾",
    "courtesyName": "公佑",
    "placeText": "北海",
@@ -523,6 +540,17 @@
    "title": "呉書·孫破虜討逆傳 (孫堅 孫策)",
    "quote": "孫堅字文臺，呉郡富春人，",
    "volumeSha256": "cb108c2a67ba4ee039c84910a0aa06d88685f1d1490483141968924279785ab8"
+  },
+  {
+   "nameKanjiTraditional": "孫堅",
+   "courtesyName": "文臺",
+   "placeText": "吳郡富春",
+   "form": "G",
+   "book": "三國演義",
+   "volume": "卷002",
+   "title": "第二回 張翼德怒鞭督郵 何國舅謀誅宦豎",
+   "quote": "吳郡富春人也：姓孫，名堅，字文臺",
+   "volumeSha256": "0d16d863526caa84985520792fd0db7455fe15fa3408c3e6aaaf2cfebb1d1edf"
   },
   {
    "nameKanjiTraditional": "孫登",
@@ -875,6 +903,17 @@
    "title": "魏書•武帝紀",
    "quote": "沛國譙人也，姓曹，諱操",
    "volumeSha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d"
+  },
+  {
+   "nameKanjiTraditional": "曹操",
+   "courtesyName": "孟德",
+   "placeText": "沛國譙郡",
+   "form": "G",
+   "book": "三國演義",
+   "volume": "卷001",
+   "title": "第一回 宴桃園豪傑三結義 斬黃巾英雄首立功",
+   "quote": "沛國譙郡人也，姓曹，名操，字孟德",
+   "volumeSha256": "6586e34755dda0f7779411d690549df961349cb3d6ee37d71541c5670bf08004"
   },
   {
    "nameKanjiTraditional": "朱儁",
@@ -1658,6 +1697,17 @@
    "volumeSha256": "c12cbc222d19911ddc3cd34c0710488b0e7fcc233c67c15c0976015aceac8e8d"
   },
   {
+   "nameKanjiTraditional": "董和",
+   "courtesyName": "幼宰",
+   "placeText": "南郡枝江",
+   "form": "H",
+   "book": "三國演義",
+   "volume": "卷064",
+   "title": "第六十四回 孔明定計捉張任 楊阜借兵破馬超",
+   "quote": "董和，字幼宰，南郡枝江人也",
+   "volumeSha256": "ab1dc3b4618d778e4426ff1ee63f2dcb2650f80041bc91253e96312f1142d546"
+  },
+  {
    "nameKanjiTraditional": "董昭",
    "courtesyName": "公仁",
    "placeText": "濟陰定陶",
@@ -1821,6 +1871,17 @@
    "title": "魏書·二李臧文吕许典二庞阎传 (李典 李通 臧霸 文聘 吕虔 许褚 典韦 庞德 庞淯 阎温)",
    "quote": "許褚字仲康，譙國譙人也",
    "volumeSha256": "03f43f4ebf5a387e757ab010e77bae7ae1cf2276f55f9723e1cbe3aaca6b443d"
+  },
+  {
+   "nameKanjiTraditional": "許褚",
+   "courtesyName": "仲康",
+   "placeText": "譙國譙縣",
+   "form": "G",
+   "book": "三國演義",
+   "volume": "卷012",
+   "title": "第十二回 陶恭祖三讓徐州 曹孟德大戰呂布",
+   "quote": "我乃譙國譙縣人也：姓許，名褚，字仲康",
+   "volumeSha256": "edde802837d9a1416c2dfe0e627ae5fac0860b852d8e0f3ec9fc7a100b03f553"
   },
   {
    "nameKanjiTraditional": "許靖",
