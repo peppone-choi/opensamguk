@@ -17,7 +17,7 @@ class HwihaCountyProductionJsonTest {
         assertEquals(1_415, table.size, "생성된 원장의 縣 수와 같아야 한다")
         assertEquals(34_000, table.values.sumOf { it.iron })
         assertEquals(600, table.values.sumOf { it.horses })
-        assertEquals(197_466, table.values.sumOf { it.timber })
+        assertEquals(197_460, table.values.sumOf { it.timber })
         assertTrue(table.values.all { it.money == 0L && it.grain == 0L },
             "전·곡은 식이 만든다 — 이 표에 들어오면 이중 계산이다")
         assertTrue(table.keys.all { it > 0 })
