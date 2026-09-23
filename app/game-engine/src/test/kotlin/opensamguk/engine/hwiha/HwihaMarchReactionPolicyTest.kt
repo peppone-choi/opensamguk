@@ -28,4 +28,15 @@ class HwihaMarchReactionPolicyTest {
         assertEquals(LandMarchEntry.CLEAR to true, march(HwihaMarchReactions.Empty.toMetaValue()))
         assertEquals(LandMarchEntry.UNAVAILABLE to false, march(mapOf("version" to 9)))
     }
+
+    @Test fun `domestic corps policies INTERCEPT and EVADE written as reaction orders do not stall marches`() {
+        // 내정 스트림(HwihaReactionInventory)이 군단 방침에서 다시 쓰는 꼴 그대로다.
+        val since = opensamguk.logic.input.HwihaPhase(200, 1, 1)
+        val written = HwihaMarchReactions.of(
+            listOf(opensamguk.logic.input.HwihaReactionOrder("o-intercept", 50, 51, 2, since)),
+            listOf(opensamguk.logic.input.HwihaReactionOrder("o-evade", 60, 61, 2, since)),
+        ).toMetaValue()
+        assertEquals(HwihaMarchReactions.Presence.PENDING, HwihaMarchReactions.presence(mapOf(HwihaMarchReactions.META_KEY to written)))
+        assertEquals(LandMarchEntry.CLEAR to true, march(written))
+    }
 }

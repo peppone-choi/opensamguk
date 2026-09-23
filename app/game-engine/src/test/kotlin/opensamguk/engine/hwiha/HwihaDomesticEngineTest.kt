@@ -80,6 +80,18 @@ class HwihaDomesticEngineTest {
         assertEquals(listOf(3), payload.updatedGenerals.map { it.id })
     }
 
+    @Test fun `a placed card still marches while corps reaction orders are pending`() {
+        val world = world(); val recorder = ChangeRecorder()
+        world.setGameEnvValue(HwihaMarchReactions.META_KEY, HwihaMarchReactions.of(
+            listOf(HwihaReactionOrder("o-intercept", 1, 2, 1, HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
+        submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")
+        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
+        // The fail-closed overload still refuses to judge entry; the production march uses the non-blocking policy.
+        assertEquals(LandMarchEntry.UNAVAILABLE, HwihaMilitaryPresenceProvider(world, topology, metrics).entryAt(3, a))
+        assertTrue(HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3))
+        assertEquals(a, world.positionOf(3))
+    }
+
     @Test fun `placement takes effect on the card's next turn and the card marches to its post`() {
         val world = world(); val recorder = ChangeRecorder()
         submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")

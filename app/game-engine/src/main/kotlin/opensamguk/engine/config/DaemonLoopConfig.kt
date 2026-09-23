@@ -328,9 +328,11 @@ class DaemonLoopConfig {
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
-        // 전쟁 결과 → 명망 사건 경계. 기록 스트림(HwihaRenownEventRecorder)이 병합되면 여기 한 곳만 바꾼다.
-        val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener = opensamguk.engine.hwiha.HwihaWarOutcomeListener.NONE
-        // 반응 기록(요격·회피·설치 계책) → 행군 진입 판정 경계. 해석기(내정 입력·시야 스트림)가 병합되면 여기 한 곳만 바꾼다.
+        // 전쟁 결과 → 명망 사건 경계: 기록 스트림(HwihaRenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
+        val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener =
+            opensamguk.engine.hwiha.HwihaWarOutcomeRenownListener(world, recorder)
+        // 반응 기록(요격·회피·설치 계책) → 행군 진입 판정 경계. 요격·회피 해석기가 아직 없어 NON_BLOCKING 을 유지한다 —
+        // 내정 군단 방침(INTERCEPT/EVADE)이 쓴 반응 목록은 PENDING 으로 읽혀 행군을 막지 않는다.
         val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = opensamguk.engine.hwiha.HwihaMarchReactionPolicy.NON_BLOCKING
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }

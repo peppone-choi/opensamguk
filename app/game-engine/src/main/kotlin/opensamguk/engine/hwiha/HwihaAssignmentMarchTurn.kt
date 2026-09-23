@@ -31,7 +31,7 @@ class HwihaAssignmentMarchTurn(
             return
         }
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
-        if (HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(generalId)) return
+        if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }

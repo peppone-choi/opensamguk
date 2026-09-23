@@ -16,6 +16,8 @@ class HwihaPlacementMarchTurn(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
+    /** 반응 기록(요격·회피) 판정 — 군단·발령 행군과 같은 정책을 쓴다. 해석기가 없는 동안은 막지 않는다. */
+    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING,
 ) {
     /** @return 이 장수의 이동 단계를 배치 행군이 맡았으면 true. */
     fun onTurn(generalId: Int): Boolean {
@@ -61,7 +63,7 @@ class HwihaPlacementMarchTurn(
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
         val movement = when (val result = LandMarchProgress.advance(topology, metrics, edges, path,
             retained?.cursor ?: LandMarchCursor(path.pathHash), position.node, 1, LandMarchMetricSnapshot.NORMAL_BUDGET_MM) { node ->
-                military.entryAt(generalId, node) }) {
+                military.entryAt(generalId, node, reactions) }) {
             is LandMarchAdvance.Advanced -> result
             is LandMarchAdvance.Rejected -> { log(generalId, "부임 행군 상태를 확인할 수 없어 이동하지 않았습니다."); return true }
         }
