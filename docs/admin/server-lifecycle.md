@@ -40,8 +40,8 @@ Gateway `/admin`의 `서버 제어`에서 서버 ID, 이름, 시나리오와 화
 `SERVER_REGISTRY_JSON`은 빈 DB의 첫 기동에서만 사용하는 이관 시드입니다. 시드 완료 여부는
 `game_server_registry_seed_state`에 영속화하므로 모든 서버를 삭제한 뒤 재기동해도 과거 env
 스냅샷으로 서버를 복원하지 않습니다. 기존 설치에서 `game_server`와 계정이 모두 비어 있다면
-V60 적용 전에 env의 시드 내용이 실제 의도와 맞는지 확인합니다.
-V60 이전 gateway-api로 롤백할 때 빈 테이블에 과거 JSON이 다시 시드될 수 있으므로
+V62 적용 전에 env의 시드 내용이 실제 의도와 맞는지 확인합니다.
+V62 이전 gateway-api로 롤백할 때 빈 테이블에 과거 JSON이 다시 시드될 수 있으므로
 롤백 전에 `SERVER_REGISTRY_JSON=[]`을 확인합니다.
 
 서버 lifecycle 중 deployer는 `gateway-api`를 재생성하지 않습니다. `web-gateway`는 아직
