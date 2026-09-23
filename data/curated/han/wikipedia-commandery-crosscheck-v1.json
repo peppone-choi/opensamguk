@@ -1,0 +1,818 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "wikipedia-commandery-crosscheck-v1",
+  "note": "위키백과 郡 문서의 東漢 속현 목록을 續漢書 郡國志 정본과 대조한 결과다. **위키백과는 정본이 아니라 두 번째 축이다** — 어긋난 곳이 곧 오류라는 뜻이 아니라 들여다볼 자리라는 뜻이다. 형근자(灈/灌·成/城)처럼 繁簡 표가 잡지 못하는 차이가 여기서 드러난다. 목록이 없는 문서가 많다(雁門郡은 治所만 적는다) — 없으면 없다고 적고 채우지 않는다. 공용 간화표의 범위는 정본·타일·런타임 지도·나무위키 원장에 쓰인 글자뿐이라 위키백과는 그 밖이다 — 표에 없는 글자에서 갈린 것은 `possiblyTableScopeArtifact` 로 표시했고, 진짜 차이라는 뜻이 아니다.",
+  "source": {
+    "api": "https://zh.wikipedia.org/w/api.php",
+    "userAgent": "opensamguk-research/1.0 (Han commandery county cross-check)"
+  },
+  "totals": {
+    "commanderies": 105,
+    "withWikipediaList": 15,
+    "withoutWikipediaList": 90,
+    "agreed": 137,
+    "onlyInWikipedia": 26,
+    "onlyInCanon": 54
+  },
+  "withoutList": [
+    {
+      "commandery": "河南尹",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "河內郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "河東郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "弘農郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "京兆尹",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "左馮翊",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "右扶風",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "潁川郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "梁國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "沛國",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "陳國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "魯國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "魏郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "鉅鹿郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "常山國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "中山國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "安平國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "河閒國",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "清河國",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "趙國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "勃海郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "陳留郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "東郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "東平國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "任城國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "濟北國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "山陽郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "濟陰郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "琅邪國",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "彭城國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "下邳國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "濟南國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "樂安國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "北海國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "齊國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "南陽郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "南郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "零陵郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "桂陽郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "長沙郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "九江郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "丹陽郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "廬江郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "吳郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "漢中郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "巴郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "廣漢郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "蜀郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "犍為郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "牂牁郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "越巂郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "益州郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "永昌郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "廣漢屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "蜀郡屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "犍為屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "隴西郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "漢陽郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "武都郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "安定郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "北地郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "武威郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "張掖郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "酒泉郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "敦煌郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "張掖屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "張掖居延屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "上黨郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "太原郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "上郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "西河郡",
+      "reason": "LIST_PRESENT_BUT_NOT_EASTERN_HAN"
+    },
+    {
+      "commandery": "雲中郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "鴈門郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "涿郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "廣陽郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "代郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "上谷郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "漁陽郡",
+      "reason": "PAGE_NOT_FETCHED"
+    },
+    {
+      "commandery": "遼西郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "遼東郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "玄菟郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "樂浪郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "遼東屬國",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "南海郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "蒼梧郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "鬱林郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "合浦郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "交趾郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "九真郡",
+      "reason": "NO_COUNTY_LIST"
+    },
+    {
+      "commandery": "日南郡",
+      "reason": "NO_COUNTY_LIST"
+    }
+  ],
+  "commanderies": [
+    {
+      "commandery": "汝南郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [
+        "安成 / 安城",
+        "灈陽 / 灌陽"
+      ],
+      "wikipediaDeclared": 37,
+      "wikipediaListed": 37,
+      "canonUnits": 37,
+      "agreed": [
+        "㶏強",
+        "上蔡",
+        "北宜春",
+        "南頓",
+        "原鹿",
+        "召陵",
+        "吳房",
+        "固始",
+        "城父",
+        "安陽",
+        "宋",
+        "定潁",
+        "宜祿",
+        "富波",
+        "山桑",
+        "平輿",
+        "弋陽",
+        "征羌",
+        "思善",
+        "愼",
+        "愼陽",
+        "新息",
+        "新蔡",
+        "新陽",
+        "期思",
+        "汝陰",
+        "汝陽",
+        "細陽",
+        "襃信",
+        "西平",
+        "西華",
+        "郎陵",
+        "陽安",
+        "項",
+        "鮦陽"
+      ],
+      "onlyInWikipedia": [
+        "安成",
+        "灈陽"
+      ],
+      "onlyInCanon": [
+        "安城",
+        "灌陽"
+      ]
+    },
+    {
+      "commandery": "泰山郡",
+      "droppedFragments": [
+        "*奉高縣\n*博縣\n*梁甫縣（梁父縣）\n*鉅平縣\n*嬴縣\n*茌縣\n*萊蕪縣\n*蓋縣\n*南武陽縣\n*南城",
+        "縣治在今平邑縣郑城镇南武城故城遗址\n*費",
+        "縣治在今費縣上冶鎮古城村\n*牟縣\n\n東漢後期"
+      ],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 12,
+      "wikipediaListed": 1,
+      "canonUnits": 12,
+      "agreed": [],
+      "onlyInWikipedia": [
+        "復置華"
+      ],
+      "onlyInCanon": [
+        "南城",
+        "南武陽",
+        "博",
+        "奉髙",
+        "嬴",
+        "山茌",
+        "梁甫",
+        "牟",
+        "萊蕪",
+        "蓋",
+        "費",
+        "鉅平"
+      ]
+    },
+    {
+      "commandery": "東海郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 13,
+      "wikipediaListed": 13,
+      "canonUnits": 13,
+      "agreed": [
+        "利城",
+        "厚丘",
+        "合鄕",
+        "戚",
+        "承",
+        "昌慮",
+        "朐",
+        "祝其",
+        "蘭陵",
+        "襄賁",
+        "贛楡",
+        "郯",
+        "陰平"
+      ],
+      "onlyInWikipedia": [],
+      "onlyInCanon": []
+    },
+    {
+      "commandery": "廣陵郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 11,
+      "wikipediaListed": 11,
+      "canonUnits": 11,
+      "agreed": [
+        "堂邑",
+        "射陽",
+        "平安",
+        "廣陵",
+        "東陽",
+        "江都",
+        "海西",
+        "淩",
+        "輿",
+        "髙郵",
+        "鹽瀆"
+      ],
+      "onlyInWikipedia": [],
+      "onlyInCanon": []
+    },
+    {
+      "commandery": "平原郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 9,
+      "wikipediaListed": 9,
+      "canonUnits": 9,
+      "agreed": [
+        "安德",
+        "平原",
+        "般",
+        "高唐",
+        "鬲"
+      ],
+      "onlyInWikipedia": [
+        "博平",
+        "聊城",
+        "茌平",
+        "西平昌"
+      ],
+      "onlyInCanon": [
+        "厭次",
+        "樂陵",
+        "濕陰",
+        "祝阿"
+      ]
+    },
+    {
+      "commandery": "東萊郡",
+      "droppedFragments": [
+        "有6500戶"
+      ],
+      "possiblyTableScopeArtifact": [
+        "曲城 / 曲成"
+      ],
+      "wikipediaDeclared": 6,
+      "wikipediaListed": 6,
+      "canonUnits": 13,
+      "agreed": [
+        "惤",
+        "掖",
+        "當利",
+        "盧鄉",
+        "黃"
+      ],
+      "onlyInWikipedia": [
+        "曲城"
+      ],
+      "onlyInCanon": [
+        "不其",
+        "昌陽",
+        "曲成",
+        "東牟",
+        "牟平",
+        "葛盧",
+        "長廣",
+        "黔陬"
+      ]
+    },
+    {
+      "commandery": "江夏郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 14,
+      "wikipediaListed": 14,
+      "canonUnits": 14,
+      "agreed": [
+        "下雉",
+        "安陸",
+        "沙羨",
+        "竟陵",
+        "蘄春",
+        "西陵",
+        "西陽",
+        "軑",
+        "邾",
+        "鄂",
+        "鄳",
+        "雲杜"
+      ],
+      "onlyInWikipedia": [
+        "襄",
+        "鍾武"
+      ],
+      "onlyInCanon": [
+        "南新市",
+        "平春"
+      ]
+    },
+    {
+      "commandery": "武陵郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [
+        "舞陽 / 零陽",
+        "鐔城 / 鐔成",
+        "黚陽 / 零陽"
+      ],
+      "wikipediaDeclared": 11,
+      "wikipediaListed": 11,
+      "canonUnits": 12,
+      "agreed": [
+        "沅南",
+        "沅陵",
+        "漢壽",
+        "臨沅",
+        "辰陽",
+        "遷陵",
+        "酉陽"
+      ],
+      "onlyInWikipedia": [
+        "舞陽",
+        "鐔城",
+        "黚陽",
+        "龍陽"
+      ],
+      "onlyInCanon": [
+        "作唐",
+        "充",
+        "孱陵",
+        "鐔成",
+        "零陽"
+      ]
+    },
+    {
+      "commandery": "會稽郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [
+        "東冶 / 東部"
+      ],
+      "wikipediaDeclared": 15,
+      "wikipediaListed": 15,
+      "canonUnits": 14,
+      "agreed": [
+        "上虞",
+        "剡",
+        "句章",
+        "太末",
+        "山陰",
+        "永寧",
+        "烏傷",
+        "章安",
+        "諸暨",
+        "鄞",
+        "鄮",
+        "餘姚",
+        "餘暨"
+      ],
+      "onlyInWikipedia": [
+        "候官",
+        "東冶"
+      ],
+      "onlyInCanon": [
+        "東部"
+      ]
+    },
+    {
+      "commandery": "豫章郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 16,
+      "wikipediaListed": 16,
+      "canonUnits": 21,
+      "agreed": [
+        "南昌",
+        "建城",
+        "建昌",
+        "彭澤",
+        "新淦",
+        "海昬",
+        "艾"
+      ],
+      "onlyInWikipedia": [
+        "吳平",
+        "宜豐",
+        "康樂",
+        "新吳",
+        "望蔡",
+        "永修",
+        "豐城",
+        "豫寧",
+        "鍾陵"
+      ],
+      "onlyInCanon": [
+        "南城",
+        "南野",
+        "宜春",
+        "平都",
+        "廬陵",
+        "柴桑",
+        "歷陵",
+        "石陽",
+        "臨汝",
+        "贛",
+        "鄡陽",
+        "鄱陽",
+        "雩都",
+        "餘汗"
+      ]
+    },
+    {
+      "commandery": "金城郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 10,
+      "wikipediaListed": 10,
+      "canonUnits": 10,
+      "agreed": [
+        "临羌",
+        "令居",
+        "允吾",
+        "允街",
+        "安夷",
+        "枝阳",
+        "榆中",
+        "浩亹",
+        "破羌",
+        "金城"
+      ],
+      "onlyInWikipedia": [],
+      "onlyInCanon": []
+    },
+    {
+      "commandery": "五原郡",
+      "droppedFragments": [
+        "有4667戶",
+        "22957人"
+      ],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 10,
+      "wikipediaListed": 10,
+      "canonUnits": 10,
+      "agreed": [
+        "临沃",
+        "九原",
+        "五原",
+        "宜梁",
+        "成宜",
+        "文国",
+        "曼柏",
+        "武都",
+        "河阴",
+        "西安阳"
+      ],
+      "onlyInWikipedia": [],
+      "onlyInCanon": []
+    },
+    {
+      "commandery": "定襄郡",
+      "droppedFragments": [
+        "大利縣（治所在今和林格爾縣境內）",
+        "有374戶"
+      ],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 1,
+      "wikipediaListed": 0,
+      "canonUnits": 5,
+      "agreed": [],
+      "onlyInWikipedia": [],
+      "onlyInCanon": [
+        "中陵",
+        "善无",
+        "桐过",
+        "武成",
+        "骆"
+      ]
+    },
+    {
+      "commandery": "朔方郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 6,
+      "wikipediaListed": 6,
+      "canonUnits": 6,
+      "agreed": [
+        "三封",
+        "临戎",
+        "大城",
+        "广牧",
+        "朔方",
+        "沃野"
+      ],
+      "onlyInWikipedia": [],
+      "onlyInCanon": []
+    },
+    {
+      "commandery": "右北平郡",
+      "droppedFragments": [],
+      "possiblyTableScopeArtifact": [],
+      "wikipediaDeclared": 4,
+      "wikipediaListed": 4,
+      "canonUnits": 4,
+      "agreed": [
+        "俊靡",
+        "土垠",
+        "徐无"
+      ],
+      "onlyInWikipedia": [
+        "無終"
+      ],
+      "onlyInCanon": [
+        "无终"
+      ]
+    }
+  ]
+}

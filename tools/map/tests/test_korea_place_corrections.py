@@ -73,8 +73,13 @@ class KoreaCorrectionsTest(unittest.TestCase):
         prior=K.ROOT/'data/map/han-world-v3-1341-artifacts-v1'
         entry=next(r for r in json.loads((prior/'catalog.json').read_text())['files'] if r['path']=='data/curated/han/route-node-selection-v1.json')
         old={r['numericCityId']:(r['routeNodeKey'],r['physicalPlaceRef']) for r in json.loads(gzip.decompress((prior/entry['blob']).read_bytes()))['routeNodes']}
+        # 1341 판에 있던 번호는 정체성이 그대로여야 하고, 없던 번호는 그 뒤에 새로 발급한 것뿐이어야 한다
+        # (2026-09-23 결손 縣 56곳 = 1342–1397. 예약 번호 1195–1341 은 다시 쓰지 않는다).
         for row in selection:
-            self.assertEqual(old[row['numericCityId']],(row['routeNodeKey'],row['physicalPlaceRef']))
+            if row['numericCityId'] in old:
+                self.assertEqual(old[row['numericCityId']],(row['routeNodeKey'],row['physicalPlaceRef']))
+            else:
+                self.assertGreater(row['numericCityId'], max(old))
         for name in ('external-places.json',):
             places=json.loads((K.ROOT/'data/map'/name).read_text())['places']
             self.assertFalse(removed & {r['id'] for r in places})
@@ -120,4 +125,4 @@ class KoreaCorrectionsTest(unittest.TestCase):
         self.assertEqual(meta['rows'] - 1, owned_rows[-1], '남쪽에 무주 여백 띠가 남았다')
         self.assertEqual(0, owned_cols[0], '서쪽에 무주 여백 띠가 남았다')
         self.assertEqual(meta['cols'] - 1, owned_cols[-1], '동쪽에 무주 여백 띠가 남았다')
-        self.assertEqual(1_374, len(self.current['provinceRecords']))
+        self.assertEqual(1_430, len(self.current['provinceRecords']))  # 2026-09-23 결손 縣 56곳

@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "survived-county-adjudications-v1",
+  "note": "gap-snapshot-reconciliation-v1 이 verdict=SURVIVED_TO_220 으로 남긴 10 건의 심사 결과다. 판정 축은 둘이다 — (1) 140년 표제 縣인가: 續漢書 郡國志 본문을 직독해 확인한다. (2) 220년까지 존속했는가: 晉書 地理志(卷014·015) 속현 목록을 1차 증인으로 쓰고 元和郡縣圖志·三國志·華陽國志로 보강한다. TGAZ 좌표는 이름만으로 붙은 것이므로 郡 중심과의 거리로 同名異地를 걸러야 한다.",
+  "method": {
+    "junguozhiReading": "색인 스니펫이 아니라 권별 본문을 직독했다. 郡國志는 권마다 마크업이 다르다 — 卷109·111·113 은 〖縣〗, 卷110·112 는 ===郡名=== 뒤에 들여쓴 맨 이름이다. 卷113 은 본문이 簡體다. 표제 縣만 세려면 이 세 형태를 모두 받아야 하고, 한 형태만 가정한 파서는 조용히 틀린다.",
+    "characterLevelFalsePositives": "색인은 글자 단위로 매칭하므로 부분 일치가 실제로 섞인다. 氐道 조회는 湔氐道·甸氐道·剛氐道 를 같이 물어왔다 — 표제 縣 여부는 〖氐道〗 같은 표제 형태로만 판정했다.",
+    "homonymCoordinateCheck": "TGAZ 좌표를 지도의 郡 중심(속현 seat 평균)과 비교해 200 km 초과를 의심으로 걸렀다. 2 건이 걸렸고 심사 결과 白水 는 실제 지리(廣漢 북단, 같은 지점에 白水關·후대 白水郡), 氐道 는 진짜 同名異地였다. 거리 검사는 郡 중심이 몇 점으로 잡혔는지에 민감하므로 단독 판정 근거로 쓰지 말고 후속 심사의 트리거로만 쓴다.",
+    "corpusBoundary": "水經注·東觀漢記·太平御覽·藝文類聚·通典은 색인 밖이다. 0건은 그 경계 안에서의 0건이다."
+  },
+  "totals": {
+    "REAL_GAP": 8,
+    "REAL_GAP_NO_COORDINATE": 1,
+    "FALSE_ABSENCE": 1
+  },
+  "adjudications": [
+    {
+      "commandery": "河東郡",
+      "canonName": "楊",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷109 郡國志 河東郡(二十城) — 「〖杨〗有高梁亭。」",
+      "survivalWitness": "晉書 卷014 平陽郡 — 「平陽　楊{{*|故楊侯國。}}　端氏…」",
+      "corroboration": "元和郡縣圖志 卷12 洪洞縣 — 「本漢楊縣，即春秋時楊侯國也…漢以為縣」",
+      "reading": "140년 河東郡 표제 縣이고 晉 平陽郡까지 이어진다. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "111.71672",
+        "latitude": "36.22077",
+        "span": "-206~220",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 97
+      }
+    },
+    {
+      "commandery": "汝南郡",
+      "canonName": "鮦陽",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷110 郡國志 汝南郡(三十七城) — 「　　鮦陽，侯國。」",
+      "survivalWitness": "晉書 卷014 汝陰郡 — 「汝陰　慎　原鹿　固始　鮦陽　新蔡　宋　褒信」",
+      "corroboration": "後漢書 卷110 校勘記 — 「今杜注云『繁陽，楚地，在汝南鮦陽縣南』」",
+      "reading": "140년 侯國이고 晉 汝陰郡으로 이관돼 존속. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "114.96900",
+        "latitude": "33.08200",
+        "span": "206~529",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 0
+      }
+    },
+    {
+      "commandery": "南陽郡",
+      "canonName": "順陽",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷112 郡國志 南陽郡(三十七城) — 「　　順陽，侯國，故博山。有須聚。」",
+      "survivalWitness": "晉書 卷015 順陽郡 — 「酂　順陽　南鄉　丹水　武當　陰　筑陽　析」",
+      "corroboration": "晉書 卷015 — 「分南陽立義陽郡，改南鄉爲順陽郡」; 後漢書 卷014 「順陽懷侯」",
+      "reading": "140년 侯國이고 이름이 그대로 晉 順陽郡의 郡名·縣名이 된다. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "111.53200",
+        "latitude": "32.74900",
+        "span": "92~478",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 89
+      }
+    },
+    {
+      "commandery": "南陽郡",
+      "canonName": "丹水",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷112 郡國志 南陽郡 — 「　　丹水，故屬弘農。有章密鄉。有三戸亭。」",
+      "survivalWitness": "晉書 卷015 順陽郡 — 「酂　順陽　南鄉　丹水　武當…」",
+      "corroboration": "後漢書 卷042 注 — 「杜預注左傳曰：今丹水縣北有三戶亭。故城在今鄧州內鄉縣西南也」",
+      "reading": "140년 표제 縣이고 晉 順陽郡까지 이어진다. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "111.22900",
+        "latitude": "33.08100",
+        "span": "-249~616",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 121
+      }
+    },
+    {
+      "commandery": "廣漢郡",
+      "canonName": "白水",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷113 郡國志 廣漢郡(十一城) — 「〖白水〗」",
+      "survivalWitness": "晉書 卷014 — 「劉備據蜀，又分廣漢之葭萌、涪城、梓潼、白水四縣…以爲梓潼郡」; 晉 梓潼郡 속현에 「白水」",
+      "corroboration": "元和郡縣圖志 卷22 — 「本漢白水縣地，屬廣漢郡」; 華陽國志 卷二 — 「白水縣 有關尉」",
+      "reading": "유비가 廣漢에서 갈라 梓潼郡을 세울 때 네 縣 중 하나로 이름이 명시된다 — 220년 존속의 직접 증거다.",
+      "tgaz": {
+        "id": "hvd_44598",
+        "longitude": "105.49215",
+        "latitude": "32.66547",
+        "span": "-201~582",
+        "coordinateTrust": "OK_VERIFIED",
+        "centroidDistanceKm": 204,
+        "coordinateNote": "郡 중심에서 204 km 라 1차 검사에서 의심으로 걸렸으나 오염이 아니다. 같은 지점에 hvd_21247 白水關·hvd_115032 白水郡(439~582) 이 겹친다 — 廣漢郡 북단의 실제 위치다. 지도의 廣漢郡 중심은 6점밖에 연결돼 있지 않아 중심 자체가 약하다."
+      }
+    },
+    {
+      "commandery": "永昌郡",
+      "canonName": "邪龍",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷113 郡國志 永昌郡(八城) — 「〖邪龙〗」",
+      "survivalWitness": "晉書 卷014 雲南郡(蜀置) — 「雲平　雲南　梇棟　青蛉　姑復　邪龍　楪榆　遂久　永寧」",
+      "corroboration": "後漢書 卷086 南蠻西南夷列傳 — 「邪龍縣昆明夷鹵承等應募」",
+      "reading": "140년 표제 縣이고 蜀이 세운 雲南郡으로 이관돼 존속. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "100.30900",
+        "latitude": "25.23000",
+        "span": "-109~548",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 92
+      }
+    },
+    {
+      "commandery": "太原郡",
+      "canonName": "茲氏",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷113 郡國志 太原郡(十六城) — 「〖兹氏〗」",
+      "survivalWitness": "三國志 卷28 鍾會傳 注 — 「夫人張氏，字昌蒲，太原茲氏人」(위대 용례)",
+      "corroboration": "元和郡縣圖志 卷13 — 「本漢茲氏縣也，曹魏於此置西河郡，晉改為國，仍改茲氏縣為隰城縣」; 晉書 卷101 — 「左部居太原茲氏」",
+      "reading": "晉書 地理志에 茲氏가 0건인 것은 폐지가 아니라 개명이다 — 晉이 茲氏를 隰城으로 고쳤고 晉 西河國 속현은 隰城으로 실린다. 黃初二年(221) 西河郡 설치가 이 縣 자리이므로 220년 시점에는 太原郡 茲氏가 맞다.",
+      "tgaz": {
+        "id": null,
+        "longitude": "111.81400",
+        "latitude": "37.20600",
+        "span": "23~281",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 72
+      }
+    },
+    {
+      "commandery": "西河郡",
+      "canonName": "中陽",
+      "verdict": "REAL_GAP",
+      "junguozhi": "後漢書 卷113 郡國志 西河郡(十三城) — 「〖中阳〗」",
+      "survivalWitness": "晉書 卷014 西河國 — 「離石　隰城　中陽　介休」",
+      "corroboration": "元和郡縣圖志 卷13 — 「曹魏移西河郡中陽縣於今理，永嘉後省入隰城」",
+      "reading": "140년 표제 縣이고 曹魏가 옮겨 세운 기록이 있으며 晉 西河國까지 이어진다. 220년 존속.",
+      "tgaz": {
+        "id": null,
+        "longitude": "110.84800",
+        "latitude": "37.37600",
+        "span": "220~307",
+        "coordinateTrust": "OK",
+        "centroidDistanceKm": 29
+      }
+    },
+    {
+      "commandery": "隴西郡",
+      "canonName": "氐道",
+      "verdict": "REAL_GAP_NO_COORDINATE",
+      "junguozhi": "後漢書 卷113 郡國志 隴西郡(十一城) — 「〖狄道〗〖安故〗〖氐道〗养水出此。〖首阳〗…」",
+      "survivalWitness": "UNKNOWN — 220년 전후 증인이 색인된 코퍼스에 0건이다.",
+      "corroboration": "漢書 卷028 隴西郡 縣十一 — 「狄道，上邽，安故，氐道，首陽，予道，大夏，羌道，襄武，臨洮，西」; 後漢書 卷024 馬援列傳 — 「十三年…至氐道縣」",
+      "reading": "140년 隴西郡 표제 縣임은 郡國志 본문으로 확정된다. 그러나 晉書 卷014 隴西郡은 統縣四(襄武·首陽·臨洮·狄道)로 氐道가 없어 280년에는 폐지됐고, 그 사이 220년 단면의 증인이 없다. 讀史方輿紀要까지 코퍼스 전체를 쓸어도 0건이므로 존속 여부는 UNKNOWN 이다. 재조회 시 水經注·太平御覽·通典은 색인 밖이라는 점을 감안해야 한다.",
+      "tgaz": {
+        "id": "hvd_96450",
+        "longitude": null,
+        "latitude": null,
+        "span": null,
+        "coordinateTrust": "REJECTED_HOMONYM",
+        "centroidDistanceKm": 245,
+        "coordinateNote": "이전 대조가 붙인 「氐道縣 214~279 @103.60289,32.77417」 은 隴西郡 氐道가 아니다. 그 좌표는 hvd_96448·hvd_96449 湔氐道(-314~155, 169~184) 와 완전히 같은 지점이고 뒤이어 hvd_96451 升遷縣(280~552) 으로 이어진다 — 사천 岷江 상류 蜀郡 湔氐道 계승 사슬이다. 감숙 狄道·安故 옆의 隴西 氐道와 245 km 떨어져 있다. 이름만으로 붙인 同名異地이므로 좌표를 쓰면 안 된다. TGAZ 에 隴西 氐道 레코드는 없다."
+      }
+    },
+    {
+      "commandery": "魯國",
+      "canonName": "魯國",
+      "verdict": "FALSE_ABSENCE",
+      "junguozhi": "後漢書 卷110 郡國志 — 「===魯國===　　魯國，秦薛郡，高后改…六城，戸七萬八千四百四十七」 다음 줄이 「　　魯國，古奄國。」",
+      "survivalWitness": "지도 魯國 속현 6/6 — 鲁县·卞县·蕃县·薛县·汶阳县·巨平县. 郡國志 「六城」과 수가 맞는다.",
+      "corroboration": "晉書 卷014 — 「兼食魯郡二十九縣」(魯郡 존속)",
+      "reading": "결손이 아니다. 코퍼스 본문이 郡 헤더 「魯國」 바로 뒤에 첫 縣을 다시 「魯國，古奄國」 으로 싣고 있어 이 줄이 縣 이름으로 파싱됐다. 정본 縣명은 魯(魯縣)이고 지도에 鲁县 으로 이미 있다. 앞선 판정은 이를 「헤더를 縣 #1 로 잘못 셈」 이라고 적었는데 정확하지 않다 — 카탈로그가 헤더를 센 게 아니라 코퍼스 표기 자체가 縣 자리에 郡名을 반복한다.",
+      "tgaz": {
+        "id": null,
+        "longitude": "116.98700",
+        "latitude": "35.59900",
+        "span": "23~369",
+        "coordinateTrust": "N/A_NOT_A_GAP",
+        "centroidDistanceKm": 18
+      }
+    }
+  ]
+}

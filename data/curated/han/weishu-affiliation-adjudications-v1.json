@@ -1,0 +1,847 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "weishu-affiliation-adjudications-v1",
+  "note": "weishu-affiliation-v1 에서 걸린 6 건의 심사와, 다섯 축을 모두 통과하지 못한 잔여 110 건의 성격 규명이다. 魏書 地形志는 縣마다 「二漢屬」·「後漢屬X」·「晉屬Y」 를 적어 220 년을 직접 가른다.",
+  "method": {
+    "control": "본문에서 눈으로 확인한 표제 9 건(繁陽·列人·武安·好畤·池陽·靈武·槐里·斥章·元城)을 도구 코드 경로로 조회해 전부 정확히 한 번씩, 예상한 註로 걸리는 것을 보았다. 조회는 살아 있다.",
+    "coverageDiagnosis": "110 건이 ABSENT 인데 코퍼스 결손이 아니다 — 필요한 郡은 대부분 실려 있다(西河·五原·雲中·代郡·漁陽·太原·樂浪·廣陽은 卷106A, 武威·張掖·上郡·金城·安定·北地·隴西·漢陽은 卷106B). 그런데 北魏 郡들은 이름만 물려받고 속현 집합이 완전히 다르다 — **그 漢縣이 北魏까지 남지 않았다**는 뜻이고, 宋書와 같은 구조적 한계다: 이 축은 존속자만 확인할 수 있고 폐지자를 판정하지 못한다.",
+    "namingArtifactExhausted": "잔여 110 건에 대해 郡別로 「지도에만 있는 이름」 과의 근접 대조를 전수로 돌렸더니 1 건만 나왔고 그것도 이미 심사한 安平國 南深↔南䜌(校勘記가 南深澤이라 하고 南䜌은 다른 縣)이었다. naming-artifact-false-absences-v1 의 8 건이 이 갈래의 전부다 — 잔여는 표기 문제가 아니다."
+  },
+  "totals": {
+    "REAL_GAP": 3,
+    "UNRESOLVED": 2,
+    "HOMONYM_REJECTED": 1
+  },
+  "adjudications": [
+    {
+      "commandery": "代郡",
+      "name": "高柳",
+      "verdict": "REAL_GAP",
+      "confidence": "STRONG",
+      "evidence": "魏書 卷106A 地形志 — 「高柳{{*|二漢屬代郡，晉罷，後復屬。}}」",
+      "reading": "「二漢屬代郡」 이 前漢·後漢 모두 代郡 소속임을 직접 적고 폐지 주체는 晉이다 — 220 년엔 있었다."
+    },
+    {
+      "commandery": "代郡",
+      "name": "东安阳",
+      "verdict": "REAL_GAP",
+      "confidence": "STRONG",
+      "evidence": "魏書 卷106A 地形志 — 「安陽{{*|二漢曰東安陽，屬代郡，晉屬，後改屬。}}」",
+      "reading": "「二漢曰東安陽，屬代郡，晉屬」 — 後漢 이름·소속과 晉 존속을 한 줄에 적는다. 北魏가 安陽으로 줄여 부른 것이다."
+    },
+    {
+      "commandery": "武威郡",
+      "name": "休屠",
+      "verdict": "REAL_GAP",
+      "confidence": "MODERATE",
+      "evidence": "魏書 卷106B 地形志 涼州 武興郡 — 「領縣三　戶三百八十五　晏然　馬城　休屠」; 같은 州 武威郡 — 「林中　襄城{{*|有休屠城、武始澤。}}」",
+      "reading": "北魏 涼州에 休屠縣이 표제로 남아 있고 옛 休屠城도 襄城 註에 남는다. 다만 이 표제엔 漢代 소속 註가 없어 「二漢屬」 류의 직접 진술이 아니다 — 같은 지역에 이름이 이어진다는 정황이다."
+    },
+    {
+      "commandery": "武威郡",
+      "name": "武威",
+      "verdict": "UNRESOLVED",
+      "evidence": "魏書 卷106B — 「鶉陰{{*|郡治。前漢屬安定，後漢屬武威，晉罷，後復屬。}}」 및 그 校勘記",
+      "reading": "걸린 것은 鶉陰의 註이고 「後漢屬武威」 는 郡을 가리킨다. 武威縣 자체의 진술이 아니다."
+    },
+    {
+      "commandery": "北地郡",
+      "name": "灵州",
+      "verdict": "UNRESOLVED",
+      "evidence": "魏書 卷106B — 「富平{{*|二漢、晉屬北地，後屬。有神泉、靈州城、彰獵山。}}」",
+      "reading": "靈州가 富平 註의 「靈州城」 으로만 나온다 — 城은 남았으나 縣으로서의 진술이 없다."
+    },
+    {
+      "commandery": "雲中郡",
+      "name": "沙陵",
+      "verdict": "HOMONYM_REJECTED",
+      "evidence": "魏書 卷106A — 걸린 「沙陵」 은 鉅鹿 南和 註의 「有…沙陵…」 이다",
+      "reading": "雲中 沙陵이 아니다."
+    }
+  ],
+  "residual": {
+    "note": "다섯 축(晉書 地理志·讀史方輿紀要 처분·宋書 州郡志·魏書 地形志, 그리고 TGAZ 좌표)이 모두 침묵한 110 건이다. **침묵은 폐지의 증명이 아니다.** 다만 성격이 둘로 갈리고, 그 둘에 필요한 다음 수가 다르다.",
+    "frontierCollapse": {
+      "count": 47,
+      "reading": "城당 1,500 戶 미만인 邊郡의 縣들이다 — 敦煌 6城에 戶 748(城당 124), 金城 385, 西河 438, 五原 466, 雲中 486, 隴西 511, 上郡 516, 北地 520, 定襄 630, 武威 717, 張掖 800. 郡國志 자신이 기록한 수치다. 北魏 涼州가 領郡十·縣二十에 戶 3,273 인 것과 이어진다. 이 縣들이 漢末에 사라졌다는 읽기가 가장 인색하고, 네 축의 침묵과도 일관된다. 그래도 **증명은 아니다** — 水經注·太平御覽·通典은 여전히 색인 밖이다.",
+      "counties": [
+        {
+          "commandery": "右扶風",
+          "name": "茂陵",
+          "declaredCities": 15,
+          "households": 17352,
+          "householdsPerCounty": 1156
+        },
+        {
+          "commandery": "隴西郡",
+          "name": "河关",
+          "declaredCities": 11,
+          "households": 5628,
+          "householdsPerCounty": 511
+        },
+        {
+          "commandery": "金城郡",
+          "name": "令居",
+          "declaredCities": 10,
+          "households": 3858,
+          "householdsPerCounty": 385
+        },
+        {
+          "commandery": "安定郡",
+          "name": "乌枝",
+          "declaredCities": 8,
+          "households": 6094,
+          "householdsPerCounty": 761
+        },
+        {
+          "commandery": "安定郡",
+          "name": "鹑觚",
+          "declaredCities": 8,
+          "households": 6094,
+          "householdsPerCounty": 761
+        },
+        {
+          "commandery": "北地郡",
+          "name": "参[�]",
+          "declaredCities": 6,
+          "households": 3122,
+          "householdsPerCounty": 520
+        },
+        {
+          "commandery": "武威郡",
+          "name": "揟次",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "鸾鸟",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "朴[B459]",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "媪围",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "仓松",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "鹯阴",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "租厉",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "武威郡",
+          "name": "左骑",
+          "declaredCities": 14,
+          "households": 10042,
+          "householdsPerCounty": 717
+        },
+        {
+          "commandery": "酒泉郡",
+          "name": "乾齐",
+          "declaredCities": 9,
+          "households": 12706,
+          "householdsPerCounty": 1411
+        },
+        {
+          "commandery": "敦煌郡",
+          "name": "拼泉",
+          "declaredCities": 6,
+          "households": 748,
+          "householdsPerCounty": 124
+        },
+        {
+          "commandery": "張掖屬國",
+          "name": "左骑",
+          "declaredCities": 5,
+          "households": 4000,
+          "householdsPerCounty": 800
+        },
+        {
+          "commandery": "張掖屬國",
+          "name": "千人",
+          "declaredCities": 5,
+          "households": 4000,
+          "householdsPerCounty": 800
+        },
+        {
+          "commandery": "張掖屬國",
+          "name": "司马官",
+          "declaredCities": 5,
+          "households": 4000,
+          "householdsPerCounty": 800
+        },
+        {
+          "commandery": "張掖屬國",
+          "name": "千人官",
+          "declaredCities": 5,
+          "households": 4000,
+          "householdsPerCounty": 800
+        },
+        {
+          "commandery": "上郡",
+          "name": "肤施",
+          "declaredCities": 10,
+          "households": 5169,
+          "householdsPerCounty": 516
+        },
+        {
+          "commandery": "上郡",
+          "name": "漆垣",
+          "declaredCities": 10,
+          "households": 5169,
+          "householdsPerCounty": 516
+        },
+        {
+          "commandery": "上郡",
+          "name": "奢延",
+          "declaredCities": 10,
+          "households": 5169,
+          "householdsPerCounty": 516
+        },
+        {
+          "commandery": "上郡",
+          "name": "桢林",
+          "declaredCities": 10,
+          "households": 5169,
+          "householdsPerCounty": 516
+        },
+        {
+          "commandery": "西河郡",
+          "name": "美稷",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "乐街",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "皋狼",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "益兰",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "圜阴",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "蔺",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "圜阳",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "西河郡",
+          "name": "广衍",
+          "declaredCities": 13,
+          "households": 5698,
+          "householdsPerCounty": 438
+        },
+        {
+          "commandery": "五原郡",
+          "name": "临沃",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "五原郡",
+          "name": "文国",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "五原郡",
+          "name": "宜梁",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "五原郡",
+          "name": "曼柏",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "五原郡",
+          "name": "成宜",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "五原郡",
+          "name": "西安阳",
+          "declaredCities": 10,
+          "households": 4667,
+          "householdsPerCounty": 466
+        },
+        {
+          "commandery": "雲中郡",
+          "name": "箕陵",
+          "declaredCities": 11,
+          "households": 5351,
+          "householdsPerCounty": 486
+        },
+        {
+          "commandery": "雲中郡",
+          "name": "北舆",
+          "declaredCities": 11,
+          "households": 5351,
+          "householdsPerCounty": 486
+        },
+        {
+          "commandery": "雲中郡",
+          "name": "成乐",
+          "declaredCities": 11,
+          "households": 5351,
+          "householdsPerCounty": 486
+        },
+        {
+          "commandery": "雲中郡",
+          "name": "武进",
+          "declaredCities": 11,
+          "households": 5351,
+          "householdsPerCounty": 486
+        },
+        {
+          "commandery": "定襄郡",
+          "name": "桐过",
+          "declaredCities": 5,
+          "households": 3153,
+          "householdsPerCounty": 630
+        },
+        {
+          "commandery": "定襄郡",
+          "name": "武成",
+          "declaredCities": 5,
+          "households": 3153,
+          "householdsPerCounty": 630
+        },
+        {
+          "commandery": "定襄郡",
+          "name": "骆",
+          "declaredCities": 5,
+          "households": 3153,
+          "householdsPerCounty": 630
+        },
+        {
+          "commandery": "定襄郡",
+          "name": "中陵",
+          "declaredCities": 5,
+          "households": 3153,
+          "householdsPerCounty": 630
+        },
+        {
+          "commandery": "上谷郡",
+          "name": "雊瞀",
+          "declaredCities": 8,
+          "households": 10352,
+          "householdsPerCounty": 1294
+        }
+      ]
+    },
+    "interior": {
+      "count": 63,
+      "reading": "汝南(城당 11,201 戶)·潁川(15,496)·蜀郡(27,500)·陳國(12,517) 같은 내지 郡의 縣들이라 **인구 붕괴로 설명되지 않는다.** 표기 문제도 아님이 위 전수 대조로 확인됐다. 따라서 이쪽은 남은 원인이 다르다 — 지도 생성 단계의 누락이거나, 사료가 이 표기로만 침묵하는 경우다. 다음 수는 축을 더 늘리는 것이 아니라 **지도 생성 사슬(CHGIS 대조·build 단계)을 보는 것**이다.",
+      "counties": [
+        {
+          "commandery": "河南尹",
+          "name": "巩",
+          "declaredCities": 21,
+          "households": 218486,
+          "householdsPerCounty": 10404
+        },
+        {
+          "commandery": "京兆尹",
+          "name": "阳陵",
+          "declaredCities": 10,
+          "households": 53299,
+          "householdsPerCounty": 5329
+        },
+        {
+          "commandery": "左馮翊",
+          "name": "频阳",
+          "declaredCities": 13,
+          "households": 37090,
+          "householdsPerCounty": 2853
+        },
+        {
+          "commandery": "左馮翊",
+          "name": "莲勺",
+          "declaredCities": 13,
+          "households": 37090,
+          "householdsPerCounty": 2853
+        },
+        {
+          "commandery": "潁川郡",
+          "name": "焉陵",
+          "declaredCities": 17,
+          "households": 263440,
+          "householdsPerCounty": 15496
+        },
+        {
+          "commandery": "汝南郡",
+          "name": "㶏強",
+          "declaredCities": 37,
+          "households": 414448,
+          "householdsPerCounty": 11201
+        },
+        {
+          "commandery": "汝南郡",
+          "name": "灌陽",
+          "declaredCities": 37,
+          "households": 414448,
+          "householdsPerCounty": 11201
+        },
+        {
+          "commandery": "汝南郡",
+          "name": "召陵",
+          "declaredCities": 37,
+          "households": 414448,
+          "householdsPerCounty": 11201
+        },
+        {
+          "commandery": "汝南郡",
+          "name": "思善",
+          "declaredCities": 37,
+          "households": 414448,
+          "householdsPerCounty": 11201
+        },
+        {
+          "commandery": "沛國",
+          "name": "臨睢",
+          "declaredCities": 21,
+          "households": 210495,
+          "householdsPerCounty": 10023
+        },
+        {
+          "commandery": "沛國",
+          "name": "太丘",
+          "declaredCities": 21,
+          "households": 210495,
+          "householdsPerCounty": 10023
+        },
+        {
+          "commandery": "陳國",
+          "name": "寧平",
+          "declaredCities": 9,
+          "households": 112653,
+          "householdsPerCounty": 12517
+        },
+        {
+          "commandery": "鉅鹿郡",
+          "name": "南〈糸言糸〉",
+          "declaredCities": 15,
+          "households": 119517,
+          "householdsPerCounty": 7967
+        },
+        {
+          "commandery": "安平國",
+          "name": "南深",
+          "declaredCities": 13,
+          "households": 91440,
+          "householdsPerCounty": 7033
+        },
+        {
+          "commandery": "東平國",
+          "name": "富成",
+          "declaredCities": 7,
+          "households": 79012,
+          "householdsPerCounty": 11287
+        },
+        {
+          "commandery": "山陽郡",
+          "name": "防東",
+          "declaredCities": 10,
+          "households": 119898,
+          "householdsPerCounty": 11989
+        },
+        {
+          "commandery": "彭城國",
+          "name": "菑丘",
+          "declaredCities": 8,
+          "households": 86170,
+          "householdsPerCounty": 10771
+        },
+        {
+          "commandery": "下邳國",
+          "name": "盱臺",
+          "declaredCities": 17,
+          "households": 136389,
+          "householdsPerCounty": 8022
+        },
+        {
+          "commandery": "下邳國",
+          "name": "髙山",
+          "declaredCities": 17,
+          "households": 136389,
+          "householdsPerCounty": 8022
+        },
+        {
+          "commandery": "下邳國",
+          "name": "潘旌",
+          "declaredCities": 17,
+          "households": 136389,
+          "householdsPerCounty": 8022
+        },
+        {
+          "commandery": "下邳國",
+          "name": "東成",
+          "declaredCities": 17,
+          "households": 136389,
+          "householdsPerCounty": 8022
+        },
+        {
+          "commandery": "樂安國",
+          "name": "蓼城",
+          "declaredCities": 9,
+          "households": 74400,
+          "householdsPerCounty": 8266
+        },
+        {
+          "commandery": "東萊郡",
+          "name": "葛盧",
+          "declaredCities": 13,
+          "households": 114297,
+          "householdsPerCounty": 8792
+        },
+        {
+          "commandery": "南郡",
+          "name": "中盧",
+          "declaredCities": 17,
+          "households": 162570,
+          "householdsPerCounty": 9562
+        },
+        {
+          "commandery": "九江郡",
+          "name": "浚遒",
+          "declaredCities": 14,
+          "households": 89436,
+          "householdsPerCounty": 6388
+        },
+        {
+          "commandery": "蜀郡",
+          "name": "湔氐道",
+          "declaredCities": 4,
+          "households": 110000,
+          "householdsPerCounty": 27500
+        },
+        {
+          "commandery": "蜀郡",
+          "name": "八陵",
+          "declaredCities": 4,
+          "households": 110000,
+          "householdsPerCounty": 27500
+        },
+        {
+          "commandery": "牂牁郡",
+          "name": "同并",
+          "declaredCities": 16,
+          "households": 31523,
+          "householdsPerCounty": 1970
+        },
+        {
+          "commandery": "牂牁郡",
+          "name": "进乘",
+          "declaredCities": 16,
+          "households": 31523,
+          "householdsPerCounty": 1970
+        },
+        {
+          "commandery": "牂牁郡",
+          "name": "西随",
+          "declaredCities": 16,
+          "households": 31523,
+          "householdsPerCounty": 1970
+        },
+        {
+          "commandery": "越巂郡",
+          "name": "灵关道",
+          "declaredCities": 14,
+          "households": 130120,
+          "householdsPerCounty": 9294
+        },
+        {
+          "commandery": "越巂郡",
+          "name": "三缝",
+          "declaredCities": 14,
+          "households": 130120,
+          "householdsPerCounty": 9294
+        },
+        {
+          "commandery": "越巂郡",
+          "name": "苏示",
+          "declaredCities": 14,
+          "households": 130120,
+          "householdsPerCounty": 9294
+        },
+        {
+          "commandery": "越巂郡",
+          "name": "大莋",
+          "declaredCities": 14,
+          "households": 130120,
+          "householdsPerCounty": 9294
+        },
+        {
+          "commandery": "益州郡",
+          "name": "胜休",
+          "declaredCities": 17,
+          "households": 29036,
+          "householdsPerCounty": 1708
+        },
+        {
+          "commandery": "益州郡",
+          "name": "梇栋",
+          "declaredCities": 17,
+          "households": 29036,
+          "householdsPerCounty": 1708
+        },
+        {
+          "commandery": "廣漢屬國",
+          "name": "阴平道",
+          "declaredCities": 3,
+          "households": 37110,
+          "householdsPerCounty": 12370
+        },
+        {
+          "commandery": "廣漢屬國",
+          "name": "甸氐道",
+          "declaredCities": 3,
+          "households": 37110,
+          "householdsPerCounty": 12370
+        },
+        {
+          "commandery": "廣漢屬國",
+          "name": "刚氐道",
+          "declaredCities": 3,
+          "households": 37110,
+          "householdsPerCounty": 12370
+        },
+        {
+          "commandery": "漢陽郡",
+          "name": "望恒",
+          "declaredCities": 13,
+          "households": 27423,
+          "householdsPerCounty": 2109
+        },
+        {
+          "commandery": "漢陽郡",
+          "name": "豲道",
+          "declaredCities": 13,
+          "households": 27423,
+          "householdsPerCounty": 2109
+        },
+        {
+          "commandery": "漢陽郡",
+          "name": "兰干",
+          "declaredCities": 13,
+          "households": 27423,
+          "householdsPerCounty": 2109
+        },
+        {
+          "commandery": "漢陽郡",
+          "name": "显亲",
+          "declaredCities": 13,
+          "households": 27423,
+          "householdsPerCounty": 2109
+        },
+        {
+          "commandery": "武都郡",
+          "name": "武都道",
+          "declaredCities": 7,
+          "households": 20102,
+          "householdsPerCounty": 2871
+        },
+        {
+          "commandery": "武都郡",
+          "name": "羌道",
+          "declaredCities": 7,
+          "households": 20102,
+          "householdsPerCounty": 2871
+        },
+        {
+          "commandery": "太原郡",
+          "name": "晋阳",
+          "declaredCities": 16,
+          "households": 30902,
+          "householdsPerCounty": 1931
+        },
+        {
+          "commandery": "鴈門郡",
+          "name": "埒",
+          "declaredCities": 14,
+          "households": 31862,
+          "householdsPerCounty": 2275
+        },
+        {
+          "commandery": "鴈門郡",
+          "name": "彊阴",
+          "declaredCities": 14,
+          "households": 31862,
+          "householdsPerCounty": 2275
+        },
+        {
+          "commandery": "廣陽郡",
+          "name": "蓟",
+          "declaredCities": 5,
+          "households": 44550,
+          "householdsPerCounty": 8910
+        },
+        {
+          "commandery": "代郡",
+          "name": "道人",
+          "declaredCities": 11,
+          "households": 20123,
+          "householdsPerCounty": 1829
+        },
+        {
+          "commandery": "代郡",
+          "name": "班氏",
+          "declaredCities": 11,
+          "households": 20123,
+          "householdsPerCounty": 1829
+        },
+        {
+          "commandery": "漁陽郡",
+          "name": "泉州",
+          "declaredCities": 9,
+          "households": 68456,
+          "householdsPerCounty": 7606
+        },
+        {
+          "commandery": "漁陽郡",
+          "name": "傂奚",
+          "declaredCities": 9,
+          "households": 68456,
+          "householdsPerCounty": 7606
+        },
+        {
+          "commandery": "漁陽郡",
+          "name": "犷平",
+          "declaredCities": 9,
+          "households": 68456,
+          "householdsPerCounty": 7606
+        },
+        {
+          "commandery": "右北平郡",
+          "name": "无终",
+          "declaredCities": 4,
+          "households": 9170,
+          "householdsPerCounty": 2292
+        },
+        {
+          "commandery": "樂浪郡",
+          "name": "𧦦邯",
+          "declaredCities": 18,
+          "households": 61492,
+          "householdsPerCounty": 3416
+        },
+        {
+          "commandery": "樂浪郡",
+          "name": "乐都",
+          "declaredCities": 18,
+          "households": 61492,
+          "householdsPerCounty": 3416
+        },
+        {
+          "commandery": "蒼梧郡",
+          "name": "鄣平",
+          "declaredCities": 11,
+          "households": 111395,
+          "householdsPerCounty": 10126
+        },
+        {
+          "commandery": "合浦郡",
+          "name": "临元",
+          "declaredCities": 5,
+          "households": 23121,
+          "householdsPerCounty": 4624
+        },
+        {
+          "commandery": "遼東屬國",
+          "name": "险渎",
+          "declaredCities": 6,
+          "households": null,
+          "householdsPerCounty": null
+        },
+        {
+          "commandery": "鬱林郡",
+          "name": "临尘",
+          "declaredCities": 11,
+          "households": null,
+          "householdsPerCounty": null
+        },
+        {
+          "commandery": "鬱林郡",
+          "name": "定周",
+          "declaredCities": 11,
+          "households": null,
+          "householdsPerCounty": null
+        },
+        {
+          "commandery": "鬱林郡",
+          "name": "增食",
+          "declaredCities": 11,
+          "households": null,
+          "householdsPerCounty": null
+        }
+      ]
+    }
+  }
+}

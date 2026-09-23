@@ -39,8 +39,8 @@
    "NO_BIOGRAPHY_STATEMENT": 536
   },
   "byMatchStatus": {
-   "COUNTY_NOT_IN_COMMANDERY": 33,
-   "MATCHED": 97,
+   "COUNTY_NOT_IN_COMMANDERY": 26,
+   "MATCHED": 104,
    "NO_COUNTY": 19,
    "UNSPLIT": 16
   },
@@ -2264,8 +2264,8 @@
    "nativeCommandery": "汝南郡",
    "commanderyId": "PARENT-0008",
    "nativeCounty": "細陽",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0008-016",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷56",
@@ -2610,8 +2610,8 @@
    "nativeCommandery": "廬江郡",
    "commanderyId": "PARENT-0050",
    "nativeCounty": "舒",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0050-001",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷54",
@@ -5137,8 +5137,8 @@
    "nativeCommandery": "鴈門郡",
    "commanderyId": "PARENT-0085",
    "nativeCounty": "馬邑",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0085-010",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷17",
@@ -5332,8 +5332,8 @@
    "nativeCommandery": "河東郡",
    "commanderyId": "PARENT-0002",
    "nativeCounty": "楊",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0002-002",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷17",
@@ -8922,8 +8922,8 @@
    "nativeCommandery": "漁陽郡",
    "commanderyId": "PARENT-0091",
    "nativeCounty": "雍奴",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0091-004",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷26",
@@ -11534,8 +11534,8 @@
    "nativeCommandery": "武威郡",
    "commanderyId": "PARENT-0072",
    "nativeCounty": "姑臧",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0072-001",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷10",
@@ -13026,8 +13026,8 @@
    "nativeCommandery": "廣陵郡",
    "commanderyId": "PARENT-0033",
    "nativeCounty": "东阳",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0033-006",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷22",

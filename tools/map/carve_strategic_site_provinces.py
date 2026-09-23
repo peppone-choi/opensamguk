@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import functools
 import hashlib
 import json
 import math
@@ -57,8 +58,17 @@ TILES = ROOT / "data/map/han-tiles.json"
 STRONGHOLDS = ROOT / "data/curated/han/strategic-strongholds-v1.json"
 PASSES = ROOT / "data/curated/han/strategic-passes-v1.json"
 LEDGER = ROOT / "data/curated/han/strategic-site-province-carves-v1.json"
+# 결손 縣 원장. **이 단계가 縣도 함께 잘라낸다** — 새 사슬 단계를 만들지 않는 이유가 있다.
+# 사슬에 층을 하나 끼우면 그 아래 모든 단계의 peel 이 그 층을 몰라 지문이 깨진다(거점 분할이
+# 추가될 때 변경 縣 도구가 `carving.peel` 을 배운 것이 그 증거다). 이 단계는 이미 비파괴 국소
+# carve 이고(기존 省을 다시 자르지 않는다) 새 행을 배열 끝에 붙여 省 인덱스를 밀지 않으므로,
+# 縣을 여기에 태우면 사슬 모양이 그대로다. 앞서 변경 縣 단계에서 33 郡을 재구획했더니
+# 거점이 73→12 로 떨어지고 접기가 죽었다 — 재구획은 위 단계의 기하를 깨뜨린다.
+GAP_COUNTIES = ROOT / "data/curated/han/gap-counties-v1.json"
 
 SITE_PREFIX = "ss-"
+GAP_PREFIX = "gc-"
+GAP_KIND = "COUNTY"
 SITE_KIND = "STRATEGIC_SITE"
 ROLE_LEVEL = {"FERRY": 1, "FORT": 2, "PASS": 3}
 FOOTPRINT = 8
@@ -100,7 +110,70 @@ def load_sites(strongholds: dict, passes: dict) -> list[dict]:
     return sorted(sites, key=lambda row: row["id"])
 
 
+def load_gap_counties(ledger: dict) -> list[dict]:
+    """결손 縣을 거점과 같은 항목 모양으로 눕힌다. 정렬은 물리 id 순 — 省 인덱스 발급 순서다."""
+    counties = []
+    for row in ledger["counties"]:
+        counties.append({
+            "id": f"{row['placeSlug']}-{row['id'].rsplit(':', 1)[-1]}",
+            "nameKo": row["nameKo"],
+            "nameHan": f"{row['nameHan']}{row['countySuffix']}",
+            "role": None,
+            "canonicalId": row["id"],
+            "hhsCommanderyHan": row["commanderyHan"],
+            "latitude": row["coordinates"]["latitude"],
+            "longitude": row["coordinates"]["longitude"],
+        })
+    ids = [row["id"] for row in counties]
+    if len(ids) != len(set(ids)):
+        raise ValueError("gap county place ids must be unique")
+    return sorted(counties, key=lambda row: row["id"])
+
+
 MAXIMUM_DISPLACEMENT = 6  # 앵커를 옮겨도 되는 최대 칸 거리(유클리드). 넘으면 세우지 않는다.
+# 결손 縣의 郡 귀속은 郡國志 표제(1차 증거)이고 좌표는 APPROXIMATE 다. 지도의 郡 기하는 NE
+# 폴리곤에서 온 것이라 경계가 거칠어(鄴·安邑은 10–17칸 밀려 있다) 경계 縣의 투영 칸이 옆 郡에
+# 떨어진다 — 그대로 세우면 弘農郡에 河南尹 新城이 붙어 기존 新成과 한글 표기까지 충돌했다.
+# 그럴 때 자기 郡 땅으로 앵커를 당긴다. 실측 필요 거리는 7건 중 최대 6.71칸(河南尹 梁縣)이다.
+MAXIMUM_COMMANDERY_SNAP = 8
+
+
+@functools.lru_cache(maxsize=1)
+def _commandery_normalizer():
+    """繁簡·異體字 접기. 자체 규칙을 쓰면 邑·道·國 접미를 잘라 허위 불일치가 난다 — audit 도구를 쓴다."""
+    from tools.map.audit_county_coverage import make_normalizer
+    return make_normalizer(group=True)
+
+
+def _commandery_fold(name: str) -> str:
+    return _commandery_normalizer()(name)
+
+
+def _commandery_parent_ids(document: dict) -> dict[str, list[str]]:
+    """郡 이름(繁簡·異體 접기) → parentRegion id 들. 원장은 繁體, 지도는 簡體가 섞여 있다."""
+    index: dict[str, list[str]] = {}
+    for row in document["parentRegions"]:
+        index.setdefault(_commandery_fold(row["nameCh"]), []).append(row["id"])
+    return index
+
+
+def _nearest_cell_in_commandery(before: np.ndarray, provinces: list[dict], parent_ids: list[str],
+                                cell: tuple[int, int], rows: int, cols: int):
+    """cell 에서 가장 가까운, parent_ids 郡에 속한 칸. MAXIMUM_COMMANDERY_SNAP 안에서만 본다."""
+    wanted = {index for index, row in enumerate(provinces) if row["parentRegionId"] in parent_ids}
+    if not wanted:
+        return None
+    reach = MAXIMUM_COMMANDERY_SNAP
+    window = before[max(cell[0] - reach, 0):cell[0] + reach + 1,
+                    max(cell[1] - reach, 0):cell[1] + reach + 1]
+    origin = (max(cell[0] - reach, 0), max(cell[1] - reach, 0))
+    best = None
+    for r, c in np.argwhere(np.isin(window, list(wanted))):
+        candidate = (origin[0] + int(r), origin[1] + int(c))
+        distance = (candidate[0] - cell[0]) ** 2 + (candidate[1] - cell[1]) ** 2
+        if distance <= reach ** 2 and (best is None or (distance, candidate) < best[0]):
+            best = ((distance, candidate), candidate)
+    return None if best is None else best[1]
 
 
 def _anchor_candidates(owner: np.ndarray, donor: int, cell: tuple[int, int], taken: set[tuple[int, int]]):
@@ -229,7 +302,7 @@ def _pending_by_donor(before: np.ndarray, sites: list[dict], projection, rows: i
     return pending
 
 
-def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
+def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = None) -> tuple[dict, dict]:
     document = copy.deepcopy(source)
     meta = document["_meta"]
     rows, cols = meta["rows"], meta["cols"]
@@ -332,6 +405,122 @@ def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
             placement["displacedFrom"] = {"col": cell[1], "row": cell[0], "reason": displaced_reason,
                                           "cellDistance": round(math.hypot(anchor[0] - cell[0], anchor[1] - cell[1]), 2)}
         placements.append(placement)
+    # ── 결손 縣. 거점 고리 뒤에 따로 돈다 — 거점의 `pending` 예약을 縣이 늘리면 기존 73 건의
+    # carve 결과가 달라진다(회귀). 기증 省의 최소 넓이·연결·마른땅 경계 조건은 같은 함수가 지킨다.
+    county_placements, county_excluded = [], []
+    commandery_parents = _commandery_parent_ids(document) if counties else {}
+    for county in counties or ():
+        base = {"countyId": county["canonicalId"], "nameHan": county["nameHan"],
+                "hhsCommanderyHan": county["hhsCommanderyHan"]}
+        col, row = projection.to_cell(county["longitude"], county["latitude"])
+        cell = (math.floor(row), math.floor(col))
+        if not (0 <= cell[0] < rows and 0 <= cell[1] < cols):
+            county_excluded.append({**base, "reason": "WATER_OR_OUT_OF_SCOPE",
+                                    "anchorCell": {"col": cell[1], "row": cell[0]}})
+            continue
+        projected_cell = cell
+        if int(before[cell]) < 0:
+            land = [(int(r), int(c)) for r, c in np.argwhere(before >= 0)
+                    if (int(r) - cell[0]) ** 2 + (int(c) - cell[1]) ** 2 <= MAXIMUM_DISPLACEMENT ** 2]
+            if not land:
+                county_excluded.append({**base, "reason": "WATER_OR_OUT_OF_SCOPE",
+                                        "anchorCell": {"col": cell[1], "row": cell[0]}})
+                continue
+            cell = min(land, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
+        # 郡 귀속은 사료가 말하는 것이고 郡 경계 기하는 근사다. 투영 칸이 옆 郡에 떨어지면
+        # 칸을 옮기고(자기 郡 안의 최근접), 자기 郡에 닿지 못하면 세우지 않는다.
+        target_parents = commandery_parents.get(_commandery_fold(county["hhsCommanderyHan"]))
+        if not target_parents:
+            county_excluded.append({**base, "reason": "LEDGER_COMMANDERY_NOT_ON_MAP"})
+            continue
+        commandery_snapped_from = None
+        if provinces[int(before[cell])]["parentRegionId"] not in target_parents:
+            inside = _nearest_cell_in_commandery(before, provinces, target_parents, cell, rows, cols)
+            if inside is None:
+                county_excluded.append({
+                    **base, "reason": "ANCHOR_OUTSIDE_LEDGER_COMMANDERY",
+                    "anchorCell": {"col": cell[1], "row": cell[0]},
+                    "worldCommanderyHan": next(
+                        r["nameCh"] for r in document["parentRegions"]
+                        if r["id"] == provinces[int(before[cell])]["parentRegionId"])})
+                continue
+            commandery_snapped_from, cell = cell, inside
+        donor = int(before[cell])
+        donor_record = provinces[donor]
+        jurisdiction = jurisdictions[donor_record["jurisdictionId"]]
+        if jurisdiction["kind"] not in DONOR_JURISDICTION_KINDS:
+            county_excluded.append({**base, "reason": "ANCHOR_OUTSIDE_COUNTY_JURISDICTION",
+                                    "donorProvinceId": donor_record["id"],
+                                    "jurisdictionKind": jurisdiction["kind"]})
+            continue
+        anchor, carved = None, None
+        for footprint in range(FOOTPRINT, MINIMUM_FOOTPRINT - 1, -1):
+            for candidate in _anchor_candidates(owner, donor, cell, point_cells):
+                carved = _carve(owner, donor, candidate, point_cells, footprint, terrain, dry, 0)
+                if carved is not None:
+                    anchor = candidate
+                    break
+            if carved is not None:
+                break
+        if carved is None:
+            for footprint in range(MINIMUM_FOOTPRINT, 0, -1):
+                for candidate in _anchor_candidates(owner, donor, cell, point_cells):
+                    carved = _carve_exhaustive(owner, donor, candidate, point_cells, footprint, terrain, dry, 0)
+                    if carved is not None:
+                        anchor = candidate
+                        break
+                if carved is not None:
+                    break
+        if carved is None:
+            county_excluded.append({**base, "reason": "DONOR_TOO_SMALL", "donorProvinceId": donor_record["id"],
+                                    "donorCellCount": int((owner == donor).sum())})
+            continue
+        place_id = f"{GAP_PREFIX}{county['id']}"
+        city_index = len(document["cities"])
+        province_index = len(provinces)
+        document["cities"].append({
+            "id": place_id, "name": f"{county['nameKo']}현", "nameCh": county["nameHan"],
+            "level": TILE_PLACE_LEVEL, "kind": GAP_KIND, "seat": False, "zhi": False,
+            "col": anchor[1], "row": anchor[0],
+            "lon": county["longitude"], "lat": county["latitude"],
+        })
+        provinces.append({
+            "id": place_id, "displayName": f"{county['nameKo']}현", "nameCh": county["nameHan"],
+            "administrativeSystem": donor_record["administrativeSystem"], "kind": "SPATIAL_PROVINCE",
+            "parentRegionId": donor_record["parentRegionId"], "cityIndex": city_index,
+            "geometryBasis": "GAP_COUNTY_LOCAL_CARVE", "confidence": "APPROXIMATE",
+            "jurisdictionId": place_id, "assignmentBasis": "GAP_COUNTY_ANCHOR",
+            "assignmentConfidence": "APPROXIMATE",
+        })
+        new_jurisdiction = {
+            "id": place_id, "displayName": f"{county['nameKo']}현", "nameCh": county["nameHan"],
+            "kind": GAP_KIND, "commanderyId": jurisdiction["commanderyId"],
+            "seatPlaceId": place_id, "provinceIds": [place_id],
+        }
+        document["jurisdictionRecords"].append(new_jurisdiction)
+        jurisdictions[place_id] = new_jurisdiction
+        commanderies[jurisdiction["commanderyId"]]["jurisdictionIds"].append(place_id)
+        for carved_cell in carved:
+            owner[carved_cell] = province_index
+        point_cells.add(anchor)
+        placement = {**base, "placeId": place_id, "provinceIndex": province_index,
+                     "donorProvinceId": donor_record["id"], "donorJurisdictionId": jurisdiction["id"],
+                     "commanderyId": jurisdiction["commanderyId"],
+                     "worldCommanderyHan": next(
+                         r["nameCh"] for r in document["parentRegions"]
+                         if r["id"] == jurisdiction["commanderyId"]),
+                     "anchorCell": {"col": anchor[1], "row": anchor[0]}, "carvedCellCount": len(carved)}
+        if anchor != projected_cell:
+            placement["displacedFrom"] = {
+                "col": projected_cell[1], "row": projected_cell[0],
+                "reason": ("PROJECTED_CELL_IN_OTHER_COMMANDERY" if commandery_snapped_from is not None
+                           else "PROJECTED_CELL_IN_WATER" if projected_cell != cell
+                           else "CITY_POINT_ON_PROJECTED_CELL" if projected_cell in point_cells
+                           else "PROJECTED_CELL_WOULD_SPLIT_DONOR"),
+                "cellDistance": round(math.hypot(anchor[0] - projected_cell[0],
+                                                 anchor[1] - projected_cell[1]), 2)}
+        county_placements.append(placement)
+
     document["owner"] = encode(owner)
     document["adjacency"]["county"] = adjacency(owner, min_shared_edges=1)
     _rederive_parent_surfaces(document)
@@ -341,11 +530,13 @@ def apply_carves(source: dict, sites: list[dict]) -> tuple[dict, dict]:
     counts["jurisdictions"] = len(document["jurisdictionRecords"])
     counts["adjCounty"] = len(document["adjacency"]["county"])
     counts[SITE_KIND] = sum(1 for row in document["cities"] if row["kind"] == SITE_KIND)
+    counts[GAP_KIND] = sum(1 for row in document["cities"] if row["kind"] == GAP_KIND)
     owner_delta = [{"col": int(position % cols), "row": int(position // cols),
                     "before": provinces[old]["id"], "after": provinces[new]["id"]}
                    for position, (old, new) in enumerate(zip(before.ravel().tolist(), owner.ravel().tolist()))
                    if old != new]
-    return document, {"placements": placements, "excluded": excluded, "ownerDelta": owner_delta}
+    return document, {"placements": placements, "excluded": excluded, "ownerDelta": owner_delta,
+                      "gapCountyPlacements": county_placements, "gapCountyExcluded": county_excluded}
 
 
 def _canonical_order(document: dict, stage: dict) -> dict:
@@ -372,7 +563,9 @@ def restore_document(document: dict, ledger: dict) -> dict:
         raise ValueError("document is not a pinned strategic-site carve output")
     restored = copy.deepcopy(_canonical_order(document, stage))
     meta = restored["_meta"]
+    # 거점 행과 결손 縣 행을 함께 걷는다 — 둘 다 이 단계가 배열 끝에 붙인 것이다(거점 뒤에 縣).
     added = {row["placeId"] for row in stage["placements"]}
+    added |= {row["placeId"] for row in stage.get("gapCountyPlacements", ())}
     provinces = restored["provinceRecords"]
     index_by_id = {row["id"]: index for index, row in enumerate(provinces)}
     owner = expand(restored["owner"], meta["rows"], meta["cols"])
@@ -431,7 +624,8 @@ def reapply(document: dict, ledger: dict) -> dict:
     if ledger.get(PARTITION_KEY) is not None:
         from tools.map import partition_counties_by_location as partition
         document = partition.reapply(document, ledger[PARTITION_KEY])
-    rebuilt, _ = apply_carves(document, _ledger_sites(ledger))
+    # 결손 縣도 같이 얹는다 — 빼면 앞 단계(변경 縣·★) 검사의 왕복이 커밋본을 재현하지 못한다.
+    rebuilt, _ = apply_carves(document, _ledger_sites(ledger), _ledger_gap_counties())
     return rebuilt
 
 
@@ -440,26 +634,41 @@ def _ledger_sites(ledger: dict) -> list[dict]:
                       json.loads(PASSES.read_text(encoding="utf-8")))
 
 
+def _ledger_gap_counties() -> list[dict]:
+    if not GAP_COUNTIES.is_file():
+        return []
+    return load_gap_counties(json.loads(GAP_COUNTIES.read_text(encoding="utf-8")))
+
+
 def build_stage(source: dict) -> tuple[dict, dict]:
     sites = load_sites(json.loads(STRONGHOLDS.read_text(encoding="utf-8")),
                        json.loads(PASSES.read_text(encoding="utf-8")))
-    document, result = apply_carves(source, sites)
+    counties = _ledger_gap_counties()
+    document, result = apply_carves(source, sites, counties)
     stage = {
         "inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
         "inputCounts": copy.deepcopy(source["_meta"]["counts"]),
         "outputCityOrder": [row["id"] for row in document["cities"]],
         "placements": result["placements"], "excluded": result["excluded"], "ownerDelta": result["ownerDelta"],
+        "gapCountyPlacements": result["gapCountyPlacements"], "gapCountyExcluded": result["gapCountyExcluded"],
     }
     ledger = {
         "schemaVersion": 1,
         "ledgerId": "strategic-site-province-carves-v1",
         "authority": "ADR-LITE-052 비현 거점 + user-approval-2026-09-15 「縣 프로빈스를 쪼개 거점 省을 준다」",
         "inputs": {"strongholds": {"path": "data/curated/han/strategic-strongholds-v1.json", "sha256": _sha256(STRONGHOLDS)},
-                   "passes": {"path": "data/curated/han/strategic-passes-v1.json", "sha256": _sha256(PASSES)}},
+                   "passes": {"path": "data/curated/han/strategic-passes-v1.json", "sha256": _sha256(PASSES)},
+                   **({"gapCounties": {"path": "data/curated/han/gap-counties-v1.json",
+                                       "sha256": _sha256(GAP_COUNTIES)}} if GAP_COUNTIES.is_file() else {})},
         "rule": {"footprintCells": FOOTPRINT, "minimumFootprintCells": MINIMUM_FOOTPRINT, "minimumDonorArea": MINIMUM_AREA,
                  "laterSiteReserve": "minimumFootprintCells × 같은 기증 省에 아직 설 거점 수 (user-decision-2026-09-18)",
                  "donorBorderTerrain": sorted(DRY_TERRAIN_NAMES),
                  "roleLevels": ROLE_LEVEL, "placeIdPrefix": SITE_PREFIX,
+                 "gapCountyPlaceIdPrefix": GAP_PREFIX,
+                 "gapCountyReserve": ("0 — 縣 고리는 거점 고리 뒤에 따로 돌며 예약을 쓰지 않는다. "
+                                      "거점의 예약에 縣을 더하면 기존 73 건의 carve 결과가 달라진다(회귀)."),
+                 "gapCountyBoundaryBasis": "LOCAL_ADAPTED_PARTITION_NOT_HISTORICAL_BOUNDARY — 복구한 縣은 "
+                                           "이웃 縣 省에서 최소 발자국만 떼어 선다. 郡 안을 다시 자르지 않는다.",
                  "boundaryBasis": "LOCAL_ADAPTED_PARTITION_NOT_HISTORICAL_BOUNDARY"},
         "geometry": {"stages": [stage]},
     }
@@ -474,9 +683,13 @@ def check(document: dict, ledger: dict) -> list[str]:
     for name, path in (("strongholds", STRONGHOLDS), ("passes", PASSES)):
         if ledger["inputs"][name]["sha256"] != _sha256(path):
             problems.append(f"{ledger['inputs'][name]['path']} changed since the carve was prepared")
-    rebuilt, result = apply_carves(restore_document(_canonical_order(document, stage), ledger), _ledger_sites(ledger))
-    for key in ("placements", "excluded", "ownerDelta"):
-        if result[key] != stage[key]:
+    if "gapCounties" in ledger["inputs"] and ledger["inputs"]["gapCounties"]["sha256"] != _sha256(GAP_COUNTIES):
+        problems.append("data/curated/han/gap-counties-v1.json changed since the carve was prepared")
+    rebuilt, result = apply_carves(restore_document(_canonical_order(document, stage), ledger),
+                                  _ledger_sites(ledger), _ledger_gap_counties())
+    for key in ("placements", "excluded", "ownerDelta", "gapCountyPlacements", "gapCountyExcluded"):
+        # 결손 縣 키는 이 단계가 縣을 태우기 전에 구운 원장에는 없다 — 그때는 빈 목록과 같다.
+        if result[key] != stage.get(key, []):
             problems.append(f"strategic-site carve {key} differs from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:
         problems.append("re-applied strategic-site carve does not reproduce han-tiles.json")

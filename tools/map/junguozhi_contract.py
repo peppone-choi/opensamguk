@@ -44,6 +44,30 @@ CTEXT_SHA256: Final = {
     113: "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
 }
 GUIZI_WITNESS_SHA256: Final = "8c73aa6dfa50593ddfc410d404bfe68e9df3eee8a01cfd97baad5dbd9a672ed4"
+DANG_WITNESS_SHA256: Final = "3d423950ea8f1ffe4774267fb337dd70aa236be6a1526b1cf55b16afff5f4bec"
+
+# 받은 원문이 縣 이름을 잘라 싣는 자리들. 쉼표·괄호가 이름 한가운데에 떨어져
+# (「陶，有薄落亭」·「〖绛〗邑」·「南深，澤故屬涿」) 파서가 앞 조각만 집는다. 교정 근거는
+# **같은 卷의 校勘記**다 — 그 卷이 스스로 온전한 이름을 적어 둔다. (郡, 順, 받은 이름) →
+# (온전한 이름, 증거 卷, 증거 줄, 그 줄에 반드시 있어야 하는 글, 사유)
+TRUNCATED_NAMES: Final = {
+    ("鉅鹿郡", 1, "陶"): (
+        "廮陶", 110, 589, "鉅鹿之廮陶",
+        "받은 원문 「陶，有薄落亭。」 은 앞 글자를 잃었다. 같은 卷 校勘記가 「鉅鹿之廮陶」 로 적는다.",
+    ),
+    ("河東郡", 11, "绛"): (
+        "絳邑", 109, 455, "在平陽絳邑縣東",
+        "받은 원문 「〖绛〗邑。」 에서 괄호가 이름을 갈랐다. 같은 卷 校勘記가 「絳邑縣」 으로 적는다.",
+    ),
+    ("安平國", 12, "南深"): (
+        "南深澤", 110, 619, "南深（國）〔澤〕故屬涿",
+        "받은 원문 「南深，澤故屬涿。」 은 쉼표가 이름을 갈랐다. 같은 卷 校勘記가 「續志有南深澤，無深澤」 라 한다.",
+    ),
+    ("梁國", 4, "碭山"): (
+        "碭", 53, 228, "梁國有碭縣",
+        "받은 원문 「碭山，出文石。」 은 본문 「山出文石」 의 첫 글자를 이름에 붙였다. 卷53 注가 「梁國有碭縣」 이라 한다.",
+    ),
+}
 
 CANONICAL_GROUPS: Final = (  # noqa: SIM905 - keep the reviewed source order human-auditable
     "河南尹 河內郡 河東郡 弘農郡 京兆尹 左馮翊 右扶風 "
@@ -625,6 +649,29 @@ def _name_correction(
                 "line": 49,
                 "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷65",
                 "snapshotSha256": GUIZI_WITNESS_SHA256,
+            },
+        }
+    truncated = TRUNCATED_NAMES.get((canonical_group, ordinal, source_name))
+    if truncated is not None:
+        corrected, volume, line_number, proof, reason = truncated
+        witness = corpus_dir / f"hhs-{volume:03d}.txt"
+        # 卷 109–113 은 이미 핀돼 있고, 그 밖의 증거 卷만 따로 핀한다.
+        _require_snapshot(witness, CORPUS_SHA256.get(volume, DANG_WITNESS_SHA256))
+        line = witness.read_text(encoding="utf-8").splitlines()[line_number - 1]
+        if proof not in line:
+            raise CatalogContractError(
+                f"後漢書 卷{volume} line {line_number} no longer proves {canonical_group} "
+                f"{ordinal} is 「{corrected}」"
+            )
+        return {
+            "correctedName": corrected,
+            "reason": reason,
+            "sourceQuote": proof,
+            "sourceCitation": {
+                "corpusPath": f"data/corpus/hhs-{volume:03d}.txt",
+                "line": line_number,
+                "sourceUrl": f"https://zh.wikisource.org/wiki/後漢書/卷{volume}",
+                "snapshotSha256": CORPUS_SHA256.get(volume, DANG_WITNESS_SHA256),
             },
         }
     return None

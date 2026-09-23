@@ -623,7 +623,7 @@ describe('province identity map', () => {
       // 앞 판은 1,520 + 73 + 平陰 1 = 1,594 였다.
       // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,374 — han-tiles 의
       // provinceRecords 실측과 같은 수다(아래 landProvinces 단언이 그 동치를 건다).
-      expect(scenario.assignments).toHaveLength(1_374);
+      expect(scenario.assignments).toHaveLength(1_430);  // 2026-09-23: 결손 縣 56 곳이 제 省을 받아 1,374 → 1,434
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;

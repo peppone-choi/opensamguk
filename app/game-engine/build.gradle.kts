@@ -173,7 +173,9 @@ tasks.test {
     useJUnitPlatform()
     // 판별 테스트는 등록된 한 세계 판 번들을 전부 한 JVM 에 올린다. 판마다 원문 ~26MB 와 투영이 캐시에 남아,
     // 다섯 번째 판(han-world-v3-1098)부터 Gradle 기본 512MB 에서 힙이 찼다(PrecheckFullCrossCallSiteTest).
-    maxHeapSize = "1g"
+    // 2026-09-23: 열한 번째 판(han-world-v3-1224)이 등록되자 CI 에서 1g 가 OutOfMemoryError 로 실행기를
+    // 죽였다(game-api 가 1168 판 때 같은 이유로 2g 가 됐다).
+    maxHeapSize = "2g"
     inputs.files(v2NamingConventionSources)
         .withPropertyName("v2NamingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
