@@ -6,6 +6,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
+import opensamguk.infra.seed.HwihaCountyProductionJson
 import opensamguk.logic.input.HwihaRecordKind
 import opensamguk.logic.input.RuleProfile
 
@@ -17,10 +18,14 @@ import opensamguk.logic.input.RuleProfile
  * 도장이 저장되지 않았다면 창고 적립도 저장되지 않았으므로, 재실행이 그 달을 다시 넣는 것이 옳다.
  *
  * 창고가 없는 縣 은 건너뛴다. 명시 재고 입력이 없는 시나리오·기존 월드를 조용히 충전하지 않는다.
+ *
+ * 철·목재·말은 이 클래스가 만들지 않는다 — [production] 표가 준다. 기본값은 생성된 런타임 산출물이고,
+ * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_hwiha_resource_production.py).
  */
 class HwihaMonthlyCountyIncome(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
+    private val production: Map<Int, HwihaResources> = HwihaCountyProductionJson.table(),
 ) {
     data class Outcome(
         val stamp: String,
@@ -57,7 +62,8 @@ class HwihaMonthlyCountyIncome(
                     agriculture = before.agriculture,
                     agricultureMax = before.agricultureMax,
                     supplied = before.supplyState != 0,
-                )
+                ),
+                sites = production[countyId] ?: HwihaResources(),
             )
             if (produced == HwihaResources()) continue
             // 넘침은 그 縣 만 건너뛴다. 월 경계에서 던지면 턴 루프가 영구히 멈춘다.

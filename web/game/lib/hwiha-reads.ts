@@ -77,7 +77,7 @@ export interface HwihaCounty {
     readonly status: HwihaReadStatus;
     readonly cityId: number;
     readonly name: string;
-    /** monthly 는 엔진이 실제로 넣는 월 산출(아직 산지 몫을 넣지 않아 null), ledgerMonthly 는 원장 설계값. */
+    /** monthly 는 이번 달 엔진이 실제로 넣을 월 산출(주인 없음·보급 끊김·창고 없음이면 0, 창고가 깨졌으면 null), ledgerMonthly 는 원장 설계값. */
     readonly specialties: readonly { resource: string; label: string; monthly: number | null; ledgerMonthly?: number | null }[];
 }
 

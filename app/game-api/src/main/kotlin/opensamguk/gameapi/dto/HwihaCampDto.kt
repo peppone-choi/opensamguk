@@ -73,9 +73,9 @@ data class HwihaWarehousesResponse(
 /**
  * 현 특산 한 줄.
  *
- * [ledgerMonthly] 는 `hwiha-resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 엔진이 실제로
- * 이 縣 창고에 매달 넣는 양이다 — 지금 월 세입(`HwihaMonthlyCountyIncome`)은 산지 몫을 넣지 않으므로
- * `null` 이다. 배선되면 두 값이 같아진다.
+ * [ledgerMonthly] 는 `hwiha-resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
+ * (`HwihaMonthlyCountyIncome`)이 이번 달 이 縣 창고에 실제로 넣을 양이다 — 주인 없음·보급 끊김·창고 없음이면 0,
+ * 창고 meta 가 깨져 엔진도 건너뛰면 `null` 이다. 평소에는 두 값이 같다.
  */
 data class HwihaSpecialtyDto(val resource: String, val label: String, val monthly: Long?, val ledgerMonthly: Long)
 

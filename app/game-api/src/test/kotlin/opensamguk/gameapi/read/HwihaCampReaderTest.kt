@@ -221,18 +221,33 @@ class HwihaCampReaderTest {
     }
 
     // ── 현 특산 ──────────────────────────────────────────────────────────
-    @Test fun `현 특산은 산출 원장의 縣 행을 싣고 엔진 미배선 월 생산은 null 이다`() {
+    @Test fun `현 특산은 산출 원장의 縣 행을 싣고 월 생산은 엔진과 같은 식으로 이번 달 실제 적립량이다`() {
         setup()
-        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거")))
-        `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, worldId = 1, name = "장안")))
+        reader.production = mapOf(5 to HwihaResources(iron = 1000, timber = 132))
+        fun tangqu(supply: Int) = CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1, supplyState = supply,
+            population = 5000, meta = warehouseMeta(5, 0))
+        `when`(cities.findById(5)).thenReturn(Optional.of(tangqu(1)))
+        `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, worldId = 1, name = "장안", nationId = 1, supplyState = 1)))
         val iron = assertNotNull(reader.county(5, 1, 41))
         assertEquals("READY", iron.status); assertEquals("탕거", iron.name)
-        // 원장 행 200197(宕渠) = 철 1000.
-        assertEquals(1, iron.specialties.size)
-        val row = iron.specialties.single()
-        assertEquals("IRON", row.resource); assertEquals("철", row.label); assertEquals(1000L, row.ledgerMonthly); assertNull(row.monthly)
-        val none = assertNotNull(reader.county(6, 1, 41))
-        assertEquals("READY", none.status); assertTrue(none.specialties.isEmpty())
+        // 원장 행 200197(宕渠) = 철 1000 · 목재 132(면적 축).
+        assertEquals(listOf("IRON" to 1000L, "TIMBER" to 132L), iron.specialties.map { it.resource to it.ledgerMonthly })
+        assertEquals("철", iron.specialties.first().label)
+        assertEquals(listOf<Long?>(1000, 132), iron.specialties.map { it.monthly }, "보급된 우리 縣은 원장대로 들어온다")
+        // 보급이 끊기면 엔진이 아무것도 넣지 않는다.
+        `when`(cities.findById(5)).thenReturn(Optional.of(tangqu(0)))
+        assertEquals(listOf<Long?>(0, 0), assertNotNull(reader.county(5, 1, 41)).specialties.map { it.monthly })
+        // 창고가 없는 縣은 엔진이 건너뛴다 — 원장 행(목재 10)은 보이되 월 생산은 0.
+        val noWarehouse = assertNotNull(reader.county(6, 1, 41))
+        assertEquals(listOf("TIMBER" to 10L), noWarehouse.specialties.map { it.resource to it.ledgerMonthly })
+        assertEquals(listOf<Long?>(0), noWarehouse.specialties.map { it.monthly })
+    }
+
+    @Test fun `창고 meta 가 깨진 縣은 월 생산을 모른다(null)`() {
+        setup()
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1,
+            supplyState = 1, meta = mapOf(HwihaCountyWarehouse.META_KEY to "broken"))))
+        assertTrue(assertNotNull(reader.county(5, 1, 41)).specialties.all { it.monthly == null })
     }
 
     @Test fun `없는 城은 404, 번들 없는 월드는 UNAVAILABLE`() {
@@ -325,11 +340,13 @@ class HwihaCampReaderTest {
         assertEquals(setOf("을"), table.keys, "갑은 두 행이 싣고, 병은 縣이 없다")
     }
 
-    @Test fun `산출 원장은 35 縣 철·말이다`() {
+    @Test fun `산출 원장은 縣마다 목재(면적 축)이고 철·말은 35 縣이다`() {
         val table = ledgers.productionByJurisdiction
-        assertEquals(35, table.size)
-        assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000)), table["200197"])
-        assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE") })
+        // 縣 수는 지도 판마다 바뀐다 — 박지 않고 모든 행에 목재가 있는지만 본다.
+        assertTrue(table.values.all { rows -> rows.any { it.resource == "TIMBER" } })
+        assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 132)), table["200197"])
+        assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE", "TIMBER") })
+        assertEquals(35, table.values.count { rows -> rows.any { it.resource != "TIMBER" } })
     }
 
     @Test fun `城 표에서 풀리지 않는 본관은 한글 이름이 null 이고 한자는 남는다`() {

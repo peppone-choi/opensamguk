@@ -3,7 +3,10 @@ package opensamguk.gameapi.read
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.controller.RetinueController
 import opensamguk.gameapi.dto.*
+import opensamguk.infra.seed.HwihaCountyProductionJson
+import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.HwihaAptitude
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
@@ -55,6 +58,9 @@ class HwihaCampReader(
     private val geography: HwihaCityGeography,
     private val objectMapper: ObjectMapper,
 ) {
+    /** 엔진과 같은 런타임 산지 표(`infra` 의 hwiha/county-production-v1.json). 테스트가 바꿔 끼운다. */
+    internal var production: Map<Int, HwihaResources> = HwihaCountyProductionJson.table()
+
     // ── 월단평 ─────────────────────────────────────────────────────────────
     fun yuedan(generalId: Int, userId: Long): HwihaYuedanResponse {
         val actor = owned(generalId, userId)
@@ -138,11 +144,35 @@ class HwihaCampReader(
         val selected = artifacts.resolve()?.artifacts ?: return HwihaCountyResponse("UNAVAILABLE", city.id, city.name)
         val jurisdiction = try { geography.places(selected)[city.id]?.jurisdictionId }
             catch (_: RuntimeException) { return HwihaCountyResponse("UNAVAILABLE", city.id, city.name) }
+        val credited = creditedSites(city)
         val specialties = jurisdiction?.let { ledgers.productionByJurisdiction[it] }.orEmpty().map {
-            // monthly: 엔진 월 세입이 산지 몫을 아직 넣지 않는다(HwihaMonthlyCountyIncome 이 sites 를 넘기지 않음).
-            HwihaSpecialtyDto(it.resource, RESOURCE_LABELS[it.resource] ?: it.resource, monthly = null, ledgerMonthly = it.ledgerMonthly)
+            HwihaSpecialtyDto(it.resource, RESOURCE_LABELS[it.resource] ?: it.resource,
+                monthly = credited?.let { sites -> siteAmount(sites, it.resource) }, ledgerMonthly = it.ledgerMonthly)
         }
         return HwihaCountyResponse("READY", city.id, city.name, specialties)
+    }
+
+    /**
+     * 엔진 월 세입(`HwihaMonthlyCountyIncome`)이 이 縣 창고에 이번 달 넣을 산지 몫(철·목재·말).
+     * 엔진과 같은 식(`HwihaCountyIncome.monthly`)에 같은 런타임 표를 넣는다 — 주인 없음·보급 끊김·창고 없음이면 0 이다.
+     * 창고 meta 가 깨졌으면 엔진도 그 縣을 건너뛰므로 null(모름)로 둔다.
+     */
+    private fun creditedSites(city: CityReadEntity): HwihaResources? {
+        val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { return null }
+        if (warehouse == null) return HwihaResources()
+        val state = try {
+            HwihaCountyIncome.CountyState(city.nationId, city.population, city.commerce, city.commerceMax,
+                city.agriculture, city.agricultureMax, supplied = city.supplyState != 0)
+        } catch (_: IllegalArgumentException) { return null }
+        val produced = HwihaCountyIncome.monthly(state, sites = production[city.id] ?: HwihaResources())
+        return HwihaResources(iron = produced.iron, timber = produced.timber, horses = produced.horses)
+    }
+
+    private fun siteAmount(sites: HwihaResources, resource: String): Long? = when (resource) {
+        "IRON" -> sites.iron
+        "TIMBER" -> sites.timber
+        "HORSE" -> sites.horses
+        else -> null
     }
 
     // ── 휘하 카드 ──────────────────────────────────────────────────────────

@@ -73,7 +73,9 @@ export default function CountyPanel({ city, isHwihaWorld }: { city: FrontCityInf
                         ) : specialties.length === 0 ? (
                             <span style={{ fontSize: 12, color: 'var(--muted)' }}>없음</span>
                         ) : (
-                            specialties.map((s) => <Chip key={s.resource}>{s.label}</Chip>)
+                            specialties.map((s) => (
+                                <Chip key={s.resource}>{`${s.label} ${s.monthly == null ? '[미정]' : s.monthly.toLocaleString('ko-KR')}/월`}</Chip>
+                            ))
                         )}
                     </div>
                 </div>
