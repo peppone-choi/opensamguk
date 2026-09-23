@@ -285,7 +285,8 @@ class ReservedTurnHandler(
                 "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
             )
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
-                applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId)
+                applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,
+                    npcSelected = !reserved.rowExists)
             }
             for (siegeInput in listOf(opensamguk.engine.hwiha.HwihaSiegeHandler.ASSAULT, opensamguk.engine.hwiha.HwihaSiegeHandler.DEMAND_SURRENDER)) {
                 handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
