@@ -19,3 +19,13 @@
 `CardContentValidator`는 콘텐츠·근거·주장·입력 소비·출력 생성의 ID 중복, 이중 소비, 부분 생성, dangling, claim→evidence를 검사한다. `tools/content/validate_card_content.py`는 현재 내정·산지·생산 원장을 읽어 같은 참조 원칙과 출처 책/권 일치를 검사한다. 어느 쪽도 전체 개수를 상수로 고정하지 않는다. 실행: `python3 tools/content/validate_card_content.py`, `python3 -m unittest discover -s tools/content/tests -v`.
 
 이 계약은 새 카드 콘텐츠 표면이다. `content/v2`의 read-only 샌드박스 로더와 과거 프로필 계약을 신규 카드의 생명주기나 월드 분리로 재사용하지 않는다.
+
+## 보물 카드와 장비 분리 (§6.5)
+
+`data/extracted/item/items.json`의 실제 161행을 `tools/content/build_hwiha_item_ledgers.py`로 나눈 결과는 한정 보물 100행(availability 1: 40, 2: 60), 무제한 장비 24행, 레지스트리 밖 37행이다. 이 수는 2026-09-24의 관측값이며 validator에 고정하지 않는다. 분리 원장은 `data/curated/han/hwiha-treasure-cards-v1.json`, `hwiha-equipment-v1.json`, `hwiha-items-excluded-v1.json`이다. 마지막 원장에는 옮기지 않은 37행의 코드·이름·종류·원본 행 번호가 모두 있다. 보물/장비 원장은 원본 행을 `legacy`로 온전히 보존하고 새 계약 필드를 따로 둔다. 사료의 책·권 근거가 없는 옛 아이템 이름에는 `게임 용어` 배지를 쓴다.
+
+보물은 장비처럼 인물의 기존 명마·무기·서적·아이템 네 칸에 붙이되 **한 칸에 한 장**만 둔다. 장비가 찬 칸에 보물을 겹쳐 붙일 수 없다. 소유 장수 본인 또는 그가 직접 거느린 NPC 인물 카드가 소지할 수 있으며, 부착할 때 같은 省에 있어야 한다. 소유권은 장수에게 남고 NPC가 휘하를 떠나면 부착 적격성이 깨진다. 다른 장수에게 자발적으로 이동할 때는 먼저 떼어 개인 보관으로 돌린 뒤, 같은 세력·같은 省의 장수에게 넘긴다. 전투 탈취는 패한 소지자(미부착이면 소유자)와 승리자가 같은 省에 있는 명시적 결과에서만 허용하며, 승리자의 미부착 보관으로 옮긴다. 중복 인스턴스·같은 칸 중복·낡은 소유자 재전달은 거부한다. 순수 상태 전이는 `HwihaTreasureState`가 검사한다. 실제 발행·예약 명령·recorder/flush 연결은 이 계약의 소비자가 별도로 구현해야 한다.
+
+availability 1의 카드 발행 상한은 1장이다. availability 2는 원본에서 “2개 한정”이지만 이를 카드 2장으로 발행할지는 #788의 사용자 결정 전까지 미정이다. 원장에는 `issuedCopies: null`을 두며, 순수 규칙도 미정 카드의 인스턴스 생성을 거부한다. 분류 자체와 원본 availability 값은 보존한다.
+
+`validate_card_content.py`는 세 원장과 추출 원본을 행마다 대조해 단 한 목적지로의 소비, 누락·dangling·메타데이터 변조를 검사한다. 고정 행 수 검사 대신 현재 원본 전체를 기준으로 한다.
