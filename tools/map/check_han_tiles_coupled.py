@@ -73,6 +73,8 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
     Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",),
             _t("tools/map/audit_territory_disconnections.py", "--check"), None, slow=True),
+    Coupled("territory-review-table", ("data/curated/han/territory-disconnection-review-table-v1.json",),
+            _t("tools/map/refresh_territory_review_table.py", "--check"), None),
     Coupled("administrative-parent-reconciliation", ("data/curated/han/administrative-parent-reconciliation-v1.json",),
             _t("tools/map/build_han_parent_reconciliation.py", "--check"),
             _t("tools/map/build_han_parent_reconciliation.py", "--write"), slow=True),
