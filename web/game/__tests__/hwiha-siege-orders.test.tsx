@@ -94,6 +94,19 @@ describe('휘하 공성·상사 화면', () => {
         expect(await screen.findByRole('alert')).toHaveTextContent('지휘 중인 포위가 없습니다.');
     });
 
+    it.each([
+        ['ASSAULT_NOT_READY', '한 달(3순)이 지나야'],
+        ['REFUSED', '항복 권고를 거절'],
+        ['BATTLE_PENDING', '조우 전투 중'],
+        ['BATTLEFIELD_UNAVAILABLE', '전장을 만들 수 없어'],
+    ])('renders %s rejection in Korean', async (code, expected) => {
+        mock.submit.mockResolvedValueOnce({ status: 'rejected', reason: code, result: { result: { code } } });
+        render(<SiegePage />);
+        expect(await screen.findByText('초현')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: '강공 예약' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent(expected);
+    });
+
     it('limits reward to the selected person card network balance', async () => {
         render(<OrdersPage />);
         expect(screen.getByText(/금 100당 충성 \+1, 한 번에 최대 \+10/)).toBeInTheDocument();
