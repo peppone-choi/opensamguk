@@ -87,6 +87,8 @@ export function buildHwihaCities(preview: MapPreviewResponse): IsoCityOverlay[] 
             mapLabel: city.name,
             nationName: owned ? nation?.name : NEUTRAL_NAME,
             nationColor: owned ? nation?.color : undefined,
+            // 보급이 끊긴 세력 城 은 「고립」 배지. 무주 城 의 보급 값은 뜻이 없어 쓰지 않는다.
+            statusBadges: owned && city.supply === false ? ['isolated'] : undefined,
             interactive: true,
         } satisfies IsoCityOverlay;
     });

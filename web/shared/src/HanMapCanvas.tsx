@@ -384,8 +384,9 @@ const CITY_MARKER_URLS = CITY_MARKER_ASSET_SCALES.flatMap((assetScale) => (
 ));
 /** 원본에서 크게 뽑은 城 그림(opensamguk-images export). 성내에 맞춰 크게 그릴 때 흐려지지 않게 고른다. */
 const CITY_MARKER_LARGE_SIZES = [128, 256] as const;
+/** opensamguk-images 규칙: `<N>x` = 1x(32px) 의 N 배 — 4x 128px, 8x 256px. */
 const CITY_MARKER_LARGE_URLS = CITY_MARKER_LARGE_SIZES.flatMap((size) => (
-  CITY_LEVELS.map((level) => ({ size, level, url: `/city/${size}/cast_${level}.png` }))
+  CITY_LEVELS.map((level) => ({ size, level, url: `/city/${size / 32}x/cast_${level}.png` }))
 ));
 
 export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
@@ -393,9 +394,17 @@ export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
 /** 미리 불러 둘 배지 — 알려진 재해·사건 코드와 휘하 상태. */
 const CITY_STATUS_BADGE_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '32', '34', '43', 'isolated', 'besieged', 'battle', 'works'];
 
+/** 상태 배지 배율 — 1x 16px · 2x 32 · 4x 64 · 8x 128(opensamguk-images `<N>x` 규칙). */
+const CITY_STATUS_BADGE_SCALES = [1, 2, 4, 8] as const;
+
 /** 상태 배지 그림 경로. 재해·사건 코드는 `state-<code>`, 휘하 상태는 `state-<name>`. */
-export function cityStatusBadgeUrl(key: string): string {
-  return `/status/state-${key}.png`;
+export function cityStatusBadgeUrl(key: string, scale: number = 1): string {
+  return `/status/${scale}x/state-${key}.png`;
+}
+
+/** 그릴 크기(캔버스 px)보다 작지 않은 가장 작은 배율. 16px 에서 장면형 그림이 뭉개지므로 늘 올려 고른다. */
+export function cityStatusBadgeScale(drawPx: number): number {
+  return CITY_STATUS_BADGE_SCALES.find((scale) => scale * 16 >= drawPx) ?? 8;
 }
 
 /** 이 城 에 붙일 배지 열쇠들 — 재해·사건 먼저, 휘하 상태가 뒤. */
@@ -933,7 +942,9 @@ export function cityFootprintMarkerBox(level: number, col: number, row: number, 
   const baseY = cy + (view.scale * block.span) / 2;
   const x = cx - width * (spec.anchorX / spec.pixelWidth);
   const y = baseY - height * (spec.anchorY / spec.pixelHeight);
-  return { x, y, width, height, cx, cy, baseY, span: block.span };
+  // 성내 마름모 폭 — 그림 캔버스가 아니라 실루엣이 차지하는 폭이다. 배지·선택 상자가 여기에 붙는다.
+  const footprintWidth = 2 * view.scale * block.span;
+  return { x, y, width, height, cx, cy, baseY, span: block.span, footprintWidth };
 }
 
 export function cityMarkerRadius(level: number, dpr: number): number {
@@ -1482,7 +1493,8 @@ function drawScene(
     // 깃발 기준점은 그림의 지붕 높이(그림 위쪽 절반), 이름표 기준점은 성내 앞 꼭짓점이다.
     const px = fit ? fit.cx : x;
     const py = fit ? fit.baseY : y;
-    const fy = fit ? fit.y + fit.height * 0.55 : y;
+    // 지붕 높이 — 실루엣은 성내 폭에 맞춰져 있으므로 캔버스가 아니라 성내 폭으로 잰다.
+    const fy = fit ? fit.baseY - fit.footprintWidth * 0.3 : y;
     const r = radius;
 
     if (markerZoom === undefined) {
@@ -1558,11 +1570,14 @@ function drawScene(
     if (markerZoom !== undefined) {
       // 상태 배지 — 城 그림 왼쪽 위에서 오른쪽으로 줄지어. 픽셀아트라 최근접 확대로 키운다.
       const keys = cityStatusBadgeKeys(city);
-      const size = Math.max(15 * dpr, Math.min(64 * dpr, (fit ? fit.width : r * 2) * 0.24));
-      let bx = fit ? fit.x + fit.width * 0.08 : px - r * 1.3;
-      const by = fit ? fit.y + fit.height * 0.08 : py - r * 1.4;
+      const fw = fit ? fit.footprintWidth : r * 2;
+      const size = Math.max(15 * dpr, Math.min(40 * dpr, fw * 0.2));
+      // 실루엣의 왼쪽 위 안쪽 — 성내 마름모 왼쪽 끝에서 조금 안, 건물 윗선 근처. 큰 城 도 이웃을 덮지 않게.
+      let bx = fit ? fit.cx - fw * 0.42 : px - r * 1.3;
+      const by = fit ? fit.baseY - fw * 0.5 - size : py - r * 1.4;
       for (const key of keys) {
-        const icon = markerImages[`status:${key}`];
+        const icon = markerImages[`status:${cityStatusBadgeScale(size)}:${key}`]
+          ?? CITY_STATUS_BADGE_SCALES.map((scale) => markerImages[`status:${scale}:${key}`]).find(Boolean);
         if (icon) {
           context.imageSmoothingEnabled = false;
           context.drawImage(icon, bx, by, size, size);
@@ -1588,7 +1603,7 @@ function drawScene(
     if (markerZoom !== undefined && city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
       context.lineWidth = 3;
-      if (fit) context.strokeRect(fit.x, fit.y, fit.width, fit.baseY - fit.y);
+      if (fit) context.strokeRect(fit.cx - fit.footprintWidth / 2, fit.baseY - fit.footprintWidth * 0.8, fit.footprintWidth, fit.footprintWidth * 0.8);
       else context.strokeRect(px - r, py - r, r * 2, r * 2);
     }
 
@@ -2063,7 +2078,7 @@ export function HanMapCanvas({
       ...CITY_MARKER_URLS.map(({ assetScale, level, url }) => load(cityMarkerImageKey(assetScale, level), url)),
       // 크게 뽑은 원본·상태 배지는 없어도 된다(onerror 무시) — 없으면 64px·숫자 배지로 그린다.
       ...CITY_MARKER_LARGE_URLS.map(({ size, level, url }) => load(`L${size}:${level}`, url)),
-      ...CITY_STATUS_BADGE_KEYS.map((key) => load(`status:${key}`, cityStatusBadgeUrl(key))),
+      ...CITY_STATUS_BADGE_SCALES.flatMap((scale) => CITY_STATUS_BADGE_KEYS.map((key) => load(`status:${scale}:${key}`, cityStatusBadgeUrl(key, scale)))),
     ];
     return () => {
       alive = false;
