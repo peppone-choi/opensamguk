@@ -5,7 +5,7 @@
   "inputs": {
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
+      "sha256": "6cd029f7082746948934217b488de958d02fd48773b4f257a70a34fa23a225e7"
     },
     "passes": {
       "path": "data/curated/han/strategic-passes-v1.json",
@@ -43,8 +43,8 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "a16c1810c4a5a94ab2d4b64628980a99297d51641ec9f28ccddd02172317d1b8",
-        "outputDocumentSha256": "4048d1ded0d356080dffe8ddc6ab7ebc23690ccc625c8b5913883fe444cc8f1b",
+        "inputDocumentSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+        "outputDocumentSha256": "e1587eba9bf847c565c976eda3a36021ac2588bdb77337490c48871daa042075",
         "inputCounts": {
           "cities": 1190,
           "seats": 172,

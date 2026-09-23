@@ -9,7 +9,7 @@
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
+      "sha256": "6cd029f7082746948934217b488de958d02fd48773b4f257a70a34fa23a225e7"
     },
     "passes": {
       "path": "data/curated/han/strategic-passes-v1.json",
@@ -4003,8 +4003,8 @@
   "geometry": {
     "stages": [
       {
-        "inputDocumentSha256": "a31d44b9f835d2b3214ba65d36043f5f407500f1c16f89f63a9a630196229172",
-        "outputDocumentSha256": "a16c1810c4a5a94ab2d4b64628980a99297d51641ec9f28ccddd02172317d1b8",
+        "inputDocumentSha256": "b1c284e7022b6ed798cf2bbafdbcca4ac48c755cfd6a0e8274c2d0f119fbb071",
+        "outputDocumentSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
         "inputBlob": {
           "path": "data/curated/han/county-location-partition-v1.input.json.gz",
           "sha256": "e549f918635cdf0148304ba2db4d63ce1d3b22118ebe3407cbe01bdaef5a9f09",

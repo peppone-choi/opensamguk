@@ -7,11 +7,11 @@
   "base": {
     "hanTiles": {
       "path": "data/map/han-tiles.json",
-      "sha256": "7d01a22614081100ea5afbd58bd5875efa38bb7561720a5265a977c00923d1cb"
+      "sha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312"
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "25a5d56d50b154103953f7d9814d200e4c88c9517e598301c521ba9cc73f6b50"
+      "sha256": "6cd029f7082746948934217b488de958d02fd48773b4f257a70a34fa23a225e7"
     }
   },
   "systems": [
@@ -1704,9 +1704,9 @@
         "kind": "STRONGHOLD",
         "id": "anfengjin"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 19,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 19칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 사료 근거로 淮水의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:anfengjin#0"
       ]
@@ -1732,9 +1732,9 @@
         "kind": "STRONGHOLD",
         "id": "liaokou"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 4,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 4칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 사료 근거로 遼水의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:liaokou#0"
       ]
@@ -1747,8 +1747,8 @@
         "id": "anpingkou"
       },
       "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 33,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 33칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "measuredCellDistanceToWater": 22,
+      "note": "가장 가까운 RIVER/LAKE 칸까지 22칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
       "sourceRefs": [
         "stronghold:anpingkou#0"
       ]
@@ -1774,9 +1774,9 @@
         "kind": "STRONGHOLD",
         "id": "liangkou"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 19,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 19칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 사료 근거로 沸流水의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:liangkou#0"
       ]
@@ -1844,12 +1844,14 @@
         "kind": "STRONGHOLD",
         "id": "xiakou"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 2,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 2칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "FERRY_ANCHOR_NOT_CONNECTED_TO_ATTESTED_REACH",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 大江 근거로 峽口 anchor에 RIVER 한 칸을 새겼다. 기존 江水 夷陵–峽口 reach와 8칸 떨어진 고립 셀이므로 강줄기 선형 판정 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:xiakou#0"
-      ]
+      ],
+      "reach": "jiang-yiling-xiakou",
+      "measuredCellDistanceToReach": 8
     },
     {
       "stableKey": "oukou",
@@ -1872,9 +1874,9 @@
         "kind": "STRONGHOLD",
         "id": "xiaoyaojin"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 4,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 4칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 사료 근거로 施水의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:xiaoyaojin#0"
       ]
@@ -1886,9 +1888,9 @@
         "kind": "STRONGHOLD",
         "id": "guokou"
       },
-      "reasonCode": "RIVER_COURSE_NOT_IN_GRID",
-      "measuredCellDistanceToWater": 11,
-      "note": "가장 가까운 RIVER/LAKE 칸까지 11칸 — 이 나루의 강이 격자에 없다. 옮기지 않고 물길도 새기지 않는다. 물길 경로 판정 대기.",
+      "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
+      "measuredCellDistanceToWater": 0,
+      "note": "#826 사료 근거로 渦水·淮水合流의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:guokou#0"
       ]
