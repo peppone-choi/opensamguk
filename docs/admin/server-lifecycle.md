@@ -30,6 +30,27 @@ Gateway `/admin`의 `서버 제어`에서 서버 ID, 이름, 시나리오와 화
 
 생성 뒤에는 Gateway 로비 노출, game-api와 game-engine health, 시드 행 존재, turn clock 전진을 확인합니다.
 
+### 공유 게이트웨이 레지스트리 경계
+
+`gateway-api`는 `game_server`를 요청 시점에 조회합니다. `DeployService`의 서버 목록,
+`ProfileIconSyncPublisher`의 동기화 대상, `AdminMemberService`의 회원별 서버 목록이 모두
+같은 DB 레지스트리를 읽습니다. 생성·삭제·리셋을 완료한 요청이 DB 전이를 확정하면 실행 중인
+`gateway-api`에서도 즉시 새 목록을 읽을 수 있습니다.
+
+`SERVER_REGISTRY_JSON`은 빈 DB의 첫 기동에서만 사용하는 이관 시드입니다. 시드 완료 여부는
+`game_server_registry_seed_state`에 영속화하므로 모든 서버를 삭제한 뒤 재기동해도 과거 env
+스냅샷으로 서버를 복원하지 않습니다. 기존 설치에서 `game_server`와 계정이 모두 비어 있다면
+V62 적용 전에 env의 시드 내용이 실제 의도와 맞는지 확인합니다.
+V62 이전 gateway-api로 롤백할 때 빈 테이블에 과거 JSON이 다시 시드될 수 있으므로
+롤백 전에 `SERVER_REGISTRY_JSON=[]`을 확인합니다.
+
+서버 lifecycle 중 deployer는 `gateway-api`를 재생성하지 않습니다. `web-gateway`는 아직
+`SERVER_REGISTRY_JSON`을 런타임 env로 읽으므로 재생성이 필요합니다. nginx는 그 새 컨테이너
+주소를 반영하기 위해 HUP으로 설정을 다시 읽으며 컨테이너를 재생성하지 않습니다.
+외부 인증 가용성 검증은 nginx의 `/api/gateway/auth/me` 경로에서 인증된 요청을 연속 폴링하고
+성공·실패 횟수와 gateway-api 컨테이너 ID를 함께 기록합니다. `/api/auth/me`는
+`web-gateway`를 거치므로 해당 컴포넌트의 재생성 동안 중단될 수 있습니다.
+
 생성 성공 후 Gateway에만 오래된 CREATE transition이 남았다면 일반 생성 요청을 재전송하지
 않습니다. [냉간 복구 문서의 관리 메타데이터 조정 절](./game-server-recovery.md#이미-충족된-create-관리-메타데이터-조정)에
 따라 runtime/env/control registry를 먼저 대조하고, 24시간 이상·만료 lease·Gateway DB 전체 정의
