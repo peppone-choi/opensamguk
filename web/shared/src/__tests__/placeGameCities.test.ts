@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   firstPickableCity,
+  fitCityFootprints,
+  fitFootprintsInTile,
   gameXyToSourceCell,
   isExternalPlace,
   placeGameCities,
@@ -9,6 +11,8 @@ import {
 } from '../iso/placeGameCities';
 import { buildProvinceSeatCells, type IsoCity } from '../iso/useIsoTileGrid';
 import { RASTER_GROUP } from '../isoTileGrid';
+import { resolveCityFootprints } from '../iso/cityFootprint';
+import { cellFootprintInTiles } from '../iso/buildingFit';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { HanTiles } from '../HanMapCanvas';
@@ -196,16 +200,29 @@ describe('郡國 밖 세력', () => {
     expect(placed).toHaveLength(0);
   });
 
-  it('城 과 같은 칸에 들면 같이 발자국을 나눈다 — 겹쳐 세우지 않는다', () => {
-    // 縣 0 의 治所는 타일 (1,0). 郡國 밖 세력도 같은 칸에 둔다.
+  it('같은 타일이라도 원본 칸이 다르면 줄이지 않고 제 성내에 선다', () => {
+    // 縣 0 의 治所는 원본 칸 (G+1,1). 郡國 밖 세력은 타일 (1,0) = 원본 칸 (G,0).
     const placed = placeGameCities(
       [city({ provinceId: 0 })],
       { ...data, cities: [place({ col: 1, row: 0 })] },
       options,
     );
     expect(placed).toHaveLength(2);
-    expect(placed.map((c) => c.drawScale)).toEqual([0.5, 0.5]);
+    // 경(7칸) 은 3.5 타일, 1칸 세력은 반 타일 — 1/n 로 줄이지 않는다.
+    expect(placed.map((c) => c.drawScale)).toEqual([7 / G, 1 / G]);
     expect(placed[0].drawCol).not.toBeCloseTo(placed[1].drawCol);
+  });
+
+  it('원본 셀이 실려 오면 그 칸에 선다 — 타일 구석으로 쏠리지 않는다', () => {
+    const [placed] = placeGameCities([], {
+      ...data, cities: [place({ col: 1, row: 0, sourceCol: G + 1, sourceRow: 1 })],
+    }, options);
+    expect(placed.col).toBeCloseTo((G + 1) / G);
+    expect(placed.tileCol).toBe(1);
+    expect(placed.tileRow).toBe(0);
+    // 1칸 성내 중심 = 원본 칸 (G+1,1) 의 중심.
+    expect(placed.drawCol).toBeCloseTo((G + 1.5) / G - 0.5);
+    expect(placed.drawRow).toBeCloseTo(1.5 / G - 0.5);
   });
 });
 
@@ -245,56 +262,79 @@ describe('세력 표시 중립성', () => {
   });
 });
 
-describe('fitFootprintsInTile', () => {
-  /** 마름모 노름. 아이소 칸은 이 값이 1 을 넘으면 칸 밖이다. */
-  const norm = (c: number, r: number) => Math.abs(c) + Math.abs(r);
+describe('fitCityFootprints — 성내에 꽉 맞춤', () => {
+  /** 원본 칸 (c,r) 에 선 城. col/row 는 placeGameCities 가 넘기는 소수 타일 좌표다. */
+  const at = (id: number, level: number, c: number, r: number): PlacedCity => ({
+    id, name: `城${id}`, level, nationId: 0,
+    col: c / G, row: r / G, tileCol: Math.floor(c / G), tileRow: Math.floor(r / G),
+    drawCol: 0, drawRow: 0, drawScale: 1, seat: true, isCapital: false, exact: true,
+  });
 
-  it('혼자면 칸 한가운데에 세운다 — 원본 셀이 칸 모서리여도', () => {
-    // 縣 0 은 원본 셀 (G+1,1), 타일 (1,0) 의 오른아래 구석이다.
+  it('혼자면 성내 중심 = 마커 칸 중심, 폭 = 변 칸 수 / G 타일', () => {
+    // 縣 0 은 원본 셀 (G+1,1), 타일 (1,0) 의 오른아래 칸이다. 경(9) 은 7칸.
     const [placed] = placeGameCities([city({ provinceId: 0 })], data, options);
-    expect(placed.drawCol).toBeCloseTo(1);
-    expect(placed.drawRow).toBeCloseTo(0);
-    expect(placed.drawScale).toBe(1);
+    expect(placed.drawCol).toBeCloseTo((G + 1.5) / G - 0.5);
+    expect(placed.drawRow).toBeCloseTo(1.5 / G - 0.5);
+    expect(placed.drawScale).toBeCloseTo(7 / G);
   });
 
-  it('같은 칸에 둘이면 발자국을 반으로 줄이고 칸 안에서 벌린다', () => {
-    const seatCell = {
-      // 둘 다 타일 (1,0) 안이지만 원본 셀은 다르다 — 같은 자리에 겹치면 못 누른다.
-      col: Int32Array.from([G, 2 * G - 1]),
-      row: Int32Array.from([0, G - 1]),
-      cityIndex: Int32Array.from([-1, -1]),
-    };
-    const both = placeGameCities(
-      [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
-      { ...data, provinceSeatCell: seatCell },
-      options,
-    );
-    expect(both).toHaveLength(2);
-    for (const placed of both) {
-      expect(placed.tileCol).toBe(1);
-      expect(placed.tileRow).toBe(0);
-      expect(placed.drawScale).toBeCloseTo(0.5);
-      // 밑면(=drawScale 타일)이 칸을 넘지 않는다: |dc|+|dr| + scale <= 1.
-      const off = norm(placed.drawCol - placed.tileCol, placed.drawRow - placed.tileRow);
-      expect(off + placed.drawScale).toBeLessThanOrEqual(1 + 1e-9);
-    }
-    // 서로 떨어져 있어야 각각 집힌다.
-    expect(norm(both[0].drawCol - both[1].drawCol, both[0].drawRow - both[1].drawRow))
-      .toBeGreaterThan(0.5);
+  it.each([
+    [9, 7], [8, 5], [7, 5], [6, 3], [10, 1], [11, 1], [5, 1],
+  ])('등급 %i 은 변 %i 칸 — 이웃이 없으면 resolveCityFootprints 그대로', (level, span) => {
+    const cities = [at(1, level, 40, 40)];
+    fitCityFootprints(cities);
+    expect(cities[0].drawScale).toBeCloseTo(span / G);
   });
 
-  it('좌표까지 같으면 마름모 둘레로 돌려세운다 — 겹쳐 두면 뒤엣것을 못 누른다', () => {
-    const seatCell = {
-      col: Int32Array.from([G + 1, G + 1]),
-      row: Int32Array.from([1, 1]),
-      cityIndex: Int32Array.from([-1, -1]),
-    };
-    const both = placeGameCities(
-      [city({ id: 1, provinceId: 0 }), city({ id: 2, provinceId: 1 })],
-      { ...data, provinceSeatCell: seatCell },
-      options,
-    );
-    expect(both[0].drawCol).not.toBeCloseTo(both[1].drawCol);
+  it('겹치면 HanMapCanvas 와 같은 규칙으로 줄인다(큰 城 먼저, 같으면 번호 순)', () => {
+    const cities = [at(2, 9, 43, 40), at(1, 9, 40, 40)];
+    fitCityFootprints(cities);
+    const spans = resolveCityFootprints(cities.map((c) => ({
+      id: c.id, level: c.level, col: c.col * G, row: c.row * G,
+    })));
+    expect(cities.map((c) => c.drawScale * G)).toEqual([spans.get(2), spans.get(1)]);
+    expect(spans.get(1)).toBe(7);
+    expect(spans.get(2)).toBeLessThan(7);
+  });
+
+  it('郡國 밖 세력은 게임 城 의 성내를 빼앗지 않는다 — 음수 id 가 먼저 풀리지 않는다', () => {
+    // 둘 다 중(6) 3칸. 번호만 보면 -1 이 먼저라 게임 城 이 1칸으로 줄 뻔했다.
+    const cities = [at(5, 6, 40, 40), at(-1, 6, 42, 40)];
+    fitCityFootprints(cities);
+    expect(cities[0].drawScale).toBeCloseTo(3 / G);
+  });
+
+  it('게임 城 의 성내는 게임 城 끼리만 푼다 — 더 큰 郡國 밖 세력이 있어도 HanMapCanvas 와 같다', () => {
+    // 세력(특 5칸)이 먼저 풀리면 게임 城(중 3칸)이 1칸으로 준다. HanMapCanvas 는 세력을 모른다.
+    const cities = [at(5, 6, 40, 40), at(-1, 8, 43, 40)];
+    fitCityFootprints(cities);
+    expect(cities[0].drawScale).toBeCloseTo(3 / G);
+  });
+
+  it('마커 칸까지 같으면 1/n 로 줄여 성내 안에서 벌린다 — 겹쳐 두면 뒤엣것을 못 누른다', () => {
+    const cities = [at(1, 6, 40, 40), at(2, 6, 40, 40)];
+    fitCityFootprints(cities);
+    // 1번이 3칸을 잡고, 2번은 마커 칸이 이미 잡혀 1칸으로 준다(resolveCityFootprints). 그다음 둘 다 1/2.
+    const own = [cellFootprintInTiles(40, 40, 3), cellFootprintInTiles(40, 40, 1)];
+    cities.forEach((placed, n) => {
+      expect(placed.drawScale).toBeCloseTo(own[n].width / 2);
+      // 줄인 정사각형이 제 성내 안에 든다(타일 좌표에서 성내는 축 정렬 정사각형이다).
+      const dc = Math.abs(placed.drawCol - own[n].centerCol);
+      const dr = Math.abs(placed.drawRow - own[n].centerRow);
+      expect(Math.max(dc, dr) + placed.drawScale / 2).toBeLessThanOrEqual(own[n].width / 2 + 1e-9);
+    });
+    expect(Math.abs(cities[0].drawCol - cities[1].drawCol) + Math.abs(cities[0].drawRow - cities[1].drawRow))
+      .toBeGreaterThan(0.1);
+  });
+
+  it('랩처럼 id 가 겹쳐도(전부 -1) 모두 자리를 받는다', () => {
+    const cities = [at(-1, 5, 10, 10), at(-1, 8, 20, 20), at(-1, 5, 30, 30)];
+    fitCityFootprints(cities);
+    expect(cities.map((c) => c.drawScale * G)).toEqual([1, 5, 1]);
+  });
+
+  it('옛 이름 fitFootprintsInTile 도 같은 함수다(랩 화면 호환)', () => {
+    expect(fitFootprintsInTile).toBe(fitCityFootprints);
   });
 });
 

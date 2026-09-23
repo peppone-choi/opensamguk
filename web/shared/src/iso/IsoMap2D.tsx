@@ -49,7 +49,8 @@ import {
   nationGlyph,
   markerScale,
 } from './marker';
-import { cityFlagBase, spriteRoofLift } from './buildingRoof';
+import { SPRITE_GROUND_CENTER_Y, cityFlagBase, spriteRoofLift } from './buildingRoof';
+import { spriteFootprintFit } from './buildingFit';
 import { bannerColor, isAchromaticNationColor, ownerTint, rgbCss, type TintMode } from './tint';
 import { cityDisplayName } from './cityName';
 import { cityIconLevel } from './cityIconLevel';
@@ -87,24 +88,18 @@ const BUILDING_TIERS: { file: string; from: number; to: number }[] = [
   { file: 'county-small', from: 11, to: 11 },
 ];
 /**
- * 오브젝트 접지점. 매니페스트가 말하는 (128,240) 은 이제 **설계값**이지 실측 우연이 아니다.
- * 11장 전부 tools/assets/build_iso2d_buildings.py 의 기하 가이드에서 나오고, 밑면 다이아몬드
- * 중심 (128,176)·반높이 64 를 그대로 쓴다. export 가 매 장 `y_bottom(x) <= 176+64(1-|x-128|/128)`
- * 를 검사해서 타일 밖으로 새면 빨개진다.
- */
-const OBJECT_ANCHOR_X = 128;
-const OBJECT_ANCHOR_Y = 240;
-/**
- * 城 은 타일보다 조금 작게, 다이아몬드 안에 앉힌다.
+ * 城 은 **성내에 꽉 맞춰** 세운다(2026-09-23 사용자 결정, 모든 지도 화면).
  *
- * 배포본은 원본 크기(256px = 타일 폭 그대로)를 타일 아래 꼭짓점에 붙여 세웠다. 그러면
- * 성벽이 칸 밖으로 삐져나가고 격자와 어긋나 보인다 — 「셀과 아이콘이 안 맞는다」(2026-09-09).
+ * 오브젝트 접지점: 매니페스트의 (128,240) 은 기하 가이드의 밑면 다이아몬드(중심 (128,176)·반높이 64)
+ * 아래 꼭짓점이다(tools/assets/build_iso2d_buildings.py). 그런데 실루엣은 그 다이아몬드보다 작다 —
+ * 등급 위계용 여백이 있다(장현 136px · 도성 254px). 그래서 캔버스가 아니라 **실루엣 폭**을 성내
+ * 마름모 폭에 맞추고, 실루엣 밑면 중심(가로 중심, y=176)을 성내 중심에 둔다. 실루엣 밑면도
+ * (128,176) 동심 마름모라 그러면 실루엣 앞 꼭짓점이 성내 앞 꼭짓점에 온다(buildingFit.ts).
  *
- * 스프라이트 밑면 다이아몬드는 아래 꼭짓점이 (128,240), 가장 넓은 줄이 y=176 이라
- * 반높이 64·반너비 128 — 타일과 같은 크기다(실측). 그래서 접지점을 아래 꼭짓점에서
- * HALF_H·배율 만큼 올리면 밑면이 타일과 **동심**이 된다. 0.75 는 눈대중이었고 6px 떴다.
+ * 예전(2026-09-09)에는 타일 하나를 발자국으로 보고 0.85 배로 세웠다 — 「셀과 아이콘이 안 맞는다」.
+ * 이제 발자국은 성내(원본 칸 span², 아이소에서 span/2 타일)이고 크기는 placeGameCities 가
+ * drawScale 에 실어 온다.
  */
-const OBJECT_SCALE = 0.85;
 const EMPTY_CITIES: readonly PlacedCity[] = [];
 const EMPTY_BATTLEFIELDS: readonly IsoBattlefieldMarker[] = [];
 const EMPTY_SEA_ROUTES: readonly IsoSeaRoute[] = [];
@@ -558,13 +553,17 @@ export function IsoMap2D({
       // 축소 상태에서는 郡治만 남긴다(SEAT_ONLY_TILE_PIXELS 주석 참조).
       const seatOnly = view.scale * TILE_SCREEN_WIDTH < SEAT_ONLY_TILE_PIXELS;
       // 뒤에서 앞으로. 같은 화가 순서를 집기 판정에서 거꾸로 훑어 위에 있는 城 을 먼저 집는다.
+      // 성내가 여러 타일에 걸치므로 반폭만큼 넉넉히 잡는다. 화가 순서는 성내 중심의 깊이다.
       const visible = cities
         .filter((city) => (!seatOnly || city.seat)
-          && city.col >= c0 - 1 && city.col <= c1 + 1
-          && city.row >= r0 - 1 && city.row <= r1 + 1)
-        .sort((a, b) => (a.col + a.row) - (b.col + b.row));
+          && city.drawCol >= c0 - 1 - city.drawScale && city.drawCol <= c1 + 1 + city.drawScale
+          && city.drawRow >= r0 - 1 - city.drawScale && city.drawRow <= r1 + 1 + city.drawScale)
+        .sort((a, b) => (a.drawCol + a.drawRow) - (b.drawCol + b.drawRow));
       let drawnCities = 0;
-      const placedOnScreen: { city: PlacedCity; sx: number; sy: number; roofLift: number | null }[] = [];
+      // halfW·halfH 는 성내 마름모의 화면 반폭·반높이. 집기 상자·이름표·테가 이 크기를 따른다.
+      const placedOnScreen: {
+        city: PlacedCity; sx: number; sy: number; roofLift: number | null; halfW: number; halfH: number;
+      }[] = [];
       for (const city of visible) {
         // 깃발·이름·집기 상자는 건물이 실제로 선 자리에 붙어야 한다 — 예전엔 소수 원좌표를
         // 써서 깃발이 옆 칸에 혼자 떠 있었다.
@@ -574,6 +573,8 @@ export function IsoMap2D({
           sx: view.panX + x * view.scale,
           sy: view.panY + y * view.scale,
           roofLift: null as number | null,
+          halfW: HALF_W * city.drawScale * view.scale,
+          halfH: HALF_H * city.drawScale * view.scale,
         };
         placedOnScreen.push(placed);
         // 城 등급이 아니라 **그림 등급**으로 고른다 — v3 가 이민족 자리에 물려준 漢 縣이
@@ -583,14 +584,14 @@ export function IsoMap2D({
         if (!tier) continue;
         const sprite = sprites.get(`objects/${tier.file}`);
         if (!sprite) continue;
-        // 그리는 자리는 col/row 가 아니라 drawCol/drawRow 다 — 칸 안에 들도록 눌러 둔 값이다.
-        const [bx, by] = tileScreen(city.drawCol, city.drawRow, city.tileCol, city.tileRow);
-        const k = OBJECT_SCALE * city.drawScale;
+        // 그리는 자리는 col/row 가 아니라 drawCol/drawRow(성내 중심)다. 실루엣이 성내 폭을 채운다.
+        const fit = spriteFootprintFit(tier.file, city.drawScale, SPRITE_GROUND_CENTER_Y);
+        const k = fit.scale;
         placed.roofLift = spriteRoofLift(tier.file, k, view.scale);
         context.drawImage(
           sprite,
-          bx - OBJECT_ANCHOR_X * k,
-          by + HALF_H * k - OBJECT_ANCHOR_Y * k,
+          x - fit.originX * k,
+          y - fit.originY * k,
           sprite.naturalWidth * k,
           sprite.naturalHeight * k,
         );
@@ -617,8 +618,8 @@ export function IsoMap2D({
         }
       }
       hits.length = 0;
-      for (const { city, sx, sy, roofLift } of placedOnScreen) {
-        if (sx < -60 || sx > w + 60 || sy < -80 || sy > h + 60) continue;
+      for (const { city, sx, sy, roofLift, halfW, halfH } of placedOnScreen) {
+        if (sx < -60 - halfW || sx > w + 60 + halfW || sy < -80 - halfH || sy > h + 60 + halfH) continue;
         // 깃대는 그 城 그림의 지붕에 꽂는다(buildingRoof.ts).
         const top = drawCityFlag(context, sx, cityFlagBase(sy, roofLift, view.scale), {
           color: city.nationColor ? rgbCss(bannerColor(city.nationColor)) : null,
@@ -626,42 +627,44 @@ export function IsoMap2D({
           k,
           glyph: city.nationColor ? nationGlyph(city.nationName) : null,
         });
-        // 집기 상자는 깃발 꼭대기부터 칸 아래 꼭짓점까지 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
+        // 집기 상자는 깃발 꼭대기부터 성내 앞 꼭짓점까지, 가로는 성내 폭 — 깃발을 눌러도, 성벽을 눌러도 잡힌다.
         // 郡國 밖 세력도 여기 들어간다. 마우스를 얹으면 이름이 떠야 하기 때문이다 —
         // 「중국 바깥엔 툴팁이 안 올라온다」(2026-09-10). 다만 게임 城 번호가 없어
         // 눌러 들어갈 데는 없으므로 **누르는 쪽에서만** 걸러진다(onClick).
-        const half = Math.max(15 * k, HALF_W * 0.45 * view.scale);
+        const half = Math.max(15 * k, halfW);
         hits.push({
           city,
           x0: sx - half,
           x1: sx + half,
           y0: top - 2,
-          y1: sy + Math.max(9, HALF_H * 0.7 * view.scale),
+          y1: sy + Math.max(9, halfH),
         });
       }
 
       // 선택·주둔 테는 깃발 위에 얹는다 — 가려지면 어디가 내 城 인지 못 찾는다.
-      for (const { city, sx, sy } of placedOnScreen) {
+      // 테는 성내 마름모를 두른다(너무 작아지면 화면 최소 크기).
+      for (const { city, sx, sy, halfW } of placedOnScreen) {
         const ring = city.id === currentCityId
           ? '#ffd36d' // --focus
           : city.id === selectedCityId ? '#ece6d8' : null; // --text
-        if (ring) drawCityRing(context, sx, sy, { color: ring, k });
+        if (ring) drawCityRing(context, sx, sy, { color: ring, k, halfWidth: halfW });
       }
 
       // 이름표. 겹치면 뒤엣것을 버린다 — 한반도 남부처럼 城 이 몰린 곳에서 글씨가
       // 한 덩어리로 뭉개진다. 郡治가 먼저 자리를 잡고 縣이 남는 틈을 쓴다.
       if (!hideCityNames && !seatOnly) {
-        const below = Math.max(9, HALF_H * 0.7 * view.scale) + 2;
+        // 이름표는 성내 앞 꼭짓점 밑에 단다.
+        const below = (halfH: number) => Math.max(9, halfH) + 2;
         const named = placedOnScreen
           .filter(({ sx, sy }) => sx >= -60 && sx <= w + 60 && sy >= -60 && sy <= h + 60)
           .sort((a, b) => Number(b.city.seat) - Number(a.city.seat));
         // 郡縣制 안이면 「뭐뭐현」으로 적는다 — 겹침 판정도 같은 글자로 해야 맞는다.
         const labels = named.map(({ city }) => cityDisplayName(city));
         const keepLabel = dropOverlappingLabels(
-          named.map(({ sx, sy }, n) => cityLabelBox(sx, sy + below, labels[n], k)),
+          named.map(({ sx, sy, halfH }, n) => cityLabelBox(sx, sy + below(halfH), labels[n], k)),
         );
-        named.forEach(({ sx, sy }, n) => {
-          if (keepLabel[n]) drawCityName(context, labels[n], sx, sy + below, k);
+        named.forEach(({ sx, sy, halfH }, n) => {
+          if (keepLabel[n]) drawCityName(context, labels[n], sx, sy + below(halfH), k);
         });
       }
 

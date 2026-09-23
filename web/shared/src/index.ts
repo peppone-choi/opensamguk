@@ -197,6 +197,7 @@ export {
   placeGameCities,
   isExternalPlace,
   firstPickableCity,
+  fitCityFootprints,
   fitFootprintsInTile,
   placeBattlefields,
   gameXyToSourceCell,
@@ -272,4 +273,14 @@ export {
   spriteRoofLift,
   cityFlagBase,
 } from './iso/buildingRoof';
+export {
+  SPRITE_SILHOUETTE_PX,
+  cellFootprintInTiles,
+  spriteFootprintFit,
+  modelFootprintFit,
+  type TileFootprint,
+  type SpriteFit,
+  type ModelBounds,
+  type ModelFit,
+} from './iso/buildingFit';
 export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';
