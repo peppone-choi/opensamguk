@@ -2,7 +2,7 @@
  "schemaVersion": 1,
  "ledgerId": "officer-native-county-v1",
  "issue": "OPENSAM-255 / GitHub #775",
- "note": "인물 본관 縣 원장 1차분. DIRECT = 열전 서두가 본관을 직접 말한다(인용문 첨부). MISSING = 아직 근거 없음 — 혈연·裴注·演義·수작업은 뒤 단계다. 추정으로 메우지 않는다.",
+ "note": "인물 본관 縣 원장. DIRECT = 三國志 열전 서두가 본관을 직접 말한다(인용문 첨부). 後漢書·晉書·華陽國志·三國演義는 동명이인 검토 후보 또는 대조 근거다. 추정으로 메우지 않는다.",
  "inputs": {
   "scenarios": [
    "1010",
@@ -48,7 +48,8 @@
    "EXACT": 670,
    "HOMONYM": 80
   },
-  "unlinkedScenarioNames": 70
+  "unlinkedScenarioNames": 70,
+  "homonymPlaceKeys": 4
  },
  "officers": [
   {
@@ -3240,10 +3241,10 @@
    "evidence": null,
    "candidates": [
     {
-     "placeText": "魯國",
-     "book": "後漢書",
-     "volume": "卷070",
-     "quote": "孔融字文舉，魯國人，"
+     "placeText": "魯國曲阜",
+     "book": "三國演義",
+     "volume": "卷011",
+     "quote": "孔融，字文舉，魯國曲阜人也"
     }
    ]
   },
@@ -3471,7 +3472,13 @@
     "volume": "卷46",
     "quote": "孫堅字文臺，呉郡富春人，"
    },
-   "courtesyName": "文臺"
+   "courtesyName": "文臺",
+   "corroboration": [
+    {
+     "book": "三國演義",
+     "volume": "卷002"
+    }
+   ]
   },
   {
    "stableId": "10236",
@@ -5971,7 +5978,14 @@
    "candidateJurisdictionIds": [
     "43340"
    ],
-   "courtesyName": null
+   "courtesyName": null,
+   "otherBookDisagreement": [
+    {
+     "book": "三國演義",
+     "volume": "卷001",
+     "quote": "沛國譙郡人也，姓曹，名操，字孟德"
+    }
+   ]
   },
   {
    "stableId": "10406",
@@ -10077,7 +10091,13 @@
     "volume": "卷39",
     "quote": "董和字幼宰，南郡枝江人也"
    },
-   "courtesyName": "幼宰"
+   "courtesyName": "幼宰",
+   "corroboration": [
+    {
+     "book": "三國演義",
+     "volume": "卷064"
+    }
+   ]
   },
   {
    "stableId": "10686",
@@ -11032,7 +11052,14 @@
     "volume": "卷18",
     "quote": "許褚字仲康，譙國譙人也"
    },
-   "courtesyName": "仲康"
+   "courtesyName": "仲康",
+   "otherBookDisagreement": [
+    {
+     "book": "三國演義",
+     "volume": "卷012",
+     "quote": "我乃譙國譙縣人也：姓許，名褚，字仲康"
+    }
+   ]
   },
   {
    "stableId": "10746",
@@ -14917,6 +14944,2983 @@
    "jurisdictionId": null,
    "matchStatus": null,
    "evidence": null
+  }
+ ],
+ "missingRows": [
+  {
+   "stableId": "10001",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10002",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10005",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10006",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10007",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10009",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10010",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10011",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10015",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10021",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10023",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10025",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10027",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10029",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10031",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10032",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10034",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10035",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10036",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10038",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10039",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10041",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10043",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10046",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10047",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10048",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10049",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10053",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10054",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10055",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10057",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10058",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10060",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10062",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10063",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10064",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10065",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10067",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10068",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10070",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10072",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10073",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10075",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10076",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10077",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10078",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10079",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10081",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10083",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10087",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10091",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10092",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10094",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10095",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10096",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10097",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10098",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10100",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10102",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10103",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10104",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10105",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10108",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10110",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10112",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10113",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10114",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10115",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10118",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10119",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10120",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10121",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10124",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10126",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10127",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10128",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10129",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10130",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10131",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10133",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10134",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10136",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10138",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10144",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10147",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10148",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10149",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10152",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10156",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10157",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10158",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10160",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10161",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10163",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10164",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10165",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10166",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10169",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10170",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10171",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10172",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10179",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10180",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10181",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10183",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10184",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10185",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10188",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10191",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10194",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10195",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10196",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10197",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10198",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10199",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10202",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10203",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10204",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10206",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10208",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10209",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10210",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10212",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10216",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10217",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10218",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10219",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10220",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10222",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10224",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10225",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10228",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10229",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10230",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10231",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10232",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10233",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10236",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10238",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10239",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10242",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10243",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10245",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10246",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10247",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10248",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10250",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10251",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10252",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10253",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10255",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10256",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10257",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10258",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10260",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10264",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10265",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10266",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10267",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10268",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10269",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10271",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10272",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10274",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10275",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10278",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10280",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10283",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10286",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10293",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10294",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10296",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10297",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10301",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10302",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10303",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10305",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10306",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10307",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10308",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10310",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10311",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10312",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10313",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10314",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10317",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10319",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10320",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10321",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10323",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10324",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10326",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10329",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10330",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10334",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10336",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10337",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10338",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10341",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10342",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10343",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10345",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10346",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10348",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10349",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10350",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10351",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10355",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10356",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10359",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10363",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10365",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10366",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10368",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10371",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10373",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10374",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10377",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10378",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10379",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10380",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10381",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10382",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10383",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10384",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10386",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10387",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10388",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10389",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10390",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10391",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10394",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10395",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10396",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10397",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10398",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10399",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10401",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10402",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10403",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10406",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10407",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10408",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10409",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10410",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10411",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10412",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10413",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10414",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10415",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10416",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10418",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10419",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10421",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10422",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10423",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10428",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10429",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10432",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10434",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10435",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10436",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10437",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10438",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10440",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10442",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10451",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10453",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10456",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10457",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10458",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10462",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10466",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10470",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10473",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10474",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10476",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10477",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10479",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10482",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10483",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10484",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10487",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10488",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10489",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10493",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10494",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10495",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10496",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10497",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10498",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10499",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10502",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10503",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10504",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10506",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10507",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10508",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10509",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10510",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10511",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10512",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10513",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10514",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10516",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10518",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10523",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10524",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10527",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10528",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10529",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10530",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10533",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10535",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10540",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10544",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10545",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10547",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10548",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10549",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10550",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10551",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10553",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10554",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10555",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10556",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10557",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10558",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10561",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10564",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10565",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10567",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10568",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10572",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10575",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10576",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10577",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10578",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10579",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10580",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10581",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10583",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10584",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10589",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10590",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10591",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10593",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10595",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10596",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10597",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10599",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10600",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10602",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10603",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10604",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10605",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10606",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10608",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10610",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10611",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10615",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10618",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10619",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10621",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10622",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10627",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10630",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10631",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10632",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10633",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10634",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10636",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10638",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10639",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10641",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10642",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10644",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10646",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10647",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10651",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10654",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10655",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10656",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10659",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10660",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10661",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10666",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10667",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10669",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10672",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10676",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10677",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10680",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10681",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10683",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10686",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10687",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10689",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10691",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10692",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10695",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10696",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10699",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10701",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10702",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10704",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10705",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10706",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10708",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10709",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10710",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10711",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10712",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10714",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10715",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10720",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10721",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10722",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10724",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10726",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10727",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10730",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10731",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10733",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10734",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10735",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10736",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10737",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10739",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10740",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10741",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10743",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10744",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10746",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10749",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10750",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10751",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10752",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10754",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10755",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10758",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10759",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10762",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10764",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10765",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10767",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10773",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10774",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10775",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10778",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10780",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10783",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10784",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10785",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10789",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10790",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10791",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10795",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10796",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10797",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10799",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10800",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10802",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10803",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10804",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10805",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10807",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10808",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10810",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10813",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10814",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10816",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10817",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10818",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10820",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10821",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10822",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10823",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10824",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10825",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10826",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10831",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10832",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10840",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10841",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10842",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10844",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10848",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10849",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10851",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10852",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10854",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10855",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10856",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10857",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10858",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10859",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10861",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10862",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10865",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10868",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10870",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10871",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 2
+  },
+  {
+   "stableId": "10872",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10873",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10874",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10875",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10877",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10878",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10879",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10880",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10883",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10885",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10886",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10887",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10889",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10890",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10891",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10894",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10901",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10902",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10903",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10904",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10905",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10906",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10908",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10909",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10910",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10911",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10912",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10914",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10915",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10916",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10917",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10919",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10921",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10925",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10926",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10928",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10929",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10931",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10932",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10933",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10936",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10937",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10939",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10940",
+   "missingReason": "AMBIGUOUS_PERSON",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10941",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10942",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10944",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10946",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10947",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10948",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10949",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10950",
+   "missingReason": "HOMONYM_UNVERIFIED",
+   "candidateCount": 1
+  },
+  {
+   "stableId": "10952",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10955",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10958",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10959",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10960",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10962",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10963",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10965",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10966",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10968",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10969",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10970",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10971",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10972",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10973",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10976",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10978",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10979",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10981",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10982",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10983",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10984",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10986",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10988",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10990",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10991",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10992",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10994",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "10999",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  },
+  {
+   "stableId": "11000",
+   "missingReason": "NO_BIOGRAPHY_STATEMENT",
+   "candidateCount": 0
+  }
+ ],
+ "homonymPlaceRows": [
+  {
+   "normalizedCountyKey": "九原",
+   "jurisdictionIds": [
+    "95698",
+    "JURISDICTION-PARENT-0138-SEAT"
+   ],
+   "commanderyIds": [
+    "PARENT-0082",
+    "PARENT-0138"
+   ],
+   "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
+  },
+  {
+   "normalizedCountyKey": "南城",
+   "jurisdictionIds": [
+    "40980",
+    "85596"
+   ],
+   "commanderyIds": [
+    "PARENT-0026",
+    "PARENT-0053"
+   ],
+   "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
+  },
+  {
+   "normalizedCountyKey": "平阳",
+   "jurisdictionIds": [
+    "85673",
+    "95415"
+   ],
+   "commanderyIds": [
+    "PARENT-0002",
+    "PARENT-0026"
+   ],
+   "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
+  },
+  {
+   "normalizedCountyKey": "汉寿",
+   "jurisdictionIds": [
+    "41901",
+    "44587"
+   ],
+   "commanderyIds": [
+    "PARENT-0046",
+    "PARENT-0055"
+   ],
+   "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
   }
  ],
  "unlinkedScenarioNames": [

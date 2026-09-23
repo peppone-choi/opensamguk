@@ -9,7 +9,8 @@
 2. 기본 실행 / ``--check`` — **커밋된 입력만**(등록부·이름표·시나리오·글자표·추출 원장·han-tiles)
    으로 ``officer-native-county-v1.json`` 을 결정론으로 다시 세운다. ``--check`` 는 바이트 비교다.
 
-추정하지 않는다. 혈연 추론·裴注·演義·수작업 판정은 이 빌더의 범위가 아니다 — 못 찾으면 MISSING 이다.
+추정하지 않는다. 혈연 추론·裴注·수작업 판정은 이 빌더의 범위가 아니다 — 못 찾으면 MISSING 이다.
+三國演義는 추출 증거와 이견 대조에 포함하지만, 이름만 같은 소설 인물을 DIRECT 로 올리지 않는다.
 표준 라이브러리만 쓴다.
 """
 
@@ -37,7 +38,7 @@ LEDGER_PATH = ROOT / "data" / "curated" / "han" / "officer-native-county-v1.json
 PRODUCT_SCENARIO_PATTERN = re.compile(r"^scenario_1[01]\d\d\.json$")
 GENERAL_KEYS = ("general", "general_ex", "general_neutral")
 # 책 우선순위 — 같은 본관을 여러 책이 말하면 앞 책의 인용문을 증거로 쓴다.
-BOOKS = ("三國志", "後漢書", "晉書", "華陽國志")
+BOOKS = ("三國志", "後漢書", "晉書", "華陽國志", "三國演義")
 QUOTE_LIMIT = 40
 
 NAME_STOP = "\\s，。、：；「」『』（）《》〈〉=|\\[\\]{}"
@@ -56,6 +57,10 @@ COMMANDERY_SPELLING_ALIASES = {"河間": "河閒國", "丹楊": "丹陽郡"}
 # F: 「太祖武皇帝，沛國譙人也，姓曹，諱操」
 TABOO_AFTER_PATTERN = re.compile(
     rf"，(?P<place>[^{PLACE_STOP}]{{1,8}}?)人(?P<tail>也)，姓(?P<surname>[^{NAME_STOP}]{{1,2}})，諱(?P<given>[^{NAME_STOP}]{{1,2}})(?=[，。])"
+)
+NOVEL_INVERTED_PATTERN = re.compile(
+    rf"(?P<place>[^{PLACE_STOP}{{}}]{{2,8}}?)人也[，：]姓(?P<surname>[^{NAME_STOP}]{{1,2}})，名(?P<given>[^{NAME_STOP}]{{1,2}})"
+    rf"(?:，字(?P<zi>[^{NAME_STOP}]{{1,3}}))?"
 )
 TILE_SUFFIXES = ("侯国", "侯國", "属国", "屬國", "公国", "公國", "县", "縣")
 
@@ -227,6 +232,37 @@ def find_hits(cleaned: str, folded: str):
                cleaned[place_span[0]:place_span[1]], "E", cleaned[match.start():match.end("tail")][:QUOTE_LIMIT])
 
 
+def find_novel_hits(cleaned: str, folded: str, wanted: dict[str, str]):
+    """Only explicit full-name or 姓·名 identity in 演義; no context-based identity guess."""
+    for match in NOVEL_INVERTED_PATTERN.finditer(folded):
+        name = match.group("surname") + match.group("given")
+        place = match.group("place")
+        raw_place = cleaned[match.start("place"):match.end("place")]
+        if raw_place.startswith("我乃"):
+            raw_place = raw_place[2:]
+        if name not in wanted or not re.search(r"[郡國].", place):
+            continue
+        zi_span = match.span("zi") if match.group("zi") else None
+        yield (name, cleaned[zi_span[0]:zi_span[1]] if zi_span else None,
+               raw_place, "G",
+               cleaned[match.start():match.end()][:QUOTE_LIMIT])
+    for name in wanted:
+        if name not in folded:
+            continue
+        pattern = re.compile(
+            rf"{re.escape(name)}(?:，?字(?P<zi>[^{NAME_STOP}]{{1,3}}))?，(?:乃)?"
+            rf"(?P<place>[^{PLACE_STOP}{{}}]{{2,8}}?)人也"
+        )
+        for match in pattern.finditer(folded):
+            place = match.group("place")
+            if not re.search(r"[郡國].", place):
+                continue
+            zi_span = match.span("zi") if match.group("zi") else None
+            yield (name, cleaned[zi_span[0]:zi_span[1]] if zi_span else None,
+                   cleaned[match.start("place"):match.end("place")], "H",
+                   cleaned[match.start():match.end()][:QUOTE_LIMIT])
+
+
 def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict:
     """wanted: folded name -> 정체 이름."""
     import sqlite3
@@ -244,9 +280,17 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
             cleaned = clean_wikitext(raw, removed_unknown)
             folded = tables.fold(cleaned)
             digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
-            for name, zi, place, form, quote in find_hits(cleaned, folded):
+            candidates = list(find_hits(cleaned, folded))
+            if book == "三國演義":
+                candidates.extend(find_novel_hits(cleaned, folded, wanted))
+            seen_local = set()
+            for name, zi, place, form, quote in candidates:
                 if name not in wanted:
                     continue
+                identity = (name, place, quote)
+                if identity in seen_local:
+                    continue
+                seen_local.add(identity)
                 hits.append({
                     "nameKanjiTraditional": wanted[name], "courtesyName": zi, "placeText": place, "form": form,
                     "book": book, "volume": volume, "title": title, "quote": quote, "volumeSha256": digest,
@@ -259,7 +303,7 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
                 "색인은 저장소 밖이라 이 파일이 커밋된 증거다 — 재추출은 build_officer_native_county.py --extract.",
         "books": list(BOOKS),
         "forms": {"A": "X字Y，郡縣人也", "B": "X，郡縣人也", "D": "X字Y，郡縣人[，。]", "E": "姓X，諱Y(，字Z)，郡縣人",
-                  "F": "郡縣人也，姓X，諱Y"},
+                  "F": "郡縣人也，姓X，諱Y", "G": "郡縣人也，姓X，名Y", "H": "X(字Y)，郡縣人也"},
         "volumesScanned": volumes,
         "unknownTemplatesDropped": {k: removed_unknown[k] for k in sorted(removed_unknown)},
         "hits": hits,
@@ -271,6 +315,9 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
 
 class Gazetteer:
     def __init__(self, tiles: dict, simplification: dict, tables: CharTables):
+        sys.path.insert(0, str(ROOT))
+        from tools.map.audit_county_coverage import make_normalizer
+        self._audit_county_normalizer = make_normalizer()
         self._tables = tables
         self._simplify = {ord(k): v for k, v in simplification["table"].items()}
         for row in simplification.get("reviewedVariantAdditions", []):
@@ -288,20 +335,23 @@ class Gazetteer:
             for alias in self._commandery_aliases(commandery["nameCh"]) | spelled:
                 self.aliases.setdefault(self.norm(alias), []).append(commandery)
         self._county_index: dict[str, list[str]] = {}
+        self._county_commandery: dict[str, str] = {}
+        commandery_by_jurisdiction = {
+            jurisdiction_id: commandery["id"]
+            for commandery in tiles["commanderyRecords"]
+            for jurisdiction_id in commandery.get("jurisdictionIds", [])
+        }
         for record in tiles["jurisdictionRecords"]:
             if record.get("kind") != "COUNTY":
                 continue
             self._county_index.setdefault(self.county_key(record["nameCh"]), []).append(record["id"])
+            self._county_commandery[record["id"]] = record.get("commanderyId") or commandery_by_jurisdiction[record["id"]]
 
     def norm(self, text: str) -> str:
         return self._tables.fold(text).translate(self._simplify)
 
     def county_key(self, name: str) -> str:
-        name = self.norm(name)
-        for suffix in TILE_SUFFIXES:
-            if name.endswith(self.norm(suffix)) and len(name) > len(suffix):
-                return name[: -len(suffix)]
-        return name
+        return self._audit_county_normalizer(self.norm(name))
 
     @staticmethod
     def _commandery_aliases(name: str) -> set[str]:
@@ -371,10 +421,14 @@ def validate_extracts(extracts: dict, tables: CharTables) -> None:
             raise LedgerError(f"인용문이 {QUOTE_LIMIT}자를 넘는다: {hit['quote']}")
         if hit["placeText"] + "人" not in hit["quote"]:
             raise LedgerError(f"인용문에 본관 문구가 없다: {hit['quote']}")
-        if hit["form"] in ("E", "F"):
+        if hit["form"] in ("E", "F", "G"):
             folded_quote = tables.fold(hit["quote"])
             if hit["form"] == "E":
                 identity = TABOO_PATTERN.fullmatch(folded_quote)
+            elif hit["form"] == "G":
+                if hit["book"] != "三國演義":
+                    raise LedgerError("姓·名 서술형 G는 三國演義에서만 허용한다")
+                identity = NOVEL_INVERTED_PATTERN.fullmatch(folded_quote)
             else:
                 # Extracted F quotes omit the leading comma and trailing delimiter.
                 identity = TABOO_AFTER_PATTERN.match("，" + folded_quote + "。")
@@ -382,7 +436,7 @@ def validate_extracts(extracts: dict, tables: CharTables) -> None:
                     identity = None
             if identity is None or (identity.group("surname") + identity.group("given")) != tables.fold(hit["nameKanjiTraditional"]):
                 raise LedgerError("인용문의 姓·諱가 추출 인물 이름과 다르다")
-        if hit["form"] not in ("E", "F") and not tables.fold(hit["quote"]).startswith(tables.fold(hit["nameKanjiTraditional"])):
+        if hit["form"] not in ("E", "F", "G") and not tables.fold(hit["quote"]).startswith(tables.fold(hit["nameKanjiTraditional"])):
             raise LedgerError(f"인용문이 인물 이름으로 시작하지 않는다: {hit['quote']}")
 
 
@@ -459,6 +513,25 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
         rows.append(entry)
     rows.sort(key=lambda e: int(e["stableId"]))
 
+    missing_rows = [
+        {"stableId": row["stableId"], "missingReason": row["missingReason"],
+         "candidateCount": len(row.get("candidates", []))}
+        for row in rows if row["method"] == "MISSING"
+    ]
+    source_county_keys = set()
+    for hit in extracts["hits"]:
+        resolution = gazetteer.resolve(hit["placeText"])
+        if resolution.get("nativeCounty"):
+            source_county_keys.add(gazetteer.county_key(resolution["nativeCounty"]))
+    homonym_place_rows = [
+        {"normalizedCountyKey": key,
+         "jurisdictionIds": sorted(ids),
+         "commanderyIds": sorted({gazetteer._county_commandery[place_id] for place_id in ids}),
+         "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"}
+        for key, ids in sorted(gazetteer._county_index.items())
+        if key in source_county_keys and len(ids) > 1
+    ]
+
     stats = {
         "officers": len(rows),
         "byMethod": dict(sorted(Counter(e["method"] for e in rows).items())),
@@ -466,13 +539,14 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
         "byMatchStatus": dict(sorted(Counter(e["matchStatus"] for e in rows if e["method"] == "DIRECT").items())),
         "byScenarioLink": dict(sorted(Counter(e["scenarioLink"] for e in rows).items())),
         "unlinkedScenarioNames": len(unlinked),
+        "homonymPlaceKeys": len(homonym_place_rows),
     }
     return {
         "schemaVersion": 1,
         "ledgerId": "officer-native-county-v1",
         "issue": "OPENSAM-255 / GitHub #775",
-        "note": "인물 본관 縣 원장 1차분. DIRECT = 열전 서두가 본관을 직접 말한다(인용문 첨부). "
-                "MISSING = 아직 근거 없음 — 혈연·裴注·演義·수작업은 뒤 단계다. 추정으로 메우지 않는다.",
+        "note": "인물 본관 縣 원장. DIRECT = 三國志 열전 서두가 본관을 직접 말한다(인용문 첨부). "
+                "後漢書·晉書·華陽國志·三國演義는 동명이인 검토 후보 또는 대조 근거다. 추정으로 메우지 않는다.",
         "inputs": {
             "scenarios": scenario_codes,
             "registry": "tools/scenario/officer-id-registry.tsv",
@@ -483,6 +557,8 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
         },
         "stats": stats,
         "officers": rows,
+        "missingRows": missing_rows,
+        "homonymPlaceRows": homonym_place_rows,
         "unlinkedScenarioNames": unlinked,
     }
 

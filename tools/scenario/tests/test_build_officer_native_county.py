@@ -104,6 +104,14 @@ class CleanAndExtractTest(unittest.TestCase):
         self.assertLessEqual({("關羽", "河東解", "A"), ("典韋", "陳留己吾", "B"), ("夏侯惇", "沛國譙", "D"),
                                 ("劉備", "涿郡涿縣", "E"), ("曹操", "沛國譙", "F"), ("羊祜", "泰山南城", "A")}, hits)
 
+    def test_novel_full_name_and_inverted_surname_forms(self):
+        text = "孔融，字文舉，魯國曲阜人也。吳郡富春人也：姓孫，名堅，字文臺"
+        wanted = {"孔融": "孔融", "孫堅": "孫堅"}
+        hits = {(name, place, form) for name, _, place, form, _ in
+                builder.find_novel_hits(text, text, wanted)}
+        self.assertIn(("孔融", "魯國曲阜", "H"), hits)
+        self.assertIn(("孫堅", "吳郡富春", "G"), hits)
+
     def test_mid_sentence_mentions_are_not_biography_openings(self):
         text = "太祖問曰張遼字文遠，雁門馬邑人也"
         self.assertEqual(list(builder.find_hits(text, text)), [])
@@ -155,6 +163,8 @@ class LedgerRuleTest(unittest.TestCase):
         entry = ledger["officers"][0]
         self.assertEqual((entry["method"], entry["missingReason"]), ("MISSING", "HOMONYM_UNVERIFIED"))
         self.assertEqual(entry["candidates"][0]["book"], "後漢書")
+        novel = _ledger(["張純"], [_hit("張純", "河東解", book="三國演義")])["officers"][0]
+        self.assertEqual((novel["method"], novel["missingReason"]), ("MISSING", "HOMONYM_UNVERIFIED"))
 
     def test_sanguozhi_wins_and_disagreement_is_recorded(self):
         ledger = _ledger(["賈逵"], [_hit("賈逵", "河東解"), _hit("賈逵", "潁川潁陰", book="後漢書")])
@@ -192,6 +202,15 @@ class LedgerRuleTest(unittest.TestCase):
 
 
 class ExtractIdentityTest(unittest.TestCase):
+    def test_committed_later_han_and_novel_hits_keep_book_and_volume(self):
+        payload = builder._load_json(builder.EXTRACTS_PATH)
+        for book in ("後漢書", "三國演義"):
+            hits = [hit for hit in payload["hits"] if hit["book"] == book]
+            self.assertTrue(hits, book)
+            self.assertTrue(all(hit["volume"].startswith("卷") and hit["quote"] for hit in hits))
+        novel = [hit for hit in payload["hits"] if hit["book"] == "三國演義"]
+        self.assertTrue({"G", "H"} <= {hit["form"] for hit in novel})
+
     def test_committed_taboo_forms_retain_their_identity(self):
         payload = builder._load_json(builder.EXTRACTS_PATH)
         special = [h for h in payload["hits"] if h["form"] in ("E", "F")]
@@ -224,6 +243,19 @@ class ExtractIdentityTest(unittest.TestCase):
 
 
 class CommittedArtifactsTest(unittest.TestCase):
+    def test_missing_and_homonym_place_lists_are_complete_and_distinct(self):
+        ledger = builder._load_json(builder.LEDGER_PATH)
+        expected_missing = {row["stableId"] for row in ledger["officers"] if row["method"] == "MISSING"}
+        actual_missing = {row["stableId"] for row in ledger["missingRows"]}
+        self.assertEqual(expected_missing, actual_missing)
+        self.assertTrue(actual_missing)
+        self.assertTrue(any(row["method"] == "DIRECT" for row in ledger["officers"]))
+        self.assertTrue(ledger["homonymPlaceRows"])
+        for row in ledger["homonymPlaceRows"]:
+            self.assertGreater(len(row["jurisdictionIds"]), 1)
+            self.assertEqual(len(row["jurisdictionIds"]), len(set(row["jurisdictionIds"])))
+            self.assertEqual("KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED", row["disposition"])
+
     def _run(self, argv):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
