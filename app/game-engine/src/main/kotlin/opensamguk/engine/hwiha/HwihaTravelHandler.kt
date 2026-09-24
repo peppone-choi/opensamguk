@@ -34,7 +34,7 @@ class HwihaTravelHandler(
             }
         } else request.destination ?: return reject(HwihaTravelFailure.INVALID_INPUT)
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
-        val budget = if (inputId == HwihaTravelInput.FORCED_MARCH) 45_000_000L else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
+        val budget = if (inputId == HwihaTravelInput.FORCED_MARCH) HwihaForcedMarchTempo.budgetMm else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
         val result = HwihaTravelExecutor(world, recorder, topology, metrics).start(requestId, request, destination, budget) { node ->
             HwihaPersonalEncounter.entryAt(world, military, reactions, actorId, node)
         }

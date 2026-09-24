@@ -45,4 +45,11 @@ class HwihaPersonalTravelConditionTest {
                 "version" to 1, "fatigue" to 101, "morale" to 50)))
         }
     }
+
+    @Test
+    fun `idle recovery is bounded and preserves partial distance accounting`() {
+        val tired = HwihaPersonalTravelCondition(14, 92, 10_000_000)
+        assertEquals(HwihaPersonalTravelCondition(4, 97, 10_000_000), tired.afterRest())
+        assertEquals(HwihaPersonalTravelCondition(0, 100, 10_000_000), tired.afterRest().afterRest())
+    }
 }
