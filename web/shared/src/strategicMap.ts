@@ -221,8 +221,7 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Ha
       const key = `${row}:${col}`;
       if (roadJunctions.has(key)) continue;
       roadJunctions.add(key);
-      roadPaths.junctions.moveTo(col + 0.75, row);
-      roadPaths.junctions.arc(col, row, 0.75, 0, Math.PI * 2);
+      roadPaths.junctions.rect(col - 0.75, row - 0.75, 1.5, 1.5);
     }
     addCurvedTrail(path, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
     if (gate.overviewTrunk && !historical)
