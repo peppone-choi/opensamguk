@@ -7,9 +7,11 @@ import kotlin.test.assertNull
 
 class WorldRuleProfileTest {
     @Test
-    fun `product default is HWIHA and rollback changes only missing profile`() {
+    fun `fresh default is HWIHA and restored missing world needs rollback`() {
         assertEquals(RuleProfile.HWIHA, WorldRuleProfile.defaultProfile(rollback = false))
-        assertEquals(RuleProfile.HWIHA, WorldRuleProfile.require(emptyMap(), rollback = false))
+        assertNull(WorldRuleProfile.resolve(emptyMap(), rollback = false))
+        assertFailsWith<IllegalArgumentException> { WorldRuleProfile.require(emptyMap(), rollback = false) }
+        assertEquals(RuleProfile.SAMMO, RuleProfile.fromWorldConfig(null))
         assertEquals(RuleProfile.SAMMO, WorldRuleProfile.require(emptyMap(), rollback = true))
         assertEquals(RuleProfile.HWIHA, WorldRuleProfile.require(mapOf("ruleProfile" to "HWIHA"), rollback = true))
         assertEquals(RuleProfile.SAMMO, WorldRuleProfile.require(mapOf("ruleProfile" to "SAMMO"), rollback = false))

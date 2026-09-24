@@ -9,7 +9,7 @@
 
 | 차이 | 2026-09-24 구현 근거 | 처리 |
 |---|---|---|
-| 제품 기본 프로필이 SAMMO였음 — B1 해소 | B1에서 `ScenarioImporter`와 game-api 공통 해석기의 누락 기본값을 HWIHA로 변경. 엔진의 `TurnWorldState`는 시드가 기록한 명시값을 읽고, 구형 누락 월드만 SAMMO로 유지 | 기본값 테스트와 적색 프로브로 고정. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
+| 제품 기본 프로필이 SAMMO였음 — B1 해소 | 신규 시드의 누락 기본값을 HWIHA로 변경하고 저장한다. 기존 월드에서 키가 없으면 game-api는 거절하며, 복원 스위치가 켜진 경우에만 SAMMO로 읽는다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀 호환이다 | 기본값 테스트와 적색 프로브로 고정. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
 | 원장 스키마의 actor·authorityRule·targetSchema·costSchema·timing·effectScope·failureReasons·resultType·replayContract·aiPolicyId·helpTopicId·tutorialObjectiveId가 아직 없음 | `HwihaInputEntry`는 `inputId`·`kind`·`layer`·`deliveryState`·`legacyCommands`만 읽는다 | 계약은 유지하고 단계별 원장 필드를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 70개 기존 명령 전환과 계책 입력이 미완 | 원장은 12행 중 11행 HANDLER_READY, `stratagem.play`만 PLANNED이며 `legacyCommands`는 일부 행만 참조 | 제품 전환표와 직접 행동·위임 대응을 완성한다. 계책 효과는 후속 구현. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
@@ -18,7 +18,7 @@
 
 ## 2026-09-20 기반 결정
 
-사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언 또는 HWIHA 제품 기본값을 기록하고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. game-api에서 키가 누락된 월드는 HWIHA로 해석하며, 복원한 SAMMO 백업의 누락 키에 한해 `SAMMO_ROLLBACK_ENABLED=true`가 SAMMO를 선택한다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀와 전환 전 세계의 호환 경로로 유지한다. 명시된 값은 스위치로 덮어쓰지 않으며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
+사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언 또는 HWIHA 신규 시드 기본값을 기록하고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 기존 월드의 키가 누락되면 game-api는 추측하지 않고 거절하며, 복원한 SAMMO 백업의 누락 키에 한해 `SAMMO_ROLLBACK_ENABLED=true`가 SAMMO를 선택한다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀와 전환 전 세계의 호환 경로로 유지한다. 명시된 값은 스위치로 덮어쓰지 않으며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
 2026-09-24 현재 원장은 12행 중 계책 `stratagem.play`만 PLANNED이고 나머지 11행이 HANDLER_READY다(`data/commands/hwiha-input-catalog.json`). 확정 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)를 따른다.
 
@@ -46,7 +46,7 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
-- **ruleProfile 의 자리(2026-09-20 확정, B1 기본값 개정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 키가 없을 때 시드와 game-api의 제품 기본은 `HWIHA`다. 한 시즌 복원 스위치는 이 누락 기본만 `SAMMO`로 바꾼다. 구형 엔진의 누락 월드 해석은 동결 기준선의 `SAMMO`로 유지한다. 월드가 살아 있는 동안 저장된 값을 바꾸지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
+- **ruleProfile 의 자리(2026-09-20 확정, B1 기본값 개정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 신규 시드의 누락 기본은 `HWIHA`지만 HWIHA 선언이 없는 옛 시나리오는 시드를 거절한다. 기존 월드에서 키가 없으면 game-api는 거절하고, 한 시즌 복원 스위치가 켜진 경우에만 `SAMMO`로 읽는다. 구형 엔진의 누락 월드 해석은 동결 기준선의 `SAMMO`로 유지한다. 월드가 살아 있는 동안 저장된 값을 바꾸지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
 - 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `legacyCommands[]` 로 역참조를 단다.
 - `legacyCommands[]` 는 **기존 명령 역참조**다. 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고(ADR-LITE-062), 같은 기존 명령이 위임 형태(방침·배치·공사)로도 간다. 그래서 **기존 명령 하나를 여러 행이 가리켜도 된다(다대일).** 대응 검사는 「기존 명령마다 가리키는 행이 하나 이상」으로 세고 「정확히 하나」를 요구하지 않는다. 금지는 둘뿐이다: 한 행 안의 같은 이름 중복, 실제 삼모 명령이 아닌 이름(`CommandRegistry.resolve` 가 `RestAction` 으로 떨어지는 이름). (#837, 옛 필드 이름 `replacesLegacy` 는 원장 파서가 거절한다.)
 - 직접 행동 행은 기존 표시 이름을 쓰되 `inputId` 는 새 꼴(`action.<name>`)이다 — `che_…` 꼴은 registry 가 `WRONG_RULE_PROFILE` 로 거절한다.

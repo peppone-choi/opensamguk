@@ -248,7 +248,6 @@ services:
       GAME_ENGINE_PORT: 8082
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
-      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       # Scenario seed and Flyway migrations use the same read-only effective scenario directory.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_990002}
@@ -314,7 +313,6 @@ services:
       # localhost:8081이라 컨테이너 안에선 자기참조→502 → 컨테이너망 DNS로 오버라이드.
       GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
       SERVER_ID: ${SERVER_ID:-pep}
-      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-[]}
     depends_on:
       gateway-api:

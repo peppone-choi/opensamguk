@@ -44,4 +44,4 @@
 
 ## 한 시즌 SAMMO 복원 스위치
 
-`SAMMO_ROLLBACK_ENABLED`의 기본값은 `false`다. 이 스위치는 `ruleProfile` 키가 없는 복원 월드의 game-api 해석만 SAMMO로 바꾼다. 신규 시드의 누락 프로필은 스위치와 관계없이 HWIHA다. 엔진은 복원 월드의 명시적 SAMMO 값을 읽고, 구형 누락 월드도 SAMMO로 읽는다. 명시적 HWIHA 월드를 SAMMO로 바꾸지 않는다. 따라서 장애 복구 시에는 전환 직전 SAMMO 백업의 복원 가능성을 먼저 확인하고, 백업을 복원한 다음 **API를 노출하기 전에** 스위치를 `true`로 설정해 동일한 이미지의 game-api·game-engine을 기동한다. 스위치가 꺼진 채 구형 누락 월드를 노출하면 API와 엔진의 프로필이 달라지므로 중단한다. 복원 월드의 프로필, API 응답, 턴 진행을 확인한다. HWIHA 재전환 때는 스위치를 `false`로 되돌리고 HWIHA 시나리오로 다시 시드한다. 스위치 제거 추적: [#891](https://github.com/peppone-choi/opensamguk/issues/891).
+`SAMMO_ROLLBACK_ENABLED`의 기본값은 `false`다. 이 스위치는 `ruleProfile` 키가 없는 복원 월드를 game-api에서 SAMMO로 읽게 한다. 엔진은 구형 누락 월드를 항상 SAMMO로 읽으며 스위치를 사용하지 않는다. 신규 시드의 누락 기본은 스위치와 관계없이 HWIHA이지만, HWIHA 선언이 없는 옛 시나리오는 시드 전에 거절한다. 명시적 HWIHA 월드를 SAMMO로 바꾸지 않는다. 장애 복구 시에는 전환 직전 SAMMO 백업의 복원 가능성을 먼저 확인하고, 백업을 복원한 다음 **API를 노출하기 전에** game-api의 스위치를 `true`로 설정해 기동한다. 스위치가 꺼진 구형 누락 월드는 game-api에서 프로필 미확인으로 거절한다. 복원 월드의 프로필, API 응답, 턴 진행을 확인한다. HWIHA 재전환 때는 스위치를 `false`로 되돌리고 HWIHA 시나리오로 다시 시드한다. 스위치 제거 추적: [#891](https://github.com/peppone-choi/opensamguk/issues/891).

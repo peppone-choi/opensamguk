@@ -79,7 +79,7 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
     private fun snapshot(): Snapshot = try {
         val selected = requireNotNull(artifacts.resolve())
         val config = selected.world.config
-        val profile = requireNotNull(opensamguk.logic.input.WorldRuleProfile.resolve(config)) { "Invalid rule profile" }
+        val profile = opensamguk.logic.input.WorldRuleProfile.require(config)
         if (profile != RuleProfile.HWIHA) Snapshot(failure = DeploymentFailure.WRONG_RULE_PROFILE)
         else {
             val bundle = requireNotNull(selected.artifacts)

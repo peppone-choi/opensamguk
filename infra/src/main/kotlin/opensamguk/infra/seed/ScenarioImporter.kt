@@ -122,6 +122,7 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): ImportCounts {
         val startYear = scenario.startYear
+        validateFreshProfile()
         validateSeedGeneralLifecycles()
         validateSeedContract()
         validateWarehouseSeed()
@@ -178,6 +179,17 @@ class ScenarioImporter(
             generalPosition = positionCount,
             bugok = unitCount,
         )
+    }
+
+    internal fun validateFreshProfile() {
+        // Historical resources omit the profile and HWIHA seed declarations. Never turn one
+        // into a partial HWIHA world merely because the fresh-import default changed.
+        if (scenario.ruleProfile != null) return
+        require(scenario.hwihaWarehouses != null &&
+            scenario.generals.any { it.hwihaLord == true } &&
+            scenario.generals.any { it.hwihaPersonPolicy != null }) {
+            "$scenarioCode omits ruleProfile without HWIHA warehouse, lord and person-policy declarations"
+        }
     }
 
     private fun insertHwihaUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {

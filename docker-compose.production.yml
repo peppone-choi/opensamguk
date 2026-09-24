@@ -62,7 +62,6 @@ services:
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
-      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_990002}
@@ -265,7 +264,6 @@ services:
       NODE_ENV: production
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
-      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       # #516 §5 — web/game no longer talks to game-api directly; /api/game traffic goes through
       # web-gateway's proxy (nginx.conf `location /api/game/` also targets web_gateway).
       GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}

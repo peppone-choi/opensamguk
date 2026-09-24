@@ -1,6 +1,8 @@
 package opensamguk.infra.seed
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -76,6 +78,26 @@ class ScenarioJsonTest {
         )
         assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": \"hwiha\"," + base) }
         assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": null," + base) }
+    }
+
+    @Test
+    fun `historical resources without HWIHA declarations cannot become fresh HWIHA worlds`() {
+        val directory = Path.of("src/main/resources/scenario")
+        val codes = Files.list(directory).use { paths ->
+            paths.map { it.fileName.toString() }
+                .filter { it.matches(Regex("scenario_\\d+\\.json")) }
+                .toList()
+        }
+        assertTrue(codes.size >= 32)
+        for (file in codes) {
+            val scenario = ScenarioJson.loadScenario(readResource("scenario/$file"))
+            val importer = ScenarioImporter(scenario, emptyList(), scenarioCode = file.removeSuffix(".json"))
+            if (scenario.ruleProfile == null) {
+                assertFailsWith<IllegalArgumentException>(file) { importer.validateFreshProfile() }
+            } else {
+                importer.validateFreshProfile()
+            }
+        }
     }
 
     @Test

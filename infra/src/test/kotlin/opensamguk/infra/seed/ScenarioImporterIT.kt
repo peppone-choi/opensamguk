@@ -221,6 +221,16 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `historical scenario without profile cannot seed a partial HWIHA world`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1020.json"))
+        val importer = ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_1020")
+
+        assertFailsWith<IllegalArgumentException> { importer.importAll(jdbc, canonicalWorldId) }
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java))
+    }
+
+    @Test
     fun `scenario 9200 seeds stable V3 ownership capitals and general locations`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))

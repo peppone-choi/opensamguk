@@ -2,6 +2,7 @@ package opensamguk.infra.seed
 
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 
 /**
  * Decoded, position-resolved model of the two committed scenario resources used by the A-minimal
@@ -84,7 +85,7 @@ object ScenarioJson {
             require(value is String) { "ruleProfile must be SAMMO or HWIHA" }
             RuleProfile.fromWorldConfig(value)
         } else null
-        val effectiveProfile = ruleProfile ?: RuleProfile.HWIHA
+        val effectiveProfile = ruleProfile ?: WorldRuleProfile.defaultProfile()
         val personPolicies = HwihaScenarioPersonPolicies.decode(root, effectiveProfile)
         val rawLords = root["hwihaLords"]
         require("hwihaLords" !in root || effectiveProfile == RuleProfile.HWIHA) {
