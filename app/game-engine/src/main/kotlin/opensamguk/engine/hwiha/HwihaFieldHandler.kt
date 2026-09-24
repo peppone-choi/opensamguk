@@ -55,8 +55,14 @@ class HwihaFieldHandler(
         if (effect.debit != HwihaResources() || effect.credit != HwihaResources()) {
             val settled = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, checkNotNull(warehouse).revision,
                 effect.debit, effect.credit)
-            if (settled != HwihaWarehouseSettlement.Result.APPLIED)
-                return reject(settled.name, "縣 창고 정산이 실패했습니다: ${settled.name}")
+            if (settled != HwihaWarehouseSettlement.Result.APPLIED) return reject(when (settled) {
+                HwihaWarehouseSettlement.Result.WRONG_RULE_PROFILE -> HwihaFieldFailure.WRONG_RULE_PROFILE
+                HwihaWarehouseSettlement.Result.NOT_COUNTY -> HwihaFieldFailure.COUNTY_UNAVAILABLE
+                HwihaWarehouseSettlement.Result.OWNER_CHANGED -> HwihaFieldFailure.FOREIGN_COUNTY
+                HwihaWarehouseSettlement.Result.NOT_READY -> HwihaFieldFailure.WAREHOUSE_NOT_READY
+                HwihaWarehouseSettlement.Result.INSUFFICIENT_STOCK -> HwihaFieldFailure.INSUFFICIENT_STOCK
+                else -> HwihaFieldFailure.STATE_UNAVAILABLE
+            })
         }
         val current = checkNotNull(world.getCityById(city.id))
         val trust = ReservedTurnHandler.materializeMariaDbFloat(effect.levels.trust)

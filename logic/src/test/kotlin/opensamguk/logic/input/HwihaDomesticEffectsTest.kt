@@ -9,7 +9,7 @@ class HwihaDomesticEffectsTest {
     private val levels = HwihaCountyLevels(50_000, 100_000, 1000, 1200, 1000, 1010, 500, 600, 80.0, 900, 1000, 900, 1000)
     private fun seat(stat: Int, hometown: Boolean = false) = HwihaSeatStats(stat, stat, stat, stat, stat, hometown)
 
-    @Test fun `design file keeps confirmed policy and work rates separate from proposed direct rates`() {
+    @Test fun `design file confirms policy work and direct action rates`() {
         assertEquals(HwihaDomesticDesign.CONFIRMED, design.status)
         assertEquals(HwihaDomesticDesign.CONFIRMED, design.directActionStatus)
         assertEquals(HwihaFieldInput.INPUT_IDS, design.directActions.keys)
@@ -20,7 +20,7 @@ class HwihaDomesticEffectsTest {
         assertEquals(setOf(HwihaDomesticDesign.Indicator.DEFENCE, HwihaDomesticDesign.Indicator.WALL),
             design.works.getValue(DomesticWork.FORTIFICATION).completion.map { it.indicator }.toSet())
         assertTrue(design.works.getValue(DomesticWork.WAREHOUSE).completion.isEmpty())
-        // Every row declares its own provisional status: no silent design numbers.
+        // Every row declares its status: no silent design numbers.
         val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
         val statuses = Regex("\"status\": \"([^\"]+)\"").findAll(raw).map { it.groupValues[1] }.toList()
         assertTrue(statuses.size >= 1 + 1 + 1 + CountyPolicy.entries.size + CorpsPolicy.entries.size + 1)
@@ -28,7 +28,7 @@ class HwihaDomesticEffectsTest {
         assertTrue(statuses.all { it in setOf(HwihaDomesticDesign.CONFIRMED, "PROPOSED") }, statuses.toString())
     }
 
-    @Test fun `proposed direct actions use one phase policy magnitude and cost`() {
+    @Test fun `direct actions use one phase policy magnitude and cost`() {
         val actor = seat(50)
         for ((inputId, policy) in listOf(HwihaFieldInput.FARM to CountyPolicy.AGRICULTURE,
             HwihaFieldInput.COMMERCE to CountyPolicy.COMMERCE, HwihaFieldInput.SETTLE to CountyPolicy.RELIEF)) {

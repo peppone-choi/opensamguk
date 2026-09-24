@@ -11,9 +11,7 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
 class HwihaFieldHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
-    private val design = HwihaDomesticDesign.parse(
-        javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
-            .replace("\"status\": \"PROPOSED\"", "\"status\": \"CONFIRMED\""))
+    private val design = HwihaDomesticDesign.CANON
 
     @Test fun `pinned administrative counties have a unique land province per county`() {
         val grouped = fixture.bundle.projection.administrativeCountyIds.groupBy {
@@ -78,9 +76,7 @@ class HwihaFieldHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1) else city
         })
-        val rawCatalog = javaClass.classLoader.getResource("command-catalog/hwiha-input-catalog.json")!!.readText()
-        val catalog = HwihaInputCatalog.parse(rawCatalog.replace("\"deliveryState\": \"PLANNED\"",
-            "\"deliveryState\": \"HANDLER_READY\""))
+        val catalog = HwihaInputCatalog.load()
         val selected = HwihaNpcFieldSelector(HwihaDomesticContext(design = design), catalog)
             .select(world, actor.id, ReservedTurn("휴식", "{}", rowExists = false))
         assertEquals(HwihaFieldInput.FARM, selected.actionCode)
