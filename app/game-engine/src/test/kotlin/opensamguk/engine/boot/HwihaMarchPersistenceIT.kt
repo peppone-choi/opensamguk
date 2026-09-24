@@ -113,7 +113,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(10, cold(id).getGeneralById(1)!!.experience)
     }
 
-    @Test fun `independence persists new nation county and lord across cold reload`() {
+    @Test fun `planned independence leaves nation county and lord unchanged through cold reload`() {
         val id = 692
         val seeded = seed(id)
         val countyId = seeded.administrativeCountyIds.sorted().first {
@@ -133,31 +133,21 @@ class HwihaMarchPersistenceIT {
         save(world, recorder)
         world = cold(id)
         recorder = ChangeRecorder()
-        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+        val generalBefore = world.getGeneralById(1)!!
+        val countyBefore = world.getCityById(countyId)!!
+        val nationCountBefore = world.listNations().size
+        val first = assertIs<HwihaTurnOutcome.Rejected>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
             .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
+        assertEquals(InputRejection.NOT_DELIVERED.name, first.code)
         save(world, recorder)
         world = cold(id)
-        val nationId = world.getGeneralById(1)!!.nationId
-        assertTrue(nationId > 1)
-        assertEquals(nationId, world.getCityById(countyId)!!.nationId)
-        assertNotNull(world.getNationById(nationId))
-        assertEquals(12, world.getGeneralById(1)!!.officerLevel)
-        assertTrue(HwihaLordStatus.read(world.getGeneralById(1)!!.meta))
+        assertEquals(generalBefore.nationId, world.getGeneralById(1)!!.nationId)
+        assertEquals(generalBefore.officerLevel, world.getGeneralById(1)!!.officerLevel)
+        assertEquals(HwihaLordStatus.read(generalBefore.meta), HwihaLordStatus.read(world.getGeneralById(1)!!.meta))
+        assertEquals(countyBefore.nationId, world.getCityById(countyId)!!.nationId)
+        assertEquals(nationCountBefore, world.listNations().size)
         assertEquals(first, HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
             .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
-        recorder = ChangeRecorder()
-        val beforeNextTurn = world.getGeneralById(1)!!
-        val nextTurn = beforeNextTurn.copy(turnTime = beforeNextTurn.turnTime.plusSeconds(3600))
-        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeNextTurn), PerTurnOverlay.toLogicGeneral(nextTurn))
-        world.applyGeneralDirtyFree(nextTurn)
-        save(world, recorder)
-        world = cold(id)
-        recorder = ChangeRecorder()
-        assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
-            .handle(HwihaPoliticalInput.FOUND_STATE, 1, "{}", "found-$id", 42))
-        save(world, recorder)
-        world = cold(id)
-        assertEquals(1, world.getNationById(nationId)!!.level)
     }
 
     @Test fun `undelivered donation cannot move money into unused nation treasury`() {
