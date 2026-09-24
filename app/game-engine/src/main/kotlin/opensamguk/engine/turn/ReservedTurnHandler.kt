@@ -227,6 +227,8 @@ class ReservedTurnHandler(
         hwihaDomesticContext, hiddenSeed) }
     private val politicalHandler by lazy { opensamguk.engine.hwiha.HwihaPoliticalHandler(world, recorder,
         hwihaDomesticContext) }
+    private val transferHandler by lazy { opensamguk.engine.hwiha.HwihaTransferHandler(world, recorder,
+        hwihaDomesticContext) }
     private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
@@ -367,6 +369,14 @@ class ReservedTurnHandler(
                 if (hwihaCatalog[politicalId]?.deliveryState?.hasHandler == true) {
                     handlers[politicalId] = InputHandler {
                         applied = politicalHandler.handle(politicalId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (transferId in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
+                if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
+                    handlers[transferId] = InputHandler {
+                        applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }

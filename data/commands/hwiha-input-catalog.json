@@ -1634,12 +1634,12 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.gift argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTransferInput.parse + HwihaTransferRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.gift rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTransferRules.assess; one personal resource transfer",
         "money": null,
         "grain": null,
         "iron": null,
@@ -1655,12 +1655,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "TARGET_UNAVAILABLE",
+        "NATION_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.gift",
       "helpTopicId": "commands.action.gift",
@@ -1668,7 +1682,7 @@
       "legacyCommands": [
         "che_증여"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.donate",
@@ -1677,12 +1691,12 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.donate argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTransferInput.parse + HwihaTransferRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.donate rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTransferRules.assess; one personal resource transfer",
         "money": null,
         "grain": null,
         "iron": null,
@@ -1698,12 +1712,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "TARGET_UNAVAILABLE",
+        "NATION_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.donate",
       "helpTopicId": "commands.action.donate",
@@ -1711,7 +1739,7 @@
       "legacyCommands": [
         "che_헌납"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.muster",

@@ -32,7 +32,8 @@ class HwihaInputRegistryTest {
         HwihaRetireInput.INPUT_ID to InputHandler {},
         "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
         "action.foundState" to InputHandler {},
-        "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {})
+        "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
+        "action.gift" to InputHandler {}, "action.donate" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -149,6 +150,17 @@ class HwihaInputRegistryTest {
             assertFailsWith<IllegalArgumentException>(id) {
                 HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
             }
+        }
+    }
+
+    @Test
+    fun `delivered transfers have exactly the shared failure vocabulary and a handler`() {
+        for (id in HwihaTransferInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
         }
     }
 

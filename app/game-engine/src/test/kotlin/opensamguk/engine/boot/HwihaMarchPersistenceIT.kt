@@ -159,6 +159,36 @@ class HwihaMarchPersistenceIT {
         assertEquals(1, world.getNationById(nationId)!!.level)
     }
 
+    @Test fun `donation persists five resource personal stock and recipient treasury after cold reload`() {
+        val id = 693
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        jdbc.update("UPDATE general SET gold=100 WHERE world_id=? AND id=1", id)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getNationById(1)!!.gold
+        val json = """{"resource":"MONEY","amount":25}"""
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaTransferHandler(world, recorder, HwihaDomesticContext())
+            .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(75, world.getGeneralById(1)!!.gold)
+        assertEquals(75L, HwihaPortableStock.read(world.getGeneralById(1)!!.meta,
+            world.getGeneralById(1)!!.gold, world.getGeneralById(1)!!.rice).money)
+        assertEquals(before + 25, world.getNationById(1)!!.gold)
+        assertEquals(first, HwihaTransferHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42))
+    }
+
     @Test fun `city military troops survive cold reload independently of fortification`() {
         val id = 691
         val seeded = seed(id)

@@ -482,6 +482,8 @@ export const api = {
     },
     politicalOptions: (generalId: number) =>
         get<import('./types').HwihaPoliticalOption[]>(`/api/commands/political-options?generalId=${generalId}`),
+    transferOptions: (inputId: import('./types').HwihaTransferActionId, generalId: number) =>
+        get<import('./types').HwihaTransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),

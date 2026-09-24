@@ -855,6 +855,12 @@ export type HwihaPoliticalActionId = 'action.resign' | 'action.rise' | 'action.f
 export interface HwihaPoliticalOption {
     inputId: HwihaPoliticalActionId; available: boolean; code?: string | null; reason?: string | null;
 }
+export type HwihaTransferActionId = 'action.gift' | 'action.donate';
+export interface HwihaTransferOptions {
+    inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
+    resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;
+    targets: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
+}
 export interface HwihaPeopleOptions {
     inputId: HwihaPeopleActionId; available: boolean; code?: string | null; reason?: string | null;
     undiscoveredCount?: number | null;
