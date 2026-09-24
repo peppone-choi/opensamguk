@@ -51,8 +51,9 @@ class HwihaWarehouseSeedIT {
         "warehouses" to counties.mapIndexed { index, id -> mapOf("countyId" to id,
             "stock" to HwihaResources(100L+index, 3_000_000_000L+index, 20, 30, 40).toMetaValue()) },
     )
-    private fun scenario(): Scenario {
+    private fun scenario(includeProfile: Boolean = true): Scenario {
         val raw = HwihaSyntheticScenario.root().toMutableMap()
+        if (!includeProfile) raw.remove("ruleProfile")
         raw["nation"] = listOf(listOf("QA 세력", "#123456", 0, 0, "synthetic QA", 0, null, 1, listOf("허창")))
         raw["hwihaWarehouses"] = declaration()
         return ScenarioJson.loadScenario(MetaJson.encode(raw))
@@ -62,7 +63,7 @@ class HwihaWarehouseSeedIT {
         jdbc.queryForObject("SELECT meta::text FROM city WHERE world_id=1 AND id=?", String::class.java, id)!!), id)
 
     @Test fun `fresh scenario without a profile seeds HWIHA positions and records HWIHA`() {
-        importer(scenario().copy(ruleProfile = null)).importAll(jdbc, WorldId(1))
+        importer(scenario(includeProfile = false)).importAll(jdbc, WorldId(1))
         assertEquals("HWIHA", jdbc.queryForObject("SELECT config->>'ruleProfile' FROM world_state WHERE id=1", String::class.java))
         assertTrue(jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id=1", Int::class.java)!! > 0)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java))

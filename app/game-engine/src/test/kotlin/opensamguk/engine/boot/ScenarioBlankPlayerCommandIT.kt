@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.io.TempDir
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -27,6 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Instant
+import java.nio.file.Path
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -84,10 +86,12 @@ class ScenarioBlankPlayerCommandIT {
     }
 
     @Test
-    fun `scenario_0 supports many player-created nations through real commands`() {
+    fun `scenario_0 supports many player-created nations through real commands`(@TempDir scenarioDir: Path) {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario blank player command IT skipped")
 
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1))
+        LegacySammoScenarioFixture.copyResource("scenario_0", scenarioDir)
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", scenarioDir = scenarioDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc))
         assertEquals("scenario_0", jdbc.queryForObject("SELECT scenario_code FROM world_state WHERE id = 1", String::class.java))
         // 전 시나리오 han 통일(사용자 지시)로 scenario_0 의 map 이 che(94개 도시)에서 han(780개 도시)으로

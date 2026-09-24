@@ -20,7 +20,10 @@ class ScenarioJsonTest {
         val declared = parse(encoded)
         assertTrue(declared.generals.single { it.name == name }.hwihaLord == true)
         assertTrue(declared.generals.filter { it.name != name }.all { it.hwihaLord == false })
-        assertTrue(old.generals.all { it.hwihaLord == null })
+        assertTrue(old.generals.all { it.hwihaLord == false })
+        val omittedProfile = ScenarioJson.loadScenario("{\"hwihaLords\":$encoded," + raw)
+        assertNull(omittedProfile.ruleProfile)
+        assertTrue(omittedProfile.generals.single { it.name == name }.hwihaLord == true)
         for (bad in listOf("null", "42", "[42]", "[\"\"]", "[\"no-such-general\"]",
             opensamguk.infra.persistence.MetaJson.encode(listOf(name, name)))) {
             assertFailsWith<IllegalArgumentException> { parse(bad) }
@@ -64,7 +67,7 @@ class ScenarioJsonTest {
 
     @Test
     fun `ruleProfile is absent on committed scenarios and parses fail closed`() {
-        // 계약 §2: 값이 없으면 SAMMO(기존 시나리오 무변경). 모르는 글자는 조용히 SAMMO 로 떨어지지 않는다.
+        // 누락은 fresh 시드에서 HWIHA로 해석하되, 파싱 모델에서는 누락 여부를 보존한다.
         assertNull(ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json")).ruleProfile)
         val base = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
         assertEquals(
@@ -72,6 +75,7 @@ class ScenarioJsonTest {
             ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\"," + base).ruleProfile,
         )
         assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": \"hwiha\"," + base) }
+        assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": null," + base) }
     }
 
     @Test

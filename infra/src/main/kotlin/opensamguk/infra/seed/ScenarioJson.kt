@@ -1,6 +1,7 @@
 package opensamguk.infra.seed
 
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.logic.input.RuleProfile
 
 /**
  * Decoded, position-resolved model of the two committed scenario resources used by the A-minimal
@@ -76,11 +77,17 @@ object ScenarioJson {
         val events = arr(root["events"]).map { decodeEvent(asList(it)) }
         val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
-        // 입력 registry 계약 §2: 시나리오가 선언한다. 없으면 null(시드가 SAMMO 로 기록), 모르는 글자는 실패.
-        val ruleProfile = strOrNull(root["ruleProfile"])?.let { opensamguk.logic.input.RuleProfile.fromWorldConfig(it) }
-        val personPolicies = HwihaScenarioPersonPolicies.decode(root, ruleProfile)
+        // Preserve omission in the model, but validate declarations against the fresh-world default.
+        // An explicit JSON null is invalid and must not be confused with an omitted key.
+        val ruleProfile = if ("ruleProfile" in root) {
+            val value = root["ruleProfile"]
+            require(value is String) { "ruleProfile must be SAMMO or HWIHA" }
+            RuleProfile.fromWorldConfig(value)
+        } else null
+        val effectiveProfile = ruleProfile ?: RuleProfile.HWIHA
+        val personPolicies = HwihaScenarioPersonPolicies.decode(root, effectiveProfile)
         val rawLords = root["hwihaLords"]
-        require("hwihaLords" !in root || ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        require("hwihaLords" !in root || effectiveProfile == RuleProfile.HWIHA) {
             "hwihaLords requires HWIHA ruleProfile"
         }
         require("hwihaLords" !in root || rawLords is List<*>) { "hwihaLords must be an array of names" }
@@ -122,7 +129,7 @@ object ScenarioJson {
             arr(root[key]).map {
                 val decoded = decodeGeneral(asList(it), nationIdsByToken, npcType = defaultNpcType)
                 val general = if (decoded.name in imperialGeneralNames) decoded.copy(npcType = 7) else decoded
-                if (ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                if (effectiveProfile == RuleProfile.HWIHA) {
                     general.copy(hwihaLord = general.name in lordNames, hwihaPersonPolicy = personPolicies[general.name]?.bind(general))
                 } else general
             }
@@ -169,8 +176,8 @@ object ScenarioJson {
             ignoreDefaultEvents = ignoreDefaultEvents,
             ruleProfile = ruleProfile,
             seedContract = seedContract,
-            hwihaWarehouses = HwihaScenarioWarehouseSeeds.decode(root, ruleProfile),
-            hwihaUnits = HwihaScenarioUnits.decode(root, ruleProfile).also { units ->
+            hwihaWarehouses = HwihaScenarioWarehouseSeeds.decode(root, effectiveProfile),
+            hwihaUnits = HwihaScenarioUnits.decode(root, effectiveProfile).also { units ->
                 for (unit in units) require(roster.count { it.name == unit.general } == 1) {
                     "hwihaUnits general must identify exactly one general: ${unit.general}"
                 }

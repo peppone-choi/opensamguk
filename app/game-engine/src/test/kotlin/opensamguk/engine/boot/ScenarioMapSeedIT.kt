@@ -79,10 +79,12 @@ class ScenarioMapSeedIT {
     }
 
     @Test
-    fun `scenario_2 seed uses Han world city catalog`() {
+    fun `scenario_2 seed uses Han world city catalog`(@TempDir scenarioDir: Path) {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1))
+        LegacySammoScenarioFixture.copyResource("scenario_2", scenarioDir)
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", scenarioDir = scenarioDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
         assertEquals(774, count("city")) // scenario_2 remains the legacy V2 compatibility template.
@@ -123,6 +125,7 @@ class ScenarioMapSeedIT {
         assertTrue(
             SeedBootstrap(
                 qaTurnTerm = "1",
+                artifactsRoot = Path.of("../.."),
                 worldId = opensamguk.common.world.WorldId(1),
             ).ensureSeeded(jdbc),
         )
@@ -132,6 +135,7 @@ class ScenarioMapSeedIT {
         assertTrue(
             SeedBootstrap(
                 qaTurnTerm = "1",
+                artifactsRoot = Path.of("../.."),
                 worldId = opensamguk.common.world.WorldId(1),
             ).ensureSeeded(jdbc),
         )
@@ -156,6 +160,7 @@ class ScenarioMapSeedIT {
 
         val scenarioFile = tempDir.resolve("scenario_3190.json")
         val actualPilotReport = copyScenario3190(scenarioFile)
+        LegacySammoScenarioFixture.write("scenario_3190", tempDir, Files.readString(scenarioFile))
         println("ScenarioMapSeedIT scenario_3190 input=${if (actualPilotReport != null) "actual-override" else "synthetic"}")
         val sourceScenario = ScenarioJson.loadScenario(Files.readString(scenarioFile))
         val bootstrap = SeedBootstrap(
@@ -310,9 +315,9 @@ class ScenarioMapSeedIT {
         assertTrue(!disabled.ensureSeeded(jdbc), "disabled gate precedes scenario-code parsing")
         assertEquals(0, count("world_state"))
 
-        assertTrue(
-            SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1)).ensureSeeded(jdbc),
-        )
+        LegacySammoScenarioFixture.copyResource("scenario_2", tempDir)
+        assertTrue(SeedBootstrap(scenarioCode = "scenario_2", scenarioDir = tempDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1)).ensureSeeded(jdbc))
         assertTrue(
             !SeedBootstrap(
                 scenarioCode = malformed,
@@ -337,6 +342,7 @@ class ScenarioMapSeedIT {
         assertTrue(
             SeedBootstrap(
                 qaTurnTerm = qaTurnTerm,
+                artifactsRoot = Path.of("../.."),
                 worldId = opensamguk.common.world.WorldId(1),
             ).ensureSeeded(jdbc),
             "fresh world is seeded",

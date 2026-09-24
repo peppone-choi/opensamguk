@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
+import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
@@ -14,6 +15,7 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 /**
  * F1a — boots the configured [WorldId] into the selected scenario when seed admission
@@ -77,6 +79,7 @@ class SeedBootstrap(
     private val resetBlockGeneralCreate: String? = null,
     private val resetNpcMode: String? = null,
     private val resetShowImgLevel: String? = null,
+    private val artifactsRoot: Path = HanWorldArtifactsResolver.defaultRoot(),
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
@@ -129,6 +132,7 @@ class SeedBootstrap(
                 blockGeneralCreate = blockGeneralCreate,
                 npcMode = npcMode,
                 showImageLevel = showImgLevel,
+                artifactsRoot = artifactsRoot,
             )
         }
         if (!admission.seeded) {

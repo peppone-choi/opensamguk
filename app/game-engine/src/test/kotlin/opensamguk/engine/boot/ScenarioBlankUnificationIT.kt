@@ -41,6 +41,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.io.TempDir
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -170,10 +171,12 @@ class ScenarioBlankUnificationIT {
     }
 
     @Test
-    fun `scenario_0 player setup reaches production unification tail and survives reload`() {
+    fun `scenario_0 player setup reaches production unification tail and survives reload`(@TempDir scenarioDir: java.nio.file.Path) {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario blank unification IT skipped")
 
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1))
+        LegacySammoScenarioFixture.copyResource("scenario_0", scenarioDir)
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", scenarioDir = scenarioDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc))
         val loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
         var world = InMemoryTurnWorld(loader.buildSnapshot())

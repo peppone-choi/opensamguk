@@ -87,12 +87,11 @@ class ScenarioImporter(
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
     private val artifactsRoot: java.nio.file.Path = HanWorldArtifactsResolver.defaultRoot(),
-    /** A restored SAMMO world may use this one-season fallback only when its profile key is absent. */
-    private val sammoRollback: Boolean = WorldRuleProfile.rollbackEnabled(),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
-    private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile(sammoRollback)
+    // Fresh imports always use HWIHA. The rollback switch is for an existing restored world.
+    private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile(rollback = false)
 
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
