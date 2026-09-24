@@ -200,8 +200,7 @@ class InMemoryTurnWorld(
         for (city in snapshot.cities) {
             if (snapshot.state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
                 city.id in administrativeCountyIds &&
-                (opensamguk.logic.input.HwihaCityMilitaryState.META_KEY !in city.meta ||
-                    (city.meta[opensamguk.logic.input.HwihaCityMilitaryState.META_KEY] as? Map<*, *>)?.get("version") == 1)) {
+                opensamguk.logic.input.HwihaCityMilitaryState.META_KEY !in city.meta) {
                 val military = opensamguk.logic.input.HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0))
                 cities[city.id] = city.copy(meta = city.meta +
                     (opensamguk.logic.input.HwihaCityMilitaryState.META_KEY to military.toMetaValue()))

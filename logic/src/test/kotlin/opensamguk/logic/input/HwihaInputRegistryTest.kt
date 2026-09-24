@@ -15,7 +15,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 class HwihaInputRegistryTest {
     private val catalog = HwihaInputCatalog.load()
     private var enlistCalls = 0
-    private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
+    private fun handlers(enlist: InputHandler) = (mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "work.reduce" to InputHandler {},
@@ -29,22 +29,18 @@ class HwihaInputRegistryTest {
         "action.train" to InputHandler {}, "action.boostMorale" to InputHandler {},
         "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {},
         "action.search" to InputHandler {}, "action.employ" to InputHandler {},
-        "action.persuadeCaptive" to InputHandler {}, "action.travel" to InputHandler {},
+        "action.travel" to InputHandler {},
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
-        HwihaRetireInput.INPUT_ID to InputHandler {},
-        "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
-        "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
-        "action.gift" to InputHandler {}, "action.donate" to InputHandler {},
+        "action.gift" to InputHandler {},
         "action.convertProficiency" to InputHandler {}, "action.tradeEquipment" to InputHandler {},
         "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {},
-        "action.randomEnlist" to InputHandler {}, "action.targetEnlist" to InputHandler {},
         "court.releaseCorps" to InputHandler {}, "court.diplomacy" to InputHandler {},
         "court.abandonCounty" to InputHandler {}, "court.institution" to InputHandler {},
         "court.moveCapital" to InputHandler {}, "court.confiscate" to InputHandler {},
         "court.nonAggression" to InputHandler {}, "court.declareWar" to InputHandler {},
         "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {}) +
-        HwihaLegacyStratagemInput.INPUT_IDS.associateWith { InputHandler {} }
+        HwihaLegacyStratagemInput.INPUT_IDS.associateWith { InputHandler {} }).filterKeys { catalog[it]?.deliveryState?.hasHandler == true }
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -95,11 +91,19 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `all old stratagems have registered handlers`() {
-        for (id in HwihaLegacyStratagemInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+    fun `old stratagems remain planned until card ownership exists`() {
+        for (id in HwihaLegacyStratagemInput.INPUT_IDS + "stratagem.play") {
+            assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
+            assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
+    }
+
+    @Test
+    fun `catalog classification is shared by engine dispatch and API precheck`() {
+        for (id in listOf("che_요양", "action.ghost", "stratagem.play", "invalid")) {
+            assertEquals(reject(RuleProfile.HWIHA, id), catalog.rejectionFor(RuleProfile.HWIHA, id), id)
+        }
+        assertEquals(null, catalog.rejectionFor(RuleProfile.HWIHA, "court.dispatch"))
     }
 
     @Test
@@ -129,9 +133,10 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `every direct military action is UI ready and has a handler`() {
+    fun `direct military actions expose their delivery state and have a handler`() {
         for (id in HwihaMilitaryInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(if (id == HwihaMilitaryInput.MUSTER) InputDeliveryState.HANDLER_READY
+                else InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
                 HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
@@ -140,52 +145,70 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `every direct people action is UI ready and has a handler`() {
+    fun `people actions expose only delivered handlers`() {
         for (id in HwihaPeopleInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaPeopleFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-            assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            if (id == HwihaPeopleInput.PERSUADE_CAPTIVE) {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
+            } else {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+                assertFailsWith<IllegalArgumentException>(id) {
+                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                }
             }
         }
     }
 
     @Test
-    fun `delivered political actions have exactly the shared failure vocabulary and a handler`() {
+    fun `political actions expose only delivered handlers`() {
         for (id in HwihaPoliticalRules.SUPPORTED_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaPoliticalFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-            assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            if (id in setOf(HwihaPoliticalInput.FOUND_STATE, HwihaPoliticalInput.ABDICATE, HwihaPoliticalInput.OATH)) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+                assertFailsWith<IllegalArgumentException>(id) {
+                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                }
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
             }
         }
     }
 
     @Test
-    fun `delivered transfers have exactly the shared failure vocabulary and a handler`() {
+    fun `gift is delivered and donation waits for a warehouse destination`() {
         for (id in HwihaTransferInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            if (id == HwihaTransferInput.GIFT) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
+            }
         }
     }
 
     @Test
     fun `the four legacy direct actions are delivered through the common executor`() {
         for (id in HwihaLegacyDirectInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(if (id == HwihaLegacyDirectInput.EQUIPMENT) InputDeliveryState.PLANNED else InputDeliveryState.UI_READY,
+                catalog[id]!!.deliveryState, id)
             assertEquals(HwihaLegacyDirectFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            if (id == HwihaLegacyDirectInput.EQUIPMENT)
+                assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
+            else assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
         }
     }
 
@@ -193,17 +216,22 @@ class HwihaInputRegistryTest {
     fun `legacy court and stratagem rows match their shared failure vocabularies`() {
         val channelFailures = setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED", "FORBIDDEN")
         for (id in HwihaLegacyCourtInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital")
+            assertEquals(if (delivered) InputDeliveryState.UI_READY else InputDeliveryState.PLANNED,
+                catalog[id]!!.deliveryState, id)
             assertEquals(HwihaLegacyCourtFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            if (delivered) assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            else assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
         for (id in HwihaLegacyStratagemInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaLegacyStratagemFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
+        assertEquals(InputDeliveryState.PLANNED, catalog[HwihaDomesticInput.REDUCE]!!.deliveryState)
+        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, HwihaDomesticInput.REDUCE))
         val reduceFailures = setOf("WRONG_RULE_PROFILE", "INVALID_REQUEST", "ACTOR_NOT_FOUND", "INVALID_COUNTY",
             "NOT_COUNTY_AUTHORITY", "WORK_IN_PROGRESS", "WORK_NOT_COMPLETED", "STATE_UNAVAILABLE")
         assertEquals(reduceFailures, catalog[HwihaDomesticInput.REDUCE]!!.failureReasons.toSet() - channelFailures)
@@ -224,17 +252,14 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `retirement is a named political successor input`() {
+    fun `retirement remains planned until succession state can be preserved`() {
         val id = HwihaRetireInput.INPUT_ID
-        assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+        assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
         assertEquals("POLITICS", catalog[id]!!.timing.getValue("phase").jsonPrimitive.content)
         assertEquals(HwihaRetireFailure.entries.map { it.name }.toSet(),
             catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                 "FORBIDDEN", "INVALID_TURN_SLOT"))
-        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-        assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
-        }
+        assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
     }
 
     @Test
@@ -288,15 +313,20 @@ class HwihaInputRegistryTest {
     private val legacy70Slots = (GameConst.availableGeneralCommand.values + GameConst.availableChiefCommand.values).flatten()
     private val legacy70 = legacy70Slots.distinct()
 
-    private fun row(inputId: String, kind: String, legacy: String) =
-        """{"inputId":"$inputId","kind":"$kind","layer":1,"actor":"GENERAL","authorityRule":"SUBJECT_OWNER",
+    private fun row(inputId: String, kind: String, legacy: String): String {
+        val timing = if (kind == "GENERAL_ACTION")
+            """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}"""
+        else """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""
+        return """{"inputId":"$inputId","kind":"$kind","layer":1,"actor":"GENERAL","authorityRule":"SUBJECT_OWNER",
             "targetSchema":{"status":"PLANNED","source":"test"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
-            "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "timing":$timing,"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
             "deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
+    }
 
-    private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
-        "inputs":[${rows.joinToString(",")}],"retiredLegacyCommands":[],"retiredLegacyReasons":{}}""")
+    private fun ledger(vararg rows: String, retired: String = "", reasons: String = "") =
+        HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[${rows.joinToString(",")}],"retiredLegacyCommands":[$retired],"retiredLegacyReasons":{$reasons}}""")
 
     @Test
     fun `legacyCommands names only commands the SAMMO registry really has`() {
@@ -353,16 +383,31 @@ class HwihaInputRegistryTest {
     fun `all 70 legacy menu slots are either live or retired`() {
         assertEquals(emptyList(), catalog.invalidLegacyCoverage(legacy70))
         assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
-        assertTrue(catalog.entries.all { it.legacyCommands.size <= 1 }, "기존 명령은 명령별 한 행으로 둔다")
-        assertTrue(catalog.entries.size >= 73, "70개 역참조 외 보조 입력은 허용한다")
+        assertEquals(setOf("휴식", "che_내정특기초기화", "che_전투특기초기화", "che_국기변경", "che_국호변경"),
+            catalog.retiredLegacyCommands.toSet())
+        assertTrue(catalog.entries.all { it.inputId == "action.enlist" || it.legacyCommands.size <= 1 }, "출사 외 기존 명령은 명령별 한 행으로 둔다")
+        assertEquals(73, catalog.entries.size)
         val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
         assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
+        val overlap = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""),
+            retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"")
+        assertEquals(emptyList(), overlap.invalidLegacyCoverage(listOf("che_농지개간", "che_징병")))
+        val court = listOf("부대탈퇴지시", "물자원조", "초토화", "기술연구", "천도", "몰수", "불가침제의", "선전포고", "종전제의", "불가침파기제의")
+        val work = listOf("증축", "감축")
+        val stratagem = listOf("필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장")
+        assertEquals(20, court.size + work.size + stratagem.size)
+        for ((names, kind) in listOf(court to InputKind.COURT_DECISION, work to InputKind.WORK,
+            stratagem to InputKind.STRATAGEM)) {
+            names.forEach { name ->
+                assertTrue(catalog.legacyIndex["che_$name"].orEmpty().any { it.kind == kind }, "che_$name -> $kind")
+            }
+        }
     }
 
     @Test
     fun `stale replacesLegacy field and in-row duplicates fail closed`() {
-        val stale = """{"schemaVersion":1,"inputs":[{"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(stale) }
+        val stale = row("action.a", "GENERAL_ACTION", "").replace("\"legacyCommands\":[]", "\"legacyCommands\":[],\"replacesLegacy\":[]")
+        assertFailsWith<IllegalArgumentException> { ledger(stale) }
         assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\",\"che_징병\"")) }
     }
 
@@ -392,5 +437,40 @@ class HwihaInputRegistryTest {
         assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\",", "")) }
         assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\"", "\"aiPolicyId\":null")) }
         assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"GENERAL\",\"actor\":\"GENERAL\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"UNKNOWN\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"phase\":\"FIELD\"", "\"phase\":\"UNKNOWN\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"resultType\":\"InputResolved\"", "\"resultType\":\"Other\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"turnSlots\":12", "\"turnSlots\":11")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"perPhaseLimit\":1", "\"perPhaseLimit\":2")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"failureReasons\":[]", "\"failureReasons\":[\"BAD\",\"BAD\"]")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup, retired = "\"che_징병\"", reasons = "") }
+        assertFailsWith<IllegalArgumentException> { ledger(dup, retired = "\"che_징병\",\"che_징병\"", reasons = "\"che_징병\":\"test\"") }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\""),
+            retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"") }
     }
+
+    @Test
+    fun `numeric and nested contracts reject type pollution`() {
+        val valid = row("action.a", "GENERAL_ACTION", "")
+        for ((from, to) in listOf(
+            "\"schemaVersion\":2" to "\"schemaVersion\":\"2\"",
+            "\"layer\":1" to "\"layer\":\"1\"",
+            "\"turnSlots\":12" to "\"turnSlots\":\"12\"",
+            "\"money\":null" to "\"money\":\"100\"",
+            "\"money\":null" to "\"money\":-5",
+            "\"money\":null" to "\"money\":{}",
+            "\"source\":\"test\"}" to "\"source\":\"test\",\"extra\":1}",
+            "\"key\":\"requestId\"}" to "\"key\":\"requestId\",\"extra\":1}",
+            "\"phase\":\"FIELD\"" to "\"phase\":\"NEXT_CARD_TURN\"",
+        )) {
+            val original = ledgerPayload(valid)
+            assertFailsWith<IllegalArgumentException>("$from -> $to") { HwihaInputCatalog.parse(original.replace(from, to)) }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ledger(row("policy.a", "POLICY", "").replace("\"turnSlots\":null", "\"turnSlots\":12"))
+        }
+    }
+
+    private fun ledgerPayload(row: String) = """{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[$row],"retiredLegacyCommands":[],"retiredLegacyReasons":{}}"""
 }

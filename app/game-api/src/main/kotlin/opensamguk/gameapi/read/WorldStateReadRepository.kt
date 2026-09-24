@@ -7,6 +7,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.Optional
@@ -81,4 +83,9 @@ class WorldStateReadRepository(
         raw.findById(worldId.value).map { listOf(it) }.orElse(emptyList())
 
     fun findProcessWorld(): WorldStateReadEntity? = raw.findById(worldId.value).orElse(null)
+
 }
+
+/** One process-world policy read; missing or invalid profile stays unavailable. */
+fun WorldStateReadRepository.processRuleProfile(): RuleProfile? =
+    findProcessWorld()?.let { WorldRuleProfile.resolve(it.config) }

@@ -8,6 +8,7 @@ enum class HwihaMilitaryFailure(val message: String) {
     ACTOR_NOT_FOUND("행동할 장수를 찾을 수 없습니다."),
     POSITION_UNAVAILABLE("장수의 현재 육상 위치를 확인할 수 없습니다."),
     BATTLE_PENDING("조우 처리가 끝나야 군사 행동을 할 수 있습니다."),
+    CORPS_DEPLOYED("출전 중인 부대의 지휘관은 도시 병력 행동을 할 수 없습니다."),
     COUNTY_UNAVAILABLE("현재 위치에 행정 縣이 없습니다."),
     FOREIGN_COUNTY("현재 縣이 본인 세력의 소유가 아닙니다."),
     STATE_UNAVAILABLE("현재 縣의 상태를 확인할 수 없습니다."),
@@ -16,6 +17,8 @@ enum class HwihaMilitaryFailure(val message: String) {
     NO_HOUSEHOLDS("모집할 호구가 없습니다."),
     NO_CITY_TROOPS("도시 소유 병력이 없습니다."),
     ALREADY_MAX("훈련·사기가 이미 최대치입니다."),
+    POPULATION_FULL("호구가 상한에 도달해 병력을 소집해제할 수 없습니다."),
+    BESIEGED("포위 중인 縣에서는 도시 병력 행동을 할 수 없습니다."),
     NO_COMMANDED_CORPS("집결시킬 지휘 중인 부곡이 없습니다."),
     NO_GATHER_TARGET("현재 위치로 집결시킬 군단이 없습니다."),
     CORPS_BUSY("조우 중인 군단은 집결 명령을 받을 수 없습니다."),
@@ -44,6 +47,7 @@ object HwihaMilitaryRules {
         if (shared is HwihaFieldAssessment.Rejected)
             return reject(HwihaMilitaryFailure.valueOf(shared.reason.name))
         val county = (shared as HwihaFieldAssessment.Eligible).county
+        if (county.id in projection.activeSiegeCountyIds) return reject(HwihaMilitaryFailure.BESIEGED)
         if (population == null || populationMax == null || troops == null || condition == null ||
             population < 0 || populationMax < population || troops < 0)
             return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE)
@@ -75,7 +79,7 @@ object HwihaMilitaryRules {
                 HwihaMilitaryInput.DEMOBILIZE -> {
                     if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
                     val headroom = populationMax - population
-                    if (headroom == 0) return reject(HwihaMilitaryFailure.ALREADY_MAX)
+                    if (headroom == 0) return reject(HwihaMilitaryFailure.POPULATION_FULL)
                     val released = maxOf(1, (troops.toLong() * design.demobilizeTroopPermille / 1000).toInt())
                         .coerceAtMost(troops).coerceAtMost(headroom)
                     HwihaCityMilitaryPlan(county.id, Math.addExact(population, released), troops - released,

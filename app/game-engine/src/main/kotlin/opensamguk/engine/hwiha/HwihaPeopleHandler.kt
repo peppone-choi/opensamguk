@@ -2,6 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
+import opensamguk.common.josa.JosaUtil
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
@@ -13,6 +14,7 @@ class HwihaPeopleHandler(
     private val context: HwihaDomesticContext,
     private val hiddenSeed: String,
     private val design: HwihaPeopleDesign = HwihaPeopleDesign.CANON,
+    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
     private val rngFactory: (String) -> RandUtil = { RandUtil(LiteHashDrbg(it)) },
 ) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
@@ -24,6 +26,8 @@ class HwihaPeopleHandler(
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
             return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = HwihaPeopleInput.parse(actorId, inputId, rawJson) ?: return reject(HwihaPeopleFailure.INVALID_INPUT)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true)
+            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         if (design.status != HwihaPeopleDesign.CONFIRMED)
             return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
@@ -68,12 +72,21 @@ class HwihaPeopleHandler(
                 if (liveTarget.nationId > 0 && world.getNationById(liveTarget.nationId) == null)
                     return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
                 val formerNationId = liveTarget.nationId
+                val joining = ready.joiningGeneralIds.map { id ->
+                    world.getGeneralById(id) ?: return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
+                }
+                if (joining.isEmpty() || joining.first().id != target.id)
+                    return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
                 val targetMeta = liveTarget.meta - HwihaEncounterResolver.CAPTIVE_KEY -
                     HwihaPlacementState.META_KEY - HwihaPlacementMarch.META_KEY -
                     HwihaCountyAssignment.META_KEY - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY
-                val joined = liveTarget.copy(nationId = actor.nationId, meta = targetMeta)
-                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(liveTarget), PerTurnOverlay.toLogicGeneral(joined))
-                world.applyGeneralDirtyFree(joined)
+                for (before in joining) {
+                    val joined = before.copy(nationId = actor.nationId,
+                        officerLevel = if (before.id == target.id) 0 else before.officerLevel,
+                        meta = if (before.id == target.id) HwihaLordStatus.afterEnlistment(targetMeta) else before.meta)
+                    recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(joined))
+                    world.applyGeneralDirtyFree(joined)
+                }
                 val oldCard = world.listRetainers().singleOrNull { it.generalId == target.id }
                 val card = if (oldCard == null) Retainer(world.allocateRetainerId(), actorId,
                     RetainerRules.ORIGIN_EXISTING, target.id, target.name, RetainerRules.RELATION_GUEST,
@@ -97,13 +110,13 @@ class HwihaPeopleHandler(
                 effects += "retainerId:${card.id}"
                 effects += "joinedGeneralId:${target.id}"
                 recordKind = HwihaRecordKind.PEOPLE_JOINED
-                recordText = "${target.name}이 동의하여 휘하에 들어왔습니다."
+                recordText = "${JosaUtil.put(target.name, "이")} 동의하여 휘하에 들어왔습니다."
                 HwihaRecords.general(world, target.id, HwihaRecordKind.RETAINER_JOINED,
                     "${actor.name}의 휘하에 들어갔습니다.", mapOf("masterGeneralId" to actorId, "retainerId" to card.id))
             } else {
                 effects += "resistedGeneralId:${target.id}"
                 recordKind = HwihaRecordKind.PEOPLE_RESISTED
-                recordText = "${target.name}이 제안을 거절했습니다."
+                recordText = "${JosaUtil.put(target.name, "이")} 제안을 거절했습니다."
             }
         }
         effects += "experience:+${design.experience}"

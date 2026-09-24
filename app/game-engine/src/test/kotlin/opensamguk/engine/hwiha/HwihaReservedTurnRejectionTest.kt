@@ -25,6 +25,16 @@ class HwihaReservedTurnRejectionTest {
         cityLandProvinceById = mapOf(1 to "p1"),
     ))
 
+    @Test fun `retired general is excluded from both next run time and due cohort`() {
+        val world = world("HWIHA")
+        val actor = world.getGeneralById(1)!!
+        world.applyGeneralDirtyFree(actor.copy(meta = actor.meta + ("hwihaRetired" to true)))
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
+        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { ReservedTurn("", "") })
+        assertNull(lifecycle.nextGeneralRunTime())
+        assertTrue(lifecycle.dueGenerals(Instant.EPOCH.plusSeconds(1)).isEmpty())
+    }
+
     @Test fun `stratagem supply does not touch SAMMO generals`() {
         val world=world("SAMMO");val before=world.getGeneralById(1);val recorder=ChangeRecorder()
         HwihaStratagemDraw(world,recorder).onTurn(1)

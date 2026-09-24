@@ -1,17 +1,21 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.content.HwihaPersonBondState
+import opensamguk.logic.content.PersonBond
+import opensamguk.logic.content.PersonBondKind
+
 object HwihaOathBonds {
-    const val META_KEY = "hwihaOathBonds"
+    const val META_KEY = HwihaPersonBondState.META_KEY
     fun read(meta: Map<String, Any?>): Set<Int> {
-        val value = meta[META_KEY] ?: return emptySet()
-        require(value is List<*>)
-        val ids = value.map { (it as? Number)?.toInt()?.takeIf { id -> id > 0 }
-            ?: throw IllegalArgumentException("Invalid oath bond") }
-        require(ids.size == ids.toSet().size)
-        return ids.toSet()
+        return HwihaPersonBondState.read(meta)?.bonds.orEmpty()
+            .filter { it.kind == PersonBondKind.OATH }
+            .map { bond -> bond.targetId.removePrefix("general:").toIntOrNull()?.takeIf { it > 0 }
+                ?: throw IllegalArgumentException("Invalid oath bond") }.toSet()
     }
     fun withBond(meta: Map<String, Any?>, id: Int): Map<String, Any?> {
         require(id > 0)
-        return meta + (META_KEY to (read(meta) + id).sorted())
+        val current = HwihaPersonBondState.read(meta)?.bonds.orEmpty()
+        val next = HwihaPersonBondState(current + PersonBond(PersonBondKind.OATH, "general:$id"))
+        return meta + (META_KEY to next.toMetaValue())
     }
 }

@@ -184,7 +184,7 @@ describe('JoinPage route guard', () => {
         expect(scoutMessage?.innerHTML).not.toContain('onerror');
     });
 
-    it('유산과 계정 초상을 실제 선택해 join 요청에 전달한다', async () => {
+    it('계정 초상을 전달하고 삼모 유산 선택은 제품에서 제공하지 않는다', async () => {
         frontInfoState.hasGeneral = false;
         apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
         render(<JoinPage />);
@@ -193,26 +193,14 @@ describe('JoinPage route guard', () => {
         await waitFor(() => {
             expect(screen.getByRole('img', { name: '전콘' })).toHaveAttribute('src', expect.stringContaining('/custom.jpg'));
         });
-        fireEvent.click(await screen.findByRole('checkbox', { name: /보이기/ }));
-        fireEvent.change(screen.getByLabelText('천재로 생성'), { target: { value: 'che_귀병' } });
-        fireEvent.change(screen.getByLabelText('도시'), { target: { value: '10' } });
-        expect(screen.getByRole('option', { name: '12:00.000 ~ 12:59.999' })).toBeInTheDocument();
-        fireEvent.change(screen.getByLabelText('턴 시간 지정'), { target: { value: '12' } });
-        const bonus = screen.getAllByLabelText(/추가 능력치/);
-        fireEvent.change(bonus[0], { target: { value: '3' } });
-        fireEvent.change(bonus[1], { target: { value: '1' } });
-        fireEvent.change(bonus[2], { target: { value: '1' } });
+        expect(screen.queryByText('유산 포인트 사용')).not.toBeInTheDocument();
         expect(screen.getByRole('checkbox', { name: '사용' })).toBeEnabled();
         fireEvent.click(screen.getByRole('button', { name: '장수 생성' }));
 
         await waitFor(() => {
-            expect(apiMocks.join).toHaveBeenCalledWith(expect.objectContaining({
-                pic: true,
-                inheritSpecial: 'che_귀병',
-                inheritCity: 10,
-                inheritTurntimeZone: 12,
-                inheritBonusStat: [3, 1, 1],
-            }));
+            expect(apiMocks.join).toHaveBeenCalledWith(expect.objectContaining({ pic: true }));
         });
+        const args = apiMocks.join.mock.calls[0]?.[0] as Record<string, unknown>;
+        expect(Object.keys(args).filter((key) => key.startsWith('inherit'))).toEqual([]);
     });
 });

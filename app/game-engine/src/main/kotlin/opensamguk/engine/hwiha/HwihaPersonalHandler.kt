@@ -34,11 +34,14 @@ class HwihaPersonalHandler(
         val check = HwihaPersonalRules.assess(request, context.projection(world))
         if (check is HwihaPersonalAssessment.Rejected) return reject(check.reason)
         val condition = (check as HwihaPersonalAssessment.Eligible).condition
+        val exploring = inputId == HwihaPersonalInput.TRAVEL
+        val experienceGain = if (exploring) design.travelExperience else 0
+        val dedicationGain = if (exploring) design.travelDedication else 0
         val nextExperience: Int
         val nextDedication: Int
         try {
-            nextExperience = Math.addExact(actor.experience, design.experiencePerAction)
-            nextDedication = Math.addExact(actor.dedication, design.dedicationPerAction)
+            nextExperience = Math.addExact(actor.experience, experienceGain)
+            nextDedication = Math.addExact(actor.dedication, dedicationGain)
         } catch (_: ArithmeticException) { return reject(HwihaPersonalFailure.STATE_UNAVAILABLE) }
         val effects = mutableListOf<String>()
         val next = when (inputId) {
@@ -46,11 +49,11 @@ class HwihaPersonalHandler(
             HwihaPersonalInput.SELF_TRAIN -> {
                 val stat = checkNotNull(request.trainingStat)
                 val grown = when (stat) {
-                    HwihaTrainingStat.LEADERSHIP -> actor.stats.copy(leadership = (actor.stats.leadership + design.trainingStatGain).coerceAtMost(100))
-                    HwihaTrainingStat.STRENGTH -> actor.stats.copy(strength = (actor.stats.strength + design.trainingStatGain).coerceAtMost(100))
-                    HwihaTrainingStat.INTELLIGENCE -> actor.stats.copy(intelligence = (actor.stats.intelligence + design.trainingStatGain).coerceAtMost(100))
-                    HwihaTrainingStat.POLITICS -> actor.stats.copy(politics = (actor.stats.politics + design.trainingStatGain).coerceAtMost(100))
-                    HwihaTrainingStat.CHARM -> actor.stats.copy(charm = (actor.stats.charm + design.trainingStatGain).coerceAtMost(100))
+                    HwihaTrainingStat.LEADERSHIP -> actor.stats.copy(leadership = (actor.stats.leadership + design.trainingStatGain).coerceAtMost(design.trainingStatCap))
+                    HwihaTrainingStat.STRENGTH -> actor.stats.copy(strength = (actor.stats.strength + design.trainingStatGain).coerceAtMost(design.trainingStatCap))
+                    HwihaTrainingStat.INTELLIGENCE -> actor.stats.copy(intelligence = (actor.stats.intelligence + design.trainingStatGain).coerceAtMost(design.trainingStatCap))
+                    HwihaTrainingStat.POLITICS -> actor.stats.copy(politics = (actor.stats.politics + design.trainingStatGain).coerceAtMost(design.trainingStatCap))
+                    HwihaTrainingStat.CHARM -> actor.stats.copy(charm = (actor.stats.charm + design.trainingStatGain).coerceAtMost(design.trainingStatCap))
                 }
                 val after = condition.copy(fatigue = (condition.fatigue + design.trainingFatigueGain).coerceAtMost(100))
                 effects += "${stat.wireName}:+${design.trainingStatGain}"
@@ -66,14 +69,16 @@ class HwihaPersonalHandler(
             }
             else -> return reject(HwihaPersonalFailure.INVALID_INPUT)
         }
-        effects += "experience:+${design.experiencePerAction}"
-        effects += "dedication:+${design.dedicationPerAction}"
+        if (exploring) {
+            effects += "experience:+$experienceGain"
+            effects += "dedication:+$dedicationGain"
+        }
         val stamp = mapOf("turn" to turnToken, "inputId" to inputId, "requestId" to requestId, "effects" to effects)
         val grown = next.copy(experience = nextExperience, dedication = nextDedication,
             meta = next.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_PERSONAL_ACTION)
+        if (exploring) HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_PERSONAL_ACTION)
         HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
             "${actor.name}의 개인 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)

@@ -6,6 +6,8 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
@@ -25,6 +27,9 @@ class CommandControllerHtmlSanitizerTest {
     private val precheck = mock(CommandPrecheckService::class.java)
     private val reserve = mock(CommandReserveService::class.java)
     private val resolver = mock(GeneralResolver::class.java).also { `when`(it.resolveGeneralId(7L)).thenReturn(10) }
+    private val worlds = mock(WorldStateReadRepository::class.java).also {
+        `when`(it.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+    }
     private val controller = CommandController(
         precheck = precheck,
         reserve = reserve,
@@ -37,6 +42,7 @@ class CommandControllerHtmlSanitizerTest {
         objectMapper = objectMapper,
         profile = "che:scenario_2",
         processWorld = GameApiProcessWorld(1),
+        worlds = worlds,
     )
 
     @Test

@@ -7,7 +7,8 @@ import opensamguk.logic.input.*
 
 /** Political-phase retirement transfers the personal retinue to the named direct retainer. */
 class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext) {
+    private val context: HwihaDomesticContext,
+    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
     fun handle(actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?, npcSelected: Boolean = false): HwihaTurnOutcome {
         fun reject(reason: HwihaRetireFailure) = HwihaTurnOutcome.Rejected(HwihaRetireInput.INPUT_ID, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(HwihaRetireFailure.WRONG_RULE_PROFILE)
@@ -25,6 +26,9 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
             return HwihaTurnOutcome.Rejected(HwihaRetireInput.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+        if (catalog[HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler != true)
+            return HwihaTurnOutcome.Rejected(HwihaRetireInput.INPUT_ID,
+                InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val assessed = HwihaRetireRules.assess(request, context.projection(world))
         if (assessed is HwihaRetireAssessment.Rejected) return reject(assessed.reason)
         val ready = assessed as HwihaRetireAssessment.Eligible

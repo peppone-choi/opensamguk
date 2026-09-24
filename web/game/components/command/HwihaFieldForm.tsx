@@ -49,7 +49,7 @@ export default function HwihaFieldForm({inputId,generalId,turnIdx,refreshKey,una
         <p>장수가 현재 서 있는 縣에 한 순의 효과가 적용됩니다. 해당 縣의 방침·공사 효과와 합산됩니다.</p>
         {!data&&!reason&&<p role="status">현장 행동 정보를 불러오는 중입니다.</p>}
         {data&&!data.available&&<p role="status">{data.reason??'현재 실행할 수 없습니다.'}</p>}
-        {data?.available&&<p>대상 縣: {data.countyName}</p>}
+        {data?.available&&<p>현재 縣: {data.countyName} (실행 순에 위치·창고 재판정)</p>}
         {reason&&<p role="alert">{reason}</p>}
         <button type="button" className="cmd-submit os-button os-button--primary" disabled={busy||!data?.available} onClick={()=>void reserve()}>
             {busy?'처리 중...':`${fieldLabels[inputId]} 예약`}

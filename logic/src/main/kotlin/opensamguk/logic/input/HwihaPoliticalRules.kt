@@ -61,14 +61,16 @@ object HwihaPoliticalRules {
             HwihaPoliticalInput.RISE -> {
                 if (actor.nationId != 0) return reject(HwihaPoliticalFailure.NOT_FREE)
                 if (renown == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-                if (renown < 50) return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
+                if (renown < HwihaPoliticalDesign.CANON.riseMinimumRenown)
+                    return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
                 if (county!!.nationId != 0) return reject(HwihaPoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
             HwihaPoliticalInput.INDEPENDENCE -> {
                 if (actor.nationId <= 0) return reject(HwihaPoliticalFailure.NOT_A_SUBJECT)
                 if (lord) return reject(HwihaPoliticalFailure.ALREADY_LORD)
                 if (renown == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-                if (renown < 50) return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
+                if (renown < HwihaPoliticalDesign.CANON.independenceMinimumRenown)
+                    return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
                 if (county!!.nationId != actor.nationId) return reject(HwihaPoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
             HwihaPoliticalInput.DISSOLVE -> {
@@ -117,6 +119,11 @@ object HwihaPoliticalRules {
         if (inputId == HwihaPoliticalInput.ABDICATE) {
             if (issuer.nationId <= 0 || !HwihaLordStatus.read(issuer.meta)) return HwihaPoliticalFailure.NOT_LORD
             if (issuer.nationId != target.nationId) return HwihaPoliticalFailure.SAME_NATION_REQUIRED
+            if (target.inBattle) return HwihaPoliticalFailure.BATTLE_PENDING
+            val chiefId = state.nation(issuer.nationId)?.chiefGeneralId
+            if ((chiefId != null && chiefId != issuer.id) ||
+                state.people.count { it.nationId == issuer.nationId && it.officerLevel == 12 } != 1 ||
+                issuer.officerLevel != 12) return HwihaPoliticalFailure.STATE_UNAVAILABLE
         } else if (inputId == HwihaPoliticalInput.OATH) {
             if (issuer.node == null || issuer.node !in (state.landProvinceIds ?: emptySet()))
                 return HwihaPoliticalFailure.POSITION_UNAVAILABLE

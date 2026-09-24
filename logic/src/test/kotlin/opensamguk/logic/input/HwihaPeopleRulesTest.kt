@@ -39,10 +39,13 @@ class HwihaPeopleRulesTest {
         assertEquals(HwihaPeopleFailure.TARGET_UNAVAILABLE,
             assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
                 base.copy(people = listOf(met, free.copy(node = "province-b"))))).reason)
+        assertEquals(HwihaPeopleFailure.TARGET_NOT_DISCOVERED,
+            assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(
+                HwihaPeopleRequest(7, HwihaPeopleInput.EMPLOY, 999), base)).reason)
     }
 
     @Test fun `captor alone may persuade the captive at their current location`() {
-        val captive = free.copy(nationId = 2, meta = mapOf("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + ("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
         val request = HwihaPeopleRequest(7, HwihaPeopleInput.PERSUADE_CAPTIVE, 8)
         assertEquals(captive, assertIs<HwihaPeopleAssessment.Eligible>(HwihaPeopleRules.assess(request,
             base.copy(people = listOf(actor, captive)))).target)
@@ -52,11 +55,14 @@ class HwihaPeopleRulesTest {
         assertEquals(HwihaPeopleFailure.TARGET_NOT_CAPTIVE,
             assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
                 base.copy(people = listOf(actor, captive.copy(meta = emptyMap()))))).reason)
+        assertEquals(HwihaPeopleFailure.TARGET_NOT_CAPTIVE,
+            assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
+                base.copy(people = listOf(actor, captive.copy(userOwned = true))))).reason)
     }
 
     @Test fun `foreign lord captive requires nation resolution before persuasion`() {
         val request = HwihaPeopleRequest(7, HwihaPeopleInput.PERSUADE_CAPTIVE, 8)
-        val captive = free.copy(nationId = 2, meta = mapOf(
+        val captive = free.copy(nationId = 2, meta = free.meta + mapOf(
             "hwihaCaptive" to mapOf("captorGeneralId" to 7), HwihaLordStatus.META_KEY to true))
         assertEquals(HwihaPeopleFailure.TARGET_IS_LORD,
             assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
@@ -80,7 +86,7 @@ class HwihaPeopleRulesTest {
             assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(
                 HwihaPeopleRequest(7, HwihaPeopleInput.EMPLOY, 8), base.copy(
                     people = listOf(met, free, namesake), cards = listOf(DomesticCard(1, 7, 9, "guest"))))).reason)
-        val captive = free.copy(nationId = 2, meta = mapOf("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + ("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
         assertIs<HwihaPeopleAssessment.Eligible>(HwihaPeopleRules.assess(
             HwihaPeopleRequest(7, HwihaPeopleInput.PERSUADE_CAPTIVE, 8), base.copy(
                 people = listOf(actor, captive), cards = listOf(DomesticCard(2, 9, 8, "guest")))))

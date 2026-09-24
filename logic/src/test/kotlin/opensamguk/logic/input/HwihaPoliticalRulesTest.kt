@@ -42,4 +42,14 @@ class HwihaPoliticalRulesTest {
         assertIs<HwihaPoliticalAssessment.Eligible>(check(HwihaPoliticalInput.DISSOLVE,
             state(person(nation = 1, lord = true), countyOwner = 1)))
     }
+
+    @Test fun `historical oath bond prevents a second oath`() {
+        val issuer = person(nation = 1).copy(meta = HwihaOathBonds.withBond(person(nation = 1).meta, 2))
+        val target = person(nation = 1).copy(id = 2, name = "상대")
+        val snapshot = state(issuer, countyOwner = 1).copy(people = listOf(issuer, target))
+        assertEquals(HwihaPoliticalFailure.ALREADY_BOUND,
+            HwihaPoliticalRules.assessConsent(target.id,
+                HwihaPoliticalConsent(issuer.id, HwihaPoliticalInput.OATH, true), snapshot))
+        assertTrue(HwihaOathBonds.META_KEY in issuer.meta)
+    }
 }

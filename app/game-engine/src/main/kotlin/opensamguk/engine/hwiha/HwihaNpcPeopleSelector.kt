@@ -12,7 +12,8 @@ internal class HwihaNpcPeopleSelector(private val context: HwihaDomesticContext,
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
             design.status != HwihaPeopleDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
+        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 || actor.nationId <= 0 ||
+            !runCatching { HwihaLordStatus.read(actor.meta) }.getOrDefault(false) ||
             world.listRetainers().any { it.generalId == actorId } || HwihaCorpsOrder.META_KEY in actor.meta) return reserved
         val deployed = try { HwihaDeploymentState.read(actor.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reserved }

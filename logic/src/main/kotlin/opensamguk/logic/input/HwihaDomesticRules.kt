@@ -31,14 +31,16 @@ data class DomesticPerson(
     }
 }
 
-data class DomesticCard(val id: Int, val masterId: Int, val generalId: Int?, val relation: String)
+data class DomesticCard(val id: Int, val masterId: Int, val generalId: Int?, val relation: String,
+    val name: String? = null)
 
 /** 행정 縣治 城만 싣는다. [provinceId]·[commanderyId] 는 부팅 판의 결속·지리에서 온다(없으면 null). */
 data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val provinceId: String?, val commanderyId: String?,
     val meta: Map<String, Any?>)
 
 data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?, val meta: Map<String, Any?>,
-    val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val tech: Double = 0.0)
+    val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val tech: Double = 0.0,
+    val chiefGeneralId: Int? = null)
 data class DomesticBugok(val id: Int, val masterGeneralId: Int, val crewTypeId: Int, val training: Int)
 data class DomesticDiplomacy(val fromNationId: Int, val toNationId: Int, val state: Int, val term: Int)
 
@@ -57,6 +59,7 @@ data class HwihaDomesticProjection(
     val countyAdjacency: Map<Int, Set<Int>> = emptyMap(),
     val supportedCrewTypeIds: Set<Int> = emptySet(),
     val diplomacy: List<DomesticDiplomacy> = emptyList(),
+    val activeSiegeCountyIds: Set<Int> = emptySet(),
 ) {
     private val peopleById = people.associateBy { it.id }
     private val countyById = counties.associateBy { it.id }

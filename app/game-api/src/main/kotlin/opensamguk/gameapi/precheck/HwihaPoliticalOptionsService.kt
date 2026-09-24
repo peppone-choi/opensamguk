@@ -22,6 +22,9 @@ class HwihaPoliticalOptionsService(private val reader: HwihaDomesticReader,
         reader.requireOwner(actorId, userId)
         val state = reader.snapshot().state
         return HwihaPoliticalRules.SUPPORTED_IDS.map { inputId ->
+            if (catalog[inputId]?.deliveryState?.hasHandler != true)
+                return@map HwihaPoliticalOption(inputId, false,
+                    InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
             val targets = if (inputId in HwihaPoliticalInput.TARGET_IDS && state != null)
                 state.people.filter { it.id != actorId && it.userOwned }.sortedBy { it.id }.map { person ->
                     val assessment = HwihaPoliticalRules.assess(HwihaPoliticalRequest(actorId, inputId, person.id), state)
@@ -31,8 +34,6 @@ class HwihaPoliticalOptionsService(private val reader: HwihaDomesticReader,
             val assessment = if (inputId in HwihaPoliticalInput.TARGET_IDS) null
                 else state?.let { HwihaPoliticalRules.assess(HwihaPoliticalRequest(actorId, inputId), it) }
             val failure = when {
-                catalog[inputId]?.deliveryState?.hasHandler != true ->
-                    InputRejection.NOT_DELIVERED.name to InputRejection.NOT_DELIVERED.message
                 state == null -> HwihaPoliticalFailure.STATE_UNAVAILABLE.name to HwihaPoliticalFailure.STATE_UNAVAILABLE.message
                 inputId in HwihaPoliticalInput.TARGET_IDS && targets.none { it.available } ->
                     (targets.firstOrNull()?.code ?: HwihaPoliticalFailure.CONSENT_REQUIRED.name) to

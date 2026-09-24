@@ -90,7 +90,7 @@ class HwihaTravelExecutor(
             }
         }
         val before = checkNotNull(world.getGeneralById(actorId))
-        val nextMeta = before.meta + (HwihaTravelState.META_KEY to next.toMetaValue()) +
+        val nextMeta = (before.meta - HwihaMarchState.META_KEY) + (HwihaTravelState.META_KEY to next.toMetaValue()) +
             (condition?.let { mapOf(HwihaPersonalTravelCondition.META_KEY to it.toMetaValue()) } ?: emptyMap())
         val after = before.copy(meta = nextMeta)
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))

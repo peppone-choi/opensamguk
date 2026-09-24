@@ -11,5 +11,14 @@
   "moraleGain": 10,
   "demobilizeTroopPermille": 100,
   "experience": 10,
-  "dedication": 1
+  "dedication": 1,
+  "npcPolicy": {
+    "status": "PROPOSED",
+    "note": "자율 NPC의 도시 병력 관리 문턱. 균형 조정 전 임시값이며 사람 장수의 행동 가능 조건에는 영향을 주지 않는다.",
+    "minimumTroops": 50,
+    "minimumTraining": 40,
+    "minimumMorale": 40,
+    "demobilizeBelowPopulation": 100,
+    "demobilizeAboveTroops": 100
+  }
 }

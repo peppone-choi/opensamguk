@@ -39,6 +39,7 @@ class HwihaDomesticReader(
     private val spatial: SpatialStateReadRepository,
     private val geography: HwihaCityGeography,
     private val diplomacy: DiplomacyReadRepository,
+    private val sieges: HwihaSiegeReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
         if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw HwihaDomesticForbidden()
@@ -72,7 +73,7 @@ class HwihaDomesticReader(
                                 (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury,
                                 g.gold, g.rice)
                         },
-                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) },
+                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
                             DomesticCounty(c.id, c.name, c.nationId, bundle.projection.bindingsByCityId[c.id]?.landProvinceId,
                                 places[c.id]?.commanderyHanja, c.meta)
@@ -86,6 +87,7 @@ class HwihaDomesticReader(
                         },
                         supportedCrewTypeIds = HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
                         diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
+                        activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->

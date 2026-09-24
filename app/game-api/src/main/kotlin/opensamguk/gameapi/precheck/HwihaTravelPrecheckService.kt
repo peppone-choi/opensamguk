@@ -58,16 +58,19 @@ class HwihaTravelPrecheckService(
                 destination?.let { listOf(HwihaTravelDestinationOption(it, ready.nameOfProvince(it), denied == null, denied?.reason?.name,
                     denied?.reason?.message)) } ?: emptyList())
         }
+        val (reachable, globalFailure) = ready.reachableDestinations()
+        val origin = (ready.positions.stateFor(actorId)?.node as? StrategicNodeRef.LandProvince)?.id
         val destinations = ready.bundle.projection.topology.landProvinceIds.sorted().map { id ->
-            val node = StrategicNodeRef.LandProvince(id)
-            val assessment = ready.assess(HwihaTravelRequest(actorId, inputId, node))
-            val denied = assessment as? HwihaTravelAssessment.Rejected
-            HwihaTravelDestinationOption(id, ready.nameOfProvince(id), denied == null, denied?.reason?.name, denied?.reason?.message)
+            val reason = globalFailure ?: when {
+                id == origin -> HwihaTravelFailure.ALREADY_THERE
+                id !in reachable -> HwihaTravelFailure.NO_ROUTE
+                else -> null
+            }
+            HwihaTravelDestinationOption(id, ready.nameOfProvince(id), reason == null, reason?.name, reason?.message)
         }
         val available = destinations.any { it.available }
-        val firstFailure = destinations.firstOrNull()?.takeUnless { available }?.code
-        return HwihaTravelOptions(inputId, available, firstFailure,
-            if (available) null else destinations.firstOrNull()?.reason, destinations)
+        val firstFailure = globalFailure ?: if (available) null else HwihaTravelFailure.NO_ROUTE
+        return HwihaTravelOptions(inputId, available, firstFailure?.name, firstFailure?.message, destinations)
     }
 
     private data class Ready(val actor: GeneralReadEntity, val selected: ActiveWorldArtifactSnapshot,
@@ -97,6 +100,31 @@ class HwihaTravelPrecheckService(
                 RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
                 positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders),
                 bundle.projection.topology, bundle.landMarchMetrics, selected.world.meta)
+        }
+
+        /** One graph traversal answers every destination on this snapshot. Reservation still checks one route exactly. */
+        fun reachableDestinations(): Pair<Set<String>, HwihaTravelFailure?> {
+            val position = positions.stateFor(actor.id) ?: return emptySet<String>() to HwihaTravelFailure.POSITION_UNAVAILABLE
+            val origin = position.node as? StrategicNodeRef.LandProvince
+                ?: return emptySet<String>() to HwihaTravelFailure.POSITION_UNAVAILABLE
+            if (position.battlefield != null) return emptySet<String>() to HwihaTravelFailure.BATTLE_PENDING
+            if (actor.id in deployedCommanders) return emptySet<String>() to HwihaTravelFailure.CORPS_DEPLOYED
+            val topology = bundle.projection.topology
+            val metrics = bundle.landMarchMetrics
+            if (metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash)
+                return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+            return try {
+                val passage = HwihaLandPassageState.read(selected.world.meta, topology)
+                    ?: return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+                if (HwihaMarchReactions.presence(selected.world.meta) in setOf(
+                        HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED))
+                    return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+                val nodes = StrategicPathResolver.reachableNodes(topology, setOf(origin), passage, 1,
+                    { it is StrategicNodeRef.LandProvince }, LandMarchMetricSnapshot::supports)
+                nodes.mapNotNull { (it as? StrategicNodeRef.LandProvince)?.id }.toSet() to null
+            } catch (_: IllegalArgumentException) {
+                emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+            }
         }
     }
 
