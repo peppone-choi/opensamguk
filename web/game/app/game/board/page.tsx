@@ -28,7 +28,7 @@ import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import type {
-    BoardArticle, BoardComment, BoardKind, BoardPerson, BoardResponse, BoardVoteSummary, FrontInfoResponse, VoteInfo,
+    BoardArticle, BoardComment, BoardKind, BoardPerson, BoardResponse, FrontInfoResponse,
 } from '../../../lib/types';
 import { isArticleBodyBlank } from './articleBody';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
@@ -69,50 +69,10 @@ function CommentRow({ comment }: { comment: BoardComment }) {
     );
 }
 
-/** 표결 카드 — 선택지별 표 수 + 표결자 스택(공개 표결). 표는 voteCast 인테이크로 던진다. */
-function VoteCard({ vote, canVote, onVote }: { vote: BoardVoteSummary; canVote: boolean; onVote: (index: number) => void }) {
-    const unvoted = Math.max(0, vote.eligibleCount - vote.voterCount);
-    return (
-        <div className="council-vote" aria-label={`표결 ${vote.title}`}>
-            <div className="council-vote__head">
-                <span className="council-vote__title">{vote.title}</span>
-                <span className="council-vote__meta os-num">
-                    {vote.options.map((o) => `${o.text} ${o.count}`).join(' · ')} · 미표 {unvoted}
-                    {vote.closed ? ' · 마감' : vote.endDate ? ` · 마감 ${shortDate(vote.endDate)}` : ''}
-                </span>
-            </div>
-            <div className="council-vote__options">
-                {vote.options.map((o) => {
-                    const mine = vote.myVote?.includes(o.index) ?? false;
-                    return (
-                        <div key={o.index} className={`council-vote__option${mine ? ' is-mine' : ''}`}>
-                            <div className="council-vote__option-head">
-                                <b>{o.text}</b>
-                                <span className="os-num">{o.count}</span>
-                            </div>
-                            {o.voters.length > 0 && (
-                                <PortraitStack label={`${o.text} 표결자`}>
-                                    {o.voters.map((p) => <PersonIcon key={p.generalId} person={p} size="icon-24" />)}
-                                </PortraitStack>
-                            )}
-                            {canVote && !vote.closed && (
-                                <button type="button" className="os-button os-button--sm" onClick={() => onVote(o.index)}>
-                                    {o.text}{mine ? ' (내 표)' : ''}
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
 function ArticleCard({
     article,
     secret,
     canComment,
-    canVote,
     commentDraft,
     setCommentDraft,
     openModal,
@@ -120,7 +80,6 @@ function ArticleCard({
     article: BoardArticle;
     secret: boolean;
     canComment: boolean;
-    canVote: boolean;
     commentDraft: string;
     setCommentDraft: (no: number, value: string) => void;
     openModal: (spec: BoardModalSpec) => void;
@@ -142,17 +101,6 @@ function ArticleCard({
             <div className="council-article__body">
                 <SafeHtml html={article.contentHtml} />
             </div>
-            {article.vote && (
-                <VoteCard
-                    vote={article.vote}
-                    canVote={canVote}
-                    onVote={(index) => openModal({
-                        command: 'voteCast',
-                        label: `표결 · ${article.vote?.title ?? ''}`,
-                        extraArgs: { voteId: article.vote?.voteId, selection: [index] },
-                    })}
-                />
-            )}
             {/* 기밀실 열람 기록 — 읽은 사람 n / 수뇌부 정원 m */}
             {article.readers && (
                 <div className="council-article__readers">
@@ -218,8 +166,6 @@ function BoardContent() {
     const [articleTitle, setArticleTitle] = useState('');
     const [articleText, setArticleText] = useState('');
     const [articleKind, setArticleKind] = useState<BoardKind>('general');
-    const [voteOptions, setVoteOptions] = useState<VoteInfo[] | null>(null);
-    const [voteIdDraft, setVoteIdDraft] = useState<number | ''>('');
     // Phase 4X-B — 작전 글에 연결할 진행 중 작전(원천 /api/operations, kind=operation 일 때만 읽는다).
     const [operationOptions, setOperationOptions] = useState<{ id: number; title: string; statusLabel: string }[] | null>(null);
     const [operationIdDraft, setOperationIdDraft] = useState<number | ''>('');
@@ -297,16 +243,6 @@ function BoardContent() {
         return () => { alive = false; };
     }, [articles, blockedReason, data, fetchBoard, myGeneralId, secret]);
 
-    // 표결 글을 쓸 때만 설문 목록을 읽는다(원천: /api/votes).
-    useEffect(() => {
-        if (articleKind !== 'vote' || voteOptions !== null) return;
-        let alive = true;
-        api.votes()
-            .then((res) => { if (alive) setVoteOptions(Object.values(res.votes ?? {})); })
-            .catch(() => { if (alive) setVoteOptions([]); });
-        return () => { alive = false; };
-    }, [articleKind, voteOptions]);
-
     const setCommentDraft = useCallback((no: number, value: string) => {
         setCommentDrafts((prev) => ({ ...prev, [no]: value }));
     }, []);
@@ -328,7 +264,7 @@ function BoardContent() {
             .then((r) => setOperationOptions(r.operations.filter((o) => o.status === 'declared' || o.status === 'active').map((o) => ({ id: o.id, title: o.title, statusLabel: o.statusLabel }))))
             .catch(() => setOperationOptions([]));
     }, [articleKind, operationOptions]);
-    const canSubmitArticle = !(articleTitle.length === 0 && isArticleBodyBlank(articleText)) && (articleKind !== 'vote' || voteIdDraft !== '');
+    const canSubmitArticle = !(articleTitle.length === 0 && isArticleBodyBlank(articleText));
 
     return (
         <>
@@ -379,7 +315,6 @@ function BoardContent() {
                                         종류
                                         <select value={articleKind} onChange={(e) => setArticleKind(e.target.value as BoardKind)}>
                                             <option value="general">일반</option>
-                                            <option value="vote">표결</option>
                                             <option value="operation">작전</option>
                                             <option value="notice" disabled={myPermission < 2}>공지{myPermission < 2 ? ' (수뇌부만)' : ''}</option>
                                         </select>
@@ -391,17 +326,6 @@ function BoardContent() {
                                                 <option value="">{operationOptions === null ? '불러오는 중...' : operationOptions.length === 0 ? '진행 중인 작전이 없습니다 (연결 없이 작성)' : '연결 없음'}</option>
                                                 {(operationOptions ?? []).map((o) => (
                                                     <option key={o.id} value={o.id}>{o.title} · {o.statusLabel}</option>
-                                                ))}
-                                            </select>
-                                        </label>
-                                    )}
-                                    {articleKind === 'vote' && (
-                                        <label className="council-write__field">
-                                            연결할 설문
-                                            <select value={voteIdDraft} onChange={(e) => setVoteIdDraft(e.target.value === '' ? '' : Number(e.target.value))}>
-                                                <option value="">{voteOptions === null ? '불러오는 중...' : voteOptions.length === 0 ? '진행 중인 설문이 없습니다' : '선택'}</option>
-                                                {(voteOptions ?? []).map((v) => (
-                                                    <option key={v.id} value={v.id}>{v.title}</option>
                                                 ))}
                                             </select>
                                         </label>
@@ -435,7 +359,6 @@ function BoardContent() {
                                                     title: articleTitle,
                                                     text: articleText,
                                                     kind: articleKind,
-                                                    ...(articleKind === 'vote' && voteIdDraft !== '' ? { voteId: voteIdDraft } : {}),
                                                     ...(articleKind === 'operation' && operationIdDraft !== '' ? { operationId: operationIdDraft } : {}),
                                                 },
                                             })
@@ -474,7 +397,6 @@ function BoardContent() {
                                         article={a}
                                         secret={secret}
                                         canComment={canWrite}
-                                        canVote={canWrite}
                                         commentDraft={commentDrafts[a.id] ?? ''}
                                         setCommentDraft={setCommentDraft}
                                         openModal={setModal}
@@ -543,7 +465,6 @@ function BoardContent() {
                     onReserved={() => {
                         setArticleTitle('');
                         setArticleText('');
-                        setVoteIdDraft('');
                         setCommentDrafts({});
                         fetchBoard(secret);
                     }}

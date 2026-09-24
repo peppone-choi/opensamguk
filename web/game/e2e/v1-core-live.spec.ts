@@ -958,16 +958,14 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
 
     const routes: Array<[string, string]> = [
       ['/game', 'general'],
-      ['/game/nation', 'nation'],
-      ['/game/auction', 'auction-resource'],
-      ['/game/auction?type=unique', 'auction-unique-deep-link'],
+      ['/game/hwiha/war-room', 'war-room'],
+      ['/game/hwiha/retinue', 'retinue'],
+      ['/game/hwiha/court', 'court'],
       ['/game/board', 'board'],
       ['/game/board?secret=1', 'board-secret-deep-link'],
-      ['/game/diplomacy', 'diplomacy'],
       ['/game/mailbox', 'mailbox'],
-      ['/game/betting', 'betting'],
       ['/game/select-pool', 'select-pool'],
-      ['/game/my', 'settings-vacation'],
+      ['/game/my', 'my-info'],
       ['/game/history', 'history'],
       ['/game/rankings/kingdoms', 'kingdom-roles'],
     ];
