@@ -221,6 +221,8 @@ class ReservedTurnHandler(
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
     private val cityMilitaryHandler by lazy { opensamguk.engine.hwiha.HwihaCityMilitaryHandler(world, recorder, hwihaDomesticContext) }
+    private val peopleHandler by lazy { opensamguk.engine.hwiha.HwihaPeopleHandler(world, recorder,
+        hwihaDomesticContext, hiddenSeed) }
     private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
@@ -331,6 +333,14 @@ class ReservedTurnHandler(
                 if (hwihaCatalog[militaryId]?.deliveryState?.hasHandler == true) {
                     handlers[militaryId] = InputHandler {
                         applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (peopleId in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
+                if (hwihaCatalog[peopleId]?.deliveryState?.hasHandler == true) {
+                    handlers[peopleId] = InputHandler {
+                        applied = peopleHandler.handle(peopleId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }

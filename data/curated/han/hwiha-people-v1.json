@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "hwiha-people-v1",
+  "status": "PROPOSED",
+  "note": "기존 재야 인물 탐색과 대상 동의·저항 후 휘하 편입은 확정. 한 순 성공률·성장 수치는 사용자 확인 대기 중이다.",
+  "searchDiscoverCount": 1,
+  "employBasePercent": 50,
+  "captiveBasePercent": 30,
+  "minimumPercent": 5,
+  "maximumPercent": 95,
+  "charmDifferencePercentPerPoint": 1,
+  "experience": 10,
+  "dedication": 1
+}
