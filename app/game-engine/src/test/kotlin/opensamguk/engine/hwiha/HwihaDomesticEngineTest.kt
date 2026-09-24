@@ -192,7 +192,7 @@ class HwihaDomesticEngineTest {
     @Test fun `works start at the next boundary stop on shortage and complete at the total cost`() {
         val world = world(HwihaResources(money = 1_000_000)); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "work.start", """{"countyId":10,"work":"FORTIFICATION"}""").ok)
-        assertEquals(DomesticFailure.WORK_IN_PROGRESS.name, submit(world, recorder, "work.start", """{"countyId":10,"work":"ROAD"}""").code)
+        assertEquals(DomesticFailure.WORK_IN_PROGRESS.name, submit(world, recorder, "work.start", """{"countyId":10,"work":"POST_STATION"}""").code)
         fun work() = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
         fun stock() = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         // Same phase as the order: the boundary does not touch the work at all (§4 「다음 순 경계부터」).
@@ -227,6 +227,35 @@ class HwihaDomesticEngineTest {
             }
             assertEquals(minOf(1000, 500 + effect.amount), value)
         }
+    }
+
+    @Test fun `completed road opens the passage and records the game env authority`() {
+        val roadContext = HwihaDomesticContext(
+            geography = HwihaCountyGeography(listOf(
+                HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
+            topology = topology, metrics = metrics,
+            roadGates = listOf(StrategicRoadGate("ab", 0, 0, 0, 1, 1, false)))
+        val world = world(HwihaResources(money = 1_000_000, timber = 100_000))
+        val recorder = ChangeRecorder()
+        world.setGameEnvValue(HwihaLandPassageState.META_KEY, mapOf(
+            "version" to 1, "topologyRevision" to topology.topologyRevision,
+            "topologyHash" to topology.contentHash,
+            "edges" to mapOf("ab" to mapOf("active" to false, "seasonOpen" to false,
+                "blockaded" to false, "availableCapacity" to 10))))
+        val result = HwihaCourtHandler(world, recorder, roadContext).handle(HwihaCourtInput(
+            "req-road", 1, 42, "work.start", """{"countyId":10,"work":"ROAD","edgeId":"ab"}"""))
+        assertTrue(result.ok, result.toString())
+        assertFalse(HwihaLandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
+        var phase = HwihaPhase(200, 1, 1)
+        repeat(12) {
+            if (HwihaCountyWorks.read(world.getCityById(10)!!.meta)?.active == null) return@repeat
+            phase = phase.plus(1)
+            world.setCurrentDate(phase.year, phase.month, phase.phase)
+            HwihaDomesticBoundary(world, recorder, roadContext).run()
+        }
+        assertNull(HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active)
+        assertTrue(HwihaLandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
+        assertTrue(recorder.kvDirty().keys.any { it.key == HwihaLandPassageState.META_KEY })
     }
 
     @Test fun `corps reaction policies populate the march reaction inventory on the commander's turn`() {
