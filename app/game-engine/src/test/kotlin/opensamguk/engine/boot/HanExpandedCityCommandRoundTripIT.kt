@@ -42,11 +42,19 @@ class HanExpandedCityCommandRoundTripIT {
     private lateinit var admin: JdbcTemplate
     private lateinit var jdbc: JdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
+    private lateinit var legacyScenarioDir: Path
+    private lateinit var bootstrap: SeedBootstrap
     private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(org.testcontainers.DockerClientFactory.instance().isDockerAvailable,
             "Docker unavailable: expanded city command persistence not verified")
+        legacyScenarioDir = Files.createTempDirectory("sammo-city-round-trip-")
+        val legacyJson = requireNotNull(javaClass.classLoader.getResourceAsStream("scenario/scenario_1020.json"))
+            .bufferedReader().use { it.readText() }
+        Files.writeString(legacyScenarioDir.resolve("scenario_1020.json"),
+            "{\"ruleProfile\":\"SAMMO\"," + legacyJson.trimStart().removePrefix("{"))
+        bootstrap = SeedBootstrap(scenarioCode = "scenario_1020", scenarioDir = legacyScenarioDir.toString(), worldId = worldId)
         postgres = PostgreSQLContainer("postgres:16-alpine")
         postgres.start()
         // 시드는 한 번만 한다. 마이그레이션 + scenario_1020 시드를 끝낸 SEEDED DB 를 틀로 두고, 반복마다
@@ -66,7 +74,6 @@ class HanExpandedCityCommandRoundTripIT {
     }
 
     private val worldId = WorldId(1)
-    private val bootstrap = SeedBootstrap(scenarioCode = "scenario_1020", worldId = worldId)
 
     private fun restoreSeededWorld() {
         admin.execute("DROP DATABASE IF EXISTS $WORK WITH (FORCE)")
@@ -88,7 +95,13 @@ class HanExpandedCityCommandRoundTripIT {
         const val WORK = "expanded_city_work"
     }
 
-    @AfterAll fun cleanup() { if (this::postgres.isInitialized) postgres.stop() }
+    @AfterAll fun cleanup() {
+        if (this::postgres.isInitialized) postgres.stop()
+        if (this::legacyScenarioDir.isInitialized) {
+            Files.deleteIfExists(legacyScenarioDir.resolve("scenario_1020.json"))
+            Files.deleteIfExists(legacyScenarioDir)
+        }
+    }
 
     @Test fun `each city added since historical roster supports move conquest and cold reload`() {
         val currentIds = MapJson.loadFromClasspath("han-world-v3").cities.map { it.id }.toSet()
