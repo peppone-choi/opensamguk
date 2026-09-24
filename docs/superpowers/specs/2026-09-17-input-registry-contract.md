@@ -1,7 +1,7 @@
 # 입력 6종 registry 계약
 
 > 작성일: 2026-09-17
-> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 4건: #779·#249.**
+> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 4건: #249·#892 (#779 상위).**
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17 사용자 결정, `.ai/decisions.md`에 반영됨)
 > 범위: 휘하 입력 계약. 구현 근거와 남은 차이는 아래 대조표에 기록한다.
 
@@ -10,9 +10,9 @@
 | 차이 | 2026-09-24 구현 근거 | 처리 |
 |---|---|---|
 | 제품 기본 프로필은 아직 SAMMO | `ScenarioImporter`의 누락 기본값과 `RuleProfile.fromWorldConfig`가 SAMMO, 일부 game-api 조회도 동일 | ADR-LITE-065에 따라 B단계에서 HWIHA 기본으로 바꾼다. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
-| 원장 스키마의 actor·authorityRule·targetSchema·costSchema·timing·effectScope·failureReasons·resultType·replayContract·aiPolicyId·helpTopicId·tutorialObjectiveId가 아직 없음 | `HwihaInputEntry`는 `inputId`·`kind`·`layer`·`deliveryState`·`legacyCommands`만 읽는다 | 계약은 유지하고 단계별 원장 필드를 구현한다. [#779](https://github.com/peppone-choi/opensamguk/issues/779) |
-| 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현 이슈로 둔다. [#779](https://github.com/peppone-choi/opensamguk/issues/779) |
-| 70개 기존 명령 전환과 계책 입력이 미완 | 원장은 12행 중 11행 HANDLER_READY, `stratagem.play`만 PLANNED이며 `legacyCommands`는 일부 행만 참조 | 제품 전환표와 직접 행동·위임 대응을 완성한다. 계책 효과는 후속 구현. [#779](https://github.com/peppone-choi/opensamguk/issues/779) |
+| 원장 스키마의 actor·authorityRule·targetSchema·costSchema·timing·effectScope·failureReasons·resultType·replayContract·aiPolicyId·helpTopicId·tutorialObjectiveId가 아직 없음 | `HwihaInputEntry`는 `inputId`·`kind`·`layer`·`deliveryState`·`legacyCommands`만 읽는다 | 계약은 유지하고 단계별 원장 필드를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 70개 기존 명령 전환과 계책 입력이 미완 | 원장은 12행 중 11행 HANDLER_READY, `stratagem.play`만 PLANNED이며 `legacyCommands`는 일부 행만 참조 | 제품 전환표와 직접 행동·위임 대응을 완성한다. 계책 효과는 후속 구현. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 
 이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. 현재 원장 12행 중 11행은 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
 

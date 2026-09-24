@@ -1,7 +1,7 @@
 # 개인 턴 결정론 계약 — 같은 시각 처리 순서와 시드
 
 > 작성일: 2026-09-18
-> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 3건: #787.** 이슈 #787 / OPENSAM-267. 로드맵 3단계.
+> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 3건: #893 (#787 상위).** 이슈 #787 / OPENSAM-267. 로드맵 3단계.
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §3·§5.1·§5.2·§17, [입력 registry 계약](./2026-09-17-input-registry-contract.md) §2(ruleProfile)·§4(timing), [장수 위치의 정본](./2026-09-18-general-position-authority.md), ADR-LITE-057, ADR-LITE-042(동결 회귀 기준선).
 > 범위: 계약만 정한다. 코드·수치 없음. **다시 열지 않는 결정:** 장수별 개인 턴 유지(전역 순서 재작업 없음), 시즌 이월 없음, 정사·연의 월드 분리 없음.
 > 표기: `ENG` = `app/game-engine/src/main/kotlin/opensamguk/engine`, `LOGIC` = `logic/src/main/kotlin/opensamguk/logic`, `INFRA` = `infra/src/main/kotlin/opensamguk/infra`. 줄 번호는 `origin/main` `43ed3872` 기준.
@@ -10,9 +10,9 @@
 
 | 차이 | 현재 구현 근거 | 처리 |
 |---|---|---|
-| G3의 장수 턴별 해시 사슬은 미구현 | `PersonalTurnSeed`는 worldId·phase를 넣고 `HwihaPersonalTurn`은 순 도장을 저장하지만 제품 `turn_hash` 저장/검증은 없다. 豫州 36순 자기 재현 시험은 별도로 통과 | 스펙의 해시 저장 여부(Q4)를 결정하고 재현 게이트 구현. [#787](https://github.com/peppone-choi/opensamguk/issues/787) |
-| G4 묶음 분할 무관성 적색 프로브가 없음 | 현재 `PersonalTurnDeterminismTest`는 시드·같은 순 중복 방지를 확인하며 한 묶음/장수별 묶음의 최종 상태 해시 비교는 없다 | 테스트를 추가하고 flush 경계 의존을 검출. [#787](https://github.com/peppone-choi/opensamguk/issues/787) |
-| G6 선후 이익 지표 저장이 없음 | `observeHandledTurn`은 콜백 자리만 제공하며 조우 순번·승패의 제품 기록은 없다 | 저장 자리(Q5)를 정하고 실제 사건 기록·조회·적색 프로브 추가. [#787](https://github.com/peppone-choi/opensamguk/issues/787) |
+| G3의 장수 턴별 해시 사슬은 미구현 | `PersonalTurnSeed`는 worldId·phase를 넣고 `HwihaPersonalTurn`은 순 도장을 저장하지만 제품 `turn_hash` 저장/검증은 없다. 豫州 36순 자기 재현 시험은 별도로 통과 | 스펙의 해시 저장 여부(Q4)를 결정하고 재현 게이트 구현. [#893](https://github.com/peppone-choi/opensamguk/issues/893) |
+| G4 묶음 분할 무관성 적색 프로브가 없음 | 현재 `PersonalTurnDeterminismTest`는 시드·같은 순 중복 방지를 확인하며 한 묶음/장수별 묶음의 최종 상태 해시 비교는 없다 | 테스트를 추가하고 flush 경계 의존을 검출. [#893](https://github.com/peppone-choi/opensamguk/issues/893) |
+| G6 선후 이익 지표 저장이 없음 | `observeHandledTurn`은 콜백 자리만 제공하며 조우 순번·승패의 제품 기록은 없다 | 저장 자리(Q5)를 정하고 실제 사건 기록·조회·적색 프로브 추가. [#893](https://github.com/peppone-choi/opensamguk/issues/893) |
 
 G1의 `(turnTime, generalId)` 정렬과 G2의 HWIHA worldId·phase 시드는 구현돼 있다. 아래 §1의 코드 줄 번호와 「아직 코드에 없다」는 작성 당시 관측이며, 2026-09-24 상태 판단은 이 표를 따른다. SAMMO 시드는 한 시즌 롤백과 동결 기준선에서 보존한다.
 
