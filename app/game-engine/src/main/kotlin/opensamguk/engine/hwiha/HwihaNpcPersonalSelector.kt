@@ -21,8 +21,16 @@ internal class HwihaNpcPersonalSelector(private val context: HwihaDomesticContex
                 HwihaPersonalRules.assess(request, state) is HwihaPersonalAssessment.Eligible
         val heal = HwihaPersonalRequest(actorId, HwihaPersonalInput.RECUPERATE)
         if (eligible(heal)) return order(heal)
-        val train = HwihaTrainingStat.entries.firstOrNull { eligible(HwihaPersonalRequest(actorId,
-            HwihaPersonalInput.SELF_TRAIN, it)) }
+        val train = HwihaTrainingStat.entries.filter { eligible(HwihaPersonalRequest(actorId,
+            HwihaPersonalInput.SELF_TRAIN, it)) }.minWithOrNull(compareBy({ stat ->
+                when (stat) {
+                    HwihaTrainingStat.LEADERSHIP -> actor.stats.leadership
+                    HwihaTrainingStat.STRENGTH -> actor.stats.strength
+                    HwihaTrainingStat.INTELLIGENCE -> actor.stats.intelligence
+                    HwihaTrainingStat.POLITICS -> actor.stats.politics
+                    HwihaTrainingStat.CHARM -> actor.stats.charm
+                }
+            }, { it.ordinal }))
         if (train != null) return order(HwihaPersonalRequest(actorId, HwihaPersonalInput.SELF_TRAIN, train))
         val travel = HwihaPersonalRequest(actorId, HwihaPersonalInput.TRAVEL)
         return if (eligible(travel)) order(travel) else reserved

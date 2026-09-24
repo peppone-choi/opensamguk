@@ -28,8 +28,7 @@ class HwihaInputRegistryTest {
         "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {},
         "action.search" to InputHandler {}, "action.employ" to InputHandler {},
         "action.persuadeCaptive" to InputHandler {}, "action.travel" to InputHandler {},
-        "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
-        HwihaRetireInput.INPUT_ID to InputHandler {})
+        "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -150,17 +149,14 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `retirement is a named political successor input`() {
+    fun `retirement remains planned until succession state can be preserved`() {
         val id = HwihaRetireInput.INPUT_ID
-        assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+        assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
         assertEquals("POLITICS", catalog[id]!!.timing.getValue("phase").jsonPrimitive.content)
         assertEquals(HwihaRetireFailure.entries.map { it.name }.toSet(),
             catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                 "FORBIDDEN", "INVALID_TURN_SLOT"))
-        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-        assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
-        }
+        assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
     }
 
     @Test

@@ -1989,7 +1989,7 @@
       "legacyCommands": [
         "che_은퇴"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.resign",
