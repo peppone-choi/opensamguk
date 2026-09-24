@@ -321,7 +321,9 @@ class ReservedTurnHandler(
                 }
             }
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
-                handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+                }
             }
             for (inputId in opensamguk.logic.input.HwihaLegacyCourtInput.INPUT_IDS) {
                 if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
