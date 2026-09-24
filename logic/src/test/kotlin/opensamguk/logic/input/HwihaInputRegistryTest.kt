@@ -31,6 +31,7 @@ class HwihaInputRegistryTest {
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         HwihaRetireInput.INPUT_ID to InputHandler {},
         "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
+        "action.foundState" to InputHandler {},
         "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
@@ -140,7 +141,7 @@ class HwihaInputRegistryTest {
     @Test
     fun `delivered political actions have exactly the shared failure vocabulary and a handler`() {
         for (id in HwihaPoliticalRules.SUPPORTED_IDS) {
-            assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaPoliticalFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)

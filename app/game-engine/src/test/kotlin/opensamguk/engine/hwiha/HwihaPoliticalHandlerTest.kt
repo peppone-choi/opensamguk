@@ -3,6 +3,7 @@ package opensamguk.engine.hwiha
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
+import opensamguk.engine.turn.Nation
 import opensamguk.logic.input.*
 
 class HwihaPoliticalHandlerTest {
@@ -47,5 +48,18 @@ class HwihaPoliticalHandlerTest {
         assertNull(world.getNationById(1))
         assertEquals(0, world.getCityById(route.startCity)!!.nationId)
         assertEquals(0, world.getGeneralById(actor.id)!!.nationId)
+    }
+
+    @Test fun `founding promotes an existing lord's unestablished nation once`() {
+        val route = fixture.route()
+        val actor = fixture.person(1041, 1, route.startCity, userId = "42", lord = true)
+        val world = fixture.world(listOf(actor to route.start),
+            nations = listOf(Nation(1, "N1", "#111111", capitalCityId = route.startCity), Nation(2, "N2", "#222222")))
+        val handler = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPoliticalInput.FOUND_STATE, actor.id, "{}", "found-1041", 42))
+        assertEquals(1, world.getNationById(1)!!.level)
+        assertEquals(HwihaPoliticalFailure.ALREADY_PROCESSED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPoliticalInput.FOUND_STATE,
+                actor.id, "{}", "found-again", 42)).code)
     }
 }

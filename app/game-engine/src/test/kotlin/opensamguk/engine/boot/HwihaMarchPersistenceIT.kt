@@ -112,6 +112,53 @@ class HwihaMarchPersistenceIT {
         assertEquals(10, cold(id).getGeneralById(1)!!.experience)
     }
 
+    @Test fun `independence persists new nation county and lord across cold reload`() {
+        val id = 692
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        val actor = world.getGeneralById(1)!!
+        val policy = HwihaPersonPolicyState(50, true, "test", "1", actor.id)
+        val ready = actor.copy(meta = actor.meta + (HwihaPersonPolicyState.META_KEY to policy.toMetaValue()))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(ready))
+        world.applyGeneralDirtyFree(ready)
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        val nationId = world.getGeneralById(1)!!.nationId
+        assertTrue(nationId > 1)
+        assertEquals(nationId, world.getCityById(countyId)!!.nationId)
+        assertNotNull(world.getNationById(nationId))
+        assertEquals(12, world.getGeneralById(1)!!.officerLevel)
+        assertTrue(HwihaLordStatus.read(world.getGeneralById(1)!!.meta))
+        assertEquals(first, HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
+        recorder = ChangeRecorder()
+        val beforeNextTurn = world.getGeneralById(1)!!
+        val nextTurn = beforeNextTurn.copy(turnTime = beforeNextTurn.turnTime.plusSeconds(3600))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeNextTurn), PerTurnOverlay.toLogicGeneral(nextTurn))
+        world.applyGeneralDirtyFree(nextTurn)
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.FOUND_STATE, 1, "{}", "found-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(1, world.getNationById(nationId)!!.level)
+    }
+
     @Test fun `city military troops survive cold reload independently of fortification`() {
         val id = 691
         val seeded = seed(id)

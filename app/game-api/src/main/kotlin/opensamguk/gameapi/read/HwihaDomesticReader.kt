@@ -74,7 +74,7 @@ class HwihaDomesticReader(
                             DomesticCounty(c.id, c.name, c.nationId, bundle.projection.bindingsByCityId[c.id]?.landProvinceId,
                                 places[c.id]?.commanderyHanja, c.meta)
                         },
-                        nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
+                        nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta, it.level) },
                         landProvinceIds = topology.landProvinceIds,
                     ),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },

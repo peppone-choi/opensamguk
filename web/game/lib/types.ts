@@ -850,6 +850,11 @@ export interface HwihaPersonalOptions {
     successors?: Array<{generalId: number; name: string; available: boolean; code?: string | null; reason?: string | null}>;
 }
 export type HwihaPeopleActionId = 'action.search' | 'action.employ' | 'action.persuadeCaptive';
+export type HwihaPoliticalActionId = 'action.resign' | 'action.rise' | 'action.foundState'
+    | 'action.independence' | 'action.dissolve';
+export interface HwihaPoliticalOption {
+    inputId: HwihaPoliticalActionId; available: boolean; code?: string | null; reason?: string | null;
+}
 export interface HwihaPeopleOptions {
     inputId: HwihaPeopleActionId; available: boolean; code?: string | null; reason?: string | null;
     undiscoveredCount?: number | null;
