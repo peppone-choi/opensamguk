@@ -45,10 +45,12 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
                 val deployment = HwihaDeploymentState.read(owner.meta) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                 val remaining = deployment.corps.filterNot { it.orderId == corps.orderId }
                 world.updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaDeploymentState.META_KEY,
-                    remaining.takeIf { it.isNotEmpty() }?.let { HwihaDeploymentState(it).toMetaValue() }))
+                    remaining.takeIf { it.isNotEmpty() }?.let { HwihaDeploymentState(it).toMetaValue() }) +
+                    ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
                 val commander = world.getGeneralById(corps.commanderGeneralId) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                 world.updateGeneralMeta(recorder, commander,
-                    commander.meta - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY)
+                    (commander.meta - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY) +
+                        ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
             }
             HwihaCourtExpansionInput.ABANDON_COUNTY -> {
                 val county = world.getCityById(ready.county!!.id) ?: return reject(HwihaLegacyCourtFailure.COUNTY_UNAVAILABLE)

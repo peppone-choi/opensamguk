@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.diplomacy.DiplomacyState
 
-/** The eleven old court orders use one strict input and one pure admission/execution gate. */
+/** Ten legacy court orders use one strict input and one pure admission/execution gate. */
 object HwihaLegacyCourtInput {
     const val INSTITUTION = "court.institution"
     val INPUT_IDS = HwihaCourtExpansionInput.INPUT_IDS + HwihaCourtResourceInput.INPUT_IDS +

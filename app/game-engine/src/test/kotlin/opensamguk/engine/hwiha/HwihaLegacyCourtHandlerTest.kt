@@ -73,4 +73,28 @@ class HwihaLegacyCourtHandlerTest {
         assertEquals(1, world.getDiplomacy(2, 1)!!.state)
         assertTrue(handler.takeExecutions().single().result.ok)
     }
+
+    @Test fun `corps release persists metadata removal for owner and commander`() {
+        val route = fixture.route()
+        val corps = HwihaDeployedCorps("corps-release", 501, 502, 51, 1, listOf(7), HwihaPhase(200, 1, 1))
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
+            it.copy(meta = it.meta + (HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue()))
+        }
+        val commander = fixture.person(502, 1, route.startCity, lord = false).let {
+            it.copy(meta = it.meta + (HwihaCorpsOrder.META_KEY to mapOf("stale" to true)) +
+                (HwihaCorpsMarchState.META_KEY to mapOf("stale" to true)))
+        }
+        val world = fixture.world(listOf(ruler to route.start, commander to route.start),
+            bugoks = listOf(fixture.unit(7, ruler.id, 1000)),
+            retainers = listOf(Retainer(51, 501, "TEST", 502, commander.name, "lieutenant")))
+        val recorder = ChangeRecorder()
+        val handler = HwihaCourtHandler(world, recorder)
+        assertTrue(handler.handle(input("court.releaseCorps", """{"targetGeneralId":502}""", "release")).ok)
+        handler.onIssuerTurn(501)
+        assertTrue(handler.takeExecutions().single().result.ok)
+        assertNull(HwihaDeploymentState.read(world.getGeneralById(501)!!.meta))
+        assertFalse(HwihaCorpsOrder.META_KEY in world.getGeneralById(502)!!.meta)
+        assertFalse(HwihaCorpsMarchState.META_KEY in world.getGeneralById(502)!!.meta)
+        assertEquals(setOf(501, 502), recorder.generalPatches().map { it.id }.toSet())
+    }
 }

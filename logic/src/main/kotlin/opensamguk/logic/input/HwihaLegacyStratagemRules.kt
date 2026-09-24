@@ -7,7 +7,7 @@ import kotlinx.serialization.json.put
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 
-/** Each retired command becomes one named card mode in the shared phase-three executor. */
+/** Each legacy stratagem command becomes one named card mode in the shared phase-three executor. */
 object HwihaLegacyStratagemInput {
     val INPUT_IDS = HwihaLegacyStratagemCorrespondences.rows.map { it.inputId }.toSet()
     const val LAST_STAND = "stratagem.lastStand"
