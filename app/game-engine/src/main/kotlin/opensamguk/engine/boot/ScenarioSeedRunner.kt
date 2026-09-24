@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
+import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
@@ -14,9 +15,10 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 /**
- * F1a — boots the configured [WorldId] into a playable `scenario_1010` world when seed admission
+ * F1a — boots the configured [WorldId] into the selected scenario when seed admission
  * permits it.
  *
  * [ScenarioSeedCoordinator] admits an import only when `world_state` is empty. It skips only when
@@ -35,7 +37,7 @@ import java.nio.charset.StandardCharsets
  *
  * Optional env fences:
  *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable fresh-world seeding.
- *  - `SCENARIO_CODE` (default `scenario_1010`) — selects the committed resource set.
+ *  - `SCENARIO_CODE` (default `scenario_990002`) — selects the committed HWIHA resource set.
  *  - `SCENARIO_DIR` — optional external directory containing `${SCENARIO_CODE}.json`.
  *  - `SCENARIO_QA_TURNTERM` — QA-only opt-in; only `1` reduces a fresh seed to one-minute cadence.
  *  - `RESET_TURNTERM` — 어드민/워크플로 리셋이 고른 턴 주기(분). 허용 집합은
@@ -67,7 +69,7 @@ class ScenarioSeedRunner(
  * guaranteed without depending on bean init ordering.
  */
 class SeedBootstrap(
-    private val scenarioCode: String = "scenario_1010",
+    private val scenarioCode: String = "scenario_990002",
     private val seedEnabled: Boolean = true,
     private val scenarioDir: String = "",
     private val qaTurnTerm: String? = null,
@@ -77,6 +79,7 @@ class SeedBootstrap(
     private val resetBlockGeneralCreate: String? = null,
     private val resetNpcMode: String? = null,
     private val resetShowImgLevel: String? = null,
+    private val artifactsRoot: Path = HanWorldArtifactsResolver.defaultRoot(),
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
@@ -129,6 +132,7 @@ class SeedBootstrap(
                 blockGeneralCreate = blockGeneralCreate,
                 npcMode = npcMode,
                 showImageLevel = showImgLevel,
+                artifactsRoot = artifactsRoot,
             )
         }
         if (!admission.seeded) {

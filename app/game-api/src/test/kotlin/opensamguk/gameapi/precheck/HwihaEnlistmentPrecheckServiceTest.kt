@@ -40,7 +40,7 @@ class HwihaEnlistmentPrecheckServiceTest {
     @Test fun `wrong or missing world rejects before querying person state`() {
         `when`(worlds.findProcessWorld()).thenReturn(null)
         assertEquals(EnlistmentAssessment.Rejected(EnlistmentFailure.POLICY_UNAVAILABLE), service.assess(request))
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "SAMMO")))
         assertEquals(EnlistmentAssessment.Rejected(EnlistmentFailure.WRONG_RULE_PROFILE), service.assess(request))
         verifyNoInteractions(generals, nations, retainers)
     }

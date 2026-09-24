@@ -8,7 +8,7 @@
 # reuses infra/nginx/nginx.conf for same-origin routing.
 #
 # First `up` with an empty `world_state` seeds the configured OPENSAMGUK_WORLD_ID:
-#   - game-engine  → ScenarioSeedRunner imports scenario_1010 (174 generals) only by configured-world admission
+#   - game-engine  → ScenarioSeedRunner imports scenario_990002 only by configured-world admission
 #   - gateway-api  → AdminSeeder creates ADMIN_USERNAME when both admin env values are set
 # A second game-engine `up` is a no-op only when `world_state` contains exactly that configured id;
 # any other world identity set is rejected. Volumes persist admitted seed data.
@@ -193,6 +193,7 @@ services:
       GAME_API_PORT: 8081
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
+      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       SERVER_ID: ${SERVER_ID:-pep}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
@@ -249,7 +250,7 @@ services:
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
       # Scenario seed and Flyway migrations use the same read-only effective scenario directory.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
-      SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      SCENARIO_CODE: ${SCENARIO_CODE:-scenario_990002}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       SCENARIO_QA_TURNTERM: ${SCENARIO_QA_TURNTERM:-}
       # 어드민/워크플로 리셋이 고른 시나리오 옵션. 값이 여기서 끊기면 옵션이 조용히 버려진다.

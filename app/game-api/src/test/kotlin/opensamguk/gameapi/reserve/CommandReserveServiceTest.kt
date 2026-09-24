@@ -48,8 +48,8 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(emptyMap()))
-        service.reserve(10, "che_농지개간", 29)
-        assertEquals(29, turns.reserves.single().turnIdx)
+        assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
+        assertEquals(0, turns.reserves.size)
     }
 
     @Test fun `hwiha direct reservation validates authority and stores canonical owned request`() {
@@ -294,7 +294,7 @@ class CommandReserveServiceTest {
     }
 
     @Test
-    fun `immediate command inserts inbox before publishing and tolerates redis failure`() {
+    fun `shared mailbox intake works in hwiha and inserts inbox before publishing`() {
         val reservedTurns = RecordingReservedTurns()
         val inbox = RecordingInbox()
         val results = RecordingResults()
@@ -310,7 +310,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-immediate" },
-            transactions = TestTransactions, worldStates = worlds(),
+            transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
         )
 
         val result = service.reserve(generalId = 10, actionCode = "sendMessage", turnIdx = 0, argJson = """{"msg":"x"}""")

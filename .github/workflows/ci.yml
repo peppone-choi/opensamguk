@@ -270,9 +270,11 @@ jobs:
   # GH #542 경고 축. contracts 에 두면 Wikidata 가 멈출 때 고아 프로세스가 25분 한도를 먹어 contracts 가
   # 통째로 취소됐다(런 35305964557: 「Terminate orphan process: timeout / python3」). 결과에 영향 없는
   # 경고이므로 자기 잡·자기 한도로 떼어 둔다 — 실패해도(continue-on-error) 다른 잡을 막지 않는다.
+  # 매트릭스 잡은 잡 단위 if 로 건너뛰면 `map-slow-tests (<test>)` 가 아니라 `map-slow-tests` 하나로만
+  # 보고돼, 이름에 매트릭스 값이 붙은 필수 체크 두 개가 영원히 대기한다(#899 가 그렇게 막혔다). 그래서 잡은
+  # 늘 돌고, 경로 판정은 단계 if 로 건다. 건너뛸 때는 러너만 뜨고 곧 성공으로 끝난다.
   map-slow-tests:
     needs: changes
-    if: needs.changes.outputs.map_slow == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -284,15 +286,21 @@ jobs:
           - test_build_han_parent_reconciliation
           - test_territory_disconnection_adjudications
     steps:
+      - name: Skip unaffected map slow test
+        if: needs.changes.outputs.map_slow != 'true'
+        run: echo "map_slow=false — ${{ matrix.test }} 는 이 변경과 무관해 돌리지 않는다."
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.map_slow == 'true'
         with:
           fetch-depth: 0
       - name: Install Han map test dependencies
+        if: needs.changes.outputs.map_slow == 'true'
         run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
       - name: Run ${{ matrix.test }}
+        if: needs.changes.outputs.map_slow == 'true'
         run: python3 -m unittest tools/map/tests/${{ matrix.test }}.py
       - name: Verify regenerated parent reconciliation ledger
-        if: matrix.test == 'test_build_han_parent_reconciliation'
+        if: needs.changes.outputs.map_slow == 'true' && matrix.test == 'test_build_han_parent_reconciliation'
         run: python3 tools/map/build_han_parent_reconciliation.py --check
 
   external-places-drift:
@@ -484,9 +492,9 @@ jobs:
         if: needs.city-test.result == 'success'
         run: python3 tools/ci/check_city_shards.py city-shard-manifests
 
+  # map-slow-tests 와 같은 이유로 잡 단위 if 를 두지 않는다 — 필수 체크 이름이 `web (game)`·`web (gateway)` 다.
   web:
     needs: changes
-    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     # build 만 돌 때 game 1m54s · gateway 1m39s 였다. vitest 를 더하면서 15 로 올린다
     # (로컬 실측 game 707 건 47s · gateway 266 건 27s). 한도 초과는 실패 로그가 아니라
@@ -496,12 +504,19 @@ jobs:
       matrix:
         app: [gateway, game]
     steps:
+      - name: Skip unaffected web app
+        if: needs.changes.outputs.web != 'true'
+        run: echo "web=false — web/${{ matrix.app }} 는 이 변경과 무관해 돌리지 않는다."
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.web == 'true'
       - uses: actions/setup-node@v4
+        if: needs.changes.outputs.web == 'true'
         with:
           node-version: '22'
       - run: corepack enable
+        if: needs.changes.outputs.web == 'true'
       - name: Install + build web/${{ matrix.app }}
+        if: needs.changes.outputs.web == 'true'
         working-directory: web/${{ matrix.app }}
         run: |
           corepack pnpm install --no-frozen-lockfile
@@ -515,7 +530,7 @@ jobs:
       # game 의 지도 테스트는 커밋된 정본(han-tiles.json · han.json)을 읽으므로 이것도
       # 지도 데이터 커밋을 막는 게이트다.
       - name: Test web/${{ matrix.app }} (vitest)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         run: corepack pnpm test
 

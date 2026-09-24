@@ -48,7 +48,6 @@ const RESERVED_PATH_SERVER_IDS = new Set([
 const SERVER_COOKIE = 'sam_server';
 
 const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
-    'v_nationBetting.php': '/game/nation-betting',
     'a_kingdomList.php': '/game/rankings/kingdoms',
     'v_nationList.php': '/game/rankings/kingdoms',
     'a_genList.php': '/game/rankings/generals',
@@ -61,13 +60,11 @@ const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
     'v_dynastyList.php': '/game/rankings/emperor',
     'v_history.php': '/game/history',
     'v_battleCenter.php': '/game/battle-center',
-    'battle_simulator.php': '/game/simulator',
     'a_traffic.php': '/game/rankings/traffic',
     'v_trafficInfo.php': '/game/rankings/traffic',
     a_npcList: '/game/rankings/npcs',
     'a_npcList.php': '/game/rankings/npcs',
     'v_npcList.php': '/game/rankings/npcs',
-    'v_vote.php': '/game/vote',
     'b_myPage.php': '/game/my',
     'v_nationGeneral.php': '/game/my-generals',
     'v_nationCity.php': '/game/my-cities',

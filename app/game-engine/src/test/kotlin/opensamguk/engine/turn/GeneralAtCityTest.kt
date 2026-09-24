@@ -32,7 +32,7 @@ class GeneralAtCityTest {
 
     @Test
     fun `sammo keeps the battlefield definition and needs no rows`() {
-        val world = InMemoryTurnWorld(snapshot(null, listOf(general(7, 10)), null))
+        val world = InMemoryTurnWorld(snapshot("SAMMO", listOf(general(7, 10)), null))
         assertTrue(world.isGeneralAtCity(7))
         assertEquals(!world.isGeneralAtBattlefield(7), world.isGeneralAtCity(7))
     }

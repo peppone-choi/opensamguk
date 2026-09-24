@@ -19,9 +19,9 @@ on:
         default: true
         type: boolean
       scenario_code:
-        description: "Scenario code to seed after reset (scenario_1020 = 【역사모드2】 반동탁연합 결성 — pep 정본)"
+        description: "Scenario code to seed after reset (scenario_990002 = HWIHA 豫州 QA slice)"
         required: true
-        default: "scenario_1020"
+        default: "scenario_990002"
         type: string
       generation:
         description: "Generation number, or current to preserve env"

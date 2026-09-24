@@ -62,6 +62,18 @@ class HwihaInputCatalog internal constructor(val entries: List<HwihaInputEntry>)
     private val byId = entries.associateBy { it.inputId }
     operator fun get(inputId: String): HwihaInputEntry? = byId[inputId]
 
+    /** Shared syntax, profile, ledger and delivery classification for API precheck and engine dispatch. */
+    fun rejectionFor(profile: RuleProfile, rawInputId: String): InputRejection? {
+        if (profile != RuleProfile.HWIHA) return InputRejection.WRONG_RULE_PROFILE
+        val parsed = parseInputId(rawInputId)
+        if (parsed == null) {
+            return if (LEGACY_CODE.matches(rawInputId)) InputRejection.WRONG_RULE_PROFILE
+            else InputRejection.MALFORMED_INPUT_ID
+        }
+        val entry = byId[rawInputId] ?: return InputRejection.UNKNOWN_INPUT
+        return if (entry.deliveryState.hasHandler) null else InputRejection.NOT_DELIVERED
+    }
+
     /** 기존 명령 → 그것을 가리키는 원장 행들(원장 순서). 다대일이므로 값은 목록이다. */
     val legacyIndex: Map<String, List<HwihaInputEntry>> by lazy {
         val index = linkedMapOf<String, MutableList<HwihaInputEntry>>()
@@ -77,6 +89,7 @@ class HwihaInputCatalog internal constructor(val entries: List<HwihaInputEntry>)
 
     companion object {
         private const val RESOURCE = "command-catalog/hwiha-input-catalog.json"
+        private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
 
         fun load(): HwihaInputCatalog = parse(
             checkNotNull(HwihaInputCatalog::class.java.classLoader.getResource(RESOURCE)) {
@@ -127,6 +140,7 @@ enum class InputRejection(val message: String) {
     WRONG_RULE_PROFILE("이 월드의 규칙에서 사용할 수 없는 입력입니다."),
     UNKNOWN_INPUT("등록되지 않은 입력입니다."),
     NOT_DELIVERED("아직 제공되지 않는 입력입니다."),
+    INVALID_INPUT_CHANNEL("이 입력 경로에서는 사용할 수 없습니다."),
 }
 
 /** 핸들러의 실제 시그니처는 엔진 배선 단계에서 정한다(계약 §6). 여기서는 등록 여부만 다룬다. */
@@ -161,14 +175,8 @@ class HwihaInputRegistry private constructor(
     }
 
     fun resolve(profile: RuleProfile, rawInputId: String): InputResolution {
-        // 삼모 명령 코드(che_*·cr_*·event_* 와 「휴식」)는 점이 없다. 꼴보다 프로필 불일치가 더 정확한 사유다.
-        val parsed = parseInputId(rawInputId)
-        if (profile != RuleProfile.HWIHA) return reject(InputRejection.WRONG_RULE_PROFILE, rawInputId)
-        if (parsed == null) {
-            val legacyShaped = LEGACY_CODE.matches(rawInputId)
-            return reject(if (legacyShaped) InputRejection.WRONG_RULE_PROFILE else InputRejection.MALFORMED_INPUT_ID, rawInputId)
-        }
-        val entry = catalog[rawInputId] ?: return reject(InputRejection.UNKNOWN_INPUT, rawInputId)
+        catalog.rejectionFor(profile, rawInputId)?.let { return reject(it, rawInputId) }
+        val entry = checkNotNull(catalog[rawInputId])
         val handler = handlers[rawInputId] ?: return reject(InputRejection.NOT_DELIVERED, rawInputId)
         return InputResolution.Resolved(entry, handler)
     }
@@ -180,6 +188,5 @@ class HwihaInputRegistry private constructor(
         internal fun forWiringTest(catalog: HwihaInputCatalog, handlers: Map<String, InputHandler>) =
             HwihaInputRegistry(catalog, handlers, false)
 
-        private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
     }
 }

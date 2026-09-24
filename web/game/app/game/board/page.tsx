@@ -7,10 +7,10 @@
 // 토글은 api.board(secret) → GET /api/board?secret= 를 구동한다. 제목·라벨은 그대로 회의실 / 기밀실.
 // 글 종류(kind: 일반/표결/작전/공지)는 V53 열 — 탭은 클라이언트 필터일 뿐 API 는 하나다.
 //
-// Mutation 은 기존 CommandModal 경로(pinnedCommand + extraArgs, 인자 폼 없음):
+// Mutation 은 공통 게시판 인테이크를 직접 제출한다:
 //  - 글쓰기 (boardArticle): { isSecret, title, text, kind, voteId? } — 엔진 BoardHandler 가 모든 guard 재검증.
 //  - 댓글 (boardComment): { articleNo, text }.
-//  - 표결 (voteCast): { voteId, selection:[index] } — 표결 글에 붙은 vote_poll 로 바로 표를 던진다.
+//  - 기존 표결 글은 읽기 전용이다.
 //  - 열람 기록 (boardRead): 기밀실 글을 처음 보면 세션당 한 번 인테이크(202 ≠ 성공 — 결과를 기다려 반영).
 // 호출 장수 id 는 응답의 myGeneralId(없으면 front-info)에서 가져온다.
 //
@@ -18,24 +18,23 @@
 // EMPTY-SAFE: articles [] → '게시물이 없습니다.'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Chip, Flag, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
+import { Chip, Flag, Modal, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import { COMMUNITY_HREF } from '../../../components/DeptNav';
-import CommandModal from '../../../components/CommandModal';
 import { RichTextEditor } from '../../../components/RichTextEditor';
 import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import type {
-    BoardArticle, BoardComment, BoardKind, BoardPerson, BoardResponse, BoardVoteSummary, FrontInfoResponse, VoteInfo,
+    BoardArticle, BoardComment, BoardKind, BoardPerson, BoardResponse, FrontInfoResponse,
 } from '../../../lib/types';
 import { isArticleBodyBlank } from './articleBody';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { OperationsResponse } from '../../../types/game';
 
-// 하나의 열린 board CommandModal spec. argType은 항상 null (args는 extraArgs에 실린다).
-type BoardModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
+// 공통 게시판 명령 확인 대화상자.
+type BoardModalSpec = { command: 'boardArticle' | 'boardComment'; label: string; extraArgs?: Record<string, unknown> };
 type KindTab = 'all' | BoardKind;
 
 const KIND_LABEL: Record<BoardKind, string> = { general: '일반', vote: '표결', operation: '작전', notice: '공지' };
@@ -69,50 +68,10 @@ function CommentRow({ comment }: { comment: BoardComment }) {
     );
 }
 
-/** 표결 카드 — 선택지별 표 수 + 표결자 스택(공개 표결). 표는 voteCast 인테이크로 던진다. */
-function VoteCard({ vote, canVote, onVote }: { vote: BoardVoteSummary; canVote: boolean; onVote: (index: number) => void }) {
-    const unvoted = Math.max(0, vote.eligibleCount - vote.voterCount);
-    return (
-        <div className="council-vote" aria-label={`표결 ${vote.title}`}>
-            <div className="council-vote__head">
-                <span className="council-vote__title">{vote.title}</span>
-                <span className="council-vote__meta os-num">
-                    {vote.options.map((o) => `${o.text} ${o.count}`).join(' · ')} · 미표 {unvoted}
-                    {vote.closed ? ' · 마감' : vote.endDate ? ` · 마감 ${shortDate(vote.endDate)}` : ''}
-                </span>
-            </div>
-            <div className="council-vote__options">
-                {vote.options.map((o) => {
-                    const mine = vote.myVote?.includes(o.index) ?? false;
-                    return (
-                        <div key={o.index} className={`council-vote__option${mine ? ' is-mine' : ''}`}>
-                            <div className="council-vote__option-head">
-                                <b>{o.text}</b>
-                                <span className="os-num">{o.count}</span>
-                            </div>
-                            {o.voters.length > 0 && (
-                                <PortraitStack label={`${o.text} 표결자`}>
-                                    {o.voters.map((p) => <PersonIcon key={p.generalId} person={p} size="icon-24" />)}
-                                </PortraitStack>
-                            )}
-                            {canVote && !vote.closed && (
-                                <button type="button" className="os-button os-button--sm" onClick={() => onVote(o.index)}>
-                                    {o.text}{mine ? ' (내 표)' : ''}
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
 function ArticleCard({
     article,
     secret,
     canComment,
-    canVote,
     commentDraft,
     setCommentDraft,
     openModal,
@@ -120,7 +79,6 @@ function ArticleCard({
     article: BoardArticle;
     secret: boolean;
     canComment: boolean;
-    canVote: boolean;
     commentDraft: string;
     setCommentDraft: (no: number, value: string) => void;
     openModal: (spec: BoardModalSpec) => void;
@@ -142,17 +100,6 @@ function ArticleCard({
             <div className="council-article__body">
                 <SafeHtml html={article.contentHtml} />
             </div>
-            {article.vote && (
-                <VoteCard
-                    vote={article.vote}
-                    canVote={canVote}
-                    onVote={(index) => openModal({
-                        command: 'voteCast',
-                        label: `표결 · ${article.vote?.title ?? ''}`,
-                        extraArgs: { voteId: article.vote?.voteId, selection: [index] },
-                    })}
-                />
-            )}
             {/* 기밀실 열람 기록 — 읽은 사람 n / 수뇌부 정원 m */}
             {article.readers && (
                 <div className="council-article__readers">
@@ -218,13 +165,12 @@ function BoardContent() {
     const [articleTitle, setArticleTitle] = useState('');
     const [articleText, setArticleText] = useState('');
     const [articleKind, setArticleKind] = useState<BoardKind>('general');
-    const [voteOptions, setVoteOptions] = useState<VoteInfo[] | null>(null);
-    const [voteIdDraft, setVoteIdDraft] = useState<number | ''>('');
     // Phase 4X-B — 작전 글에 연결할 진행 중 작전(원천 /api/operations, kind=operation 일 때만 읽는다).
     const [operationOptions, setOperationOptions] = useState<{ id: number; title: string; statusLabel: string }[] | null>(null);
     const [operationIdDraft, setOperationIdDraft] = useState<number | ''>('');
     const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
     const [modal, setModal] = useState<BoardModalSpec | null>(null);
+    const [submitting, setSubmitting] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     // 기밀실 열람 기록 — 세션당 글마다 한 번만 인테이크한다.
     const readRequested = useRef<Set<number>>(new Set());
@@ -272,7 +218,7 @@ function BoardContent() {
     const participants = data?.participants ?? [];
     const chiefCount = data?.chiefCount ?? 0;
 
-    // 기밀실 글 열람 기록 — 아직 내 열람이 없는 글만, 세션당 한 번. 202 는 성공이 아니므로 결과를 기다린 뒤 재조회한다.
+    // 기밀실 글 열람 기록 — 한 방문에서 한 번만 제출한다. 대기·거절도 다음 방문에만 재시도한다.
     useEffect(() => {
         if (!secret || !data || myGeneralId === 0 || blockedReason) return;
         const unread = articles.filter(
@@ -289,7 +235,6 @@ function BoardContent() {
                     if (out.status === 'applied') applied = true;
                 } catch {
                     /* 열람 기록 실패는 화면을 막지 않는다 — 다음 방문에 다시 시도한다. */
-                    readRequested.current.delete(a.id);
                 }
             }
             if (alive && applied) fetchBoard(secret, true);
@@ -297,19 +242,37 @@ function BoardContent() {
         return () => { alive = false; };
     }, [articles, blockedReason, data, fetchBoard, myGeneralId, secret]);
 
-    // 표결 글을 쓸 때만 설문 목록을 읽는다(원천: /api/votes).
-    useEffect(() => {
-        if (articleKind !== 'vote' || voteOptions !== null) return;
-        let alive = true;
-        api.votes()
-            .then((res) => { if (alive) setVoteOptions(Object.values(res.votes ?? {})); })
-            .catch(() => { if (alive) setVoteOptions([]); });
-        return () => { alive = false; };
-    }, [articleKind, voteOptions]);
-
     const setCommentDraft = useCallback((no: number, value: string) => {
         setCommentDrafts((prev) => ({ ...prev, [no]: value }));
     }, []);
+
+    async function submitBoard() {
+        if (!modal || submitting || !canWrite) return;
+        setSubmitting(true);
+        try {
+            const out = await submitCommandAndAwaitResult(() =>
+                api.command(modal.command, modal.extraArgs ?? {}, myGeneralId));
+            if (out.status === 'applied' || out.status === 'pending' || out.status === 'reserved') {
+                if (modal.command === 'boardArticle') {
+                    setArticleTitle('');
+                    setArticleText('');
+                } else if (modal.command === 'boardComment') {
+                    const articleNo = Number(modal.extraArgs?.articleNo);
+                    setCommentDrafts((drafts) => ({ ...drafts, [articleNo]: '' }));
+                }
+                setModal(null);
+                setToast(out.status === 'applied' ? '등록되었습니다.' : '접수됨 — 반영 대기');
+                if (out.status === 'applied') await fetchBoard(secret);
+                else void fetchBoard(secret, true);
+            } else {
+                setToast(out.reason ?? '처리 결과를 확인하지 못했습니다.');
+            }
+        } catch (error) {
+            setToast(error instanceof Error ? error.message : '등록에 실패했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
+    }
 
     const counts = useMemo(() => {
         const c: Record<KindTab, number> = { all: articles.length, general: 0, vote: 0, operation: 0, notice: 0 };
@@ -328,7 +291,7 @@ function BoardContent() {
             .then((r) => setOperationOptions(r.operations.filter((o) => o.status === 'declared' || o.status === 'active').map((o) => ({ id: o.id, title: o.title, statusLabel: o.statusLabel }))))
             .catch(() => setOperationOptions([]));
     }, [articleKind, operationOptions]);
-    const canSubmitArticle = !(articleTitle.length === 0 && isArticleBodyBlank(articleText)) && (articleKind !== 'vote' || voteIdDraft !== '');
+    const canSubmitArticle = !(articleTitle.length === 0 && isArticleBodyBlank(articleText));
 
     return (
         <>
@@ -379,7 +342,6 @@ function BoardContent() {
                                         종류
                                         <select value={articleKind} onChange={(e) => setArticleKind(e.target.value as BoardKind)}>
                                             <option value="general">일반</option>
-                                            <option value="vote">표결</option>
                                             <option value="operation">작전</option>
                                             <option value="notice" disabled={myPermission < 2}>공지{myPermission < 2 ? ' (수뇌부만)' : ''}</option>
                                         </select>
@@ -391,17 +353,6 @@ function BoardContent() {
                                                 <option value="">{operationOptions === null ? '불러오는 중...' : operationOptions.length === 0 ? '진행 중인 작전이 없습니다 (연결 없이 작성)' : '연결 없음'}</option>
                                                 {(operationOptions ?? []).map((o) => (
                                                     <option key={o.id} value={o.id}>{o.title} · {o.statusLabel}</option>
-                                                ))}
-                                            </select>
-                                        </label>
-                                    )}
-                                    {articleKind === 'vote' && (
-                                        <label className="council-write__field">
-                                            연결할 설문
-                                            <select value={voteIdDraft} onChange={(e) => setVoteIdDraft(e.target.value === '' ? '' : Number(e.target.value))}>
-                                                <option value="">{voteOptions === null ? '불러오는 중...' : voteOptions.length === 0 ? '진행 중인 설문이 없습니다' : '선택'}</option>
-                                                {(voteOptions ?? []).map((v) => (
-                                                    <option key={v.id} value={v.id}>{v.title}</option>
                                                 ))}
                                             </select>
                                         </label>
@@ -435,7 +386,6 @@ function BoardContent() {
                                                     title: articleTitle,
                                                     text: articleText,
                                                     kind: articleKind,
-                                                    ...(articleKind === 'vote' && voteIdDraft !== '' ? { voteId: voteIdDraft } : {}),
                                                     ...(articleKind === 'operation' && operationIdDraft !== '' ? { operationId: operationIdDraft } : {}),
                                                 },
                                             })
@@ -474,7 +424,6 @@ function BoardContent() {
                                         article={a}
                                         secret={secret}
                                         canComment={canWrite}
-                                        canVote={canWrite}
                                         commentDraft={commentDrafts[a.id] ?? ''}
                                         setCommentDraft={setCommentDraft}
                                         openModal={setModal}
@@ -530,24 +479,16 @@ function BoardContent() {
                 </aside>
             </div>
 
-            {/* Board CommandModal (pinnedCommand + extraArgs; pinnedArgType=null — args는 extraArgs에 실린다). */}
+            {/* 게시판 명령은 게임 행동 카탈로그와 별개의 공통 인테이크로 제출한다. */}
             {modal && myGeneralId !== 0 && (
-                <CommandModal
-                    onClose={() => setModal(null)}
-                    onToast={(msg) => setToast(msg)}
-                    generalId={myGeneralId}
-                    pinnedCommand={modal.command}
-                    pinnedLabel={modal.label}
-                    pinnedArgType={null}
-                    extraArgs={modal.extraArgs}
-                    onReserved={() => {
-                        setArticleTitle('');
-                        setArticleText('');
-                        setVoteIdDraft('');
-                        setCommentDrafts({});
-                        fetchBoard(secret);
-                    }}
-                />
+                <Modal ariaLabel={modal.label} className="modal-content" overlayClassName="modal-overlay" onClose={() => { if (!submitting) setModal(null); }}>
+                    <h2 className="os-serif">{modal.label}</h2>
+                    <p>등록하시겠습니까?</p>
+                    <div className="council-write__actions">
+                        <button type="button" className="os-button os-button--ghost" disabled={submitting} onClick={() => setModal(null)}>취소</button>
+                        <button type="button" className="os-button os-button--primary" disabled={submitting} onClick={() => void submitBoard()}>{submitting ? '처리 중...' : '등록'}</button>
+                    </div>
+                </Modal>
             )}
             {toast && (
                 <div role="status" className="council-toast" onClick={() => setToast(null)}>

@@ -13,6 +13,8 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandWireMapper
@@ -21,6 +23,9 @@ import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.logic.v2.command.V2CommandRegistry
 import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.InputRejection
+import opensamguk.logic.input.RuleProfile
 import opensamguk.gameapi.v2.legacyError
 import opensamguk.gameapi.v2.validateLegacyV2Arguments
 import org.springframework.beans.factory.annotation.Value
@@ -73,8 +78,10 @@ class CommandController(
     private val objectMapper: ObjectMapper,
     @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
     processWorld: GameApiProcessWorld,
+    private val worlds: WorldStateReadRepository,
 ) {
     private val worldId = processWorld.worldId
+    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
 
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
@@ -101,18 +108,24 @@ class CommandController(
         } else {
             null
         }
-        if (code == SELECT_POOL_PICK) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
-        }
-
         // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
-        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
+        if (code != SELECT_POOL_PICK && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val worldProfile = worlds.processRuleProfile()
+            ?: return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to "POLICY_UNAVAILABLE", "reason" to "세계 규칙을 확인할 수 없습니다."))
+        if (worldProfile == RuleProfile.HWIHA && code !in CommandReserveService.HWIHA_RESERVABLE_ACTIONS &&
+            code !in CommandReserveService.COMMON_INTAKE_COMMANDS) {
+            val rejection = hwihaInputRejection(code)
+            return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to rejection.name, "reason" to rejection.message))
+        }
+        if (code == SELECT_POOL_PICK && worldProfile == RuleProfile.SAMMO) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
         if (code in opensamguk.gameapi.reserve.CommandReserveService.HWIHA_RESERVABLE_ACTIONS) {
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             return try {
-                reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt())
+                reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt(), worldProfile)
             } catch (denied: opensamguk.gameapi.reserve.HwihaAdmissionDenied) {
                 ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
             }
@@ -149,11 +162,11 @@ class CommandController(
             precheck.precheck(generalId = generalId, actionCode = code, args = precheckArgs(sanitizedArgJson))
         }
         return when (result) {
-            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
+            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId, worldProfile)
 
             is PrecheckResult.Blocked ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
+                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId, worldProfile)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "BLOCKED", reason = result.reason, constraintName = result.constraintName),
@@ -162,13 +175,22 @@ class CommandController(
 
             is PrecheckResult.Unknown ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
+                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId, worldProfile)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
                     )
                 }
         }
+    }
+
+    private fun hwihaInputRejection(code: String): InputRejection {
+        // The frozen engine pick handler always rejects; never publish a misleading 202.
+        if (code == SELECT_POOL_PICK) return InputRejection.NOT_DELIVERED
+        val rejection = hwihaCatalog.rejectionFor(RuleProfile.HWIHA, code)
+        if (rejection != null) return rejection
+        // This registered input has a handler, but this generic route has no matching typed intake.
+        return InputRejection.INVALID_INPUT_CHANNEL
     }
 
     private fun precheckArgs(argJson: String): Map<String, Any?> =
@@ -182,16 +204,22 @@ class CommandController(
         turnIdx: Int,
         argJson: String?,
         ownerUserId: Int? = null,
+        verifiedProfile: RuleProfile? = null,
     ): ResponseEntity<Any> {
         val reserved = if (ownerUserId == null) {
-            reserve.reserve(
+            if (verifiedProfile == RuleProfile.HWIHA) reserve.reserveWithRuleProfile(
+                generalId = generalId, actionCode = code, turnIdx = turnIdx, argJson = argJson, verifiedProfile = verifiedProfile,
+            ) else reserve.reserve(
                 generalId = generalId,
                 actionCode = code,
                 turnIdx = turnIdx,
                 argJson = argJson,
             )
         } else {
-            reserve.reserveForOwner(
+            if (verifiedProfile == RuleProfile.HWIHA) reserve.reserveForOwnerWithRuleProfile(
+                generalId = generalId, actionCode = code, turnIdx = turnIdx, argJson = argJson,
+                ownerUserId = ownerUserId, verifiedProfile = verifiedProfile,
+            ) else reserve.reserveForOwner(
                 generalId = generalId,
                 actionCode = code,
                 turnIdx = turnIdx,

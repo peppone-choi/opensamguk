@@ -73,28 +73,42 @@ function setServerCookie(res: NextResponse, server: string): void {
   });
 }
 
-// The v2 experimental namespace (OPENSAM-35 / 0A-a) exists only when
-// `V2_ENABLED=true`. The rendering-layer `notFound()` in
-// `app/game/v2-lab/layout.tsx` can produce HTTP 200 because `app/game/layout.tsx`
-// renders the `AuthGate` client component, streams the /game/** subtree within that
-// client boundary, and resolves `notFound()` only after the HTML shell flushes.
-// Reject it here, before rendering, to guarantee an HTTP 404. Retain the layout gate
-// as defense in depth so v2 content cannot render if middleware is bypassed.
-function isV2LabPath(pathname: string): boolean {
+// Retired SAMMO routes must return a real HTTP 404 before AuthGate streams a shell.
+// This also covers /game/<serverId>/... before the server-path rewrite.
+const RETIRED_GAME_PATHS = new Set([
+  'admin1', 'admin2', 'admin5', 'admin7', 'admin8',
+  'auction', 'battle-plan', 'betting', 'chief-center', 'coming-soon',
+  'diplomacy', 'inherit', 'my-boss', 'nation', 'nation-betting',
+  'nation-finance', 'npc-control', 'simulator', 'tournament',
+  'tournament-admin', 'troop', 'v2-lab', 'vote',
+]);
+
+function isRetiredGamePath(pathname: string): boolean {
   const segments = pathname.split('/');
   if (segments[1] !== 'game') return false;
-  // The rewrite below folds `/game/<serverId>/v2-lab` into `/game/v2-lab`. Evaluate
-  // the effective render path rather than the raw pathname to prevent that bypass;
-  // the query-based `?server=` form already has its effective pathname.
   const rest = segments[2] === configuredServerId() ? segments.slice(3) : segments.slice(2);
-  return rest[0] === 'v2-lab';
+  return RETIRED_GAME_PATHS.has(rest[0]);
 }
 
 export function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
-  if (isV2LabPath(pathname) && process.env.V2_ENABLED !== 'true') {
+  if (isRetiredGamePath(pathname)) {
     return new NextResponse(null, { status: 404 });
+  }
+
+  // The serverless HWIHA URL is a legacy address. Keep the selected game
+  // instance in the visible URL, while the existing rewrite serves its page.
+  if (pathname === '/game/hwiha' || pathname.startsWith('/game/hwiha/')) {
+    const serverId = configuredServerId();
+    if (serverId) {
+      const targetUrl = req.nextUrl.clone();
+      targetUrl.pathname = `/game/${serverId}${pathname.slice('/game'.length)}${pathname === '/game/hwiha' ? '/war-room' : ''}`;
+      targetUrl.searchParams.delete('server');
+      const res = NextResponse.redirect(targetUrl, 308);
+      setServerCookie(res, serverId);
+      return res;
+    }
   }
 
   // 1) Query-based server selection: preserve existing behavior.
