@@ -5,11 +5,11 @@ import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.RecruitCrewTypeAvailability
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.input.WorldRuleProfile
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -76,7 +76,7 @@ class AvailableCommandsController(
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<Any> {
         // The public-alpha catalog belongs only to the one-season SAMMO rollback path.
-        if (WorldRuleProfile.resolve(worlds.findProcessWorld()?.config ?: emptyMap()) != RuleProfile.SAMMO) {
+        if (worlds.processRuleProfile() != RuleProfile.SAMMO) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
         // Identity: principal first; else the transition ?generalId= fallback.
@@ -112,7 +112,7 @@ class AvailableCommandsController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<Any> {
-        if (WorldRuleProfile.resolve(worlds.findProcessWorld()?.config ?: emptyMap()) != RuleProfile.SAMMO) {
+        if (worlds.processRuleProfile() != RuleProfile.SAMMO) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
         if (userId == null) {

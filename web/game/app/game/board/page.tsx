@@ -218,7 +218,7 @@ function BoardContent() {
     const participants = data?.participants ?? [];
     const chiefCount = data?.chiefCount ?? 0;
 
-    // 기밀실 글 열람 기록 — 아직 내 열람이 없는 글만, 세션당 한 번. 202 는 성공이 아니므로 결과를 기다린 뒤 재조회한다.
+    // 기밀실 글 열람 기록 — 한 방문에서 한 번만 제출한다. 대기·거절도 다음 방문에만 재시도한다.
     useEffect(() => {
         if (!secret || !data || myGeneralId === 0 || blockedReason) return;
         const unread = articles.filter(
@@ -233,10 +233,8 @@ function BoardContent() {
                 try {
                     const out = await submitCommandAndAwaitResult(() => api.command('boardRead', { articleNo: a.id }, myGeneralId));
                     if (out.status === 'applied') applied = true;
-                    else readRequested.current.delete(a.id);
                 } catch {
                     /* 열람 기록 실패는 화면을 막지 않는다 — 다음 방문에 다시 시도한다. */
-                    readRequested.current.delete(a.id);
                 }
             }
             if (alive && applied) fetchBoard(secret, true);
@@ -254,7 +252,7 @@ function BoardContent() {
         try {
             const out = await submitCommandAndAwaitResult(() =>
                 api.command(modal.command, modal.extraArgs ?? {}, myGeneralId));
-            if (out.status === 'applied') {
+            if (out.status === 'applied' || out.status === 'pending' || out.status === 'reserved') {
                 if (modal.command === 'boardArticle') {
                     setArticleTitle('');
                     setArticleText('');
@@ -263,8 +261,9 @@ function BoardContent() {
                     setCommentDrafts((drafts) => ({ ...drafts, [articleNo]: '' }));
                 }
                 setModal(null);
-                setToast('등록되었습니다.');
-                await fetchBoard(secret);
+                setToast(out.status === 'applied' ? '등록되었습니다.' : '접수됨 — 반영 대기');
+                if (out.status === 'applied') await fetchBoard(secret);
+                else void fetchBoard(secret, true);
             } else {
                 setToast(out.reason ?? '처리 결과를 확인하지 못했습니다.');
             }

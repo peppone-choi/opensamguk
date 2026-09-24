@@ -99,4 +99,20 @@ describe('Board rich text command lifecycle', () => {
         await waitFor(() => expect(apiMocks.board).toHaveBeenCalledTimes(2));
         expect(screen.getByTestId('rich-value')).toHaveTextContent('');
     });
+
+    it.each(['pending', 'reserved'] as const)('closes an accepted %s article to prevent duplicate submission', async (status) => {
+        submitMock.mockImplementation(async (submit: () => Promise<unknown>) => {
+            await submit();
+            return { status, reason: '처리 지연' };
+        });
+        render(<BoardPage />);
+        await screen.findByText('게시물이 없습니다.');
+        fireEvent.click(screen.getByRole('button', { name: '내용 작성' }));
+        fireEvent.click(screen.getByRole('button', { name: '등록' }));
+        fireEvent.click(screen.getAllByRole('button', { name: '등록' }).at(-1)!);
+        await screen.findByText('접수됨 — 반영 대기');
+        expect(screen.queryByText('등록하시겠습니까?')).not.toBeInTheDocument();
+        expect(screen.getByTestId('rich-value')).toHaveTextContent('');
+        expect(apiMocks.command).toHaveBeenCalledTimes(1);
+    });
 });

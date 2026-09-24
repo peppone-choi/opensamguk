@@ -12,6 +12,7 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
+import opensamguk.logic.input.RuleProfile
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
@@ -110,6 +111,12 @@ class CommandControllerSecurityTest {
             "휴식" to "WRONG_RULE_PROFILE",
             "action.unlisted" to "UNKNOWN_INPUT",
             "stratagem.play" to "NOT_DELIVERED",
+            "court.dispatch" to "INVALID_INPUT_CHANNEL",
+            "court.dispatchReply" to "INVALID_INPUT_CHANNEL",
+            "court.reward" to "INVALID_INPUT_CHANNEL",
+            "placement.assign" to "INVALID_INPUT_CHANNEL",
+            "policy.set" to "INVALID_INPUT_CHANNEL",
+            "work.start" to "INVALID_INPUT_CHANNEL",
             "invalid" to "MALFORMED_INPUT_ID",
         )
         cases.forEach { (code, expected) ->
@@ -130,13 +137,13 @@ class CommandControllerSecurityTest {
         `when`(precheck.precheck(10, "boardArticle", mapOf(
             "isSecret" to false, "title" to "소식", "text" to "본문", "kind" to "general",
         ))).thenReturn(PrecheckResult.Available)
-        `when`(reserve.reserve(10, "boardArticle", 0, body)).thenReturn(ReserveResult("board-request", 0))
+        `when`(reserve.reserveWithRuleProfile(10, "boardArticle", 0, body, RuleProfile.HWIHA)).thenReturn(ReserveResult("board-request", 0))
 
         mockMvc().perform(post("/api/command/boardArticle").param("generalId", "10")
             .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.requestId").value("board-request"))
-        verify(reserve).reserve(10, "boardArticle", 0, body)
+        verify(reserve).reserveWithRuleProfile(10, "boardArticle", 0, body, RuleProfile.HWIHA)
     }
 
     @Test
