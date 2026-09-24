@@ -97,6 +97,20 @@ export function middleware(req: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
+  // The serverless HWIHA URL is a legacy address. Keep the selected game
+  // instance in the visible URL, while the existing rewrite serves its page.
+  if (pathname === '/game/hwiha' || pathname.startsWith('/game/hwiha/')) {
+    const serverId = configuredServerId();
+    if (serverId) {
+      const targetUrl = req.nextUrl.clone();
+      targetUrl.pathname = `/game/${serverId}${pathname.slice('/game'.length)}${pathname === '/game/hwiha' ? '/war-room' : ''}`;
+      targetUrl.searchParams.delete('server');
+      const res = NextResponse.redirect(targetUrl, 308);
+      setServerCookie(res, serverId);
+      return res;
+    }
+  }
+
   // 1) Query-based server selection: preserve existing behavior.
   const queryServer = searchParams.get('server');
   if (queryServer && queryServer === configuredServerId()) {

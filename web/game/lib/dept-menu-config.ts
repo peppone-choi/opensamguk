@@ -99,8 +99,8 @@ function menuFinder(source: readonly MenuNode[]) {
     };
 }
 
-/** 작전실 메인은 라우트 하나. 천하 지도는 기존 /game/map 라우트(20버튼·8메뉴 밖의 화면). */
-export const OPS_ROUTE: DeptRouteEntry = { kind: 'route', label: '작전실', href: '/game' };
+/** 작전실은 서버별 휘하 경로가 정본이다. */
+export const OPS_ROUTE: DeptRouteEntry = { kind: 'route', label: '작전실', href: '/game/hwiha/war-room' };
 export const MAP_ROUTE: DeptRouteEntry = { kind: 'route', label: '천하 지도', href: '/game/map' };
 
 /** 부서 그룹을 만든다. `menuSource` 는 서버 전역 메뉴(없으면 픽스처). */
@@ -165,10 +165,10 @@ export const DEPT_GROUPS: readonly DeptGroup[] = buildDeptGroups();
 
 /** 모바일 5탭(S1): 작전실 · 지도 · 명령 · 국가 · 더보기. 「명령」은 작전실의 명령 목록 앵커, 「더보기」는 부서 시트. */
 export const MOBILE_TABS = [
-    { key: 'ops', label: '작전실', href: '/game', controlId: null },
+    { key: 'ops', label: '작전실', href: '/game/hwiha/war-room', controlId: null },
     { key: 'map', label: '지도', href: '/game/map', controlId: null },
-    // 「명령」은 작전실 우측 명령 목록(PartialReservedCommand, id=reservedCommandPanel) 앵커.
-    { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
+    // 「명령」은 휘하 작전실의 12순 명령 목록 앵커.
+    { key: 'commands', label: '명령', href: '/game/hwiha/war-room#reservedCommandPanel', controlId: null },
     // 「국가」는 세력 정보(#11, myLevel 게이팅)와 같은 규칙을 탄다.
     { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
     { key: 'more', label: '더보기', href: '#dept-more', controlId: null },

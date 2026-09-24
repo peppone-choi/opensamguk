@@ -18,7 +18,7 @@ const NONE: ControlGating = { showSecret: false, permission: 0, myLevel: 0, nati
 
 describe('DeptNav (부서 나브)', () => {
     it('renders the six S1 groups and keeps blocked entries visible as dashed items with a reason', () => {
-        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.pathname.mockReturnValue('/game/s1/hwiha/war-room');
         mocks.serverId.mockReturnValue('s1');
         render(<DeptNav gating={NONE} global={{ npcMode: 0 }} />);
 

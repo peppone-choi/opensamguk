@@ -49,7 +49,7 @@ export default function TurnList({ generalId, nationId, refreshKey, isHwihaWorld
     const slots = Array.from({ length: HWIHA_SLOTS }, (_, turnIdx) => data?.slots.find((s) => s.turnIdx === turnIdx) ?? null);
 
     return (
-        <Panel style={{ padding: 12 }}>
+        <Panel id="reservedCommandPanel" style={{ padding: 12 }}>
             <SectionHeader
                 title={`명령 목록 ${HWIHA_SLOTS}순`}
                 sub={data?.turnTime ? `직접 행동 · 한 순에 하나 · 다음 실행 ${data.turnTime}` : '직접 행동 · 한 순에 하나'}

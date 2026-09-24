@@ -28,7 +28,8 @@
 | 영역 | 대표 경로 | 용도 |
 |---|---|---|
 | Gateway | `/`, `/login`, `/join`, `/lobby`, `/account` | 인증, 서버 선택, 계정 설정 |
-| 게임 메인 | `/game` | 장수·국가 상태, 명령, 최근 결과 |
+| 휘하 작전실 | `/game/<서버>/hwiha/war-room` | 지도, 휘하 인물, 12순 명령과 최근 결과. `/game`도 같은 작전실을 엽니다 |
+| 휘하 화면 | `/game/<서버>/hwiha/{retinue,hand,posts,orders,supply,siege,court,yuedan}` | 편성, 계책, 배치, 발령, 보급, 공성, 조정, 월단평 |
 | 도시·국가 | `/game/city`, `/game/nation`, `/game/my-*` | 도시·국가·소속 장수와 자원 확인 |
 | 전쟁·외교 | `/game/battle-center`, `/game/diplomacy`, `/game/global-diplomacy` | 출병 판단, 관계와 제안 확인 |
 | 기록·순위 | `/game/rankings/*`, `/game/history`, `/game/world-log` | 장수·국가·황제·명예의 전당·기록 |
@@ -37,6 +38,8 @@
 
 서버의 시나리오, 시작 연도, 턴 간격, 가입 방식과 열린 이벤트에 따라 보이는 기능이 달라질 수 있습니다.
 문서보다 화면의 현재 가능/불가 사유와 운영 공지를 우선합니다.
+
+이전 `/hwiha/*` 및 `/game/hwiha/*` 북마크는 서버별 휘하 주소로 이동합니다.
 
 ## 현재 구현과 기획의 경계
 

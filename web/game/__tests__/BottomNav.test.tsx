@@ -16,9 +16,9 @@ describe('BottomNav (모바일 5탭)', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
         render(<BottomNav gating={NONE} gatingState="ready" global={{}} />);
-        expect(screen.getByRole('link', { name: '작전실' })).toHaveAttribute('href', '/game/s1');
+        expect(screen.getByRole('link', { name: '작전실' })).toHaveAttribute('href', '/game/s1/hwiha/war-room');
         expect(screen.getByRole('link', { name: '지도' })).toHaveAttribute('href', '/game/s1/map');
-        expect(screen.getByRole('link', { name: '명령' })).toHaveAttribute('href', '/game/s1#reservedCommandPanel');
+        expect(screen.getByRole('link', { name: '명령' })).toHaveAttribute('href', '/game/s1/hwiha/war-room#reservedCommandPanel');
         const nation = screen.getByRole('link', { name: '국가' });
         expect(nation).toHaveAttribute('aria-disabled', 'true');
         expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('장수 직위 이상 필요');

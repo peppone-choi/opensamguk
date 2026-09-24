@@ -4,12 +4,14 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 const nextServerMocks = vi.hoisted(() => ({
   next: vi.fn(),
   rewrite: vi.fn(),
+  redirect: vi.fn(),
 }));
 
 vi.mock('next/server', () => ({
   NextResponse: {
     next: nextServerMocks.next,
     rewrite: nextServerMocks.rewrite,
+    redirect: nextServerMocks.redirect,
   },
 }));
 
@@ -39,19 +41,23 @@ function makeRequest(path: string): NextRequest {
 const originalServerId = process.env.SERVER_ID;
 let nextResponse: MockResponse;
 let rewriteResponse: MockResponse;
+let redirectResponse: MockResponse;
 
 describe('game middleware server path selection', () => {
   beforeEach(() => {
     process.env.SERVER_ID = 'pep';
     nextResponse = makeResponse();
     rewriteResponse = makeResponse();
+    redirectResponse = makeResponse();
     nextServerMocks.next.mockReturnValue(nextResponse);
     nextServerMocks.rewrite.mockReturnValue(rewriteResponse);
+    nextServerMocks.redirect.mockReturnValue(redirectResponse);
   });
 
   afterEach(() => {
     nextServerMocks.next.mockReset();
     nextServerMocks.rewrite.mockReset();
+    nextServerMocks.redirect.mockReset();
   });
 
   afterAll(() => {
@@ -74,6 +80,41 @@ describe('game middleware server path selection', () => {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
     });
+  });
+
+  it.each(['war-room', 'retinue', 'hand', 'posts', 'orders', 'supply', 'siege', 'court', 'yuedan'])(
+    'serves the primary HWIHA %s route under the server ID',
+    (slug) => {
+      middleware(makeRequest(`/game/pep/hwiha/${slug}`));
+      expect(nextServerMocks.rewrite).toHaveBeenCalledTimes(1);
+      const target = nextServerMocks.rewrite.mock.calls[0][0] as URL;
+      expect(target.pathname).toBe(`/game/hwiha/${slug}`);
+      expect(target.searchParams.get('server')).toBe('pep');
+      expect(nextServerMocks.redirect).not.toHaveBeenCalled();
+    },
+  );
+
+  it('redirects old HWIHA paths to the server path with the query intact', () => {
+    middleware(makeRequest('/game/hwiha/retinue?person=17&server=pep'));
+
+    expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
+    const [target, status] = nextServerMocks.redirect.mock.calls[0] as [URL, number];
+    expect(status).toBe(308);
+    expect(target.pathname).toBe('/game/pep/hwiha/retinue');
+    expect(target.searchParams.get('person')).toBe('17');
+    expect(target.searchParams.has('server')).toBe(false);
+    expect(redirectResponse.cookies.set).toHaveBeenCalledWith('sam_server', 'pep', expect.any(Object));
+
+    nextServerMocks.redirect.mockClear();
+    middleware(makeRequest('/game/hwiha'));
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/hwiha/war-room');
+  });
+
+  it('keeps the HWIHA page available when no public server ID is configured', () => {
+    delete process.env.SERVER_ID;
+    middleware(makeRequest('/game/hwiha/war-room'));
+    expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
+    expect(nextServerMocks.redirect).not.toHaveBeenCalled();
   });
 
   it('preserves ordinary child routes and mismatched alphanumeric path segments', () => {
