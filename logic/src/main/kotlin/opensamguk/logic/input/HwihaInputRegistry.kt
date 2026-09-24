@@ -114,10 +114,14 @@ class HwihaInputCatalog internal constructor(
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs", "retiredLegacyCommands", "retiredLegacyReasons")) {
                 "unexpected or missing hwiha catalog field"
             }
+            root.requiredText("catalogId")
+            root.requiredText("status")
+            root.requiredText("note")
             val retired = root.getValue("retiredLegacyCommands").jsonArray.map { it.jsonPrimitive.content }
             require(retired.size == retired.toSet().size) { "duplicate retiredLegacyCommands" }
             val reasons = root.getValue("retiredLegacyReasons").jsonObject
             require(reasons.keys == retired.toSet()) { "retiredLegacyReasons must match retiredLegacyCommands" }
+            reasons.keys.forEach { reasons.requiredText(it) }
             val entries = root.getValue("inputs").jsonArray.map { element ->
                 val row = element.jsonObject
                 val inputId = row.getValue("inputId").jsonPrimitive.content
@@ -127,6 +131,14 @@ class HwihaInputCatalog internal constructor(
                 require(parsed != null && parsed.first == kind) { "inputId prefix does not match kind: $inputId / $kind" }
                 val cost = row.getValue("costSchema").jsonObject
                 require(cost.keys == COST_FIELDS) { "costSchema fields missing or unknown: $inputId" }
+                cost.requiredText("status")
+                cost.requiredText("source")
+                val target = row.getValue("targetSchema").jsonObject
+                target.requiredText("status")
+                target.requiredText("source")
+                val replay = row.getValue("replayContract").jsonObject
+                replay.requiredText("status")
+                replay.requiredText("key")
                 val failureReasons = row.getValue("failureReasons").jsonArray.map { it.jsonPrimitive.content }
                 require(failureReasons.size == failureReasons.toSet().size) { "duplicate failureReasons: $inputId" }
                 val actor = row.requiredText("actor")
@@ -144,13 +156,13 @@ class HwihaInputCatalog internal constructor(
                     layer = row.getValue("layer").jsonPrimitive.int.also { require(it in 1..3) { "layer must be 1..3: $inputId" } },
                     actor = actor,
                     authorityRule = row.requiredText("authorityRule"),
-                    targetSchema = row.getValue("targetSchema").jsonObject,
+                    targetSchema = target,
                     costSchema = cost,
                     timing = timing,
                     effectScope = row.requiredText("effectScope"),
                     failureReasons = failureReasons,
                     resultType = row.requiredText("resultType"),
-                    replayContract = row.getValue("replayContract").jsonObject,
+                    replayContract = replay,
                     aiPolicyId = row.requiredText("aiPolicyId"),
                     helpTopicId = row.requiredText("helpTopicId"),
                     tutorialObjectiveId = row.requiredText("tutorialObjectiveId"),
@@ -176,8 +188,11 @@ class HwihaInputCatalog internal constructor(
         private val ACTORS = setOf("GENERAL", "LORD", "RULER", "OFFICE_HOLDER")
         private val PHASES = setOf("POLITICS", "MOVE", "SIEGE", "FIELD", "NEXT_CARD_TURN", "NEXT_PHASE_BOUNDARY", "CARD_TRIGGER", "DECISION_TURN")
 
-        private fun JsonObject.requiredText(key: String): String =
-            (getValue(key) as JsonPrimitive).content.also { require(it.isNotBlank()) { "blank $key" } }
+        private fun JsonObject.requiredText(key: String): String {
+            val value = getValue(key) as? JsonPrimitive
+            require(value != null && value.isString && value.content.isNotBlank()) { "missing or invalid text field $key" }
+            return value.content
+        }
 
         private inline fun <reified T : Enum<T>> enumValueOfOrFail(text: String, inputId: String): T =
             requireNotNull(enumValues<T>().firstOrNull { it.name == text }) { "unknown ${T::class.simpleName} '$text' for $inputId" }

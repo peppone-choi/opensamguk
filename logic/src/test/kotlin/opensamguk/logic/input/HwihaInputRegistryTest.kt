@@ -137,9 +137,9 @@ class HwihaInputRegistryTest {
 
     private fun row(inputId: String, kind: String, legacy: String) =
         """{"inputId":"$inputId","kind":"$kind","layer":1,"actor":"GENERAL","authorityRule":"SUBJECT_OWNER",
-            "targetSchema":{"status":"PLANNED"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
+            "targetSchema":{"status":"PLANNED","source":"test"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
             "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
-            "replayContract":{"status":"PLANNED"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
+            "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
             "deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
 
     private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
@@ -220,6 +220,7 @@ class HwihaInputRegistryTest {
         assertFailsWith<IllegalArgumentException> { ledger(badState) }
         assertFailsWith<IllegalArgumentException> { ledger(row("policy.a", "GENERAL_ACTION", "")) }
         assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\",", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\"", "\"aiPolicyId\":null")) }
         assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"GENERAL\",\"actor\":\"GENERAL\"")) }
     }
 }
