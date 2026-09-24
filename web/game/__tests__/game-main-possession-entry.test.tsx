@@ -28,11 +28,11 @@ vi.mock('@/components/game/CharacterClaim', () => ({
   default: ({ onClaimed }: { onClaimed: () => void }) => <button onClick={onClaimed}>장수 선택 완료</button>,
 }));
 
-function setSession(generalId: number | null) {
+function setSession(generalId: number | null, global: { npcMode?: number; blockGeneralCreate?: number } = {}) {
   vi.mocked(useHwihaSession).mockReturnValue({
     loading: false,
     error: null,
-    frontInfo: { global: { serverId: 'pep' } },
+    frontInfo: { global: { serverId: 'pep', ...global } },
     generalId,
     serverId: 'pep',
     isHwihaWorld: true,
@@ -65,6 +65,20 @@ describe('main game route after HWIHA cutover', () => {
   it('sends a player without a general to registration by default', () => {
     mocks.useSearchParams.mockReturnValue(new URLSearchParams());
     setSession(null);
+    render(<GameMainPage />);
+    expect(mocks.replace).toHaveBeenCalledWith('/game/pep/join');
+  });
+
+  it.each([1, 2])('opens the selection entry when npcMode %s blocks direct creation', (npcMode) => {
+    mocks.useSearchParams.mockReturnValue(new URLSearchParams());
+    setSession(null, { npcMode, blockGeneralCreate: 1 });
+    render(<GameMainPage />);
+    expect(mocks.replace).toHaveBeenCalledWith('/game/pep?entry=possession');
+  });
+
+  it('keeps registration available when the creation block bit is clear', () => {
+    mocks.useSearchParams.mockReturnValue(new URLSearchParams());
+    setSession(null, { npcMode: 1, blockGeneralCreate: 2 });
     render(<GameMainPage />);
     expect(mocks.replace).toHaveBeenCalledWith('/game/pep/join');
   });

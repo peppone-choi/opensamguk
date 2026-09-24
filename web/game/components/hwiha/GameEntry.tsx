@@ -15,12 +15,19 @@ export default function GameEntry() {
   const joinHref = session.serverId
     ? resolveServerGamePath(undefined, session.serverId, '/game', 'join')
     : '/game/join';
+  const selectionEntryHref = session.serverId
+    ? `${resolveServerGamePath(undefined, session.serverId, '/game')}?entry=possession`
+    : '/game?entry=possession';
+  const global = session.frontInfo?.global;
+  const selectionOnly = global != null
+    && ((global.blockGeneralCreate ?? 0) & 1) !== 0
+    && (global.npcMode === 1 || global.npcMode === 2);
 
   useEffect(() => {
     if (!session.loading && !session.error && session.frontInfo && session.generalId == null && !possessionEntry) {
-      router.replace(joinHref);
+      router.replace(selectionOnly ? selectionEntryHref : joinHref);
     }
-  }, [joinHref, possessionEntry, router, session.error, session.frontInfo, session.generalId, session.loading]);
+  }, [joinHref, possessionEntry, router, selectionEntryHref, selectionOnly, session.error, session.frontInfo, session.generalId, session.loading]);
 
   if (session.loading) return <p role="status">장수 정보를 불러오는 중입니다.</p>;
   if (session.error || !session.frontInfo) {
