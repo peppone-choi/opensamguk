@@ -4,6 +4,6 @@ package opensamguk.engine.hwiha
 sealed interface HwihaTurnOutcome {
     val inputId: String
     data object NoAction : HwihaTurnOutcome { override val inputId = "" }
-    data class Applied(override val inputId: String) : HwihaTurnOutcome
+    data class Applied(override val inputId: String, val effects: List<String> = emptyList()) : HwihaTurnOutcome
     data class Rejected(override val inputId: String, val code: String, val reason: String) : HwihaTurnOutcome
 }

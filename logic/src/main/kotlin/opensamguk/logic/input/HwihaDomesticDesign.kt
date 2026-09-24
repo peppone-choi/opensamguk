@@ -22,6 +22,8 @@ class HwihaDomesticDesign internal constructor(
     val scaling: Scaling,
     val defaultCountyPolicy: CountyPolicy,
     val countyPolicies: Map<CountyPolicy, PolicyEffect>,
+    val directActionStatus: String,
+    val directActions: Map<String, DirectAction>,
     val maxActiveWorksPerCounty: Int,
     val progressPerPhase: Int,
     val works: Map<DomesticWork, WorkDesign>,
@@ -42,6 +44,11 @@ class HwihaDomesticDesign internal constructor(
         init { require(perHouseholdPermille >= 0) }
     }
     data class PolicyEffect(val policy: CountyPolicy, val indicators: List<IndicatorEffect>, val resources: List<ResourceFlow>)
+    data class DirectAction(val inputId: String, val equivalent: String,
+        val indicators: List<IndicatorEffect>, val resources: List<ResourceFlow>, val fixedCost: HwihaResources,
+        val costStat: Stat?, val experience: Int, val dedication: Int) {
+        init { require(experience >= 0 && dedication >= 0) }
+    }
     data class CompletionEffect(val indicator: Indicator, val amount: Int)
     data class WorkDesign(val work: DomesticWork, val requiredProgress: Int, val cost: HwihaResources,
         val completion: List<CompletionEffect>) {
@@ -84,6 +91,31 @@ class HwihaDomesticDesign internal constructor(
                     })
             }
             require(policies.map { it.policy } == CountyPolicy.entries) { "every county policy must be designed exactly once, in order" }
+            val directNode = root.obj("directActions")
+            val directStatus = directNode.text("status")
+            require(directStatus in setOf("PROPOSED", CONFIRMED)) { "unknown direct action status" }
+            val directActions = directNode.getValue("rows").jsonArray.map { raw ->
+                val row = raw.jsonObject
+                val inputId = row.text("inputId")
+                val fixed = row.obj("fixedCost")
+                require(fixed.keys == setOf("money", "grain", "iron", "timber", "horses")) { "direct action cost fields for $inputId" }
+                DirectAction(inputId, row.text("equivalent"),
+                    row.getValue("effects").jsonArray.map { item ->
+                        val effect = item.jsonObject
+                        IndicatorEffect(Indicator.valueOf(effect.text("indicator").uppercase()), effect.int("amount"),
+                            Unit.valueOf(effect.text("unit")), effect.stat())
+                    },
+                    row.getValue("resources").jsonArray.map { item ->
+                        val flow = item.jsonObject
+                        ResourceFlow(Resource.valueOf(flow.text("resource").uppercase()), Direction.valueOf(flow.text("direction")),
+                            flow.int("perHouseholdPermille"), flow.stat())
+                    },
+                    HwihaResources(fixed.long("money"), fixed.long("grain"), fixed.long("iron"), fixed.long("timber"), fixed.long("horses")),
+                    row.stat("costStat"), row.int("experience"), row.int("dedication"))
+            }
+            require(directActions.map { it.inputId } == HwihaFieldInput.INPUT_IDS.toList()) {
+                "every direct domestic action must be designed exactly once, in order"
+            }
             val corps = root.getValue("corpsPolicies").jsonArray.map { CorpsPolicy.valueOf(it.jsonObject.text("code")) }
             require(corps == CorpsPolicy.entries) { "every corps policy must be listed exactly once, in order" }
             val worksNode = root.obj("works")
@@ -102,6 +134,7 @@ class HwihaDomesticDesign internal constructor(
             }
             require(works.map { it.work } == DomesticWork.entries) { "every work must be designed exactly once, in order" }
             return HwihaDomesticDesign(status, scaling, defaultPolicy, policies.associateBy { it.policy },
+                directStatus, directActions.associateBy { it.inputId },
                 worksNode.int("maxActiveWorksPerCounty").also { require(it == 1) { "only one active work per county is supported" } },
                 worksNode.int("progressPerPhase").also { require(it > 0) }, works.associateBy { it.work })
         }
@@ -110,10 +143,10 @@ class HwihaDomesticDesign internal constructor(
         private fun JsonObject.text(key: String): String = (getValue(key) as JsonPrimitive).also { require(it.isString) { "$key must be text" } }.content
         private fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.also { require(!it.isString) }.int
         private fun JsonObject.long(key: String): Long = getValue(key).jsonPrimitive.also { require(!it.isString) }.long
-        private fun JsonObject.stat(): Stat? = when (val value = getValue("stat")) {
+        private fun JsonObject.stat(key: String = "stat"): Stat? = when (val value = getValue(key)) {
             JsonNull -> null
             is JsonPrimitive -> Stat.valueOf(value.also { require(it.isString) }.content.uppercase())
-            is JsonArray, is JsonObject -> throw IllegalArgumentException("stat must be text or null")
+            is JsonArray, is JsonObject -> throw IllegalArgumentException("$key must be text or null")
         }
     }
 }

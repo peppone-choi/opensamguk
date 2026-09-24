@@ -31,6 +31,7 @@ object HwihaRecordKind {
     const val ENLISTED = "enlist.joined"
     const val RETAINER_JOINED = "enlist.retainerJoined"
     const val INPUT_REJECTED = "input.rejected"
+    const val FIELD_APPLIED = "field.applied"
     const val RENOWN_EVENT = "renown.event"
     const val YUEDAN_ASSESSED = "yuedan.assessed"
     const val DEPARTURE_JUDGED = "retinue.departureJudged"

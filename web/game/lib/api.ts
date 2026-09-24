@@ -450,6 +450,14 @@ export const api = {
         const name = inputId === 'action.move' ? 'move' : inputId === 'action.forcedMarch' ? 'forced-march' : 'return';
         return get<import('./types').HwihaTravelOptions>(`/api/commands/${name}-options?generalId=${generalId}`);
     },
+    fieldOptions: (inputId: import('./types').HwihaFieldActionId, generalId: number) => {
+        const names: Record<import('./types').HwihaFieldActionId, string> = {
+            'action.farm': 'farm', 'action.commerce': 'commerce', 'action.fortify': 'fortify',
+            'action.repairWall': 'repair-wall', 'action.security': 'security', 'action.settle': 'settle',
+            'action.selectResidents': 'select-residents', 'action.tour': 'tour',
+        };
+        return get<import('./types').HwihaFieldOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+    },
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),

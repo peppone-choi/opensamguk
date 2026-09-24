@@ -58,6 +58,20 @@
       "resources": [{"resource": "grain", "direction": "CREDIT", "perHouseholdPermille": 5000, "stat": "leadership"}]
     }
   ],
+  "directActions": {
+    "status": "CONFIRMED",
+    "note": "2026-09-24 사용자 승인: 직접 행동은 대응 방침·공사 1순 효과·비용을 같은 縣에 합산한다. 수비강화·성벽보수는 성방 공사 진척을 절반씩 나누고, 주민선정·순행은 휼민 곡물 비용으로 민심 +2를 준다. 각 직접 행동의 경험 10·치적 1은 본인에게 기록한다.",
+    "rows": [
+      {"inputId": "action.farm", "equivalent": "AGRICULTURE", "effects": [{"indicator": "agriculture", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}], "resources": [], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1},
+      {"inputId": "action.commerce", "equivalent": "COMMERCE", "effects": [{"indicator": "commerce", "amount": 20, "unit": "ABSOLUTE", "stat": "politics"}], "resources": [], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1},
+      {"inputId": "action.fortify", "equivalent": "FORTIFICATION_1_PHASE", "effects": [{"indicator": "defence", "amount": 50, "unit": "ABSOLUTE", "stat": "intelligence"}], "resources": [], "fixedCost": {"money": 10000, "grain": 0, "iron": 0, "timber": 500, "horses": 0}, "costStat": "intelligence", "experience": 10, "dedication": 1},
+      {"inputId": "action.repairWall", "equivalent": "FORTIFICATION_1_PHASE", "effects": [{"indicator": "wall", "amount": 50, "unit": "ABSOLUTE", "stat": "intelligence"}], "resources": [], "fixedCost": {"money": 10000, "grain": 0, "iron": 0, "timber": 500, "horses": 0}, "costStat": "intelligence", "experience": 10, "dedication": 1},
+      {"inputId": "action.security", "equivalent": "MILITARY_FARM_SECURITY", "effects": [{"indicator": "security", "amount": 10, "unit": "ABSOLUTE", "stat": "leadership"}], "resources": [], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1},
+      {"inputId": "action.settle", "equivalent": "RELIEF", "effects": [{"indicator": "trust", "amount": 2, "unit": "ABSOLUTE", "stat": "charm"}, {"indicator": "population", "amount": 1, "unit": "PERMILLE_OF_CURRENT", "stat": "charm"}], "resources": [{"resource": "grain", "direction": "DEBIT", "perHouseholdPermille": 1000, "stat": null}], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1},
+      {"inputId": "action.selectResidents", "equivalent": "RELIEF_TRUST", "effects": [{"indicator": "trust", "amount": 2, "unit": "ABSOLUTE", "stat": "charm"}], "resources": [{"resource": "grain", "direction": "DEBIT", "perHouseholdPermille": 1000, "stat": null}], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1},
+      {"inputId": "action.tour", "equivalent": "RELIEF_TRUST", "effects": [{"indicator": "trust", "amount": 2, "unit": "ABSOLUTE", "stat": "charm"}], "resources": [{"resource": "grain", "direction": "DEBIT", "perHouseholdPermille": 1000, "stat": null}], "fixedCost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0}, "costStat": null, "experience": 10, "dedication": 1}
+    ]
+  },
   "corpsPolicies": [
     {"code": "DRILL", "name": "조련", "status": "CONFIRMED", "effect": "저장·조회만 한다. 훈련 증가 소비자는 아직 없다."},
     {"code": "ASSAULT", "name": "공략", "status": "CONFIRMED", "effect": "저장·조회만 한다. 공성 보정 소비자는 아직 없다."},
