@@ -90,6 +90,7 @@ class CommandReserveService(
     private val hwihaPersonalAdmission: HwihaPersonalAdmission? = null,
     private val hwihaRetireAdmission: HwihaRetireAdmission? = null,
     private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
+    private val hwihaPoliticalAdmission: HwihaPoliticalAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -215,6 +216,10 @@ class CommandReserveService(
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
             (hwihaPeopleAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS) {
+            (hwihaPoliticalAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {

@@ -42,7 +42,7 @@ class HwihaDomesticContext(
                 DomesticCounty(c.id, c.name, c.nationId, (world.landNodeOfCity(c.id) as? StrategicNodeRef.LandProvince)?.id,
                     geography?.commanderyOf(c.id), c.meta)
             },
-            nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
+            nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta, it.level) },
             landProvinceIds = positions?.knownLandProvinceIds,
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }

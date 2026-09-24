@@ -11,6 +11,7 @@ enum class HwihaPoliticalFailure(val message: String) {
     NOT_A_SUBJECT("하야하려면 섬기는 세력이 있어야 합니다."),
     NOT_FREE("거병하려면 재야여야 합니다."),
     NOT_LORD("주공만 세력을 해산할 수 있습니다."),
+    ALREADY_FOUNDED("이미 건국한 세력입니다."),
     ALREADY_LORD("이미 주공인 장수는 이 행동을 할 수 없습니다."),
     INSUFFICIENT_RENOWN("거병·독립에는 명망 50이 필요합니다."),
     COUNTY_NOT_AVAILABLE("현재 縣을 이 행동으로 차지할 수 없습니다."),
@@ -25,6 +26,7 @@ sealed interface HwihaPoliticalAssessment {
 /** Pure authority and current-county checks for the nation changing direct actions. */
 object HwihaPoliticalRules {
     val SUPPORTED_IDS = setOf(HwihaPoliticalInput.RESIGN, HwihaPoliticalInput.RISE,
+        HwihaPoliticalInput.FOUND_STATE,
         HwihaPoliticalInput.INDEPENDENCE, HwihaPoliticalInput.DISSOLVE)
 
     fun assess(request: HwihaPoliticalRequest, state: HwihaDomesticProjection): HwihaPoliticalAssessment {
@@ -66,6 +68,12 @@ object HwihaPoliticalRules {
             HwihaPoliticalInput.DISSOLVE -> {
                 if (actor.nationId <= 0 || !lord) return reject(HwihaPoliticalFailure.NOT_LORD)
                 if (state.nation(actor.nationId) == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+            }
+            HwihaPoliticalInput.FOUND_STATE -> {
+                if (actor.nationId <= 0 || !lord) return reject(HwihaPoliticalFailure.NOT_LORD)
+                val nation = state.nation(actor.nationId) ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+                if (nation.level > 0) return reject(HwihaPoliticalFailure.ALREADY_FOUNDED)
+                if (nation.capitalCityId == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
             }
         }
         return HwihaPoliticalAssessment.Eligible(actor, county, lord)

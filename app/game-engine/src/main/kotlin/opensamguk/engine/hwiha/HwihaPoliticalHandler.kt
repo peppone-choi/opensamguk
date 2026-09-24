@@ -94,6 +94,14 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
                 }
                 effects += "dissolvedNationId:$formerNation"
             }
+            HwihaPoliticalInput.FOUND_STATE -> {
+                val old = checkNotNull(oldNation)
+                if (old.level > 0) return reject(HwihaPoliticalFailure.ALREADY_FOUNDED)
+                val next = old.copy(level = 1, meta = old.meta + ("hwihaFoundedBy" to actorId))
+                recorder.diffNation(PerTurnOverlay.toLogicNation(old), PerTurnOverlay.toLogicNation(next))
+                world.applyNationDirtyFree(next)
+                effects += "nationLevel:1"
+            }
             else -> return reject(HwihaPoliticalFailure.INVALID_INPUT)
         }
         val latest = world.getGeneralById(actorId) ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)

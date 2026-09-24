@@ -1998,17 +1998,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.resign argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.resign rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2019,12 +2019,29 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_LORD",
+        "ALREADY_FOUNDED",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.resign",
       "helpTopicId": "commands.action.resign",
@@ -2032,7 +2049,7 @@
       "legacyCommands": [
         "che_하야"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.rise",
@@ -2041,17 +2058,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.rise argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.rise rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2062,12 +2079,29 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_LORD",
+        "ALREADY_FOUNDED",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.rise",
       "helpTopicId": "commands.action.rise",
@@ -2075,7 +2109,7 @@
       "legacyCommands": [
         "che_거병"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.foundState",
@@ -2084,17 +2118,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.foundState argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.foundState rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2105,12 +2139,29 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_LORD",
+        "ALREADY_FOUNDED",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.foundState",
       "helpTopicId": "commands.action.foundState",
@@ -2118,7 +2169,7 @@
       "legacyCommands": [
         "che_건국"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.abdicate",
@@ -2170,17 +2221,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.dissolve argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.dissolve rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2191,12 +2242,29 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_LORD",
+        "ALREADY_FOUNDED",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.dissolve",
       "helpTopicId": "commands.action.dissolve",
@@ -2204,7 +2272,7 @@
       "legacyCommands": [
         "che_해산"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.tour",
@@ -2368,17 +2436,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.independence argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.independence rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2389,18 +2457,35 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_LORD",
+        "ALREADY_FOUNDED",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.independence",
       "helpTopicId": "commands.action.independence",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.randomEnlist",
