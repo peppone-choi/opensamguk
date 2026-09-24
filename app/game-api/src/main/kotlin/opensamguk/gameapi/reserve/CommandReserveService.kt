@@ -458,7 +458,9 @@ class CommandReserveService(
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
-            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaTransferInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
     }
 }
 
