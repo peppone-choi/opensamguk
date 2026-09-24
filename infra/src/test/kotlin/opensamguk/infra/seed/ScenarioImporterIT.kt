@@ -86,14 +86,35 @@ class ScenarioImporterIT {
             readResource("map/${MapJson.resourceCode(scenario.map["mapName"] as? String ?: "han-world-v2")}.json"),
         )
 
+    /** Frozen legacy fixtures declare SAMMO explicitly without changing their source JSON. */
+    private fun regressionImporter(
+        scenario: Scenario,
+        cities: List<ScenarioCity>,
+        scenarioCode: String = "scenario_1010",
+        scenarioNumber: Int = 1010,
+        showImageLevel: Int = 3,
+        extendedGeneral: Boolean = true,
+        installTime: OffsetDateTime = OffsetDateTime.now(),
+        artifactsRoot: java.nio.file.Path = java.nio.file.Path.of("."),
+    ) = ScenarioImporter(
+        scenario = scenario.copy(ruleProfile = scenario.ruleProfile ?: opensamguk.logic.input.RuleProfile.SAMMO),
+        cities = cities,
+        scenarioCode = scenarioCode,
+        scenarioNumber = scenarioNumber,
+        showImageLevel = showImageLevel,
+        extendedGeneral = extendedGeneral,
+        installTime = installTime,
+        artifactsRoot = artifactsRoot,
+    )
+
     private fun newImporter(
         showImageLevel: Int = 3,
         extendedGeneral: Boolean = true,
     ): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
         val cities = mapCitiesOf(scenario)
-        return ScenarioImporter(
-            scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO),
+        return regressionImporter(
+            scenario = scenario,
             cities = cities,
             showImageLevel = showImageLevel,
             extendedGeneral = extendedGeneral,
@@ -107,8 +128,8 @@ class ScenarioImporterIT {
     ): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_mapless_legacy.json"))
         val cities = mapCitiesOf(scenario)
-        return ScenarioImporter(
-            scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO),
+        return regressionImporter(
+            scenario = scenario,
             cities = cities,
             showImageLevel = showImageLevel,
             extendedGeneral = extendedGeneral,
@@ -119,7 +140,7 @@ class ScenarioImporterIT {
     private fun newImporter1030(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
         val cities = mapCitiesOf(scenario)
-        return ScenarioImporter(scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO), cities = cities, scenarioCode = "scenario_1030")
+        return regressionImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
     }
 
     @Test
@@ -127,7 +148,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable")
         val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
             java.nio.file.Path.of("../tools/e2e/fixtures/hwiha-court/scenario_990001.json")))
-        val importer = ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario),
+        val importer = regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario),
             scenarioCode = "scenario_990001", artifactsRoot = java.nio.file.Path.of(".."))
         importer.importAll(jdbc, canonicalWorldId)
         fun stored() = opensamguk.logic.input.HwihaPersonPolicyState.read(opensamguk.infra.persistence.MetaJson.decode(
@@ -148,7 +169,7 @@ class ScenarioImporterIT {
         val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
         val scenario = ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\", \"hwihaLords\": [\"우길\"]," + raw)
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
-        ScenarioImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
+        regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
 
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id = 1", Int::class.java))
         val generals = jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1", Int::class.java)!!
@@ -204,7 +225,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
 
-        ScenarioImporter(
+        regressionImporter(
             scenario = scenario,
             cities = mapCitiesOf(scenario),
             scenarioCode = "scenario_9200",
@@ -221,7 +242,7 @@ class ScenarioImporterIT {
     private fun newImporter2(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
         val cities = mapCitiesOf(scenario)
-        return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_2", scenarioNumber = 2)
+        return regressionImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_2", scenarioNumber = 2)
     }
 
     @Test
@@ -926,7 +947,7 @@ class ScenarioImporterIT {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
         val extendedName = scenario.generalEx.first().name
         val cities = mapCitiesOf(scenario)
-        val counts = ScenarioImporter(
+        val counts = regressionImporter(
             scenario = scenario,
             cities = cities,
             extendedGeneral = false,
@@ -960,7 +981,7 @@ class ScenarioImporterIT {
             extendedAffinity = 1,
             extendedEgo = "유지",
         )
-        ScenarioImporter(
+        regressionImporter(
             scenario = baseline,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_rng_explicit",
@@ -979,7 +1000,7 @@ class ScenarioImporterIT {
             extendedAffinity = 0,
             extendedEgo = null,
         )
-        ScenarioImporter(
+        regressionImporter(
             scenario = consuming,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_rng_consuming",
@@ -1004,7 +1025,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         fun importAndSnapshot(sourceProvenanced: Boolean, extendedGeneral: Boolean): Map<String, Map<String, Any?>> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenarioForGeneralExProvenanceRng(sourceProvenanced),
                 cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
                 scenarioCode = "scenario_general_ex_provenance_rng",
@@ -1065,7 +1086,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         fun importAndSnapshot(includeRtk14Addition: Boolean): List<Map<String, Any?>> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenarioForRtk14RngIsolation(includeRtk14Addition),
                 cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
                 scenarioCode = "scenario_rtk14_rng_isolation",
@@ -1096,7 +1117,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         fun importAndSnapshot(enrichEarlyRow: Boolean): Map<String, Any?> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenarioForRtk14LegacyRngLifecycle(
                     earlyRow = if (enrichEarlyRow) {
                         rtk14LifecycleTuple(
@@ -1144,7 +1165,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         fun importAndSnapshot(enrichEarlyRow: Boolean): Map<String, Any?> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenarioForRtk14LegacyRngLifecycle(
                     earlyRow = if (enrichEarlyRow) {
                         rtk14LifecycleTuple(
@@ -1198,7 +1219,7 @@ class ScenarioImporterIT {
             }
             """.trimIndent(),
         )
-        ScenarioImporter(
+        regressionImporter(
             scenario = scenario,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_deferred",
@@ -1273,7 +1294,7 @@ class ScenarioImporterIT {
             }
             """.trimIndent(),
         )
-        ScenarioImporter(
+        regressionImporter(
             scenario = scenario,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_rtk14_lifecycle",
@@ -1419,7 +1440,7 @@ class ScenarioImporterIT {
         )
 
         val error = assertFailsWith<IllegalArgumentException> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenario,
                 cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
                 scenarioCode = "scenario_invalid_rtk14_lifecycle",
@@ -1461,7 +1482,7 @@ class ScenarioImporterIT {
             """.trimIndent(),
         )
 
-        val counts = ScenarioImporter(
+        val counts = regressionImporter(
             scenario = scenario,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_reviewed_legacy_metadata",
@@ -1514,7 +1535,7 @@ class ScenarioImporterIT {
             }
             """.trimIndent(),
         )
-        val counts = ScenarioImporter(
+        val counts = regressionImporter(
             scenario = scenario,
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_edge",
@@ -1668,7 +1689,7 @@ class ScenarioImporterIT {
         )
 
         kotlin.test.assertFailsWith<IllegalArgumentException> {
-            ScenarioImporter(
+            regressionImporter(
                 scenario = scenario,
                 cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
                 scenarioCode = "scenario_invalid",
