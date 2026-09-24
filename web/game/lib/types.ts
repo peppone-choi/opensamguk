@@ -861,6 +861,16 @@ export interface HwihaPoliticalConsentOption {
     accepted?:boolean|null;code?:string|null;reason?:string|null;
 }
 export type HwihaTransferActionId = 'action.gift' | 'action.donate';
+export type HwihaLegacyDirectActionId = 'action.convertProficiency' | 'action.tradeEquipment'
+    | 'action.tradeGrain' | 'action.transport';
+export interface HwihaLegacyDirectChoice {
+    label:string;arguments:Record<string,string|number>;available:boolean;
+    code?:string|null;reason?:string|null;maxAmount?:number|null;
+}
+export interface HwihaLegacyDirectOptions {
+    inputId:HwihaLegacyDirectActionId;available:boolean;code?:string|null;reason?:string|null;
+    choices:HwihaLegacyDirectChoice[];
+}
 export interface HwihaTransferOptions {
     inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;

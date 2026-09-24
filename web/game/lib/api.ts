@@ -488,6 +488,8 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/court/politicalConsent?generalId=${generalId}`, args),
     transferOptions: (inputId: import('./types').HwihaTransferActionId, generalId: number) =>
         get<import('./types').HwihaTransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
+    legacyDirectOptions: (inputId: import('./types').HwihaLegacyDirectActionId, generalId: number) =>
+        get<import('./types').HwihaLegacyDirectOptions>(`/api/commands/legacy-direct-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
