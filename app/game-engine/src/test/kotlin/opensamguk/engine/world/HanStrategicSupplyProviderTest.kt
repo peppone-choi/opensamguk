@@ -6,6 +6,8 @@ import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.world.*
 import java.nio.file.Path
+import java.security.MessageDigest
+import java.util.HexFormat
 import kotlin.test.*
 
 class HanStrategicSupplyProviderTest {
@@ -80,6 +82,7 @@ class HanStrategicSupplyProviderTest {
             .path("scenarios").map { it.path("scenarioCode").asInt() }
         assertEquals(15, scenarios.size)
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han-world-v3"), emptyMap())
+        val cuts = linkedMapOf<Int, Pair<Int, String>>()
         for (code in scenarios) {
             val scenario = ScenarioJson.loadScenario(Path.of("../../infra/src/main/resources/scenario/scenario_$code.json").toFile().readText())
             val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
@@ -96,6 +99,27 @@ class HanStrategicSupplyProviderTest {
             val after = evaluateSupplyReachability(owned, capitals, cityConst, dry).rows
                 .filter { it.spatialGraphSupplied }.map { it.cityId }.toSet()
             assertEquals(emptySet(), after - before, "road graph created supply reachability in $code")
+            val sortedCuts = (before - after).sorted().joinToString(",")
+            cuts[code] = (before - after).size to HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(sortedCuts.toByteArray(Charsets.UTF_8))
+            )
         }
+        assertEquals(mapOf(
+            1010 to (23 to "63bf89266f82429aafa50cec6a947fe855f57cc35b074f894d8f65aa649a0f0a"),
+            1020 to (78 to "6660d85aa2d5fc5b70a17abe2f10b77057511cf69c556868b07afc7a5461db47"),
+            1021 to (94 to "35184194578392b77d601352485551c0d7ba04004635f4351a85172e2e014480"),
+            1030 to (240 to "48ef39af94a35844895e64b35354b63a76e9ea35aae315c1a3967eeb61c785f2"),
+            1031 to (309 to "46da6fa2bc70fcf0aca3ca20a3b68be406c99950c549704dd277de1b629f7ec2"),
+            1040 to (218 to "3ab373db9cb515797f2a6bed860e51b7ff9f2530a61512c547f0d58b9274b055"),
+            1041 to (312 to "149ca9180335a53cfc270144647c8c812a75d169e9453165658ac10003bffd2b"),
+            1050 to (225 to "b70bf1afebe7b03bdefc1002e161f54b33a6f54d2233ea233688238bcac84e4f"),
+            1060 to (229 to "b5cf5d2f8311c7112d83fb6ee5cacc1020dc9449c37fbf94a46b59777becaf1a"),
+            1070 to (151 to "cddb1a844871ec1c1a9ec3c52d1885723123c793635072f8ea5cd67bc806cd86"),
+            1080 to (195 to "2e70f0f1e420847bde680356b990c7936a51ba5906de1c1c2df4de8bca3ce08d"),
+            1090 to (191 to "00fd0f72a50c82b1abc0c4df461797ee435e70792e22175a5f367aea05abcdac"),
+            1100 to (931 to "9ee7af6041dfd2b35a263e53a1d52c2184bff1104bedd30325872fcf031cb16c"),
+            1110 to (902 to "017169f1f5b71b91cbe1950dddc16e905e3c1ec5ccf6c9ed61d9ea73f4f8458e"),
+            1120 to (78 to "f5ea5e58b39036e749600235df16b1fa674b919fed44a4aee6ba8f2aed075102"),
+        ), cuts, "scenario road graph cuts changed")
     }
 }
