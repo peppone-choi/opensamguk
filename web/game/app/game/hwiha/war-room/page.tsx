@@ -14,8 +14,9 @@ import StandingBar from '@/components/hwiha/StandingBar';
 import TurnList from '@/components/hwiha/TurnList';
 import WarRoomMap from '@/components/hwiha/WarRoomMap';
 import { useToast } from '@/hooks/useToast';
-import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
+import { reserveHwihaScout } from '@/lib/hwiha-scout';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 /**
@@ -37,10 +38,11 @@ export default function WarRoomPage() {
         refresh();
     };
 
-    // 시야·군단·첩보 — 서버 투영이 정한다. 휘하 규칙이 아니면 안개가 없다(null).
+    // 시야·군단·첩보 — 서버 투영이 정한다. 조회 실패 시 레이어를 비운다.
     const vision = useHwihaRead((id, signal) => api.hwihaVisibility(id, signal), [refreshKey]);
     const corps = useHwihaRead((id, signal) => api.hwihaCorps(id, signal), [refreshKey]);
     const sieges = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
+    const works = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
     const scout = useHwihaRead((id, signal) => api.hwihaScoutOptions(id, signal), [refreshKey]);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
@@ -61,20 +63,9 @@ export default function WarRoomPage() {
         if (generalId == null || !option) return;
         setScoutPending(true);
         try {
-            const reserved = await api.reservedCommands(generalId);
-            const used = new Set(reserved.slots.map((slot) => slot.turnIdx));
-            const turnIdx = Array.from({ length: 12 }, (_, i) => i).find((i) => !used.has(i));
-            if (turnIdx === undefined) {
-                show('명령 목록 12순이 모두 찼습니다.', 'error');
-                return;
-            }
-            const out = await api.command('action.scout', { commanderyId: option.id }, generalId, turnIdx);
-            if (isIntakeQueued(out)) {
-                show(`${option.name}에 첩보를 ${turnIdx + 1}순에 예약했습니다.`, 'success');
-                bump();
-            } else if (isIntakeDenied(out)) show(out.reason ?? '첩보를 예약할 수 없습니다.', 'error');
-        } catch (e) {
-            show(e instanceof Error ? e.message : '첩보를 예약하지 못했습니다.', 'error');
+            const result = await reserveHwihaScout(generalId, option);
+            show(result.message, result.ok ? 'success' : 'error');
+            if (result.ok) bump();
         } finally {
             setScoutPending(false);
         }
@@ -92,17 +83,21 @@ export default function WarRoomPage() {
                 }}
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다 — 휘하 월드가 아니면 없다. */}
+                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}
                     <WarRoomMap
+                        refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
-                        sieges={sieges.data?.status === 'READY' ? sieges.data.sieges : undefined}
+                        works={works.data}
+                        sieges={sieges.data}
                         scoutable={scoutable}
-                        onScout={isHwihaWorld ? (no) => void sendScout(no) : undefined}
+                        onScout={generalId != null ? (no) => void sendScout(no) : undefined}
                         scoutPending={scoutPending}
                     />
+                    {vision.error || vision.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p> : null}
+                    {corps.error || corps.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p> : null}
                     {isHwihaWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
                         요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
                     </p>}

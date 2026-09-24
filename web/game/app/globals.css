@@ -895,9 +895,26 @@ input:focus, select:focus, textarea:focus {
 .map-viewer-canvas {
   position: relative;
   width: 100%;
-  aspect-ratio: 700 / 500; /* che 좌표계 700×500 native(php) — 캔버스 폭에 균일 확대(로비 MapPreview와 동일) */
+  aspect-ratio: 700 / 500; /* Responsive viewport; terrain data supplies the grid dimensions. */
   overflow: hidden;
   background: #000;
+}
+.map-layer-notices {
+  position: absolute;
+  z-index: 3;
+  top: 8px;
+  left: var(--battlefield-left-clearance, 8px);
+  max-width: min(32rem, var(--battlefield-control-width, calc(100% - 160px)));
+  display: grid;
+  gap: 4px;
+  pointer-events: none;
+}
+.map-layer-notices p {
+  margin: 0;
+  padding: 4px 7px;
+  background: rgb(12 15 14 / 88%);
+  color: #fff;
+  font-size: 12px;
 }
 /* 지도 자리비움(타일 미준비) */
 .map-viewer-ph {

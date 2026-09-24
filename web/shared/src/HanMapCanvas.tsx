@@ -192,7 +192,7 @@ export interface IsoScene {
   cities: IsoSceneCity[];
 }
 
-interface IsoMarkerPosition {
+export interface IsoMarkerPosition {
   col: number;
   row: number;
   provinceId?: number;
@@ -306,6 +306,8 @@ const FOG_DIM = 'rgba(8,10,9,0.78)';
 const FOG_HIDDEN = '#0c0f0e';
 
 export interface HanMapCanvasProps extends IsoSceneOptions {
+  /** 카메라 초점. 현재 城 표식과 별도로 움직인다. */
+  cameraFocusCityId?: number | null;
   battlefieldTargets?: readonly BattlefieldMapTarget[];
   onBattlefieldActivate?: (target: BattlefieldMapTarget) => void;
   mapCode: string;
@@ -574,18 +576,18 @@ function cityMarkerTile(
   placement?: IsoSceneOptions['markerPlacement'],
 ): IsoMarkerPosition {
   const mapped = mapCityToTile(city, grid, source);
-  if (!placement) return mapped;
+  if (!placement) return { col: Math.round(mapped.col), row: Math.round(mapped.row) };
 
   const { provinceMap, countyIndex, preferredByProvince } = placement;
   const commandery = city.commanderyName == null
     ? undefined
     : countyIndex.commanderyByName.get(city.commanderyName);
-  if (city.commanderyName != null && commandery === undefined) return mapped;
   if (city.provinceId !== undefined
     && city.provinceId >= 0
     && city.provinceId < countyIndex.commanderyByProvince.length) {
     const preferred = preferredByProvince?.get(city.provinceId);
-    if (preferred) return { ...preferred, provinceId: city.provinceId };
+    if (preferred && provinceMap.provinces[preferred.row * provinceMap.width + preferred.col] === city.provinceId)
+      return { ...preferred, provinceId: city.provinceId };
     for (let index = 0; index < provinceMap.provinces.length; index += 1) {
       if (provinceMap.provinces[index] !== city.provinceId) continue;
       return {
@@ -595,10 +597,36 @@ function cityMarkerTile(
       };
     }
   }
+  if (city.commanderyName != null && commandery === undefined) return { col: Math.round(mapped.col), row: Math.round(mapped.row) };
   const resolved = resolveProvincePlacement(
     provinceMap, countyIndex, mapped.col, mapped.row, commandery,
   );
-  return resolved ?? mapped;
+  return resolved ?? { col: Math.round(mapped.col), row: Math.round(mapped.row) };
+}
+
+export function buildCanonicalMarkerPositions(
+  tiles: HanTiles,
+  cities: readonly IsoCityOverlay[],
+  sourceSize: IsoSourceSize,
+  provinceMap: ProvinceIdentityMap | null,
+): Map<number, IsoMarkerPosition> {
+  const countyIndex = provinceMap
+    ? (tiles.provinceRecords && tiles.parentRegions
+      ? buildProvinceAdministrativeIndex(provinceMap, tiles.provinceRecords, tiles.parentRegions, tiles.jurisdictionRecords)
+      : buildCountyAdministrativeIndex(provinceMap, tiles.cities, tiles.juns))
+    : null;
+  const preferredByProvince = new Map<number, { col: number; row: number }>();
+  tiles.provinceRecords?.forEach((record, provinceId) => {
+    if (record.cityIndex == null) return;
+    const city = tiles.cities[record.cityIndex];
+    if (city) preferredByProvince.set(provinceId, { col: city.col, row: city.row });
+  });
+  const placement = provinceMap && countyIndex
+    ? { provinceMap, countyIndex, preferredByProvince } : undefined;
+  const hasCanonicalHierarchy = Boolean(tiles.provinceRecords && tiles.jurisdictionRecords);
+  const grid = { cols: tiles._meta.cols, rows: tiles._meta.rows };
+  return new Map(cities.map((city) => [city.id, cityMarkerTile(city, grid, sourceSize,
+    hasCanonicalHierarchy && city.provinceId === undefined ? undefined : placement)]));
 }
 
 export function buildIsoScene(
@@ -1790,6 +1818,8 @@ export function HanMapCanvas({
   corps = null,
   politicalStyle = 'fill',
   currentCityId,
+  cameraFocusCityId,
+  markerPositions: suppliedMarkerPositions,
   selectedCityId,
   hideCityNames = false,
   className = '',
@@ -1923,31 +1953,9 @@ export function HanMapCanvas({
         : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
   ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.jurisdictionRecords, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
-  const canonicalMarkerPositions = useMemo(() => {
-    if (!loadedTiles) return undefined;
-    const hasCanonicalHierarchy = Boolean(
-      loadedTiles.provinceRecords && loadedTiles.jurisdictionRecords,
-    );
-    const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-    const preferredByProvince = new Map<number, { col: number; row: number }>();
-    loadedTiles.provinceRecords?.forEach((record, provinceId) => {
-      if (record.cityIndex == null) return;
-      const city = loadedTiles.cities[record.cityIndex];
-      if (city) preferredByProvince.set(provinceId, { col: city.col, row: city.row });
-    });
-    const placement = provinceMap && countyIndex
-      ? { provinceMap, countyIndex, preferredByProvince }
-      : undefined;
-    return new Map(cities.map((city) => [
-      city.id,
-      cityMarkerTile(
-        city,
-        grid,
-        sourceSize,
-        hasCanonicalHierarchy && city.provinceId === undefined ? undefined : placement,
-      ),
-    ]));
-  }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
+  const canonicalMarkerPositions = useMemo(() => suppliedMarkerPositions
+    ?? (loadedTiles ? buildCanonicalMarkerPositions(loadedTiles, cities, sourceSize, provinceMap) : undefined),
+  [cities, loadedTiles, provinceMap, sourceSize, suppliedMarkerPositions]);
   const provinceAnchors = useMemo(() => {
     if (!canonicalMarkerPositions || !provinceMap) return undefined;
     const preferredByProvince = new Map<number, { col: number; row: number }>();
@@ -2272,7 +2280,8 @@ export function HanMapCanvas({
       canvas.style.height = `${cssHeight}px`;
       sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
       const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-      const currentPosition = currentCityId == null ? undefined : markerPositions?.get(currentCityId);
+      const focusCityId = cameraFocusCityId ?? currentCityId;
+      const currentPosition = focusCityId == null ? undefined : markerPositions?.get(focusCityId);
       const sameViewport = previousView
         && previousSize.width === canvas.width
         && previousSize.height === canvas.height
@@ -2347,7 +2356,7 @@ export function HanMapCanvas({
       observer.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [currentCityId, initialFocus, loadedTiles, mapCode, markerPositions, onViewChange, render]);
+  }, [cameraFocusCityId, currentCityId, initialFocus, loadedTiles, mapCode, markerPositions, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
     userModifiedViewRef.current = true;
@@ -2600,7 +2609,7 @@ export function HanMapCanvas({
         ref={canvasRef}
         className="os-iso-map__canvas"
         role="img"
-        aria-label={ariaLabel ?? (loadedTiles ? `${mapCode} 아이소 타일 지도` : '지도 불러오는 중')}
+        aria-label={ariaLabel ?? (loadedTiles ? `${mapCode} 2D 지도` : '지도 불러오는 중')}
         tabIndex={0}
         onPointerDown={(event) => {
           pointerTypeRef.current = event.pointerType || 'mouse';

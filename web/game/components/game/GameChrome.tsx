@@ -138,7 +138,7 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
 
         {/* 중앙: 지도 */}
         <div className="ib-map os-panel os-panel--static os-frame--bronze">
-          <MapViewer live showMe={1} refreshKey={refreshKey} currentCityId={city?.id ?? null} gameConst={constData?.gameConst} initialFocus="current-city-close" />
+          <MapViewer live showMe={1} refreshKey={refreshKey} currentCityId={city?.id ?? null} generalId={generalId} gameConst={constData?.gameConst} initialFocus="current-city-close" />
         </div>
 
         {/* 우: 명령 목록 12순 */}

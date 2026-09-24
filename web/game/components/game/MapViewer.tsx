@@ -1,15 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cityBadgeLabel, formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, isUprisingNation, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
+import { cityBadgeLabel, formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, isUprisingNation, useWorldMap, worldProvincesUrl, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
-import type { HwihaSieges, HwihaWorks } from '@/lib/hwiha-reads';
-import { cityBadgesById } from '@/lib/iso-city-badges';
+import { useMapLayers, type MapLayerScope } from '@/lib/use-map-layers';
+import { buildVisibleCorps } from '@/lib/map-corps';
+import { commanderyOfCity } from '@/lib/hwiha-fog';
+import { CommanderyNavigator } from '@/components/hwiha/CommanderyNavigator';
 
-const NEUTRAL_NAME = '공 백 지';
+const NEUTRAL_NAME = '공백지';
 const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
@@ -92,8 +94,10 @@ export function mapTitleTooltip(
 
 export interface MapViewerProps {
     mapData?: MapPreviewResponse | null;
+    hwihaLayers?: MapLayerScope;
     disallowClick?: boolean;
     currentCityId?: number | null;
+    generalId?: number | null;
     initialFocus?: InitialFocusProfile;
     live?: boolean;
     showMe?: 0 | 1;
@@ -144,8 +148,10 @@ function mergeLive(preview: MapPreviewResponse, world: WorldMapResponse) {
 
 export default function MapViewer({
     mapData,
+    hwihaLayers,
     disallowClick,
     currentCityId,
+    generalId,
     initialFocus,
     live = false,
     showMe = 1,
@@ -159,8 +165,6 @@ export default function MapViewer({
     onNavigate,
 }: MapViewerProps = {}) {
     const cityBaseHref = useServerGameUrl('city');
-    const [data, setData] = useState<MapPreviewResponse | null>(mapData ?? null);
-    const [failed, setFailed] = useState(false);
     const [tileMissing, setTileMissing] = useState(false);
     const [liveMyCity, setLiveMyCity] = useState<number | null>(null);
     const [hoverCounty, setHoverCounty] = useState<IsoCountyHover | null>(null);
@@ -170,134 +174,85 @@ export default function MapViewer({
     const [touchDevice, setTouchDevice] = useState(false);
     const [strategicTopology, setStrategicTopology] = useState<StrategicMapSnapshot | null>(null);
     const [strategicError, setStrategicError] = useState<string | null>(null);
-    const [worksRead, setWorksRead] = useState<HwihaWorks | null>(null);
-    const [siegesRead, setSiegesRead] = useState<HwihaSieges | null>(null);
     const [hoverCity, setHoverCity] = useState<IsoCityOverlay | null>(null);
     const strategicCache = useRef<{ server: string | undefined; snapshot: StrategicMapSnapshot } | null>(null);
     const bindingCallback = useRef(onStrategicBindingChange);
     bindingCallback.current = onStrategicBindingChange;
     const touchArmedId = useRef<number | null>(null);
-    const dataRef = useRef<MapPreviewResponse | null>(data);
+    const [focusNo, setFocusNo] = useState<number | null>(null);
+    const loadPreview = useCallback(async (signal: AbortSignal): Promise<MapPreviewResponse> => {
+        const previewRequest = api.mapPreview(signal);
+        const worldRequest = live ? api.worldMap(0, showMe).catch(() => null) : Promise.resolve(null);
+        const preview = await previewRequest;
+        const world = await worldRequest;
+        const merged = world && world.mapName === preview.mapCode ? mergeLive(preview, world) : { data: preview, myCity: null };
+        if (!signal.aborted) setLiveMyCity(merged.myCity);
+        return merged.data;
+    }, [live, showMe]);
+    const layerScope = hwihaLayers ?? (mapData != null ? 'none' : 'full');
+    const layers = useMapLayers(layerScope, refreshKey, generalId);
+    const map = useWorldMap({ loadPreview, mapData, refreshKey, cacheScope: readServerCookie(),
+        works: layers.works, sieges: layers.sieges });
+    const ready = map.kind === 'ready' ? map : null;
+    const data = ready?.preview ?? null;
+    const home = useMemo(() => {
+        if (!ready) return undefined;
+        const city = ready.preview.cities.find((entry) => entry.id === (currentCityId ?? liveMyCity));
+        return commanderyOfCity(ready.commanderies, city?.commanderyName);
+    }, [ready, currentCityId, liveMyCity]);
+    const focus = ready && layerScope === 'full' ?
+        ready.commanderies.find((entry) => entry.no === focusNo) ?? home ?? ready.commanderies.find((entry) => entry.focusCityId != null) : undefined;
+    const focusCityId = focus && home && focus.no === home.no ? currentCityId ?? liveMyCity : focus?.focusCityId;
+    const corpsOverlay = useMemo(() => ready && layerScope === 'full'
+        ? buildVisibleCorps(layers.corps, layers.visibility, ready.provinceCenter) : [],
+        [ready, layerScope, layers.corps, layers.visibility]);
+
+    useEffect(() => {
+        if (mapData != null) return;
+        setStrategicTopology(null);
+        bindingCallback.current?.(null);
+    }, [refreshKey, mapData]);
 
     // 2026-09-17: 메인 지도의 전장(장판·관도) 표식과 전장 선택 줄을 뺐다(사용자 결정).
 
     useEffect(() => {
-        dataRef.current = data;
-    }, [data]);
-
-    useEffect(() => {
-        if (!live || mapData != null) {
-            setWorksRead(null);
-            setSiegesRead(null);
-            return;
-        }
-        const controller = new AbortController();
-        api.frontInfo(controller.signal).then((front) => {
-            const generalId = front.general.generalId;
-            if (generalId == null || controller.signal.aborted) return;
-            void api.hwihaWorks(generalId, controller.signal).then(setWorksRead).catch(() => {
-                if (!controller.signal.aborted) setWorksRead(null);
-            });
-            void api.hwihaSieges(generalId, controller.signal).then(setSiegesRead).catch(() => {
-                if (!controller.signal.aborted) setSiegesRead(null);
-            });
-        }).catch(() => {
-            if (!controller.signal.aborted) { setWorksRead(null); setSiegesRead(null); }
-        });
-        return () => controller.abort();
-    }, [live, mapData, refreshKey]);
-
-    useEffect(() => {
-        if (mapData != null) {
-            setData(mapData);
-            setFailed(false);
-            setTileMissing(false);
-            setLiveMyCity(null);
-            setStrategicTopology(null);
-            setStrategicError(null);
-            bindingCallback.current?.(null);
-            return;
-        }
+        setStrategicTopology(null);
+        if (mapData != null || !data) { bindingCallback.current?.(null); return; }
+        const requestServer = readServerCookie();
         let active = true;
         const controller = new AbortController();
-        const requestServer = readServerCookie();
-        if (strategicCache.current && strategicCache.current.server !== requestServer) {
-            strategicCache.current = null;
-            bindingCallback.current?.(null);
-        }
-        const serverUnchanged = () => {
-            if (readServerCookie() === requestServer) return true;
-            strategicCache.current = null;
-            setStrategicTopology(null);
-            setStrategicError('서버가 변경되어 이전 수역 응답을 표시하지 않습니다. 지도를 갱신해주세요.');
-            bindingCallback.current?.(null);
-            return false;
-        };
-        const hadData = dataRef.current != null;
-        setFailed(false);
-        setTileMissing(false);
-        setStrategicTopology(null);
-        // 초기 로딩 단축: 미리보기와 월드 조회는 서로 안 기다린다(§4). 월드 실패는
-        // 미리보기만으로 내려앉히는 기존 동작을 그대로 둔다 — world 실패가 전체를
-        // 깨뜨리지 않도록 먼저 잡아 둔다. 수역은 미리보기 binding 이 필요해서 직렬 유지.
-        const previewRequest = api.mapPreview(controller.signal);
-        const worldRequest = live
-            ? api.worldMap(0, showMe).catch(() => null)
-            : Promise.resolve(null);
-        previewRequest
-            .then(async (preview) => {
-                if (!live) return { data: preview, myCity: null };
-                const world = await worldRequest;
-                return world && world.mapName === preview.mapCode
-                    ? mergeLive(preview, world) : { data: preview, myCity: null };
-            })
-            .then(async (result) => {
-                if (!active || !serverUnchanged()) return;
-                setData(result.data);
-                setLiveMyCity(result.myCity);
-                const binding = result.data.strategicTopology;
-                if (result.data.mapCode !== 'han-world-v3') {
-                    setStrategicTopology(null);
-                    setStrategicError(null);
+        const binding = data.strategicTopology;
+        const previous = strategicCache.current;
+        const cached = previous && previous.server === requestServer
+            && sameStrategicBinding(binding, previous.snapshot.binding)
+            ? previous.snapshot : null;
+        void (async () => {
+            try {
+                if (!binding) throw new Error('missing binding');
+                const response = await api.strategicTopology(cached?.binding.topologyHash, controller.signal);
+                if (!active) return;
+                if (readServerCookie() !== requestServer) {
                     strategicCache.current = null;
+                    setStrategicError('서버가 변경되어 이전 수역 응답을 표시하지 않습니다. 지도를 갱신해주세요.');
                     bindingCallback.current?.(null);
                     return;
                 }
-                const cached = strategicCache.current && strategicCache.current.server === requestServer
-                    && sameStrategicBinding(binding, strategicCache.current.snapshot.binding)
-                    ? strategicCache.current.snapshot : null;
-                setStrategicTopology(null); // Do not show stale dynamic control while refreshing.
-                try {
-                    if (!binding) throw new Error('missing binding');
-                    const response = await api.strategicTopology(cached?.binding.topologyHash, controller.signal);
-                    if (!active || !serverUnchanged()) return;
-                    if (!sameStrategicBinding(binding, response.binding)) throw new Error('binding mismatch');
-                    const topology = cached?.topology ?? response.topology;
-                    if (!topology) throw new Error('missing topology');
-                    const snapshot = { ...response, topology };
-                    strategicCache.current = { server: requestServer, snapshot };
-                    setStrategicTopology(snapshot);
-                    setStrategicError(null);
-                    bindingCallback.current?.(binding);
-                } catch {
-                    if (active) {
-                        setStrategicTopology(null);
-                        setStrategicError('수역 데이터가 지도와 일치하지 않거나 불러올 수 없습니다.');
-                        bindingCallback.current?.(null);
-                    }
-                }
-            })
-            .catch(() => {
-                if (active) {
-                    setStrategicTopology(null);
-                    bindingCallback.current?.(null);
-                    if (!serverUnchanged()) return;
-                    if (dataRef.current?.mapCode === 'han-world-v3') setStrategicError('수역 데이터를 갱신하지 못했습니다.');
-                }
-                if (active && !hadData) setFailed(true);
-            });
+                if (!sameStrategicBinding(binding, response.binding)) throw new Error('binding mismatch');
+                const topology = cached?.topology ?? response.topology;
+                if (!topology) throw new Error('missing topology');
+                const snapshot = { ...response, topology };
+                strategicCache.current = { server: requestServer, snapshot };
+                setStrategicTopology(snapshot);
+                setStrategicError(null);
+                bindingCallback.current?.(binding);
+            } catch {
+                if (!active) return;
+                setStrategicError('수역 데이터가 지도와 일치하지 않거나 불러올 수 없습니다.');
+                bindingCallback.current?.(null);
+            }
+        })();
         return () => { active = false; controller.abort(); };
-    }, [cityBaseHref, live, mapData, refreshKey, showMe]);
+    }, [data, mapData]);
 
     useEffect(() => {
         setHideCityNames(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
@@ -305,54 +260,12 @@ export default function MapViewer({
         setTouchDevice(navigator.maxTouchPoints > 0 || window.matchMedia('(any-pointer: coarse)').matches);
     }, []);
 
-    const nationById = useMemo(() => new Map(
-        data?.nations.map((nation) => [nation.id, nation]) ?? [],
-    ), [data]);
-    const serverBadges = useMemo(() => cityBadgesById(data?.cities ?? [], worksRead, siegesRead),
-        [data?.cities, worksRead, siegesRead]);
-    const cities = useMemo<IsoCityOverlay[]>(() => data?.cities.map((city) => {
-        const nation = nationById.get(city.nationId);
-        const owned = isOwnedNationVisual(city.nationId, nation?.color);
-        return {
-            ...city,
-            nationName: owned ? nation?.name : NEUTRAL_NAME,
-            nationColor: owned ? nation.color : undefined,
-            cityBadges: (serverBadges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
-        };
-    }) ?? [], [data, nationById, serverBadges]);
-    const sourceSize = useMemo(() => ({
-        width: data?.width || 700,
-        height: data?.height || 610,
-    }), [data?.height, data?.width]);
-    const administrativeOwnership = useMemo(() => ({
-        provinceOccupancy: (data?.provinceOccupancy ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-        jurisdictionOwnership: (data?.jurisdictionOwnership ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-        commanderyControl: (data?.commanderyControl ?? []).map((owner) => ({
-            ...owner,
-            nationColor: nationById.get(owner.nationId)?.color,
-            nationName: nationById.get(owner.nationId)?.name,
-        })),
-    }), [data?.commanderyControl, data?.jurisdictionOwnership, data?.provinceOccupancy, nationById]);
+    const cities = ready?.cities ?? [];
+    const sourceSize = ready?.sourceSize;
+    const administrativeOwnership = ready?.administrativeOwnership;
 
     const selectionEnabled = onCitySelect != null || onCityPick != null;
     const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
-    // This cache key triggers a new fetch when the immutable base changes. The response's strong
-    // ETag, never the requested hash, remains the byte identity checked by HanMapCanvas.
-    const terrainBaseHash = data?.mapCode === 'han-world-v3' && data.strategicTopology
-        && validStrategicBinding(data.strategicTopology) ? data.strategicTopology.baseTilesSha256 : null;
-    const terrainUrl = useCallback((mapCode: string) =>
-        `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`
-        + (mapCode === 'han-world-v3' && terrainBaseHash ? `&baseTilesSha256=${terrainBaseHash}` : ''), [terrainBaseHash]);
-    const provinceUrl = useCallback((mapCode: string) =>
-        `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`, []);
     const handleMissing = useCallback(() => setTileMissing(true), []);
     const handleCountyHover = useCallback((county: IsoCountyHover | null, point?: IsoHoverPoint) => {
         setHoverCounty(county);
@@ -384,8 +297,8 @@ export default function MapViewer({
         return !enabled;
     });
 
-    if (failed || tileMissing || (data && data.cities.length === 0)) {
-        return <section className="map-viewer" aria-label="세계 지도"><EmptyState illustration="map" title="지도 데이터 준비 중입니다." className="map-viewer-ph" /></section>;
+    if (map.kind === 'error' || map.kind === 'unsupported' || tileMissing || (data && data.cities.length === 0)) {
+        return <section className="map-viewer" aria-label="세계 지도"><EmptyState illustration="map" title={map.kind === 'unsupported' ? `지원하지 않는 지도 판: ${map.mapCode}` : '지도 데이터 준비 중입니다.'} className="map-viewer-ph" /></section>;
     }
     if (!data) {
         return <section className="map-viewer" aria-label="세계 지도"><div className="map-viewer-ph"><div className="spinner" /></div></section>;
@@ -418,21 +331,29 @@ export default function MapViewer({
             </div>
             <div className="map-viewer-canvas">
                 <HanMapCanvas
+                    key={focus?.no ?? 'world'}
                     mapCode={data.mapCode}
-                    terrainUrl={terrainUrl}
-                    provinceUrl={provinceUrl}
+                    tiles={ready!.tiles}
+                    tilesSha256={ready!.tilesSha256}
+                    provinceMap={ready!.provinceMap ?? undefined}
+                    provinceUrl={ready!.provinceMap ? undefined : worldProvincesUrl()}
                     cities={cities}
-                    administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
-                        ? administrativeOwnership : undefined}
+                    administrativeOwnership={administrativeOwnership}
                     sourceSize={sourceSize}
+                    markerPositions={ready!.markerPositions}
+                    corps={corpsOverlay}
+                    commanderyVisibility={layerScope !== 'none' ? layers.visibility : null}
+                    fogMode="dim"
                     currentCityId={currentCityId ?? liveMyCity}
-                    initialFocus={initialFocus}
+                    cameraFocusCityId={focusCityId ?? currentCityId ?? liveMyCity}
+                    initialFocus={focus ? 'current-commandery' : initialFocus}
                     selectedCityId={selectedCityId}
                     strategicTopology={strategicTopology ?? undefined}
                     selectedServerRoute={mapData == null && selectedServerRoute?.serverId === readServerCookie()
                         && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
                     currentServerId={readServerCookie()}
                     hideCityNames={hideCityNames}
+                    showCellGrid
                     showCityFootprint
                     politicalStyle="tint"
                     ariaLabel={`${data.mapCode} 세계 지도`}
@@ -444,7 +365,20 @@ export default function MapViewer({
                     onCityActivate={activateCity}
                     onMissing={handleMissing}
                 />
-                {strategicError && <p role="status">{strategicError}</p>}
+                {focus && <CommanderyNavigator commanderies={ready!.commanderies} focus={focus} home={home} onFocus={setFocusNo}
+                    overlayInfo
+                    visibility={layers.visibility} intelAge={layers.intelAge} scoutable={layers.scoutable}
+                    onScout={layers.canScout ? (no) => void layers.sendScout(no) : undefined} scoutPending={layers.scoutPending} />}
+                {(ready?.refreshError || strategicError || layers.visibilityError || layers.corpsError || layers.badgeError || layers.scoutError || layers.scoutMessage) &&
+                    <div className="map-layer-notices" aria-live="polite">
+                        {ready?.refreshError && <p role="status">지도를 갱신하지 못했습니다.</p>}
+                        {strategicError && <p role="status">{strategicError}</p>}
+                        {layers.visibilityError && <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p>}
+                        {layers.corpsError && <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p>}
+                        {layers.badgeError && <p role="status">공사·포위 정보를 불러오지 못해 해당 배지를 비웠습니다.</p>}
+                        {layers.scoutError && <p role="status">첩보 대상 정보를 불러오지 못했습니다.</p>}
+                        {layers.scoutMessage && <p role="status">{layers.scoutMessage}</p>}
+                    </div>}
                 <div className="map-btn-stack">
                     <button type="button" className={`map-toggle-cityname${hideCityNames ? ' active' : ''}`} aria-pressed={hideCityNames} onClick={toggleCityNames}>도시명 표기</button>
                     {touchDevice && <button type="button" className={`map-toggle-singletap${singleTap ? ' active' : ''}`} aria-pressed={singleTap} onClick={toggleSingleTap}>두번 탭 해 도시 이동</button>}

@@ -1,53 +1,52 @@
 import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const shared = vi.hoisted(() => ({
   props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  fetch: vi.fn(),
 }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
     shared.props = props;
-    return <div data-testid="shared-iso-map" />;
+    return <div data-testid="shared-map" />;
   } };
 });
-
 import MapViewer from '@/components/game/MapViewer';
 
 const MAP: MapPreviewResponse = {
-  serverName: '테스트섭', year: 200, month: 5, mapCode: 'han', width: 700, height: 610,
+  serverName: '테스트섭', year: 200, month: 5, mapCode: 'han-world-v3', width: 700, height: 610,
   cities: [{ id: 11, name: '낙양', level: 8, nationId: 0, x: 300, y: 250, state: 0, supply: true, isCapital: false }],
   nations: [],
 };
 
-describe('MapViewer asset-independent terrain selection', () => {
-  const stub = () => {
-    vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
-    vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
-  };
+beforeEach(() => {
+  shared.props = null;
+  shared.fetch.mockReset().mockImplementation(async (input: string) => input.includes('/terrain?')
+    ? { ok: true, headers: { get: () => null }, json: async () => ({ _meta: { cols: 768, rows: 669 }, juns: [] }) }
+    : { ok: false, status: 404 });
+  vi.stubGlobal('fetch', shared.fetch);
+  vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
+});
 
-  it('requests han tiles and never renders a che background or road image', () => {
-    const mapCode = 'ha n&?';
-    stub();
-    render(<MapViewer mapData={{ ...MAP, mapCode }} />);
-    expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
-    const url = typeof shared.props?.terrainUrl === 'function' ? shared.props.terrainUrl(mapCode) : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
-    expect(document.querySelector('.map-bg')).toBeNull();
-    expect(document.querySelector('.map-road')).toBeNull();
-    expect(document.querySelector('img[src*="/game/map/che/"]')).toBeNull();
+describe('MapViewer served map assets', () => {
+  it('passes the served board and centered markers without requesting sprite backgrounds', async () => {
+    render(<MapViewer mapData={MAP} />);
+    await screen.findByTestId('shared-map');
+    expect(shared.props?.tiles?._meta.cols).toBe(768);
+    expect(shared.props?.markerPositions?.has(11)).toBe(true);
+    expect(shared.props?.terrainUrl).toBeUndefined();
+    expect(shared.fetch.mock.calls.filter(([url]) => String(url).includes('/terrain?'))).toHaveLength(1);
+    expect(document.querySelector('.map-bg, .map-road, img[src*="/game/map/che/"]')).toBeNull();
   });
 
-  it('메인 2D 지도가 같은 지형 주소와 province PNG 를 쓴다', () => {
-    const mapCode = 'ha n&?';
-    stub();
-    render(<MapViewer mapData={{ ...MAP, mapCode }} />);
-    const url = typeof shared.props?.terrainUrl === 'function' ? shared.props.terrainUrl(mapCode) : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
-    const provinceUrl = typeof shared.props?.provinceUrl === 'function' ? shared.props.provinceUrl(mapCode) : shared.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
+  it('rejects a different board before loading terrain', async () => {
+    render(<MapViewer mapData={{ ...MAP, mapCode: 'old-board' }} />);
+    expect(await screen.findByText('지원하지 않는 지도 판: old-board')).toBeInTheDocument();
+    expect(shared.fetch).not.toHaveBeenCalled();
   });
 });

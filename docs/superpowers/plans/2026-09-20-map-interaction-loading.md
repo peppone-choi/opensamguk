@@ -16,7 +16,7 @@
 ## Step 3 — chunks and trailing zoom refinement
 - [x] Add `mapChunkCache.ts` with `get(view, render, settled)` returning surfaces and pending work. Use 512-pixel allocations with one-pixel gutters, stable world chunk origins, LRU eviction, and adaptive density keeping at most 12 visible chunks and 16 resident chunks.
 - [x] Add failing tests for incremental initial fill, stationary reuse, newly exposed pan regions, active-zoom reuse, final-scale refinement, memory/eviction/disposal, fractional-coordinate coverage, context failure and viewport/DPR changes. Run `vitest run src/__tests__/mapChunkCache.test.ts` and confirm failures before implementation.
-- [x] Integrate in `IsoMap2D.tsx`: clip chunk interiors and composite at world coordinates; pass raster scale to border rendering; schedule pending chunks via RAF. A shared trailing zoom timer handles wheel/pinch/buttons/fit and is cancelled by effect cleanup.
+- [x] Integrate in `retired sprite renderer`: clip chunk interiors and composite at world coordinates; pass raster scale to border rendering; schedule pending chunks via RAF. A shared trailing zoom timer handles wheel/pinch/buttons/fit and is cancelled by effect cleanup.
 - [x] Run shared suite and TypeScript. Verify actual terrain in Chromium: fill, repeated pan, wheel zoom, settled refinement, no page errors, no chunk seams. Review, commit, open PR and merge after CI.
 
 ## Step 4 — loading reuse and independent invalidation

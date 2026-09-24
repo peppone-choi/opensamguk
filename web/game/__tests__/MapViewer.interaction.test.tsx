@@ -12,6 +12,20 @@ vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return {
     ...actual,
+    useWorldMap: ({ mapData }: { mapData?: MapPreviewResponse }) => {
+      if (!mapData) return { kind: 'loading' as const };
+      if (mapData.mapCode !== 'han-world-v3') return { kind: 'unsupported' as const, mapCode: mapData.mapCode };
+      const nations = new Map(mapData.nations.map((nation) => [nation.id, nation]));
+      const colorOf = (nationId: number) => ({ nationName: nations.get(nationId)?.name, nationColor: nations.get(nationId)?.color });
+      return { kind: 'ready' as const, preview: mapData, tiles: { _meta: { cols: 768, rows: 669 } },
+        tilesSha256: 'test', provinceMap: null, commanderies: [], markerPositions: new Map([[11, { col: 100, row: 100 }]]),
+        cities: actual.buildWorldCities(mapData), sourceSize: { width: mapData.width, height: mapData.height },
+        administrativeOwnership: mapData.provinceOccupancy?.length && mapData.jurisdictionOwnership?.length && mapData.commanderyControl?.length
+          ? { provinceOccupancy: mapData.provinceOccupancy.map((row) => ({ ...row, ...colorOf(row.nationId) })),
+            jurisdictionOwnership: mapData.jurisdictionOwnership.map((row) => ({ ...row, ...colorOf(row.nationId) })),
+            commanderyControl: mapData.commanderyControl.map((row) => ({ ...row, ...colorOf(row.nationId) })) } : undefined,
+      };
+    },
     HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       shared.props = props;
       const city = props.cities?.[0];
@@ -57,7 +71,7 @@ import MapViewer from '@/components/game/MapViewer';
 
 const MAP: MapPreviewResponse = {
   serverName: '테스트섭', year: 200, month: 5, turnPhase: 1, turnPhaseText: '상순',
-  mapCode: 'han', width: 700, height: 610,
+  mapCode: 'han-world-v3', width: 700, height: 610,
   cities: [
     { id: 11, name: '낙양', level: 8, nationId: 1, x: 300, y: 250, state: 6, supply: true, isCapital: true },
     { id: 22, name: '허창', level: 6, nationId: 1, x: 500, y: 300, state: 0, supply: false, isCapital: false },
@@ -82,7 +96,7 @@ beforeEach(() => {
 
 describe('MapViewer 메인 2D 지도', () => {
   it('城·선택 상태·지형 주소를 작전실과 같은 캔버스에 넘긴다', () => {
-    const mapCode = 'ha n&?';
+    const mapCode = 'han-world-v3';
     render(<MapViewer mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
     expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
@@ -90,13 +104,13 @@ describe('MapViewer 메인 2D 지도', () => {
     expect(shared.props?.currentCityId).toBe(11);
     expect(shared.props?.selectedCityId).toBe(22);
     expect(shared.props?.cities?.map((city) => city.id)).toEqual([11, 22]);
-    const terrainUrl = typeof shared.props?.terrainUrl === 'function'
-      ? shared.props.terrainUrl(mapCode) : shared.props?.terrainUrl;
-    expect(terrainUrl).toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
+    expect(shared.props?.tiles).toBeDefined();
+    expect(shared.props?.markerPositions?.get(11)).toEqual({ col: 100, row: 100 });
+    expect(shared.props?.terrainUrl).toBeUndefined();
   });
 
   it('지역 城 데이터와 province PNG 를 메인 캔버스에 넘긴다', () => {
-    const mapCode = 'ha n&?';
+    const mapCode = 'han-world-v3';
     render(<MapViewer mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
     expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
@@ -107,10 +121,7 @@ describe('MapViewer 메인 2D 지도', () => {
       expect.objectContaining({ id: 11, nationColor: '#ff0000', nationName: '위', state: 6, supply: true, isCapital: true }),
       expect.objectContaining({ id: 22, nationColor: '#ff0000', supply: false }),
     ]);
-    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
-      ? shared.props.provinceUrl(mapCode)
-      : shared.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
+    expect(shared.props?.provinceUrl).toBe('/api/game/api/map/provinces?mapCode=han-world-v3');
   });
 
   it('shows the region commandery and county from the polygon callback', () => {
@@ -189,7 +200,7 @@ describe('MapViewer 메인 2D 지도', () => {
 
     expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
       nationId: 0,
-      nationName: '공 백 지',
+      nationName: '공백지',
       nationColor: undefined,
     }));
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));

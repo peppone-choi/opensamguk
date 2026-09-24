@@ -5,9 +5,14 @@ import { beforeEach, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 const state = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null }));
+const preview = {serverName:'test',year:208,month:1,mapCode:'han-world-v3',width:700,height:610,
+ cities:[{id:405,name:'당양',level:5,nationId:0,x:335,y:286,state:0,supply:true,isCapital:false}],nations:[]};
 vi.mock('@opensamguk/ui', async () => {
  const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
- return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+ return { ...actual, useWorldMap: () => ({kind:'ready',preview,tiles:{_meta:{cols:768,rows:669}},
+    provinceMap:null,provinceCenter:()=>undefined,cities:actual.buildWorldCities(preview),markerPositions:new Map(),
+    commanderies:[],sourceSize:{width:700,height:610},administrativeOwnership:undefined}),
+    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
     state.props = props;
     return <div data-testid="main-map" />;
   } };
@@ -19,7 +24,7 @@ beforeEach(()=>{
  vi.clearAllMocks();state.props=null;document.cookie='sam_server=; Max-Age=0; path=/';
  vi.stubGlobal('localStorage',{getItem:()=>null,setItem(){}});
  vi.stubGlobal('matchMedia',()=>({matches:false,addListener(){},removeListener(){}}));
- vi.mocked(api.mapPreview).mockResolvedValue({serverName:'test',year:208,month:1,mapCode:'han-world-v3',width:700,height:610,cities:[{id:405,name:"당양",level:5,nationId:0,x:335,y:286,state:0,supply:true,isCapital:false}],nations:[]});
+ vi.mocked(api.mapPreview).mockResolvedValue(preview);
  vi.mocked(api.worldMap).mockRejectedValue(new Error('no live overlay'));
  vi.mocked(api.frontInfo).mockResolvedValue({ general: { generalId: null } } as Awaited<ReturnType<typeof api.frontInfo>>);
 });
