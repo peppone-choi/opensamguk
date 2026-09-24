@@ -5,7 +5,7 @@
   "inputs": {
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "6cd029f7082746948934217b488de958d02fd48773b4f257a70a34fa23a225e7"
+      "sha256": "758f3d13fdcbe536f999eb34f560514fa5cfdb5f26a635ec0ac44c6e4e84f55f"
     },
     "passes": {
       "path": "data/curated/han/strategic-passes-v1.json",

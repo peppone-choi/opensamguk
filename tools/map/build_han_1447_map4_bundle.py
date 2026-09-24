@@ -28,7 +28,13 @@ def outputs() -> dict[Path, bytes]:
     result = {}
     for entry in catalog['files']:
         data = (ROOT / entry['path']).read_bytes()
-        compressed = gzip.compress(data, compresslevel=9, mtime=0)
+        # Preserve the checked-in gzip stream when its payload matches. zlib's
+        # output differs across platforms even with a fixed mtime, while the
+        # release catalog pins the exact compressed bytes.
+        existing = BUNDLE / f'blobs/{sha(data)}.json.gz'
+        compressed = existing.read_bytes() if existing.exists() else gzip.compress(data, compresslevel=9, mtime=0)
+        if gzip.decompress(compressed) != data:
+            raise ValueError(f'corrupt map4 payload: {existing}')
         entry.update(sha256=sha(data), bytes=len(data), blob=f'blobs/{sha(data)}.json.gz',
                      compressedSha256=sha(compressed))
         result[BUNDLE / entry['blob']] = compressed

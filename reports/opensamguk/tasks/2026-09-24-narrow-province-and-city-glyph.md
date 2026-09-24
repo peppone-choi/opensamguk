@@ -38,13 +38,17 @@
 
 전체 지형은 `assets/map4-overview.png`, 건업 부근 최대 확대는 `assets/map4-geonyeop-max-zoom.png`에 있다.
 
+실제 `HanMapCanvas`를 로컬 브라우저에서 새 정본 지형·도로·1,447 城으로 띄운 검증 캡처는 `assets/map4-browser-far.png`, `assets/map4-browser-mid.png`, `assets/map4-browser-max.png`에 있다. 확대 최대치는 셀당 16px이며, 이때 1,447개 성 모두 그림 경로(`citySprites=1447`, `cityPixels=0`)였다. 가장 먼 줌은 픽셀 1,445개·그림 2개였고 `cityGlyphs=0`이다. 중앙 `elementFromPoint=CANVAS`, 휠·드래그 전후 캔버스 픽셀 변화, 브라우저 오류 0건을 `assets/map4-browser-verification.json`에 기록했다. 무위군 현미(647), 주천군 연수(771), 한중군 면양(598), 재동(587), 요동군(730), 검각(1047), 우산국(1104), 일대국(1120), 건업(934)은 `assets/map4-browser-city-<id>.png`에 개별 캡처했다. 이 로컬 캔버스 하네스는 실제 렌더러를 사용하지만 로그인·메인·휘하 화면의 서버 연동 자체를 대체하지는 않는다.
+
 ## 검증 현황
 
 - 통과: 전체 구역 여유 칸 감사, 도로 단위 검사, 새 번들 재생성과 해시 대조, web/shared·web/game 타입 검사, JVM 컴파일.
-- 통과: web/shared Vitest 141건, web/game Vitest 779건, 대상 game-api JVM 테스트 93건, 대상 infra JVM 테스트 15건, V2 운송 회귀 테스트.
+- 통과: web/shared Vitest 141건, web/game Vitest 779건, web/gateway Vitest 263건과 세 패키지 타입 검사. 지도 Python 대상 테스트 67건(의도된 skip 1건). 대상 game-api JVM 테스트 93건, 대상 infra JVM 테스트 15건, V2 운송 회귀 테스트.
 - 통과: `HanWorldArtifactsResolverTest`, `HanRuntimeConstantsIntegrityTest`, `MapStrategicTopologyControllerTest`, `HwihaDeployPrecheckServiceTest`, `HwihaRoadFortStateTest`, `HwihaDomesticInputTest` 대상 JVM 테스트.
 - 통과: `audit_territory_disconnections.py --check`가 재귀 단계 검사 뒤 이탈 조각 124건 모두에 기존 검토 판정을 이어 붙였다. 새 판에서 새로 생긴 미심의 조각은 0건이다. 판정은 외부 세력 45·격자 결함 47·역사적 비지 8·부모 귀속 오류 8·물길 분리 16건이다.
-- 전체 Python 지도 테스트와 game-engine 전체 테스트는 진행 중이다. web/gateway Vitest, 시나리오 감사, 실제 세 화면 브라우저 캡처, PR CI는 아직 검증하지 않았다. 완료 전 이 항목을 갱신한다.
+- 통과: 한 지도 보급 불일치 감사(`mismatches=250 errors=0`), 시나리오 시작 보급 감사(`errors=0`), 郡 보급 연결 산출물 대조, map4 번들 카탈로그의 15개 blob 해시 대조.
+- 통과: 시나리오 Python 테스트 430건(의도된 skip 1건). 실제 지도 캔버스의 브라우저 조작·멀리/중간/최대 확대와 위 9곳 캡처.
+- 격리된 세 제품 화면의 서버 연동 캡처는 아직 하지 못했다. 로컬 디스크 여유 3.6GiB로 6개 Docker 이미지의 새 빌드를 시작하기 어려워, 동일 컴포넌트의 로컬 브라우저 검증으로 화면 동작을 확인했다. PR CI와 infra 전체 테스트는 진행 중이다.
 
 ## 운영 위험
 
