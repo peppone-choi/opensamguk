@@ -4,9 +4,12 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.RecruitCrewTypeAvailability
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -49,6 +52,7 @@ class AvailableCommandsController(
     private val resolver: GeneralResolver,
     private val precheck: CommandPrecheckService,
     private val registry: CommandRegistry,
+    private val worlds: WorldStateReadRepository,
 ) {
 
     /** A category bucket (matches web/game `AvailableCommandCategory`). */
@@ -71,6 +75,10 @@ class AvailableCommandsController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<Any> {
+        // The public-alpha catalog belongs only to the one-season SAMMO rollback path.
+        if (WorldRuleProfile.resolve(worlds.findProcessWorld()?.config ?: emptyMap()) != RuleProfile.SAMMO) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+        }
         // Identity: principal first; else the transition ?generalId= fallback.
         // Task 4 hardening — when authenticated, the passed generalId MUST be the caller's own.
         val resolvedId = userId?.let { resolver.resolveGeneralId(it) }
@@ -104,6 +112,9 @@ class AvailableCommandsController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<Any> {
+        if (WorldRuleProfile.resolve(worlds.findProcessWorld()?.config ?: emptyMap()) != RuleProfile.SAMMO) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+        }
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }

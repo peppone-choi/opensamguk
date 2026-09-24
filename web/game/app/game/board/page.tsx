@@ -7,10 +7,10 @@
 // 토글은 api.board(secret) → GET /api/board?secret= 를 구동한다. 제목·라벨은 그대로 회의실 / 기밀실.
 // 글 종류(kind: 일반/표결/작전/공지)는 V53 열 — 탭은 클라이언트 필터일 뿐 API 는 하나다.
 //
-// Mutation 은 기존 CommandModal 경로(pinnedCommand + extraArgs, 인자 폼 없음):
+// Mutation 은 공통 게시판 인테이크를 직접 제출한다:
 //  - 글쓰기 (boardArticle): { isSecret, title, text, kind, voteId? } — 엔진 BoardHandler 가 모든 guard 재검증.
 //  - 댓글 (boardComment): { articleNo, text }.
-//  - 표결 (voteCast): { voteId, selection:[index] } — 표결 글에 붙은 vote_poll 로 바로 표를 던진다.
+//  - 기존 표결 글은 읽기 전용이다.
 //  - 열람 기록 (boardRead): 기밀실 글을 처음 보면 세션당 한 번 인테이크(202 ≠ 성공 — 결과를 기다려 반영).
 // 호출 장수 id 는 응답의 myGeneralId(없으면 front-info)에서 가져온다.
 //
@@ -18,11 +18,10 @@
 // EMPTY-SAFE: articles [] → '게시물이 없습니다.'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Chip, Flag, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
+import { Chip, Flag, Modal, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import { COMMUNITY_HREF } from '../../../components/DeptNav';
-import CommandModal from '../../../components/CommandModal';
 import { RichTextEditor } from '../../../components/RichTextEditor';
 import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
@@ -34,8 +33,8 @@ import { isArticleBodyBlank } from './articleBody';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { OperationsResponse } from '../../../types/game';
 
-// 하나의 열린 board CommandModal spec. argType은 항상 null (args는 extraArgs에 실린다).
-type BoardModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
+// 공통 게시판 명령 확인 대화상자.
+type BoardModalSpec = { command: 'boardArticle' | 'boardComment'; label: string; extraArgs?: Record<string, unknown> };
 type KindTab = 'all' | BoardKind;
 
 const KIND_LABEL: Record<BoardKind, string> = { general: '일반', vote: '표결', operation: '작전', notice: '공지' };
@@ -171,6 +170,7 @@ function BoardContent() {
     const [operationIdDraft, setOperationIdDraft] = useState<number | ''>('');
     const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
     const [modal, setModal] = useState<BoardModalSpec | null>(null);
+    const [submitting, setSubmitting] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     // 기밀실 열람 기록 — 세션당 글마다 한 번만 인테이크한다.
     const readRequested = useRef<Set<number>>(new Set());
@@ -233,6 +233,7 @@ function BoardContent() {
                 try {
                     const out = await submitCommandAndAwaitResult(() => api.command('boardRead', { articleNo: a.id }, myGeneralId));
                     if (out.status === 'applied') applied = true;
+                    else readRequested.current.delete(a.id);
                 } catch {
                     /* 열람 기록 실패는 화면을 막지 않는다 — 다음 방문에 다시 시도한다. */
                     readRequested.current.delete(a.id);
@@ -246,6 +247,33 @@ function BoardContent() {
     const setCommentDraft = useCallback((no: number, value: string) => {
         setCommentDrafts((prev) => ({ ...prev, [no]: value }));
     }, []);
+
+    async function submitBoard() {
+        if (!modal || submitting || !canWrite) return;
+        setSubmitting(true);
+        try {
+            const out = await submitCommandAndAwaitResult(() =>
+                api.command(modal.command, modal.extraArgs ?? {}, myGeneralId));
+            if (out.status === 'applied') {
+                if (modal.command === 'boardArticle') {
+                    setArticleTitle('');
+                    setArticleText('');
+                } else if (modal.command === 'boardComment') {
+                    const articleNo = Number(modal.extraArgs?.articleNo);
+                    setCommentDrafts((drafts) => ({ ...drafts, [articleNo]: '' }));
+                }
+                setModal(null);
+                setToast('등록되었습니다.');
+                await fetchBoard(secret);
+            } else {
+                setToast(out.reason ?? '처리 결과를 확인하지 못했습니다.');
+            }
+        } catch (error) {
+            setToast(error instanceof Error ? error.message : '등록에 실패했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
+    }
 
     const counts = useMemo(() => {
         const c: Record<KindTab, number> = { all: articles.length, general: 0, vote: 0, operation: 0, notice: 0 };
@@ -452,23 +480,16 @@ function BoardContent() {
                 </aside>
             </div>
 
-            {/* Board CommandModal (pinnedCommand + extraArgs; pinnedArgType=null — args는 extraArgs에 실린다). */}
+            {/* 게시판 명령은 게임 행동 카탈로그와 별개의 공통 인테이크로 제출한다. */}
             {modal && myGeneralId !== 0 && (
-                <CommandModal
-                    onClose={() => setModal(null)}
-                    onToast={(msg) => setToast(msg)}
-                    generalId={myGeneralId}
-                    pinnedCommand={modal.command}
-                    pinnedLabel={modal.label}
-                    pinnedArgType={null}
-                    extraArgs={modal.extraArgs}
-                    onReserved={() => {
-                        setArticleTitle('');
-                        setArticleText('');
-                        setCommentDrafts({});
-                        fetchBoard(secret);
-                    }}
-                />
+                <Modal ariaLabel={modal.label} className="modal-content" overlayClassName="modal-overlay" onClose={() => { if (!submitting) setModal(null); }}>
+                    <h2 className="os-serif">{modal.label}</h2>
+                    <p>등록하시겠습니까?</p>
+                    <div className="council-write__actions">
+                        <button type="button" className="os-button os-button--ghost" disabled={submitting} onClick={() => setModal(null)}>취소</button>
+                        <button type="button" className="os-button os-button--primary" disabled={submitting} onClick={() => void submitBoard()}>{submitting ? '처리 중...' : '등록'}</button>
+                    </div>
+                </Modal>
             )}
             {toast && (
                 <div role="status" className="council-toast" onClick={() => setToast(null)}>

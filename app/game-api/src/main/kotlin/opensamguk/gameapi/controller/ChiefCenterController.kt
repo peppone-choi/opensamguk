@@ -66,6 +66,8 @@ class ChiefCenterController(
     @GetMapping("/chief-reserved")
     fun chiefReserved(@AuthenticationPrincipal userId: Long?): ResponseEntity<ChiefReservedResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        if (opensamguk.logic.input.WorldRuleProfile.resolve(world.findProcessWorld()?.config ?: emptyMap()) !=
+            opensamguk.logic.input.RuleProfile.SAMMO) return ResponseEntity.notFound().build()
         val resolved = resolver.resolve(userId)
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val nationId = resolved.nationId

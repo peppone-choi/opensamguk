@@ -13,6 +13,7 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandWireMapper
@@ -21,6 +22,11 @@ import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.logic.v2.command.V2CommandRegistry
 import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.InputKind
+import opensamguk.logic.input.InputRejection
+import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.gameapi.v2.legacyError
 import opensamguk.gameapi.v2.validateLegacyV2Arguments
 import org.springframework.beans.factory.annotation.Value
@@ -73,8 +79,10 @@ class CommandController(
     private val objectMapper: ObjectMapper,
     @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
     processWorld: GameApiProcessWorld,
+    private val worlds: WorldStateReadRepository,
 ) {
     private val worldId = processWorld.worldId
+    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
 
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
@@ -101,13 +109,22 @@ class CommandController(
         } else {
             null
         }
-        if (code == SELECT_POOL_PICK) {
+        // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
+        if (code != SELECT_POOL_PICK && generalId != resolver.resolveGeneralId(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val worldProfile = WorldRuleProfile.resolve(worlds.findProcessWorld()?.config ?: emptyMap())
+            ?: return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to "POLICY_UNAVAILABLE", "reason" to "세계 규칙을 확인할 수 없습니다."))
+        if (worldProfile == RuleProfile.HWIHA && code !in CommandReserveService.HWIHA_RESERVABLE_ACTIONS &&
+            code !in CommandReserveService.COMMON_INTAKE_COMMANDS) {
+            val rejection = hwihaInputRejection(code)
+            return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to rejection.name, "reason" to rejection.message))
+        }
+        if (code == SELECT_POOL_PICK && worldProfile == RuleProfile.SAMMO) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
-
-        // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
-        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (code == SELECT_POOL_PICK && generalId != 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
         if (code in opensamguk.gameapi.reserve.CommandReserveService.HWIHA_RESERVABLE_ACTIONS) {
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
@@ -169,6 +186,15 @@ class CommandController(
                     )
                 }
         }
+    }
+
+    private fun hwihaInputRejection(code: String): InputRejection {
+        if (code == "휴식" || LEGACY_COMMAND_CODE.matches(code)) return InputRejection.WRONG_RULE_PROFILE
+        val dot = code.indexOf('.')
+        if (dot <= 0 || dot == code.length - 1 || InputKind.ofPrefix(code.substring(0, dot)) == null) {
+            return InputRejection.MALFORMED_INPUT_ID
+        }
+        return if (hwihaCatalog[code] == null) InputRejection.UNKNOWN_INPUT else InputRejection.NOT_DELIVERED
     }
 
     private fun precheckArgs(argJson: String): Map<String, Any?> =
@@ -509,6 +535,7 @@ class CommandController(
         }
 
     private companion object {
+        private val LEGACY_COMMAND_CODE = Regex("^(che|cr|event)_.+$")
         private const val SELECT_POOL_PICK = "selectPoolPick"
         private val SELECT_POOL_COMMANDS = setOf(SELECT_POOL_PICK, "selectPoolUpdate")
         private val FORECAST_RESERVABLE_COMMANDS: Set<String> =

@@ -172,7 +172,8 @@ class CommandReserveService(
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
         val worldProfile = opensamguk.logic.input.WorldRuleProfile.resolve(config)
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA && actionCode !in HWIHA_RESERVABLE_ACTIONS) {
+        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
+            actionCode !in HWIHA_RESERVABLE_ACTIONS && actionCode !in COMMON_INTAKE_COMMANDS) {
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
@@ -414,6 +415,11 @@ class CommandReserveService(
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
         val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") + HWIHA_SIEGE_ACTIONS
+        /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
+        val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
+            "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",
+            "selectPoolPick", "selectPoolUpdate",
+        )
     }
 }
 

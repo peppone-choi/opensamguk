@@ -7,6 +7,8 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
@@ -52,6 +54,9 @@ class CommandControllerSecurityTest {
     private val queue = mock(CommandQueueService::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
+    private val worlds = mock(WorldStateReadRepository::class.java).also {
+        `when`(it.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+    }
 
     // W0-4 결과 회신 시밍 — 이 테스트는 결과 엔드포인트를 호출하지 않으므로 redis는 미사용 mock.
     private val redis = mock(StringRedisTemplate::class.java)
@@ -62,7 +67,7 @@ class CommandControllerSecurityTest {
                 CommandController(
                     precheck, reserve, resolver, queue, generals, commandResults,
                     mock(CommandInboxRepository::class.java), redis,
-                    ObjectMapper(), "che:scenario_2", GameApiProcessWorld(1),
+                    ObjectMapper(), "che:scenario_2", GameApiProcessWorld(1), worlds,
                 ),
             )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
@@ -94,6 +99,44 @@ class CommandControllerSecurityTest {
             .andExpect(status().isOk).andExpect(jsonPath("$.code").value("POLICY_UNAVAILABLE"))
             .andExpect(jsonPath("$.reason").value("정책 미확인"))
         verify(reserve).reserveForOwner(10, "action.enlist", 0, body, 7)
+    }
+
+    @Test
+    fun `hwiha rejects legacy unknown and undelivered inputs before precheck or reservation`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        val cases = mapOf(
+            "che_요양" to "WRONG_RULE_PROFILE",
+            "휴식" to "WRONG_RULE_PROFILE",
+            "action.unlisted" to "UNKNOWN_INPUT",
+            "stratagem.play" to "NOT_DELIVERED",
+            "invalid" to "MALFORMED_INPUT_ID",
+        )
+        cases.forEach { (code, expected) ->
+            mockMvc().perform(post("/api/command/$code").param("generalId", "10")
+                .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.status").value("BLOCKED"))
+                .andExpect(jsonPath("$.code").value(expected))
+        }
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `hwiha keeps shared board intake available without the legacy catalog`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        val body = """{"isSecret":false,"title":"소식","text":"본문","kind":"general"}"""
+        `when`(precheck.precheck(10, "boardArticle", mapOf(
+            "isSecret" to false, "title" to "소식", "text" to "본문", "kind" to "general",
+        ))).thenReturn(PrecheckResult.Available)
+        `when`(reserve.reserve(10, "boardArticle", 0, body)).thenReturn(ReserveResult("board-request", 0))
+
+        mockMvc().perform(post("/api/command/boardArticle").param("generalId", "10")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.requestId").value("board-request"))
+        verify(reserve).reserve(10, "boardArticle", 0, body)
     }
 
     @Test
@@ -316,15 +359,32 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `select pool pick reproduces the PHP fatal without reserving a command`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         mockMvc().perform(
             post("/api/command/{code}", "selectPoolPick")
-                .param("generalId", "999")
+                .param("generalId", "10")
                 .with(principal(7L)),
         )
             .andExpect(status().isInternalServerError)
             .andExpect(content().string(""))
 
         verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `hwiha first general selection uses the shared intake with caller ownership`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        val body = """{"uniqueName":"장수"}"""
+        `when`(precheck.precheck(0, "selectPoolPick", mapOf("uniqueName" to "장수")))
+            .thenReturn(PrecheckResult.Available)
+        `when`(reserve.reserveForOwner(0, "selectPoolPick", 0, body, 7))
+            .thenReturn(ReserveResult("pick-request", 0))
+
+        mockMvc().perform(post("/api/command/selectPoolPick").param("generalId", "0")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.requestId").value("pick-request"))
+        verify(reserve).reserveForOwner(0, "selectPoolPick", 0, body, 7)
     }
 
     @Test

@@ -2,6 +2,7 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.reserve.HwihaAdmissionDenied
 import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.logic.actions.instant.InstantActionRegistry
 import opensamguk.logic.actions.instant.inherit.InheritActionRegistry
@@ -100,7 +101,11 @@ class InstantActionController(
         }
 
         // (4) 인테이크 — sanctioned Model B 경로(typed daemon-command 발행). game-api는 write 안 함.
-        val reserved = reserve.reserve(generalId = generalId, actionCode = code, turnIdx = 0, argJson = argJson)
+        val reserved = try {
+            reserve.reserve(generalId = generalId, actionCode = code, turnIdx = 0, argJson = argJson)
+        } catch (denied: HwihaAdmissionDenied) {
+            return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
+        }
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(IntakeAcceptedResponse(status = "AVAILABLE", requestId = reserved.requestId, code = code))
     }
