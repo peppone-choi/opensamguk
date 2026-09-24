@@ -1,13 +1,16 @@
 package opensamguk.gameapi.reserve
 
 import opensamguk.gameapi.precheck.HwihaDispatchPrecheckService
+import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.HwihaDomesticForbidden
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 
 @Service
 class HwihaCourtAdmission(private val precheck: HwihaDispatchPrecheckService,
     private val domestic: HwihaDomesticAdmission? = null,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
+    private val reader: HwihaDomesticReader? = null) {
     fun canonicalArguments(actorId: Int, ownerUserId: Int, inputId: String, raw: String): String {
         if (ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         // Standing domestic inputs share the immediate channel (no 12-phase slot), with their own admission.
@@ -28,6 +31,19 @@ class HwihaCourtAdmission(private val precheck: HwihaDispatchPrecheckService,
                 val request = HwihaRewardInput.parse(actorId, raw)
                     ?: throw HwihaAdmissionDenied("INVALID_REQUEST", "상사할 카드와 금을 확인해 주세요.")
                 null to HwihaRewardInput.canonicalJson(request)
+            }
+            HwihaPoliticalConsent.COURT_INPUT_ID -> {
+                try { reader?.requireOwner(actorId, ownerUserId.toLong())
+                    ?: throw HwihaAdmissionDenied(HwihaPoliticalFailure.STATE_UNAVAILABLE.name, HwihaPoliticalFailure.STATE_UNAVAILABLE.message) }
+                catch (_: HwihaDomesticForbidden) { throw HwihaAdmissionDenied("FORBIDDEN", "자신의 장수만 응답할 수 있습니다.") }
+                val consent = HwihaPoliticalConsent.parse(actorId, raw)
+                    ?: throw HwihaAdmissionDenied(HwihaPoliticalFailure.INVALID_INPUT.name, HwihaPoliticalFailure.INVALID_INPUT.message)
+                val state = reader?.snapshot()?.state
+                    ?: throw HwihaAdmissionDenied(HwihaPoliticalFailure.STATE_UNAVAILABLE.name, HwihaPoliticalFailure.STATE_UNAVAILABLE.message)
+                HwihaPoliticalRules.assessConsent(actorId, consent, state)?.let {
+                    throw HwihaAdmissionDenied(it.name, it.message)
+                }
+                null to HwihaPoliticalConsent.canonicalJson(consent)
             }
             else -> throw HwihaAdmissionDenied("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }

@@ -19,6 +19,7 @@ class HwihaInputRegistryTest {
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
+        HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {},
         "action.move" to InputHandler {}, "action.forcedMarch" to InputHandler {}, "action.return" to InputHandler {},
         "action.farm" to InputHandler {}, "action.commerce" to InputHandler {}, "action.fortify" to InputHandler {},
         "action.repairWall" to InputHandler {}, "action.security" to InputHandler {}, "action.settle" to InputHandler {},
@@ -28,7 +29,9 @@ class HwihaInputRegistryTest {
         "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {},
         "action.search" to InputHandler {}, "action.employ" to InputHandler {},
         "action.travel" to InputHandler {},
-        "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {})
+        "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
+        "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
+        "action.gift" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -144,6 +147,41 @@ class HwihaInputRegistryTest {
                 assertFailsWith<IllegalArgumentException>(id) {
                     HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
                 }
+            }
+        }
+    }
+
+    @Test
+    fun `political actions expose only delivered handlers`() {
+        for (id in HwihaPoliticalRules.SUPPORTED_IDS) {
+            assertEquals(HwihaPoliticalFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
+            if (id in setOf(HwihaPoliticalInput.FOUND_STATE, HwihaPoliticalInput.ABDICATE, HwihaPoliticalInput.OATH)) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+                assertFailsWith<IllegalArgumentException>(id) {
+                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                }
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
+            }
+        }
+    }
+
+    @Test
+    fun `gift is delivered and donation waits for a warehouse destination`() {
+        for (id in HwihaTransferInput.INPUT_IDS) {
+            assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
+            if (id == HwihaTransferInput.GIFT) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
             }
         }
     }
@@ -296,21 +334,17 @@ class HwihaInputRegistryTest {
         assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
         assertEquals(setOf("휴식", "che_내정특기초기화", "che_전투특기초기화", "che_국기변경", "che_국호변경"),
             catalog.retiredLegacyCommands.toSet())
-        assertEquals(71, catalog.entries.size)
-        val mutation = ledger(row("action.conscript", "GENERAL_ACTION", "\"che_징병\""))
-        assertEquals(listOf("che_농지개간"), mutation.invalidLegacyCoverage(listOf("che_농지개간")))
+        assertTrue(catalog.entries.all { it.inputId == "action.enlist" || it.legacyCommands.size <= 1 }, "출사 외 기존 명령은 명령별 한 행으로 둔다")
+        assertEquals(72, catalog.entries.size)
+        val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
+        assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
         val overlap = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""),
             retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"")
         assertEquals(emptyList(), overlap.invalidLegacyCoverage(listOf("che_농지개간", "che_징병")))
-    }
-
-    @Test
-    fun `chief commands retain their agreed input kinds`() {
-        val court = listOf("발령", "포상", "몰수", "부대탈퇴지시", "물자원조", "불가침제의",
-            "선전포고", "종전제의", "불가침파기제의", "초토화", "천도")
+        val court = listOf("부대탈퇴지시", "물자원조", "초토화", "기술연구", "천도", "몰수", "불가침제의", "선전포고", "종전제의", "불가침파기제의")
         val work = listOf("증축", "감축")
         val stratagem = listOf("필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장")
-        assertEquals(21, court.size + work.size + stratagem.size)
+        assertEquals(20, court.size + work.size + stratagem.size)
         for ((names, kind) in listOf(court to InputKind.COURT_DECISION, work to InputKind.WORK,
             stratagem to InputKind.STRATAGEM)) {
             names.forEach { name ->

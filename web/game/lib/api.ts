@@ -480,6 +480,14 @@ export const api = {
         };
         return get<import('./types').HwihaPeopleOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
+    politicalOptions: (generalId: number) =>
+        get<import('./types').HwihaPoliticalOption[]>(`/api/commands/political-options?generalId=${generalId}`),
+    politicalConsentOptions: (generalId: number) =>
+        get<import('./types').HwihaPoliticalConsentOption[]>(`/api/commands/political-consent-options?generalId=${generalId}`),
+    courtPoliticalConsent: (generalId: number, args: {issuerGeneralId:number;inputId:'action.abdicate'|'action.oath';accepted:boolean}) =>
+        post<IntakeOutcome>(`/api/commands/court/politicalConsent?generalId=${generalId}`, args),
+    transferOptions: (inputId: import('./types').HwihaTransferActionId, generalId: number) =>
+        get<import('./types').HwihaTransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),

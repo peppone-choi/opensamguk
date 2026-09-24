@@ -91,6 +91,8 @@ class CommandReserveService(
     private val hwihaPersonalAdmission: HwihaPersonalAdmission? = null,
     private val hwihaRetireAdmission: HwihaRetireAdmission? = null,
     private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
+    private val hwihaPoliticalAdmission: HwihaPoliticalAdmission? = null,
+    private val hwihaTransferAdmission: HwihaTransferAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -226,6 +228,14 @@ class CommandReserveService(
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
             (hwihaPeopleAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS) {
+            (hwihaPoliticalAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
+            (hwihaTransferAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
@@ -459,7 +469,9 @@ class CommandReserveService(
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
-            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaTransferInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
         /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
         val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
             "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",
