@@ -127,6 +127,9 @@ tasks.processResources {
 // 멀티서버에서 각 서버의 game-engine은 자기 버전을 보고한다. image.tag는 빌드 시 IMAGE_TAG env로 주입.
 springBoot {
     buildInfo {
+        if (System.getenv("CI") == "true" && System.getenv("IMAGE_TAG").isNullOrBlank()) {
+            excludes.add("time")
+        }
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
         }

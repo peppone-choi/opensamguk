@@ -15,6 +15,9 @@ tasks.named("jar") { enabled = false }
 // 어드민 버전 표시(GET /admin/version)에서 읽는다. image.tag는 빌드 시 IMAGE_TAG env로 주입(없으면 dev).
 springBoot {
     buildInfo {
+        if (System.getenv("CI") == "true" && System.getenv("IMAGE_TAG").isNullOrBlank()) {
+            excludes.add("time")
+        }
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
         }
