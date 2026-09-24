@@ -19,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data/map/han-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 DISPOSITIONS = ROOT / 'data/curated/han/province-dead-end-dispositions-v1.json'
+ROADS = ROOT / 'data/map/han-land-roads-v1.json'
+ADMIN_AUDIT = ROOT / 'data/curated/han/administrative-topology-audit-v1.json'
 NEIGHBOURS = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
 LEVEL_NAME = {1: "수", 2: "진", 3: "관", 4: "이"}
 
@@ -122,7 +124,30 @@ def movement_graph(tiles: dict, world: dict) -> tuple[list[set[int]], list[dict]
     return graph, water_edges
 
 
-def audit(tiles: dict, world: dict) -> dict:
+def runtime_road_dead_ends(tiles: dict, world: dict, roads: dict) -> list[dict]:
+    """Use only initially open roads, as the map4 movement graph does."""
+    provinces = tiles['provinceRecords']
+    index = {province['id']: n for n, province in enumerate(provinces)}
+    degree = [0] * len(provinces)
+    for edge in roads['edges']:
+        if edge['status'] != 'BUILT':
+            continue
+        a, b = index[edge['fromProvinceId']], index[edge['toProvinceId']]
+        degree[a] += 1
+        degree[b] += 1
+    result = []
+    for city in world['cities']:
+        if city['level'] > 4:
+            continue
+        province_id = city['spatialProvinceId']
+        n = index[province_id]
+        if degree[n] <= 1:
+            result.append({'provinceId': province_id, 'cityId': city['id'],
+                           'level': city['level'], 'builtRoadDegree': degree[n]})
+    return result
+
+
+def audit(tiles: dict, world: dict, roads: dict | None = None, admin_audit: dict | None = None) -> dict:
     owner = owner_grid(tiles)
     provinces = tiles["provinceRecords"]
     distance, maximum = visual_clearance(owner, len(provinces))
@@ -197,6 +222,8 @@ def audit(tiles: dict, world: dict) -> dict:
         "movementDeadEndsByLevel": dict(sorted(Counter(x["levelName"] or "빈 구역" for x in dead_ends).items())),
         "diagonalOnlyContacts": sorted(diagonal_only),
         "activatedWaterRoutes": water_edges,
+        "runtimeRoadStrategicDeadEnds": runtime_road_dead_ends(tiles, world, roads) if roads is not None else [],
+        "jurisdictionFullyEnclosed": admin_audit['jurisdictionTopology']['fullyEnclosed'] if admin_audit is not None else [],
         "strategicSites": strategic,
         "strategicSitesWithoutThroughPairByLevel": dict(sorted(Counter(
             x["levelName"] for x in strategic if not x["hasThroughPair"]).items())),
@@ -236,8 +263,11 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--check", action="store_true")
     parser.add_argument('--dispositions', type=Path, default=DISPOSITIONS)
+    parser.add_argument('--roads', type=Path, default=ROADS)
+    parser.add_argument('--admin-audit', type=Path, default=ADMIN_AUDIT)
     args = parser.parse_args()
-    result = audit(json.loads(args.tiles.read_text()), json.loads(args.world.read_text()))
+    result = audit(json.loads(args.tiles.read_text()), json.loads(args.world.read_text()),
+                   json.loads(args.roads.read_text()), json.loads(args.admin_audit.read_text()))
     if args.json:
         print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
     else:
@@ -249,6 +279,8 @@ def main() -> int:
         print(f"strategicDeadEnds={len(result['strategicDeadEnds'])} emptyDeadEnds={len(result['emptyDeadEnds'])}")
         print(f"diagonalOnlyContacts={len(result['diagonalOnlyContacts'])}")
         print(f"sitesWithoutThroughPair={result['strategicSitesWithoutThroughPairByLevel']}")
+        print(f"runtimeRoadStrategicDeadEnds={len(result['runtimeRoadStrategicDeadEnds'])}")
+        print(f"jurisdictionFullyEnclosed={len(result['jurisdictionFullyEnclosed'])}")
     if not args.check:
         return 0
     problems = disposition_problems(result, json.loads(args.dispositions.read_text()))
@@ -256,7 +288,8 @@ def main() -> int:
         print(problem)
     return int(bool(result["narrow"] or result["growthSpaceMissing"]
                     or result["surrounded"] or result['strategicDeadEnds']
-                    or result['emptyDeadEnds'] or problems))
+                    or result['emptyDeadEnds'] or result['runtimeRoadStrategicDeadEnds']
+                    or result['jurisdictionFullyEnclosed'] or problems))
 
 
 if __name__ == "__main__":
