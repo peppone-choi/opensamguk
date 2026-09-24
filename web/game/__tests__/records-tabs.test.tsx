@@ -8,13 +8,12 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('RecordsTabs', () => {
-    it('lists the 기록 department leaves plus 전황, labels verbatim', () => {
+    it('lists the HWIHA product records', () => {
         expect(recordsTabs().map((t) => t.label)).toEqual([
-            '연감', '전황', '세력일람', '장수일람', '명장일람', '명예의전당', '왕조일람', '접속량정보', '빙의일람',
+            '월단평', '연감', '월드 기록', '랭킹',
         ]);
         expect(recordsTabs().map((t) => t.href)).toEqual([
-            '/game/history', '/game/world-log', '/game/rankings/kingdoms', '/game/rankings/generals', '/game/rankings/best-generals',
-            '/game/rankings/hall-of-fame', '/game/rankings/emperor', '/game/rankings/traffic', '/game/rankings/npcs',
+            '/game/hwiha/yuedan', '/game/history', '/game/world-log', '/game/rankings',
         ]);
     });
 
@@ -22,9 +21,17 @@ describe('RecordsTabs', () => {
         nav.pathname = '/game/world-log';
         render(<RecordsTabs />);
         const tabs = screen.getByRole('navigation', { name: '기록' });
-        expect(tabs.querySelectorAll('a')).toHaveLength(9);
-        expect(screen.getByRole('link', { name: '전황' })).toHaveAttribute('aria-current', 'page');
+        expect(tabs.querySelectorAll('a')).toHaveLength(4);
+        expect(screen.getByRole('link', { name: '월드 기록' })).toHaveAttribute('aria-current', 'page');
         expect(screen.getByRole('link', { name: '연감' })).not.toHaveAttribute('aria-current');
         expect(screen.getByRole('link', { name: '연감' })).toHaveAttribute('href', '/game/history');
+    });
+
+    it('keeps rankings active and links ranking siblings from a detail page', () => {
+        nav.pathname = '/game/rankings/emperor/7';
+        render(<RecordsTabs />);
+        expect(screen.getByRole('link', { name: '랭킹' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '황제 정보' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '세력 순위' })).toHaveAttribute('href', '/game/rankings/kingdoms');
     });
 });

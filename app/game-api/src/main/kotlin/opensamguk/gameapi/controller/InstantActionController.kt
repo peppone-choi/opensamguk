@@ -1,10 +1,15 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.reserve.HwihaAdmissionDenied
 import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.logic.actions.instant.InstantActionRegistry
 import opensamguk.logic.actions.instant.inherit.InheritActionRegistry
+import opensamguk.logic.input.InputRejection
+import opensamguk.logic.input.RuleProfile
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -59,6 +64,7 @@ import org.springframework.web.bind.annotation.RestController
 class InstantActionController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
+    private val worlds: WorldStateReadRepository,
 ) {
     /** 202 인테이크 성공 본문(CommandController.ReservedResponse와 동형). */
     data class IntakeAcceptedResponse(val status: String, val requestId: String, val code: String)
@@ -79,16 +85,23 @@ class InstantActionController(
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
     ): ResponseEntity<Any> {
-        // (1) 분류 — 등록된 instant/inherit-action 코드만 받는다.
+        // 소유권 가드 — 인증 시 generalId는 본인 소유여야 함.
+        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
+        // 월드 프로필을 먼저 확인해야 옛 코드가 HWIHA에서 400/409로 오분류되지 않는다.
+        val worldProfile = worlds.processRuleProfile()
+            ?: return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to "POLICY_UNAVAILABLE", "reason" to "세계 규칙을 확인할 수 없습니다."))
+        if (worldProfile == RuleProfile.HWIHA) {
+            return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to InputRejection.WRONG_RULE_PROFILE.name,
+                "reason" to InputRejection.WRONG_RULE_PROFILE.message))
+        }
+
         val isInstant = InstantActionRegistry.isInstantAction(code)
         val isInherit = InheritActionRegistry.isInheritAction(code)
         if (!isInstant && !isInherit) {
             return ResponseEntity.badRequest().body(mapOf("error" to "알 수 없는 즉시 액션입니다."))
-        }
-
-        // (2) 소유권 가드 — 인증 시 generalId는 본인 소유여야 함(CommandController.ownershipGuard 동일).
-        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
         // (3) FOUNDATION 가드 — 본체(toCommand 분기 + 핸들러)가 아직 안 배선된 코드는 409로 명시 거부.
@@ -100,7 +113,11 @@ class InstantActionController(
         }
 
         // (4) 인테이크 — sanctioned Model B 경로(typed daemon-command 발행). game-api는 write 안 함.
-        val reserved = reserve.reserve(generalId = generalId, actionCode = code, turnIdx = 0, argJson = argJson)
+        val reserved = try {
+            reserve.reserve(generalId = generalId, actionCode = code, turnIdx = 0, argJson = argJson)
+        } catch (denied: HwihaAdmissionDenied) {
+            return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
+        }
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(IntakeAcceptedResponse(status = "AVAILABLE", requestId = reserved.requestId, code = code))
     }
