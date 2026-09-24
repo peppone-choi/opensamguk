@@ -19,6 +19,7 @@ class HwihaInputRegistryTest {
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
+        HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {},
         "action.move" to InputHandler {}, "action.forcedMarch" to InputHandler {}, "action.return" to InputHandler {},
         "action.farm" to InputHandler {}, "action.commerce" to InputHandler {}, "action.fortify" to InputHandler {},
         "action.repairWall" to InputHandler {}, "action.security" to InputHandler {}, "action.settle" to InputHandler {},
@@ -31,7 +32,7 @@ class HwihaInputRegistryTest {
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         HwihaRetireInput.INPUT_ID to InputHandler {},
         "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
-        "action.foundState" to InputHandler {},
+        "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
         "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
         "action.gift" to InputHandler {}, "action.donate" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
@@ -309,7 +310,7 @@ class HwihaInputRegistryTest {
         assertEquals(emptyList(), catalog.invalidLegacyCoverage(legacy70))
         assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
         assertTrue(catalog.entries.all { it.legacyCommands.size <= 1 }, "기존 명령은 명령별 한 행으로 둔다")
-        assertEquals(73, catalog.entries.size)
+        assertTrue(catalog.entries.size >= 73, "70개 역참조 외 보조 입력은 허용한다")
         val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
         assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
     }

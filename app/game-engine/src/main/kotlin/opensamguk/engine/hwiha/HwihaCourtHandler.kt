@@ -33,6 +33,7 @@ class HwihaCourtHandler(
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
             HwihaRewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
+            HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
             HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
@@ -119,6 +120,16 @@ class HwihaCourtHandler(
                 val queued = HwihaQueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
                 updateMeta(actor, actor.meta + (HwihaQueuedReward.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
+            HwihaPoliticalConsent.COURT_INPUT_ID -> {
+                val consent = HwihaPoliticalConsent.parse(actor.id, command.argJson)
+                    ?: return deny(HwihaPoliticalFailure.INVALID_INPUT.name, HwihaPoliticalFailure.INVALID_INPUT.message)
+                val state = domesticContext.projection(world)
+                HwihaPoliticalRules.assessConsent(actor.id, consent, state)?.let {
+                    return deny(it.name, it.message)
+                }
+                updateMeta(actor, actor.meta + (HwihaPoliticalConsent.META_KEY to consent.toMetaValue()))
+                result(actor.id, command.inputId, true)
             }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }

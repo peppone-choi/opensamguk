@@ -415,6 +415,70 @@
       "deliveryState": "HANDLER_READY"
     },
     {
+      "inputId": "court.politicalConsent",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalConsent.parse + HwihaPoliticalRules.assessConsent"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "recipient decision; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_FOUNDED",
+        "ALREADY_LORD",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.politicalConsent",
+      "helpTopicId": "commands.court.politicalConsent",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "UI_READY"
+    },
+    {
       "inputId": "placement.assign",
       "kind": "PLACEMENT",
       "layer": 1,
@@ -2046,11 +2110,6 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED",
-        "UNAUTHORIZED",
-        "FORBIDDEN",
-        "INVALID_TURN_SLOT",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "BATTLE_PENDING",
@@ -2060,11 +2119,23 @@
         "NOT_A_SUBJECT",
         "NOT_FREE",
         "NOT_LORD",
-        "ALREADY_LORD",
         "ALREADY_FOUNDED",
+        "ALREADY_LORD",
         "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
-        "ALREADY_PROCESSED"
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2106,11 +2177,6 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED",
-        "UNAUTHORIZED",
-        "FORBIDDEN",
-        "INVALID_TURN_SLOT",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "BATTLE_PENDING",
@@ -2120,11 +2186,23 @@
         "NOT_A_SUBJECT",
         "NOT_FREE",
         "NOT_LORD",
-        "ALREADY_LORD",
         "ALREADY_FOUNDED",
+        "ALREADY_LORD",
         "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
-        "ALREADY_PROCESSED"
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2166,11 +2244,6 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED",
-        "UNAUTHORIZED",
-        "FORBIDDEN",
-        "INVALID_TURN_SLOT",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "BATTLE_PENDING",
@@ -2180,11 +2253,23 @@
         "NOT_A_SUBJECT",
         "NOT_FREE",
         "NOT_LORD",
-        "ALREADY_LORD",
         "ALREADY_FOUNDED",
+        "ALREADY_LORD",
         "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
-        "ALREADY_PROCESSED"
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2206,17 +2291,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.abdicate argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.abdicate rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2226,13 +2311,37 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_FOUNDED",
+        "ALREADY_LORD",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.abdicate",
       "helpTopicId": "commands.action.abdicate",
@@ -2240,7 +2349,7 @@
       "legacyCommands": [
         "che_선양"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.dissolve",
@@ -2269,11 +2378,6 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED",
-        "UNAUTHORIZED",
-        "FORBIDDEN",
-        "INVALID_TURN_SLOT",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "BATTLE_PENDING",
@@ -2283,11 +2387,23 @@
         "NOT_A_SUBJECT",
         "NOT_FREE",
         "NOT_LORD",
-        "ALREADY_LORD",
         "ALREADY_FOUNDED",
+        "ALREADY_LORD",
         "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
-        "ALREADY_PROCESSED"
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2423,17 +2539,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.oath argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalInput.parse + HwihaPoliticalRules.assess"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.oath rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaPoliticalRules.assess; no resource cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -2443,19 +2559,43 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "COUNTY_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "NOT_A_SUBJECT",
+        "NOT_FREE",
+        "NOT_LORD",
+        "ALREADY_FOUNDED",
+        "ALREADY_LORD",
+        "INSUFFICIENT_RENOWN",
+        "COUNTY_NOT_AVAILABLE",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
+        "status": "HANDLER_DEFINED",
+        "key": "requestId + actor turnTime"
       },
       "aiPolicyId": "ai.action.oath",
       "helpTopicId": "commands.action.oath",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.independence",
@@ -2484,11 +2624,6 @@
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
         "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED",
-        "UNAUTHORIZED",
-        "FORBIDDEN",
-        "INVALID_TURN_SLOT",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "BATTLE_PENDING",
@@ -2498,11 +2633,23 @@
         "NOT_A_SUBJECT",
         "NOT_FREE",
         "NOT_LORD",
-        "ALREADY_LORD",
         "ALREADY_FOUNDED",
+        "ALREADY_LORD",
         "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
-        "ALREADY_PROCESSED"
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "SAME_NATION_REQUIRED",
+        "SAME_PROVINCE_REQUIRED",
+        "CONSENT_REQUIRED",
+        "CONSENT_DECLINED",
+        "ALREADY_BOUND",
+        "ALREADY_PROCESSED",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT"
       ],
       "resultType": "InputResolved",
       "replayContract": {

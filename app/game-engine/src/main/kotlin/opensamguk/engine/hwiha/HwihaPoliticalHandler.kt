@@ -102,6 +102,35 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
                 world.applyNationDirtyFree(next)
                 effects += "nationLevel:1"
             }
+            HwihaPoliticalInput.ABDICATE -> {
+                val targetId = checkNotNull(request.targetGeneralId)
+                val target = world.getGeneralById(targetId) ?: return reject(HwihaPoliticalFailure.TARGET_NOT_FOUND)
+                val nation = oldNation ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+                for (card in world.listRetainers().filter { it.generalId == targetId }) world.removeRetainer(card.id)
+                val oldRuler = actor.copy(officerLevel = 1,
+                    meta = actor.meta + (HwihaLordStatus.META_KEY to false))
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(oldRuler))
+                world.applyGeneralDirtyFree(oldRuler)
+                val successor = target.copy(officerLevel = 12,
+                    meta = (target.meta - HwihaPoliticalConsent.META_KEY) + (HwihaLordStatus.META_KEY to true))
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(target), PerTurnOverlay.toLogicGeneral(successor))
+                world.applyGeneralDirtyFree(successor)
+                val nextNation = nation.copy(chiefGeneralId = targetId)
+                recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
+                world.applyNationDirtyFree(nextNation)
+                effects += "chiefGeneralId:$targetId"
+            }
+            HwihaPoliticalInput.OATH -> {
+                val targetId = checkNotNull(request.targetGeneralId)
+                val target = world.getGeneralById(targetId) ?: return reject(HwihaPoliticalFailure.TARGET_NOT_FOUND)
+                val nextActor = actor.copy(meta = HwihaOathBonds.withBond(actor.meta, targetId))
+                val nextTarget = target.copy(meta = HwihaOathBonds.withBond(target.meta - HwihaPoliticalConsent.META_KEY, actorId))
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(nextActor))
+                world.applyGeneralDirtyFree(nextActor)
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(target), PerTurnOverlay.toLogicGeneral(nextTarget))
+                world.applyGeneralDirtyFree(nextTarget)
+                effects += "oathGeneralId:$targetId"
+            }
             else -> return reject(HwihaPoliticalFailure.INVALID_INPUT)
         }
         val latest = world.getGeneralById(actorId) ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)

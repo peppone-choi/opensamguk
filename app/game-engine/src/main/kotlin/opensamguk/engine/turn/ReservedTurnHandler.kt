@@ -307,6 +307,9 @@ class ReservedTurnHandler(
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
                 "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
+                opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {
+                    applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
+                },
             )
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
                 handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }

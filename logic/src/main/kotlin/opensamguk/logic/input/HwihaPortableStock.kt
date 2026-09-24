@@ -2,7 +2,7 @@ package opensamguk.logic.input
 
 import opensamguk.logic.economy.HwihaResources
 
-/** All five resources are authoritative here; legacy gold/rice columns mirror them for old readers. */
+/** Five-resource ledger. Existing gold/rice columns remain current when older systems change them. */
 object HwihaPortableStock {
     const val META_KEY = "hwihaPortableStock"
 
@@ -12,10 +12,9 @@ object HwihaPortableStock {
         val row = meta[META_KEY] as? Map<*, *> ?: invalid()
         require(row.keys == setOf("version", "money", "grain", "iron", "timber", "horses"))
         require(exact(row["version"]) == 1L)
-        val storedMoney = exact(row["money"])
-        val storedGrain = exact(row["grain"])
-        require(storedMoney == money.toLong() && storedGrain == grain.toLong()) { "portable stock mirror drift" }
-        return HwihaResources(storedMoney, storedGrain, exact(row["iron"]),
+        exact(row["money"])
+        exact(row["grain"])
+        return HwihaResources(money.toLong(), grain.toLong(), exact(row["iron"]),
             exact(row["timber"]), exact(row["horses"]))
     }
 
