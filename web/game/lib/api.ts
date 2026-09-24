@@ -490,6 +490,10 @@ export const api = {
         get<import('./types').HwihaTransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
     legacyDirectOptions: (inputId: import('./types').HwihaLegacyDirectActionId, generalId: number) =>
         get<import('./types').HwihaLegacyDirectOptions>(`/api/commands/legacy-direct-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    legacyCourtOptions: (inputId: import('./types').HwihaLegacyCourtId, generalId: number) =>
+        get<import('./types').HwihaLegacyCourtOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    courtLegacy: (inputId: import('./types').HwihaLegacyCourtId, generalId: number, args: Record<string,string|number>) =>
+        post<IntakeOutcome>(`/api/commands/court/${inputId.slice(6)}?generalId=${generalId}`, args),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
@@ -520,8 +524,8 @@ export const api = {
     hwihaWorks: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaWorks>(`/api/hwiha/works?generalId=${generalId}`, signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
-    hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work', body: unknown) =>
-        post<IntakeOutcome>(`/api/commands/${kind}/${{ placement: 'assign', policy: 'set', work: 'start' }[kind]}?generalId=${generalId}`, body),
+    hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
+        post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),

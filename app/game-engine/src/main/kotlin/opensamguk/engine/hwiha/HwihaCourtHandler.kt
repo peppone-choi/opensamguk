@@ -15,6 +15,7 @@ class HwihaCourtHandler(
 ) {
     private val executor = HwihaDispatchExecutor(world, recorder)
     private val domestic by lazy { HwihaDomesticHandler(world, recorder, domesticContext) }
+    private val legacy by lazy { HwihaLegacyCourtExecutor(world, recorder, domesticContext) }
     private val executions = mutableListOf<HwihaCourtExecution>()
 
     fun handle(command: HwihaCourtInput): CommandLifecycleResult {
@@ -38,10 +39,16 @@ class HwihaCourtHandler(
             HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
+            HwihaDomesticInput.REDUCE to InputHandler { outcome = domestic.handle(command) },
         )
         for (travelId in HwihaTravelInput.INPUT_IDS) {
             channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }
+        }
+        for (legacyId in HwihaLegacyCourtInput.INPUT_IDS) {
+            if (HwihaInputCatalog.load()[legacyId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[legacyId] = InputHandler { outcome = handleKnown(command) }
+            }
         }
         for (fieldId in HwihaFieldInput.INPUT_IDS) {
             channelHandlers[fieldId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
@@ -131,6 +138,20 @@ class HwihaCourtHandler(
                 updateMeta(actor, actor.meta + (HwihaPoliticalConsent.META_KEY to consent.toMetaValue()))
                 result(actor.id, command.inputId, true)
             }
+            in HwihaLegacyCourtInput.INPUT_IDS -> {
+                val json = HwihaLegacyCourtInput.canonical(actor.id, command.inputId, command.argJson)
+                    ?: return deny(HwihaLegacyCourtFailure.INVALID_INPUT.name, HwihaLegacyCourtFailure.INVALID_INPUT.message)
+                val existing = try { HwihaQueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) {
+                    return deny(HwihaLegacyCourtFailure.STATE_UNAVAILABLE.name, HwihaLegacyCourtFailure.STATE_UNAVAILABLE.message)
+                }
+                if (existing != null) return deny(HwihaLegacyCourtFailure.ALREADY_QUEUED.name,
+                    HwihaLegacyCourtFailure.ALREADY_QUEUED.message)
+                val assessment = legacy.assess(actor.id, command.inputId, json)
+                if (assessment is HwihaLegacyCourtAssessment.Rejected) return deny(assessment.reason.name, assessment.reason.message)
+                val queued = HwihaQueuedLegacyCourt(command.requestId, command.ownerUserId, command.inputId, json)
+                updateMeta(actor, actor.meta + (HwihaQueuedLegacyCourt.META_KEY to queued.toMetaValue()))
+                result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }
     }
@@ -139,6 +160,7 @@ class HwihaCourtHandler(
     fun onIssuerTurn(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         runQueuedReward(generalId)
+        runQueuedLegacy(generalId)
         val actor = world.getGeneralById(generalId) ?: return
         val queued = HwihaQueuedDispatch.read(actor.meta)
         if (queued == null) {
@@ -175,6 +197,20 @@ class HwihaCourtHandler(
         val current = world.getGeneralById(generalId)!!
         updateMeta(current, current.meta - HwihaQueuedReward.META_KEY)
         executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, result)
+    }
+
+    private fun runQueuedLegacy(generalId: Int) {
+        val actor = world.getGeneralById(generalId) ?: return
+        val queued = try { HwihaQueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
+            result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
+        } else when (val rejected = legacy.execute(generalId, queued.inputId, queued.argJson)) {
+            null -> result(generalId, queued.inputId, true)
+            else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
+        }
+        val current = world.getGeneralById(generalId) ?: return
+        updateMeta(current, current.meta - HwihaQueuedLegacyCourt.META_KEY)
+        executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }
 
     fun expireDue() { executor.expireDue() }

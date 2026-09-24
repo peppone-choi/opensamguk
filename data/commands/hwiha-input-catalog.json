@@ -2669,12 +2669,12 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.randomEnlist argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaEnlistmentInput mode-specific JSON"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.randomEnlist rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaEnlistmentRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -2690,11 +2690,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "INVALID_REQUEST",
+        "ACTOR_NOT_FOUND",
+        "ALREADY_SERVING",
+        "ALREADY_BOUND",
+        "INVALID_RETINUE",
+        "HUMAN_RETAINER_REQUIRES_LORD",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_LORD",
+        "TARGET_NOT_ACCEPTING",
+        "INSUFFICIENT_RENOWN",
+        "NO_ELIGIBLE_NATION",
+        "DUPLICATE_RETAINER_NAME",
+        "POLICY_UNAVAILABLE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.randomEnlist",
@@ -2703,7 +2715,7 @@
       "legacyCommands": [
         "che_랜덤임관"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.targetEnlist",
@@ -2712,12 +2724,12 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.targetEnlist argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaEnlistmentInput mode-specific JSON"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.targetEnlist rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaEnlistmentRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -2733,11 +2745,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "INVALID_REQUEST",
+        "ACTOR_NOT_FOUND",
+        "ALREADY_SERVING",
+        "ALREADY_BOUND",
+        "INVALID_RETINUE",
+        "HUMAN_RETAINER_REQUIRES_LORD",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_LORD",
+        "TARGET_NOT_ACCEPTING",
+        "INSUFFICIENT_RENOWN",
+        "NO_ELIGIBLE_NATION",
+        "DUPLICATE_RETAINER_NAME",
+        "POLICY_UNAVAILABLE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.targetEnlist",
@@ -2746,7 +2770,7 @@
       "legacyCommands": [
         "che_장수대상임관"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.convertProficiency",
@@ -3011,12 +3035,12 @@
       "actor": "LORD",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.releaseCorps argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.releaseCorps rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3032,11 +3056,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.releaseCorps",
@@ -3045,7 +3086,7 @@
       "legacyCommands": [
         "che_부대탈퇴지시"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.diplomacy",
@@ -3054,12 +3095,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.diplomacy argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.diplomacy rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3075,11 +3116,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.diplomacy",
@@ -3088,7 +3146,7 @@
       "legacyCommands": [
         "che_물자원조"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.abandonCounty",
@@ -3097,12 +3155,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.abandonCounty argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.abandonCounty rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3118,11 +3176,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.abandonCounty",
@@ -3131,7 +3206,7 @@
       "legacyCommands": [
         "che_초토화"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.institution",
@@ -3140,13 +3215,13 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.institution argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.institution rules",
-        "money": null,
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
+        "money": 100,
         "grain": null,
         "iron": null,
         "timber": null,
@@ -3161,11 +3236,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.institution",
@@ -3174,7 +3266,7 @@
       "legacyCommands": [
         "che_기술연구"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.moveCapital",
@@ -3183,12 +3275,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.moveCapital argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.moveCapital rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3204,11 +3296,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.moveCapital",
@@ -3217,7 +3326,7 @@
       "legacyCommands": [
         "che_천도"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.confiscate",
@@ -3226,12 +3335,12 @@
       "actor": "LORD",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.confiscate argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.confiscate rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3247,11 +3356,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.confiscate",
@@ -3260,7 +3386,7 @@
       "legacyCommands": [
         "che_몰수"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.nonAggression",
@@ -3269,12 +3395,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.nonAggression argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.nonAggression rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3290,11 +3416,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.nonAggression",
@@ -3303,7 +3446,7 @@
       "legacyCommands": [
         "che_불가침제의"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.declareWar",
@@ -3312,12 +3455,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.declareWar argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.declareWar rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3333,11 +3476,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.declareWar",
@@ -3346,7 +3506,7 @@
       "legacyCommands": [
         "che_선전포고"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.offerPeace",
@@ -3355,12 +3515,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.offerPeace argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.offerPeace rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3376,11 +3536,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.offerPeace",
@@ -3389,7 +3566,7 @@
       "legacyCommands": [
         "che_종전제의"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "court.breakNonAggression",
@@ -3398,12 +3575,12 @@
       "actor": "RULER",
       "authorityRule": "DECISION_AUTHORITY",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.breakNonAggression argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtInput strict mode arguments"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side court.breakNonAggression rules",
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaLegacyCourtRules",
         "money": null,
         "grain": null,
         "iron": null,
@@ -3419,11 +3596,28 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_RULER",
+        "COUNTY_UNAVAILABLE",
+        "CAPITAL_REQUIRED",
+        "LAST_COUNTY",
+        "TARGET_UNAVAILABLE",
+        "CORPS_UNAVAILABLE",
+        "ENVOY_REQUIRED",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "ALREADY_AT_WAR",
+        "NOT_AT_WAR",
+        "AGREEMENT_UNAVAILABLE",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.court.breakNonAggression",
@@ -3432,7 +3626,7 @@
       "legacyCommands": [
         "che_불가침파기제의"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "work.reduce",
@@ -3441,17 +3635,17 @@
       "actor": "OFFICE_HOLDER",
       "authorityRule": "JURISDICTION_OFFICE",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side work.reduce argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaDomesticInput.parseWork FORTIFICATION"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side work.reduce rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaDomesticRules.assessReduce",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "NEXT_PHASE_BOUNDARY",
@@ -3462,11 +3656,19 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_REQUEST",
+        "ACTOR_NOT_FOUND",
+        "INVALID_COUNTY",
+        "NOT_COUNTY_AUTHORITY",
+        "WORK_IN_PROGRESS",
+        "WORK_NOT_COMPLETED",
+        "STATE_UNAVAILABLE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.work.reduce",
@@ -3475,7 +3677,7 @@
       "legacyCommands": [
         "che_감축"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "stratagem.steal",

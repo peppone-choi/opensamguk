@@ -185,9 +185,9 @@ class CommandReserveService(
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
-        val canonicalArgs = if (actionCode == "action.enlist") {
+        val canonicalArgs = if (actionCode in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS) {
             (hwihaAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
-                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson, actionCode)
         } else if (actionCode == "action.deploy") {
             (hwihaDeployAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
@@ -458,7 +458,8 @@ class CommandReserveService(
         val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
-        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") +
+        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.deploy", "action.scout") +
+            opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS +
             opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +

@@ -21,7 +21,7 @@ function costLine(stock: HwihaStock): string {
 function useDomesticSubmit(onToast: Toast, onDone: () => void) {
     const { generalId } = useHwihaSession();
     const [busy, setBusy] = useState(false);
-    const submit = async (kind: 'placement' | 'policy' | 'work', body: unknown, okText: string) => {
+    const submit = async (kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown, okText: string) => {
         if (generalId == null || busy) return;
         setBusy(true);
         try {
@@ -236,6 +236,11 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
                             <strong>{c.name}</strong>
                             {c.commanderyName ? <span style={{ fontSize: 12, color: 'var(--muted)' }}>{c.commanderyName}</span> : null}
                             {c.completed.map((w) => <Chip key={w.work} tone="moss">{w.label}</Chip>)}
+                            {!c.active && c.completed.some(w => w.work === 'FORTIFICATION') && (
+                                <button type="button" className="os-button os-button--ghost os-button--sm" disabled={busy}
+                                    onClick={() => void submit('reduce', { countyId: c.countyId, work: 'FORTIFICATION' },
+                                        `${c.name} 성방을 감축했습니다.`)}>성방 감축</button>
+                            )}
                         </div>
                         {c.active ? (
                             <div style={{ display: 'grid', gap: 4 }}>

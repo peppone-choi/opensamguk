@@ -31,6 +31,11 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
                 val request = HwihaDomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
                 HwihaDomesticInput.canonicalJson(request) to { state: HwihaDomesticProjection -> HwihaDomesticRules.assessWork(request, state) }
             }
+            HwihaDomesticInput.REDUCE -> {
+                val request = HwihaDomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                HwihaDomesticInput.canonicalJson(request) to
+                    { state: HwihaDomesticProjection -> HwihaDomesticRules.assessReduce(request, state) }
+            }
             else -> deny(InputRejection.UNKNOWN_INPUT.name, InputRejection.UNKNOWN_INPUT.message)
         }
         val snapshot = reader.snapshot()

@@ -871,6 +871,17 @@ export interface HwihaLegacyDirectOptions {
     inputId:HwihaLegacyDirectActionId;available:boolean;code?:string|null;reason?:string|null;
     choices:HwihaLegacyDirectChoice[];
 }
+export type HwihaLegacyCourtId = 'court.releaseCorps' | 'court.diplomacy' | 'court.abandonCounty'
+    | 'court.institution' | 'court.moveCapital' | 'court.confiscate' | 'court.nonAggression'
+    | 'court.declareWar' | 'court.offerPeace' | 'court.breakNonAggression';
+export interface HwihaLegacyCourtChoice {
+    label:string;arguments:Record<string,string|number>;available:boolean;
+    code?:string|null;reason?:string|null;maxAmount?:number|null;
+}
+export interface HwihaLegacyCourtOptions {
+    inputId:HwihaLegacyCourtId;available:boolean;code?:string|null;reason?:string|null;
+    choices:HwihaLegacyCourtChoice[];
+}
 export interface HwihaTransferOptions {
     inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;

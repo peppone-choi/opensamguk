@@ -313,8 +313,20 @@ class ReservedTurnHandler(
                     applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
                 },
             )
+            for (enlistId in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS - HwihaEnlistmentHandler.INPUT_ID) {
+                if (hwihaCatalog[enlistId]?.deliveryState?.hasHandler == true) {
+                    handlers[enlistId] = InputHandler {
+                        applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month, enlistId)
+                    }
+                }
+            }
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
                 handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+            }
+            for (inputId in opensamguk.logic.input.HwihaLegacyCourtInput.INPUT_IDS) {
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
+                }
             }
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,

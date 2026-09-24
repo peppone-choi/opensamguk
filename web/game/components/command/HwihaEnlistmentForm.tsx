@@ -19,7 +19,8 @@ export function useRuleProfile(supplied?: string | null) {
     return value === 'SAMMO' || value === 'HWIHA' ? value : null;
 }
 
-export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {
+export default function HwihaEnlistmentForm({ inputId = 'action.enlist', generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {
+    inputId?: 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist';
     generalId: number; turnIdx: number; unavailable: boolean;
     onToast: (message: string, type: 'success' | 'error' | 'info') => void;
     onClose: () => void; onReserved?: () => void;
@@ -48,7 +49,7 @@ export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, o
         setBusy(true); setReason(null);
         const body = option.mode === 'RANDOM' ? { mode: option.mode } : { mode: option.mode, targetId: option.targetId };
         try {
-            const result = await submitCommandAndAwaitResult(() => api.command('action.enlist', body, generalId, turnIdx));
+            const result = await submitCommandAndAwaitResult(() => api.command(inputId, body, generalId, turnIdx));
             if (result.status === 'reserved' || result.status === 'applied') {
                 onToast(result.status === 'reserved' ? '출사 명령이 예약되었습니다.' : '출사 명령이 실행되었습니다.', 'success');
                 onReserved?.(); onClose();
@@ -63,9 +64,10 @@ export default function HwihaEnlistmentForm({ generalId, turnIdx, unavailable, o
         {!data && !reason && <p role="status">출사 후보를 불러오는 중입니다.</p>}
         {data && <label>출사 대상<select className="os-inset" aria-label="출사 대상" value={selection} onChange={event => setSelection(event.target.value)} disabled={busy}>
             <option value="">선택하세요</option>
-            {data.options.map((row, index) => <option key={`${row.mode}:${row.targetId ?? ''}`} value={index}>
+            {data.options.map((row, index) => (inputId === 'action.randomEnlist' && row.mode !== 'RANDOM'
+                || inputId === 'action.targetEnlist' && row.mode !== 'GENERAL' ? null : <option key={`${row.mode}:${row.targetId ?? ''}`} value={index}>
                 {labels[row.mode]} · {row.label}{row.availability.status === 'BLOCKED' ? ` — ${row.availability.reason ?? '출사 불가'}` : ''}
-            </option>)}
+            </option>))}
         </select></label>}
         {option?.availability.status === 'BLOCKED' && <p role="status">{option.availability.reason ?? '출사할 수 없습니다.'}</p>}
         {reason && <p role="alert">{reason}</p>}

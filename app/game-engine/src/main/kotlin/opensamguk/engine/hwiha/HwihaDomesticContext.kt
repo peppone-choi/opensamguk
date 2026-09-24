@@ -48,13 +48,14 @@ class HwihaDomesticContext(
                     geography?.commanderyOf(c.id), c.meta)
             },
             nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
-                it.level, it.gold, it.rice) },
+                it.level, it.gold, it.rice, it.tech) },
             landProvinceIds = positions?.knownLandProvinceIds,
             bugoks = world.listBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
             countyAdjacency = world.administrativeCountyIds.associateWith { countyId ->
                 cityConst?.byId(countyId)?.path?.keys?.filter { it in world.administrativeCountyIds }?.toSet() ?: emptySet()
             },
             supportedCrewTypeIds = supportedCrewTypeIds,
+            diplomacy = world.listDiplomacy().map { DomesticDiplomacy(it.fromNationId, it.toNationId, it.state, it.term) },
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),

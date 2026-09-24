@@ -18,6 +18,7 @@ class HwihaInputRegistryTest {
     private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
+        "work.reduce" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
         HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {},
         "action.move" to InputHandler {}, "action.forcedMarch" to InputHandler {}, "action.return" to InputHandler {},
@@ -36,7 +37,13 @@ class HwihaInputRegistryTest {
         "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
         "action.gift" to InputHandler {}, "action.donate" to InputHandler {},
         "action.convertProficiency" to InputHandler {}, "action.tradeEquipment" to InputHandler {},
-        "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {})
+        "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {},
+        "action.randomEnlist" to InputHandler {}, "action.targetEnlist" to InputHandler {},
+        "court.releaseCorps" to InputHandler {}, "court.diplomacy" to InputHandler {},
+        "court.abandonCounty" to InputHandler {}, "court.institution" to InputHandler {},
+        "court.moveCapital" to InputHandler {}, "court.confiscate" to InputHandler {},
+        "court.nonAggression" to InputHandler {}, "court.declareWar" to InputHandler {},
+        "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.

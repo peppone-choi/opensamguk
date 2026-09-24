@@ -4,6 +4,7 @@ import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 
 /**
@@ -49,11 +50,19 @@ class HwihaDomesticHandler(
                     if (it is DomesticAssessment.Eligible) storeWork(command.requestId, request, now)
                 }
             }
+            HwihaDomesticInput.REDUCE -> {
+                val request = HwihaDomesticInput.parseWork(actor.id, command.argJson)
+                    ?: return deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                HwihaDomesticRules.assessReduce(request, state).also {
+                    if (it is DomesticAssessment.Eligible) reduceFortification(request.countyId)
+                }
+            }
             else -> return deny("UNKNOWN_INPUT", "등록되지 않은 내정 입력입니다.")
         }
         return when (outcome) {
             is DomesticAssessment.Rejected -> deny(outcome.reason.name, outcome.reason.message)
-            is DomesticAssessment.Eligible -> result(actor.id, command.inputId, kind, true, type = "reservationAccepted")
+            is DomesticAssessment.Eligible -> result(actor.id, command.inputId, kind, true,
+                type = if (command.inputId == HwihaDomesticInput.REDUCE) "executionApplied" else "reservationAccepted")
         }
     }
 
@@ -105,10 +114,22 @@ class HwihaDomesticHandler(
         world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyWorks.META_KEY, next.toMetaValue()))
     }
 
+    private fun reduceFortification(countyId: Int) {
+        val city = checkNotNull(world.getCityById(countyId))
+        val works = checkNotNull(HwihaCountyWorks.read(city.meta))
+        val remaining = HwihaCountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
+        val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
+            wall = (city.wall - 500).coerceAtLeast(0),
+            meta = city.meta.withKey(HwihaCountyWorks.META_KEY, remaining.toMetaValue()))
+        recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(next))
+        world.applyCityDirtyFree(next)
+    }
+
     private fun kindOf(inputId: String) = when (inputId) {
         HwihaDomesticInput.PLACEMENT -> "PLACEMENT"
         HwihaDomesticInput.POLICY -> "POLICY"
         HwihaDomesticInput.WORK -> "WORK"
+        HwihaDomesticInput.REDUCE -> "WORK"
         else -> "COURT_DECISION"
     }
 
