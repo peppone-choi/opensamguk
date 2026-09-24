@@ -334,17 +334,17 @@ class HwihaInputRegistryTest {
         assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
         assertEquals(setOf("휴식", "che_내정특기초기화", "che_전투특기초기화", "che_국기변경", "che_국호변경"),
             catalog.retiredLegacyCommands.toSet())
-        assertTrue(catalog.entries.all { it.legacyCommands.size <= 1 }, "기존 명령은 명령별 한 행으로 둔다")
-        assertEquals(74, catalog.entries.size)
+        assertTrue(catalog.entries.all { it.inputId == "action.enlist" || it.legacyCommands.size <= 1 }, "출사 외 기존 명령은 명령별 한 행으로 둔다")
+        assertEquals(72, catalog.entries.size)
         val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
         assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
         val overlap = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""),
             retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"")
         assertEquals(emptyList(), overlap.invalidLegacyCoverage(listOf("che_농지개간", "che_징병")))
-        val court = listOf("부대해산", "원조", "영토포기", "제도정비", "천도", "몰수", "불가침", "선전포고", "종전제의", "불가침파기")
-        val work = listOf("작업", "작업단축", "작업취소")
+        val court = listOf("부대탈퇴지시", "물자원조", "초토화", "기술연구", "천도", "몰수", "불가침제의", "선전포고", "종전제의", "불가침파기제의")
+        val work = listOf("증축", "감축")
         val stratagem = listOf("필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장")
-        assertEquals(21, court.size + work.size + stratagem.size)
+        assertEquals(20, court.size + work.size + stratagem.size)
         for ((names, kind) in listOf(court to InputKind.COURT_DECISION, work to InputKind.WORK,
             stratagem to InputKind.STRATAGEM)) {
             names.forEach { name ->
