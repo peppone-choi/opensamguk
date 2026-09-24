@@ -52,6 +52,18 @@ class HanLandRoadsTest(unittest.TestCase):
                 stack.extend(network[node] - visited)
         self.assertEqual(visited, set(network))
 
+    def test_low_cost_detours_close_avoidable_cul_de_sacs(self):
+        roads = json.loads(OUTPUT.read_text())
+        degree = defaultdict(int)
+        for edge in roads["edges"]:
+            if edge["status"] == "BUILT":
+                degree[edge["fromProvinceId"]] += 1
+                degree[edge["toProvinceId"]] += 1
+        for edge in roads["edges"]:
+            if edge["status"] == "UNBUILT" and edge["terrainCost"] <= 8:
+                self.assertNotEqual(1, degree[edge["fromProvinceId"]])
+                self.assertNotEqual(1, degree[edge["toProvinceId"]])
+
 
 if __name__ == "__main__":
     unittest.main()

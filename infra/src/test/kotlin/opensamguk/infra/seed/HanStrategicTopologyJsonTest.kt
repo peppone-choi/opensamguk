@@ -26,23 +26,23 @@ class HanStrategicTopologyJsonTest {
         val json = mapper.valueToTree<JsonNode>(loaded)
         val presentation = json.path("presentation")
         // 2026-09-21: 북동 확장 프레임을 걷어내 격자가 669x768 로 돌아왔다.
-        assertEquals(768, presentation.path("cols").asInt())
-        assertEquals(669, presentation.path("rows").asInt())
+        assertEquals(3072, presentation.path("cols").asInt())
+        assertEquals(2676, presentation.path("rows").asInt())
         // 2026-09-18 지리 재분할(GH #806) 뒤의 han-tiles — 郡 안 縣 경계를 城의 실제 위치로 다시 잘랐다. 물 기하는 그대로다.
         // (앞 핀 ba08098a… 는 2026-09-17 저지 지형 재분류 뒤 문서였다.)
         // 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
         // parentRegions 3 곳이 aliases 를 얻은 것뿐이고 물 기하·격자·좌표는 그대로다.
         // 2026-09-23: 결손 縣 56곳이 제 省을 받고 郡 오귀속 2건(857·993)을 바로잡으며 재핀했다. 물 기하는 그대로다.
-        assertEquals("ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312",
+        assertEquals("99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f",
             presentation.path("baseTilesSha256").asText())
-        assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
+        assertEquals(listOf(752, 1328), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
             presentation.path("zoneConnections").fields().asSequence().map { it.value.asText() }.toList())
         val coast = presentation.path("geometries")[0].path("cellRuns")
-        assertEquals(1, coast.size())
-        assertEquals(543, coast[0].path("row").asInt())
-        assertEquals(305, coast[0].path("startCol").asInt())
-        assertEquals(351, coast[0].path("endCol").asInt())
+        assertEquals(4, coast.size())
+        assertEquals(2172, coast[0].path("row").asInt())
+        assertEquals(1220, coast[0].path("startCol").asInt())
+        assertEquals(1407, coast[0].path("endCol").asInt())
     }
 
     @Test
@@ -51,7 +51,7 @@ class HanStrategicTopologyJsonTest {
         val topology = loaded.topology
 
         // 지리 재분할(GH #806): 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331. 앞 판은 1,520 + 73 = 1,594 였다.
-        assertEquals(1653, topology.landProvinceIds.size)
+        assertEquals(1627, topology.landProvinceIds.size)
         assertTrue(topology.landProvinceIds.any { it.startsWith("DIRECT-PARENT-") })
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
@@ -68,10 +68,10 @@ class HanStrategicTopologyJsonTest {
         assertEquals("chgis:v6:cnty:45022", loaded.bindingsByCityId.getValue(781).physicalPlaceRef)
         assertEquals("f1aae98e-ead0-49f7-b4da-e427277a66ef", loaded.bindingsByCityId.getValue(781).routeNodeKey)
         val path = assertIs<StrategicPathResult.Resolved>(loaded.resolve(273, 781, 1, state(topology))).path
-        assertEquals(listOf("land:45098", "land:45022"), path.nodeKeys)
-        assertEquals(listOf(TraversalMode.LAND), path.modes)
-        assertEquals(1, path.edgeIds.size)
-        assertEquals(1L, path.totalCost)
+        assertEquals(listOf("land:45098", "land:45127", "land:45022"), path.nodeKeys)
+        assertEquals(listOf(TraversalMode.LAND, TraversalMode.LAND), path.modes)
+        assertEquals(2, path.edgeIds.size)
+        assertEquals(2L, path.totalCost)
         assertEquals(
             path.pathHash,
             assertIs<StrategicPathResult.Resolved>(loaded.resolve(273, 781, 1, state(topology))).path.pathHash,
@@ -195,7 +195,7 @@ class HanStrategicTopologyJsonTest {
         }
         repinManifests(files)
         val projection = load(files)
-        assertEquals(listOf(TraversalMode.LAND),
+        assertEquals(listOf(TraversalMode.LAND, TraversalMode.LAND),
             assertIs<StrategicPathResult.Resolved>(projection.resolve(273, 781, 1, state(projection.topology))).path.modes)
     }
 
@@ -252,8 +252,8 @@ class HanStrategicTopologyJsonTest {
     private fun assertLuToLicheng(files: Map<String, ByteArray>) {
         val projection = load(files)
         val path = assertIs<StrategicPathResult.Resolved>(projection.resolve(273, 781, 1, state(projection.topology))).path
-        assertEquals(listOf("land:45098", "land:45022"), path.nodeKeys)
-        assertEquals(listOf(TraversalMode.LAND), path.modes)
+        assertEquals(listOf("land:45098", "land:45127", "land:45022"), path.nodeKeys)
+        assertEquals(listOf(TraversalMode.LAND, TraversalMode.LAND), path.modes)
     }
 
     @Test
@@ -319,6 +319,17 @@ class HanStrategicTopologyJsonTest {
             it.withArray("traversalEdges").add(edge)
             it.putArray("activationBlockers")
         }
+        update(files, ROADS) {
+            val edges = it.withArray("edges")
+            val removed = (0 until edges.size()).first { index ->
+                val row = edges[index]
+                setOf(row["fromProvinceId"].asText(), row["toProvinceId"].asText()) == setOf("45098", "45022")
+            }
+            edges.remove(removed)
+            val counts = it["counts"] as ObjectNode
+            counts.put("candidateEdges", counts["candidateEdges"].asInt() - 1)
+            counts.put("unbuiltEdges", counts["unbuiltEdges"].asInt() - 1)
+        }
         update(files, ADJUDICATIONS) {
             val reviewedBarrier = barrier.deepCopy().apply { remove("id"); put("stableKey", "test-boundary"); put("status", "APPROVED") }
             val reviewedEdge = edge.deepCopy().apply {
@@ -348,7 +359,7 @@ class HanStrategicTopologyJsonTest {
         StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash, emptyMap())
 
     private fun files(): MutableMap<String, ByteArray> = listOf(
-        TILES, WATER, ADJUDICATIONS, WATER_MANIFEST, WORLD, WORLD_MANIFEST, SELECTION, MIGRATION, LEGACY,
+        TILES, WATER, ADJUDICATIONS, WATER_MANIFEST, WORLD, WORLD_MANIFEST, SELECTION, MIGRATION, LEGACY, ROADS,
     ).associateWith { Files.readAllBytes(root.resolve(it)) }.toMutableMap()
 
     private fun load(files: Map<String, ByteArray>) = HanStrategicTopologyJson.load("han-world-v3") { files.getValue(it) }
@@ -386,5 +397,6 @@ class HanStrategicTopologyJsonTest {
         const val SELECTION = "data/curated/han/route-node-selection-v1.json"
         const val MIGRATION = "data/curated/han/route-node-migration-v1.json"
         const val LEGACY = "infra/src/main/resources/map/han-780-v1.json"
+        const val ROADS = "data/map/han-land-roads-v1.json"
     }
 }

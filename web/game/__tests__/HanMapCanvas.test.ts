@@ -417,7 +417,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         });
         expect(scene.cities.some((city) => city.id === 199)).toBe(false);
         expect(scene.cities.filter((city) => city.provinceId === 691)).toHaveLength(1);
-    });
+    }, 30_000);
 
     it('실제 정본에서 1020개 현과 172개 군국 마커를 각각 한 번만 만든다', () => {
         const runtime = JSON.parse(

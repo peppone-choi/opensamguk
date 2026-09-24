@@ -50,8 +50,10 @@ class HanSpatialSupplyProviderTest {
         assertTrue(custom.provinceOwners.all { it==0 || it==77 })
         // 판을 박아 두면 지도 릴리스마다 살아 있는 城 집합과 어긋난다(2026-09-21 실측: 1,168 판에서
         // 城 1134 identity 불일치). 런타임이 하는 그대로 살아 있는 城 id 로 판을 고른다.
-        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../.."))
-            .resolve(cities.map { it.cityId }, emptyList())
+        val resolver=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../.."))
+        val topology=resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection.topology
+        val artifacts=resolver.resolve(cities.map { it.cityId }, listOf(opensamguk.infra.seed.HanWorldTopologyPin(
+            "province_control", topology.topologyRevision, topology.contentHash)))
         val selected=provider().network("han-world-v3",990001,cities,artifacts=artifacts)
         assertEquals(custom.provinceOwners.toList(),selected.provinceOwners.toList())
         assertFailsWith<IllegalArgumentException> {
@@ -90,15 +92,15 @@ class HanSpatialSupplyProviderTest {
         // 2026-09-18 지리 재분할(GH #806): 郡 안 縣 경계를 城의 실제 위치로 다시 잘라 1,594 → 1,331 省.
         // 2026-09-20 한반도·만주 확장: 1,558개 구획, 대칭 인접 4,167개.
         // 2026-09-21 한반도·만주 임시 거점 정리(#848): 1,558 → 1,374 省.
-        assertEquals(1_653, network.provinceOwners.size)  // 2026-09-23: 미해독 3행 제외, 합성 城 223곳 추가
-        assertEquals(1_653, network.provinceAdjacency.size)
+        assertEquals(1_627, network.provinceOwners.size)  // 4배 지도 구역 재편 후
+        assertEquals(1_627, network.provinceAdjacency.size)
         // 동명이지에 잘못 묶인 縣 4곳을 CHGIS 제자리로 되돌리면서 省 인접이 2간선 늘었다
         // (4,118 → 4,120). 거점 省이 이웃과 새 경계를 내어 4,274 다. han-tiles.json adjacency.county 실측값이다.
         // 2026-09-16 1098: 五原郡 九原·河陰이 南匈奴 땅에서 발자국을 받고 平陰 省이 생기며 4,275.
         // 2026-09-18 지리 재분할: han-tiles adjacency.county 실측 4,275 → 3,551.
         // 2026-09-21 #848: han-tiles adjacency.county 실측 3,660.
         // 2026-09-23 미해독 3행을 제외한 결손 縣 223곳이 제 省을 받아 han-tiles adjacency.county 실측 4,296.
-        assertEquals(4_296, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        assertEquals(4_337, network.provinceAdjacency.sumOf(IntArray::size) / 2)
         network.provinceAdjacency.forEachIndexed { a, neighbors ->
             neighbors.forEach { b -> assertTrue(a in network.provinceAdjacency[b]) }
         }

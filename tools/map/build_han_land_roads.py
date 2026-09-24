@@ -276,6 +276,18 @@ def build(tiles: dict) -> dict:
         degree[pair[0]] += 1
         degree[pair[1]] += 1
         extra_budget -= 1
+    # A minimum spanning tree creates many arbitrary cul-de-sacs even where
+    # the terrain offers a cheap second crossing. Close those local loops so
+    # the road system reads and plays as a connected network. Mountain and
+    # desert detours stay unbuilt unless justified by another rule above.
+    for pair, (score, _, _) in ordered:
+        if pair not in accessible or pair in built or score[0] > 8:
+            continue
+        if degree[pair[0]] != 1 and degree[pair[1]] != 1:
+            continue
+        built.add(pair)
+        degree[pair[0]] += 1
+        degree[pair[1]] += 1
     # The long-distance overview shows the part of the initial tree that
     # actually joins substantial groups of counties. Local terminal streets
     # remain available at closer zoom, without cluttering the world picture.

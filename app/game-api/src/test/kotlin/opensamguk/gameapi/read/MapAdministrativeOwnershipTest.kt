@@ -250,7 +250,7 @@ class MapAdministrativeOwnershipTest {
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
             // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
             // 2026-09-21 #848 한반도 임시 거점 정리: 1,558 → data/map/han-tiles.json provinceRecords 1,374.
-            assertEquals(1_653, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 2026-09-23: 미해독 3행 제외, 합성 城 223곳 추가
+            assertEquals(1_627, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 4배 지도 구역 재편 후
             // 1,071 에서 1,070 으로 — 南鄉郡(PARENT-0113)의 합성 치소 관할
             // JURISDICTION-PARENT-0113-SEAT 하나가 접혔다. 동명이지(漢中 南鄉縣)에 잘못
             // 묶여 있던 진짜 南鄉縣(71022)이 제자리로 돌아와 그 임시 관할과 같은 칸에

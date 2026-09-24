@@ -1,13 +1,13 @@
 {
  "schemaVersion": 1,
  "sourceLedgerId": "territory-disconnection-adjudications-partition-v1",
- "sourcePartitionStageOutputSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+ "sourcePartitionStageOutputSha256": "989c37006f7069224320d936e29f6e9ceb89f16d9eb70a0bb298f308e659457a",
  "scope": "Partition carry review proposals only; draftVerdict is not an adopted ruling.",
  "counts": {
   "rows": 67,
   "humanDecisionRequired": 15,
-  "currentExact": 35,
-  "currentChanged": 28,
+  "currentExact": 52,
+  "currentChanged": 11,
   "currentAbsent": 4
  },
  "rows": [
@@ -16,14 +16,14 @@
    "unitId": "40165",
    "unitNameCh": "东部侯官县",
    "memberIds": [
-    "SUB-40165-39a88c0543b5"
+    "40165"
    ],
    "cellCountAtPartition": 9,
    "carryMode": "NEW_UNVERIFIED",
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "40165"
    ],
@@ -39,14 +39,14 @@
    "unitId": "40426",
    "unitNameCh": "娄县",
    "memberIds": [
-    "SUB-40426-900f77eff5b7"
+    "40426"
    ],
    "cellCountAtPartition": 39,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "40426"
    ],
@@ -72,14 +72,14 @@
    "unitId": "40740",
    "unitNameCh": "鄮县",
    "memberIds": [
-    "SUB-40740-3a5b5675f605"
+    "40740"
    ],
    "cellCountAtPartition": 30,
    "carryMode": "NEW_UNVERIFIED",
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "40740"
    ],
@@ -151,14 +151,14 @@
    "unitId": "42301",
    "unitNameCh": "安宁县",
    "memberIds": [
-    "SUB-42301-7104ff31657a"
+    "42301"
    ],
    "cellCountAtPartition": 16,
    "carryMode": "CARRIED_SAME_CELLS",
    "draftVerdict": "PARENT_MISASSIGNMENT",
    "sourceReviewState": "CORRECTED_BY_2_REFUTERS",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "42301"
    ],
@@ -259,14 +259,14 @@
    "unitId": "43252",
    "unitNameCh": "徐县",
    "memberIds": [
-    "SUB-43252-2d3b29ad3f33"
+    "43252"
    ],
    "cellCountAtPartition": 9,
    "carryMode": "NEW_UNVERIFIED",
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "43252"
    ],
@@ -543,7 +543,7 @@
     "87510",
     "87513"
    ],
-   "cellCountAtPartition": 165,
+   "cellCountAtPartition": 163,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "TIEBREAK_RESOLVED",
@@ -598,7 +598,8 @@
     "chgis:hvd_85186 source note「刘玄更始元年（23年）改延平侯国置，属魏郡。东汉同。」",
     "chgis:hvd_87489 source note「西汉初置。⑴治所在今河北任县任城镇西南。⑵属广平国。⑶」",
     "chgis:hvd_87506 source note「西汉初置。⑴治所在今河北任县任城镇西。⑵属广平国。⑶」",
-    "repo:data/curated/han/administrative-parent-reconciliation-v1.json cityId 87055 decision=PROPOSED_GEOMETRIC, nearestCandidates anchorCityId 87188 hhs-group:110:安平國 squaredGridDistance 32, approvedAdministrativeGroupIds=[安平國, 清河國]"
+    "repo:data/curated/han/administrative-parent-reconciliation-v1.json cityId 87055 decision=PROPOSED_GEOMETRIC, nearestCandidates anchorCityId 87188 hhs-group:110:安平國 squaredGridDistance 32, approvedAdministrativeGroupIds=[安平國, 清河國]",
+    "map:2026-09-24 최대 증축 경계 조정 뒤 PARENT-0014@414:180 은 163칸이며, 郡治 쪽 128칸과 여전히 따로 떨어진다. 기존 165칸 판정에서 2칸만 이웃 郡 경계로 이동했다."
    ]
   },
   {
@@ -1554,7 +1555,7 @@
    "unitId": "X040",
    "unitNameCh": "目支國",
    "memberIds": [
-    "SUB-X040-541a9c6ebb19"
+    "X040"
    ],
    "cellCountAtPartition": 9,
    "carryMode": "CARRIED_MEMBERS",
@@ -1582,7 +1583,7 @@
    "unitId": "X041",
    "unitNameCh": "辟卑離國",
    "memberIds": [
-    "SUB-X041-17b9700aed53"
+    "X041"
    ],
    "cellCountAtPartition": 14,
    "carryMode": "CARRIED_MEMBERS",
@@ -1694,14 +1695,14 @@
    "unitId": "X046",
    "unitNameCh": "古資彌凍國",
    "memberIds": [
-    "SUB-X046-763d3a08775b"
+    "X046"
    ],
    "cellCountAtPartition": 22,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "UPHELD",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X046"
    ],
@@ -1750,14 +1751,14 @@
    "unitId": "X052",
    "unitNameCh": "末盧國",
    "memberIds": [
-    "SUB-X052-9097a8854a1f"
+    "X052"
    ],
    "cellCountAtPartition": 20,
    "carryMode": "NEW_UNVERIFIED",
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X052"
    ],
@@ -1773,14 +1774,14 @@
    "unitId": "X052",
    "unitNameCh": "末盧國",
    "memberIds": [
-    "SUB-X052-e2019b23588b"
+    "X052"
    ],
    "cellCountAtPartition": 8,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X052"
    ],
@@ -1879,14 +1880,14 @@
    "unitId": "X054",
    "unitNameCh": "奴國",
    "memberIds": [
-    "SUB-X054-05d9b93dfd00"
+    "X054"
    ],
    "cellCountAtPartition": 480,
    "carryMode": "NEW_UNVERIFIED",
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X054"
    ],
@@ -1930,14 +1931,14 @@
    "unitId": "X055",
    "unitNameCh": "邪馬壹國",
    "memberIds": [
-    "SUB-X055-0deaa9deddaa"
+    "X055"
    ],
    "cellCountAtPartition": 41,
    "carryMode": "CARRIED_SAME_CELLS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X055"
    ],
@@ -1958,14 +1959,14 @@
    "unitId": "X055",
    "unitNameCh": "邪馬壹國",
    "memberIds": [
-    "SUB-X055-f9c61192fa78"
+    "X055"
    ],
    "cellCountAtPartition": 19,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X055"
    ],
@@ -1986,14 +1987,14 @@
    "unitId": "X055",
    "unitNameCh": "邪馬壹國",
    "memberIds": [
-    "SUB-X055-42319b3daf6c"
+    "X055"
    ],
    "cellCountAtPartition": 28,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X055"
    ],
@@ -2014,14 +2015,14 @@
    "unitId": "X056",
    "unitNameCh": "夷洲",
    "memberIds": [
-    "SUB-X056-c4d35e38f118"
+    "X056"
    ],
    "cellCountAtPartition": 15,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X056"
    ],
@@ -2046,14 +2047,14 @@
    "unitId": "X057",
    "unitNameCh": "流求",
    "memberIds": [
-    "SUB-X057-6e514a3d0138"
+    "X057"
    ],
    "cellCountAtPartition": 19,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X057"
    ],
@@ -2074,14 +2075,14 @@
    "unitId": "X057",
    "unitNameCh": "流求",
    "memberIds": [
-    "SUB-X057-f6cdaf119bf2"
+    "X057"
    ],
    "cellCountAtPartition": 11,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X057"
    ],
@@ -2102,14 +2103,14 @@
    "unitId": "X057",
    "unitNameCh": "流求",
    "memberIds": [
-    "SUB-X057-583a342f4480"
+    "X057"
    ],
    "cellCountAtPartition": 12,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X057"
    ],
@@ -2130,14 +2131,14 @@
    "unitId": "X057",
    "unitNameCh": "流求",
    "memberIds": [
-    "SUB-X057-ef85eaeea522"
+    "X057"
    ],
    "cellCountAtPartition": 42,
    "carryMode": "CARRIED_MEMBERS",
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "X057"
    ],

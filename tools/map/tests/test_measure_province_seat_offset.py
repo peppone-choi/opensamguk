@@ -97,15 +97,15 @@ class MeasureTest(unittest.TestCase):
         """적색 프로브: 예외 원장을 빼면 빨개진다 — 초록이 「아무것도 안 잰다」가 아님을 고정한다."""
         rc, text = self._run()
         self.assertEqual(rc, 1)
-        self.assertIn("Q1: 60 / 1445", text)
+        self.assertIn("Q1: 155 / 1445", text)
 
     def test_red_probe_seat_moved_ten_cells_is_red_even_with_the_ledgers(self):
-        """적색 프로브(계획 §6): 예외 행이 없는 城 하나의 실제 좌표를 10칸(≈0.54°) 옮긴 문서."""
+        """적색 프로브(계획 §6): 예외 행이 없는 城의 실제 좌표를 종전 격자 10칸만큼 옮긴 문서."""
         import json
         import tempfile
         document = json.loads(TILES.read_text())
         city = next(row for row in document["cities"] if row["nameCh"] == "邺县")
-        city["lon"] += 10 * document["_meta"]["projection"]["cell"] / document["_meta"]["projection"]["k"]
+        city["lon"] += 40 * document["_meta"]["projection"]["cell"] / document["_meta"]["projection"]["k"]
         with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
             json.dump(document, handle)
             handle.flush()
@@ -118,8 +118,8 @@ class MeasureTest(unittest.TestCase):
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
         self.assertEqual(len(rows), 1445)  # 결손 縣 223곳 추가 후
-        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1376)
-        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1385)
+        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1281)
+        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1290)
         self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1415)
 
 

@@ -135,7 +135,7 @@ export interface StrategicMapScene {
   byCell: ReadonlyMap<number, StrategicWaterZone>;
   edgesById: ReadonlyMap<string, StrategicTraversalEdge>;
   roadGates: readonly StrategicRoadGate[];
-  roadPaths?: { ordinary: Path2D; trunk: Path2D; historical: Path2D };
+  roadPaths?: { ordinary: Path2D; trunk: Path2D; historical: Path2D; junctions: Path2D };
 }
 
 /** Decode only reviewed cells. This is a renderer, never a route search or coastline flood-fill. */
@@ -177,16 +177,8 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Ha
     ? new Set(roadGates.filter(gate => gate.initiallyBuilt).map(gate => gate.edgeId))
     : new Set(roadOpenEdgeIds);
   if ([...openRoads].some(id => !seenGates.has(id))) throw new Error('Unknown open road edge');
-  const roadPaths = { ordinary: new Path2D(), trunk: new Path2D(), historical: new Path2D() };
-  const drawn = { ordinary: new Set<number>(), historical: new Set<number>() };
-  const cellCount = rows * cols;
-  function addSegment(path: Path2D, seen: Set<number>, a: readonly [number, number], b: readonly [number, number]) {
-    const first = a[0] * cols + a[1], second = b[0] * cols + b[1];
-    const key = Math.min(first, second) * cellCount + Math.max(first, second);
-    if (seen.has(key)) return;
-    seen.add(key);
-    path.moveTo(a[1], a[0]); path.lineTo(b[1], b[0]);
-  }
+  const roadPaths = { ordinary: new Path2D(), trunk: new Path2D(), historical: new Path2D(), junctions: new Path2D() };
+  const roadJunctions = new Set<string>();
   function addCurvedTrail(path: Path2D, cells: readonly (readonly [number, number])[]) {
     if (cells.length < 2) return;
     const radius = 18;
@@ -212,7 +204,6 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Ha
     if (!openRoads.has(gate.edgeId)) continue;
     const historical = gate.historicalRouteIds.length > 0;
     const path = historical ? roadPaths.historical : roadPaths.ordinary;
-    const seen = historical ? drawn.historical : drawn.ordinary;
     const from = gate.fromTrail ?? [[gate.fromRow, gate.fromCol] as const];
     const to = gate.toTrail ?? [[gate.toRow, gate.toCol] as const];
     for (const trail of [from, to]) {
@@ -222,13 +213,18 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Ha
         if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row >= rows || col < 0 || col >= cols ||
           (i > 0 && (Math.max(Math.abs(row - trail[i - 1][0]), Math.abs(col - trail[i - 1][1])) !== 1)))
           throw new Error('Invalid road trail');
-        if (i > 0 && !historical) addSegment(path, seen, trail[i - 1], trail[i]);
       }
     }
     if (from.at(-1)?.[0] !== gate.fromRow || from.at(-1)?.[1] !== gate.fromCol ||
       to.at(-1)?.[0] !== gate.toRow || to.at(-1)?.[1] !== gate.toCol) throw new Error('Road trail misses gate');
-    if (historical) addCurvedTrail(path, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
-    else addSegment(path, seen, [gate.fromRow, gate.fromCol], [gate.toRow, gate.toCol]);
+    for (const [row, col] of [from[0], to[0]]) {
+      const key = `${row}:${col}`;
+      if (roadJunctions.has(key)) continue;
+      roadJunctions.add(key);
+      roadPaths.junctions.moveTo(col + 0.75, row);
+      roadPaths.junctions.arc(col, row, 0.75, 0, Math.PI * 2);
+    }
+    addCurvedTrail(path, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
     if (gate.overviewTrunk && !historical)
       addCurvedTrail(roadPaths.trunk, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
   }

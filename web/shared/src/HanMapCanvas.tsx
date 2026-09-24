@@ -1385,15 +1385,23 @@ function drawScene(
   if (strategic && scale * resolutionScale / dpr >= 0.8) {
     const paths = strategic.scene.roadPaths;
     context.lineCap = 'round';
+    context.strokeStyle = scale * resolutionScale / dpr >= 2
+      ? 'rgba(109, 75, 37, 0.78)' : 'rgba(109, 75, 37, 0.54)';
+    context.lineWidth = Math.max(0.22, (scale * resolutionScale / dpr >= 2 ? 1 : 0.7) * dpr / scale);
+    if (paths) context.stroke(paths.ordinary);
     context.strokeStyle = 'rgba(132, 91, 53, 0.88)';
     context.lineWidth = Math.max(0.25, 1.15 * dpr / scale);
     if (paths) context.stroke(paths.trunk);
-    context.strokeStyle = 'rgba(109, 75, 37, 0.82)';
-    context.lineWidth = Math.max(0.22, dpr / scale);
-    if (paths && scale * resolutionScale / dpr >= 2) context.stroke(paths.ordinary);
     context.strokeStyle = 'rgba(229, 178, 86, 0.96)';
     context.lineWidth = Math.max(0.3, 1.5 * dpr / scale);
     if (paths) context.stroke(paths.historical);
+    if (paths && scale * resolutionScale / dpr < 2) {
+      context.fillStyle = 'rgba(82, 60, 42, 0.92)';
+      context.fill(paths.junctions);
+      context.strokeStyle = 'rgba(82, 60, 42, 0.92)';
+      context.lineWidth = Math.max(0.2, 1.2 * dpr / scale);
+      context.stroke(paths.junctions);
+    }
   }
   if (lod === 'JU' && juLayer) {
     context.strokeStyle = 'rgba(249,232,173,0.92)';

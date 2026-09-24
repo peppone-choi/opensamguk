@@ -82,21 +82,36 @@ def main():
             cells = edge["fromTrail"] + [[edge["toCell"]["row"], edge["toCell"]["col"]]] + list(reversed(edge["toTrail"]))
             pts = smooth([point(cell) for cell in cells])
             if len(pts) > 1:
-                fill, width = {"local": ((129, 94, 62, 66), 2), "trunk": ((117, 72, 38, 213), 5),
+                fill, width = {"local": ((129, 94, 62, 190), 4), "trunk": ((117, 72, 38, 230), 5),
                                "historical": ((191, 68, 22, 240), 7)}[layer]
                 draw.line(pts, fill=fill, width=width, joint="curve")
     base = Image.alpha_composite(base.convert("RGBA"), road_layer).convert("RGB")
     base = base.resize((cols // 2, rows // 2), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(base)
+    # Some province junctions have no city record. Mark every built road's
+    # endpoints so the line ends read as a destination or interchange.
+    junctions = set()
+    for edge in roads["edges"]:
+        if edge["status"] == "BUILT":
+            junctions.add(tuple(edge["fromTrail"][0]))
+            junctions.add(tuple(edge["toTrail"][0]))
+    for row, col in junctions:
+        x, y = col / 2, row / 2
+        draw.ellipse((x - 1.15, y - 1.15, x + 1.15, y + 1.15), fill=(91, 67, 47))
+    for city in tiles["cities"]:
+        x, y = city["col"] / 2, city["row"] / 2
+        draw.ellipse((x - 1.75, y - 1.75, x + 1.75, y + 1.75), fill=(83, 55, 34))
     font_path = Path("/System/Library/Fonts/AppleSDGothicNeo.ttc")
     font = ImageFont.truetype(str(font_path), 17) if font_path.exists() else ImageFont.load_default()
     small = ImageFont.truetype(str(font_path), 14) if font_path.exists() else ImageFont.load_default()
-    draw.rectangle((16, 16, 560, 100), fill=(248, 246, 237), outline=(107, 101, 86))
+    draw.rectangle((16, 16, 620, 100), fill=(248, 246, 237), outline=(107, 101, 86))
     draw.text((26, 23), "4배 지도 · 지형과 도로 구상", font=font, fill=(39, 39, 34))
     draw.line((28, 54, 67, 54), fill=(157, 117, 75), width=2)
     draw.text((77, 44), "지형 기반 간선·지방길", font=small, fill=(39, 39, 34))
     draw.line((265, 54, 304, 54), fill=(191, 97, 35), width=3)
     draw.text((314, 44), "사료 확인 통로*", font=small, fill=(39, 39, 34))
+    draw.ellipse((478, 49, 484, 55), fill=(83, 55, 34))
+    draw.text((491, 44), "치소·도로 접점", font=small, fill=(39, 39, 34))
     draw.text((26, 72), "* 통로의 존재는 사료 근거, 격자 경로는 지형 추정", font=small, fill=(78, 73, 65))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     base.save(OUT, optimize=True)

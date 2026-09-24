@@ -103,7 +103,8 @@ class HwihaLastTurnsReaderTest {
     @Test fun `세력 요약은 공개 종류만 묻는다 - 월세입은 요약 종류가 아니다`() {
         assertFalse(HwihaRecordKind.INCOME_MONTHLY in HwihaRecordKind.NATION_SUMMARY_KINDS)
         assertFalse(HwihaRecordKind.INCOME_MONTHLY in HwihaRecordKind.WORLD_SUMMARY_KINDS)
-        assertEquals(setOf(HwihaRecordKind.COUNTY_CAPTURED, HwihaRecordKind.COUNTY_LOST), HwihaRecordKind.NATION_SUMMARY_KINDS)
+        assertEquals(setOf(HwihaRecordKind.COUNTY_CAPTURED, HwihaRecordKind.COUNTY_LOST,
+            HwihaRecordKind.ROAD_FORT_CAPTURED), HwihaRecordKind.NATION_SUMMARY_KINDS)
         assertEquals(setOf(HwihaRecordKind.YUEDAN_ANNOUNCED), HwihaRecordKind.WORLD_SUMMARY_KINDS)
     }
 
