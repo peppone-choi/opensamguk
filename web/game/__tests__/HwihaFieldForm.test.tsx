@@ -16,7 +16,7 @@ beforeEach(()=>{
 
 test('reserves the current county action without caller supplied target or cost',async()=>{
     render(<HwihaFieldForm {...props}/>);
-    expect(await screen.findByText('대상 縣: 漢縣')).toBeInTheDocument();
+    expect(await screen.findByText('현재 縣: 漢縣 (실행 순에 위치·창고 재판정)')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'농지개간 예약'}));
     await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.farm',{},1,11));
     expect(props.onToast).toHaveBeenCalledWith('농지개간 명령이 예약되었습니다.','success');

@@ -133,11 +133,30 @@ class HwihaDomesticDesign internal constructor(
                     })
             }
             require(works.map { it.work } == DomesticWork.entries) { "every work must be designed exactly once, in order" }
+            val fortification = works.single { it.work == DomesticWork.FORTIFICATION }
+            val phaseProgress = worksNode.int("progressPerPhase").toLong()
+            val requiredProgress = fortification.requiredProgress.toLong()
+            for ((inputId, indicator) in listOf("action.fortify" to Indicator.DEFENCE,
+                "action.repairWall" to Indicator.WALL)) {
+                val direct = directActions.single { it.inputId == inputId }
+                val completion = fortification.completion.single { it.indicator == indicator }
+                require(direct.equivalent == "FORTIFICATION_1_PHASE" &&
+                    direct.indicators.single().indicator == indicator && direct.indicators.single().amount.toLong() ==
+                    completion.amount * phaseProgress / requiredProgress && direct.fixedCost == HwihaResources(
+                    fortification.cost.money * phaseProgress / requiredProgress / 2,
+                    fortification.cost.grain * phaseProgress / requiredProgress / 2,
+                    fortification.cost.iron * phaseProgress / requiredProgress / 2,
+                    fortification.cost.timber * phaseProgress / requiredProgress / 2,
+                    fortification.cost.horses * phaseProgress / requiredProgress / 2)) {
+                    "$inputId must match half of one fortification phase"
+                }
+            }
             return HwihaDomesticDesign(status, scaling, defaultPolicy, policies.associateBy { it.policy },
                 directStatus, directActions.associateBy { it.inputId },
                 worksNode.int("maxActiveWorksPerCounty").also { require(it == 1) { "only one active work per county is supported" } },
                 worksNode.int("progressPerPhase").also { require(it > 0) }, works.associateBy { it.work })
         }
+
 
         private fun JsonObject.obj(key: String): JsonObject = getValue(key).jsonObject
         private fun JsonObject.text(key: String): String = (getValue(key) as JsonPrimitive).also { require(it.isString) { "$key must be text" } }.content
