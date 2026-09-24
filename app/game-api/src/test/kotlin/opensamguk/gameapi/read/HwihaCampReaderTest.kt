@@ -225,23 +225,23 @@ class HwihaCampReaderTest {
     // ── 현 특산 ──────────────────────────────────────────────────────────
     @Test fun `현 특산은 산출 원장의 縣 행을 싣고 월 생산은 엔진과 같은 식으로 이번 달 실제 적립량이다`() {
         setup()
-        reader.production = mapOf(5 to HwihaResources(iron = 1000, timber = 2112))
+        reader.production = mapOf(5 to HwihaResources(iron = 1000, timber = 132))
         fun tangqu(supply: Int) = CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1, supplyState = supply,
             population = 5000, meta = warehouseMeta(5, 0))
         `when`(cities.findById(5)).thenReturn(Optional.of(tangqu(1)))
         `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, worldId = 1, name = "장안", nationId = 1, supplyState = 1)))
         val iron = assertNotNull(reader.county(5, 1, 41))
         assertEquals("READY", iron.status); assertEquals("탕거", iron.name)
-        // 원장 행 200197(宕渠) = 철 1000 · 목재 2112(4배 격자 면적 축).
-        assertEquals(listOf("IRON" to 1000L, "TIMBER" to 2112L), iron.specialties.map { it.resource to it.ledgerMonthly })
+        // 원장 행 200197(宕渠) = 철 1000 · 목재 132(기준 격자 면적 축).
+        assertEquals(listOf("IRON" to 1000L, "TIMBER" to 132L), iron.specialties.map { it.resource to it.ledgerMonthly })
         assertEquals("철", iron.specialties.first().label)
-        assertEquals(listOf<Long?>(1000, 2112), iron.specialties.map { it.monthly }, "보급된 우리 縣은 원장대로 들어온다")
+        assertEquals(listOf<Long?>(1000, 132), iron.specialties.map { it.monthly }, "보급된 우리 縣은 원장대로 들어온다")
         // 보급이 끊기면 엔진이 아무것도 넣지 않는다.
         `when`(cities.findById(5)).thenReturn(Optional.of(tangqu(0)))
         assertEquals(listOf<Long?>(0, 0), assertNotNull(reader.county(5, 1, 41)).specialties.map { it.monthly })
-        // 창고가 없는 縣은 엔진이 건너뛴다 — 원장 행(목재 160)은 보이되 월 생산은 0.
+        // 창고가 없는 縣은 엔진이 건너뛴다 — 원장 행(목재 10)은 보이되 월 생산은 0.
         val noWarehouse = assertNotNull(reader.county(6, 1, 41))
-        assertEquals(listOf("TIMBER" to 160L), noWarehouse.specialties.map { it.resource to it.ledgerMonthly })
+        assertEquals(listOf("TIMBER" to 10L), noWarehouse.specialties.map { it.resource to it.ledgerMonthly })
         assertEquals(listOf<Long?>(0), noWarehouse.specialties.map { it.monthly })
     }
 
@@ -360,7 +360,7 @@ class HwihaCampReaderTest {
         val table = ledgers.productionByJurisdiction
         // 縣 수는 지도 판마다 바뀐다 — 박지 않고 모든 행에 목재가 있는지만 본다.
         assertTrue(table.values.all { rows -> rows.any { it.resource == "TIMBER" } })
-        assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 2112)), table["200197"])
+        assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 132)), table["200197"])
         assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE", "TIMBER") })
         assertEquals(40, table.values.count { rows -> rows.any { it.resource != "TIMBER" } }, "1447 판: 결손 縣 배치 뒤 생산 원장 실측")
     }
