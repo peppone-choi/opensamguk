@@ -20,7 +20,8 @@ class HwihaPersonalHandlerTest {
         assertEquals(actor.stats.strength + ready.trainingStatGain, after.stats.strength)
         assertEquals(actor.stats.leadership, after.stats.leadership)
         assertEquals(ready.trainingFatigueGain, HwihaPersonalTravelCondition.read(after.meta)!!.fatigue)
-        assertEquals(ready.experiencePerAction, after.experience)
+        assertEquals(actor.experience, after.experience)
+        assertEquals(actor.dedication, after.dedication)
         assertEquals(applied, handler.handle(HwihaPersonalInput.SELF_TRAIN, actor.id, args, "train-901", 42))
         assertEquals(after, world.getGeneralById(actor.id))
     }
@@ -38,6 +39,8 @@ class HwihaPersonalHandlerTest {
         assertEquals(10, after.injury)
         assertEquals(5, HwihaPersonalTravelCondition.read(after.meta)!!.fatigue)
         assertEquals(60, HwihaPersonalTravelCondition.read(after.meta)!!.morale)
+        assertEquals(actor.experience, after.experience)
+        assertEquals(actor.dedication, after.dedication)
         val healthy = fixture.person(903, 1, route.startCity, userId = "42")
         val healthyWorld = fixture.world(listOf(healthy to route.start))
         assertEquals(HwihaPersonalFailure.ALREADY_HEALTHY.name,

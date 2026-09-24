@@ -27,6 +27,9 @@ class HwihaSiegeAssaultTest {
         val bare = HwihaSiegeAssault.resolve(layout, army(1000), 50, 1000, 100, 0)
         val walled = HwihaSiegeAssault.resolve(layout, army(1000), 50, 1000, 100, 100)
         assertTrue(walled.garrisonRemaining >= bare.garrisonRemaining, "walls never make the defence weaker")
+        val fortified = HwihaSiegeAssault.resolve(layout, army(1000), 50, 1000, 100, 0,
+            defenceBonusPercent = HwihaS3Provisional.ASSAULT_MAX_DEFENCE_BONUS_PERCENT)
+        assertTrue(fortified.garrisonRemaining >= bare.garrisonRemaining, "county defence protects the garrison")
     }
 
     @Test fun `an undefended county falls without a round and results are reproducible`() {

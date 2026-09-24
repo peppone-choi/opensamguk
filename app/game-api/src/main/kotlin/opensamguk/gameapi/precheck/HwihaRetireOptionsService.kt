@@ -18,6 +18,9 @@ class HwihaRetireOptionsService(private val reader: HwihaDomesticReader,
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(actorId: Int, userId: Long): HwihaRetireOptions {
         reader.requireOwner(actorId, userId)
+        if (catalog[HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler != true)
+            return HwihaRetireOptions(HwihaRetireInput.INPUT_ID, false,
+                InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state ?: return HwihaRetireOptions(HwihaRetireInput.INPUT_ID,
             false, HwihaRetireFailure.STATE_UNAVAILABLE.name, HwihaRetireFailure.STATE_UNAVAILABLE.message)
         val candidates = state.cards.filter { it.masterId == actorId && it.generalId != null }
@@ -29,10 +32,8 @@ class HwihaRetireOptionsService(private val reader: HwihaDomesticReader,
                         assessed.reason.name, assessed.reason.message)
                 }
             } }.sortedBy { it.generalId }
-        val delivered = catalog[HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler == true
-        val available = delivered && candidates.any { it.available }
+        val available = candidates.any { it.available }
         val failure = when {
-            !delivered -> InputRejection.NOT_DELIVERED.name to InputRejection.NOT_DELIVERED.message
             !available && candidates.isEmpty() -> HwihaRetireFailure.SUCCESSOR_NOT_RETAINER.name to
                 HwihaRetireFailure.SUCCESSOR_NOT_RETAINER.message
             !available -> candidates.first().let { it.code to it.reason }

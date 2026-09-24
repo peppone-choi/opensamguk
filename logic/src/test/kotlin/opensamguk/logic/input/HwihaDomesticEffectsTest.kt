@@ -37,7 +37,7 @@ class HwihaDomesticEffectsTest {
         }
         val fortify = HwihaDomesticEffects.applyDirect(design, HwihaFieldInput.FORTIFY, levels, actor)
         assertEquals(950, fortify.levels.defence)
-        assertEquals(HwihaResources(money = 10_000, timber = 500), fortify.debit)
+        assertEquals(HwihaResources(money = 5_000, timber = 250), fortify.debit)
         val wall = HwihaDomesticEffects.applyDirect(design, HwihaFieldInput.REPAIR_WALL, levels, actor)
         assertEquals(950, wall.levels.wall)
         assertEquals(fortify.debit, wall.debit)

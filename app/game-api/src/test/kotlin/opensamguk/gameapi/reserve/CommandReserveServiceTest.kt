@@ -30,7 +30,8 @@ class CommandReserveServiceTest {
             "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
             "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED","source":"test"},
             "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
-            "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "timing":${if (kind == "GENERAL_ACTION") """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}""" else
+                """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
             "deliveryState":"$state","legacyCommands":[]}]}""")
     private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
@@ -297,7 +298,7 @@ class CommandReserveServiceTest {
     }
 
     @Test
-    fun `immediate command inserts inbox before publishing and tolerates redis failure`() {
+    fun `shared mailbox intake works in hwiha and inserts inbox before publishing`() {
         val reservedTurns = RecordingReservedTurns()
         val inbox = RecordingInbox()
         val results = RecordingResults()
@@ -313,7 +314,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-immediate" },
-            transactions = TestTransactions, worldStates = worlds(),
+            transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
         )
 
         val result = service.reserve(generalId = 10, actionCode = "sendMessage", turnIdx = 0, argJson = """{"msg":"x"}""")

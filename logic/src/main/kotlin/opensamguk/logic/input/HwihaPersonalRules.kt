@@ -44,7 +44,7 @@ object HwihaPersonalRules {
                     null -> return reject(HwihaPersonalFailure.INVALID_INPUT)
                 }
                 if (value !in 0..100) return reject(HwihaPersonalFailure.STATE_UNAVAILABLE)
-                if (value == 100) return reject(HwihaPersonalFailure.TRAINING_MAXED)
+                if (value >= HwihaPersonalDesign.CANON.trainingStatCap) return reject(HwihaPersonalFailure.TRAINING_MAXED)
             }
             HwihaPersonalInput.RECUPERATE ->
                 if (actor.injury == 0 && condition.fatigue == 0) return reject(HwihaPersonalFailure.ALREADY_HEALTHY)

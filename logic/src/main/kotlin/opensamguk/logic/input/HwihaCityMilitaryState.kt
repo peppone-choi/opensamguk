@@ -17,11 +17,10 @@ data class HwihaCityMilitaryState(val training: Int, val morale: Int, val troops
             if (META_KEY !in meta) return INITIAL.copy(troops = legacyGarrison)
             val value = meta[META_KEY] as? Map<*, *> ?: invalid()
             val version = value["version"] as? Int ?: invalid()
-            require((version == 1 && value.keys == setOf("version", "training", "morale")) ||
-                (version == 2 && value.keys == setOf("version", "training", "morale", "troops")))
+            require(version == 2 && value.keys == setOf("version", "training", "morale", "troops"))
             return HwihaCityMilitaryState(value["training"] as? Int ?: invalid(),
                 value["morale"] as? Int ?: invalid(),
-                if (version == 1) legacyGarrison else value["troops"] as? Int ?: invalid())
+                value["troops"] as? Int ?: invalid())
         }
 
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA city military state")

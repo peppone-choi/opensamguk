@@ -28,7 +28,7 @@ class HwihaPersonalRulesTest {
         val request = HwihaPersonalRequest(1, HwihaPersonalInput.SELF_TRAIN, HwihaTrainingStat.STRENGTH)
         assertEquals(HwihaPersonalFailure.TRAINING_MAXED,
             assertIs<HwihaPersonalAssessment.Rejected>(HwihaPersonalRules.assess(request,
-                state(person(strength = 100)))).reason)
+                state(person(strength = HwihaPersonalDesign.CANON.trainingStatCap)))).reason)
         assertEquals(HwihaPersonalFailure.BATTLE_PENDING,
             assertIs<HwihaPersonalAssessment.Rejected>(HwihaPersonalRules.assess(request,
                 state(person().copy(inBattle = true)))).reason)

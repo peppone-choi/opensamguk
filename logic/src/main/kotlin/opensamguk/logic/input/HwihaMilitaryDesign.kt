@@ -18,7 +18,16 @@ data class HwihaMilitaryDesign(
     val demobilizeTroopPermille: Int,
     val experience: Int,
     val dedication: Int,
+    val npcPolicy: NpcPolicy,
 ) {
+    data class NpcPolicy(val status: String, val minimumTroops: Int, val minimumTraining: Int,
+        val minimumMorale: Int, val demobilizeBelowPopulation: Int, val demobilizeAboveTroops: Int) {
+        init {
+            require(status == "PROPOSED")
+            require(minimumTroops >= 0 && minimumTraining in 0..100 && minimumMorale in 0..100)
+            require(demobilizeBelowPopulation >= 0 && demobilizeAboveTroops >= 0)
+        }
+    }
     init {
         require(status == "PROPOSED" || status == CONFIRMED)
         require(conscriptHouseholdPermille in 1..1000 && volunteerHouseholdPermille in 1..1000)
@@ -36,16 +45,24 @@ data class HwihaMilitaryDesign(
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note", "conscriptHouseholdPermille",
                 "volunteerHouseholdPermille", "grainPerTroop", "moneyPerVolunteer", "trainingGain", "moraleGain",
-                "demobilizeTroopPermille", "experience", "dedication"))
+                "demobilizeTroopPermille", "experience", "dedication", "npcPolicy"))
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1 &&
                 root.getValue("ledgerId").jsonPrimitive.content == "hwiha-military-v1")
             require(root.getValue("note").jsonPrimitive.content.isNotBlank())
             fun count(name: String) = root.getValue(name).jsonPrimitive.int
             fun resource(name: String) = root.getValue(name).jsonPrimitive.long
+            val npc = root.getValue("npcPolicy").jsonObject
+            require(npc.keys == setOf("status", "note", "minimumTroops", "minimumTraining", "minimumMorale",
+                "demobilizeBelowPopulation", "demobilizeAboveTroops"))
+            require(npc.getValue("note").jsonPrimitive.content.isNotBlank())
+            fun npcCount(name: String) = npc.getValue(name).jsonPrimitive.int
             return HwihaMilitaryDesign(root.getValue("status").jsonPrimitive.content,
                 count("conscriptHouseholdPermille"), count("volunteerHouseholdPermille"),
                 resource("grainPerTroop"), resource("moneyPerVolunteer"), count("trainingGain"), count("moraleGain"),
-                count("demobilizeTroopPermille"), count("experience"), count("dedication"))
+                count("demobilizeTroopPermille"), count("experience"), count("dedication"),
+                NpcPolicy(npc.getValue("status").jsonPrimitive.content, npcCount("minimumTroops"),
+                    npcCount("minimumTraining"), npcCount("minimumMorale"), npcCount("demobilizeBelowPopulation"),
+                    npcCount("demobilizeAboveTroops")))
         }
     }
 }

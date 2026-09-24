@@ -20,6 +20,8 @@ class HwihaPeopleAdmission(private val reader: HwihaDomesticReader,
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         val request = HwihaPeopleInput.parse(actorId, inputId, raw)
             ?: deny(HwihaPeopleFailure.INVALID_INPUT.name, HwihaPeopleFailure.INVALID_INPUT.message)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true)
+            deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val projection = reader.snapshot().state ?: deny(HwihaPeopleFailure.STATE_UNAVAILABLE.name,
             HwihaPeopleFailure.STATE_UNAVAILABLE.message)
         when (val assessment = HwihaPeopleRules.assess(request, projection)) {

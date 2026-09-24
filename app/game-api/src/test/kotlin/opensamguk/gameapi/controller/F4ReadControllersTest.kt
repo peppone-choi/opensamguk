@@ -44,6 +44,7 @@ import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.domestic.getOutcome
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.any
@@ -78,6 +79,8 @@ import java.util.Optional
  * board, votes, troops, history) + the permission gates (board 기밀실, chief/npc/inherit identity).
  */
 class F4ReadControllersTest {
+    @BeforeEach
+    fun clearAuthentication() = SecurityContextHolder.clearContext()
 
     private val generals = mock(GeneralReadRepository::class.java)
     private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
@@ -623,6 +626,7 @@ class F4ReadControllersTest {
     // ── GET /api/nation/chief-reserved (8 posts, reserved turns by level) ────────────────────────────
     @Test
     fun `chief reserved returns 8 posts with reserved turns grouped by officer level`() {
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
         // 액터 상태 없음 → precheckAll null → 명령 팔레트는 레지스트리-only 폴백(possible=true).
         `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
@@ -702,6 +706,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `chief reserved for 재야 caller returns 8 empty posts with neutral nation`() {
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "방랑", nationId = 0, officerLevel = 0)))
         `when`(world.findAll()).thenReturn(
@@ -727,6 +732,13 @@ class F4ReadControllersTest {
     fun `chief reserved 401 for anonymous caller`() {
         mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved"))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `chief legacy command palette is not a hwiha product endpoint`() {
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved").with(principal(7L)))
+            .andExpect(status().isNotFound)
     }
 
     // ── GET /api/nation/npc-policy (default + current, permission gate) ──────────────────────────────

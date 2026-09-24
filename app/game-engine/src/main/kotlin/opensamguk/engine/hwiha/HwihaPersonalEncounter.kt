@@ -22,8 +22,10 @@ class HwihaPersonalEncounter(
             .removePrefix("land:"))
         if (defenders.isEmpty()) {
             check(reactions.schemeContact(world, actorId, province)) { "Encounter lost its defender" }
+            val stop = if (checkpoint.cursor.edgeIndex == checkpoint.path.edgeIds.size) LandMarchStop.ARRIVED
+                else LandMarchStop.BUDGET_EXHAUSTED
             update(actorId) { it.copy(meta = it.meta + (HwihaTravelState.META_KEY to
-                applied.state.copy(checkpoint = checkpoint.copy(stop = LandMarchStop.BUDGET_EXHAUSTED)).toMetaValue())) }
+                applied.state.copy(checkpoint = checkpoint.copy(stop = stop)).toMetaValue())) }
             HwihaRecords.general(world, actorId, HwihaRecordKind.MARCH_DIRECT,
                 "설치 계책을 만나 행군을 멈췄습니다.", mapOf("orderId" to applied.state.orderId,
                     "province" to province.canonicalKey, "stop" to "SCHEME_CONTACT"))
@@ -31,13 +33,26 @@ class HwihaPersonalEncounter(
         }
         val attacker = checkNotNull(world.getGeneralById(actorId))
         val defenderPeople = defenders.map { checkNotNull(world.getGeneralById(it.commanderGeneralId)) }
-        val attackerCondition = HwihaPersonalTravelCondition.read(attacker.meta) ?: HwihaPersonalTravelCondition.INITIAL
+        val conditions = try {
+            (listOf(attacker) + defenderPeople).associate { person ->
+                person.id to (HwihaPersonalTravelCondition.read(person.meta) ?: HwihaPersonalTravelCondition.INITIAL)
+            }
+        } catch (_: IllegalArgumentException) {
+            check(recorder.moveGeneral(world, actorId, approach) is GeneralPositionChangeResult.Changed) {
+                "Invalid personal encounter state could not retreat"
+            }
+            update(actorId) { it.copy(meta = it.meta - HwihaTravelState.META_KEY) }
+            HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
+                "개인 조우 상태를 읽을 수 없어 이전 省으로 물러났습니다.",
+                mapOf("inputId" to applied.state.inputId, "code" to "STATE_UNAVAILABLE"))
+            return
+        }
+        val attackerCondition = conditions.getValue(actorId)
         fun fighter(person: TurnGeneral, condition: HwihaPersonalTravelCondition) = HwihaPersonalEncounterBattle.Fighter(
             person.id, person.stats.leadership.coerceIn(0, 100), person.stats.strength.coerceIn(0, 100),
             person.injury.coerceIn(0, 100), condition.fatigue, condition.morale)
         val battle = HwihaPersonalEncounterBattle.resolve(fighter(attacker, attackerCondition),
-            defenderPeople.map { person -> fighter(person, HwihaPersonalTravelCondition.read(person.meta)
-                ?: HwihaPersonalTravelCondition.INITIAL) })
+            defenderPeople.map { person -> fighter(person, conditions.getValue(person.id)) })
         val encounterId = "personal:${applied.state.orderId}:${checkpoint.cursor.edgeIndex}"
         val replay = linkedMapOf<String, Any?>("version" to 1, "ruleVersion" to HwihaPersonalEncounterBattle.RULE_VERSION,
             "orderId" to applied.state.orderId,

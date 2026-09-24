@@ -110,12 +110,12 @@ class TurnDaemonLifecycle(
      */
     fun dueGenerals(runTime: Instant): List<TurnGeneral> =
         world.listGenerals()
-            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) &&
-                (world.ruleProfile != RuleProfile.HWIHA || it.meta["hwihaRetired"] != true) }
+            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
-        world.ruleProfile != RuleProfile.HWIHA || HwihaPersonalTurn.eligible(general.meta, world.getState())
+        world.ruleProfile != RuleProfile.HWIHA ||
+            (general.meta["hwihaRetired"] != true && HwihaPersonalTurn.eligible(general.meta, world.getState()))
 
     class GeneralDrainCohort internal constructor(
         internal val identityTokens: Map<Int, Long>,
