@@ -9,7 +9,7 @@ vi.mock('@/lib/serverGameUrl', async () => {
     const actual = await vi.importActual<typeof import('@/lib/serverGameUrl')>('@/lib/serverGameUrl');
     return { ...actual, useServerId: mocks.serverId };
 });
-const NONE: ControlGating = { showSecret: false, permission: 0, myLevel: 0, nationLevel: 0, isTournamentApplicationOpen: false, isBettingActive: false };
+const NONE: ControlGating = { myLevel: 0 };
 
 describe('BottomNav (모바일 5탭)', () => {
     it('renders the five S1 tabs on server-scoped hrefs and gates 국가 with a reason', () => {

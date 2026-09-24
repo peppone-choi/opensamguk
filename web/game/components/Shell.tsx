@@ -24,36 +24,28 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     }, []);
     const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
     const isMainPage = normalizedPathname === '/game';
-    const { info, error, state, menu } = useShellFrontInfo();
+    const { info, error, state } = useShellFrontInfo();
 
     useSSE(refresh);
 
     const gating: ControlGating | null = useMemo(() => {
         if (!info?.general.hasGeneral) return null;
-        const g = info.general;
-        return {
-            showSecret: g.showSecret,
-            permission: g.permission,
-            myLevel: g.officerLevel,
-            nationLevel: info.nation?.level ?? 0,
-            isTournamentApplicationOpen: Boolean(info.global.isTournamentApplicationOpen),
-            isBettingActive: Boolean(info.global.isBettingActive),
-        };
+        return { myLevel: info.general.officerLevel };
     }, [info]);
     const global = (info?.global ?? {}) as unknown as MenuFlagSource;
 
     return (
         <div className="shell">
             <Header info={info} error={error} />
-            <DeptNav gating={gating} gatingState={state} global={global} menu={menu} />
+            <DeptNav gating={gating} gatingState={state} global={global} />
             <div className="shell-body">
                 <main className="shell-main shell-scroll-surface" aria-label="게임 콘텐츠">
-                    {/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 메인은 GameChrome이라 미적용. */}
+                    {/* 서브 페이지 공통 돌아가기/갱신 바. 메인 작전실에는 미적용. */}
                     {!isMainPage && <BackBar />}
                     {children}
                 </main>
             </div>
-            <BottomNav gating={gating} gatingState={state} global={global} menu={menu} />
+            <BottomNav gating={gating} gatingState={state} global={global} />
         </div>
     );
 }

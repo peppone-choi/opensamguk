@@ -4,7 +4,7 @@
 // 비활성은 숨기지 않고 점선 + 사유 툴팁(OPENSAM-113). 우측: 갱신 · 로비로 · 커뮤니티 ↗.
 // 게이팅을 아직 모르면(loading) 중립으로 두고, 서버 정보가 없으면(error) 「서버 정보 없음」만 붙인다 — 권한 사유를 지어내지 않는다.
 // 키보드: 그룹 버튼 Enter/Space/ArrowDown 으로 열고 첫 항목에 포커스, 항목 간 ArrowUp/Down·Home/End, Escape 로 닫고 버튼으로 복귀.
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { Chip, ReasonTooltip } from '@opensamguk/ui';
 import { useAuthOptional } from '@/lib/auth-context';
@@ -17,7 +17,7 @@ import {
     type DeptGroup,
     type GatingState,
 } from '@/lib/dept-menu-config';
-import type { MenuFlagSource, MenuNode } from '@/lib/menu-types';
+import type { MenuFlagSource } from '@/lib/menu-types';
 import {
     gameChildPath,
     normalizeGamePathname,
@@ -47,8 +47,6 @@ export interface DeptNavProps {
     gating: ControlGating | null;
     gatingState?: GatingState;
     global: MenuFlagSource;
-    /** 서버 전역 메뉴(GetGlobalMenu). 없으면 v2 픽스처. */
-    menu?: MenuNode[];
     /** 세로 목록(모바일 「더보기」 시트). */
     vertical?: boolean;
     onNavigate?: () => void;
@@ -232,13 +230,13 @@ function GroupMenu({
     );
 }
 
-export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'loading', global, menu, vertical = false, onNavigate, onReload }: DeptNavProps) {
+export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'loading', global, vertical = false, onNavigate, onReload }: DeptNavProps) {
     const serverId = useServerId();
     const pathname = usePathname();
     const normalized = normalizeGamePathname(pathname ?? '', serverId);
     const [openKey, setOpenKey] = useState<string | null>(null);
     const rootRef = useRef<HTMLElement>(null);
-    const groups = useMemo(() => buildDeptGroups(menu), [menu]);
+    const groups = buildDeptGroups();
     const auth = useAuthOptional();
     const isAdmin = auth?.user?.role === 'ADMIN';
 

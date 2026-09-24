@@ -239,12 +239,7 @@ export default function JoinPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [joinStatus, setJoinStatus] = useState('');
-  const [displayInherit, setDisplayInherit] = useState(false);
   const [joinForm, setJoinForm] = useState<JoinFormResponse | null>(null);
-  const [inheritSpecial, setInheritSpecial] = useState<string | undefined>();
-  const [inheritTurntimeZone, setInheritTurntimeZone] = useState<number | undefined>();
-  const [inheritCity, setInheritCity] = useState<number | undefined>();
-  const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
 
   // 국가 목록(임관권유문 표시 전용 — 입장 안 함, 재야로 시작). 레거시 v_join.php nationList + scout_msg.
   const [nations, setNations] = useState<MapPreviewResponse['nations']>([]);
@@ -253,27 +248,6 @@ export default function JoinPage() {
 
   const total = leadership + strength + intel + politics + charm;
   const remaining = DEFAULT_STAT_TOTAL - total;
-  const inheritBonusTotal = inheritBonusStat.reduce((sum, value) => sum + value, 0);
-  const inheritRequiredPoint =
-    (inheritSpecial === undefined ? 0 : (joinForm?.inheritCosts.special ?? 0)) +
-    (inheritTurntimeZone === undefined ? 0 : (joinForm?.inheritCosts.turntime ?? 0)) +
-    (inheritCity === undefined ? 0 : (joinForm?.inheritCosts.city ?? 0)) +
-    (inheritBonusTotal === 0 ? 0 : (joinForm?.inheritCosts.stat ?? 0));
-
-  const turnTimeZoneList = useMemo(() => {
-    const zoneSeconds = joinForm?.turnTermMinutes ?? 0;
-    if (zoneSeconds <= 0) return [];
-    const format = (seconds: number) => {
-      const minute = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const second = (seconds % 60).toString().padStart(2, '0');
-      return `${minute}:${second}`;
-    };
-    return Array.from({ length: 60 }, (_, index) => {
-      const start = index * zoneSeconds;
-      const end = start + zoneSeconds - 1;
-      return `${format(start)}.000 ~ ${format(end)}.999`;
-    });
-  }, [joinForm?.turnTermMinutes]);
 
   useEffect(() => {
     let alive = true;
@@ -356,18 +330,6 @@ export default function JoinPage() {
       );
       if (!ok) return;
     }
-    if (inheritBonusTotal !== 0 && (inheritBonusTotal < 3 || inheritBonusTotal > 5)) {
-      setError('보너스 능력치 합은 3~5 사이여야 합니다.');
-      return;
-    }
-    if (inheritRequiredPoint > (joinForm?.inheritTotalPoint ?? 0)) {
-      setError('유산 포인트가 부족합니다. 다시 가입해주세요!');
-      return;
-    }
-    if (inheritSpecial !== undefined && (joinForm?.geniusRemaining ?? 0) <= 0) {
-      setError('이미 천재가 모두 나타났습니다. 다시 가입해주세요!');
-      return;
-    }
     setLoading(true);
     try {
       setJoinStatus('장수 생성 요청 중...');
@@ -380,10 +342,7 @@ export default function JoinPage() {
         charm,
         character,
         pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
-        ...(inheritSpecial === undefined ? {} : { inheritSpecial }),
-        ...(inheritTurntimeZone === undefined ? {} : { inheritTurntimeZone }),
-        ...(inheritCity === undefined ? {} : { inheritCity }),
-        ...(inheritBonusTotal === 0 ? {} : { inheritBonusStat }),
+
       });
       if (res.status === 'AVAILABLE' && res.requestId) {
         setJoinStatus('장수 생성 반영 중...');
@@ -608,103 +567,9 @@ export default function JoinPage() {
             모든 능력치는 ( {STAT_MIN} &lt;= 능력치 &lt;= {STAT_MAX} ) 사이로 잡으셔야 합니다.<br />그 외의 능력치는 가입되지 않습니다.
           </p>
           <p className="join-note">
-            능력치의 총합은 {DEFAULT_STAT_TOTAL} 입니다. 가입후 {BORN_MIN_STAT_BONUS} ~ {BORN_MAX_STAT_BONUS} 의 능력치 보너스를 받게 됩니다.<br />임의의 도시에서 재야로 시작하며 건국과 임관은 게임 내에서 실행합니다.
+            능력치의 총합은 {DEFAULT_STAT_TOTAL} 입니다. 가입후 {BORN_MIN_STAT_BONUS} ~ {BORN_MAX_STAT_BONUS} 의 능력치 보너스를 받게 됩니다.<br />장수 생성 뒤 출사는 작전실의 직접 행동으로 예약합니다.
           </p>
         </div>
-
-        <section className="join-section">
-          <div className="join-inherit__head">
-            <strong className="join-inherit__title">유산 포인트 사용</strong>
-            <label className="join-check join-check--sm">
-              <input type="checkbox" checked={displayInherit} onChange={(e) => setDisplayInherit(e.target.checked)} />
-              {displayInherit ? '숨기기' : '보이기'}
-            </label>
-          </div>
-          {displayInherit && (
-            <div className="join-inherit">
-              <div className="join-inherit__pair">
-                <label>
-                  <span className="join-inherit__label">보유한 유산 포인트</span>
-                  <input type="text" value={joinForm?.inheritTotalPoint ?? 0} readOnly className="join-field__control" />
-                </label>
-                <label>
-                  <span className="join-inherit__label">필요 유산 포인트</span>
-                  <input type="text" value={inheritRequiredPoint} readOnly className="join-field__control" />
-                </label>
-              </div>
-              <div className="join-inherit__grid">
-                <label>
-                  <span className="join-inherit__label">천재로 생성</span>
-                  <select
-                    value={inheritSpecial ?? ''}
-                    disabled={joinForm === null || joinForm.geniusRemaining <= 0}
-                    onChange={(e) => setInheritSpecial(e.target.value || undefined)}
-                    className="join-field__control"
-                  >
-                    <option value="">사용안함</option>
-                    {Object.entries(joinForm?.availableSpecialWar ?? {}).map(([key, special]) => (
-                      <option key={key} value={key}>{special.title}</option>
-                    ))}
-                  </select>
-                  {inheritSpecial !== undefined && (
-                    <small dangerouslySetInnerHTML={{ __html: joinForm?.availableSpecialWar[inheritSpecial]?.info ?? '' }} />
-                  )}
-                </label>
-                <label>
-                  <span className="join-inherit__label">도시</span>
-                  <select
-                    value={inheritCity ?? ''}
-                    disabled={joinForm === null}
-                    onChange={(e) => setInheritCity(e.target.value === '' ? undefined : Number(e.target.value))}
-                    className="join-field__control"
-                  >
-                    <option value="">사용안함</option>
-                    {(joinForm?.cities ?? []).map((city) => (
-                      <option key={city.id} value={city.id}>{`[${city.region}] ${city.name}`}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span className="join-inherit__label">턴 시간 지정</span>
-                  <select
-                    value={inheritTurntimeZone ?? ''}
-                    disabled={joinForm === null}
-                    onChange={(e) => setInheritTurntimeZone(e.target.value === '' ? undefined : Number(e.target.value))}
-                    className="join-field__control"
-                  >
-                    <option value="">사용안함</option>
-                    {turnTimeZoneList.map((zone, index) => (
-                      <option key={zone} value={index}>{zone}</option>
-                    ))}
-                  </select>
-                </label>
-                <fieldset disabled={joinForm === null} className="join-bonus">
-                  <legend>추가 능력치 고정(통/무/지)</legend>
-                  <div className="join-bonus__grid">
-                    {(['통솔', '무력', '지력'] as const).map((statName, index) => (
-                      <input
-                        key={statName}
-                        aria-label={`추가 능력치 ${statName}`}
-                        type="number"
-                        min={0}
-                        max={BORN_MAX_STAT_BONUS}
-                        value={inheritBonusStat[index]}
-                        onChange={(e) => {
-                          const value = Math.max(0, Math.min(BORN_MAX_STAT_BONUS, Number(e.target.value) || 0));
-                          setInheritBonusStat((current) => {
-                            if (index === 0) return [value, current[1], current[2]];
-                            if (index === 1) return [current[0], value, current[2]];
-                            return [current[0], current[1], value];
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
-                </fieldset>
-              </div>
-            </div>
-          )}
-        </section>
 
         <div className="join-submit">
           {(() => {

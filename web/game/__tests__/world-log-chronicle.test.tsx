@@ -32,7 +32,7 @@ describe('WorldLogPage 편년체', () => {
         expect(rowTexts(jan)).toEqual(['●187년 1월:둘째', '●187년 1월:첫째']);
         expect(screen.getAllByRole('region')).toHaveLength(2);
         expect(screen.getByText('187年 1月 ~ 187年 2月')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: '전황' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '월드 기록' })).toHaveAttribute('aria-current', 'page');
     });
 
     it('renders the empty state without a heading row', async () => {

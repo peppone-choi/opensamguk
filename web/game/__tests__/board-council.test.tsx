@@ -85,31 +85,19 @@ describe('BoardPage (14 회의실·기밀실)', () => {
         expect(await screen.findByRole('heading', { name: '기밀실' })).toBeInTheDocument();
         expect(screen.getByText('원소 불가침, 회신 미루자')).toBeInTheDocument();
         const kinds = screen.getByRole('tablist', { name: '글 종류' });
-        expect(within(kinds).getByRole('tab', { name: /전체/ })).toHaveTextContent('2');
+        expect(within(kinds).getByRole('tab', { name: /전체/ })).toHaveTextContent('1');
         expect(within(kinds).getByRole('tab', { name: /공지/ })).toHaveTextContent('1');
-        // 열람 기록 — 읽은 사람 / 수뇌부 정원
-        // 두 글 모두 열람 1/3(읽은 사람 1 / 수뇌부 정원 3)
-        expect(screen.getAllByText('열람 1/3', { exact: false })).toHaveLength(2);
-        // 내(77)가 아직 안 읽은 글(5)만 boardRead 를 한 번 인테이크, 이미 읽은 글(6)은 하지 않는다.
+        expect(within(kinds).queryByRole('tab', { name: /표결/ })).not.toBeInTheDocument();
+        expect(screen.queryByText('양양 확보를 병행할 것인가')).not.toBeInTheDocument();
+        expect(screen.getByText('열람 1/3', { exact: false })).toBeInTheDocument();
+        // 내(77)가 아직 안 읽은 공지(5)만 boardRead 인테이크한다.
         await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('boardRead', { articleNo: 5 }, 77));
         expect(mocks.command).toHaveBeenCalledTimes(1);
         // 적용되면 열람 수를 다시 읽는다(202 ≠ 성공 — 결과 뒤 재조회).
         await waitFor(() => expect(mocks.board).toHaveBeenCalledTimes(2));
-        fireEvent.click(within(kinds).getByRole('tab', { name: /표결/ }));
-        expect(screen.queryByText('원소 불가침, 회신 미루자')).not.toBeInTheDocument();
-        expect(screen.getByText('양양 확보를 병행할 것인가')).toBeInTheDocument();
         // 우측 레일 — 참여 스택과 활동/침묵 집계, 기밀실 안내
         expect(screen.getByText('활동 2 · 침묵 1 · NPC 제외')).toBeInTheDocument();
         expect(screen.getByText(/URL 직접 입력으로 우회할 수 없습니다/)).toBeInTheDocument();
-    });
-
-    it('casts a vote from the 표결 card through the voteCast intake', async () => {
-        render(<BoardPage />);
-        const card = await screen.findByLabelText('표결 양양 확보 병행');
-        expect(within(card).getByText('찬성 2 · 반대 0 · 미표 1')).toBeInTheDocument();
-        fireEvent.click(within(card).getByRole('button', { name: '반대' }));
-        await waitFor(() => expect(screen.getByTestId('command-modal')).toHaveTextContent('voteCast'));
-        expect(modalSpy.latest?.extraArgs).toEqual({ voteId: 3, selection: [1] });
     });
 
     it('sends kind with the article and gates 공지 to 수뇌부', async () => {

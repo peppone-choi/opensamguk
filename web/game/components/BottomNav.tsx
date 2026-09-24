@@ -7,17 +7,16 @@ import { usePathname } from 'next/navigation';
 import { ReasonTooltip } from '@opensamguk/ui';
 import DeptNav, { resolveDeptHref } from './DeptNav';
 import { MOBILE_TABS, evaluateMobileTab, type ControlGating, type GatingState } from '@/lib/dept-menu-config';
-import type { MenuFlagSource, MenuNode } from '@/lib/menu-types';
+import type { MenuFlagSource } from '@/lib/menu-types';
 import { normalizeGamePathname, useServerId } from '@/lib/serverGameUrl';
 
 export interface BottomNavProps {
     gating?: ControlGating | null;
     gatingState?: GatingState;
     global?: MenuFlagSource;
-    menu?: MenuNode[];
 }
 
-export default function BottomNav({ gating = null, gatingState = gating ? 'ready' : 'loading', global = {}, menu }: BottomNavProps) {
+export default function BottomNav({ gating = null, gatingState = gating ? 'ready' : 'loading', global = {} }: BottomNavProps) {
     const pathname = usePathname();
     const serverId = useServerId();
     const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
@@ -119,7 +118,7 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
                                 moreButtonRef.current?.focus();
                             }}>닫기</button>
                         </div>
-                        <DeptNav gating={gating} gatingState={gatingState} global={global} menu={menu} vertical onNavigate={() => setMoreOpen(false)} />
+                        <DeptNav gating={gating} gatingState={gatingState} global={global} vertical onNavigate={() => setMoreOpen(false)} />
                     </div>
                 </div>
             )}
