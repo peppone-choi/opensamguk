@@ -19,6 +19,8 @@ object HwihaRecordKind {
     // 장수 개인
     const val MARCH_ASSIGNMENT = "march.assignment"
     const val MARCH_CORPS = "march.corps"
+    const val MARCH_DIRECT = "march.direct"
+    const val PERSONAL_ENCOUNTER = "encounter.personal"
     const val DEPLOY_STARTED = "deploy.started"
     const val ENCOUNTER_PENDING = "encounter.pending"
     const val ENCOUNTER_DISBANDED = "encounter.disbanded"

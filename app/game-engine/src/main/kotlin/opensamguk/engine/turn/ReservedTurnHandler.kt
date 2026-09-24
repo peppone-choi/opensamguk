@@ -200,6 +200,7 @@ class ReservedTurnHandler(
     private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
     private val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener = opensamguk.engine.hwiha.HwihaWarOutcomeListener.NONE,
+    private val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = opensamguk.engine.hwiha.HwihaMarchReactionPolicy.NON_BLOCKING,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
@@ -216,6 +217,8 @@ class ReservedTurnHandler(
     private val scoutHandler by lazy { opensamguk.engine.hwiha.HwihaScoutHandler(world, recorder, hwihaVisionContext) }
     private val siegeHandler by lazy { opensamguk.engine.hwiha.HwihaSiegeHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
+    private val travelHandler by lazy { opensamguk.engine.hwiha.HwihaTravelHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -305,6 +308,12 @@ class ReservedTurnHandler(
             }
             handlers[opensamguk.logic.input.HwihaScoutInput.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
+            }
+            for (travelId in opensamguk.logic.input.HwihaTravelInput.INPUT_IDS) {
+                handlers[travelId] = InputHandler {
+                    applied = travelHandler.handle(travelId, generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId)
+                }
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {

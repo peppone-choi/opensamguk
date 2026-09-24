@@ -83,6 +83,41 @@ class HwihaMarchPersistenceIT {
         return cold(id)
     }
 
+    @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
+        val id = 618
+        var world = personalMarchFixture(id)
+        val assignment = HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta)!!
+        val destination = assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(assignment.countyId))
+        var recorder = ChangeRecorder()
+        val started = HwihaTravelExecutor(world, recorder, topology, metrics)
+            .start("forced-$id", HwihaTravelRequest(1, HwihaTravelInput.FORCED_MARCH, destination), destination,
+                45_000_000L) { LandMarchEntry.CLEAR }
+        val first = assertIs<HwihaTravelExecution.Applied>(started, "direct travel start: $started")
+        val beforeCondition = HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta)
+        assertEquals(first.condition, beforeCondition)
+        save(world, recorder)
+        world = cold(id)
+        val saved = HwihaTravelState.read(world.getGeneralById(1)!!.meta, topology, metrics)!!
+        assertEquals(first.state.orderId, saved.orderId)
+        assertEquals(first.state.checkpoint.cursor, saved.checkpoint.cursor)
+        assertEquals(first.state.assignmentIdAtStart, saved.assignmentIdAtStart)
+        assertEquals(beforeCondition, HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta))
+        val beforePosition = world.positionOf(1)
+        assertIs<HwihaTravelExecution.AlreadyProcessed>(HwihaTravelExecutor(world, ChangeRecorder(), topology, metrics)
+            .start("forced-$id", HwihaTravelRequest(1, HwihaTravelInput.FORCED_MARCH, destination), destination,
+                45_000_000L) { error("duplicate must not re-enter") })
+        assertEquals(beforePosition, world.positionOf(1))
+        if (saved.checkpoint.stop != LandMarchStop.ARRIVED) {
+            nextPhase(world); recorder = ChangeRecorder()
+            val resumed = assertIs<HwihaTravelExecution.Applied>(HwihaTravelExecutor(world, recorder, topology, metrics)
+                .resume(1, 45_000_000L) { LandMarchEntry.CLEAR })
+            save(world, recorder); world = cold(id)
+            assertEquals(resumed.state.checkpoint.cursor,
+                HwihaTravelState.read(world.getGeneralById(1)!!.meta, topology, metrics)!!.checkpoint.cursor)
+            assertEquals(resumed.condition, HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta))
+        }
+    }
+
     @Test fun `stale position flush rolls back march metadata and phase together`() {
         val id=605;var world=seed(id)
         repeat(5) {

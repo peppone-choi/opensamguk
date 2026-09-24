@@ -837,3 +837,9 @@ export interface HwihaDeployOptions {
     destinations: {provinceId:string;name:string}[];
     order?: {orderId:string;destinationProvinceId:string;stop?:string|null}|null;
 }
+
+export type HwihaTravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
+export interface HwihaTravelOptions {
+    inputId: HwihaTravelActionId; available: boolean; code?: string | null; reason?: string | null;
+    destinations: {provinceId:string;name:string;available:boolean;code?:string|null;reason?:string|null}[];
+}

@@ -1533,17 +1533,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.move argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTravelInput.parse + HwihaTravelReturn.resolve"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.move rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "30 km per phase; no resource or personal-condition cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "MOVE",
@@ -1554,11 +1554,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "INVALID_DESTINATION",
+        "NO_RETURN_ASSIGNMENT",
+        "ALREADY_THERE",
+        "STATE_UNAVAILABLE",
+        "NO_ROUTE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.move",
@@ -1567,7 +1579,7 @@
       "legacyCommands": [
         "che_이동"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.forcedMarch",
@@ -1576,17 +1588,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.forcedMarch argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTravelInput.parse + HwihaTravelReturn.resolve"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.forcedMarch rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "45 km per phase; personal fatigue +10/morale -5 per cumulative physical 30 km",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "MOVE",
@@ -1597,11 +1609,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "INVALID_DESTINATION",
+        "NO_RETURN_ASSIGNMENT",
+        "ALREADY_THERE",
+        "STATE_UNAVAILABLE",
+        "NO_ROUTE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.forcedMarch",
@@ -1610,7 +1634,7 @@
       "legacyCommands": [
         "che_강행"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.return",
@@ -1619,17 +1643,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.return argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaTravelInput.parse + HwihaTravelReturn.resolve"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.return rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "30 km per phase; no resource or personal-condition cost",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "MOVE",
@@ -1640,11 +1664,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "INVALID_DESTINATION",
+        "NO_RETURN_ASSIGNMENT",
+        "ALREADY_THERE",
+        "STATE_UNAVAILABLE",
+        "NO_ROUTE"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.return",
@@ -1653,7 +1689,7 @@
       "legacyCommands": [
         "che_귀환"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.retire",

@@ -19,7 +19,7 @@ class HwihaCourtHandler(
 
     fun handle(command: HwihaCourtInput): CommandLifecycleResult {
         var outcome: CommandLifecycleResult? = null
-        val registry = HwihaInputRegistry(HwihaInputCatalog.load(), mapOf(
+        val channelHandlers = mutableMapOf<String, InputHandler>(
             "action.enlist" to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "출사는 개인 행동 예약으로 입력해야 합니다.") },
             HwihaDeployInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
@@ -37,7 +37,12 @@ class HwihaCourtHandler(
             HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
-        ))
+        )
+        for (travelId in HwihaTravelInput.INPUT_IDS) {
+            channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }
+        }
+        val registry = HwihaInputRegistry(HwihaInputCatalog.load(), channelHandlers)
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,
                 resolution.reason.name, resolution.reason.message)

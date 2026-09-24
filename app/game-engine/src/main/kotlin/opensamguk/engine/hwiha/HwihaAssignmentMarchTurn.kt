@@ -34,6 +34,7 @@ class HwihaAssignmentMarchTurn(
             if (isUnowned(generalId)) { if (besieging) siege.npcAct(generalId) else siege.npcEndIfStranded(generalId) }
             return
         }
+        if (HwihaTravelTurn(world, recorder, topology, metrics, reactions, outcomes).onTurn(generalId)) return
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return

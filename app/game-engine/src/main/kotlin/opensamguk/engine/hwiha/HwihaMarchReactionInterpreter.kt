@@ -25,6 +25,9 @@ class HwihaMarchReactionInterpreter(
     override fun entryHazard(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry =
         decide(world, actorId, node)?.hazard ?: LandMarchEntry.UNAVAILABLE
 
+    override fun directEntryHazard(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry =
+        decide(world, actorId, node, directTravel = true)?.hazard ?: LandMarchEntry.UNAVAILABLE
+
     override fun evadingOrderIds(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Set<String> =
         decide(world, actorId, node)?.yieldingOrders.orEmpty()
 
@@ -34,8 +37,19 @@ class HwihaMarchReactionInterpreter(
     override fun interceptsAt(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Boolean =
         decide(world, actorId, node)?.interceptors?.isNotEmpty() == true
 
+    override fun directInterceptsAt(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Boolean =
+        decide(world, actorId, node, directTravel = true)?.interceptors?.isNotEmpty() == true
+
     override fun onEntered(world: InMemoryTurnWorld, recorder: ChangeRecorder, actorId: Int, node: StrategicNodeRef.LandProvince) {
-        val decision = decide(world, actorId, node) ?: error("Reaction authority changed during entry")
+        applyEntered(world, recorder, actorId, node, directTravel = false)
+    }
+
+    override fun onDirectEntered(world: InMemoryTurnWorld, recorder: ChangeRecorder, actorId: Int,
+        node: StrategicNodeRef.LandProvince) = applyEntered(world, recorder, actorId, node, directTravel = true)
+
+    private fun applyEntered(world: InMemoryTurnWorld, recorder: ChangeRecorder, actorId: Int,
+        node: StrategicNodeRef.LandProvince, directTravel: Boolean) {
+        val decision = decide(world, actorId, node, directTravel) ?: error("Reaction authority changed during entry")
         for ((commander, retreat) in decision.evaders.toSortedMap()) {
             check(recorder.moveGeneral(world, commander, retreat) is GeneralPositionChangeResult.Changed) {
                 "Validated evasive retreat failed"
@@ -49,7 +63,8 @@ class HwihaMarchReactionInterpreter(
         }
     }
 
-    private fun decide(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Decision? {
+    private fun decide(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince,
+        directTravel: Boolean = false): Decision? {
         if (world.ruleProfile != RuleProfile.HWIHA || !topology.containsNode(node)) return null
         val inventory = try { HwihaMarchReactions.read(world.getState().meta) } catch (_: IllegalArgumentException) { null }
             ?: return null
@@ -72,7 +87,7 @@ class HwihaMarchReactionInterpreter(
         val actorIsCorps = projection.deployed.any { it.commanderGeneralId == actorId }
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
             ?: return null
-        val interceptors = if (!actorIsCorps) emptyList() else inventory.interceptions.filter { hostile(it.nationId) }.mapNotNull { order ->
+        val interceptors = if (!directTravel && !actorIsCorps) emptyList() else inventory.interceptions.filter { hostile(it.nationId) }.mapNotNull { order ->
             val from = world.positionOf(order.commanderGeneralId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (from == node || !visible(world, order.ownerGeneralId, node, projection, now)) return@mapNotNull null
             val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(from, node, 1), edges, metrics)
