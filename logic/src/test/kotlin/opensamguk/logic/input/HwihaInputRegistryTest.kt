@@ -190,6 +190,26 @@ class HwihaInputRegistryTest {
     }
 
     @Test
+    fun `legacy court and stratagem rows match their shared failure vocabularies`() {
+        val channelFailures = setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED", "FORBIDDEN")
+        for (id in HwihaLegacyCourtInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaLegacyCourtFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - channelFailures, id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+        }
+        for (id in HwihaLegacyStratagemInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaLegacyStratagemFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - channelFailures, id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+        }
+        val reduceFailures = setOf("WRONG_RULE_PROFILE", "INVALID_REQUEST", "ACTOR_NOT_FOUND", "INVALID_COUNTY",
+            "NOT_COUNTY_AUTHORITY", "WORK_IN_PROGRESS", "WORK_NOT_COMPLETED", "STATE_UNAVAILABLE")
+        assertEquals(reduceFailures, catalog[HwihaDomesticInput.REDUCE]!!.failureReasons.toSet() - channelFailures)
+    }
+
+    @Test
     fun `every field personal action is UI ready and has a handler`() {
         for (id in HwihaPersonalInput.FIELD_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
