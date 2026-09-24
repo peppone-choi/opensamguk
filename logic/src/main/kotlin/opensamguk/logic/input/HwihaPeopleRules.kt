@@ -13,6 +13,7 @@ enum class HwihaPeopleFailure(val message: String) {
     TARGET_NOT_DISCOVERED("먼저 현재 縣에서 인재를 탐색해야 합니다."),
     TARGET_NOT_FREE("대상은 재야 인물이 아닙니다."),
     TARGET_NOT_CAPTIVE("대상은 본인이 잡은 포로가 아닙니다."),
+    TARGET_IS_LORD("다른 세력의 주공 포로는 국가 지위 처리 전까지 설득할 수 없습니다."),
     CAPACITY_UNAVAILABLE("인물 카드 수용 여력이 없습니다."),
     DUPLICATE_RETAINER_NAME("같은 이름의 인물 카드가 이미 휘하에 있습니다."),
     INSUFFICIENT_STOCK("행동 비용을 낼 수 없습니다."),
@@ -86,6 +87,10 @@ object HwihaPeopleRules {
                     state.cards.any { it.generalId == target.id && it.masterId == actor.id } ||
                     state.cards.count { it.generalId == target.id } > 1)
                     return reject(HwihaPeopleFailure.TARGET_NOT_CAPTIVE)
+                val isLord = try { HwihaLordStatus.read(target.meta) }
+                    catch (_: IllegalArgumentException) { return reject(HwihaPeopleFailure.STATE_UNAVAILABLE) }
+                if (target.nationId > 0 && target.nationId != actor.nationId && isLord)
+                    return reject(HwihaPeopleFailure.TARGET_IS_LORD)
                 capacityFor(target)?.let { return reject(it) }
                 HwihaPeopleAssessment.Eligible(actor, county, target = target)
             }
