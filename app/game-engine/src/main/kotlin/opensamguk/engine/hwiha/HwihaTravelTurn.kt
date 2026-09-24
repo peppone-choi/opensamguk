@@ -12,6 +12,7 @@ class HwihaTravelTurn(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val reactions: HwihaMarchReactionPolicy,
+    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
 ) {
     fun onTurn(actorId: Int): Boolean {
         val actor = world.getGeneralById(actorId) ?: return false
@@ -34,19 +35,17 @@ class HwihaTravelTurn(
             return state.inputId != HwihaTravelInput.RETURN
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
         val budget = if (state.inputId == HwihaTravelInput.FORCED_MARCH) 45_000_000L else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
-        var hostileEntryBlocked = false
         when (val result = HwihaTravelExecutor(world, recorder, topology, metrics).resume(actorId, budget) { node ->
-            military.entryAt(actorId, node, reactions).let {
-                if (it == LandMarchEntry.ENCOUNTER) { hostileEntryBlocked = true; LandMarchEntry.UNAVAILABLE } else it
-            }
+            HwihaPersonalEncounter.entryAt(world, military, reactions, actorId, node)
         }) {
             HwihaTravelExecution.NoOrder, HwihaTravelExecution.AlreadyProcessed -> Unit
             is HwihaTravelExecution.Rejected -> HwihaRecords.general(world, actorId,
                 HwihaRecordKind.INPUT_REJECTED, result.reason.message,
                 mapOf("inputId" to state.inputId, "code" to result.reason.name))
             is HwihaTravelExecution.Applied -> {
-                result.movement.reachedNodes.forEach { reactions.onEntered(world, recorder, actorId, it) }
-                HwihaTravelHandler.record(world, actorId, result, hostileEntryBlocked)
+                result.movement.reachedNodes.forEach { reactions.onDirectEntered(world, recorder, actorId, it) }
+                HwihaTravelHandler.record(world, actorId, result)
+                HwihaPersonalEncounter(world, recorder, topology, metrics, reactions, outcomes).settle(actorId, result)
             }
         }
         return true

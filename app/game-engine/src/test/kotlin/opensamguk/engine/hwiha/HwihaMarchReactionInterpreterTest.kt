@@ -86,6 +86,37 @@ class HwihaMarchReactionInterpreterTest {
         assertEquals(target, world.positionOf(2), "interceptor moves only when the target was actually entered")
     }
 
+    @Test fun `lone direct traveler can be intercepted while assignment travel keeps its prior policy`() {
+        val index = fixture.bundle.commanderyIndex
+        val (from, target, towerCity) = fixture.topology.traversalEdges.firstNotNullOf { edge ->
+            val a = edge.from as? StrategicNodeRef.LandProvince
+            val b = edge.to as? StrategicNodeRef.LandProvince
+            val aNo = a?.let { index.commanderyOf(it.id) }
+            val bNo = b?.let { index.commanderyOf(it.id) }
+            val city = if (bNo == null) null else fixture.bundle.projection.bindingsByCityId.entries.firstOrNull {
+                it.value.landProvinceId?.let(index::commanderyOf) == bNo
+            }?.key
+            if (a == null || b == null || aNo == null || bNo == null || aNo == bNo || city == null ||
+                fixture.metrics.edgesById[edge.id]!!.costMm > LandMarchMetricSnapshot.NORMAL_BUDGET_MM) null
+            else Triple(a, b, city)
+        }
+        val world = fixture.world(listOf(fixture.person(11, 1, route.startCity) to target,
+            fixture.person(12, 2, route.startCity) to from), bugoks = listOf(fixture.unit(812, 12, 100)),
+            cityChanges = { city -> city.copy(nationId = if (city.id == towerCity) 2 else 1) })
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, 12, listOf(812), target, "order-12")
+        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
+            HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-12", 12, 12, 2,
+                HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
+        val tower = world.getCityById(towerCity)!!
+        world.updateCity(tower.copy(meta = tower.meta + (HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY to
+            mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
+        assertEquals(LandMarchEntry.CLEAR, policy.entryHazard(world, 11, target))
+        assertEquals(LandMarchEntry.ENCOUNTER, policy.directEntryHazard(world, 11, target))
+        policy.onDirectEntered(world, recorder, 11, target)
+        assertEquals(target, world.positionOf(12))
+    }
+
     @Test fun `evasive defender retreats into its own adjacent province and yields passage`() {
         val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.start,
             fixture.person(2, 2, route.destinationCounty) to route.first),
