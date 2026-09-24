@@ -30,6 +30,9 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         val ready = assessed as HwihaRetireAssessment.Eligible
         val successor = world.getGeneralById(ready.successor.id) ?: return reject(HwihaRetireFailure.SUCCESSOR_UNAVAILABLE)
         val cards = world.listRetainers().filter { it.masterGeneralId == actorId }
+        val outerCards = world.listRetainers().filter { it.generalId == actorId }
+        if (outerCards.size > 1 || outerCards.any { it.masterGeneralId == request.successorGeneralId })
+            return reject(HwihaRetireFailure.STATE_UNAVAILABLE)
         val successorCard = cards.singleOrNull { it.id == ready.successorCard.id }
             ?: return reject(HwihaRetireFailure.SUCCESSOR_NOT_RETAINER)
         if (cards.any { it.generalId != null && world.getGeneralById(it.generalId)?.nationId != actor.nationId })
@@ -60,6 +63,8 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(successor), PerTurnOverlay.toLogicGeneral(inherited))
         world.applyGeneralDirtyFree(inherited)
         world.removeRetainer(successorCard.id)
+        for (card in outerCards)
+            world.updateRetainer(card.copy(generalId = successor.id, name = successor.name))
         for (card in cards.filter { it.id != successorCard.id })
             world.updateRetainer(card.copy(masterGeneralId = successor.id))
         for (unit in world.listBugoks().filter { it.masterGeneralId == actorId })

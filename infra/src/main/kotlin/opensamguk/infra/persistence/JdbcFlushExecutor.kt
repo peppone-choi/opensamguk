@@ -1755,6 +1755,7 @@ open class JdbcFlushExecutor(
                 .addValue("world_id", worldId.value)
                 .addValue("id", r.id)
                 .addValue("master_general_id", r.masterGeneralId)
+                .addValue("general_id", r.generalId)
                 .addValue("name", r.name)
                 .addValue("relation", r.relation)
                 .addValue("role", r.role)
@@ -1766,7 +1767,8 @@ open class JdbcFlushExecutor(
         val affected = jdbc.batchUpdate(
             """
             UPDATE general_retainers
-               SET master_general_id = :master_general_id, name = :name, relation = :relation, role = :role, has_own_bugok = :has_own_bugok,
+               SET master_general_id = :master_general_id, general_id = :general_id,
+                   name = :name, relation = :relation, role = :role, has_own_bugok = :has_own_bugok,
                    release_policy = :release_policy, loyalty = :loyalty, task = :task, updated_at = now()
              WHERE world_id = :world_id AND id = :id
             """.trimIndent(),
