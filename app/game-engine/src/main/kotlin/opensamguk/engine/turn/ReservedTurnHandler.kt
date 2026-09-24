@@ -218,7 +218,7 @@ class ReservedTurnHandler(
     private val siegeHandler by lazy { opensamguk.engine.hwiha.HwihaSiegeHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
     private val travelHandler by lazy { opensamguk.engine.hwiha.HwihaTravelHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions) }
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
