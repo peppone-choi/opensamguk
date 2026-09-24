@@ -143,10 +143,20 @@ class HwihaInputRegistryTest {
     private val legacy70Slots = (GameConst.availableGeneralCommand.values + GameConst.availableChiefCommand.values).flatten()
     private val legacy70 = legacy70Slots.distinct()
 
-    private fun row(inputId: String, kind: String, legacy: String) =
-        """{"inputId":"$inputId","kind":"$kind","layer":1,"deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
+    private fun row(inputId: String, kind: String, legacy: String): String {
+        val timing = if (kind == "GENERAL_ACTION")
+            """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}"""
+        else """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""
+        return """{"inputId":"$inputId","kind":"$kind","layer":1,"actor":"GENERAL","authorityRule":"SUBJECT_OWNER",
+            "targetSchema":{"status":"PLANNED","source":"test"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
+            "timing":$timing,"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
+            "deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
+    }
 
-    private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[${rows.joinToString(",")}]}""")
+    private fun ledger(vararg rows: String, retired: String = "", reasons: String = "") =
+        HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[${rows.joinToString(",")}],"retiredLegacyCommands":[$retired],"retiredLegacyReasons":{$reasons}}""")
 
     @Test
     fun `legacyCommands names only commands the SAMMO registry really has`() {
@@ -185,21 +195,116 @@ class HwihaInputRegistryTest {
     }
 
     @Test
+    fun `all direct legacy actions have a GENERAL_ACTION row`() {
+        val direct = listOf(
+            "농지개간", "상업투자", "수비강화", "성벽보수", "치안강화", "정착장려", "주민선정",
+            "징병", "모병", "훈련", "사기진작", "출병", "집합", "소집해제", "첩보",
+            "이동", "강행", "인재탐색", "등용", "귀환", "임관", "랜덤임관", "장수대상임관",
+            "견문", "단련", "요양", "은퇴", "증여", "헌납", "하야", "거병", "건국", "선양", "해산",
+            "숙련전환", "장비매매", "군량매매", "물자조달",
+        ).map { "che_$it" }
+        assertEquals(38, direct.size)
+        assertEquals(emptyList(), direct.filter { name -> catalog.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
+        val mutated = ledger(row("policy.farm", "POLICY", "\"che_농지개간\""))
+        assertEquals(listOf("che_농지개간"), direct.filter { name -> name == "che_농지개간" && mutated.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
+    }
+
+    @Test
+    fun `all 70 legacy menu slots are either live or retired`() {
+        assertEquals(emptyList(), catalog.invalidLegacyCoverage(legacy70))
+        assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
+        assertEquals(setOf("휴식", "che_내정특기초기화", "che_전투특기초기화", "che_국기변경", "che_국호변경"),
+            catalog.retiredLegacyCommands.toSet())
+        assertEquals(71, catalog.entries.size)
+        val mutation = ledger(row("action.conscript", "GENERAL_ACTION", "\"che_징병\""))
+        assertEquals(listOf("che_농지개간"), mutation.invalidLegacyCoverage(listOf("che_농지개간")))
+        val overlap = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""),
+            retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"")
+        assertEquals(emptyList(), overlap.invalidLegacyCoverage(listOf("che_농지개간", "che_징병")))
+    }
+
+    @Test
+    fun `chief commands retain their agreed input kinds`() {
+        val court = listOf("발령", "포상", "몰수", "부대탈퇴지시", "물자원조", "불가침제의",
+            "선전포고", "종전제의", "불가침파기제의", "초토화", "천도")
+        val work = listOf("증축", "감축")
+        val stratagem = listOf("필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장")
+        assertEquals(21, court.size + work.size + stratagem.size)
+        for ((names, kind) in listOf(court to InputKind.COURT_DECISION, work to InputKind.WORK,
+            stratagem to InputKind.STRATAGEM)) {
+            names.forEach { name ->
+                assertTrue(catalog.legacyIndex["che_$name"].orEmpty().any { it.kind == kind }, "che_$name -> $kind")
+            }
+        }
+    }
+
+    @Test
     fun `stale replacesLegacy field and in-row duplicates fail closed`() {
-        val stale = """{"schemaVersion":1,"inputs":[{"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(stale) }
+        val stale = row("action.a", "GENERAL_ACTION", "").replace("\"legacyCommands\":[]", "\"legacyCommands\":[],\"replacesLegacy\":[]")
+        assertFailsWith<IllegalArgumentException> { ledger(stale) }
         assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\",\"che_징병\"")) }
     }
 
     @Test
-    fun `duplicate or unknown ledger fields fail closed`() {
-        val dup = """{"schemaVersion":1,"inputs":[
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]},
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(dup) }
-        val badState = dup.replace("\"PLANNED\"", "\"DONE\"")
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badState) }
-        val badKind = """{"schemaVersion":1,"inputs":[{"inputId":"policy.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badKind) }
+    fun `string arrays reject null and numeric members`() {
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "null")) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "123")) }
+        val row = row("action.a", "GENERAL_ACTION", "")
+        for (bad in listOf("null", "123")) {
+            assertFailsWith<IllegalArgumentException> {
+                ledger(row.replace("\"failureReasons\":[]", "\"failureReasons\":[$bad]"))
+            }
+            assertFailsWith<IllegalArgumentException> {
+                HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+                    "inputs":[],"retiredLegacyCommands":[$bad],"retiredLegacyReasons":{}}""")
+            }
+        }
     }
+
+    @Test
+    fun `duplicate or unknown ledger fields fail closed`() {
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", ""), row("action.a", "GENERAL_ACTION", "")) }
+        val dup = row("action.a", "GENERAL_ACTION", "")
+        val badState = dup.replace("\"PLANNED\"", "\"DONE\"")
+        assertFailsWith<IllegalArgumentException> { ledger(badState) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("policy.a", "GENERAL_ACTION", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\",", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\"", "\"aiPolicyId\":null")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"GENERAL\",\"actor\":\"GENERAL\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"UNKNOWN\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"phase\":\"FIELD\"", "\"phase\":\"UNKNOWN\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"resultType\":\"InputResolved\"", "\"resultType\":\"Other\"")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"turnSlots\":12", "\"turnSlots\":11")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"perPhaseLimit\":1", "\"perPhaseLimit\":2")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"failureReasons\":[]", "\"failureReasons\":[\"BAD\",\"BAD\"]")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup, retired = "\"che_징병\"", reasons = "") }
+        assertFailsWith<IllegalArgumentException> { ledger(dup, retired = "\"che_징병\",\"che_징병\"", reasons = "\"che_징병\":\"test\"") }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\""),
+            retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"") }
+    }
+
+    @Test
+    fun `numeric and nested contracts reject type pollution`() {
+        val valid = row("action.a", "GENERAL_ACTION", "")
+        for ((from, to) in listOf(
+            "\"schemaVersion\":2" to "\"schemaVersion\":\"2\"",
+            "\"layer\":1" to "\"layer\":\"1\"",
+            "\"turnSlots\":12" to "\"turnSlots\":\"12\"",
+            "\"money\":null" to "\"money\":\"100\"",
+            "\"money\":null" to "\"money\":-5",
+            "\"money\":null" to "\"money\":{}",
+            "\"source\":\"test\"}" to "\"source\":\"test\",\"extra\":1}",
+            "\"key\":\"requestId\"}" to "\"key\":\"requestId\",\"extra\":1}",
+            "\"phase\":\"FIELD\"" to "\"phase\":\"NEXT_CARD_TURN\"",
+        )) {
+            val original = ledgerPayload(valid)
+            assertFailsWith<IllegalArgumentException>("$from -> $to") { HwihaInputCatalog.parse(original.replace(from, to)) }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ledger(row("policy.a", "POLICY", "").replace("\"turnSlots\":null", "\"turnSlots\":12"))
+        }
+    }
+
+    private fun ledgerPayload(row: String) = """{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[$row],"retiredLegacyCommands":[],"retiredLegacyReasons":{}}"""
 }
