@@ -24,7 +24,10 @@ class HwihaInputRegistryTest {
         "action.selectResidents" to InputHandler {}, "action.tour" to InputHandler {},
         "action.conscript" to InputHandler {}, "action.raiseVolunteers" to InputHandler {},
         "action.train" to InputHandler {}, "action.boostMorale" to InputHandler {},
-        "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {})
+        "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {},
+        "action.search" to InputHandler {}, "action.employ" to InputHandler {},
+        "action.persuadeCaptive" to InputHandler {}, "action.travel" to InputHandler {},
+        "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -109,6 +112,34 @@ class HwihaInputRegistryTest {
     fun `every direct military action is UI ready and has a handler`() {
         for (id in HwihaMilitaryInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            assertFailsWith<IllegalArgumentException>(id) {
+                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            }
+        }
+    }
+
+    @Test
+    fun `every direct people action is UI ready and has a handler`() {
+        for (id in HwihaPeopleInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaPeopleFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            assertFailsWith<IllegalArgumentException>(id) {
+                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            }
+        }
+    }
+
+    @Test
+    fun `every field personal action is UI ready and has a handler`() {
+        for (id in HwihaPersonalInput.FIELD_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaPersonalFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
                 HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)

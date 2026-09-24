@@ -3,9 +3,9 @@ package opensamguk.logic.input
 import kotlin.test.*
 
 class HwihaPeopleRulesTest {
-    @Test fun `proposed consent rates are bounded and remain closed`() {
+    @Test fun `confirmed consent rates are bounded`() {
         val design = HwihaPeopleDesign.CANON
-        assertEquals("PROPOSED", design.status)
+        assertEquals("CONFIRMED", design.status)
         assertEquals(50, design.acceptancePercent(60, 60, captive = false))
         assertEquals(30, design.acceptancePercent(60, 60, captive = true))
         assertEquals(95, design.acceptancePercent(100, 0, captive = false))
@@ -52,6 +52,20 @@ class HwihaPeopleRulesTest {
         assertEquals(HwihaPeopleFailure.TARGET_NOT_CAPTIVE,
             assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
                 base.copy(people = listOf(actor, captive.copy(meta = emptyMap()))))).reason)
+    }
+
+    @Test fun `foreign lord captive requires nation resolution before persuasion`() {
+        val request = HwihaPeopleRequest(7, HwihaPeopleInput.PERSUADE_CAPTIVE, 8)
+        val captive = free.copy(nationId = 2, meta = mapOf(
+            "hwihaCaptive" to mapOf("captorGeneralId" to 7), HwihaLordStatus.META_KEY to true))
+        assertEquals(HwihaPeopleFailure.TARGET_IS_LORD,
+            assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
+                base.copy(people = listOf(actor, captive)))).reason)
+        assertEquals(HwihaPeopleFailure.STATE_UNAVAILABLE,
+            assertIs<HwihaPeopleAssessment.Rejected>(HwihaPeopleRules.assess(request,
+                base.copy(people = listOf(actor, captive.copy(meta = captive.meta + (HwihaLordStatus.META_KEY to "yes")))))).reason)
+        assertIs<HwihaPeopleAssessment.Eligible>(HwihaPeopleRules.assess(request,
+            base.copy(people = listOf(actor, captive.copy(meta = captive.meta + (HwihaLordStatus.META_KEY to false))))))
     }
 
     @Test fun `employ and captive persuasion share personal card capacity and unique name gates`() {

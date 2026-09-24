@@ -50,7 +50,8 @@ class HwihaPersonalHandlerTest {
         val route = fixture.route()
         val actor = fixture.person(904, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(actor to route.start))
-        val result = HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext()).handle(
+        val result = HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(),
+            ready.copy(status = "PROPOSED")).handle(
             HwihaPersonalInput.TRAVEL, actor.id, "{}", "travel-904", 42)
         assertEquals(InputRejection.NOT_DELIVERED.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
         assertEquals(actor, world.getGeneralById(actor.id))
