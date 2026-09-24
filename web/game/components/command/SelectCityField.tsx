@@ -185,6 +185,7 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
                     mapData={data}
                     hwihaLayers="fog"
                     currentCityId={currentCityId}
+                    generalId={frontInfo?.general.generalId}
                     selectedCityId={value}
                     onCitySelect={selectCandidate}
                     gameConst={constData?.gameConst}

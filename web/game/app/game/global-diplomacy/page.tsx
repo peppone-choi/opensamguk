@@ -74,6 +74,7 @@ function neutralCell(state: number): React.ReactNode {
 export default function GlobalDiplomacyPage() {
     const [data, setData] = useState<DiplomacyConflictResponse | null>(null);
     const [currentCityId, setCurrentCityId] = useState<number | null>(null);
+    const [currentGeneralId, setCurrentGeneralId] = useState<number | null | undefined>(undefined);
     const [cityConst, setCityConst] = useState<GameCityConstItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
@@ -115,7 +116,10 @@ export default function GlobalDiplomacyPage() {
         let on = true;
         api.frontInfo()
             .then((fi: FrontInfoResponse) => {
-                if (on) setCurrentCityId(fi.general?.cityId ?? null);
+                if (on) {
+                    setCurrentCityId(fi.general?.cityId ?? null);
+                    setCurrentGeneralId(fi.general?.generalId ?? null);
+                }
             })
             .catch(() => {
                 /* graceful: no highlight ring if front-info unavailable */
@@ -285,7 +289,7 @@ export default function GlobalDiplomacyPage() {
             </div>
             <div className="gd-split">
                 <div className="gd-split__map">
-                    <MapViewer hwihaLayers="fog" />
+                    <MapViewer hwihaLayers="fog" generalId={currentGeneralId} />
                 </div>
                 <div className="gd-split__list">
                     <GameCard>
