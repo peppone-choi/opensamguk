@@ -841,6 +841,16 @@ export interface HwihaDeployOptions {
 export type HwihaTravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
 export type HwihaFieldActionId = 'action.farm' | 'action.commerce' | 'action.fortify' | 'action.repairWall'
     | 'action.security' | 'action.settle' | 'action.selectResidents' | 'action.tour';
+export type HwihaMilitaryActionId = 'action.conscript' | 'action.raiseVolunteers' | 'action.train'
+    | 'action.boostMorale' | 'action.muster' | 'action.demobilize';
+export interface HwihaMilitaryOptions {
+    inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
+    countyId?: number | null; countyName?: string | null; troops?: number | null;
+    training?: number | null; morale?: number | null; gatheringCorps?: number | null;
+    troopsAfter?: number | null; populationAfter?: number | null;
+    trainingAfter?: number | null; moraleAfter?: number | null;
+    grainCost?: number | null; moneyCost?: number | null;
+}
 export interface HwihaFieldOptions {
     inputId: HwihaFieldActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null;

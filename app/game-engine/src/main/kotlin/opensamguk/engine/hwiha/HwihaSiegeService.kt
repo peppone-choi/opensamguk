@@ -49,7 +49,13 @@ class HwihaSiegeService(
     private fun countiesIn(node: StrategicNodeRef): List<Int> =
         world.administrativeCountyIds.filter { world.landNodeOfCity(it) == node }.sorted()
 
-    private fun garrisonOf(city: City) = city.defence.coerceAtLeast(0)
+    private fun garrisonOf(city: City) = HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)).troops
+
+    private fun withGarrison(city: City, troops: Int, resetCondition: Boolean = false): City {
+        val military = if (resetCondition) HwihaCityMilitaryState.INITIAL
+            else HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0))
+        return city.copy(meta = city.meta + (HwihaCityMilitaryState.META_KEY to military.copy(troops = troops).toMetaValue()))
+    }
 
     private fun corpsOf(commanderId: Int): HwihaDeployedCorps? =
         projection()?.deployed?.singleOrNull { it.commanderGeneralId == commanderId }
@@ -90,9 +96,13 @@ class HwihaSiegeService(
             log(commanderId, "포위 대상 縣 자료가 없어 이번 출병을 건너뛰었습니다.")
             return false
         }
+        val garrison = try { garrisonOf(city) } catch (_: IllegalArgumentException) {
+            log(commanderId, "${city.name} 縣城의 도시 병력 상태를 확인할 수 없어 포위를 시작하지 않았습니다.")
+            return false
+        }
         // A siege that could not hold at the next boundary is not started (no start/lift churn every phase).
         val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
-        if (garrisonOf(city) > 0 && HwihaSiegeRules.maintenance(units.sumOf { it.troops }, garrisonOf(city),
+        if (garrison > 0 && HwihaSiegeRules.maintenance(units.sumOf { it.troops }, garrison,
                 units.all { HwihaSiegeRules.besiegerFed(it.troops, it.provisions) }) != HwihaSiegeRules.Maintenance.MAINTAINED) return false
         val path = march.checkpoint.path
         val approach = if (path.nodeKeys.size >= 2) path.nodeKeys[path.nodeKeys.size - 2].removePrefix("land:")
@@ -100,10 +110,10 @@ class HwihaSiegeService(
         val now = now()
         val siege = HwihaSiege(county, ACTIVE, commanderId, corps.ownerGeneralId, corps.orderId, corps.nationId,
             city.nationId, approach, now.year, now.month, now.phase, morale = HwihaSiegeMorale.INITIAL_MORALE,
-            garrison = garrisonOf(city), timeline = listOf(entry(now, "START", HwihaSiegeMorale.INITIAL_MORALE, garrisonOf(city))))
+            garrison = garrison, timeline = listOf(entry(now, "START", HwihaSiegeMorale.INITIAL_MORALE, garrison)))
         world.putHwihaSiege(siege)
         log(commanderId, "${city.name} 縣城을 포위했습니다.")
-        if (garrisonOf(city) == 0) capture(siege, "UNDEFENDED")
+        if (garrison == 0) capture(siege, "UNDEFENDED")
         return true
     }
 
@@ -134,7 +144,10 @@ class HwihaSiegeService(
         if (HwihaSiegeRules.surrenderDemandAccepted(siege.morale, trustOf(city))) { demandSurrender(commanderId); return }
         val corps = corpsOf(commanderId) ?: return
         if (siege.turns < HwihaS3Provisional.ASSAULT_MIN_SIEGE_TURNS) return
-        if (corpsTroops(corps).toLong() >= garrisonOf(city).toLong() * HwihaS3Provisional.NPC_ASSAULT_MIN_RATIO) assault(commanderId)
+        val garrison = try { garrisonOf(city) } catch (_: IllegalArgumentException) {
+            lift(siege, "STATE_UNAVAILABLE"); return
+        }
+        if (corpsTroops(corps).toLong() >= garrison.toLong() * HwihaS3Provisional.NPC_ASSAULT_MIN_RATIO) assault(commanderId)
     }
 
     /**
@@ -191,8 +204,13 @@ class HwihaSiegeService(
         val leadership = world.getGeneralById(actorId)?.stats?.leadership ?: return Failure.STATE_UNAVAILABLE
         val wallBonus = if (city.wallMax <= 0) 0 else
             (city.wall.coerceIn(0, city.wallMax).toLong() * HwihaS3Provisional.ASSAULT_MAX_WALL_BONUS_PERCENT / city.wallMax).toInt()
-        val result = HwihaSiegeAssault.resolve(layout, attackers, leadership, garrisonOf(city),
-            (siege.morale / 100).coerceIn(0, 100), wallBonus)
+        val defenceBonus = if (city.defenceMax <= 0) 0 else
+            (city.defence.coerceIn(0, city.defenceMax).toLong() * HwihaS3Provisional.ASSAULT_MAX_DEFENCE_BONUS_PERCENT / city.defenceMax).toInt()
+        val cityMilitary = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
+            catch (_: IllegalArgumentException) { return Failure.STATE_UNAVAILABLE }
+        val result = HwihaSiegeAssault.resolve(layout, attackers, leadership, cityMilitary.troops,
+            (siege.morale / 100 + cityMilitary.morale - HwihaCityMilitaryState.INITIAL.morale).coerceIn(0, 100),
+            wallBonus, cityMilitary.training, defenceBonus)
         // Attacker losses; an annihilated unit row is removed (troops > 0 constraint) and leaves the corps.
         val destroyed = sortedSetOf<Int>()
         for (unit in result.attackers) {
@@ -201,7 +219,7 @@ class HwihaSiegeService(
             val next = live.copy(troops = unit.troops, morale = unit.morale, fatigue = unit.fatigue)
             if (next != live) world.updateBugok(next)
         }
-        val afterCity = city.copy(defence = result.garrisonRemaining)
+        val afterCity = withGarrison(city, result.garrisonRemaining)
         recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(afterCity))
         world.applyCityDirtyFree(afterCity)
         val next = siege.copy(garrison = result.garrisonRemaining, timeline = appendEntry(siege.timeline,
@@ -254,7 +272,9 @@ class HwihaSiegeService(
         val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
         val troops = units.sumOf { it.troops }
         val fed = units.all { HwihaSiegeRules.besiegerFed(it.troops, it.provisions) }
-        val garrison = garrisonOf(city)
+        val garrison = try { garrisonOf(city) } catch (_: IllegalArgumentException) {
+            lift(stamped, "STATE_UNAVAILABLE"); return
+        }
         when (HwihaSiegeRules.maintenance(troops, garrison, fed)) {
             HwihaSiegeRules.Maintenance.UNFED -> {
                 // armyEncirclement.interruption: 군량 부족은 원정 명령까지 끝낸다. 병력·남은 군량은 보존한다.
@@ -304,13 +324,16 @@ class HwihaSiegeService(
             return
         }
         val previousOwner = before.nationId
+        try { garrisonOf(before) } catch (_: IllegalArgumentException) {
+            lift(siege, "STATE_UNAVAILABLE"); return
+        }
         val settlement = HwihaCountyCapture.settle(HwihaCountyCapture.CountyBefore(before.id, before.nationId,
             before.population, garrisonOf(before)), siege.besiegerNationId)
         // 점령군 수비대(2026-09-23 확정): 포위 군단이 부곡에서 수비병을 떼어 남긴다. 옛 수비대는 위 정산대로 인구가 된다.
         val left = corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }
             ?.let { leaveGarrison(it, before.defenceMax) } ?: 0
-        val after = before.copy(nationId = settlement.ownerNationId, population = settlement.population,
-            defence = settlement.garrisonTroops + left, supplyState = 0, frontState = 0)
+        val after = withGarrison(before.copy(nationId = settlement.ownerNationId, population = settlement.population,
+            supplyState = 0, frontState = 0), settlement.garrisonTroops + left, resetCondition = true)
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
         HwihaCapitalAfterCapture(world, recorder).settle(previousOwner, before.id)

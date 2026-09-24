@@ -220,6 +220,9 @@ class ReservedTurnHandler(
     private val travelHandler by lazy { opensamguk.engine.hwiha.HwihaTravelHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
+    private val cityMilitaryHandler by lazy { opensamguk.engine.hwiha.HwihaCityMilitaryHandler(world, recorder, hwihaDomesticContext) }
+    private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -322,6 +325,20 @@ class ReservedTurnHandler(
                         applied = fieldHandler.handle(fieldId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
+                }
+            }
+            for (militaryId in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS) {
+                if (hwihaCatalog[militaryId]?.deliveryState?.hasHandler == true) {
+                    handlers[militaryId] = InputHandler {
+                        applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            if (hwihaCatalog[opensamguk.logic.input.HwihaMilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.HwihaMilitaryInput.MUSTER] = InputHandler {
+                    applied = musterHandler.handle(generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)

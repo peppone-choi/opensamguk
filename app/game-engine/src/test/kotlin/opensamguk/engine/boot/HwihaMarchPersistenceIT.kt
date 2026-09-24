@@ -11,6 +11,7 @@ import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -109,6 +110,37 @@ class HwihaMarchPersistenceIT {
         assertEquals(first, HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext())
             .handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
         assertEquals(10, cold(id).getGeneralById(1)!!.experience)
+    }
+
+    @Test fun `city military troops survive cold reload independently of fortification`() {
+        val id = 691
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        val stock = opensamguk.logic.economy.HwihaCountyWarehouse(countyId, 0,
+            opensamguk.logic.economy.HwihaResources(grain = 100_000_000))
+        jdbc.update("UPDATE city SET nation_id=1, meta=meta || ?::jsonb WHERE world_id=? AND id=?",
+            MetaJson.encode(mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to stock.toMetaValue())), id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getCityById(countyId)!!
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaCityMilitaryHandler(world, recorder)
+            .handle(HwihaMilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        val after = world.getCityById(countyId)!!
+        assertEquals(before.defence, after.defence)
+        assertTrue(HwihaCityMilitaryState.read(after.meta).troops > HwihaCityMilitaryState.read(before.meta).troops)
+        assertEquals(first, HwihaCityMilitaryHandler(world, ChangeRecorder())
+            .handle(HwihaMilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
+        assertEquals(after, cold(id).getCityById(countyId))
     }
 
     @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
