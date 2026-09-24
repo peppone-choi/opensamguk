@@ -1472,17 +1472,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "source": "server-side action.travel argument contract"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.travel rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-personal-v1.json",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -1493,11 +1493,22 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "STATE_UNAVAILABLE",
+        "TRAINING_MAXED",
+        "ALREADY_HEALTHY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.travel",
@@ -1506,7 +1517,7 @@
       "legacyCommands": [
         "che_견문"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.selfTrain",
@@ -1515,17 +1526,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "source": "server-side action.selfTrain argument contract"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.selfTrain rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-personal-v1.json",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -1536,11 +1547,22 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "STATE_UNAVAILABLE",
+        "TRAINING_MAXED",
+        "ALREADY_HEALTHY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.selfTrain",
@@ -1549,7 +1571,7 @@
       "legacyCommands": [
         "che_단련"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.recuperate",
@@ -1558,17 +1580,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "source": "server-side action.recuperate argument contract"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.recuperate rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-personal-v1.json",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -1579,11 +1601,22 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "STATE_UNAVAILABLE",
+        "TRAINING_MAXED",
+        "ALREADY_HEALTHY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.recuperate",
@@ -1592,7 +1625,7 @@
       "legacyCommands": [
         "che_요양"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.gift",
