@@ -418,7 +418,7 @@ class CommandReserveService(
         /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
         val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
             "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",
-            "selectPoolPick", "selectPoolUpdate",
+            "selectPoolUpdate",
         )
     }
 }

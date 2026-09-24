@@ -123,9 +123,6 @@ class CommandController(
         if (code == SELECT_POOL_PICK && worldProfile == RuleProfile.SAMMO) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
-        if (code == SELECT_POOL_PICK && generalId != 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
-        }
         if (code in opensamguk.gameapi.reserve.CommandReserveService.HWIHA_RESERVABLE_ACTIONS) {
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             return try {
@@ -189,6 +186,8 @@ class CommandController(
     }
 
     private fun hwihaInputRejection(code: String): InputRejection {
+        // The frozen engine pick handler always rejects; never publish a misleading 202.
+        if (code == SELECT_POOL_PICK) return InputRejection.NOT_DELIVERED
         if (code == "휴식" || LEGACY_COMMAND_CODE.matches(code)) return InputRejection.WRONG_RULE_PROFILE
         val dot = code.indexOf('.')
         if (dot <= 0 || dot == code.length - 1 || InputKind.ofPrefix(code.substring(0, dot)) == null) {

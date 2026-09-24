@@ -372,19 +372,16 @@ class CommandControllerSecurityTest {
     }
 
     @Test
-    fun `hwiha first general selection uses the shared intake with caller ownership`() {
+    fun `hwiha first general selection fails before the frozen engine stub`() {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
         val body = """{"uniqueName":"장수"}"""
-        `when`(precheck.precheck(0, "selectPoolPick", mapOf("uniqueName" to "장수")))
-            .thenReturn(PrecheckResult.Available)
-        `when`(reserve.reserveForOwner(0, "selectPoolPick", 0, body, 7))
-            .thenReturn(ReserveResult("pick-request", 0))
 
         mockMvc().perform(post("/api/command/selectPoolPick").param("generalId", "0")
             .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isAccepted)
-            .andExpect(jsonPath("$.requestId").value("pick-request"))
-        verify(reserve).reserveForOwner(0, "selectPoolPick", 0, body, 7)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("BLOCKED"))
+            .andExpect(jsonPath("$.code").value("NOT_DELIVERED"))
+        verifyNoInteractions(precheck, reserve)
     }
 
     @Test
