@@ -8,6 +8,8 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.common.world.WorldId
 import opensamguk.logic.event.EventStore
+import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
 import opensamguk.logic.world.SpecialityHelper
@@ -85,9 +87,12 @@ class ScenarioImporter(
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트(저장소 루트). 테스트는 `..` 을 준다. */
     private val artifactsRoot: java.nio.file.Path = java.nio.file.Path.of("."),
+    /** A restored SAMMO world may use this one-season fallback only when its profile key is absent. */
+    private val sammoRollback: Boolean = WorldRuleProfile.rollbackEnabled(),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
+    private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile(sammoRollback)
 
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
@@ -141,7 +146,7 @@ class ScenarioImporter(
         val generalTurnCount = insertGeneralTurns(jdbc, general, worldId)
 
         // 4f' — 위치 권위 spec §2.2·§3-3(HWIHA): 전 장수 위치 행. 부팅이 고를 변형과 같은 핀으로.
-        val positionCount = if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
+        val positionCount = if (effectiveProfile == RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
 
         // 4f'' — HWIHA 초기 부곡(시나리오 `hwihaUnits` 선언만). 선언이 없으면 아무 행도 만들지 않는다.
         val unitCount = insertHwihaUnits(jdbc, general, worldId)
@@ -178,7 +183,7 @@ class ScenarioImporter(
 
     private fun insertHwihaUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         if (scenario.hwihaUnits.isEmpty()) return 0
-        require(scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) { "hwihaUnits requires HWIHA" }
+        require(effectiveProfile == RuleProfile.HWIHA) { "hwihaUnits requires HWIHA" }
         val rows = scenario.hwihaUnits.mapIndexed { index, unit ->
             val owner = generals.singleOrNull { it.src.name == unit.general }
                 ?: throw IllegalArgumentException("hwihaUnits general is not seeded: ${unit.general}")
@@ -224,7 +229,7 @@ class ScenarioImporter(
             "show_img_level" to showImageLevel,
             "extended_general" to extendedGeneral,
         )
-        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.HwihaMarchReactions.META_KEY] =
                 opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue()
         }
@@ -246,8 +251,8 @@ class ScenarioImporter(
             "fiction" to fiction,
             "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
-            // 부재를 런타임이 추측하지 않도록 SAMMO 도 명시 기록한다(입력 registry 계약 §2).
-            "ruleProfile" to (scenario.ruleProfile ?: opensamguk.logic.input.RuleProfile.SAMMO).name,
+            // Store the resolved profile so later reads never infer from a missing key.
+            "ruleProfile" to effectiveProfile.name,
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
@@ -403,7 +408,7 @@ class ScenarioImporter(
     /** Explicit fresh-world inventory only. Never copy legacy treasuries or infer a missing county. */
     internal fun validateWarehouseSeed() {
         val seed = scenario.hwihaWarehouses ?: return
-        require(scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        require(effectiveProfile == RuleProfile.HWIHA) {
             "County warehouse seed requires HWIHA"
         }
         require(scenario.nations.all { it.gold == 0 && it.rice == 0 }) {
@@ -509,7 +514,7 @@ class ScenarioImporter(
             }
         }
         val declaredPolicies = (scenario.generals + selectedRoster).distinct().filter { it.hwihaPersonPolicy != null }
-        require(declaredPolicies.isEmpty() || scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        require(declaredPolicies.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "person policies require HWIHA"
         }
         require(declaredPolicies.map { it.name }.distinct().size == declaredPolicies.size) { "Duplicate person policy name" }
@@ -519,7 +524,7 @@ class ScenarioImporter(
         declaredPolicies.forEach(HwihaScenarioPersonPolicies::validate)
 
         val declaredLords = scenario.generals.filter { it.hwihaLord == true }
-        require(declaredLords.isEmpty() || scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        require(declaredLords.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "explicit lord declarations require HWIHA"
         }
         val active = buildGenerals(scenario.startYear).map { it.src }
@@ -739,7 +744,7 @@ class ScenarioImporter(
             meta["rtk14_total"] = general.total
             meta["rtk14_ideology"] = general.ideology
         }
-        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+        if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.HwihaLordStatus.META_KEY] = general.hwihaLord ?: false
             general.hwihaPersonPolicy?.let { meta[opensamguk.logic.input.HwihaPersonPolicyState.META_KEY] = it.toMetaValue() }
         }
@@ -885,7 +890,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private fun insertGeneralTurns(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         // HWIHA has a sparse twelve-phase queue: no row means no player reservation.
-        if (scenario.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) return 0
+        if (effectiveProfile == RuleProfile.HWIHA) return 0
         val rows = ArrayList<Array<Any?>>(generals.size * MAX_GENERAL_TURNS)
         for (bg in generals) {
             for (idx in 0 until MAX_GENERAL_TURNS) {

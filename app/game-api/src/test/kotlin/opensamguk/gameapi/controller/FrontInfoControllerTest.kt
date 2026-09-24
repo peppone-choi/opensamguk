@@ -261,7 +261,7 @@ class FrontInfoControllerTest {
         }
         seedWorld()
         mockMvc().perform(get("/api/front-info"))
-            .andExpect(jsonPath("$.global.ruleProfile").value("SAMMO"))
+            .andExpect(jsonPath("$.global.ruleProfile").value("HWIHA"))
         for (invalid in listOf(null, "unknown", 1)) {
             seedWorld(config = mapOf("ruleProfile" to invalid))
             mockMvc().perform(get("/api/front-info"))

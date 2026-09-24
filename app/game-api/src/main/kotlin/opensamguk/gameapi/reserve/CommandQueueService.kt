@@ -368,9 +368,9 @@ class CommandQueueService(
     private fun requireLegacyQueueProfile() {
         val config = worldStates.findProcessWorld()?.config
             ?: throw CommandQueueDenied("세계 규칙을 확인할 수 없습니다.")
-        val profile = if ("ruleProfile" !in config) "SAMMO" else config["ruleProfile"]
-        if (profile == "HWIHA") throw CommandQueueDenied("새 규칙에서는 순별 직접 예약만 제공됩니다.")
-        if (profile != "SAMMO") throw CommandQueueDenied("세계 규칙을 확인할 수 없습니다.")
+        val profile = opensamguk.logic.input.WorldRuleProfile.resolve(config)
+        if (profile == opensamguk.logic.input.RuleProfile.HWIHA) throw CommandQueueDenied("새 규칙에서는 순별 직접 예약만 제공됩니다.")
+        if (profile != opensamguk.logic.input.RuleProfile.SAMMO) throw CommandQueueDenied("세계 규칙을 확인할 수 없습니다.")
     }
 
     private fun queueMutation(

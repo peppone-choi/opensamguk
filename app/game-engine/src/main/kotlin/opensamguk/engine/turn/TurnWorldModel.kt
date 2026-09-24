@@ -299,13 +299,9 @@ data class TurnWorldState(
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
     val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
 ) {
-    /** 월드 규칙 프로필(입력 registry 계약 §2). 시드 전 월드는 config 에 없어 SAMMO, 모르는 글자는 부팅 실패. */
+    /** 월드 규칙 프로필. 누락은 HWIHA(한 시즌 롤백 env가 켜지면 SAMMO), 오염 값은 부팅 실패. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
-        get() {
-            val value = config["ruleProfile"]
-            require(value == null || value is String) { "ruleProfile in world config must be a string" }
-            return opensamguk.logic.input.RuleProfile.fromWorldConfig(value as String?)
-        }
+        get() = opensamguk.logic.input.WorldRuleProfile.require(config)
 }
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"

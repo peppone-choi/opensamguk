@@ -84,7 +84,7 @@ class HwihaDispatchPrecheckServiceTest {
         valid.world.config = mapOf("ruleProfile" to null)
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)
         valid.world.config = emptyMap()
-        assertEquals(DispatchFailure.WRONG_RULE_PROFILE, service.pending(1,41).code)
+        assertTrue(service.pending(1,41).result)
         valid.world.config = mapOf("ruleProfile" to "HWIHA")
         people[2].worldId = 2
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)

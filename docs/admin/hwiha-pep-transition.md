@@ -14,6 +14,7 @@
 | 세대 | 현재 pep의 `generation`을 읽은 뒤 `generation=current` | 기존 세대와 전환 의도를 기록 |
 
 `scenario_990002`의 병력·재고·장수 수치는 PROVISIONAL이다. W4 순별 사건표, 12–24순 포위 기준과 월단평 편향을 검토한 결과를 전환 기록에 붙인다.
+전체 지도 역사 시나리오는 S4([#596](https://github.com/peppone-choi/opensamguk/issues/596)) 범위이며 이 컷오버의 기본 시나리오가 아니다.
 합성 시나리오의 30개 적대 관계는 게임 규칙의 최대치인 13개월로 시작한다. 첫 월 정산 뒤에도 `diplomacy.state_code=0`과 남은 기간이 유지되는지 확인한다. 기간 0개월이면 첫 정산에서 중립으로 만료되어 조우 검증이 성립하지 않는다.
 
 ## `reset-game-server.yml` 명시 입력
@@ -40,3 +41,7 @@
 5. 승격할 정확한 SHA와 이미지 digest, 시나리오 SHA, 지도 城 수·첫 城, 직전 운영 상태를 기록한다. #865 병합 여부가 바뀌면 입력값과 합성 시나리오를 다시 만든다.
 
 선행 PR 승인·병합과 최신 main CI 초록을 확인한 뒤 승격과 월드 초기화를 한 작업으로 추적한다. 완료 뒤에는 새 월드의 시나리오·城 수·첫 城, 사람 가입·출사, 순 증가, `lastTickError`와 `failedTicks`, 화면과 API를 다시 검증한다. 실패하면 워크플로의 복구 상태와 백업을 기준으로 복구 절차를 결정한다.
+
+## 한 시즌 SAMMO 복원 스위치
+
+`SAMMO_ROLLBACK_ENABLED`의 기본값은 `false`다. 이 스위치는 `ruleProfile` 키가 없는 복원 월드의 해석과 그때의 시나리오 시드 기본값만 SAMMO로 바꾼다. 명시적 HWIHA 월드를 SAMMO로 바꾸지 않는다. 따라서 장애 복구 시에는 전환 직전 SAMMO 백업의 복원 가능성을 먼저 확인하고, 백업을 복원한 다음 스위치를 `true`로 설정해 동일한 이미지의 game-api·game-engine을 기동한다. 복원 월드의 프로필, API 응답, 턴 진행을 확인한다. HWIHA 재전환 때는 스위치를 `false`로 되돌리고 HWIHA 시나리오로 다시 시드한다. 스위치 제거 추적: [#891](https://github.com/peppone-choi/opensamguk/issues/891).

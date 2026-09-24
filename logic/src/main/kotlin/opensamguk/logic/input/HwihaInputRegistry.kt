@@ -32,9 +32,9 @@ enum class RuleProfile {
     HWIHA;
 
     companion object {
-        /** 값이 없으면(기존 월드) SAMMO. 값이 있는데 모르는 글자면 조용히 SAMMO 로 떨어지지 않고 실패한다. */
+        /** 값이 없으면 제품 기본 HWIHA. 기존 SAMMO 기준선은 명시적 프로필을 사용한다. */
         fun fromWorldConfig(value: String?): RuleProfile =
-            if (value == null) SAMMO
+            if (value == null) HWIHA
             else requireNotNull(entries.firstOrNull { it.name == value }) { "unknown ruleProfile in world config: '$value'" }
     }
 }

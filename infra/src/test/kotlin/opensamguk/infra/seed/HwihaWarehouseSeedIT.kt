@@ -61,6 +61,13 @@ class HwihaWarehouseSeedIT {
     private fun stored(id: Int): HwihaCountyWarehouse? = HwihaCountyWarehouse.read(MetaJson.decode(
         jdbc.queryForObject("SELECT meta::text FROM city WHERE world_id=1 AND id=?", String::class.java, id)!!), id)
 
+    @Test fun `fresh scenario without a profile seeds HWIHA positions and records HWIHA`() {
+        importer(scenario().copy(ruleProfile = null)).importAll(jdbc, WorldId(1))
+        assertEquals("HWIHA", jdbc.queryForObject("SELECT config->>'ruleProfile' FROM world_state WHERE id=1", String::class.java))
+        assertTrue(jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id=1", Int::class.java)!! > 0)
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java))
+    }
+
     @Test fun `fresh import preserves explicit county stock only and reboot cannot refill consumed inventory`() {
         val scenario = scenario()
         importer(scenario).importAll(jdbc, WorldId(1))

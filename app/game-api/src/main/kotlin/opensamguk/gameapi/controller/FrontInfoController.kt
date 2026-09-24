@@ -662,13 +662,7 @@ class FrontInfoController(
             ?.takeIf { it.closedAt == null && (it.endAt == null || it.endAt!!.isAfter(now)) }
             ?.let { toFrontLastVote(it) }
 
-        val profile = when {
-            w == null -> null
-            "ruleProfile" !in config -> opensamguk.logic.input.RuleProfile.SAMMO
-            config["ruleProfile"] == "SAMMO" -> opensamguk.logic.input.RuleProfile.SAMMO
-            config["ruleProfile"] == "HWIHA" -> opensamguk.logic.input.RuleProfile.HWIHA
-            else -> null
-        }
+        val profile = if (w == null) null else opensamguk.logic.input.WorldRuleProfile.resolve(config)
         return FrontGlobalInfo(
             ruleProfile = profile,
             year = w?.currentYear ?: 0,

@@ -62,9 +62,10 @@ services:
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
+      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
-      SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      SCENARIO_CODE: ${SCENARIO_CODE:-scenario_990002}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       # 어드민/워크플로 리셋이 고른 시나리오 옵션. 값이 여기서 끊기면 옵션이 조용히 버려진다.
       # 기본값은 넣지 않는다 — 미설정의 의미는 SeedBootstrap이 PHP install.php 기본값으로 단독 소유한다.
@@ -115,6 +116,7 @@ services:
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
+      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       SERVER_ID: ${SERVER_ID:-pep}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
@@ -263,6 +265,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
+      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
       # #516 §5 — web/game no longer talks to game-api directly; /api/game traffic goes through
       # web-gateway's proxy (nginx.conf `location /api/game/` also targets web_gateway).
       GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}

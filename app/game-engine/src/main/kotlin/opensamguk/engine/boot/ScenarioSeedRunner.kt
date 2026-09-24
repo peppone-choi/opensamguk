@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 
 /**
- * F1a — boots the configured [WorldId] into a playable `scenario_1010` world when seed admission
+ * F1a — boots the configured [WorldId] into the selected scenario when seed admission
  * permits it.
  *
  * [ScenarioSeedCoordinator] admits an import only when `world_state` is empty. It skips only when
@@ -35,7 +35,7 @@ import java.nio.charset.StandardCharsets
  *
  * Optional env fences:
  *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable fresh-world seeding.
- *  - `SCENARIO_CODE` (default `scenario_1010`) — selects the committed resource set.
+ *  - `SCENARIO_CODE` (default `scenario_990002`) — selects the committed HWIHA resource set.
  *  - `SCENARIO_DIR` — optional external directory containing `${SCENARIO_CODE}.json`.
  *  - `SCENARIO_QA_TURNTERM` — QA-only opt-in; only `1` reduces a fresh seed to one-minute cadence.
  *  - `RESET_TURNTERM` — 어드민/워크플로 리셋이 고른 턴 주기(분). 허용 집합은
@@ -67,7 +67,7 @@ class ScenarioSeedRunner(
  * guaranteed without depending on bean init ordering.
  */
 class SeedBootstrap(
-    private val scenarioCode: String = "scenario_1010",
+    private val scenarioCode: String = "scenario_990002",
     private val seedEnabled: Boolean = true,
     private val scenarioDir: String = "",
     private val qaTurnTerm: String? = null,

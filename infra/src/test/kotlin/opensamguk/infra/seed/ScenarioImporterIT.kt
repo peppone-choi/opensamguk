@@ -93,7 +93,7 @@ class ScenarioImporterIT {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
         val cities = mapCitiesOf(scenario)
         return ScenarioImporter(
-            scenario = scenario,
+            scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO),
             cities = cities,
             showImageLevel = showImageLevel,
             extendedGeneral = extendedGeneral,
@@ -108,7 +108,7 @@ class ScenarioImporterIT {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_mapless_legacy.json"))
         val cities = mapCitiesOf(scenario)
         return ScenarioImporter(
-            scenario = scenario,
+            scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO),
             cities = cities,
             showImageLevel = showImageLevel,
             extendedGeneral = extendedGeneral,
@@ -119,7 +119,7 @@ class ScenarioImporterIT {
     private fun newImporter1030(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
         val cities = mapCitiesOf(scenario)
-        return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
+        return ScenarioImporter(scenario = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO), cities = cities, scenarioCode = "scenario_1030")
     }
 
     @Test
@@ -538,7 +538,7 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
         assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
-        // 계약 §2: 시나리오에 ruleProfile 이 없으면 SAMMO 가 명시적으로 기록된다(런타임이 부재를 추측하지 않게).
+        // Frozen SAMMO regression fixture declares its profile explicitly in newImporter().
         assertTrue(config.contains("\"ruleProfile\": \"SAMMO\"") || config.contains("\"ruleProfile\":\"SAMMO\""), "config has ruleProfile: $config")
         assertEquals(
             "30000",

@@ -45,11 +45,7 @@ class HwihaDomesticReader(
         if (selected == null) HwihaDomesticSnapshot(failure = "UNAVAILABLE")
         else {
             val config = selected.world.config
-            val profile = when {
-                "ruleProfile" !in config || config["ruleProfile"] == "SAMMO" -> RuleProfile.SAMMO
-                config["ruleProfile"] == "HWIHA" -> RuleProfile.HWIHA
-                else -> throw IllegalArgumentException("Invalid rule profile")
-            }
+            val profile = requireNotNull(opensamguk.logic.input.WorldRuleProfile.resolve(config)) { "Invalid rule profile" }
             if (profile != RuleProfile.HWIHA) HwihaDomesticSnapshot(failure = "WRONG_RULE_PROFILE")
             else {
                 val bundle = requireNotNull(selected.artifacts) { "HWIHA requires pinned Han artifacts" }

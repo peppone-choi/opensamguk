@@ -170,11 +170,9 @@ class CommandReserveService(
     ): ReserveResult {
         val config = worldStates.findProcessWorld()?.config
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        val worldProfile = if ("ruleProfile" !in config) "SAMMO" else config["ruleProfile"]
-        if (worldProfile != "SAMMO" && worldProfile != "HWIHA") {
-            throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        }
-        if (worldProfile == "HWIHA" && actionCode !in HWIHA_RESERVABLE_ACTIONS) {
+        val worldProfile = opensamguk.logic.input.WorldRuleProfile.resolve(config)
+            ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
+        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA && actionCode !in HWIHA_RESERVABLE_ACTIONS) {
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
