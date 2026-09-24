@@ -11,8 +11,13 @@ class TurnWorldStateRuleProfileTest {
         TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60, lastTurnTime = Instant.EPOCH, config = config)
 
     @Test
-    fun `worlds seeded before the field exist are SAMMO`() {
-        assertEquals(RuleProfile.SAMMO, state(emptyMap()).ruleProfile)
+    fun `worlds without a stored profile use the HWIHA product default`() {
+        assertEquals(RuleProfile.HWIHA, state(emptyMap()).ruleProfile)
+    }
+
+    @Test
+    fun `frozen legacy worlds read their explicit SAMMO profile`() {
+        assertEquals(RuleProfile.SAMMO, state(mapOf("ruleProfile" to "SAMMO")).ruleProfile)
     }
 
     @Test
