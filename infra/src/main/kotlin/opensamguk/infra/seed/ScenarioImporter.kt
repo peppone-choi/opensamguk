@@ -85,8 +85,8 @@ class ScenarioImporter(
     private val hiddenSeed: String = "8ebfeb6fa932a181ec9ef43b7473f4c9",
     /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
-    /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트(저장소 루트). 테스트는 `..` 을 준다. */
-    private val artifactsRoot: java.nio.file.Path = java.nio.file.Path.of("."),
+    /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
+    private val artifactsRoot: java.nio.file.Path = HanWorldArtifactsResolver.defaultRoot(),
     /** A restored SAMMO world may use this one-season fallback only when its profile key is absent. */
     private val sammoRollback: Boolean = WorldRuleProfile.rollbackEnabled(),
 ) {

@@ -189,6 +189,7 @@ tasks.test {
         .withPropertyName("v2NamingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
+    systemProperty("opensamguk.artifacts.root", rootProject.projectDir.absolutePath)
     providers.systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR").orNull?.let {
         systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR", it)
     }

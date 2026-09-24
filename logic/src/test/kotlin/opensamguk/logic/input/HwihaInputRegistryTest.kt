@@ -113,8 +113,8 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `rule profile defaults to HWIHA only when absent and fails closed on unknown text`() {
-        assertEquals(RuleProfile.HWIHA, RuleProfile.fromWorldConfig(null))
+    fun `rule profile defaults to SAMMO only when absent and fails closed on unknown text`() {
+        assertEquals(RuleProfile.SAMMO, RuleProfile.fromWorldConfig(null))
         assertEquals(RuleProfile.HWIHA, RuleProfile.fromWorldConfig("HWIHA"))
         assertFailsWith<IllegalArgumentException> { RuleProfile.fromWorldConfig("hwiha") }
         assertFailsWith<IllegalArgumentException> { RuleProfile.fromWorldConfig("") }

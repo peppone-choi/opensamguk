@@ -44,4 +44,4 @@
 
 ## 한 시즌 SAMMO 복원 스위치
 
-`SAMMO_ROLLBACK_ENABLED`의 기본값은 `false`다. 이 스위치는 `ruleProfile` 키가 없는 복원 월드의 해석과 그때의 시나리오 시드 기본값만 SAMMO로 바꾼다. 명시적 HWIHA 월드를 SAMMO로 바꾸지 않는다. 따라서 장애 복구 시에는 전환 직전 SAMMO 백업의 복원 가능성을 먼저 확인하고, 백업을 복원한 다음 스위치를 `true`로 설정해 동일한 이미지의 game-api·game-engine을 기동한다. 복원 월드의 프로필, API 응답, 턴 진행을 확인한다. HWIHA 재전환 때는 스위치를 `false`로 되돌리고 HWIHA 시나리오로 다시 시드한다. 스위치 제거 추적: [#891](https://github.com/peppone-choi/opensamguk/issues/891).
+`SAMMO_ROLLBACK_ENABLED`의 기본값은 `false`다. 이 스위치는 `ruleProfile` 키가 없는 복원 월드의 game-api 해석과 그때의 시나리오 시드 기본값만 SAMMO로 바꾼다. 엔진은 복원 월드의 명시적 SAMMO 값을 읽고, 구형 누락 월드도 SAMMO로 읽는다. 명시적 HWIHA 월드를 SAMMO로 바꾸지 않는다. 따라서 장애 복구 시에는 전환 직전 SAMMO 백업의 복원 가능성을 먼저 확인하고, 백업을 복원한 다음 스위치를 `true`로 설정해 동일한 이미지의 game-api·game-engine을 기동한다. 복원 월드의 프로필, API 응답, 턴 진행을 확인한다. HWIHA 재전환 때는 스위치를 `false`로 되돌리고 HWIHA 시나리오로 다시 시드한다. 스위치 제거 추적: [#891](https://github.com/peppone-choi/opensamguk/issues/891).
