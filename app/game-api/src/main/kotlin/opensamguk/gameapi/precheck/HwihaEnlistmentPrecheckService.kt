@@ -66,13 +66,8 @@ class HwihaEnlistmentPrecheckService(
 
     private fun snapshot(): Snapshot {
         val world = worlds.findProcessWorld() ?: return Snapshot.Unavailable(EnlistmentFailure.POLICY_UNAVAILABLE)
-        val rawProfile = world.config["ruleProfile"]
-        val profile = when {
-            "ruleProfile" !in world.config -> RuleProfile.SAMMO
-            rawProfile == "SAMMO" -> RuleProfile.SAMMO
-            rawProfile == "HWIHA" -> RuleProfile.HWIHA
-            else -> return Snapshot.Unavailable(EnlistmentFailure.POLICY_UNAVAILABLE)
-        }
+        val profile = opensamguk.logic.input.WorldRuleProfile.resolve(world.config)
+            ?: return Snapshot.Unavailable(EnlistmentFailure.POLICY_UNAVAILABLE)
         if (profile != RuleProfile.HWIHA) return Snapshot.Unavailable(EnlistmentFailure.WRONG_RULE_PROFILE)
         val nationRows = nations.findAll()
         val state = HwihaEnlistmentProjection(profile,

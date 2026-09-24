@@ -48,8 +48,8 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(emptyMap()))
-        service.reserve(10, "che_농지개간", 29)
-        assertEquals(29, turns.reserves.single().turnIdx)
+        assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
+        assertEquals(0, turns.reserves.size)
     }
 
     @Test fun `hwiha direct reservation validates authority and stores canonical owned request`() {

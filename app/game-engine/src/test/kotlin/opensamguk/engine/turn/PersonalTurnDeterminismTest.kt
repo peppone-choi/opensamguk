@@ -46,7 +46,8 @@ class PersonalTurnDeterminismTest {
             WorldSnapshot(
                 state = TurnWorldState(
                     worldId, 200, 6, 3600, t0, currentPhase = phase,
-                    config = if (hwiha) mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA") else mapOf("mapName" to "che"),
+                    config = if (hwiha) mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA")
+                        else mapOf("mapName" to "che", "ruleProfile" to "SAMMO"),
                 ),
                 generals = generals,
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5, meta = linkedMapOf("trust" to 50.0))),

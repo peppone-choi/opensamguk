@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.world.WorldId
 import opensamguk.engine.boot.SeedBootstrap
+import opensamguk.engine.boot.LegacySammoScenarioFixture
 import opensamguk.engine.boot.WorldSnapshotLoader
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.seed.HanStrategicTopologyJson
@@ -23,6 +24,7 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.security.MessageDigest
 import java.nio.file.Path
+import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -38,6 +40,7 @@ class HanAiLifecycleReplayIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var loader: WorldSnapshotLoader
+    private lateinit var legacyScenarioDir: Path
     private var dockerAvailable = false
 
     @BeforeAll
@@ -60,7 +63,10 @@ class HanAiLifecycleReplayIT {
             .load()
             .migrate()
         jdbc = JdbcTemplate(dataSource)
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = WorldId(1))
+        legacyScenarioDir = Files.createTempDirectory("sammo-han-ai-")
+        LegacySammoScenarioFixture.copyResource("scenario_1010", legacyScenarioDir)
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", scenarioDir = legacyScenarioDir.toString(),
+            worldId = WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh database must seed scenario_1010")
         val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
         loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
@@ -71,6 +77,10 @@ class HanAiLifecycleReplayIT {
     @AfterAll
     fun tearDownClass() {
         if (this::postgres.isInitialized) postgres.stop()
+        if (this::legacyScenarioDir.isInitialized) {
+            Files.deleteIfExists(legacyScenarioDir.resolve("scenario_1010.json"))
+            Files.deleteIfExists(legacyScenarioDir)
+        }
     }
 
     @Test

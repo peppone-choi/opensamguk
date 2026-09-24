@@ -60,12 +60,12 @@ class CommandQueueTest {
         }
     }
 
-    @Test fun `absent profile retains legacy thirty slot queue behavior`() {
+    @Test fun `absent profile rejects legacy thirty slot queue behavior`() {
         val repo = RecordingReservedTurns()
         val queue = CommandQueueService(repo, registry, RecordingInbox(), RecordingResults(), TestTransactions,
             GameApiProcessWorld(1), worldState(emptyMap()))
-        queue.pushGeneral(10, 12)
-        assertEquals(12, repo.pushGeneral.single().cnt)
+        assertFailsWith<CommandQueueService.CommandQueueDenied> { queue.pushGeneral(10, 12) }
+        assertTrue(repo.pushGeneral.isEmpty())
     }
 
     private val registry = CommandRegistry(GeneralActionPipeline())

@@ -640,7 +640,7 @@ class VerticalSliceE2EIT {
                 "VALUES (1, 'scenario_2', :y, :m, :t, CAST(:cfg AS jsonb))",
             MapSqlParameterSource()
                 .addValue("y", year).addValue("m", month).addValue("t", tickSeconds)
-                .addValue("cfg", """{"startYear":$startYear,"mapName":"che"}"""),
+                .addValue("cfg", """{"startYear":$startYear,"mapName":"che","ruleProfile":"SAMMO"}"""),
         )
         // nation 2 (the general's owning nation) — a precondition the constraints READ
         // (NotWanderingNation needs level != 0; OccupiedCity needs city.nationId == general.nationId).

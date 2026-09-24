@@ -1,7 +1,7 @@
 # 입력 6종 registry 계약
 
 > 작성일: 2026-09-17
-> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 4건: #249·#892 (#779 상위).**
+> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 3건: #249·#892 (#779 상위).**
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17 사용자 결정, `.ai/decisions.md`에 반영됨)
 > 범위: 휘하 입력 계약. 구현 근거와 남은 차이는 아래 대조표에 기록한다.
 
@@ -9,16 +9,16 @@
 
 | 차이 | 2026-09-24 구현 근거 | 처리 |
 |---|---|---|
-| 제품 기본 프로필은 아직 SAMMO | `ScenarioImporter`의 누락 기본값과 `RuleProfile.fromWorldConfig`가 SAMMO, 일부 game-api 조회도 동일 | ADR-LITE-065에 따라 B단계에서 HWIHA 기본으로 바꾼다. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
+| 제품 기본 프로필이 SAMMO였음 — B1 해소 | 신규 시드의 누락 기본값을 HWIHA로 변경하고 저장한다. 기존 월드에서 키가 없으면 game-api는 거절하며, 복원 스위치가 켜진 경우에만 SAMMO로 읽는다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀 호환이다 | 기본값 테스트와 적색 프로브로 고정. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
 | 원장 스키마의 actor·authorityRule·targetSchema·costSchema·timing·effectScope·failureReasons·resultType·replayContract·aiPolicyId·helpTopicId·tutorialObjectiveId가 아직 없음 | `HwihaInputEntry`는 `inputId`·`kind`·`layer`·`deliveryState`·`legacyCommands`만 읽는다 | 계약은 유지하고 단계별 원장 필드를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 70개 기존 명령 전환과 계책 입력이 미완 | 원장은 12행 중 11행 HANDLER_READY, `stratagem.play`만 PLANNED이며 `legacyCommands`는 일부 행만 참조 | 제품 전환표와 직접 행동·위임 대응을 완성한다. 계책 효과는 후속 구현. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 
-이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. 현재 원장 12행 중 11행은 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
+이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. B1 컷오버 이후 제품 기본 프로필은 HWIHA이며 위 첫 번째 차이는 B1에서 해소했다. 현재 원장 12행 중 11행은 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
 
 ## 2026-09-20 기반 결정
 
-사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언을 적고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 누락만 SAMMO 기본값이며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
+사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언 또는 HWIHA 신규 시드 기본값을 기록하고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 기존 월드의 키가 누락되면 game-api는 추측하지 않고 거절하며, 복원한 SAMMO 백업의 누락 키에 한해 `SAMMO_ROLLBACK_ENABLED=true`가 SAMMO를 선택한다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀와 전환 전 세계의 호환 경로로 유지한다. 명시된 값은 스위치로 덮어쓰지 않으며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
 2026-09-24 현재 원장은 12행 중 계책 `stratagem.play`만 PLANNED이고 나머지 11행이 HANDLER_READY다(`data/commands/hwiha-input-catalog.json`). 확정 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)를 따른다.
 
@@ -46,7 +46,7 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
-- **ruleProfile 의 자리(2026-09-20 확정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 값이 없으면 `SAMMO` 다(기존 월드·시나리오 무변경). 월드가 살아 있는 동안 바뀌지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
+- **ruleProfile 의 자리(2026-09-20 확정, B1 기본값 개정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 신규 시드의 누락 기본은 `HWIHA`지만 HWIHA 선언이 없는 옛 시나리오는 시드를 거절한다. 기존 월드에서 키가 없으면 game-api는 거절하고, 한 시즌 복원 스위치가 켜진 경우에만 `SAMMO`로 읽는다. 구형 엔진의 누락 월드 해석은 동결 기준선의 `SAMMO`로 유지한다. 월드가 살아 있는 동안 저장된 값을 바꾸지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
 - 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `legacyCommands[]` 로 역참조를 단다.
 - `legacyCommands[]` 는 **기존 명령 역참조**다. 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고(ADR-LITE-062), 같은 기존 명령이 위임 형태(방침·배치·공사)로도 간다. 그래서 **기존 명령 하나를 여러 행이 가리켜도 된다(다대일).** 대응 검사는 「기존 명령마다 가리키는 행이 하나 이상」으로 세고 「정확히 하나」를 요구하지 않는다. 금지는 둘뿐이다: 한 행 안의 같은 이름 중복, 실제 삼모 명령이 아닌 이름(`CommandRegistry.resolve` 가 `RestAction` 으로 떨어지는 이름). (#837, 옛 필드 이름 `replacesLegacy` 는 원장 파서가 거절한다.)
 - 직접 행동 행은 기존 표시 이름을 쓰되 `inputId` 는 새 꼴(`action.<name>`)이다 — `che_…` 꼴은 registry 가 `WRONG_RULE_PROFILE` 로 거절한다.
@@ -194,7 +194,7 @@ HWIHA 세계의 기존 단건 legacy 예약도 서버 접수 경계에서 거절
 
 ### 출사 화면의 읽기 계약
 
-`front-info.global.ruleProfile`은 저장된 세계 규칙을 표시한다. 세계가 존재하고 키가 없는 기존 세계는 SAMMO이며, 세계 부재·명시 null·오염 값은 확인 불가(null)다. 클라이언트가 관직·도시·시나리오 이름으로 규칙을 추정하지 않는다.
+`front-info.global.ruleProfile`은 저장된 세계 규칙을 표시한다. 세계가 존재해도 키가 없으면 복원 스위치가 꺼진 경우 확인 불가(null)이며, 켜진 경우에만 SAMMO다. 세계 부재·명시 null·오염 값도 확인 불가(null)다. 클라이언트가 관직·도시·시나리오 이름으로 규칙을 추정하지 않는다.
 
 `GET /api/commands/enlistment-options?generalId=<소유 장수>`는 인증된 소유자만 읽는다. 한 REPEATABLE_READ 스냅샷에서 세력·장수 후보를 모으고, 예약과 같은 공통 출사 판정으로 각 옵션의 가용 여부·실패 코드·사유를 만든다. 응답은 inputId, maxReservedTurns=12, options(mode, targetId, label, availability)이며 RANDOM에는 targetId를 생략한다. 비용·주공 수용량·휘하 하위 관계·서버 정책 원문을 반환하지 않는다. 정책 확인이 불가능해도 설명 없는 빈 목록 대신 사유가 있는 RANDOM 거절 행을 반환한다. 읽기 성공은 예약 또는 실행 성공이 아니며, 접수와 실행은 최신 상태에서 다시 검사한다.
 

@@ -80,7 +80,7 @@ class AiTurnAdapterE2ETest {
         currentMonth = MONTH,
         tickSeconds = 3600,
         lastTurnTime = t0,
-        config = linkedMapOf("mapName" to "che"),
+        config = linkedMapOf("mapName" to "che", "ruleProfile" to "SAMMO"),
     )
 
     private fun worldWith(
@@ -114,7 +114,7 @@ class AiTurnAdapterE2ETest {
     }
 
     @Test fun `AI fails closed when the world does not declare an active map`() {
-        val state = baseState().copy(config = emptyMap())
+        val state = baseState().copy(config = mapOf("ruleProfile" to "SAMMO"))
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state,
@@ -245,7 +245,7 @@ class AiTurnAdapterE2ETest {
     @Test fun `a wandering NPC ruler founds from a han county through the active map seam`() {
         val han = CityConstRegistry.of("han")
         val county = han.all().values.first { it.level >= 10 }
-        val state = baseState().copy(config = linkedMapOf("mapName" to "han"))
+        val state = baseState().copy(config = linkedMapOf("mapName" to "han", "ruleProfile" to "SAMMO"))
         val ruler = general(id = 20, nationId = 20, cityId = county.id, officerLevel = 12, npcState = 2).copy(crew = 10_000)
         val follower = general(id = 21, nationId = 20, cityId = county.id, officerLevel = 1, npcState = 2)
         val city = city(id = county.id, nationId = 0).copy(level = county.level, supplyState = 1, frontState = 0)
@@ -412,7 +412,7 @@ class AiTurnAdapterE2ETest {
     private fun hanWanderingWorld(crew: Int, followers: Boolean = true, defense: Int = 2000): InMemoryTurnWorld {
         val variant = opensamguk.logic.world.HanWorldVariant.V3_835
         val county = CityConstRegistry.hanWorld(variant).all().values.first { it.level >= 10 }
-        val state = baseState().copy(config = linkedMapOf("mapName" to "han-world-v3", "unitSet" to "han"),
+        val state = baseState().copy(config = linkedMapOf("mapName" to "han-world-v3", "unitSet" to "han", "ruleProfile" to "SAMMO"),
             hanWorldVariant = variant)
         val ruler = general(id = 20, nationId = 20, cityId = county.id, officerLevel = 12).copy(crew = crew)
         val follower = general(id = 21, nationId = 20, cityId = county.id)
