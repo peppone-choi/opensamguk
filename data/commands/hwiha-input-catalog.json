@@ -676,23 +676,23 @@
       "deliveryState": "HANDLER_READY"
     },
     {
-      "inputId": "stratagem.play",
+      "inputId": "stratagem.rumor",
       "kind": "STRATAGEM",
       "layer": 1,
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -719,16 +719,69 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.rumor",
+      "helpTopicId": "commands.stratagem.rumor",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_선동"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.play",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "generic hand card-play argument contract pending"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "card-specific cost pending",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "FORBIDDEN",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "BATTLE_PENDING",
+        "POSITION_UNAVAILABLE",
+        "SOURCE_UNAVAILABLE",
+        "TARGET_UNAVAILABLE",
+        "CARD_UNAVAILABLE",
+        "INSUFFICIENT_STOCK",
+        "STOCK_OVERFLOW",
+        "STATE_UNAVAILABLE",
+        "ALREADY_QUEUED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.play",
       "helpTopicId": "commands.stratagem.play",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_선동"
-      ],
-      "deliveryState": "UI_READY"
+      "legacyCommands": [],
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.farm",
@@ -2910,7 +2963,7 @@
       "legacyCommands": [
         "che_장비매매"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.tradeGrain",
@@ -3158,7 +3211,7 @@
       "legacyCommands": [
         "che_물자원조"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.abandonCounty",
@@ -3278,7 +3331,7 @@
       "legacyCommands": [
         "che_기술연구"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.moveCapital",
@@ -3398,7 +3451,7 @@
       "legacyCommands": [
         "che_몰수"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.nonAggression",
@@ -3458,7 +3511,7 @@
       "legacyCommands": [
         "che_불가침제의"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.declareWar",
@@ -3518,7 +3571,7 @@
       "legacyCommands": [
         "che_선전포고"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.offerPeace",
@@ -3578,7 +3631,7 @@
       "legacyCommands": [
         "che_종전제의"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "court.breakNonAggression",
@@ -3638,7 +3691,7 @@
       "legacyCommands": [
         "che_불가침파기제의"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "work.reduce",
@@ -3689,7 +3742,7 @@
       "legacyCommands": [
         "che_감축"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.steal",
@@ -3698,17 +3751,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -3735,7 +3788,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.steal",
@@ -3744,7 +3797,7 @@
       "legacyCommands": [
         "che_탈취"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.sabotage",
@@ -3753,17 +3806,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -3790,7 +3843,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.sabotage",
@@ -3799,7 +3852,7 @@
       "legacyCommands": [
         "che_파괴"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.fire",
@@ -3808,17 +3861,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 0,
-        "grain": 0,
-        "iron": 0,
-        "timber": 100,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -3845,7 +3898,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.fire",
@@ -3854,7 +3907,7 @@
       "legacyCommands": [
         "che_화계"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.lastStand",
@@ -3863,17 +3916,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -3900,7 +3953,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.lastStand",
@@ -3909,7 +3962,7 @@
       "legacyCommands": [
         "che_필사즉생"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.mobilizePeople",
@@ -3918,17 +3971,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 0,
-        "grain": 300,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -3955,7 +4008,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.mobilizePeople",
@@ -3964,7 +4017,7 @@
       "legacyCommands": [
         "che_백성동원"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.flood",
@@ -3973,17 +4026,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 0,
-        "grain": 0,
-        "iron": 0,
-        "timber": 100,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4010,7 +4063,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.flood",
@@ -4019,7 +4072,7 @@
       "legacyCommands": [
         "che_수몰"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.falseReport",
@@ -4028,17 +4081,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4065,7 +4118,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.falseReport",
@@ -4074,7 +4127,7 @@
       "legacyCommands": [
         "che_허보"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.raiseMilitia",
@@ -4083,17 +4136,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 0,
-        "grain": 300,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4120,7 +4173,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.raiseMilitia",
@@ -4129,7 +4182,7 @@
       "legacyCommands": [
         "che_의병모집"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.provokeRivalry",
@@ -4138,17 +4191,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 300,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4175,7 +4228,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.provokeRivalry",
@@ -4184,7 +4237,7 @@
       "legacyCommands": [
         "che_이호경식"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.raid",
@@ -4193,17 +4246,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 0,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 100
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4230,7 +4283,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.raid",
@@ -4239,7 +4292,7 @@
       "legacyCommands": [
         "che_급습"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "stratagem.reciprocity",
@@ -4248,17 +4301,17 @@
       "actor": "GENERAL",
       "authorityRule": "CARD_OWNER",
       "targetSchema": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "source": "HwihaLegacyStratagemInput strict mode arguments"
       },
       "costSchema": {
-        "status": "HANDLER_DEFINED",
-        "source": "HwihaLegacyStratagemRules.cost local county warehouse",
-        "money": 100,
-        "grain": 0,
-        "iron": 0,
-        "timber": 0,
-        "horses": 0
+        "status": "PLANNED",
+        "source": "hwiha-legacy-stratagem-v1 proposed costs",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
       },
       "timing": {
         "phase": "CARD_TRIGGER",
@@ -4285,7 +4338,7 @@
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "HANDLER_DEFINED",
+        "status": "PLANNED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.stratagem.reciprocity",
@@ -4294,7 +4347,7 @@
       "legacyCommands": [
         "che_피장파장"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     }
   ],
   "retiredLegacyCommands": [

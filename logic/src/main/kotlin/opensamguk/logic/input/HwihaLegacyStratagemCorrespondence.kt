@@ -6,7 +6,7 @@ data class HwihaLegacyStratagemCorrespondence(val inputId: String, val legacyCom
 /** One legacy command per row, all routed through the eventual card-play executor. */
 object HwihaLegacyStratagemCorrespondences {
     val rows = listOf(
-        HwihaLegacyStratagemCorrespondence("stratagem.play", "che_선동", "유언"),
+        HwihaLegacyStratagemCorrespondence("stratagem.rumor", "che_선동", "유언"),
         HwihaLegacyStratagemCorrespondence("stratagem.steal", "che_탈취", "탈취"),
         HwihaLegacyStratagemCorrespondence("stratagem.sabotage", "che_파괴", "파괴"),
         HwihaLegacyStratagemCorrespondence("stratagem.fire", "che_화계", "화계"),

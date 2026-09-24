@@ -7,7 +7,8 @@ import opensamguk.logic.input.*
 
 /** Direct conversion, treasure/grain trade and one-hop warehouse transport. */
 class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext) {
+    private val context: HwihaDomesticContext,
+    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
         npcSelected: Boolean = false): HwihaTurnOutcome {
         fun reject(reason: HwihaLegacyDirectFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
@@ -18,6 +19,8 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
             return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = HwihaLegacyDirectInput.parse(actorId, inputId, rawJson)
             ?: return reject(HwihaLegacyDirectFailure.INVALID_INPUT)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true)
+            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
@@ -28,20 +31,18 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
         val assessed = HwihaLegacyDirectRules.assess(request, context.projection(world))
         if (assessed is HwihaLegacyDirectAssessment.Rejected) return reject(assessed.reason)
         val ready = assessed as HwihaLegacyDirectAssessment.Eligible
-        val experience: Int
-        val dedication: Int
-        try { experience = Math.addExact(actor.experience, 10); dedication = Math.addExact(actor.dedication, 1) }
-        catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE) }
+        val design = HwihaLegacyDirectDesign.CANON
         val effects = mutableListOf<String>()
         var stock = ready.actorStock
         var inventory = ready.inventory
         when (request) {
             is HwihaLegacyDirectRequest.Convert -> {
                 val unit = world.getBugokById(request.bugokId) ?: return reject(HwihaLegacyDirectFailure.BUGOK_UNAVAILABLE)
-                world.updateBugok(unit.copy(crewTypeId = request.crewTypeId, training = (unit.training - 10).coerceAtLeast(0)))
+                world.updateBugok(unit.copy(crewTypeId = request.crewTypeId,
+                    training = (unit.training - design.conversionTrainingLoss).coerceAtLeast(0)))
                 effects += "bugokId:${unit.id}"
                 effects += "crewTypeId:${request.crewTypeId}"
-                effects += "training:${(unit.training - 10).coerceAtLeast(0) - unit.training}"
+                effects += "training:${(unit.training - design.conversionTrainingLoss).coerceAtLeast(0) - unit.training}"
             }
             is HwihaLegacyDirectRequest.Equipment -> {
                 val card = checkNotNull(ready.treasure)
@@ -61,8 +62,8 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
             }
             is HwihaLegacyDirectRequest.Grain -> {
                 val warehouse = checkNotNull(ready.warehouse)
-                val money = HwihaResources(money = 100)
-                val grain = HwihaResources(grain = 300)
+                val money = HwihaResources(money = design.grainTradeMoney.toLong())
+                val grain = HwihaResources(grain = design.grainTradeGrain.toLong())
                 if (request.side == HwihaTradeSide.BUY) {
                     stock = checkNotNull(checkNotNull(stock).debit(money)).credit(grain)
                     changeWarehouse(checkNotNull(ready.county).id, warehouse,
@@ -72,8 +73,8 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
                     changeWarehouse(checkNotNull(ready.county).id, warehouse,
                         checkNotNull(warehouse.stock.debit(money)).credit(grain))
                 }
-                effects += "money:${if (request.side == HwihaTradeSide.BUY) -100 else 100}"
-                effects += "grain:${if (request.side == HwihaTradeSide.BUY) 300 else -300}"
+                effects += "money:${if (request.side == HwihaTradeSide.BUY) -design.grainTradeMoney else design.grainTradeMoney}"
+                effects += "grain:${if (request.side == HwihaTradeSide.BUY) design.grainTradeGrain else -design.grainTradeGrain}"
             }
             is HwihaLegacyDirectRequest.Transport -> {
                 val from = checkNotNull(ready.warehouse)
@@ -88,13 +89,11 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
                 effects += "amount:${request.amount}"
             }
         }
-        effects += "experience:+10"
-        effects += "dedication:+1"
         val stamp = mapOf("turn" to turnToken, "inputId" to inputId, "requestId" to requestId, "effects" to effects)
         val current = world.getGeneralById(actorId) ?: return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE)
         val nextStock = stock
         val meta = if (nextStock == null) current.meta else HwihaPortableStock.withStock(current.meta, nextStock)
-        val next = current.copy(experience = experience, dedication = dedication,
+        val next = current.copy(
             gold = nextStock?.let { HwihaPortableStock.checkedColumn(it.money) } ?: current.gold,
             rice = nextStock?.let { HwihaPortableStock.checkedColumn(it.grain) } ?: current.rice,
             meta = (if (request is HwihaLegacyDirectRequest.Equipment) HwihaTreasureInventory.withCards(meta, inventory) else meta) +

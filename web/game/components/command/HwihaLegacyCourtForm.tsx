@@ -11,7 +11,7 @@ const labels:Record<HwihaLegacyCourtId,string>={
     'court.nonAggression':'불가침 제의','court.declareWar':'선전포고',
     'court.offerPeace':'종전 제의','court.breakNonAggression':'불가침 파기 제의',
 };
-const ids=Object.keys(labels) as HwihaLegacyCourtId[];
+const ids:HwihaLegacyCourtId[]=['court.releaseCorps','court.abandonCounty','court.moveCapital'];
 
 export default function HwihaLegacyCourtForm({generalId,refreshKey=0,onReserved}:{generalId:number;refreshKey?:number;onReserved?:()=>void}){
     const [inputId,setInputId]=useState<HwihaLegacyCourtId>('court.releaseCorps');

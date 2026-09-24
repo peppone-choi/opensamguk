@@ -27,6 +27,9 @@ class HwihaDomesticHandler(
         val actor = world.getGeneralById(command.generalId) ?: return deny("ACTOR_NOT_FOUND", "장수를 찾을 수 없습니다.")
         if (command.ownerUserId <= 0 || actor.userId?.toLongOrNull() != command.ownerUserId.toLong())
             return deny("FORBIDDEN", "자신의 장수만 조작할 수 있습니다.")
+        if (command.inputId == HwihaDomesticInput.REDUCE &&
+            HwihaInputCatalog.load()[command.inputId]?.deliveryState?.hasHandler != true)
+            return deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = context.projection(world)
         val now = state.now
         val outcome: DomesticAssessment = when (command.inputId) {

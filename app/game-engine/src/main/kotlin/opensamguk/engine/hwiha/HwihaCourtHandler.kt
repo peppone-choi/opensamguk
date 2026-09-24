@@ -41,8 +41,9 @@ class HwihaCourtHandler(
             HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
-            HwihaDomesticInput.REDUCE to InputHandler { outcome = domestic.handle(command) },
         )
+        if (HwihaInputCatalog.load()[HwihaDomesticInput.REDUCE]?.deliveryState?.hasHandler == true)
+            channelHandlers[HwihaDomesticInput.REDUCE] = InputHandler { outcome = domestic.handle(command) }
         for (travelId in HwihaTravelInput.INPUT_IDS) {
             channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }

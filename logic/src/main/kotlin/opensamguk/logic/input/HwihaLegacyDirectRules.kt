@@ -30,6 +30,7 @@ sealed interface HwihaLegacyDirectAssessment {
 object HwihaLegacyDirectRules {
     fun assess(request: HwihaLegacyDirectRequest, state: HwihaDomesticProjection): HwihaLegacyDirectAssessment {
         fun reject(reason: HwihaLegacyDirectFailure) = HwihaLegacyDirectAssessment.Rejected(reason)
+        val design = HwihaLegacyDirectDesign.CANON
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaLegacyDirectFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return reject(HwihaLegacyDirectFailure.ACTOR_NOT_FOUND)
         if (actor.inBattle) return reject(HwihaLegacyDirectFailure.BATTLE_PENDING)
@@ -38,6 +39,13 @@ object HwihaLegacyDirectRules {
         if (request is HwihaLegacyDirectRequest.Convert) {
             val unit = state.bugoks.singleOrNull { it.id == request.bugokId && it.masterGeneralId == actor.id }
                 ?: return reject(HwihaLegacyDirectFailure.BUGOK_UNAVAILABLE)
+            val local = state.counties.singleOrNull { it.provinceId == node }
+                ?: return reject(HwihaLegacyDirectFailure.COUNTY_UNAVAILABLE)
+            if (local.nationId != actor.nationId || local.nationId <= 0)
+                return reject(HwihaLegacyDirectFailure.FOREIGN_COUNTY)
+            val deployed = try { HwihaDomesticRules.deployedCorps(state) }
+                catch (_: IllegalArgumentException) { return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE) }
+            if (deployed.any { unit.id in it.bugokIds }) return reject(HwihaLegacyDirectFailure.BUGOK_UNAVAILABLE)
             if (request.crewTypeId !in state.supportedCrewTypeIds)
                 return reject(HwihaLegacyDirectFailure.INVALID_CREW_TYPE)
             if (unit.crewTypeId == request.crewTypeId) return reject(HwihaLegacyDirectFailure.SAME_CREW_TYPE)
@@ -82,22 +90,22 @@ object HwihaLegacyDirectRules {
             is HwihaLegacyDirectRequest.Grain -> {
                 if (request.amount != 1) return reject(HwihaLegacyDirectFailure.INVALID_INPUT)
                 if (request.side == HwihaTradeSide.BUY) {
-                    if (actorStock.money < 100 || warehouse.stock.grain < 300)
+                    if (actorStock.money < design.grainTradeMoney || warehouse.stock.grain < design.grainTradeGrain)
                         return reject(HwihaLegacyDirectFailure.INSUFFICIENT_STOCK)
-                    if (actorStock.grain + 300 > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
-                    try { warehouse.stock.credit(HwihaResources(money = 100)) }
+                    if (actorStock.grain + design.grainTradeGrain > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
+                    try { warehouse.stock.credit(HwihaResources(money = design.grainTradeMoney.toLong())) }
                     catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW) }
                 } else {
-                    if (actorStock.grain < 300 || warehouse.stock.money < 100)
+                    if (actorStock.grain < design.grainTradeGrain || warehouse.stock.money < design.grainTradeMoney)
                         return reject(HwihaLegacyDirectFailure.INSUFFICIENT_STOCK)
-                    if (actorStock.money + 100 > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
-                    try { warehouse.stock.credit(HwihaResources(grain = 300)) }
+                    if (actorStock.money + design.grainTradeMoney > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
+                    try { warehouse.stock.credit(HwihaResources(grain = design.grainTradeGrain.toLong())) }
                     catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW) }
                 }
                 return HwihaLegacyDirectAssessment.Eligible(actor, county, actorStock = actorStock, warehouse = warehouse)
             }
             is HwihaLegacyDirectRequest.Transport -> {
-                if (request.amount !in 1..1000) return reject(HwihaLegacyDirectFailure.INVALID_INPUT)
+                if (request.amount !in 1..design.transportMaxAmount) return reject(HwihaLegacyDirectFailure.INVALID_INPUT)
                 val target = state.county(request.targetCountyId)?.takeIf {
                     it.id in state.countyAdjacency[county.id].orEmpty() && it.nationId == county.nationId
                 } ?: return reject(HwihaLegacyDirectFailure.TARGET_COUNTY_UNAVAILABLE)

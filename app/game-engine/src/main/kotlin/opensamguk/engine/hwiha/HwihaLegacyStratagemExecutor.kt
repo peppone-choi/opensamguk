@@ -56,7 +56,7 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
                 catch (_: ArithmeticException) { return reject(HwihaLegacyStratagemFailure.STOCK_OVERFLOW) }
         }
         when (request.inputId) {
-            "stratagem.play" -> target = target!!.copy(meta = target.meta +
+            "stratagem.rumor" -> target = target!!.copy(meta = target.meta +
                 ("trust" to ((target.meta["trust"] as? Number)?.toDouble() ?: 50.0).minus(2.0).coerceAtLeast(0.0)))
             "stratagem.sabotage" -> target = target!!.copy(defence = (target.defence - 50).coerceAtLeast(0))
             "stratagem.fire" -> target = target!!.copy(wall = (target.wall - 50).coerceAtLeast(0))
