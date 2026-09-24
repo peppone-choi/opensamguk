@@ -12,15 +12,15 @@
 | 제품 기본 프로필이 SAMMO였음 — B1 해소 | 신규 시드의 누락 기본값을 HWIHA로 변경하고 저장한다. 기존 월드에서 키가 없으면 game-api는 거절하며, 복원 스위치가 켜진 경우에만 SAMMO로 읽는다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀 호환이다 | 기본값 테스트와 적색 프로브로 고정. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
 | 원장 스키마 필드 누락 — 첫 슬라이스 해소 | `HwihaInputEntry`가 계약 §3의 필드를 모두 읽고 필수 필드·중복 키를 검사한다. 미구현 행의 비용·효과·실패 사유 세부값은 `PLANNED`이며 실행 전 확정 대상 | 실제 수치·핸들러·사유 공유는 입력별 슬라이스에서 검증한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
-| 70개 기존 명령 전환과 계책 입력이 미완 | 원장 73행에 기존 고유 명령 69개를 활성 역참조 64개·폐지/설정 5개로 등록했다. 신규 행은 모두 PLANNED다 | 직접 행동 34개와 70개 대응 게이트를 유지하며 실행은 후속 슬라이스. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 70개 기존 명령 전환과 계책 입력이 미완 | 원장 71행에 기존 고유 명령 69개를 활성 역참조 64개·폐지/설정 5개로 등록했다. 신규 행은 모두 PLANNED다 | 직접 행동 38개와 70개 대응 게이트를 유지하며 실행은 후속 슬라이스. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 
-이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. B1 컷오버 이후 제품 기본 프로필은 HWIHA이며 위 첫 번째 차이는 B1에서 해소했다. 현재 원장 73행 중 기존 11행만 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
+이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. B1 컷오버 이후 제품 기본 프로필은 HWIHA이며 위 첫 번째 차이는 B1에서 해소했다. 현재 원장 71행 중 기존 11행만 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
 
 ## 2026-09-20 기반 결정
 
 사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언 또는 HWIHA 신규 시드 기본값을 기록하고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 기존 월드의 키가 누락되면 game-api는 추측하지 않고 거절하며, 복원한 SAMMO 백업의 누락 키에 한해 `SAMMO_ROLLBACK_ENABLED=true`가 SAMMO를 선택한다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀와 전환 전 세계의 호환 경로로 유지한다. 명시된 값은 스위치로 덮어쓰지 않으며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
-2026-09-24 입력 원장 첫 슬라이스에서 12행을 73행으로 확장했다. 기존 11행의 HANDLER_READY는 유지하고 신규 행은 PLANNED다. 비용이 null인 필드는 미확정으로서 무료를 뜻하지 않는다. 확정 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)를 따른다.
+2026-09-24 입력 원장 첫 슬라이스에서 12행을 71행으로 확장했다. 기존 11행의 HANDLER_READY는 유지하고 신규 행은 PLANNED다. 비용이 null인 필드는 미확정으로서 무료를 뜻하지 않는다. 확정 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)를 따른다.
 
 2026-09-21 현재 원장은 출사 `action.enlist`와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 나머지4행은 PLANNED다. 이 결정은 입력 기능 완료나 계약 전체의 승격이 아니다. actor·권한·효과 봉투는 출사 소비자의 접수·실행 계약을 따르며, 아래 WORK·UI·이전 관련 미결을 기반 구현 완료로 포장하지 않는다.
 
@@ -60,7 +60,7 @@ failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
 tutorialObjectiveId|N/A, legacyCommands[], deliveryState; root.retiredLegacyCommands[]
 ```
 
-- (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry 는 이런 입력을 `NOT_DELIVERED` 로 거절한다. 거절 사유는 4종이다: `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED`. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
+- (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry 는 이런 입력을 `NOT_DELIVERED` 로 거절한다. 현행 예약 API는 허용 목록에 없는 PLANNED 입력을 먼저 `WRONG_RULE_PROFILE`로 거절하므로, 예약 경로를 원장 판정으로 바꾸기 전까지 두 표면의 거절 사유가 다르다. 거절 사유는 4종이다: `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED`. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
 - `PLANNED` 뒤는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
 - 원장 파일: `data/commands/hwiha-input-catalog.json`(현행 파일). 알파 카탈로그 파일과 `PublicCommandCatalogIndex` 는 `SAMMO` 월드용으로 남는다.
 - schemaVersion 2부터 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. `retiredLegacyCommands[]`는 명령이 폐지되거나 설정으로 이동한 경우만 기록한다. 대응 게이트는 각 기존 명령이 활성 역참조 또는 이 목록 중 정확히 한쪽에 있는지 검사한다.

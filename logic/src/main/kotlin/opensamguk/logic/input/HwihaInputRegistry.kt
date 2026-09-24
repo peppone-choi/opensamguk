@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -111,7 +112,7 @@ class HwihaInputCatalog internal constructor(
         fun parse(payload: String): HwihaInputCatalog {
             HwihaCatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.getValue("schemaVersion").jsonPrimitive.int == 2) { "unsupported hwiha input catalog schemaVersion" }
+            require(root.requiredInt("schemaVersion") == 2) { "unsupported hwiha input catalog schemaVersion" }
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs", "retiredLegacyCommands", "retiredLegacyReasons")) {
                 "unexpected or missing hwiha catalog field"
             }
@@ -134,10 +135,13 @@ class HwihaInputCatalog internal constructor(
                 require(cost.keys == COST_FIELDS) { "costSchema fields missing or unknown: $inputId" }
                 cost.requiredText("status")
                 cost.requiredText("source")
+                (COST_FIELDS - setOf("status", "source")).forEach { cost.requiredNonNegativeCost(it) }
                 val target = row.getValue("targetSchema").jsonObject
+                require(target.keys == TARGET_FIELDS) { "targetSchema fields missing or unknown: $inputId" }
                 target.requiredText("status")
                 target.requiredText("source")
                 val replay = row.getValue("replayContract").jsonObject
+                require(replay.keys == REPLAY_FIELDS) { "replayContract fields missing or unknown: $inputId" }
                 replay.requiredText("status")
                 replay.requiredText("key")
                 val failureReasons = row.getValue("failureReasons").stringArray("failureReasons")
@@ -145,16 +149,23 @@ class HwihaInputCatalog internal constructor(
                 val actor = row.requiredText("actor")
                 require(actor in ACTORS) { "unknown actor: $inputId / $actor" }
                 val timing = row.getValue("timing").jsonObject
+                require(timing.keys == TIMING_FIELDS) { "timing fields missing or unknown: $inputId" }
                 require(timing.getValue("phase").jsonPrimitive.content in PHASES) { "unknown timing phase: $inputId" }
                 if (kind == InputKind.GENERAL_ACTION) {
-                    require(timing.getValue("turnSlots").jsonPrimitive.int == 12 &&
-                        timing.getValue("perPhaseLimit").jsonPrimitive.int == 1) { "general action must use 12 slots and one action per phase: $inputId" }
+                    require(timing.requiredText("phase") in GENERAL_PHASES &&
+                        timing.requiredInt("turnSlots") == 12 && timing.requiredInt("perPhaseLimit") == 1) {
+                        "general action must use 12 slots and one action per phase: $inputId"
+                    }
+                } else {
+                    require(timing.getValue("turnSlots") == JsonNull && timing.getValue("perPhaseLimit") == JsonNull) {
+                        "standing input must not use turn slots: $inputId"
+                    }
                 }
                 require(row.requiredText("resultType") == "InputResolved") { "wrong resultType: $inputId" }
                 HwihaInputEntry(
                     inputId = inputId,
                     kind = kind,
-                    layer = row.getValue("layer").jsonPrimitive.int.also { require(it in 1..3) { "layer must be 1..3: $inputId" } },
+                    layer = row.requiredInt("layer").also { require(it in 1..3) { "layer must be 1..3: $inputId" } },
                     actor = actor,
                     authorityRule = row.requiredText("authorityRule"),
                     targetSchema = target,
@@ -186,8 +197,27 @@ class HwihaInputCatalog internal constructor(
             "costSchema", "timing", "effectScope", "failureReasons", "resultType", "replayContract",
             "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "legacyCommands", "deliveryState")
         private val COST_FIELDS = setOf("status", "source", "money", "grain", "iron", "timber", "horses")
+        private val TARGET_FIELDS = setOf("status", "source")
+        private val REPLAY_FIELDS = setOf("status", "key")
+        private val TIMING_FIELDS = setOf("phase", "turnSlots", "perPhaseLimit")
         private val ACTORS = setOf("GENERAL", "LORD", "RULER", "OFFICE_HOLDER")
         private val PHASES = setOf("POLITICS", "MOVE", "SIEGE", "FIELD", "NEXT_CARD_TURN", "NEXT_PHASE_BOUNDARY", "CARD_TRIGGER", "DECISION_TURN")
+        private val GENERAL_PHASES = setOf("POLITICS", "MOVE", "SIEGE", "FIELD")
+
+        private fun JsonObject.requiredInt(key: String): Int {
+            val value = getValue(key) as? JsonPrimitive
+            require(value != null && !value.isString) { "$key must be an integer" }
+            return value.int
+        }
+
+        private fun JsonObject.requiredNonNegativeCost(key: String) {
+            val value = getValue(key)
+            if (value == JsonNull) return
+            val primitive = value as? JsonPrimitive
+            require(primitive != null && !primitive.isString && primitive.content.matches(Regex("[0-9]+"))) {
+                "$key must be a non-negative number or null"
+            }
+        }
 
         private fun JsonElement.stringArray(field: String): List<String> = jsonArray.map { item ->
             val value = item as? JsonPrimitive
