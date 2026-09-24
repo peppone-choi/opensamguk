@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   main-ci-alert:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push'
+    if: github.event_name == 'workflow_dispatch' || contains(fromJSON('["push", "schedule"]'), github.event.workflow_run.event)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

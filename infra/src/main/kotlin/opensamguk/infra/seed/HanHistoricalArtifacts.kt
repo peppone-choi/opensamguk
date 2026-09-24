@@ -30,7 +30,9 @@ object HanHistoricalArtifacts {
         val (commit, count) = requireNotNull(versions[variantId]) { "Unknown Han artifact set: $variantId" }
         try {
             val directory = root.resolve("data/map/han-world-artifacts-v1")
-            val raw = Files.readAllBytes(directory.resolve("catalog.json"))
+            val catalogPath = directory.resolve("catalog.json")
+            RepositoryInputTrace.file(catalogPath)
+            val raw = Files.readAllBytes(catalogPath)
             require(sha(raw) == CATALOG_SHA256) { "Historical Han catalog hash mismatch" }
             val catalog = mapper.readTree(raw)
             require(catalog.path("schemaVersion").asInt() == 1 &&
@@ -50,7 +52,9 @@ object HanHistoricalArtifacts {
                 require(hash.matches(Regex("[a-f0-9]{64}"))) { "Invalid historical blob digest" }
                 val blob = "blobs/$hash.json"
                 require(entry.path("blob").asText() == blob) { "Invalid historical blob path" }
-                val data = Files.readAllBytes(directory.resolve(blob))
+                val blobPath = directory.resolve(blob)
+                RepositoryInputTrace.file(blobPath)
+                val data = Files.readAllBytes(blobPath)
                 require(data.size == entry.path("bytes").asInt() && sha(data) == hash) { "Historical blob hash/length mismatch" }
                 entry.path("path").asText() to data
             }

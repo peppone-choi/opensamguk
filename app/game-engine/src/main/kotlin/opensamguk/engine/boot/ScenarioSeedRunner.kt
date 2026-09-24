@@ -7,6 +7,7 @@ import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.infra.seed.ScenarioSeedCoordinator
+import opensamguk.infra.seed.RepositoryInputTrace
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -157,6 +158,7 @@ class SeedBootstrap(
     private fun readResource(path: String): String {
         val stream = javaClass.classLoader.getResourceAsStream(path)
             ?: error("resource not found on classpath: $path")
+        RepositoryInputTrace.resource(path)
         return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
     }
 

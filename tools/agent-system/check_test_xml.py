@@ -61,6 +61,7 @@ def load_quarantine(path: Path) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("module_roots", nargs="+", help="repo-root 기준 모듈 경로 (e.g. infra, app/game-engine)")
+    ap.add_argument("--task", default="test", help="Gradle Test task whose XML is checked (default: test)")
     ap.add_argument("--repo-root", default=".")
     ap.add_argument(
         "--quarantine",
@@ -77,7 +78,7 @@ def main() -> int:
     files = []
     missing = []
     for module_root in module_roots:
-        found = sorted(module_root.glob("build/test-results/test/TEST-*.xml"))
+        found = sorted(module_root.glob(f"build/test-results/{args.task}/TEST-*.xml"))
         if not found:
             missing.append(module_root.relative_to(root))
         files.extend(found)

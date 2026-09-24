@@ -4,13 +4,40 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '0 17 * * *'
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      jvm: ${{ steps.filter.outputs.jvm }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+      map_slow: ${{ steps.filter.outputs.map_slow }}
+      external_places: ${{ steps.filter.outputs.external_places }}
+      web: ${{ steps.filter.outputs.web }}
+      city: ${{ steps.filter.outputs.city }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        name: Classify changed paths
+        run: |
+          python3 tools/ci/changed_paths.py \
+            --event '${{ github.event_name }}' \
+            --base '${{ github.event.pull_request.base.sha }}' \
+            --head '${{ github.event.pull_request.head.sha }}'
+
   contracts:
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -227,6 +254,9 @@ jobs:
       - name: Verify main CI red/recovery alert decisions
         if: '!cancelled()'
         run: python3 tools/ops/test_main_ci_alert.py
+      - name: Verify CI path and shard tooling
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/ci -p 'test_*.py'
       - name: Verify game-server reset workflow contract
         if: '!cancelled()'
         run: bash tools/ops/wait_deployer_operation_contract_test.sh
@@ -238,6 +268,8 @@ jobs:
   # 통째로 취소됐다(런 35305964557: 「Terminate orphan process: timeout / python3」). 결과에 영향 없는
   # 경고이므로 자기 잡·자기 한도로 떼어 둔다 — 실패해도(continue-on-error) 다른 잡을 막지 않는다.
   map-slow-tests:
+    needs: changes
+    if: needs.changes.outputs.map_slow == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -261,6 +293,8 @@ jobs:
         run: python3 tools/map/build_han_parent_reconciliation.py --check
 
   external-places-drift:
+    needs: changes
+    if: needs.changes.outputs.external_places == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -283,14 +317,11 @@ jobs:
           esac
           exit 0
 
-  jvm:
+  jvm-core:
+    needs: changes
+    if: needs.changes.outputs.jvm == 'true'
     runs-on: ubuntu-latest
-    # OPENSAM-221 (GH #487): 상한이 없으면 Flyway CONCURRENTLY 데드락 같은 무한 대기가
-    # 러너 기본 상한(6시간)까지 붙잡고 배포 파이프 전체를 세운다.
-    # 2026-09-18 실측: 「~9분」은 옛 수치다. :app:game-engine:test 혼자 ~30분(main 35313733459: 06:11→06:41),
-    # 빌드 전체 31m37s. logic 을 건드린 PR 은 캐시가 안 맞아 앞단이 4–6분 더 돌고 40분 한도에 걸려
-    # 테스트 실패 없이 취소됐다(#815 두 번, #820 세 번). 한도는 매달림을 끊는 용도라 여유를 둔다.
-    timeout-minutes: 70
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -299,48 +330,55 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Refuse the skipped-IT opt-out in CI
-        # OPENSAM_ALLOW_SKIPPED_IT is a local-only escape hatch for developers
-        # iterating without Docker. ubuntu-latest
-        # always has Docker, so this var has no legitimate reason to be set
-        # here — if it is, something (workflow edit, secret, cached env) is
-        # trying to silence the skip gate. Fail loud instead of trusting it.
         run: |
           if [ -n "${OPENSAM_ALLOW_SKIPPED_IT:-}" ]; then
-            echo "OPENSAM_ALLOW_SKIPPED_IT is set in CI — this is not allowed. CI must never silence skipped IT." >&2
+            echo "OPENSAM_ALLOW_SKIPPED_IT is not allowed in CI" >&2
             exit 1
           fi
-      - name: Build + test (Testcontainers uses the runner's Docker)
-        run: ./gradlew build --no-daemon
-      - name: Fail on skipped tests (docker-gated IT must not silently skip in CI)
-        # OPENSAM_ALLOW_SKIPPED_IT is intentionally never set here: ubuntu-latest
-        # ships Docker, so any assumeTrue(dockerAvailable) skip in CI means Docker
-        # actually became unavailable on the runner and must be investigated, not
-        # waved through by a BUILD SUCCESSFUL that never ran the IT. Pinned empty
-        # here (not just refused in the prior step) so an env: block added
-        # anywhere else in this job can't quietly re-introduce the opt-out.
-        #
-        # One known, permanent, ticket-registered exception passes through this gate:
-        # LongSimReplayGateTest's PHP-golden replay test (tools/agent-system/skipped_it_quarantine.json).
-        # It can never run here — its candidate data needs legacy/devsam-core, which is
-        # git-ignored and absent from every CI checkout — see LongSimReplayGateTest.kt's
-        # class doc and #521 before attempting to wire it in.
+      - name: Build and test JVM modules except game-engine
+        run: |
+          ./gradlew :common:build :logic:build :infra:build :app:gateway-api:build :app:game-api:build :app:board-api:build --no-daemon
+      - name: Fail on skipped tests
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""
         run: |
-          python3 tools/agent-system/check_test_xml.py \
-            common logic infra app/gateway-api app/game-api app/game-engine app/board-api
+          python3 tools/agent-system/check_test_xml.py common logic infra app/gateway-api app/game-api app/board-api
       - name: Surface test results
         if: always()
         run: |
-          echo "== test summary =="
-          # 모듈별 XML 개수를 먼저 낸다. head 로 자른 전체 목록만 찍으면 결과가 0건인
-          # 모듈이 잘림에 묻혀 보이지 않는다(2026-08-21 game-api 매달림 진단이 그래서
-          # 늦어졌다). 목록은 그 뒤에 붙인다.
-          for m in common logic infra app/gateway-api app/game-api app/game-engine app/board-api; do
-            printf '%-22s %s\n' "$m" "$(find "$m" -path '*/build/test-results/*/*.xml' 2>/dev/null | wc -l)"
+          for m in common logic infra app/gateway-api app/game-api app/board-api; do
+            printf '%-22s %s\n' "$m" "$(find "$m/build/test-results/test" -name 'TEST-*.xml' 2>/dev/null | wc -l)"
           done
-          find . -path '*/build/test-results/*/*.xml' -print > /tmp/xml-list.txt 2>/dev/null || true
-          head -50 /tmp/xml-list.txt || true
+
+  game-engine:
+    needs: changes
+    if: needs.changes.outputs.jvm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Refuse the skipped-IT opt-out in CI
+        run: |
+          if [ -n "${OPENSAM_ALLOW_SKIPPED_IT:-}" ]; then
+            echo "OPENSAM_ALLOW_SKIPPED_IT is not allowed in CI" >&2
+            exit 1
+          fi
+      - name: Test game-engine
+        run: ./gradlew :app:game-engine:test --no-daemon
+      - name: Fail on skipped game-engine tests
+        env:
+          OPENSAM_ALLOW_SKIPPED_IT: ""
+        run: python3 tools/agent-system/check_test_xml.py app/game-engine
+      - name: Surface game-engine test results
+        if: always()
+        run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
       - name: Upload game-engine test failures
         if: failure()
         uses: actions/upload-artifact@v4
@@ -361,7 +399,91 @@ jobs:
             app/game-engine/build/test-results/test/TEST-*HwihaS3PassChain*.xml
             app/game-engine/build/test-results/test/TEST-*HwihaYuzhouCampaignSimulationTest.xml
 
+  city-test:
+    needs: changes
+    if: needs.changes.outputs.city == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        city_shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Refuse the skipped-IT opt-out in CI
+        run: |
+          if [ -n "${OPENSAM_ALLOW_SKIPPED_IT:-}" ]; then
+            echo "OPENSAM_ALLOW_SKIPPED_IT is not allowed in CI" >&2
+            exit 1
+          fi
+      - name: Test added cities in shard ${{ matrix.city_shard }}
+        run: |
+          ./gradlew :app:game-engine:cityTest -PcityShardCount=12 -PcityShardIndex=${{ matrix.city_shard }} --no-daemon
+      - name: Fail on skipped city tests
+        env:
+          OPENSAM_ALLOW_SKIPPED_IT: ""
+        run: python3 tools/agent-system/check_test_xml.py --task cityTest app/game-engine
+      - name: Surface city test results
+        if: always()
+        run: find app/game-engine/build/test-results/cityTest -name 'TEST-*.xml' -print 2>/dev/null || true
+      - name: Upload city shard coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: city-shard-${{ matrix.city_shard }}
+          if-no-files-found: error
+          retention-days: 7
+          path: app/game-engine/build/city-shards/shard-${{ matrix.city_shard }}.json
+      - name: Upload city test failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: city-test-failures-shard-${{ matrix.city_shard }}
+          if-no-files-found: warn
+          path: |
+            app/game-engine/build/reports/tests/cityTest/
+            app/game-engine/build/test-results/cityTest/
+
+  jvm:
+    needs: [changes, jvm-core, game-engine, city-test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Collect JVM results for the required jvm check
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          CORE: ${{ needs['jvm-core'].result }}
+          ENGINE: ${{ needs['game-engine'].result }}
+          CITY: ${{ needs['city-test'].result }}
+        run: |
+          test "$CHANGES" = success || exit 1
+          for result in "$CORE" "$ENGINE" "$CITY"; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "JVM dependency failed: $result" >&2; exit 1 ;;
+            esac
+          done
+      - uses: actions/checkout@v4
+        if: needs.city-test.result == 'success'
+      - uses: actions/download-artifact@v4
+        if: needs.city-test.result == 'success'
+        with:
+          pattern: city-shard-*
+          path: city-shard-manifests
+      - name: Verify every added city ran once across the CI shards
+        if: needs.city-test.result == 'success'
+        run: python3 tools/ci/check_city_shards.py city-shard-manifests
+
   web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     # build 만 돌 때 game 1m54s · gateway 1m39s 였다. vitest 를 더하면서 15 로 올린다
     # (로컬 실측 game 707 건 47s · gateway 266 건 27s). 한도 초과는 실패 로그가 아니라
@@ -398,6 +520,8 @@ jobs:
   # 이 스위트는 커밋된 지도 정본(han-world-v3.json · han-tiles.json · han.json)을 읽어
   # 표기 규칙과 省 도장 찍기를 검사하므로, 지도 데이터 커밋을 막는 게이트이기도 하다.
   web-shared:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

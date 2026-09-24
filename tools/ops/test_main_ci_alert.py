@@ -44,6 +44,11 @@ class DecideTest(unittest.TestCase):
         self.assertIsNotNone(payload)
         self.assertIn("적색", payload["embeds"][0]["title"])
 
+    def test_scheduled_failure_is_alerted(self):
+        payload = alert.decide(run(event="schedule"), ["city-test (2)"], None)
+        self.assertIsNotNone(payload)
+        self.assertIn("city-test (2)", payload["embeds"][0]["fields"][1]["value"])
+
     def test_first_green_after_red_is_a_recovery(self):
         payload = alert.decide(run(conclusion="success"), None, "failure")
         self.assertEqual("[main CI 복구] success @ 677e8940", payload["embeds"][0]["title"])

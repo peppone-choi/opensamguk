@@ -93,6 +93,7 @@ object MapJson {
     fun loadFromClasspath(mapCode: String): MapData {
         val resourceCode = resourceCode(mapCode)
         val json = MapJson::class.java.classLoader.getResourceAsStream("map/$resourceCode.json")
+            ?.also { RepositoryInputTrace.resource("map/$resourceCode.json") }
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
             ?: return MapData(width = 0, height = 0, cities = emptyList())
         return loadMap(json)
@@ -139,6 +140,7 @@ object MapJson {
     fun loadCityDetailsFromClasspath(mapCode: String): List<MapCityDetail> {
         val resourceCode = resourceCode(mapCode)
         val json = MapJson::class.java.classLoader.getResourceAsStream("map/$resourceCode.json")
+            ?.also { RepositoryInputTrace.resource("map/$resourceCode.json") }
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
             ?: return emptyList()
         return loadCityDetails(json)

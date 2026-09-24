@@ -24,11 +24,16 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+
+internal object ExpandedCityCommandCases {
+    val keys = listOf("che_이동", "che_출병")
+}
 
 /** Real city/general command persistence; authenticated intake and spatial-row writes have separate coverage. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -68,12 +73,18 @@ class HanExpandedCityCommandRoundTripIT {
         admin.execute("CREATE DATABASE $WORK TEMPLATE $SEEDED")
     }
 
+    private fun restorePreparedWorld() {
+        admin.execute("DROP DATABASE IF EXISTS $WORK WITH (FORCE)")
+        admin.execute("CREATE DATABASE $WORK TEMPLATE $PREPARED")
+    }
+
     private fun load() = WorldSnapshotLoader(jdbc, bootstrap, worldId,
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
         hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant }).buildSnapshot()
 
     private companion object {
         const val SEEDED = "expanded_city_seeded"
+        const val PREPARED = "expanded_city_prepared"
         const val WORK = "expanded_city_work"
     }
 
@@ -87,6 +98,24 @@ class HanExpandedCityCommandRoundTripIT {
         val olderIds = artifacts.artifacts(HanWorldVariant.V3_835).cityConst.all().keys
         val additions = (currentIds - olderIds - isolated).sorted()
         assertTrue(additions.isNotEmpty(), "expansion evidence must exercise added cities")
+        val shardCount = System.getProperty("cityShardCount", "1").toInt()
+        val shardIndex = System.getProperty("cityShardIndex", "0").toInt()
+        require(shardCount in 1..additions.size) { "invalid city shard count: $shardCount" }
+        require(shardIndex in 0 until shardCount) { "invalid city shard index: $shardIndex/$shardCount" }
+        val shards = List(shardCount) { mutableListOf<Int>() }
+        additions.forEachIndexed { index, cityId -> shards[index % shardCount].add(cityId) }
+        assertEquals(additions, shards.flatten().sorted(), "city shards must cover every addition exactly once")
+        assertEquals(additions.size, shards.flatten().toSet().size, "city shards must not duplicate additions")
+        val selected = shards[shardIndex]
+        val manifestDirectory = Path.of(System.getProperty("cityManifestDirectory", "build/city-shards"))
+        Files.createDirectories(manifestDirectory)
+        ObjectMapper().writeValue(manifestDirectory.resolve("shard-$shardIndex.json").toFile(), mapOf(
+            "shardIndex" to shardIndex,
+            "shardCount" to shardCount,
+            "allCityIds" to additions,
+            "selectedCityIds" to selected,
+        ))
+        println("EXPANDED_CITY_SHARD index=$shardIndex count=$shardCount cities=${selected.size} total=${additions.size}")
         // 틀에서 찍은 DB 는 매번 같은 내용이므로 시드 직후 스냅샷과 그것에만 의존하는 투영 입력은 한 번만 만든다.
         // 끝에서 새로 찍은 DB 를 다시 읽어 baseline 과 같은지 대조한다 — 공유 객체가 도중에 변형됐다면 거기서 빨개진다.
         restoreSeededWorld()
@@ -99,61 +128,77 @@ class HanExpandedCityCommandRoundTripIT {
             .toString(Charsets.UTF_8)).cities.associateBy { it.id }
         val provinces = mapper.readTree(bundle.artifactBytes("data/map/han-tiles.json")).path("provinceRecords")
         val canonicalOwners = apiOwnership.project("1020", emptyList(), bundle).provinceOccupancy.map { it.nationId }
+        val actor = baseline.generals.first { it.nationId > 0 }
+        val nationId = actor.nationId
+        val enemyId = baseline.nations.first { it.id != nationId }.id
+        val sourceIds = additions.map { assertNotNull(bundle.cityConst.byId(it)).path.keys.sorted().first() }.toSet()
+        val reserveId = currentIds.sorted().first { it !in additions && it !in sourceIds }
+        val unitSet = baseline.state.meta["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
+        val crewType = assertNotNull(UnitSetTable.defaultCrewTypeId(unitSet))
+
+        // Shared fixture rows are identical for every city. Persist them once and clone the prepared DB;
+        // each iteration then flushes only its destination, actor and capital changes.
+        val commonFixture = InMemoryTurnWorld(baseline)
+        baseline.cities.forEach { city ->
+            commonFixture.updateCity(city.copy(
+                nationId = if (city.id == reserveId) enemyId else nationId,
+                supplyState = 1, frontState = 3,
+                population = 100_000, populationMax = 100_000,
+                agriculture = 20_000, agricultureMax = 20_000,
+                commerce = 20_000, commerceMax = 20_000,
+                security = 20_000, securityMax = 20_000,
+                defence = 20_000, wall = 20_000,
+            ))
+        }
+        baseline.generals.forEach { general ->
+            commonFixture.updateGeneral(if (general.id == actor.id) general.copy(
+                cityId = reserveId, officerLevel = 1, troopId = 0,
+                crew = 50_000, crewTypeId = crewType, train = 100, atmos = 100,
+                gold = 1_000_000, rice = 1_000_000,
+                stats = GeneralStats(leadership = 100, strength = 100, intelligence = 90),
+            ) else general.copy(cityId = reserveId, nationId = 0, officerLevel = 1, troopId = 0))
+        }
+        baseline.nations.forEach { nation ->
+            commonFixture.updateNation(nation.copy(capitalCityId = reserveId,
+                gold = 1_000_000, rice = 1_000_000))
+        }
+        val commonRecorder = ChangeRecorder()
+        baseline.generals.forEach { before -> commonRecorder.diffGeneral(
+            PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(commonFixture.getGeneralById(before.id)!!)) }
+        baseline.cities.forEach { before -> commonRecorder.diffCity(
+            PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(commonFixture.getCityById(before.id)!!)) }
+        baseline.nations.forEach { before -> commonRecorder.diffNation(
+            PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(commonFixture.getNationById(before.id)!!)) }
+        for ((from, to) in listOf(nationId to enemyId, enemyId to nationId)) {
+            val previous = commonFixture.getDiplomacy(from, to)
+            if (previous == null) commonFixture.createDiplomacy(TurnDiplomacy(from, to, state = 0, term = 0))
+            else {
+                val next = assertNotNull(commonFixture.updateDiplomacy(from, to, 0, 0))
+                commonRecorder.diffDiplomacy(previous, next)
+            }
+        }
+        executor.flush(DatabaseHooks.toFlushPayload(commonFixture, commonRecorder, commonFixture.consumeDirtyState()))
+        val prepared = load()
+        admin.execute("CREATE DATABASE $PREPARED TEMPLATE $WORK")
         var restoredFirst = false
-        for (destination in additions) for (command in listOf("che_이동", "che_출병")) {
-            // 첫 반복은 위에서 찍은 DB 를 그대로 쓴다(아직 아무도 쓰지 않았다).
-            if (restoredFirst) restoreSeededWorld()
+        for (destination in selected) for (command in ExpandedCityCommandCases.keys) {
+            if (restoredFirst) restorePreparedWorld()
             restoredFirst = true
             val sourceId = assertNotNull(bundle.cityConst.byId(destination)).path.keys.sorted().first()
             assertTrue(destination in assertNotNull(bundle.cityConst.byId(sourceId)).path)
-            val actor = baseline.generals.first { it.nationId > 0 }
-            val nationId = actor.nationId
-            val enemyId = baseline.nations.first { it.id != nationId }.id
-            val reserveId = currentIds.sorted().first { it != sourceId && it != destination }
             val attack = command == "che_출병"
-            val fixture = InMemoryTurnWorld(baseline)
-            // Controlled resources/opposition; real route constraints and combat remain enabled.
-            baseline.cities.forEach { city ->
-                fixture.updateCity(city.copy(
-                    nationId = when { city.id == reserveId -> enemyId; attack && city.id == destination -> enemyId; else -> nationId },
-                    supplyState = 1, frontState = 3,
-                    population = 100_000, populationMax = 100_000,
-                    agriculture = 20_000, agricultureMax = 20_000,
-                    commerce = 20_000, commerceMax = 20_000,
-                    security = 20_000, securityMax = 20_000,
-                    defence = if (city.id == destination) 1 else 20_000,
-                    wall = if (city.id == destination) 1 else 20_000,
-                ))
-            }
-            val unitSet = baseline.state.meta["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
-            val crewType = assertNotNull(UnitSetTable.defaultCrewTypeId(unitSet))
-            baseline.generals.forEach { general ->
-                fixture.updateGeneral(if (general.id == actor.id) general.copy(
-                    cityId = sourceId, officerLevel = 1, troopId = 0,
-                    crew = 50_000, crewTypeId = crewType, train = 100, atmos = 100,
-                    gold = 1_000_000, rice = 1_000_000,
-                    stats = GeneralStats(leadership = 100, strength = 100, intelligence = 90),
-                ) else general.copy(cityId = reserveId, nationId = 0, officerLevel = 1, troopId = 0))
-            }
-            baseline.nations.forEach { nation ->
-                fixture.updateNation(nation.copy(capitalCityId = if (nation.id == nationId) sourceId else reserveId,
-                    gold = 1_000_000, rice = 1_000_000))
-            }
+            val fixture = InMemoryTurnWorld(prepared)
+            fixture.updateCity(assertNotNull(fixture.getCityById(destination)).copy(
+                nationId = if (attack) enemyId else nationId, defence = 1, wall = 1))
+            fixture.updateGeneral(assertNotNull(fixture.getGeneralById(actor.id)).copy(cityId = sourceId))
+            fixture.updateNation(assertNotNull(fixture.getNationById(nationId)).copy(capitalCityId = sourceId))
             val prepRecorder = ChangeRecorder()
-            baseline.generals.forEach { before -> prepRecorder.diffGeneral(
-                PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(fixture.getGeneralById(before.id)!!)) }
-            baseline.cities.forEach { before -> prepRecorder.diffCity(
-                PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(fixture.getCityById(before.id)!!)) }
-            baseline.nations.forEach { before -> prepRecorder.diffNation(
-                PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(fixture.getNationById(before.id)!!)) }
-            for ((from, to) in listOf(nationId to enemyId, enemyId to nationId)) {
-                val previous = fixture.getDiplomacy(from, to)
-                if (previous == null) fixture.createDiplomacy(TurnDiplomacy(from, to, state = 0, term = 0))
-                else {
-                    val next = assertNotNull(fixture.updateDiplomacy(from, to, 0, 0))
-                    prepRecorder.diffDiplomacy(previous, next)
-                }
-            }
+            prepRecorder.diffCity(PerTurnOverlay.toLogicCity(assertNotNull(prepared.cities.find { it.id == destination })),
+                PerTurnOverlay.toLogicCity(assertNotNull(fixture.getCityById(destination))))
+            prepRecorder.diffGeneral(PerTurnOverlay.toLogicGeneral(assertNotNull(prepared.generals.find { it.id == actor.id })),
+                PerTurnOverlay.toLogicGeneral(assertNotNull(fixture.getGeneralById(actor.id))))
+            prepRecorder.diffNation(PerTurnOverlay.toLogicNation(assertNotNull(prepared.nations.find { it.id == nationId })),
+                PerTurnOverlay.toLogicNation(assertNotNull(fixture.getNationById(nationId))))
             executor.flush(DatabaseHooks.toFlushPayload(fixture, prepRecorder, fixture.consumeDirtyState()))
             val world = InMemoryTurnWorld(load())
             assertEquals(sourceId, world.getGeneralById(actor.id)!!.cityId)

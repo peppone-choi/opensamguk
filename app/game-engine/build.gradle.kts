@@ -174,6 +174,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    exclude("**/HanExpandedCityCommandRoundTripIT.class")
+    inputs.file(rootProject.file(".github/city-paths.txt"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     testLogging {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
@@ -189,6 +192,36 @@ tasks.test {
     providers.systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR").orNull?.let {
         systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR", it)
     }
+    environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
+    environment("DOCKER_CONTEXT", "default")
+    environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
+}
+
+val cityPathList = rootProject.file(".github/city-paths.txt")
+val cityPathPatterns = cityPathList.readLines().map(String::trim)
+    .filter { it.isNotEmpty() && !it.startsWith("#") && !it.startsWith("[") }
+val cityPathInputs = rootProject.fileTree(rootProject.projectDir) {
+    cityPathPatterns.forEach { include(it) }
+}
+
+tasks.register<Test>("cityTest") {
+    group = "verification"
+    description = "Runs one deterministic shard of the exhaustive added-city command round trip."
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("**/HanExpandedCityCommandRoundTripIT.class")
+    useJUnitPlatform()
+    maxHeapSize = "2g"
+    val shardCount = providers.gradleProperty("cityShardCount").orElse("1")
+    val shardIndex = providers.gradleProperty("cityShardIndex").orElse("0")
+    systemProperty("cityShardCount", shardCount.get())
+    systemProperty("cityShardIndex", shardIndex.get())
+    val manifestDirectory = layout.buildDirectory.dir("city-shards")
+    systemProperty("cityManifestDirectory", manifestDirectory.get().asFile.absolutePath)
+    outputs.dir(manifestDirectory)
+    inputs.file(cityPathList).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cityPathInputs).withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
