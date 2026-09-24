@@ -30,7 +30,8 @@ class CommandReserveServiceTest {
             "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
             "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED","source":"test"},
             "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
-            "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "timing":${if (kind == "GENERAL_ACTION") """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}""" else
+                """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
             "deliveryState":"$state","legacyCommands":[]}]}""")
     private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
