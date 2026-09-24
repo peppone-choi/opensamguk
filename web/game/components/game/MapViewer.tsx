@@ -353,6 +353,7 @@ export default function MapViewer({
                         && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
                     currentServerId={readServerCookie()}
                     hideCityNames={hideCityNames}
+                    showCellGrid
                     showCityFootprint
                     politicalStyle="tint"
                     ariaLabel={`${data.mapCode} 세계 지도`}

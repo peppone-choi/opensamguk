@@ -142,6 +142,7 @@ export default function MapPreview({
                     selectedCityId={picked?.id ?? null}
                     hideCityNames={hideCityName}
                     politicalStyle="tint"
+                    showCellGrid
                     showCityFootprint
                     onCityActivate={handlePickCity}
                     onCityHover={handleHoverCity}

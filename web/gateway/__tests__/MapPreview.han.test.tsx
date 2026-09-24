@@ -64,6 +64,7 @@ describe('MapPreview 작전실 2D 판', () => {
     render(<MapPreview serverId="s 1&?" mapData={{ ...MAP, mapCode }} currentCityId={11} />);
     expect(shared.props?.tiles).toBeDefined();
     expect(shared.props?.markerPositions?.get(11)).toEqual({ col: 100, row: 100 });
+    expect(shared.props?.showCellGrid).toBe(true);
     expect(shared.props?.terrainUrl).toBeUndefined();
     expect(shared.props?.provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=han-world-v3');
     expect(shared.props?.cities?.[0]).toMatchObject({ id: 11, regionName: '사예' });

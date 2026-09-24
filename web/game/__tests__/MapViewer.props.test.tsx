@@ -188,6 +188,7 @@ describe('MapViewer data props', () => {
     expect(mocks.props?.mapCode).toBe('han-world-v3');
     expect(mocks.props?.tiles?._meta.cols).toBe(768);
     expect(mocks.props?.markerPositions?.has(11)).toBe(true);
+    expect(mocks.props?.showCellGrid).toBe(true);
     expect(mocks.props?.provinceMap?.commanderies[0]).toBe(0);
     expect(mocks.props?.terrainUrl).toBeUndefined();
     expect(mocks.fetch.mock.calls.map(([url]) => url)).toContain('/api/game/api/map/provinces?mapCode=han-world-v3');
