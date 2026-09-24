@@ -1,6 +1,7 @@
 package opensamguk.logic.input
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.int
@@ -117,7 +118,7 @@ class HwihaInputCatalog internal constructor(
             root.requiredText("catalogId")
             root.requiredText("status")
             root.requiredText("note")
-            val retired = root.getValue("retiredLegacyCommands").jsonArray.map { it.jsonPrimitive.content }
+            val retired = root.getValue("retiredLegacyCommands").stringArray("retiredLegacyCommands")
             require(retired.size == retired.toSet().size) { "duplicate retiredLegacyCommands" }
             val reasons = root.getValue("retiredLegacyReasons").jsonObject
             require(reasons.keys == retired.toSet()) { "retiredLegacyReasons must match retiredLegacyCommands" }
@@ -139,7 +140,7 @@ class HwihaInputCatalog internal constructor(
                 val replay = row.getValue("replayContract").jsonObject
                 replay.requiredText("status")
                 replay.requiredText("key")
-                val failureReasons = row.getValue("failureReasons").jsonArray.map { it.jsonPrimitive.content }
+                val failureReasons = row.getValue("failureReasons").stringArray("failureReasons")
                 require(failureReasons.size == failureReasons.toSet().size) { "duplicate failureReasons: $inputId" }
                 val actor = row.requiredText("actor")
                 require(actor in ACTORS) { "unknown actor: $inputId / $actor" }
@@ -169,7 +170,7 @@ class HwihaInputCatalog internal constructor(
                     deliveryState = enumValueOfOrFail(row.getValue("deliveryState").jsonPrimitive.content, inputId),
                     legacyCommands = requireNotNull(row["legacyCommands"]) {
                         "missing legacyCommands for $inputId (replacesLegacy was renamed, #837)"
-                    }.jsonArray.map { it.jsonPrimitive.content }.also {
+                    }.stringArray("legacyCommands").also {
                         require(it.toSet().size == it.size) { "duplicate legacyCommands within one row: $inputId" }
                     },
                 )
@@ -187,6 +188,12 @@ class HwihaInputCatalog internal constructor(
         private val COST_FIELDS = setOf("status", "source", "money", "grain", "iron", "timber", "horses")
         private val ACTORS = setOf("GENERAL", "LORD", "RULER", "OFFICE_HOLDER")
         private val PHASES = setOf("POLITICS", "MOVE", "SIEGE", "FIELD", "NEXT_CARD_TURN", "NEXT_PHASE_BOUNDARY", "CARD_TRIGGER", "DECISION_TURN")
+
+        private fun JsonElement.stringArray(field: String): List<String> = jsonArray.map { item ->
+            val value = item as? JsonPrimitive
+            require(value != null && value.isString) { "$field must contain strings only" }
+            value.content
+        }
 
         private fun JsonObject.requiredText(key: String): String {
             val value = getValue(key) as? JsonPrimitive

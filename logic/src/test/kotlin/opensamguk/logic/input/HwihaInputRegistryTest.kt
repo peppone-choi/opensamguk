@@ -188,8 +188,9 @@ class HwihaInputRegistryTest {
             "징병", "모병", "훈련", "사기진작", "출병", "집합", "소집해제", "첩보",
             "이동", "강행", "인재탐색", "등용", "귀환", "임관", "랜덤임관", "장수대상임관",
             "견문", "단련", "요양", "은퇴", "증여", "헌납", "하야", "거병", "건국", "선양", "해산",
+            "숙련전환", "장비매매", "군량매매", "물자조달",
         ).map { "che_$it" }
-        assertEquals(34, direct.size)
+        assertEquals(38, direct.size)
         assertEquals(emptyList(), direct.filter { name -> catalog.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
         val mutated = ledger(row("policy.farm", "POLICY", "\"che_농지개간\""))
         assertEquals(listOf("che_농지개간"), direct.filter { name -> name == "che_농지개간" && mutated.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
@@ -210,6 +211,22 @@ class HwihaInputRegistryTest {
         val stale = """{"schemaVersion":1,"inputs":[{"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
         assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(stale) }
         assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "\"che_징병\",\"che_징병\"")) }
+    }
+
+    @Test
+    fun `string arrays reject null and numeric members`() {
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "null")) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", "123")) }
+        val row = row("action.a", "GENERAL_ACTION", "")
+        for (bad in listOf("null", "123")) {
+            assertFailsWith<IllegalArgumentException> {
+                ledger(row.replace("\"failureReasons\":[]", "\"failureReasons\":[$bad]"))
+            }
+            assertFailsWith<IllegalArgumentException> {
+                HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+                    "inputs":[],"retiredLegacyCommands":[$bad],"retiredLegacyReasons":{}}""")
+            }
+        }
     }
 
     @Test
