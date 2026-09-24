@@ -360,6 +360,15 @@ jobs:
           for m in common logic infra app/gateway-api app/game-api app/board-api; do
             printf '%-22s %s\n' "$m" "$(find "$m/build/test-results/test" -name 'TEST-*.xml' 2>/dev/null | wc -l)"
           done
+      - name: Upload failed JVM test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-core-test-reports
+          path: |
+            infra/build/test-results/test/
+            app/game-api/build/test-results/test/
+          retention-days: 3
 
   game-engine:
     needs: changes
