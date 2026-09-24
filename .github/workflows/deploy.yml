@@ -3,6 +3,13 @@ name: Build + Deploy to GCP VM
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'reports/**'
+      - '.ai/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
 
 # 연속 머지(auto-merge 케이던스) 시 배포 런 겹침 방지 — 겹친 배포가 컨테이너를
 # Created 상태로 방치해 502를 유발한 회귀(2026-06-10). 진행 중 런은 죽이지 않고
@@ -16,17 +23,30 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  ci-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for successful main CI at this commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: python3 tools/ci/wait_for_main_ci.py
+
   # ------------------------------------------------------------------
   # 1. Build JVM artifacts
   # ------------------------------------------------------------------
   build-jvm:
     runs-on: ubuntu-latest
-    # 잡 기본값은 6시간이다. 2026-08-21 에 :app:game-api:test 가 매달려 72분 넘게 돌았고
-    # concurrency(deploy-production, cancel-in-progress: false) 때문에 그동안 모든 후속
-    # 배포가 큐에 갇혔다. 직전 성공 런들이 13~22분이라 40분으로 뒀는데, 城 832 · 省 1,520
-    # 으로 커진 2026-09-11 런(34576054808)이 game-api 이미지 푸시 도중 40분에서 잘렸다
-    # (테스트는 통과했고 이미지 4개 중 2개까지 밀어 넣은 상태였다). 70분으로 올린다.
-    timeout-minutes: 70
+    strategy:
+      matrix:
+        app: [gateway-api, board-api, game-api, game-engine]
+    # CI에서 전체 JVM 테스트를 검증한다. 이 잡은 비밀 시나리오 계약과 이미지 빌드만 수행한다.
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
@@ -39,23 +59,11 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@v4
-
-      - name: Build + test JVM
-        run: ./gradlew build --no-daemon
-
-      - name: Surface test results
-        if: always()
-        run: |
-          echo "== test summary =="
-          # 모듈별 XML 개수를 먼저 낸다. head 로 자른 전체 목록만 찍으면 결과가 0건인
-          # 모듈이 잘림에 묻혀 보이지 않는다(2026-08-21 game-api 매달림 진단이 그래서
-          # 늦어졌다). 목록은 그 뒤에 붙인다.
-          for m in common logic infra app/gateway-api app/game-api app/game-engine app/board-api; do
-            printf '%-22s %s\n' "$m" "$(find "$m" -path '*/build/test-results/*/*.xml' 2>/dev/null | wc -l)"
-          done
-          find . -path '*/build/test-results/*/*.xml' -print | head -50 || true
+        with:
+          cache-read-only: true
 
       - name: Materialize RTK14 scenario stats for image build
+        if: matrix.app == 'game-api' || matrix.app == 'game-engine'
         shell: bash
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
@@ -153,6 +161,7 @@ jobs:
           echo "RTK14 scenario enrichment completed for ${scenario_count} scenario file(s)."
 
       - name: Validate materialized scenario seed contracts
+        if: matrix.app == 'game-api' || matrix.app == 'game-engine'
         run: >-
           ./gradlew :infra:test --no-daemon
           --tests 'opensamguk.infra.seed.ScenarioJsonTest.committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly'
@@ -164,41 +173,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build + push gateway-api image
+      - name: Build + push ${{ matrix.app }} image
         run: |
-          docker build -f docker/gateway-api.Dockerfile \
+          docker build -f docker/${{ matrix.app }}.Dockerfile \
             --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-latest .
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-latest
-
-      - name: Build + push board-api image
-        run: |
-          docker build -f docker/board-api.Dockerfile \
-            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest .
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest
-
-      - name: Build + push game-api image
-        run: |
-          docker build -f docker/game-api.Dockerfile \
-            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-latest .
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-latest
-
-      - name: Build + push game-engine image
-        run: |
-          docker build -f docker/game-engine.Dockerfile \
-            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-latest .
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-latest
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:${{ matrix.app }}-${{ env.IMAGE_TAG }} .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:${{ matrix.app }}-${{ env.IMAGE_TAG }}
 
   # ------------------------------------------------------------------
   # 2. Build web images
@@ -227,10 +207,28 @@ jobs:
           [ "${{ matrix.app }}" = "game" ] && ASSET_PREFIX="/game"
           docker build -f docker/web-${{ matrix.app }}.Dockerfile \
             --build-arg ASSET_PREFIX="$ASSET_PREFIX" \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-latest .
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-${{ env.IMAGE_TAG }} .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-latest
+
+  promote-images:
+    needs: [ci-gate, build-jvm, build-web]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        app: [gateway-api, board-api, game-api, game-engine, web-gateway, web-game]
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote tested image to latest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:${{ matrix.app }}-latest \
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:${{ matrix.app }}-${{ env.IMAGE_TAG }}
 
   # ------------------------------------------------------------------
   # 3. Deploy to GCP VM — self-hosted runner ON the VM (deploy job runs locally, so
@@ -238,7 +236,7 @@ jobs:
   # ------------------------------------------------------------------
   deploy:
     runs-on: [self-hosted, gcp-prod]
-    needs: [build-jvm, build-web]
+    needs: [promote-images]
     permissions:
       contents: read
       packages: read

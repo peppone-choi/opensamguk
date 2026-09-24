@@ -12,6 +12,9 @@ tasks.named("jar") { enabled = false }
 
 springBoot {
     buildInfo {
+        if (System.getenv("CI") == "true" && System.getenv("IMAGE_TAG").isNullOrBlank()) {
+            excludes.add("time")
+        }
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
             additional.put("jwt.verifier", "rsa-audience-v1")

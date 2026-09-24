@@ -25,7 +25,9 @@ internal object Han1447Artifacts {
     fun load(root: Path): ResolvedHanWorldArtifacts {
         val variant = HanWorldVariant.V3_1447
         val directory = root.resolve("data/map/han-world-v3-1447-artifacts-v1")
-        val raw = Files.readAllBytes(directory.resolve("catalog.json"))
+        val catalogPath = directory.resolve("catalog.json")
+        RepositoryInputTrace.file(catalogPath)
+        val raw = Files.readAllBytes(catalogPath)
         require(sha(raw) == CATALOG_SHA256) { "1447 release catalog hash mismatch" }
         val catalog = mapper.readTree(raw)
         require(catalog.path("schemaVersion").asInt() == 1 &&
@@ -42,7 +44,9 @@ internal object Han1447Artifacts {
             require(hash.matches(Regex("[a-f0-9]{64}")))
             val blob = "blobs/$hash.json.gz"
             require(entry.path("blob").asText() == blob)
-            val compressed = Files.readAllBytes(directory.resolve(blob))
+            val blobPath = directory.resolve(blob)
+            RepositoryInputTrace.file(blobPath)
+            val compressed = Files.readAllBytes(blobPath)
             require(sha(compressed) == entry.path("compressedSha256").asText()) { "1447 compressed artifact hash mismatch" }
             val length = entry.path("bytes").asInt()
             require(length in 1..30_000_000)

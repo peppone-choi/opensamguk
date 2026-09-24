@@ -14,11 +14,13 @@ class EffectiveScenarioResolver(
 
     fun readScenarioJson(scenarioCode: String): String {
         externalScenarioPath(scenarioCode)?.let { path ->
+            RepositoryInputTrace.file(path)
             return Files.readString(path, StandardCharsets.UTF_8)
         }
 
         val resource = "scenario/$scenarioCode.json"
         return classLoader.getResourceAsStream(resource)?.use { stream ->
+            RepositoryInputTrace.resource(resource)
             stream.readBytes().toString(StandardCharsets.UTF_8)
         } ?: throw EffectiveScenarioNotFoundException(scenarioCode)
     }

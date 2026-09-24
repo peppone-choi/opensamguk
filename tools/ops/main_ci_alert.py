@@ -55,9 +55,10 @@ def previous_conclusion(repo: str, run: dict) -> str | None:
         return api(f"/repos/{repo}/actions/runs/{run['id']}/attempts/{attempt - 1}")["conclusion"]
     runs = api(
         f"/repos/{repo}/actions/workflows/{run['workflow_id']}/runs"
-        "?branch=main&event=push&status=completed&per_page=100"
+        "?branch=main&status=completed&per_page=100"
     )["workflow_runs"]
-    earlier = [r for r in runs if r["id"] != run["id"] and r["updated_at"] < run["updated_at"]]
+    earlier = [r for r in runs if r["id"] != run["id"] and r["updated_at"] < run["updated_at"]
+               and r.get("event", "push") in {"push", "schedule"}]
     if not earlier:
         return None
     return max(earlier, key=lambda r: r["updated_at"])["conclusion"]
@@ -65,7 +66,7 @@ def previous_conclusion(repo: str, run: dict) -> str | None:
 
 def decide(run: dict, jobs: list[str] | None, previous: str | None) -> dict | None:
     """보낼 Discord 메시지. 보낼 것이 없으면 None."""
-    if run.get("head_branch") != "main" or run.get("event") != "push":
+    if run.get("head_branch") != "main" or run.get("event") not in {"push", "schedule"}:
         return None
     sha = run["head_sha"][:8]
     subject = ((run.get("head_commit") or {}).get("message") or "").splitlines()[0][:200] or "(메시지 없음)"

@@ -28,6 +28,9 @@ tasks.processResources {
 // image.tag는 빌드 시 IMAGE_TAG env로 주입(없으면 dev).
 springBoot {
     buildInfo {
+        if (System.getenv("CI") == "true" && System.getenv("IMAGE_TAG").isNullOrBlank()) {
+            excludes.add("time")
+        }
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
             additional.put("jwt.verifier", "rsa-audience-v1")

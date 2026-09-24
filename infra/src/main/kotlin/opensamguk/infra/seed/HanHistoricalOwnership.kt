@@ -20,7 +20,9 @@ internal object HanHistoricalOwnership {
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
     fun load(directory: Path, variantId: String, sourceCommit: String): Map<String, ByteArray> {
-        val raw = Files.readAllBytes(directory.resolve("ownership-catalog.json"))
+        val catalogPath = directory.resolve("ownership-catalog.json")
+        RepositoryInputTrace.file(catalogPath)
+        val raw = Files.readAllBytes(catalogPath)
         require(sha(raw) == CATALOG_SHA256) { "Historical ownership catalog hash mismatch" }
         val catalog = mapper.readTree(raw)
         require(catalog.path("schemaVersion").asInt() == 1)
@@ -33,7 +35,9 @@ internal object HanHistoricalOwnership {
             require(hash.matches(Regex("[a-f0-9]{64}")))
             val blob = "blobs/$hash.json.gz"
             require(entry.path("blob").asText() == blob)
-            val compressed = Files.readAllBytes(directory.resolve(blob))
+            val blobPath = directory.resolve(blob)
+            RepositoryInputTrace.file(blobPath)
+            val compressed = Files.readAllBytes(blobPath)
             require(sha(compressed) == entry.path("compressedSha256").asText()) { "Historical ownership compressed hash mismatch" }
             val length = entry.path("bytes").asInt()
             require(length in 1..30_000_000)
