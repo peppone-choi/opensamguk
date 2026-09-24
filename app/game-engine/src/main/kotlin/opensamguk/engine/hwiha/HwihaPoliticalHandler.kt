@@ -138,6 +138,11 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
         val recorded = latest.copy(meta = latest.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(recorded))
         world.applyGeneralDirtyFree(recorded)
+        if (inputId == HwihaPoliticalInput.OATH) {
+            val renown = HwihaRenownEventRecorder(world, recorder)
+            renown.record(actorId, HwihaRenownEventSource.SWORN_OATH)
+            renown.record(checkNotNull(request.targetGeneralId), HwihaRenownEventSource.SWORN_OATH)
+        }
         HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
             "${actor.name}의 정치 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
