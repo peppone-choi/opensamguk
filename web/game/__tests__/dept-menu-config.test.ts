@@ -38,7 +38,7 @@ describe('dept-menu-config (S1 매핑)', () => {
 
     it('keeps six groups in S1 order with 작전실 first', () => {
         expect(DEPT_GROUPS.map((g) => g.label)).toEqual(['작전실', '국가 운영', '군사', '정보', '광장', '기록']);
-        expect(DEPT_GROUPS[0].entries[0]).toMatchObject({ kind: 'route', href: '/game' });
+        expect(DEPT_GROUPS[0].entries[0]).toMatchObject({ kind: 'route', href: '/game/hwiha/war-room' });
     });
 
     it('gates exactly like MainControlBar and attaches a reason to every non-always bucket', () => {
@@ -78,7 +78,7 @@ describe('dept-menu-config (S1 매핑)', () => {
 
     it('defines the five mobile tabs of S1 with real targets and gates 국가 like 세력 정보', () => {
         expect(MOBILE_TABS.map((t) => t.label)).toEqual(['작전실', '지도', '명령', '국가', '더보기']);
-        expect(MOBILE_TABS.map((t) => t.href)).toEqual(['/game', '/game/map', '/game#reservedCommandPanel', '/game/my-nation', '#dept-more']);
+        expect(MOBILE_TABS.map((t) => t.href)).toEqual(['/game/hwiha/war-room', '/game/map', '/game/hwiha/war-room#reservedCommandPanel', '/game/my-nation', '#dept-more']);
         const nationTab = MOBILE_TABS.find((t) => t.key === 'nation')!;
         expect(evaluateMobileTab(nationTab, NONE, {}, 'ready')).toMatchObject({ enabled: false, reason: '장수 직위 이상 필요', label: '국가' });
         expect(evaluateMobileTab(nationTab, CHIEF, {}, 'ready')).toMatchObject({ enabled: true, reason: null });
