@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.retainer.RetainerRules
+
 enum class HwihaPeopleFailure(val message: String) {
     WRONG_RULE_PROFILE("이 세계에서는 인물 행동을 사용할 수 없습니다."),
     INVALID_INPUT("인물 행동 인자를 확인할 수 없습니다."),
@@ -16,13 +18,13 @@ enum class HwihaPeopleFailure(val message: String) {
     TARGET_IS_LORD("다른 세력의 주공 포로는 국가 지위 처리 전까지 설득할 수 없습니다."),
     CAPACITY_UNAVAILABLE("인물 카드 수용 여력이 없습니다."),
     DUPLICATE_RETAINER_NAME("같은 이름의 인물 카드가 이미 휘하에 있습니다."),
-    INSUFFICIENT_STOCK("행동 비용을 낼 수 없습니다."),
     ALREADY_PROCESSED("이 순에는 이미 인물 행동을 실행했습니다."),
 }
 
 sealed interface HwihaPeopleAssessment {
     data class Eligible(val actor: DomesticPerson, val county: DomesticCounty?,
-        val candidateIds: List<Int> = emptyList(), val target: DomesticPerson? = null) : HwihaPeopleAssessment
+        val candidateIds: List<Int> = emptyList(), val target: DomesticPerson? = null,
+        val joiningGeneralIds: List<Int> = emptyList()) : HwihaPeopleAssessment
     data class Rejected(val reason: HwihaPeopleFailure) : HwihaPeopleAssessment
 }
 
@@ -33,6 +35,7 @@ object HwihaPeopleRules {
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaPeopleFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaPeopleInput.INPUT_IDS) return reject(HwihaPeopleFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(HwihaPeopleFailure.ACTOR_NOT_FOUND)
+        if (actor.nationId <= 0) return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
         if (actor.inBattle) return reject(HwihaPeopleFailure.BATTLE_PENDING)
         val node = actor.node ?: return reject(HwihaPeopleFailure.POSITION_UNAVAILABLE)
         if (state.landProvinceIds?.contains(node) != true) return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
@@ -43,26 +46,48 @@ object HwihaPeopleRules {
             return reject(HwihaPeopleFailure.COUNTY_UNAVAILABLE)
         val known = try { HwihaTalentDiscovery.read(actor.meta) }
             catch (_: IllegalArgumentException) { return reject(HwihaPeopleFailure.STATE_UNAVAILABLE) }
-        fun free(target: DomesticPerson): Boolean = target.id != actor.id && target.nationId == 0 &&
-            !target.userOwned && target.npcState >= 2 && state.cards.none { it.generalId == target.id } &&
-            "hwihaCaptive" !in target.meta
+        fun free(target: DomesticPerson): Boolean = target.nationId == 0 &&
+            RetainerRules.existingCandidateEligible(actor.id, actor.nationId, target.id, target.nationId,
+                target.npcState, if (target.userOwned) "1" else null, target.officerLevel,
+                state.cards.any { it.generalId == target.id }) &&
+            try { !HwihaLordStatus.read(target.meta) }
+            catch (_: IllegalArgumentException) { false }
         fun capacityFor(target: DomesticPerson): HwihaPeopleFailure? {
             val owned = state.cards.filter { it.masterId == actor.id }
-            if (owned.any { card -> state.person(card.generalId ?: return HwihaPeopleFailure.CAPACITY_UNAVAILABLE)?.name == target.name })
+            val incomingName = state.cards.singleOrNull { it.generalId == target.id }?.name ?: target.name
+            if (owned.any { card -> (card.name ?: card.generalId?.let(state::person)?.name) == incomingName })
                 return HwihaPeopleFailure.DUPLICATE_RETAINER_NAME
-            return try {
-                val maximum = HwihaPersonPolicyState.read(actor.meta)?.renownCapacity
+            val budget = HwihaEnlistmentBudget.assess(target.id, state.profile, state.people.map { person ->
+                PersonPolicyInput(person.id, person.nationId, person.leadership, person.strength,
+                    person.intelligence, person.politics, person.charm, person.meta)
+            }, state.cards.map { DirectPersonCard(it.id, it.masterId, it.generalId) })
+            val ready = budget as? RenownBudgetResult.Ready ?: return HwihaPeopleFailure.CAPACITY_UNAVAILABLE
+            if (actor.id in ready.unavailableOwnerReasons) return HwihaPeopleFailure.CAPACITY_UNAVAILABLE
+            val freeRenown = ready.freeRenownByOwner[actor.id] ?: try {
+                if (owned.isNotEmpty()) return HwihaPeopleFailure.CAPACITY_UNAVAILABLE
+                HwihaPersonPolicyState.read(actor.meta)?.renownCapacity
                     ?: return HwihaPeopleFailure.CAPACITY_UNAVAILABLE
-                val occupied = owned.sumOf { card ->
-                    val person = state.person(card.generalId ?: return HwihaPeopleFailure.CAPACITY_UNAVAILABLE)
-                        ?: return HwihaPeopleFailure.CAPACITY_UNAVAILABLE
-                    HwihaRenownRules.personCost(person.leadership, person.strength, person.intelligence,
-                        person.politics, person.charm).toLong()
-                }
-                val next = occupied + HwihaRenownRules.personCost(target.leadership, target.strength,
-                    target.intelligence, target.politics, target.charm)
-                if (next > maximum) HwihaPeopleFailure.CAPACITY_UNAVAILABLE else null
-            } catch (_: IllegalArgumentException) { HwihaPeopleFailure.CAPACITY_UNAVAILABLE }
+            } catch (_: IllegalArgumentException) { return HwihaPeopleFailure.CAPACITY_UNAVAILABLE }
+            return if (freeRenown <
+                ready.actorCardCost) HwihaPeopleFailure.CAPACITY_UNAVAILABLE else null
+        }
+        fun joiningFor(target: DomesticPerson): List<Int>? {
+            val children = state.cards.filter { it.generalId != null }.groupBy({ it.masterId }, { it.generalId!! })
+            val queue = ArrayDeque<Int>().apply { add(target.id) }
+            val seen = linkedSetOf<Int>()
+            while (queue.isNotEmpty()) {
+                val id = queue.removeFirst()
+                if (!seen.add(id) || id == actor.id) return null
+                val person = state.person(id) ?: return null
+                if (person.nationId != target.nationId || (id != target.id && (person.userOwned || person.npcState != 2)))
+                    return null
+                val lord = try { HwihaLordStatus.read(person.meta) } catch (_: IllegalArgumentException) { return null }
+                if (id != target.id && lord) return null
+                val policy = try { HwihaPersonPolicyState.read(person.meta) } catch (_: IllegalArgumentException) { return null }
+                if (policy == null) return null
+                queue.addAll(children[id].orEmpty())
+            }
+            return seen.toList()
         }
         return when (request.inputId) {
             HwihaPeopleInput.SEARCH -> {
@@ -72,15 +97,18 @@ object HwihaPeopleRules {
                 else HwihaPeopleAssessment.Eligible(actor, county, candidateIds = candidates)
             }
             HwihaPeopleInput.EMPLOY -> {
-                val target = request.targetGeneralId?.let(state::person) ?: return reject(HwihaPeopleFailure.TARGET_UNAVAILABLE)
+                val targetId = request.targetGeneralId ?: return reject(HwihaPeopleFailure.INVALID_INPUT)
+                if (targetId !in known) return reject(HwihaPeopleFailure.TARGET_NOT_DISCOVERED)
+                val target = state.person(targetId) ?: return reject(HwihaPeopleFailure.TARGET_UNAVAILABLE)
                 if (target.node != node) return reject(HwihaPeopleFailure.TARGET_UNAVAILABLE)
                 if (!free(target)) return reject(HwihaPeopleFailure.TARGET_NOT_FREE)
-                if (target.id !in known) return reject(HwihaPeopleFailure.TARGET_NOT_DISCOVERED)
                 capacityFor(target)?.let { return reject(it) }
-                HwihaPeopleAssessment.Eligible(actor, county, target = target)
+                val joining = joiningFor(target) ?: return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
+                HwihaPeopleAssessment.Eligible(actor, county, target = target, joiningGeneralIds = joining)
             }
             HwihaPeopleInput.PERSUADE_CAPTIVE -> {
                 val target = request.targetGeneralId?.let(state::person) ?: return reject(HwihaPeopleFailure.TARGET_UNAVAILABLE)
+                if (target.userOwned || target.npcState != 2) return reject(HwihaPeopleFailure.TARGET_NOT_CAPTIVE)
                 if (target.node != node) return reject(HwihaPeopleFailure.TARGET_UNAVAILABLE)
                 val marker = target.meta["hwihaCaptive"] as? Map<*, *>
                 if (marker?.get("captorGeneralId") != actor.id ||
@@ -92,7 +120,8 @@ object HwihaPeopleRules {
                 if (target.nationId > 0 && target.nationId != actor.nationId && isLord)
                     return reject(HwihaPeopleFailure.TARGET_IS_LORD)
                 capacityFor(target)?.let { return reject(it) }
-                HwihaPeopleAssessment.Eligible(actor, county, target = target)
+                val joining = joiningFor(target) ?: return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
+                HwihaPeopleAssessment.Eligible(actor, county, target = target, joiningGeneralIds = joining)
             }
             else -> reject(HwihaPeopleFailure.INVALID_INPUT)
         }

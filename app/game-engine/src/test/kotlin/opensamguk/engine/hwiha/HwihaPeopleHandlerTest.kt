@@ -4,6 +4,7 @@ import kotlin.test.*
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.*
 
 class HwihaPeopleHandlerTest {
@@ -51,7 +52,29 @@ class HwihaPeopleHandlerTest {
         assertEquals(1, world.listRetainers().size)
     }
 
-    @Test fun `captive persuasion spends the phase on resistance without transferring the captive`() {
+    @Test fun `employ transfers the candidate and their direct retinue together`() {
+        val route = fixture.route()
+        val actor = fixture.person(841, 1, route.startCity, userId = "42")
+            .let { it.copy(meta = HwihaTalentDiscovery.add(it.meta, 842)) }
+        val target = fixture.person(842, 0, route.startCity, lord = false)
+        val child = fixture.person(843, 0, route.startCity, lord = false)
+        val card = Retainer(844, target.id, "EXISTING", child.id, child.name, "guest")
+        val world = fixture.world(listOf(actor to route.start, target to route.start, child to route.start),
+            retainers = listOf(card))
+        val handler = HwihaPeopleHandler(world, ChangeRecorder(), HwihaDomesticContext(), "test", ready) { seed ->
+            object : RandUtil(LiteHashDrbg(seed)) {
+                override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
+            }
+        }
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPeopleInput.EMPLOY, actor.id,
+            """{"targetGeneralId":842}""", "employ-841", 42))
+        assertEquals(1, world.getGeneralById(target.id)!!.nationId)
+        assertEquals(1, world.getGeneralById(child.id)!!.nationId)
+        assertEquals(0, world.getGeneralById(target.id)!!.officerLevel)
+        assertEquals(2, world.listRetainers().size)
+    }
+
+    @Test fun `captive persuasion remains unavailable without a confinement lifecycle`() {
         val route = fixture.route()
         val actor = fixture.person(821, 1, route.startCity, userId = "42")
         val captive = fixture.person(822, 2, route.startCity, lord = false).copy(meta =
@@ -64,12 +87,12 @@ class HwihaPeopleHandlerTest {
             }
         }
         val args = """{"targetGeneralId":822}"""
-        val result = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
+        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
             actor.id, args, "persuade-821", 42))
-        assertTrue(result.effects.contains("resistedGeneralId:822"))
+        assertEquals("NOT_DELIVERED", result.code)
         assertEquals(2, world.getGeneralById(captive.id)!!.nationId)
         assertTrue(world.listRetainers().isEmpty())
-        assertEquals(ready.experience, world.getGeneralById(actor.id)!!.experience)
+        assertEquals(0, world.getGeneralById(actor.id)!!.experience)
     }
 
     @Test fun `foreign lord captive is rejected before consent roll or transfer`() {
@@ -84,7 +107,7 @@ class HwihaPeopleHandlerTest {
         }
         val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
             actor.id, """{"targetGeneralId":832}""", "persuade-831", 42))
-        assertEquals(HwihaPeopleFailure.TARGET_IS_LORD.name, result.code)
+        assertEquals("NOT_DELIVERED", result.code)
         assertEquals(lord, world.getGeneralById(lord.id))
         assertTrue(world.listRetainers().isEmpty())
     }

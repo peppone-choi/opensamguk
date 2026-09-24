@@ -1387,7 +1387,6 @@
         "TARGET_IS_LORD",
         "CAPACITY_UNAVAILABLE",
         "DUPLICATE_RETAINER_NAME",
-        "INSUFFICIENT_STOCK",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -1449,7 +1448,6 @@
         "TARGET_IS_LORD",
         "CAPACITY_UNAVAILABLE",
         "DUPLICATE_RETAINER_NAME",
-        "INSUFFICIENT_STOCK",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -2261,7 +2259,6 @@
         "TARGET_IS_LORD",
         "CAPACITY_UNAVAILABLE",
         "DUPLICATE_RETAINER_NAME",
-        "INSUFFICIENT_STOCK",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -2273,7 +2270,7 @@
       "helpTopicId": "commands.action.persuadeCaptive",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.oath",

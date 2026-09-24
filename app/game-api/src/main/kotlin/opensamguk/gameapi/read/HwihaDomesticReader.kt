@@ -69,7 +69,7 @@ class HwihaDomesticReader(
                                 g.leadership, g.strength, g.intel, g.politics, g.charm,
                                 (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta)
                         },
-                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) },
+                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
                             DomesticCounty(c.id, c.name, c.nationId, bundle.projection.bindingsByCityId[c.id]?.landProvinceId,
                                 places[c.id]?.commanderyHanja, c.meta)

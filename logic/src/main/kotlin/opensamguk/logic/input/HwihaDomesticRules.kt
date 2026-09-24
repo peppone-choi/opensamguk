@@ -28,7 +28,8 @@ data class DomesticPerson(
     }
 }
 
-data class DomesticCard(val id: Int, val masterId: Int, val generalId: Int?, val relation: String)
+data class DomesticCard(val id: Int, val masterId: Int, val generalId: Int?, val relation: String,
+    val name: String? = null)
 
 /** 행정 縣治 城만 싣는다. [provinceId]·[commanderyId] 는 부팅 판의 결속·지리에서 온다(없으면 null). */
 data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val provinceId: String?, val commanderyId: String?,
