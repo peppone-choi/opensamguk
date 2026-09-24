@@ -1943,17 +1943,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.retire argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.retire successorGeneralId and direct retainer gate"
       },
       "costSchema": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "source": "server-side action.retire rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "POLITICS",
@@ -1964,11 +1964,23 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "ALREADY_RETIRED",
+        "BATTLE_PENDING",
+        "SUCCESSOR_UNAVAILABLE",
+        "SUCCESSOR_NOT_RETAINER",
+        "SUCCESSOR_UNAVAILABLE_FOR_CONTROL",
+        "STATE_UNAVAILABLE",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.retire",
@@ -1977,7 +1989,7 @@
       "legacyCommands": [
         "che_은퇴"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.resign",

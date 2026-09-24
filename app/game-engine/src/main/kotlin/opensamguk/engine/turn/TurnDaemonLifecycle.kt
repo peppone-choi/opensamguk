@@ -110,7 +110,8 @@ class TurnDaemonLifecycle(
      */
     fun dueGenerals(runTime: Instant): List<TurnGeneral> =
         world.listGenerals()
-            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) }
+            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) &&
+                (world.ruleProfile != RuleProfile.HWIHA || it.meta["hwihaRetired"] != true) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =

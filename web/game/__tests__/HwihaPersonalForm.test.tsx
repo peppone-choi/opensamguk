@@ -38,3 +38,13 @@ test('healthy actor cannot reserve recuperation',async()=>{
     expect(await screen.findByText('요양할 필요가 없습니다.')).toBeInTheDocument();
     expect(screen.getByRole('button',{name:'요양 예약'})).toBeDisabled();
 });
+
+test('retirement submits the chosen successor from server options',async()=>{
+    vi.mocked(api.personalOptions).mockResolvedValue({inputId:'action.retire',available:true,
+        successors:[{generalId:8,name:'후계',available:true},{generalId:9,name:'타인',available:false,reason:'불가'}]});
+    render(<HwihaPersonalForm {...props} inputId="action.retire"/>);
+    expect(await screen.findByRole('option',{name:'후계'})).toBeInTheDocument();
+    expect(screen.getByRole('option',{name:'타인 — 불가'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('button',{name:'은퇴 예약'}));
+    await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.retire',{successorGeneralId:8},7,0));
+});
