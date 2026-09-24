@@ -168,11 +168,27 @@ describe('MapViewer data props', () => {
   });
 
   it('loads the served terrain and province PNG through the common map hook', async () => {
+    // One opaque RGB pixel: commandery 0, province 0. Keep a real PNG envelope so
+    // the hook exercises the response, PNG validation, bitmap and pixel decoding path.
+    const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgEGAEAAAlABJ854baAAAAAElFTkSuQmCC'), char => char.charCodeAt(0));
+    mocks.fetch.mockImplementation(async (input: string) => input.includes('/provinces?')
+      ? { ok: true, headers: { get: (name: string) => name === 'content-type' ? 'image/png' : null },
+        arrayBuffer: async () => png.buffer }
+      : input.includes('/terrain?')
+        ? { ok: true, headers: { get: () => null },
+          json: async () => ({ _meta: { cols: 768, rows: 669, year: 200, terrainLegend: {} }, juns: [], cities: [] }) }
+        : { ok: false, status: 404 });
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({ width: 1, height: 1, close: vi.fn() })));
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+      getImageData: () => ({ data: new Uint8ClampedArray([0, 16, 1, 255]) }),
+    } as unknown as CanvasRenderingContext2D);
     render(<MapViewer />);
-    await screen.findByTestId('shared-iso-map');
+    await waitFor(() => expect(mocks.props?.provinceMap?.provinces[0]).toBe(0));
     expect(mocks.props?.mapCode).toBe('han-world-v3');
     expect(mocks.props?.tiles?._meta.cols).toBe(768);
     expect(mocks.props?.markerPositions?.has(11)).toBe(true);
+    expect(mocks.props?.provinceMap?.commanderies[0]).toBe(0);
     expect(mocks.props?.terrainUrl).toBeUndefined();
     expect(mocks.fetch.mock.calls.map(([url]) => url)).toContain('/api/game/api/map/provinces?mapCode=han-world-v3');
   });

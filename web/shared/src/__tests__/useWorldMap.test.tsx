@@ -61,6 +61,25 @@ describe('useWorldMap common served board', () => {
     expect(mocks.fetch.mock.calls.filter(([url]) => String(url).includes('/terrain?'))).toHaveLength(1);
   });
 
+  it('keeps geographic calculations stable when a work badge changes', async () => {
+    const loadPreview = vi.fn(async () => preview);
+    const { result, rerender } = renderHook(({ works }) => useWorldMap({ loadPreview, works }),
+      { initialProps: { works: null as Parameters<typeof useWorldMap>[0]['works'] } });
+    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    if (result.current.kind !== 'ready') throw new Error('not ready');
+    const { markerPositions, provinceCenter, commanderies, legend } = result.current;
+    rerender({ works: { status: 'READY', counties: [{ countyId: 7,
+      active: { work: 'ROAD', label: '도로', percent: 50 }, completed: [] }] } });
+    expect(result.current.kind).toBe('ready');
+    if (result.current.kind !== 'ready') throw new Error('not ready');
+    expect(result.current.markerPositions).toBe(markerPositions);
+    expect(result.current.provinceCenter).toBe(provinceCenter);
+    expect(result.current.commanderies).toBe(commanderies);
+    expect(result.current.legend).toBe(legend);
+    expect(result.current.cities[0].cityBadges).toContainEqual({ kind: 'work', work: 'ROAD',
+      label: '도로', phase: 'active', percent: 50 });
+  });
+
   it('seats a 城 in its own 省 even when its projected point is in a neighbor', async () => {
     const province = { width: 3, height: 1, provinces: new Int16Array([0, 0, 1]),
       commanderies: new Int16Array([0, 0, 0]), provinceEdges: [], commanderyEdges: [] };

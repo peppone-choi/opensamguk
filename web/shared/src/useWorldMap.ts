@@ -76,108 +76,108 @@ export function worldProvincesUrl(serverId?: string): string {
 }
 
 export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesById(preview.cities, null, null)): IsoCityOverlay[] {
-    const nations = new Map(preview.nations.map((n) => [n.id, n]));
-    return preview.cities.map((city) => {
-        const nation = nations.get(city.nationId);
-        const owned = isOwnedNationVisual(city.nationId, nation?.color);
-        return {
-            ...city,
-            // 지도 이름표는 縣 이름만 — 동명이지 구분 郡 은 commanderyName 으로 따로 간다.
-            mapLabel: city.name,
-            nationName: owned ? nation?.name : NEUTRAL_NAME,
-            nationColor: owned ? nation?.color : undefined,
-            cityBadges: (badges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
-            interactive: true,
-        } satisfies IsoCityOverlay;
-    });
+  const nations = new Map(preview.nations.map((n) => [n.id, n]));
+  return preview.cities.map((city) => {
+    const nation = nations.get(city.nationId);
+    const owned = isOwnedNationVisual(city.nationId, nation?.color);
+    return {
+      ...city,
+      // 지도 이름표는 縣 이름만 — 동명이지 구분 郡 은 commanderyName 으로 따로 간다.
+      mapLabel: city.name,
+      nationName: owned ? nation?.name : NEUTRAL_NAME,
+      nationColor: owned ? nation?.color : undefined,
+      cityBadges: (badges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
+      interactive: true,
+    } satisfies IsoCityOverlay;
+  });
 }
 
 /**
- * 城 아이콘을 자기 省의 치소 칸에 앉힌다. 省 색인이 없을 때만 원본 좌표의 칸을 쓴다.
- */
+* 城 아이콘을 자기 省의 치소 칸에 앉힌다. 省 색인이 없을 때만 원본 좌표의 칸을 쓴다.
+*/
 export function buildMarkerPositions(
-    cities: readonly IsoCityOverlay[],
-    tiles: HanTiles,
-    sourceSize: { width: number; height: number },
-    provinceMap: ProvinceIdentityMap | null = null,
+  cities: readonly IsoCityOverlay[],
+  tiles: HanTiles,
+  sourceSize: { width: number; height: number },
+  provinceMap: ProvinceIdentityMap | null = null,
 ): Map<number, IsoMarkerPosition> {
-    return buildCanonicalMarkerPositions(tiles, cities, sourceSize, provinceMap);
+  return buildCanonicalMarkerPositions(tiles, cities, sourceSize, provinceMap);
 }
 
 /**
- * 지형의 juns → 군국 표. 초점 城 은 미리보기에서 **이름이 같은 군국의 치소**를 먼저, 없으면 그
- * 군국의 아무 城 이나 id 가 가장 작은 것을 고른다. 城 없는 군국은 초점이 null 이다 — 지어내지 않는다.
- */
+* 지형의 juns → 군국 표. 초점 城 은 미리보기에서 **이름이 같은 군국의 치소**를 먼저, 없으면 그
+* 군국의 아무 城 이나 id 가 가장 작은 것을 고른다. 城 없는 군국은 초점이 null 이다 — 지어내지 않는다.
+*/
 export function buildCommanderies(tiles: HanTiles, preview: WorldMapPreview): HwihaCommanderyCell[] {
-    const byCommandery = new Map<string, { seat: number | null; first: number }>();
-    for (const city of [...preview.cities].sort((a, b) => a.id - b.id)) {
-        const name = city.commanderyName;
-        if (!name) continue;
-        const entry = byCommandery.get(name) ?? { seat: null, first: city.id };
-        if (city.isCommanderySeat && entry.seat == null) entry.seat = city.id;
-        byCommandery.set(name, entry);
-    }
-    return tiles.juns.flatMap((jun, no) => {
-        if (!Number.isFinite(jun.col) || !Number.isFinite(jun.row)) return [];
-        const hit = byCommandery.get(jun.name);
-        return [{ no, name: jun.name, col: jun.col, row: jun.row, focusCityId: hit ? hit.seat ?? hit.first : null }];
-    });
+  const byCommandery = new Map<string, { seat: number | null; first: number }>();
+  for (const city of [...preview.cities].sort((a, b) => a.id - b.id)) {
+    const name = city.commanderyName;
+    if (!name) continue;
+    const entry = byCommandery.get(name) ?? { seat: null, first: city.id };
+    if (city.isCommanderySeat && entry.seat == null) entry.seat = city.id;
+    byCommandery.set(name, entry);
+  }
+  return tiles.juns.flatMap((jun, no) => {
+    if (!Number.isFinite(jun.col) || !Number.isFinite(jun.row)) return [];
+    const hit = byCommandery.get(jun.name);
+    return [{ no, name: jun.name, col: jun.col, row: jun.row, focusCityId: hit ? hit.seat ?? hit.first : null }];
+  });
 }
 
 /**
- * 구역 id → 그 구역 안의 대표 칸. 칸들의 무게중심에 가장 가까운 **구역 안** 칸을 고른다 — 초승달 꼴
- * 구역의 무게중심은 밖에 떨어질 수 있다. 처음 물을 때 한 번 훑고 담아 둔다.
- */
+* 구역 id → 그 구역 안의 대표 칸. 칸들의 무게중심에 가장 가까운 **구역 안** 칸을 고른다 — 초승달 꼴
+* 구역의 무게중심은 밖에 떨어질 수 있다. 처음 물을 때 한 번 훑고 담아 둔다.
+*/
 export function buildProvinceCenters(
-    tiles: HanTiles,
-    provinceMap: ProvinceIdentityMap | null,
+  tiles: HanTiles,
+  provinceMap: ProvinceIdentityMap | null,
 ): (provinceId: string) => { col: number; row: number } | undefined {
-    const records = tiles.provinceRecords ?? [];
-    const indexById = new Map(records.map((record, index) => [record.id, index]));
-    let centers: Map<number, { col: number; row: number }> | null = null;
-    const compute = () => {
-        const out = new Map<number, { col: number; row: number }>();
-        if (!provinceMap) return out;
-        const { width, provinces } = provinceMap;
-        const sum = new Map<number, { c: number; r: number; n: number }>();
-        for (let i = 0; i < provinces.length; i += 1) {
-            const p = provinces[i];
-            if (p < 0) continue;
-            const acc = sum.get(p) ?? { c: 0, r: 0, n: 0 };
-            acc.c += i % width;
-            acc.r += Math.floor(i / width);
-            acc.n += 1;
-            sum.set(p, acc);
-        }
-        const best = new Map<number, { col: number; row: number; d: number }>();
-        for (let i = 0; i < provinces.length; i += 1) {
-            const p = provinces[i];
-            if (p < 0) continue;
-            const acc = sum.get(p)!;
-            const col = i % width;
-            const row = Math.floor(i / width);
-            const d = (col - acc.c / acc.n) ** 2 + (row - acc.r / acc.n) ** 2;
-            const cur = best.get(p);
-            if (!cur || d < cur.d) best.set(p, { col, row, d });
-        }
-        for (const [p, v] of best) out.set(p, { col: v.col, row: v.row });
-        return out;
-    };
-    return (provinceId: string) => {
-        const index = indexById.get(provinceId);
-        if (index === undefined) return undefined;
-        centers ??= compute();
-        return centers.get(index);
-    };
+  const records = tiles.provinceRecords ?? [];
+  const indexById = new Map(records.map((record, index) => [record.id, index]));
+  let centers: Map<number, { col: number; row: number }> | null = null;
+  const compute = () => {
+    const out = new Map<number, { col: number; row: number }>();
+    if (!provinceMap) return out;
+    const { width, provinces } = provinceMap;
+    const sum = new Map<number, { c: number; r: number; n: number }>();
+    for (let i = 0; i < provinces.length; i += 1) {
+      const p = provinces[i];
+      if (p < 0) continue;
+      const acc = sum.get(p) ?? { c: 0, r: 0, n: 0 };
+      acc.c += i % width;
+      acc.r += Math.floor(i / width);
+      acc.n += 1;
+      sum.set(p, acc);
+    }
+    const best = new Map<number, { col: number; row: number; d: number }>();
+    for (let i = 0; i < provinces.length; i += 1) {
+      const p = provinces[i];
+      if (p < 0) continue;
+      const acc = sum.get(p)!;
+      const col = i % width;
+      const row = Math.floor(i / width);
+      const d = (col - acc.c / acc.n) ** 2 + (row - acc.r / acc.n) ** 2;
+      const cur = best.get(p);
+      if (!cur || d < cur.d) best.set(p, { col, row, d });
+    }
+    for (const [p, v] of best) out.set(p, { col: v.col, row: v.row });
+    return out;
+  };
+  return (provinceId: string) => {
+    const index = indexById.get(provinceId);
+    if (index === undefined) return undefined;
+    centers ??= compute();
+    return centers.get(index);
+  };
 }
 
 export function buildLegend(preview: WorldMapPreview): HwihaLegendEntry[] {
-    const counts = new Map<number, number>();
-    for (const city of preview.cities) counts.set(city.nationId, (counts.get(city.nationId) ?? 0) + 1);
-    return preview.nations
-        .filter((n) => isOwnedNationVisual(n.id, n.color))
-        .map((n) => ({ nationId: n.id, name: n.name, color: n.color, cities: counts.get(n.id) ?? 0 }))
-        .sort((a, b) => b.cities - a.cities || a.nationId - b.nationId);
+  const counts = new Map<number, number>();
+  for (const city of preview.cities) counts.set(city.nationId, (counts.get(city.nationId) ?? 0) + 1);
+  return preview.nations
+    .filter((n) => isOwnedNationVisual(n.id, n.color))
+    .map((n) => ({ nationId: n.id, name: n.name, color: n.color, cities: counts.get(n.id) ?? 0 }))
+    .sort((a, b) => b.cities - a.cities || a.nationId - b.nationId);
 }
 
 
@@ -252,21 +252,31 @@ export function useWorldMap<P extends WorldMapPreview>({
     return () => controller.abort();
   }, [loadPreview, mapData, refreshKey, serverId, cacheScope]);
 
+  const base = useMemo(() => {
+    if (raw.kind !== 'loaded') return null;
+    const { preview, tiles, provinceMap } = raw;
+    const sourceSize = { width: preview.width || 700, height: preview.height || 610 };
+    return {
+      provinceCenter: buildProvinceCenters(tiles, provinceMap),
+      markerPositions: buildMarkerPositions(buildWorldCities(preview), tiles, sourceSize, provinceMap),
+      commanderies: buildCommanderies(tiles, preview),
+      legend: buildLegend(preview),
+      sourceSize,
+    };
+  }, [raw]);
+
   return useMemo<WorldMapState<P>>(() => {
-    if (raw.kind !== 'loaded') return raw;
+    if (raw.kind !== 'loaded' || !base) return raw as WorldMapState<P>;
     const { preview, tiles, hash, provinceMap } = raw;
     const nations = new Map(preview.nations.map((nation) => [nation.id, nation]));
     const colorOf = (nationId: number) => ({
       nationColor: nations.get(nationId)?.color,
       nationName: nations.get(nationId)?.name,
     });
-    const sourceSize = { width: preview.width || 700, height: preview.height || 610 };
     const cities = buildWorldCities(preview, cityBadgesById(preview.cities, works, sieges));
     return {
       kind: 'ready', preview, refreshError: raw.refreshError, tiles, tilesSha256: hash ?? undefined, provinceMap,
-      provinceCenter: buildProvinceCenters(tiles, provinceMap), cities,
-      markerPositions: buildMarkerPositions(cities, tiles, sourceSize, provinceMap),
-      commanderies: buildCommanderies(tiles, preview), legend: buildLegend(preview), sourceSize,
+      ...base, cities,
       administrativeOwnership: preview.provinceOccupancy?.length && preview.jurisdictionOwnership?.length
         && preview.commanderyControl?.length
         ? {
@@ -275,5 +285,5 @@ export function useWorldMap<P extends WorldMapPreview>({
           commanderyControl: preview.commanderyControl.map((owner) => ({ ...owner, ...colorOf(owner.nationId) })),
         } : undefined,
     };
-  }, [raw, works, sieges]);
+  }, [raw, base, works, sieges]);
 }

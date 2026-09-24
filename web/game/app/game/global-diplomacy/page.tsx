@@ -289,7 +289,7 @@ export default function GlobalDiplomacyPage() {
             </div>
             <div className="gd-split">
                 <div className="gd-split__map">
-                    <MapViewer hwihaLayers="fog" generalId={currentGeneralId} />
+                    <MapViewer hwihaLayers={currentGeneralId === undefined ? 'none' : 'fog'} generalId={currentGeneralId} />
                 </div>
                 <div className="gd-split__list">
                     <GameCard>

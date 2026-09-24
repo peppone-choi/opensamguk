@@ -24,11 +24,15 @@ async function canvasHit(page: Page, selector: string) {
     return element?.tagName.toLowerCase() ?? null;
   }, { x, y });
   expect(hit).toBe('canvas');
+  const beforeWheel = await canvas.screenshot();
   await page.mouse.move(x, y);
   await page.mouse.wheel(0, -400);
+  await expect.poll(async () => !(await canvas.screenshot()).equals(beforeWheel)).toBe(true);
+  const beforeDrag = await canvas.screenshot();
   await page.mouse.down();
   await page.mouse.move(x + 60, y + 40, { steps: 5 });
   await page.mouse.up();
+  await expect.poll(async () => !(await canvas.screenshot()).equals(beforeDrag)).toBe(true);
   return { x, y, hit };
 }
 
