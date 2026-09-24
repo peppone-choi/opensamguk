@@ -1,6 +1,7 @@
 package opensamguk.infra.seed
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.JsonToken
 import java.nio.file.Path
 import kotlin.test.*
 
@@ -15,14 +16,27 @@ class HanAdministrativeCountyTest {
         assertFailsWith<UnsupportedOperationException> { (projection.administrativeCountyIds as MutableSet).clear() }
     }
     @Test fun `all registered archives keep county identities inside their selected roster`() {
-        val resolver = HanWorldArtifactsResolver(Path.of(".."))
         for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
-            val artifact = resolver.artifacts(variant)
+            // This audit only needs one release at a time. Holding every
+            // fourfold-grid bundle and parsing its full terrain tree exceeds
+            // the test worker heap without strengthening the assertion.
+            val artifact = HanWorldArtifactsResolver(Path.of("..")).artifacts(variant)
             val projection = artifact.projection
             assertEquals(variant.cityCount, projection.bindingsByCityId.size)
             assertTrue(projection.administrativeCountyIds.all { it in projection.bindingsByCityId })
-            val tiles = mapper.readTree(artifact.artifactBytes("data/map/han-tiles.json"))
-            if (!tiles.has("jurisdictionRecords")) assertTrue(projection.administrativeCountyIds.isEmpty())
+            val hasJurisdictions = mapper.factory.createParser(
+                artifact.artifactBytes("data/map/han-tiles.json")
+            ).use { parser ->
+                var found = false
+                while (parser.nextToken() != null) {
+                    if (parser.currentToken == JsonToken.FIELD_NAME && parser.text == "jurisdictionRecords") {
+                        found = true
+                        break
+                    }
+                }
+                found
+            }
+            if (!hasJurisdictions) assertTrue(projection.administrativeCountyIds.isEmpty())
         }
     }
     @Test fun `missing legacy classification grants no county capability`() {
