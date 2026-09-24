@@ -221,6 +221,8 @@ class ReservedTurnHandler(
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
     private val cityMilitaryHandler by lazy { opensamguk.engine.hwiha.HwihaCityMilitaryHandler(world, recorder, hwihaDomesticContext) }
+    private val personalHandler by lazy { opensamguk.engine.hwiha.HwihaPersonalHandler(world, recorder, hwihaDomesticContext) }
+    private val retireHandler by lazy { opensamguk.engine.hwiha.HwihaRetireHandler(world, recorder, hwihaDomesticContext) }
     private val peopleHandler by lazy { opensamguk.engine.hwiha.HwihaPeopleHandler(world, recorder,
         hwihaDomesticContext, hiddenSeed) }
     private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
@@ -335,6 +337,20 @@ class ReservedTurnHandler(
                         applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
+                }
+            }
+            for (personalId in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS) {
+                if (hwihaCatalog[personalId]?.deliveryState?.hasHandler == true) {
+                    handlers[personalId] = InputHandler {
+                        applied = personalHandler.handle(personalId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            if (hwihaCatalog[opensamguk.logic.input.HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.HwihaRetireInput.INPUT_ID] = InputHandler {
+                    applied = retireHandler.handle(generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
             for (peopleId in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {

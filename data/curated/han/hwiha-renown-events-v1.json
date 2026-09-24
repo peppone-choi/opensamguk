@@ -9,7 +9,7 @@
   "sources": {
     "warMerit": ["ENCOUNTER_VICTORY", "COUNTY_CAPTURE"],
     "defeat": ["ENCOUNTER_DEFEAT", "COUNTY_LOSS"],
-    "domesticMerit": ["COUNTY_INDICATOR_RISE", "DIRECT_COUNTY_ACTION", "DIRECT_MILITARY_ACTION", "DIRECT_PEOPLE_ACTION"],
+    "domesticMerit": ["COUNTY_INDICATOR_RISE", "DIRECT_COUNTY_ACTION", "DIRECT_MILITARY_ACTION", "DIRECT_PERSONAL_ACTION", "DIRECT_PEOPLE_ACTION"],
     "betrayal": ["DEFECTION"],
     "bondEvent": ["SWORN_OATH", "RECOMMENDATION", "REWARD"],
     "office": ["OFFICE_APPOINTMENT"],
@@ -21,6 +21,7 @@
     "COUNTY_INDICATOR_RISE": "HwihaCountyMeritWindow — 월 경계",
     "DIRECT_COUNTY_ACTION": "HwihaFieldHandler — 본인이 현재 縣에서 직접 내정 행동을 완료한 순",
     "DIRECT_MILITARY_ACTION": "HwihaMilitaryHandler/HwihaMusterHandler — 본인이 현재 縣에서 직접 군사 행동 또는 집합을 완료한 순",
+    "DIRECT_PERSONAL_ACTION": "HwihaPersonalHandler — 본인이 견문·단련·요양을 완료한 순",
     "DIRECT_PEOPLE_ACTION": "HwihaPeopleHandler — 본인이 현재 위치에서 인재탐색·등용·포로 설득을 마친 순",
     "ENCOUNTER_VICTORY": "훅만(HwihaRenownHooks.onEncounterResolved) — 조우 판정 흐름이 부른다",
     "ENCOUNTER_DEFEAT": "훅만(HwihaRenownHooks.onEncounterResolved)",

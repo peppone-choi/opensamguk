@@ -527,12 +527,15 @@ class DaemonLoopConfig {
                 val deploy = opensamguk.engine.hwiha.HwihaNpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
                 val field = opensamguk.engine.hwiha.HwihaNpcFieldSelector(domesticContext)
                 val military = opensamguk.engine.hwiha.HwihaNpcCityMilitarySelector(domesticContext)
+                val personal = opensamguk.engine.hwiha.HwihaNpcPersonalSelector(domesticContext)
+                val retire = opensamguk.engine.hwiha.HwihaNpcRetireSelector(domesticContext)
                 val people = opensamguk.engine.hwiha.HwihaNpcPeopleSelector(domesticContext)
                 val muster = opensamguk.engine.hwiha.HwihaNpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
                 val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn = { generalId, reserved ->
-                    field.select(world, generalId, people.select(world, generalId,
-                        military.select(world, generalId,
-                            muster.select(world, generalId, deploy.select(world, generalId, reserved)))))
+                    personal.select(world, generalId, field.select(world, generalId,
+                        people.select(world, generalId, military.select(world, generalId,
+                            muster.select(world, generalId, deploy.select(world, generalId,
+                                retire.select(world, generalId, reserved)))))))
                 }
                 select
             } else { _, reserved -> reserved },

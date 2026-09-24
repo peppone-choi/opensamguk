@@ -33,6 +33,9 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/hwiha-military-v1.json")) {
         into("hwiha")
     }
+    from(rootProject.file("data/curated/han/hwiha-personal-v1.json")) {
+        into("hwiha")
+    }
     from(rootProject.file("data/curated/han/hwiha-people-v1.json")) {
         into("hwiha")
     }

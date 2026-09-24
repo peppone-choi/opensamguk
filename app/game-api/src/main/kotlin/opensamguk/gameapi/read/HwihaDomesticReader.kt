@@ -68,7 +68,7 @@ class HwihaDomesticReader(
                             val position = positions.stateFor(g.id)
                             DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
                                 g.leadership, g.strength, g.intel, g.politics, g.charm,
-                                (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta)
+                                (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury)
                         },
                         cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->

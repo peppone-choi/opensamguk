@@ -48,6 +48,7 @@ enum class HwihaRenownEventSource(val kind: HwihaRenownEventKind, val label: Str
     COUNTY_INDICATOR_RISE(HwihaRenownEventKind.DOMESTIC_MERIT, "관할 縣 지표 상승"),
     DIRECT_COUNTY_ACTION(HwihaRenownEventKind.DOMESTIC_MERIT, "직접 내정 행동"),
     DIRECT_MILITARY_ACTION(HwihaRenownEventKind.DOMESTIC_MERIT, "직접 군사 행동"),
+    DIRECT_PERSONAL_ACTION(HwihaRenownEventKind.DOMESTIC_MERIT, "직접 개인 행동"),
     DIRECT_PEOPLE_ACTION(HwihaRenownEventKind.DOMESTIC_MERIT, "직접 인물 행동"),
     /**
      * 실제 배반만 배신이다 — 원천은 아직 없다(훅 자리). 코스트 상한 초과 이탈은 배신이 아니며 월단평 사건도

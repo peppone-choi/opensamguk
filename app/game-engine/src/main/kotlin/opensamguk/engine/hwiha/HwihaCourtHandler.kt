@@ -52,13 +52,28 @@ class HwihaCourtHandler(
                     "INVALID_INPUT_CHANNEL", "직접 군사 행동은 개인 행동 예약으로 입력해야 합니다.") }
             }
         }
+        for (personalId in HwihaPersonalInput.FIELD_IDS) {
+            if (HwihaInputCatalog.load()[personalId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[personalId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "개인 현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
+            }
+        }
         for (peopleId in HwihaPeopleInput.INPUT_IDS) {
             if (HwihaInputCatalog.load()[peopleId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[peopleId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                     "INVALID_INPUT_CHANNEL", "인물 직접 행동은 개인 행동 예약으로 입력해야 합니다.") }
             }
         }
-        val registry = HwihaInputRegistry(HwihaInputCatalog.load(), channelHandlers)
+        // 이 즉시 입력 채널에도 배달된 직접 행동의 명시적 오채널 응답이 있어야 원장/핸들러
+        // 전수 검사에 걸리지 않는다. 새 직접 행동이 추가될 때 이 지도가 누락되지 않게 한다.
+        val catalog = HwihaInputCatalog.load()
+        for (entry in catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION && it.deliveryState.hasHandler }) {
+            channelHandlers.putIfAbsent(entry.inputId, InputHandler {
+                outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "직접 행동은 개인 행동 예약으로 입력해야 합니다.")
+            })
+        }
+        val registry = HwihaInputRegistry(catalog, channelHandlers)
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,
                 resolution.reason.name, resolution.reason.message)

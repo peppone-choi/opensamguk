@@ -18,6 +18,7 @@ data class DomesticPerson(
     val node: String?,
     val inBattle: Boolean,
     val meta: Map<String, Any?>,
+    val injury: Int = 0,
 ) {
     fun stat(stat: HwihaDomesticDesign.Stat): Int = when (stat) {
         HwihaDomesticDesign.Stat.LEADERSHIP -> leadership

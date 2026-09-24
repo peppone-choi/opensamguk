@@ -466,6 +466,13 @@ export const api = {
         };
         return get<import('./types').HwihaMilitaryOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
+    personalOptions: (inputId: import('./types').HwihaPersonalActionId, generalId: number) => {
+        const names: Record<import('./types').HwihaPersonalActionId, string> = {
+            'action.travel': 'travel', 'action.selfTrain': 'self-train', 'action.recuperate': 'recuperate',
+            'action.retire': 'retire',
+        };
+        return get<import('./types').HwihaPersonalOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+    },
     peopleOptions: (inputId: import('./types').HwihaPeopleActionId, generalId: number) => {
         const names: Record<import('./types').HwihaPeopleActionId, string> = {
             'action.search': 'search', 'action.employ': 'employ',
