@@ -104,6 +104,21 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(design.experience * 2, after.generals.single { it.id == 1 }.experience)
     }
 
+    @Test fun `retainer and bugok ownership updates survive cold reload`() {
+        val id = 694
+        seed(id)
+        val world = InMemoryTurnWorld(load(id))
+        val card = world.listRetainers().single()
+        val unit = world.listBugoks().single()
+        world.updateRetainer(card.copy(masterGeneralId = 10))
+        world.updateBugok(unit.copy(masterGeneralId = 10, crewTypeId = 2))
+        flush.flush(DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState()))
+        val restored = load(id)
+        assertEquals(10, restored.retainers.single().masterGeneralId)
+        assertEquals(10, restored.bugoks.single().masterGeneralId)
+        assertEquals(2, restored.bugoks.single().crewTypeId)
+    }
+
     @Test fun `real HWIHA snapshot enlistment flush and cold reload preserve personal assets and prevent duplicate relation`() {
         seed(1); seed(2)
         val before = load(1)

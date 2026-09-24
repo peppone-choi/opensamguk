@@ -163,6 +163,29 @@ class HwihaMarchPersistenceIT {
         assertEquals(before.stats.strength + design.trainingStatGain, cold(id).getGeneralById(1)!!.stats.strength)
     }
 
+    @Test fun `named retirement transfers control retinue and bugok through cold reload`() {
+        val id = 693
+        seed(id)
+        jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id=2", id)
+        var world = cold(id)
+        val before = world.getGeneralById(1)!!
+        val recorder = ChangeRecorder()
+        val handler = HwihaRetireHandler(world, recorder, HwihaDomesticContext())
+        val args = """{"successorGeneralId":2}"""
+        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, args, "retire-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertNull(world.getGeneralById(1)!!.userId)
+        assertEquals(true, world.getGeneralById(1)!!.meta["hwihaRetired"])
+        assertEquals(before.userId, world.getGeneralById(2)!!.userId)
+        assertEquals(2, world.listBugoks().single().masterGeneralId)
+        assertEquals(1, world.listRetainers().size)
+        assertEquals(10, world.listRetainers().single().masterGeneralId)
+        assertEquals(2, world.listRetainers().single().generalId)
+        assertEquals(first, HwihaRetireHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(1, args, "retire-$id", 42))
+    }
+
     @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
         val id = 618
         var world = personalMarchFixture(id)

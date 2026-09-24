@@ -88,6 +88,7 @@ class CommandReserveService(
     private val hwihaFieldAdmission: HwihaFieldAdmission? = null,
     private val hwihaMilitaryAdmission: HwihaMilitaryAdmission? = null,
     private val hwihaPersonalAdmission: HwihaPersonalAdmission? = null,
+    private val hwihaRetireAdmission: HwihaRetireAdmission? = null,
     private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -208,6 +209,10 @@ class CommandReserveService(
             (hwihaPersonalAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == opensamguk.logic.input.HwihaRetireInput.INPUT_ID) {
+            (hwihaRetireAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
             (hwihaPeopleAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
@@ -442,6 +447,7 @@ class CommandReserveService(
             opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
+            opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
             opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
     }
 }
