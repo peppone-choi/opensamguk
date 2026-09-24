@@ -117,4 +117,19 @@ class HwihaDomesticEffectsTest {
         val fast = HwihaDomesticEffects.remainingPhases(design, work, seat(100))
         assertTrue(fast < slow, "$fast < $slow")
     }
+
+    @Test fun `another road site completes without granting county commerce twice`() {
+        val spec = design.works.getValue(DomesticWork.ROAD)
+        val nearCompletion = HwihaDomesticEffects.newWork(design, DomesticWork.ROAD, "second-road", 1, now)
+            .copy(progress = spec.requiredProgress - 1,
+                charged = HwihaDomesticEffects.charged(spec.cost, spec.requiredProgress - 1, spec.requiredProgress))
+        val stock = HwihaResources(10_000_000, 10_000_000, 10_000_000, 10_000_000, 10_000_000)
+        val first = assertIs<HwihaWorkStep.Completed>(HwihaDomesticEffects.progressWork(
+            design, nearCompletion, now.plus(1), stock, levels, null))
+        val repeated = assertIs<HwihaWorkStep.Completed>(HwihaDomesticEffects.progressWork(
+            design, nearCompletion, now.plus(1), stock, levels, null, alreadyCompletedInCounty = true))
+        assertTrue(first.levels.commerce > levels.commerce)
+        assertEquals(levels, repeated.levels)
+        assertEquals(first.debit, repeated.debit)
+    }
 }

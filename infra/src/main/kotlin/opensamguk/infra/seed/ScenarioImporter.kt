@@ -406,7 +406,9 @@ class ScenarioImporter(
      * selected independently from their stored topology pins on boot. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedHanWorldArtifacts {
         val resolver = HanWorldArtifactsResolver(artifactsRoot)
-        return if (ids.size == 1447 && ids.toSet() == (1..1447).toSet())
+        return if (ids.size == 1447 && ids.toSet() ==
+            opensamguk.logic.world.CityConstRegistry.hanWorld(
+                opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
         else resolver.resolve(ids, emptyList())
     }

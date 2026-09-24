@@ -31,7 +31,10 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         val ready = requireNotNull(snapshot.ready)
         val topology = ready.bundle.projection.topology
         val passage = try {
-            val base = HwihaLandPassageState.read(ready.selected.world.meta, topology)
+            val passageRaw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
+            val passageMeta = if (passageRaw == null) ready.selected.world.meta else
+                ready.selected.world.meta + (HwihaLandPassageState.META_KEY to mapper.readValue(passageRaw, Map::class.java))
+            val base = HwihaLandPassageState.read(passageMeta, topology)
                 ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
             if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
                 val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaRoadFortState.META_KEY)?.value

@@ -83,7 +83,7 @@ object HwihaDomesticEffects {
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
     fun progressWork(design: HwihaDomesticDesign, work: HwihaActiveWork, now: HwihaPhase, stock: HwihaResources,
-        levels: HwihaCountyLevels, seat: HwihaSeatStats?): HwihaWorkStep {
+        levels: HwihaCountyLevels, seat: HwihaSeatStats?, alreadyCompletedInCounty: Boolean = false): HwihaWorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, HwihaDomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()
         val due = charged(work.cost, next, work.required).debit(work.charged)
@@ -91,7 +91,8 @@ object HwihaDomesticEffects {
         if (stock.debit(due) == null) return HwihaWorkStep.Stopped(work.copy(stopReason = INSUFFICIENT_STOCK), INSUFFICIENT_STOCK)
         if (next == work.required) {
             var after = levels
-            for (effect in design.works.getValue(work.work).completion) after = add(after, effect.indicator, effect.amount.toLong())
+            if (!alreadyCompletedInCounty) for (effect in design.works.getValue(work.work).completion)
+                after = add(after, effect.indicator, effect.amount.toLong())
             return HwihaWorkStep.Completed(HwihaCompletedWork(work.work, now, work.edgeId, work.row, work.col), due, after)
         }
         return HwihaWorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,

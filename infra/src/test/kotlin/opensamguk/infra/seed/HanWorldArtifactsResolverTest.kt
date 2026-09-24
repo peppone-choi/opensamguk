@@ -40,6 +40,9 @@ class HanWorldArtifactsResolverTest {
         }
         assertEquals(HanWorldVariant.V3_1447_MAP4, resolver.resolve(ids, listOf(currentPin)).variant)
         assertEquals(HanWorldVariant.V3_1447, resolver.resolve(ids, emptyList()).variant)
+        val oldTopology = resolver.artifacts(HanWorldVariant.V3_1447).projection.topology
+        assertEquals(HanWorldVariant.V3_1447, resolver.resolve(ids,
+            listOf(HanWorldTopologyPin("province_control", oldTopology.topologyRevision, oldTopology.contentHash))).variant)
     }
 
     @Test fun `complete old and current rosters select distinct verified bundles without persisted pins`() {

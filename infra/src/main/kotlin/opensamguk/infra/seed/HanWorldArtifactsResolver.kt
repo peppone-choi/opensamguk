@@ -38,6 +38,10 @@ class ResolvedHanWorldArtifacts internal constructor(
 /** Cache immutable artifacts, never the world's selection: a reset can change its roster. */
 class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
     companion object {
+        // Immutable topology pins for the two releases with the same 1447-city roster.
+        // Select from these before loading either multi-megabyte bundle.
+        private const val V3_1447_HASH = "393e42c8b0ff59b03f3bf5a1c67f41eb12caa53ce71033097480918f977b7ecb"
+        private const val V3_1447_MAP4_HASH = "2cb3e2efe0ee0d40c6137ceac0a9bfcac9e61120f1539510687603380d4927f5"
         /**
          * 엔진·API 는 저장소 루트에서 뜨므로 기본값은 `.` 이다. 그 전제가 성립하지 않는 곳 —
          * Gradle 이 모듈 디렉터리(app/game-engine)에서 띄우는 통합 테스트처럼 — 에서는 이
@@ -79,10 +83,17 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
             // Both 1447 releases have the same city identities. Stored topology
             // pins identify their grid; unpinned old worlds keep the old release.
             if (pins.isEmpty()) artifacts(HanWorldVariant.V3_1447)
-            else candidates.map(::artifacts).singleOrNull { candidate ->
-                pins.all { pin -> pin.revision == candidate.projection.topology.topologyRevision &&
-                    pin.hash == candidate.projection.topology.contentHash }
-            } ?: throw IllegalArgumentException("World spatial pins do not select one 1447 release")
+            else {
+                require(pins.all { it.revision == "han-water-topology-v1" && it.hash == pins.first().hash }) {
+                    "World spatial pins disagree"
+                }
+                val variant = when (pins.first().hash) {
+                    V3_1447_HASH -> HanWorldVariant.V3_1447
+                    V3_1447_MAP4_HASH -> HanWorldVariant.V3_1447_MAP4
+                    else -> throw IllegalArgumentException("World spatial pins do not select one 1447 release")
+                }
+                artifacts(variant)
+            }
         }
         val topology = selected.projection.topology
         pins.forEach { pin ->

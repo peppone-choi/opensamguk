@@ -108,7 +108,10 @@ class HwihaDomesticHandler(
     }
 
     private fun infrastructureTargetError(request: WorkRequest, state: HwihaDomesticProjection): String? {
-        if (context.roadGates.isEmpty() || request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
+        if (request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
+        if (request.work == DomesticWork.FORTIFICATION && request.edgeId == null &&
+            request.row == null && request.col == null) return null // County wall, independent of a road fort.
+        if (context.roadGates.isEmpty()) return "이 지도에는 도로 공사 자리가 없습니다."
         val gate = context.roadGates.singleOrNull { it.edgeId == request.edgeId }
             ?: return "지도에 등록된 도로 접경을 골라 주세요."
         val provinceId = state.county(request.countyId)?.provinceId

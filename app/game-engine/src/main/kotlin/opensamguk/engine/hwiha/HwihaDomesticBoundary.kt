@@ -103,7 +103,8 @@ class HwihaDomesticBoundary(
                 state.homeCountyByGeneral[person.id] == countyId)
         }
         val levels = HwihaDomesticCountyEffects.levelsOf(city)
-        return when (val step = HwihaDomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels, seat)) {
+        return when (val step = HwihaDomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels,
+            seat, works.completed.any { it.work == active.work })) {
             is HwihaWorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
             is HwihaWorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
