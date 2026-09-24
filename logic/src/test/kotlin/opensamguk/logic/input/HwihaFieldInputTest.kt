@@ -35,6 +35,12 @@ class HwihaFieldInputTest {
         assertEquals(HwihaFieldFailure.BATTLE_PENDING,
             assertIs<HwihaFieldAssessment.Rejected>(HwihaFieldRules.assess(request,
                 state.copy(people = listOf(person.copy(inBattle = true))))).reason)
+        val deployed = HwihaDeploymentState(listOf(HwihaDeployedCorps("order-7", 7, 7, null, 2,
+            listOf(1), state.now)))
+        assertEquals(HwihaFieldFailure.CORPS_DEPLOYED,
+            assertIs<HwihaFieldAssessment.Rejected>(HwihaFieldRules.assess(request,
+                state.copy(people = listOf(person.copy(meta = mapOf(HwihaDeploymentState.META_KEY to
+                    deployed.toMetaValue())))))).reason)
     }
 
     @Test fun `shared economy assessment rejects a short warehouse before effect`() {
@@ -42,11 +48,15 @@ class HwihaFieldInputTest {
             100, 1000, 100, 1000)
         val design = HwihaDomesticDesign.CANON
         val short = HwihaFieldRules.assessEconomy(HwihaFieldInput.FORTIFY, person, county.id,
-            levels, HwihaResources(money = 9_999, timber = 500), design)
+            levels, HwihaResources(money = 4_999, timber = 250), design)
         assertEquals(HwihaFieldFailure.INSUFFICIENT_STOCK,
             assertIs<HwihaFieldEconomyAssessment.Rejected>(short).reason)
         val ready = HwihaFieldRules.assessEconomy(HwihaFieldInput.FORTIFY, person, county.id,
-            levels, HwihaResources(money = 10_000, timber = 500), design)
+            levels, HwihaResources(money = 5_000, timber = 250), design)
         assertEquals(150, assertIs<HwihaFieldEconomyAssessment.Eligible>(ready).outcome.levels.defence)
+        val capped = HwihaFieldRules.assessEconomy(HwihaFieldInput.FORTIFY, person, county.id,
+            levels.copy(defence = 1000), HwihaResources(), design)
+        assertEquals(HwihaFieldFailure.AT_CAPACITY,
+            assertIs<HwihaFieldEconomyAssessment.Rejected>(capped).reason)
     }
 }

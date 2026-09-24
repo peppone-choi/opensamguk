@@ -21,10 +21,6 @@ vi.mock('@/components/game/GeneralBasicCard', () => ({
   ),
 }));
 
-vi.mock('@/app/game/simulator/page', () => ({
-  default: () => <div>전투 시뮬레이터</div>,
-}));
-
 vi.mock('@/lib/api', () => ({
   api: apiMocks,
 }));

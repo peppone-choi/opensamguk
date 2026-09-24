@@ -1,6 +1,7 @@
 package opensamguk.gameapi.reserve
 
 import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.HwihaDomesticForbidden
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -13,7 +14,8 @@ class HwihaFieldAdmission(private val reader: HwihaDomesticReader,
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, actorId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
         if (ownerUserId == null || ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")
-        reader.requireOwner(actorId, ownerUserId.toLong())
+        try { reader.requireOwner(actorId, ownerUserId.toLong()) }
+        catch (_: HwihaDomesticForbidden) { deny("FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.") }
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         val request = HwihaFieldInput.parse(actorId, inputId, raw)
             ?: deny(HwihaFieldFailure.INVALID_INPUT.name, HwihaFieldFailure.INVALID_INPUT.message)
@@ -24,12 +26,12 @@ class HwihaFieldAdmission(private val reader: HwihaDomesticReader,
         val assessment = HwihaFieldRules.assess(request, state)
         if (assessment is HwihaFieldAssessment.Rejected) deny(assessment.reason.name, assessment.reason.message)
         val eligible = assessment as HwihaFieldAssessment.Eligible
-        val economy = HwihaFieldRules.assessEconomy(inputId, eligible.person, eligible.county.id,
-            snapshot.countyLevels[eligible.county.id], snapshot.warehouseStocks[eligible.county.id], HwihaDomesticDesign.CANON)
-        if (economy is HwihaFieldEconomyAssessment.Rejected) deny(economy.reason.name, economy.reason.message)
         if (HwihaDomesticDesign.CANON.directActionStatus != HwihaDomesticDesign.CONFIRMED ||
             catalog[inputId]?.deliveryState?.hasHandler != true)
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val economy = HwihaFieldRules.assessEconomy(inputId, eligible.person, eligible.county.id,
+            snapshot.countyLevels[eligible.county.id], snapshot.warehouseStocks[eligible.county.id], HwihaDomesticDesign.CANON)
+        if (economy is HwihaFieldEconomyAssessment.Rejected) deny(economy.reason.name, economy.reason.message)
         return HwihaFieldInput.canonicalJson(request)
     }
 

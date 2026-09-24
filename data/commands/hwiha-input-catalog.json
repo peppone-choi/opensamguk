@@ -55,7 +55,9 @@
       "helpTopicId": "commands.action.enlist",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [
-        "che_임관"
+        "che_임관",
+        "che_랜덤임관",
+        "che_장수대상임관"
       ],
       "deliveryState": "HANDLER_READY"
     },
@@ -283,6 +285,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "NOT_LORD",
         "TARGET_NOT_FOUND",
@@ -341,6 +345,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "NOT_LORD",
         "TARGET_NOT_FOUND",
@@ -442,6 +448,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
@@ -507,6 +515,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
@@ -572,6 +582,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
@@ -690,11 +702,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -746,11 +760,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -778,11 +794,11 @@
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
-        "money": 10000,
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions (base cost; intelligence multiplier applied)",
+        "money": 5000,
         "grain": 0,
         "iron": 0,
-        "timber": 500,
+        "timber": 250,
         "horses": 0
       },
       "timing": {
@@ -802,11 +818,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -834,11 +852,11 @@
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
-        "money": 10000,
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions (base cost; intelligence multiplier applied)",
+        "money": 5000,
         "grain": 0,
         "iron": 0,
-        "timber": 500,
+        "timber": 250,
         "horses": 0
       },
       "timing": {
@@ -858,11 +876,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -914,11 +934,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -970,11 +992,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -1026,11 +1050,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -2170,11 +2196,13 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
         "WAREHOUSE_NOT_READY",
         "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -2309,92 +2337,6 @@
       "helpTopicId": "commands.action.independence",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "PLANNED"
-    },
-    {
-      "inputId": "action.randomEnlist",
-      "kind": "GENERAL_ACTION",
-      "layer": 1,
-      "actor": "GENERAL",
-      "authorityRule": "SUBJECT_OWNER",
-      "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.randomEnlist argument contract"
-      },
-      "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.randomEnlist rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
-      },
-      "timing": {
-        "phase": "POLITICS",
-        "turnSlots": 12,
-        "perPhaseLimit": 1
-      },
-      "effectScope": "ACTOR_LOCATION",
-      "failureReasons": [
-        "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
-      ],
-      "resultType": "InputResolved",
-      "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
-      },
-      "aiPolicyId": "ai.action.randomEnlist",
-      "helpTopicId": "commands.action.randomEnlist",
-      "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_랜덤임관"
-      ],
-      "deliveryState": "PLANNED"
-    },
-    {
-      "inputId": "action.targetEnlist",
-      "kind": "GENERAL_ACTION",
-      "layer": 1,
-      "actor": "GENERAL",
-      "authorityRule": "SUBJECT_OWNER",
-      "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.targetEnlist argument contract"
-      },
-      "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.targetEnlist rules",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
-      },
-      "timing": {
-        "phase": "POLITICS",
-        "turnSlots": 12,
-        "perPhaseLimit": 1
-      },
-      "effectScope": "ACTOR_LOCATION",
-      "failureReasons": [
-        "WRONG_RULE_PROFILE",
-        "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
-      ],
-      "resultType": "InputResolved",
-      "replayContract": {
-        "status": "PLANNED",
-        "key": "requestId"
-      },
-      "aiPolicyId": "ai.action.targetEnlist",
-      "helpTopicId": "commands.action.targetEnlist",
-      "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_장수대상임관"
-      ],
       "deliveryState": "PLANNED"
     },
     {
