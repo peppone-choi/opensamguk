@@ -76,7 +76,8 @@ class HwihaNpcDeploySelector(
             val city = world.getCityById(countyId) ?: return@mapNotNull null
             val hostile = city.nationId != actor.nationId && (city.nationId == 0 ||
                 (actor.nationId to city.nationId) in wars || (city.nationId to actor.nationId) in wars)
-            val garrison = HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)).troops
+            val garrison = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)).troops }
+                catch (_: IllegalArgumentException) { return@mapNotNull null }
             if (!hostile || troops < garrison.toLong() * HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO) return@mapNotNull null
             (city.nationId != 0) to Triple(hops.getValue(node.id), countyId, node)
         }

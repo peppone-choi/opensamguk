@@ -16,6 +16,7 @@ import opensamguk.gameapi.read.NationTurnReadRepository
 import opensamguk.gameapi.read.TroopReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.gameapi.web.CommandCatalogRowFactory
@@ -66,6 +67,8 @@ class ChiefCenterController(
     @GetMapping("/chief-reserved")
     fun chiefReserved(@AuthenticationPrincipal userId: Long?): ResponseEntity<ChiefReservedResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        if (world.processRuleProfile() !=
+            opensamguk.logic.input.RuleProfile.SAMMO) return ResponseEntity.notFound().build()
         val resolved = resolver.resolve(userId)
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val nationId = resolved.nationId

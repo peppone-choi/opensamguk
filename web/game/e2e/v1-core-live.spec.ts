@@ -926,27 +926,46 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
     expect(Number.isInteger(generalId) && generalId > 0, 'live scenario must expose a playable general').toBeTruthy();
     state.generalId = generalId;
 
-    const available = await apiGet(page.request, `/api/game/api/commands/available?generalId=${generalId}`);
-    writeArtifact('general-commands-available.json', { status: available.response.status(), body: available.data });
-    const commandCode = commandCodeOf(available.data);
-    expect(commandCode, 'live available command catalog').toBeTruthy();
+    const ruleProfile = ((front.global ?? {}) as Record<string, unknown>).ruleProfile;
+    let commandCode: string;
+    let commandArgs: Record<string, unknown> = {};
+    if (ruleProfile === 'HWIHA') {
+      const options = await apiGet(page.request, `/api/game/api/commands/enlistment-options?generalId=${generalId}`);
+      writeArtifact('general-enlistment-options.json', { status: options.response.status(), body: options.data });
+      expect(options.response.status()).toBe(200);
+      const choice = ((options.data as Record<string, unknown>).options as Array<Record<string, unknown>>)
+        .find(option => (option.availability as Record<string, unknown>)?.status === 'AVAILABLE');
+      expect(choice, 'HWIHA enlistment option').toBeTruthy();
+      commandCode = 'action.enlist';
+      commandArgs = { mode: choice?.mode, ...(choice?.targetId == null ? {} : { targetId: choice.targetId }) };
+    } else {
+      expect(ruleProfile).toBe('SAMMO');
+      const available = await apiGet(page.request, `/api/game/api/commands/available?generalId=${generalId}`);
+      writeArtifact('general-commands-available.json', { status: available.response.status(), body: available.data });
+      const availableCode = commandCodeOf(available.data);
+      expect(availableCode, 'SAMMO rollback command catalog').toBeTruthy();
+      commandCode = availableCode as string;
+    }
 
-    const applied = await apiPost(page.request, `/api/game/api/command/${encodeURIComponent(commandCode as string)}?generalId=${generalId}&turnIdx=0`, {});
+    const applied = await apiPost(page.request, `/api/game/api/command/${encodeURIComponent(commandCode)}?generalId=${generalId}&turnIdx=0`, commandArgs);
     const appliedRequestId = requestIdOf(applied.data);
-    const appliedTerminal = appliedRequestId ? await pollCommandResult(page.request, appliedRequestId) : null;
+    const appliedTerminal = appliedRequestId ? await pollCommandResult(page.request, appliedRequestId,
+      ruleProfile === 'HWIHA' ? 1_200_000 : Number(process.env.E2E_COMMAND_TIMEOUT_MS ?? 30_000)) : null;
     writeArtifact('command-general-applied.json', { intake: { status: applied.response.status(), body: applied.data }, requestId: appliedRequestId, terminal: appliedTerminal });
     expect(applied.response.status()).toBeLessThan(300);
     expect(appliedRequestId, 'applied command requestId').toBeTruthy();
     expect(appliedTerminal?.data).toMatchObject({ status: 'RESOLVED', ok: true });
     state.commandRequestId = appliedRequestId;
 
-    const pending = await apiPost(page.request, `/api/game/api/command/${encodeURIComponent(commandCode as string)}?generalId=${generalId}&turnIdx=1`, {});
-    const pendingRequestId = requestIdOf(pending.data);
-    writeArtifact('command-general-pending.json', { status: pending.response.status(), body: pending.data, requestId: pendingRequestId });
-    expect(pending.response.status()).toBeLessThan(300);
-    expect(pendingRequestId, 'pending command requestId').toBeTruthy();
-    const pendingTerminal = await pollCommandResult(page.request, pendingRequestId as string);
-    writeArtifact('command-general-pending-terminal.json', { requestId: pendingRequestId, ...pendingTerminal, data: pendingTerminal.data });
+    if (ruleProfile === 'SAMMO') {
+      const pending = await apiPost(page.request, `/api/game/api/command/${encodeURIComponent(commandCode)}?generalId=${generalId}&turnIdx=1`, {});
+      const pendingRequestId = requestIdOf(pending.data);
+      writeArtifact('command-general-pending.json', { status: pending.response.status(), body: pending.data, requestId: pendingRequestId });
+      expect(pending.response.status()).toBeLessThan(300);
+      expect(pendingRequestId, 'pending command requestId').toBeTruthy();
+      const pendingTerminal = await pollCommandResult(page.request, pendingRequestId as string);
+      writeArtifact('command-general-pending-terminal.json', { requestId: pendingRequestId, ...pendingTerminal, data: pendingTerminal.data });
+    }
 
     const rejected = await apiPost(page.request, '/api/game/api/command/__e2e_invalid__?generalId=0&turnIdx=0', {});
     writeArtifact('command-general-rejected.json', { status: rejected.response.status(), body: rejected.data });
@@ -958,16 +977,14 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
 
     const routes: Array<[string, string]> = [
       ['/game', 'general'],
-      ['/game/nation', 'nation'],
-      ['/game/auction', 'auction-resource'],
-      ['/game/auction?type=unique', 'auction-unique-deep-link'],
+      ['/game/hwiha/war-room', 'war-room'],
+      ['/game/hwiha/retinue', 'retinue'],
+      ['/game/hwiha/court', 'court'],
       ['/game/board', 'board'],
       ['/game/board?secret=1', 'board-secret-deep-link'],
-      ['/game/diplomacy', 'diplomacy'],
       ['/game/mailbox', 'mailbox'],
-      ['/game/betting', 'betting'],
       ['/game/select-pool', 'select-pool'],
-      ['/game/my', 'settings-vacation'],
+      ['/game/my', 'my-info'],
       ['/game/history', 'history'],
       ['/game/rankings/kingdoms', 'kingdom-roles'],
     ];
@@ -1018,6 +1035,10 @@ test('operational smoke follows che_요양 from reservation through durable exec
   try {
     const auth = await createAndLogin(context);
     page = auth.page;
+    const operationalProfile = await apiGet(page.request, '/api/game/api/front-info');
+    expect(operationalProfile.response.status()).toBe(200);
+    test.skip(((operationalProfile.data as Record<string, unknown>).global as Record<string, unknown>)?.ruleProfile !== 'SAMMO',
+      'che_요양 delta smoke is for the SAMMO rollback profile; HWIHA uses the enlistment live flow');
     await installOperationalBrowserProbe(page);
 
     const joined = await createOperationalNeutralGeneral(page);

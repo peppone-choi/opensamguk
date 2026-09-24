@@ -38,6 +38,8 @@ object HwihaS3Provisional {
 
     /** 성벽 방어 보정 상한(%) — 방비 wall/wallMax 비율만큼 방어력을 최대 이만큼 올린다. */
     const val ASSAULT_MAX_WALL_BONUS_PERCENT = 100
+    /** 縣 방비 지표가 상한일 때 성벽 패에 더하는 방어력 보정(%, 임시 균형값). */
+    const val ASSAULT_MAX_DEFENCE_BONUS_PERCENT = 50
 
     /**
      * 강공 준비 — 포위가 이 순 수만큼 순 경계를 버텨야(siege.turns ≥ 이 값) 강공할 수 있다. 사람·NPC 같다.

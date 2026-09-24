@@ -43,14 +43,14 @@ class HwihaFieldHandlerTest {
     @Test fun `fortification spends county stock and insufficient stock rejects without changes`() {
         val route = fixture.route()
         val actor = fixture.person(502, 1, route.startCity, userId = "42")
-        val warehouse = HwihaCountyWarehouse(route.startCity, 0, HwihaResources(money = 10_000, timber = 500))
+        val warehouse = HwihaCountyWarehouse(route.startCity, 0, HwihaResources(money = 5_000, timber = 250))
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1,
                 meta = city.meta + (HwihaCountyWarehouse.META_KEY to warehouse.toMetaValue())) else city
         })
         val handler = HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.defence
-        // Actor intelligence is 70: cost scales beyond the unscaled 10,000/500 stock.
+        // Actor intelligence is 70: cost scales beyond the unscaled 5,000/250 stock.
         val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaFieldInput.FORTIFY,
             actor.id, "{}", "fort-502", 42))
         assertEquals("INSUFFICIENT_STOCK", rejected.code)

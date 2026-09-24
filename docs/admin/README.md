@@ -1,14 +1,17 @@
 # 오픈삼국 관리자 매뉴얼
 
 > 상태: 현재 Gateway·게임 관리자 화면 기준
-> 마지막 검토: 2026-08-29
+> 마지막 검토: 2026-09-24
 
 관리 표면은 두 곳입니다.
 
 | 표면 | 대표 경로 | 책임 |
 |---|---|---|
 | Gateway 관리자 | `/admin` (운영 콘솔: 개요 · 회원 관리 · 게시판 관리 · 서버 제어 · 게임 환경 · 공지) | 회원, 게시판, 서버 생성·리셋·삭제, 버전, 공용·서버 환경, 공지 |
-| 게임 관리자 | `/game/admin`(허브, 탭 `?tab=settings\|generals\|stats\|logs\|diplomacy\|tournament\|status`) — 옛 `/game/admin1`, `admin2`, `admin5`, `admin7`, `admin8`, `tournament-admin` 도 그대로 열림 | 현재 월드 설정·장수 조치·통계·로그·외교·토너먼트·서버 상태 |
+| 게임 관리자 | `/game/<서버>/admin`(허브, 탭 `?tab=settings\|generals\|stats\|logs\|diplomacy\|status`) | 현재 월드 설정·장수 조치·통계·로그·외교·서버 상태 |
+
+옛 `/game/admin1`, `admin2`, `admin5`, `admin7`, `admin8`, `tournament-admin` 주소는 제거됐습니다.
+공통 운영 도구는 게임 관리 허브의 탭에서 엽니다.
 
 브라우저에서 탭이 보이는 것은 편의 기능입니다. 실제 권한은 Gateway의 `ROLE_ADMIN`, game-api의 인증 주체,
 장수 소유권·직책과 각 API의 서버 검사가 결정합니다.

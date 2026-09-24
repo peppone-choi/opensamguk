@@ -9,13 +9,13 @@ vi.mock('@/lib/serverGameUrl', async () => {
     const actual = await vi.importActual<typeof import('@/lib/serverGameUrl')>('@/lib/serverGameUrl');
     return { ...actual, useServerId: mocks.serverId };
 });
-const NONE: ControlGating = { showSecret: false, permission: 0, myLevel: 0, nationLevel: 0, isTournamentApplicationOpen: false, isBettingActive: false };
+const NONE: ControlGating = { myLevel: 0 };
 
 describe('BottomNav (모바일 5탭)', () => {
     it('renders the five S1 tabs on server-scoped hrefs and gates 국가 with a reason', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
-        render(<BottomNav gating={NONE} gatingState="ready" global={{}} />);
+        render(<BottomNav gating={NONE} gatingState="ready" />);
         expect(screen.getByRole('link', { name: '작전실' })).toHaveAttribute('href', '/game/s1/hwiha/war-room');
         expect(screen.getByRole('link', { name: '지도' })).toHaveAttribute('href', '/game/s1/map');
         expect(screen.getByRole('link', { name: '명령' })).toHaveAttribute('href', '/game/s1/hwiha/war-room#reservedCommandPanel');
@@ -28,7 +28,7 @@ describe('BottomNav (모바일 5탭)', () => {
     it('opens the department sheet from 더보기 and closes it with Escape', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
-        render(<BottomNav gating={NONE} gatingState="ready" global={{}} />);
+        render(<BottomNav gating={NONE} gatingState="ready" />);
         fireEvent.click(screen.getByRole('button', { name: '더보기' }));
         expect(screen.getByRole('dialog', { name: '부서 메뉴' })).toBeInTheDocument();
         fireEvent.keyDown(window, { key: 'Escape' });
@@ -38,7 +38,7 @@ describe('BottomNav (모바일 5탭)', () => {
     it('traps Tab inside the department sheet in both directions', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
-        render(<BottomNav gating={NONE} gatingState="ready" global={{}} />);
+        render(<BottomNav gating={NONE} gatingState="ready" />);
         fireEvent.click(screen.getByRole('button', { name: '더보기' }));
         const sheet = screen.getByRole('dialog', { name: '부서 메뉴' });
         const items = Array.from(sheet.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'));

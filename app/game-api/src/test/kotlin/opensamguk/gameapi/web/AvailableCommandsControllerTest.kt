@@ -6,6 +6,8 @@ import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.RecruitAvailability
 import opensamguk.gameapi.precheck.RecruitCrewTypeAvailability
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -43,9 +45,10 @@ class AvailableCommandsControllerTest {
     private val resolver = mock(GeneralResolver::class.java)
     private val precheck = mock(CommandPrecheckService::class.java)
     private val registry = CommandRegistry(GeneralActionPipeline())
+    private val worlds = mock(WorldStateReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(AvailableCommandsController(resolver, precheck, registry))
+        MockMvcBuilders.standaloneSetup(AvailableCommandsController(resolver, precheck, registry, worlds))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -59,8 +62,20 @@ class AvailableCommandsControllerTest {
     @AfterEach
     fun clearAuth() = SecurityContextHolder.clearContext()
 
+    private fun sammoWorld() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+    }
+
+    @Test
+    fun `legacy catalog and recruit options are absent from hwiha product API`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        mockMvc().perform(get("/api/commands/available")).andExpect(status().isNotFound)
+        mockMvc().perform(get("/api/commands/recruit/availability")).andExpect(status().isNotFound)
+    }
+
     @Test
     fun `catalog is grouped by category and carries registry-sourced fields`() {
+        sammoWorld()
         // No actor resolvable → precheckAll returns null → registry-only catalog (possible=true).
         `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
 
@@ -80,6 +95,7 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `real precheck flows into possible-false plus reason for a blocked command`() {
+        sammoWorld()
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenAnswer { inv ->
             @Suppress("UNCHECKED_CAST")
@@ -105,6 +121,7 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `catalog emits ordered forms and legacy scalar arg types`() {
+        sammoWorld()
         `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
 
         val response = mockMvc().perform(get("/api/commands/available").param("generalId", "10"))
@@ -169,6 +186,7 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `403 when authenticated caller passes a generalId that is not their own`() {
+        sammoWorld()
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
 
         mockMvc().perform(get("/api/commands/available").param("generalId", "999").with(principal(7L)))
@@ -177,6 +195,7 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `recruit availability is exposed as a typed server contract`() {
+        sammoWorld()
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(precheck.recruitAvailability(10)).thenReturn(
             RecruitAvailability(
@@ -204,12 +223,14 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `recruit availability requires an authenticated principal`() {
+        sammoWorld()
         mockMvc().perform(get("/api/commands/recruit/availability").param("generalId", "10"))
             .andExpect(status().isUnauthorized)
     }
 
     @Test
     fun `recruit availability rejects a foreign generalId even for an authenticated caller`() {
+        sammoWorld()
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
 
         mockMvc().perform(

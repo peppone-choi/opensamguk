@@ -9,17 +9,13 @@ import {
   formatInjury,
   formatOfficerLevelText,
   formatGeneralTypeCall,
-  formatVoteColor,
   getNPCColor,
   isValidObjKey,
   nextExpLevelRemain,
   calcInjury,
-  calcTournamentTerm,
   convTechLevel,
   getMaxRelativeTechLevel,
   formatLog,
-  formatTournamentStep,
-  formatTournamentType,
 } from '@/lib/utilGame';
 
 describe('binarySearch 버킷 포매터 (경계)', () => {
@@ -86,11 +82,7 @@ describe('단순 버킷/맵 포매터', () => {
     expect(getNPCColor(0)).toBeUndefined();
   });
 
-  it('formatVoteColor — 7색 순환', () => {
-    expect(formatVoteColor(0)).toBe('#ff0000');
-    expect(formatVoteColor(6)).toBe('#800080');
-    expect(formatVoteColor(7)).toBe('#ff0000');
-  });
+
 });
 
 describe('계산 포매터', () => {
@@ -112,11 +104,7 @@ describe('계산 포매터', () => {
     expect(calcInjury('strength', { leadership: 0, strength: 71, intel: 0, injury: 0 })).toBe(71);
   });
 
-  it('calcTournamentTerm — clamp 5..120', () => {
-    expect(calcTournamentTerm(3)).toBe(5);
-    expect(calcTournamentTerm(60)).toBe(60);
-    expect(calcTournamentTerm(200)).toBe(120);
-  });
+
 
   it('techLevel — convTechLevel/getMaxRelativeTechLevel clamp', () => {
     expect(convTechLevel(2500, 9)).toBe(2);
@@ -146,14 +134,5 @@ describe('formatLog — 색 태그 → span', () => {
     expect(formatLog("<span style='color:#FFFF00;'><b>국기</b></span>")).toBe('<span style="color:#FFFF00;"><b>국기</b></span>');
     expect(formatLog('<img src=x onerror=alert(1)>')).toBe('&lt;img src=x onerror=alert(1)&gt;');
     expect(formatLog('장수<script>alert(1)</script>')).toBe('장수&lt;script&gt;alert(1)&lt;/script&gt;');
-  });
-});
-
-describe('formatTournament', () => {
-  it('type/step', () => {
-    expect(formatTournamentType(0)).toBe('전력전');
-    expect(formatTournamentType(null)).toBe('?');
-    expect(formatTournamentStep(1).state).toBe('참가 모집중');
-    expect(formatTournamentStep(null).state).toBe('경기 없음');
   });
 });

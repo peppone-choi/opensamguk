@@ -29,6 +29,11 @@ data class HwihaSiegeReadRow(
 class HwihaSiegeReadRepository(private val jdbc: NamedParameterJdbcTemplate, processWorld: GameApiProcessWorld) {
     private val worldId = processWorld.worldId.value
 
+    fun activeCountyIds(): Set<Int> = jdbc.queryForList(
+        "SELECT county_id FROM hwiha_siege WHERE world_id = :world AND status = 'ACTIVE'",
+        mapOf("world" to worldId), Int::class.java,
+    ).toSet()
+
     fun involving(generalId: Int, nationId: Int): List<HwihaSiegeReadRow> = jdbc.query(
         """
         SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id,

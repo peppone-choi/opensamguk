@@ -44,6 +44,22 @@ class HwihaMusterHandlerTest {
         assertEquals(0, world.getGeneralById(owner.id)!!.experience)
     }
 
+    @Test fun `operational deploy path creates no muster target`() {
+        val route = fixture.route()
+        val owner = fixture.person(707, 1, route.startCity, userId = "42")
+        val world = fixture.world(listOf(owner to route.start), bugoks = listOf(fixture.unit(708, owner.id, 1000)),
+            cityChanges = { city -> city.copy(nationId = if (city.id == route.destinationCounty) 2 else 1) })
+        val recorder = ChangeRecorder()
+        val input = HwihaDeployInput.canonicalJson(DeployInput(owner.id, listOf(708), route.destination))
+        assertIs<HwihaTurnOutcome.Applied>(HwihaDeployHandler(world, recorder, fixture.topology, fixture.metrics)
+            .handle(owner.id, input, "deploy-707", 42))
+        val corps = HwihaDeploymentState.read(world.getGeneralById(owner.id)!!.meta)!!.corps.single()
+        assertEquals(owner.id, corps.commanderGeneralId)
+        val result = HwihaMusterHandler(world, recorder, fixture.topology, fixture.metrics)
+            .handle(owner.id, "{}", "muster-707", 42)
+        assertEquals("NO_GATHER_TARGET", assertIs<HwihaTurnOutcome.Rejected>(result).code)
+    }
+
     @Test fun `proposed military rates cannot execute`() {
         val route = fixture.route()
         val owner = fixture.person(706, 1, route.startCity, userId = "42")

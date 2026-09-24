@@ -43,6 +43,12 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/hwiha-equipment-v1.json")) {
         into("hwiha")
     }
+    from(rootProject.file("data/curated/han/hwiha-personal-encounter-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/march-tempo-targets-v1.json")) {
+        into("hwiha")
+    }
 }
 
 tasks.test { useJUnitPlatform() }

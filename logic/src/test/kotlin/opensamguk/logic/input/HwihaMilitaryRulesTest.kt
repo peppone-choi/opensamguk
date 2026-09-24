@@ -41,6 +41,10 @@ class HwihaMilitaryRulesTest {
         assertFailsWith<IllegalArgumentException> {
             HwihaCityMilitaryState.read(mapOf(HwihaCityMilitaryState.META_KEY to migrated.toMetaValue() + ("troops" to -1)))
         }
+        assertFailsWith<IllegalArgumentException> {
+            HwihaCityMilitaryState.read(mapOf(HwihaCityMilitaryState.META_KEY to
+                mapOf("version" to 1, "training" to 50, "morale" to 50)))
+        }
     }
 
     @Test fun `train morale and demobilize operate on separate city state and bounded households`() {
@@ -69,6 +73,18 @@ class HwihaMilitaryRulesTest {
         assertEquals(HwihaMilitaryFailure.BATTLE_PENDING,
             assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(request,
                 state.copy(people = listOf(person.copy(inBattle = true))), 1000, 2000, 100,
+                HwihaCityMilitaryState.INITIAL, null, design)).reason)
+    }
+
+    @Test fun `a besieged county cannot change city troops and full households cannot demobilize`() {
+        val request = HwihaMilitaryRequest(7, HwihaMilitaryInput.CONSCRIPT)
+        assertEquals(HwihaMilitaryFailure.BESIEGED,
+            assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(request,
+                state.copy(activeSiegeCountyIds = setOf(county.id)), 1000, 2000, 100,
+                HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 99_999), design)).reason)
+        assertEquals(HwihaMilitaryFailure.POPULATION_FULL,
+            assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(
+                HwihaMilitaryRequest(7, HwihaMilitaryInput.DEMOBILIZE), state, 1000, 1000, 100,
                 HwihaCityMilitaryState.INITIAL, null, design)).reason)
     }
 }

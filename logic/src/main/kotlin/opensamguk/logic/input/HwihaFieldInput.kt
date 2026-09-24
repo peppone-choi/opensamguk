@@ -35,11 +35,13 @@ enum class HwihaFieldFailure(val message: String) {
     ACTOR_NOT_FOUND("행동할 장수를 찾을 수 없습니다."),
     POSITION_UNAVAILABLE("장수의 현재 육상 위치를 확인할 수 없습니다."),
     BATTLE_PENDING("조우 처리가 끝나야 현장 행동을 할 수 있습니다."),
+    CORPS_DEPLOYED("출전 중인 부대의 지휘관은 현장 행동을 할 수 없습니다."),
     COUNTY_UNAVAILABLE("현재 위치에 행정 縣이 없습니다."),
     FOREIGN_COUNTY("현재 위치의 縣이 본인 세력의 소유가 아닙니다."),
     STATE_UNAVAILABLE("현재 縣의 소유·위치 상태를 확인할 수 없습니다."),
     WAREHOUSE_NOT_READY("縣 창고를 확인할 수 없습니다."),
     INSUFFICIENT_STOCK("縣 창고의 물자가 모자랍니다."),
+    AT_CAPACITY("현재 縣 지표가 상한에 도달해 효과가 없습니다."),
     ALREADY_PROCESSED("이 순에는 이미 현장 행동을 실행했습니다."),
 }
 
@@ -56,6 +58,9 @@ object HwihaFieldRules {
         if (request.actorId <= 0 || request.inputId !in HwihaFieldInput.INPUT_IDS) return reject(HwihaFieldFailure.INVALID_INPUT)
         val person = state.person(request.actorId) ?: return reject(HwihaFieldFailure.ACTOR_NOT_FOUND)
         if (person.inBattle) return reject(HwihaFieldFailure.BATTLE_PENDING)
+        val deployed = try { HwihaDeploymentState.read(person.meta)?.corps.orEmpty() }
+            catch (_: IllegalArgumentException) { return reject(HwihaFieldFailure.STATE_UNAVAILABLE) }
+        if (deployed.any { it.ownerGeneralId == person.id }) return reject(HwihaFieldFailure.CORPS_DEPLOYED)
         val node = person.node ?: return reject(HwihaFieldFailure.POSITION_UNAVAILABLE)
         if (state.landProvinceIds?.contains(node) != true) return reject(HwihaFieldFailure.STATE_UNAVAILABLE)
         val counties = state.counties.filter { it.provinceId == node }
@@ -76,6 +81,8 @@ object HwihaFieldRules {
         val outcome = try { HwihaDomesticEffects.applyDirect(design, inputId, levels, stats) }
             catch (_: IllegalArgumentException) { return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.INVALID_INPUT) }
             catch (_: ArithmeticException) { return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.STATE_UNAVAILABLE) }
+        if (outcome.levels == levels && outcome.credit == HwihaResources())
+            return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.AT_CAPACITY)
         if (outcome.debit != HwihaResources() || outcome.credit != HwihaResources()) {
             if (stock == null) return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.WAREHOUSE_NOT_READY)
             if (stock.debit(outcome.debit) == null)
