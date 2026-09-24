@@ -47,6 +47,8 @@ class HwihaLegacyStratagemHandlerTest {
             val execution = handler.takeExecutions().single()
             assertTrue(execution.result.ok, "$inputId: ${execution.result.code}/${execution.result.reason}")
             assertEquals("STRATAGEM", execution.result.commandKind)
+            assertEquals(inputId, execution.result.inputResolved?.inputId)
+            assertEquals("STRATAGEM", execution.result.inputResolved?.kind)
             val actor = world.getGeneralById(501)!!
             assertFalse(HwihaLegacyStratagemStock.forPhase(actor.meta, HwihaPhase(200, 1, 1)).available(inputId))
             val again = handler.handle(TurnDaemonCommand.HwihaCourtInput("again-$inputId", 501, 42, inputId, args(inputId)))

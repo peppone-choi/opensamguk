@@ -173,7 +173,7 @@ class HwihaEnlistmentPersistenceIT {
     }
     private fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>) = fixture.service(id, active, published)
 
-    @Test fun `undelivered input result slot consumption and personal time commit together and survive restart`() {
+    @Test fun `wrong channel input result slot consumption and personal time commit together and survive restart`() {
         seed(4)
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=4 AND id<>1")
         val id = WorldId(4)
@@ -186,7 +186,7 @@ class HwihaEnlistmentPersistenceIT {
         val published = mutableListOf<String>()
         val at = java.time.Instant.parse("0200-01-01T00:00:01Z")
         val result = service(id, world, published).runDueGeneralTurns(at).handled.single()
-        assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+        assertEquals("INVALID_INPUT_CHANNEL", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
         assertEquals(listOf("undelivered-request"), published)
         assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
         val after = load(4)
@@ -205,7 +205,7 @@ class HwihaEnlistmentPersistenceIT {
             as opensamguk.common.wire.CommandLifecycleResult
         assertEquals("executionRejected", stored.type)
         assertFalse(stored.ok)
-        assertEquals("NOT_DELIVERED", stored.code)
+        assertEquals("INVALID_INPUT_CHANNEL", stored.code)
         assertEquals("stratagem.play", stored.actionCode)
         assertTrue(service(id, InMemoryTurnWorld(after), published).runDueGeneralTurns(at).handled.isEmpty())
         assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)

@@ -24,7 +24,10 @@ class HwihaLegacyCourtHandlerTest {
         handler.onIssuerTurn(501)
         assertEquals(30.0, world.getNationById(1)!!.tech)
         assertEquals(0, world.getNationById(1)!!.gold)
-        assertEquals(listOf(true), handler.takeExecutions().map { it.result.ok })
+        val execution = handler.takeExecutions().single().result
+        assertTrue(execution.ok)
+        assertEquals("court.institution", execution.inputResolved?.inputId)
+        assertEquals("COURT_DECISION", execution.inputResolved?.kind)
         handler.onIssuerTurn(501)
         assertEquals(30.0, world.getNationById(1)!!.tech)
     }

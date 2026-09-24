@@ -1,6 +1,7 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.common.wire.InputResolved
 import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
@@ -277,5 +278,6 @@ class HwihaCourtHandler(
         type: String = if (ok) "executionApplied" else "executionRejected") =
         CommandLifecycleResult(type = type, ok = ok,
             commandKind = if (inputId in HwihaLegacyStratagemInput.INPUT_IDS) "STRATAGEM" else "COURT_DECISION", actionCode = inputId,
-            generalId = generalId, code = code, reason = reason)
+            generalId = generalId, code = code, reason = reason,
+            inputResolved = HwihaInputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
 }

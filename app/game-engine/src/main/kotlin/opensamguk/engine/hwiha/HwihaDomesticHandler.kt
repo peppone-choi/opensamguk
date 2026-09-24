@@ -1,6 +1,7 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.common.wire.InputResolved
 import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -136,5 +137,6 @@ class HwihaDomesticHandler(
     private fun result(generalId: Int, inputId: String, kind: String, ok: Boolean, code: String? = null, reason: String? = null,
         type: String = if (ok) "executionApplied" else "executionRejected") =
         CommandLifecycleResult(type = type, ok = ok, commandKind = kind, actionCode = inputId, generalId = generalId,
-            code = code, reason = reason)
+            code = code, reason = reason,
+            inputResolved = HwihaInputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
 }

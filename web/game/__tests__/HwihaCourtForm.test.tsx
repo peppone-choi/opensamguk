@@ -4,7 +4,7 @@ import CommandModal from '../components/CommandModal';
 import HwihaCourtForm from '../components/command/HwihaCourtForm';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
-vi.mock('../lib/api', () => ({api:{dispatchOptions:vi.fn(),dispatchPending:vi.fn(),courtDispatch:vi.fn(),courtDispatchReply:vi.fn(),commandResult:vi.fn()}}));
+vi.mock('../lib/api', () => ({api:{dispatchOptions:vi.fn(),dispatchPending:vi.fn(),courtDispatch:vi.fn(),courtDispatchReply:vi.fn(),commandResult:vi.fn(),legacyCourtOptions:vi.fn(),legacyStratagemOptions:vi.fn()}}));
 vi.mock('../lib/commandSubmit', () => ({submitCommandAndAwaitResult:vi.fn()}));
 const options = {result:true,targets:[{generalId:2,label:'조운'}],counties:[{countyId:7,label:'허현',available:true}],queued:null};
 const order = {dispatchId:'private-key',issuerId:1,targetId:2,countyId:7,issuerLabel:'유비',targetLabel:'조운',countyLabel:'허현',issuedAt:{year:200,month:1,phase:1},dueAt:{year:200,month:5,phase:1},status:'PENDING' as const};
@@ -14,6 +14,8 @@ beforeEach(() => {
  vi.mocked(api.dispatchPending).mockResolvedValue({result:true,dispatches:[]});
  vi.mocked(api.courtDispatch).mockResolvedValue({status:'AVAILABLE',requestId:'ticket'} as any);
  vi.mocked(api.courtDispatchReply).mockResolvedValue({status:'AVAILABLE',requestId:'reply'} as any);
+ vi.mocked(api.legacyCourtOptions).mockResolvedValue({inputId:'court.releaseCorps',available:false,reason:'선택지가 없습니다.',choices:[]});
+ vi.mocked(api.legacyStratagemOptions).mockResolvedValue({inputId:'stratagem.play',available:false,reason:'선택지가 없습니다.',choices:[]});
  vi.mocked(submitCommandAndAwaitResult).mockImplementation(async send => {await send();return {status:'reserved',reason:'접수'};});
 });
 async function selectDestination(){fireEvent.change(await screen.findByLabelText('직속 장수'),{target:{value:'2'}});fireEvent.change(await screen.findByLabelText('발령할 현'),{target:{value:'7'}});}

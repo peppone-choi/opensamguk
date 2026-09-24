@@ -48,7 +48,7 @@ class HwihaReservedTurnRejectionTest {
         }
     }
 
-    @Test fun `undelivered hwiha input cannot run rest or legacy AI`() {
+    @Test fun `stratagem in personal slot cannot run rest or legacy AI`() {
         val world = world("HWIHA")
         val before = world.getGeneralById(1)
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
@@ -56,7 +56,7 @@ class HwihaReservedTurnRejectionTest {
         val result = handler.handle(1, ReservedTurn("stratagem.play", "{}", requestId = "request"), 200, 1, "00:00")
         assertNull(result.definition)
         assertFalse(result.fellBack)
-        assertEquals("아직 제공되지 않는 입력입니다.", result.denyReason)
+        assertEquals("이 입력은 별도 조정·계책 채널에서 제출해야 합니다.", result.denyReason)
         assertEquals(before, world.getGeneralById(1))
         assertFalse(handler.recorder.isDirty)
     }
