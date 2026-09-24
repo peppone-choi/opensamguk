@@ -52,6 +52,12 @@ class HwihaCourtHandler(
                     "INVALID_INPUT_CHANNEL", "직접 군사 행동은 개인 행동 예약으로 입력해야 합니다.") }
             }
         }
+        for (peopleId in HwihaPeopleInput.INPUT_IDS) {
+            if (HwihaInputCatalog.load()[peopleId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[peopleId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "인물 직접 행동은 개인 행동 예약으로 입력해야 합니다.") }
+            }
+        }
         val registry = HwihaInputRegistry(HwihaInputCatalog.load(), channelHandlers)
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,

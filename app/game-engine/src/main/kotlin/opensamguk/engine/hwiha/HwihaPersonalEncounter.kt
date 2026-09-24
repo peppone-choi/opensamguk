@@ -79,7 +79,8 @@ class HwihaPersonalEncounter(
         }
         update(battle.defenderGeneralId) { it.copy(injury = battle.defenderInjury,
             meta = it.meta + (REPLAY_KEY to replay)) }
-        if (battle.outcome != HwihaPersonalEncounterBattle.Outcome.WON) {
+        // A captured traveler remains with the captor, so a local persuasion action can target them.
+        if (battle.outcome == HwihaPersonalEncounterBattle.Outcome.RETREATED) {
             check(recorder.moveGeneral(world, actorId, approach) is GeneralPositionChangeResult.Changed) {
                 "Personal encounter retreat failed"
             }
