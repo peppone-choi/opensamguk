@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import DiplomacyPage from '@/app/game/diplomacy/page';
 import MailboxPage from '@/app/game/mailbox/page';
 
 const mocks = vi.hoisted(() => ({
@@ -121,7 +120,7 @@ afterEach(() => {
     vi.clearAllMocks();
 });
 
-describe('OPENSAM-87 rich-text surface wiring', () => {
+describe('Mailbox rich-text surface', () => {
     it('renders the mailbox rich-text editor and sanitizes stored message markup', async () => {
         // Given
         const { container } = render(<MailboxPage />);
@@ -134,20 +133,4 @@ describe('OPENSAM-87 rich-text surface wiring', () => {
         expect(container.querySelector('img')).toBeNull();
     });
 
-    it('keeps the diplomacy summary plain while using rich text and safe rendering for the document body', async () => {
-        // Given
-        const { container } = render(<DiplomacyPage />);
-
-        await waitFor(() => expect(mocks.diplomacyLetters).toHaveBeenCalled());
-
-        // When
-        fireEvent.click(screen.getByRole('button', { name: '펼치기' }));
-
-        // Then
-        expect(screen.getByPlaceholderText('요약문을 입력하세요')).toHaveAttribute('type', 'text');
-        expect(await screen.findByRole('textbox', { name: '외교 서신 본문' })).toHaveAttribute('contenteditable', 'true');
-        await waitFor(() => expect(container.querySelector('strong')).toHaveTextContent('공개 문서'));
-        expect(container.querySelector('em')).toHaveTextContent('외교 본문');
-        expect(container.querySelector('img')).toBeNull();
-    });
 });

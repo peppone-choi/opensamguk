@@ -12,7 +12,8 @@ internal class HwihaNpcMusterSelector(private val topology: StrategicTopologySna
     private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
-            catalog[HwihaMilitaryInput.MUSTER]?.deliveryState?.hasHandler != true) return reserved
+            (catalog[HwihaMilitaryInput.MUSTER]?.deliveryState ?: InputDeliveryState.PLANNED) < InputDeliveryState.AI_READY)
+            return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId }) return reserved

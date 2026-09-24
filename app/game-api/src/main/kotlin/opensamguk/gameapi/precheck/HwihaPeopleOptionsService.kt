@@ -22,6 +22,8 @@ class HwihaPeopleOptionsService(private val reader: HwihaDomesticReader,
         reader.requireOwner(actorId, userId)
         fun blocked(reason: HwihaPeopleFailure) = HwihaPeopleOptions(inputId, false, reason.name, reason.message)
         if (inputId !in HwihaPeopleInput.INPUT_IDS) return blocked(HwihaPeopleFailure.INVALID_INPUT)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true)
+            return HwihaPeopleOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val projection = reader.snapshot().state ?: return blocked(HwihaPeopleFailure.STATE_UNAVAILABLE)
         val actor = projection.person(actorId) ?: return blocked(HwihaPeopleFailure.ACTOR_NOT_FOUND)
         val locationCheck = HwihaPeopleRules.assess(HwihaPeopleRequest(actorId, inputId, null), projection)

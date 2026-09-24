@@ -8,6 +8,7 @@ import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
 import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
@@ -120,6 +121,16 @@ class CommandReserveService(
         ownerUserId: Int,
     ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId)
 
+    /** Reuse the controller's verified process-world snapshot for the same HWIHA request. */
+    fun reserveWithRuleProfile(
+        generalId: Int, actionCode: String, turnIdx: Int, argJson: String?, verifiedProfile: opensamguk.logic.input.RuleProfile,
+    ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, null, verifiedProfile)
+
+    fun reserveForOwnerWithRuleProfile(
+        generalId: Int, actionCode: String, turnIdx: Int, argJson: String?, ownerUserId: Int,
+        verifiedProfile: opensamguk.logic.input.RuleProfile,
+    ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId, verifiedProfile)
+
     fun reserveV2(
         generalId: Int,
         schema: V2CommandSchema,
@@ -173,12 +184,12 @@ class CommandReserveService(
         turnIdx: Int,
         argJson: String?,
         ownerUserId: Int?,
+        verifiedProfile: opensamguk.logic.input.RuleProfile? = null,
     ): ReserveResult {
-        val config = worldStates.findProcessWorld()?.config
+        val worldProfile = (verifiedProfile ?: worldStates.processRuleProfile())
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        val worldProfile = opensamguk.logic.input.WorldRuleProfile.resolve(config)
-            ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA && actionCode !in HWIHA_RESERVABLE_ACTIONS) {
+        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
+            actionCode !in HWIHA_RESERVABLE_ACTIONS && actionCode !in COMMON_INTAKE_COMMANDS) {
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
@@ -449,6 +460,11 @@ class CommandReserveService(
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
             opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+        /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
+        val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
+            "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",
+            "selectPoolUpdate",
+        )
     }
 }
 
