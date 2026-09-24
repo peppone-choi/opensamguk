@@ -84,6 +84,7 @@ class CommandReserveService(
     private val hwihaCourtAdmission: HwihaCourtAdmission? = null,
     private val hwihaDeployAdmission: HwihaDeployAdmission? = null,
     private val hwihaScoutAdmission: HwihaScoutAdmission? = null,
+    private val hwihaTravelAdmission: HwihaTravelAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -187,6 +188,10 @@ class CommandReserveService(
             (hwihaScoutAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaTravelInput.INPUT_IDS) {
+            (hwihaTravelAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
             // 강공·항복 권고는 인자가 없다. 포위 여부는 실행 턴에 다시 본다(§4 — 조건이 안 맞으면 비용 없이 무효).
             if (ownerUserId == null || ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
@@ -413,7 +418,8 @@ class CommandReserveService(
         val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
-        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") + HWIHA_SIEGE_ACTIONS
+        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") +
+            opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
     }
 }
 

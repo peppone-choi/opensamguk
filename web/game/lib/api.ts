@@ -446,6 +446,10 @@ export const api = {
     courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
     deployOptions: (generalId: number) => get<import('./types').HwihaDeployOptions>(`/api/hwiha/deploy/options?generalId=${generalId}`),
+    travelOptions: (inputId: import('./types').HwihaTravelActionId, generalId: number) => {
+        const name = inputId === 'action.move' ? 'move' : inputId === 'action.forcedMarch' ? 'forced-march' : 'return';
+        return get<import('./types').HwihaTravelOptions>(`/api/commands/${name}-options?generalId=${generalId}`);
+    },
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),

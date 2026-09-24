@@ -371,6 +371,7 @@ class DaemonLoopConfig {
             hwihaVisionContext = visionContext,
             hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
             hwihaWarOutcomes = hwihaWarOutcomes,
+            hwihaMarchReactions = hwihaMarchReactions,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
