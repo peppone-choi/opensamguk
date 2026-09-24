@@ -324,15 +324,16 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exactly 1000 portrait identities"):
                 b.attach_portrait_ids(b._source_rows_to_rtk(duplicate_identity_rows), registry, name_map)
 
-    def test_deploy_tests_classpath_baseline_before_materializing_image_rosters(self):
+    def test_deploy_waits_for_baseline_ci_before_promoting_images(self):
         workflow = (
             Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
         ).read_text(encoding="utf-8")
 
-        self.assertLess(
-            workflow.index("- name: Build + test JVM"),
-            workflow.index("- name: Materialize RTK14 scenario stats for image build"),
-        )
+        ci_gate = workflow.index("  ci-gate:")
+        build = workflow.index("  build-jvm:")
+        promote = workflow.index("  promote-images:")
+        self.assertIn("run: python3 tools/ci/wait_for_main_ci.py", workflow[ci_gate:build])
+        self.assertIn("needs: [ci-gate, build-jvm, build-web]", workflow[promote:])
 
     def test_deploy_validates_materialized_rosters_with_runtime_importer(self):
         workflow = (
@@ -341,7 +342,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
 
         materialize = workflow.index("- name: Materialize RTK14 scenario stats for image build")
         validate = workflow.index("- name: Validate materialized scenario seed contracts")
-        image_build = workflow.index("- name: Build + push game-engine image")
+        image_build = workflow.index("- name: Build + push ${{ matrix.app }} image")
         self.assertLess(materialize, validate)
         self.assertLess(validate, image_build)
         self.assertIn(
