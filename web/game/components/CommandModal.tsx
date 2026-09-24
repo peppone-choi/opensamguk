@@ -40,6 +40,7 @@ import SelectAmountField from './command/SelectAmountField';
 import HwihaCourtForm from './command/HwihaCourtForm';
 import HwihaDeployForm from './command/HwihaDeployForm';
 import HwihaTravelForm from './command/HwihaTravelForm';
+import HwihaFieldForm, { fieldLabels, isFieldActionId } from './command/HwihaFieldForm';
 import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
@@ -599,11 +600,13 @@ export default function CommandModal({
 
                 {courtMode ? (profile === 'HWIHA' ? <HwihaCourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
                     <>
-                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option></select></label>}
+                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option>{Object.entries(fieldLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
                         {(pinnedCommand || hwihaAction) === 'action.deploy' ?
                             <HwihaDeployForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
                             isTravelActionId(pinnedCommand || hwihaAction) ?
                             <HwihaTravelForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as HwihaTravelActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isFieldActionId(pinnedCommand || hwihaAction) ?
+                            <HwihaFieldForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaFieldActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
                             <HwihaEnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx}
                                 unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
                                 onToast={onToast} onClose={onClose} onReserved={onReserved} />}

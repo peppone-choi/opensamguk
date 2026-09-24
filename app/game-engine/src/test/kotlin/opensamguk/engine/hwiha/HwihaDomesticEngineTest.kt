@@ -61,6 +61,14 @@ class HwihaDomesticEngineTest {
         return checkNotNull(HwihaDomesticBoundary(world, recorder, context).run())
     }
 
+    @Test fun `direct county actions are routed only through personal reservations`() {
+        val world = world(); val recorder = ChangeRecorder()
+        for (inputId in HwihaFieldInput.INPUT_IDS) {
+            val result = submit(world, recorder, inputId, "{}")
+            assertEquals("INVALID_INPUT_CHANNEL", result.code, inputId)
+        }
+    }
+
     @Test fun `standing inputs are accepted into the immediate channel as pending orders only`() {
         val world = world(); val recorder = ChangeRecorder()
         val result = submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")

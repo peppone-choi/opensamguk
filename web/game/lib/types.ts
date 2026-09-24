@@ -839,6 +839,12 @@ export interface HwihaDeployOptions {
 }
 
 export type HwihaTravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
+export type HwihaFieldActionId = 'action.farm' | 'action.commerce' | 'action.fortify' | 'action.repairWall'
+    | 'action.security' | 'action.settle' | 'action.selectResidents' | 'action.tour';
+export interface HwihaFieldOptions {
+    inputId: HwihaFieldActionId; available: boolean; code?: string | null; reason?: string | null;
+    countyId?: number | null; countyName?: string | null;
+}
 export interface HwihaTravelOptions {
     inputId: HwihaTravelActionId; available: boolean; code?: string | null; reason?: string | null;
     destinations: {provinceId:string;name:string;available:boolean;code?:string|null;reason?:string|null}[];

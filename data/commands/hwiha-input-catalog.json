@@ -673,17 +673,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.farm argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -694,11 +694,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.farm",
@@ -707,7 +722,7 @@
       "legacyCommands": [
         "che_농지개간"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.commerce",
@@ -716,17 +731,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.commerce argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -737,11 +752,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.commerce",
@@ -750,7 +780,7 @@
       "legacyCommands": [
         "che_상업투자"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.fortify",
@@ -759,17 +789,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.fortify argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions (base cost; intelligence multiplier applied)",
+        "money": 5000,
+        "grain": 0,
+        "iron": 0,
+        "timber": 250,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -780,11 +810,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.fortify",
@@ -793,7 +838,7 @@
       "legacyCommands": [
         "che_수비강화"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.repairWall",
@@ -802,17 +847,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.repairWall argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions (base cost; intelligence multiplier applied)",
+        "money": 5000,
+        "grain": 0,
+        "iron": 0,
+        "timber": 250,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -823,11 +868,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.repairWall",
@@ -836,7 +896,7 @@
       "legacyCommands": [
         "che_성벽보수"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.security",
@@ -845,17 +905,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.security argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
-        "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
+        "grain": 0,
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -866,11 +926,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.security",
@@ -879,7 +954,7 @@
       "legacyCommands": [
         "che_치안강화"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.settle",
@@ -888,17 +963,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.settle argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
         "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -909,11 +984,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.settle",
@@ -922,7 +1012,7 @@
       "legacyCommands": [
         "che_정착장려"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.selectResidents",
@@ -931,17 +1021,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.selectResidents argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "data/curated/han/hwiha-domestic-v1.json",
-        "money": null,
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
         "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -952,11 +1042,26 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.selectResidents",
@@ -965,7 +1070,7 @@
       "legacyCommands": [
         "che_주민선정"
       ],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.conscript",
@@ -1956,17 +2061,17 @@
       "actor": "GENERAL",
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.tour argument contract"
+        "status": "HANDLER_DEFINED",
+        "source": "HwihaFieldInput.parse + HwihaFieldRules.assess at actor position"
       },
       "costSchema": {
-        "status": "PLANNED",
-        "source": "server-side action.tour rules",
-        "money": null,
+        "status": "HANDLER_DEFINED",
+        "source": "data/curated/han/hwiha-domestic-v1.json directActions",
+        "money": 0,
         "grain": null,
-        "iron": null,
-        "timber": null,
-        "horses": null
+        "iron": 0,
+        "timber": 0,
+        "horses": 0
       },
       "timing": {
         "phase": "FIELD",
@@ -1977,18 +2082,33 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
-        "NOT_DELIVERED"
+        "NOT_DELIVERED",
+        "UNAUTHORIZED",
+        "FORBIDDEN",
+        "INVALID_TURN_SLOT",
+        "INVALID_INPUT",
+        "ACTOR_NOT_FOUND",
+        "POSITION_UNAVAILABLE",
+        "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "COUNTY_UNAVAILABLE",
+        "FOREIGN_COUNTY",
+        "STATE_UNAVAILABLE",
+        "WAREHOUSE_NOT_READY",
+        "INSUFFICIENT_STOCK",
+        "AT_CAPACITY",
+        "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
-        "status": "PLANNED",
+        "status": "HANDLER_DEFINED",
         "key": "requestId"
       },
       "aiPolicyId": "ai.action.tour",
       "helpTopicId": "commands.action.tour",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "PLANNED"
+      "deliveryState": "UI_READY"
     },
     {
       "inputId": "action.persuadeCaptive",

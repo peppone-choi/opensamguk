@@ -219,6 +219,7 @@ class ReservedTurnHandler(
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
     private val travelHandler by lazy { opensamguk.engine.hwiha.HwihaTravelHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
+    private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -313,6 +314,14 @@ class ReservedTurnHandler(
                 handlers[travelId] = InputHandler {
                     applied = travelHandler.handle(travelId, generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId)
+                }
+            }
+            for (fieldId in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS) {
+                if (hwihaCatalog[fieldId]?.deliveryState?.hasHandler == true) {
+                    handlers[fieldId] = InputHandler {
+                        applied = fieldHandler.handle(fieldId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
                 }
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)

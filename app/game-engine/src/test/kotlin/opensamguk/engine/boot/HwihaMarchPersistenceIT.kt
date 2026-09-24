@@ -83,6 +83,34 @@ class HwihaMarchPersistenceIT {
         return cold(id)
     }
 
+    @Test fun `direct county action survives flush cold reload and duplicate execution has no second effect`() {
+        val id = 690
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getCityById(countyId)!!.agriculture
+        val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext())
+        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertTrue(world.getCityById(countyId)!!.agriculture > before)
+        assertEquals(10, world.getGeneralById(1)!!.experience)
+        assertEquals(1, world.getGeneralById(1)!!.dedication)
+        assertEquals(first, HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+        assertEquals(10, cold(id).getGeneralById(1)!!.experience)
+    }
+
     @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
         val id = 618
         var world = personalMarchFixture(id)

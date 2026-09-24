@@ -18,6 +18,7 @@ data class HwihaDomesticSnapshot(
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
+    val countyLevels: Map<Int, HwihaCountyLevels> = emptyMap(),
 )
 
 /**
@@ -83,6 +84,9 @@ class HwihaDomesticReader(
                     warehouseStocks = counties.mapNotNull { c ->
                         try { HwihaCountyWarehouse.read(c.meta, c.id)?.let { c.id to it.stock } } catch (_: IllegalArgumentException) { null }
                     }.toMap(),
+                    countyLevels = counties.associate { c -> c.id to HwihaCountyLevels(c.population, c.populationMax,
+                        c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
+                        c.trust, c.defense, c.defenseMax, c.wall, c.wallMax) },
                 )
             }
         }
