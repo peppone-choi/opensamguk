@@ -191,7 +191,8 @@ class TurnDaemonLifecycle(
                 // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
                     (reserved.actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS)
+                        reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS)
                 if (fieldAction) hwihaMovementOf(g.id, reserved, null)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)

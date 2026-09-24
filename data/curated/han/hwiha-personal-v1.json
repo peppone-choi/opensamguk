@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "hwiha-personal-v1",
+  "status": "PROPOSED",
+  "note": "견문·단련·요양의 한 순 수치와 은퇴 승계 선택은 사용자 확인 중이다. 확정 전에는 예약과 실행을 열지 않는다.",
+  "experiencePerAction": 10,
+  "dedicationPerAction": 1,
+  "trainingStatGain": 1,
+  "trainingFatigueGain": 5,
+  "recuperationInjuryRecovery": 10,
+  "recuperationFatigueRecovery": 10
+}

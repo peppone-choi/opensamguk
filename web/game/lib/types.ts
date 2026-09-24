@@ -843,6 +843,11 @@ export type HwihaFieldActionId = 'action.farm' | 'action.commerce' | 'action.for
     | 'action.security' | 'action.settle' | 'action.selectResidents' | 'action.tour';
 export type HwihaMilitaryActionId = 'action.conscript' | 'action.raiseVolunteers' | 'action.train'
     | 'action.boostMorale' | 'action.muster' | 'action.demobilize';
+export type HwihaPersonalActionId = 'action.travel' | 'action.selfTrain' | 'action.recuperate';
+export interface HwihaPersonalOptions {
+    inputId: HwihaPersonalActionId; available: boolean; code?: string | null; reason?: string | null;
+    stats: Array<{stat: string; available: boolean; code?: string | null; reason?: string | null}>;
+}
 export interface HwihaMilitaryOptions {
     inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;

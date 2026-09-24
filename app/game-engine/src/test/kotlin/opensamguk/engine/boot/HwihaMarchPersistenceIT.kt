@@ -143,6 +143,26 @@ class HwihaMarchPersistenceIT {
         assertEquals(after, cold(id).getCityById(countyId))
     }
 
+    @Test fun `direct personal training survives flush cold reload and duplicate execution`() {
+        val id = 692
+        seed(id)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        val before = world.getGeneralById(1)!!
+        val design = HwihaPersonalDesign.CANON.copy(status = HwihaPersonalDesign.CONFIRMED)
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaPersonalHandler(world, recorder,
+            HwihaDomesticContext(), design).handle(HwihaPersonalInput.SELF_TRAIN, 1,
+            """{"stat":"strength"}""", "personal-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(before.stats.strength + design.trainingStatGain, world.getGeneralById(1)!!.stats.strength)
+        assertEquals(design.trainingFatigueGain,
+            HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta)!!.fatigue)
+        assertEquals(first, HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(), design)
+            .handle(HwihaPersonalInput.SELF_TRAIN, 1, """{"stat":"strength"}""", "personal-$id", 42))
+        assertEquals(before.stats.strength + design.trainingStatGain, cold(id).getGeneralById(1)!!.stats.strength)
+    }
+
     @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
         val id = 618
         var world = personalMarchFixture(id)
