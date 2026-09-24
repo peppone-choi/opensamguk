@@ -14,13 +14,13 @@ vi.mock('@/lib/auth-context', () => ({
     useAuthOptional: () => (authMock.role ? { user: { id: 1, username: 'u', nickname: null, email: null, role: authMock.role }, loading: false, refresh: vi.fn() } : null),
 }));
 
-const NONE: ControlGating = { showSecret: false, permission: 0, myLevel: 0, nationLevel: 0, isTournamentApplicationOpen: false, isBettingActive: false };
+const NONE: ControlGating = { myLevel: 0 };
 
 describe('DeptNav (부서 나브)', () => {
-    it('renders the six S1 groups and keeps blocked entries visible as dashed items with a reason', () => {
+    it('renders the six product groups with HWIHA links', () => {
         mocks.pathname.mockReturnValue('/game/s1/hwiha/war-room');
         mocks.serverId.mockReturnValue('s1');
-        render(<DeptNav gating={NONE} global={{ npcMode: 0 }} />);
+        render(<DeptNav gating={NONE} />);
 
         expect(screen.getByRole('link', { name: '작전실' })).toHaveAttribute('aria-current', 'page');
         expect(screen.getByRole('link', { name: '로비로' })).toHaveAttribute('href', expect.stringMatching(/\/lobby$/));
@@ -30,17 +30,14 @@ describe('DeptNav (부서 나브)', () => {
         }
         fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
         const menu = screen.getByRole('menu', { name: '국가 운영' });
-        const secret = within(menu).getByText('기 밀 실');
-        expect(secret).toHaveAttribute('aria-disabled', 'true');
-        expect(secret).toHaveClass('dept-nav__entry--disabled');
-        const tipId = secret.parentElement?.querySelector('[role="tooltip"]')?.id;
-        expect(document.getElementById(tipId ?? '')).toHaveTextContent('수뇌부 권한 필요');
+        expect(within(menu).getByRole('menuitem', { name: '배치 · 방침 · 공사' })).toHaveAttribute('href', '/game/s1/hwiha/posts');
+        expect(within(menu).getByRole('menuitem', { name: '조정 결정' })).toHaveAttribute('href', '/game/s1/hwiha/orders');
     });
 
-    it('resolves hrefs onto the server-scoped path and hides only server-conditioned menu items', () => {
+    it('resolves hrefs onto the server-scoped path and omits the old server menu', () => {
         mocks.pathname.mockReturnValue('/game/s1/city');
         mocks.serverId.mockReturnValue('s1');
-        render(<DeptNav gating={{ ...NONE, myLevel: 5, nationLevel: 2, showSecret: true, permission: 4 }} global={{ npcMode: 0 }} />);
+        render(<DeptNav gating={{ myLevel: 5 }} />);
 
         fireEvent.click(screen.getByRole('button', { name: /^정보/ }));
         const info = screen.getByRole('menu', { name: '정보' });
@@ -49,13 +46,13 @@ describe('DeptNav (부서 나브)', () => {
         fireEvent.click(screen.getByRole('button', { name: /^기록/ }));
         const records = screen.getByRole('menu', { name: '기록' });
         expect(within(records).queryByText('빙의일람')).not.toBeInTheDocument();
-        expect(within(records).getByText('접속량정보')).toBeInTheDocument();
+        expect(within(records).getByRole('menuitem', { name: '월단평' })).toHaveAttribute('href', '/game/s1/hwiha/yuedan');
     });
 
     it('opens a group with ArrowDown, moves focus with arrows and closes with Escape back to the button', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
-        render(<DeptNav gating={{ ...NONE, myLevel: 5, nationLevel: 2, showSecret: true, permission: 4 }} global={{}} />);
+        render(<DeptNav gating={{ myLevel: 5 }} />);
         const button = screen.getByRole('button', { name: /국가 운영/ });
         button.focus();
         fireEvent.keyDown(button, { key: 'ArrowDown' });
@@ -71,30 +68,28 @@ describe('DeptNav (부서 나브)', () => {
         expect(button).toHaveFocus();
     });
 
-    it('stays neutral while gating is loading and shows 서버 정보 없음 on error', () => {
+    it('keeps product routes visible while server information loads or fails', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
-        const { unmount } = render(<DeptNav gating={null} gatingState="loading" global={{}} />);
+        const { unmount } = render(<DeptNav gating={null} gatingState="loading" />);
         fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
-        expect(within(screen.getByRole('menu', { name: '국가 운영' })).getByRole('menuitem', { name: '기 밀 실' })).not.toHaveAttribute('aria-disabled');
+        expect(within(screen.getByRole('menu', { name: '국가 운영' })).getByRole('menuitem', { name: '보급망 · 창고' })).not.toHaveAttribute('aria-disabled');
         unmount();
-        render(<DeptNav gating={null} gatingState="error" global={{}} />);
+        render(<DeptNav gating={null} gatingState="error" />);
         fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
-        const secret = within(screen.getByRole('menu', { name: '국가 운영' })).getByText('기 밀 실');
-        expect(secret).toHaveAttribute('aria-disabled', 'true');
-        const tipId = secret.parentElement?.querySelector('[role="tooltip"]')?.id;
-        expect(document.getElementById(tipId ?? '')).toHaveTextContent('서버 정보 없음');
+        expect(within(screen.getByRole('menu', { name: '국가 운영' })).getByRole('menuitem', { name: '보급망 · 창고' })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getAllByText('서버 정보 없음').length).toBeGreaterThan(0);
     });
 
     it('shows the 관리 entry only for ADMIN accounts', () => {
         mocks.pathname.mockReturnValue('/game/s1');
         mocks.serverId.mockReturnValue('s1');
         authMock.role = 'USER';
-        const { unmount } = render(<DeptNav gating={NONE} global={{}} />);
+        const { unmount } = render(<DeptNav gating={NONE} />);
         expect(screen.queryByRole('link', { name: '관리' })).not.toBeInTheDocument();
         unmount();
         authMock.role = 'ADMIN';
-        render(<DeptNav gating={NONE} global={{}} />);
+        render(<DeptNav gating={NONE} />);
         expect(screen.getByRole('link', { name: '관리' })).toHaveAttribute('href', '/game/s1/admin');
         authMock.role = 'USER';
     });

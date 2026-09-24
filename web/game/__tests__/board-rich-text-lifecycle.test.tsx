@@ -3,20 +3,12 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BoardPage from '@/app/game/board/page';
 
-type ModalProps = {
-    extraArgs?: Record<string, unknown>;
-    onReserved?: () => void;
-    pinnedCommand?: string;
-};
-
 const apiMocks = vi.hoisted(() => ({
     board: vi.fn(),
     frontInfo: vi.fn(),
+    command: vi.fn(),
 }));
-
-const modalSpy = vi.hoisted(() => ({
-    latest: null as ModalProps | null,
-}));
+const submitMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
     useSearchParams: () => new URLSearchParams(),
@@ -49,20 +41,10 @@ vi.mock('@/components/RichTextEditor', () => ({
     ),
 }));
 
-vi.mock('@/components/CommandModal', () => ({
-    default: (props: ModalProps) => {
-        modalSpy.latest = props;
-        return (
-            <button aria-label="terminal success" onClick={() => props.onReserved?.()} type="button">
-                terminal success
-            </button>
-        );
-    },
-}));
-
 vi.mock('@/lib/api', () => ({
     api: apiMocks,
 }));
+vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: submitMock }));
 
 class EventSourceStub {
     onerror: (() => void) | null = null;
@@ -82,7 +64,11 @@ describe('Board rich text command lifecycle', () => {
             articles: [],
         });
         apiMocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: 10 } });
-        modalSpy.latest = null;
+        apiMocks.command.mockReset().mockResolvedValue({ status: 'AVAILABLE', requestId: 'board-1' });
+        submitMock.mockReset().mockImplementation(async (submit: () => Promise<unknown>) => {
+            await submit();
+            return { status: 'applied', result: {} };
+        });
         vi.stubGlobal('EventSource', EventSourceStub);
     });
 
@@ -98,19 +84,35 @@ describe('Board rich text command lifecycle', () => {
         });
         fireEvent.click(screen.getByRole('button', { name: '등록' }));
 
-        expect(await screen.findByRole('button', { name: 'terminal success' })).toBeInTheDocument();
-        expect(modalSpy.latest?.pinnedCommand).toBe('boardArticle');
-        expect(modalSpy.latest?.extraArgs).toEqual({
+        expect(await screen.findByText('등록하시겠습니까?')).toBeInTheDocument();
+        expect(apiMocks.command).not.toHaveBeenCalled();
+        expect(apiMocks.board).toHaveBeenCalledTimes(1);
+
+        fireEvent.click(screen.getAllByRole('button', { name: '등록' }).at(-1)!);
+        await waitFor(() => expect(apiMocks.command).toHaveBeenCalledWith('boardArticle', {
             isSecret: false,
             title: '',
             text: '<p><strong>천하</strong> 통일</p>',
             kind: 'general',
-        });
-        expect(apiMocks.board).toHaveBeenCalledTimes(1);
-
-        fireEvent.click(screen.getByRole('button', { name: 'terminal success' }));
+        }, 10));
 
         await waitFor(() => expect(apiMocks.board).toHaveBeenCalledTimes(2));
         expect(screen.getByTestId('rich-value')).toHaveTextContent('');
+    });
+
+    it.each(['pending', 'reserved'] as const)('closes an accepted %s article to prevent duplicate submission', async (status) => {
+        submitMock.mockImplementation(async (submit: () => Promise<unknown>) => {
+            await submit();
+            return { status, reason: '처리 지연' };
+        });
+        render(<BoardPage />);
+        await screen.findByText('게시물이 없습니다.');
+        fireEvent.click(screen.getByRole('button', { name: '내용 작성' }));
+        fireEvent.click(screen.getByRole('button', { name: '등록' }));
+        fireEvent.click(screen.getAllByRole('button', { name: '등록' }).at(-1)!);
+        await screen.findByText('접수됨 — 반영 대기');
+        expect(screen.queryByText('등록하시겠습니까?')).not.toBeInTheDocument();
+        expect(screen.getByTestId('rich-value')).toHaveTextContent('');
+        expect(apiMocks.command).toHaveBeenCalledTimes(1);
     });
 });

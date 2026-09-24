@@ -1,6 +1,6 @@
 # 오픈삼국 사용자 매뉴얼
 
-> 상태: 컷오버 A단계 문서 정리 진행 중. B단계 코드 교체와 pep 전환은 시작 전입니다. 아래 옛 화면 경로는 B단계 제품 라우트 전환 전의 사용 안내이며, 정식 게임 규칙은 휘하(ADR-LITE-065)입니다.
+> 상태: 휘하 제품 화면 전환 중. pep 운영 전환은 구현 PR들이 모두 병합된 뒤 진행합니다.
 > 마지막 검토: 2026-09-24
 
 오픈삼국은 장수 한 명의 행동을 예약하고, 국가의 사람들과 도시·자원·외교를 운영하는 웹 전략 게임입니다.
@@ -21,7 +21,7 @@
 
 - [첫 시작](./getting-started.md): 가입, 서버 선택, 장수 생성·점유, 첫 예턴
 - [게임플레이 가이드](./gameplay-guide.md): 시간, 턴, 명령, 내정, 전쟁, 외교, 승리·시즌 종료와 실패 처리
-- [기능 안내](./features.md): 지도, 랭킹, 서신, 게시판, 경매, 베팅, 투표, 유산, 토너먼트
+- [기능 안내](./features.md): 휘하 작전·조정, 지도, 랭킹, 서신, 게시판
 
 ## 화면 지도
 
@@ -30,10 +30,9 @@
 | Gateway | `/`, `/login`, `/join`, `/lobby`, `/account` | 인증, 서버 선택, 계정 설정 |
 | 휘하 작전실 | `/game/<서버>/hwiha/war-room` | 지도, 휘하 인물, 12순 명령과 최근 결과. `/game`도 같은 작전실을 엽니다 |
 | 휘하 화면 | `/game/<서버>/hwiha/{retinue,hand,posts,orders,supply,siege,court,yuedan}` | 편성, 계책, 배치, 발령, 보급, 공성, 조정, 월단평 |
-| 도시·국가 | `/game/city`, `/game/nation`, `/game/my-*` | 도시·국가·소속 장수와 자원 확인 |
-| 전쟁·외교 | `/game/battle-center`, `/game/diplomacy`, `/game/global-diplomacy` | 출병 판단, 관계와 제안 확인 |
+| 도시·국가 | `/game/city`, `/game/my-nation`, `/game/my-*` | 도시·국가·소속 장수와 자원 확인 |
+| 전쟁·외교 | `/game/<서버>/hwiha/{siege,court}`, `/game/battle-center`, `/game/global-diplomacy` | 공성 입력과 기록·관계 확인. 조정의 외교 입력은 준비 중 |
 | 기록·순위 | `/game/rankings/*`, `/game/history`, `/game/world-log` | 장수·국가·황제·명예의 전당·기록 |
-| 부가 기능 | `/game/auction`, `/game/betting`, `/game/nation-betting`, `/game/vote`, `/game/inherit`, `/game/tournament` | 열린 기간과 조건에 따른 참여 |
 | 소통 | `/board`, `/game/board`, `/game/mailbox` | 공개 게시판과 게임 내 서신 |
 
 서버의 시나리오, 시작 연도, 턴 간격, 가입 방식과 열린 이벤트에 따라 보이는 기능이 달라질 수 있습니다.
@@ -47,4 +46,4 @@
   아니라 참고 자료입니다.
 - 기존 골든은 삭제하지 않고 frozen baseline 회귀 검증으로 사용합니다.
 - 豫州 한 州의 휘하 S3 흐름은 [통과했습니다](../superpowers/specs/2026-09-23-hwiha-s3-exit-yuzhou-slice.md). 전체 지도·계책 등 남은 기능은 [제품 로드맵](../design/roadmap.md)에 있으며, 현재 제공 범위를 화면과 구분합니다.
-- 삼모 전용 부가 기능과 위 옛 경로는 컷오버 B단계에서 제품 메뉴·라우트에서 제거됩니다. 삼모 엔진·골든은 동결 회귀 기준선으로만 남습니다.
+- 삼모 전용 부가 기능과 옛 명령 예약 화면은 제품 메뉴·라우트에서 제거했습니다. 삼모 엔진·골든은 동결 회귀 기준선으로만 남습니다.
