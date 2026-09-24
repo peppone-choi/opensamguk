@@ -342,7 +342,6 @@ export default function JoinPage() {
         charm,
         character,
         pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
-
       });
       if (res.status === 'AVAILABLE' && res.requestId) {
         setJoinStatus('장수 생성 반영 중...');

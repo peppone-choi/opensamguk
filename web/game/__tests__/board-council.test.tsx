@@ -85,16 +85,20 @@ describe('BoardPage (14 회의실·기밀실)', () => {
         expect(await screen.findByRole('heading', { name: '기밀실' })).toBeInTheDocument();
         expect(screen.getByText('원소 불가침, 회신 미루자')).toBeInTheDocument();
         const kinds = screen.getByRole('tablist', { name: '글 종류' });
-        expect(within(kinds).getByRole('tab', { name: /전체/ })).toHaveTextContent('1');
+        expect(within(kinds).getByRole('tab', { name: /전체/ })).toHaveTextContent('2');
         expect(within(kinds).getByRole('tab', { name: /공지/ })).toHaveTextContent('1');
-        expect(within(kinds).queryByRole('tab', { name: /표결/ })).not.toBeInTheDocument();
-        expect(screen.queryByText('양양 확보를 병행할 것인가')).not.toBeInTheDocument();
-        expect(screen.getByText('열람 1/3', { exact: false })).toBeInTheDocument();
-        // 내(77)가 아직 안 읽은 공지(5)만 boardRead 인테이크한다.
+        expect(within(kinds).getByRole('tab', { name: /표결/ })).toHaveTextContent('1');
+        expect(screen.getByText('양양 확보를 병행할 것인가')).toBeInTheDocument();
+        expect(screen.getAllByText('열람 1/3', { exact: false })).toHaveLength(2);
+        // 내(77)가 아직 안 읽은 공지(5)만 boardRead 인테이크한다. 옛 표결 글(6)은 이미 읽었다.
         await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('boardRead', { articleNo: 5 }, 77));
         expect(mocks.command).toHaveBeenCalledTimes(1);
         // 적용되면 열람 수를 다시 읽는다(202 ≠ 성공 — 결과 뒤 재조회).
         await waitFor(() => expect(mocks.board).toHaveBeenCalledTimes(2));
+        fireEvent.click(within(kinds).getByRole('tab', { name: /표결/ }));
+        expect(screen.queryByText('원소 불가침, 회신 미루자')).not.toBeInTheDocument();
+        expect(screen.getByText('양양 확보를 병행할 것인가')).toBeInTheDocument();
+        expect(screen.queryByLabelText('표결 양양 확보 병행')).not.toBeInTheDocument();
         // 우측 레일 — 참여 스택과 활동/침묵 집계, 기밀실 안내
         expect(screen.getByText('활동 2 · 침묵 1 · NPC 제외')).toBeInTheDocument();
         expect(screen.getByText(/URL 직접 입력으로 우회할 수 없습니다/)).toBeInTheDocument();
@@ -107,6 +111,7 @@ describe('BoardPage (14 회의실·기밀실)', () => {
         expect(await screen.findByRole('heading', { name: '회의실' })).toBeInTheDocument();
         const kind = screen.getByLabelText('종류') as HTMLSelectElement;
         expect((within(kind).getByRole('option', { name: /공지/ }) as HTMLOptionElement).disabled).toBe(true);
+        expect(within(kind).queryByRole('option', { name: /표결/ })).not.toBeInTheDocument();
         fireEvent.change(kind, { target: { value: 'operation' } });
         fireEvent.change(screen.getByPlaceholderText('제목'), { target: { value: '낙양 공략' } });
         fireEvent.click(screen.getByRole('button', { name: '등록' }));

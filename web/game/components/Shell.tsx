@@ -12,7 +12,6 @@ import { useShellFrontInfo } from '../hooks/useShellFrontInfo';
 import { deliverTurnCompleted } from '../lib/turnEvents';
 import { normalizeGamePathname, useServerId } from '../lib/serverGameUrl';
 import type { ControlGating } from '../lib/dept-menu-config';
-import type { MenuFlagSource } from '../lib/menu-types';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -32,12 +31,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         if (!info?.general.hasGeneral) return null;
         return { myLevel: info.general.officerLevel };
     }, [info]);
-    const global = (info?.global ?? {}) as unknown as MenuFlagSource;
 
     return (
         <div className="shell">
             <Header info={info} error={error} />
-            <DeptNav gating={gating} gatingState={state} global={global} />
+            <DeptNav gating={gating} gatingState={state} />
             <div className="shell-body">
                 <main className="shell-main shell-scroll-surface" aria-label="게임 콘텐츠">
                     {/* 서브 페이지 공통 돌아가기/갱신 바. 메인 작전실에는 미적용. */}
@@ -45,7 +43,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
             </div>
-            <BottomNav gating={gating} gatingState={state} global={global} />
+            <BottomNav gating={gating} gatingState={state} />
         </div>
     );
 }

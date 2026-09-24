@@ -31,7 +31,7 @@
 | 휘하 작전실 | `/game/<서버>/hwiha/war-room` | 지도, 휘하 인물, 12순 명령과 최근 결과. `/game`도 같은 작전실을 엽니다 |
 | 휘하 화면 | `/game/<서버>/hwiha/{retinue,hand,posts,orders,supply,siege,court,yuedan}` | 편성, 계책, 배치, 발령, 보급, 공성, 조정, 월단평 |
 | 도시·국가 | `/game/city`, `/game/my-nation`, `/game/my-*` | 도시·국가·소속 장수와 자원 확인 |
-| 전쟁·외교 | `/game/<서버>/hwiha/{siege,court}`, `/game/battle-center`, `/game/global-diplomacy` | 공성·조정 입력과 기록·관계 확인 |
+| 전쟁·외교 | `/game/<서버>/hwiha/{siege,court}`, `/game/battle-center`, `/game/global-diplomacy` | 공성 입력과 기록·관계 확인. 조정의 외교 입력은 준비 중 |
 | 기록·순위 | `/game/rankings/*`, `/game/history`, `/game/world-log` | 장수·국가·황제·명예의 전당·기록 |
 | 소통 | `/board`, `/game/board`, `/game/mailbox` | 공개 게시판과 게임 내 서신 |
 

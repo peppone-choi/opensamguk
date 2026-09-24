@@ -41,7 +41,7 @@ type KindTab = 'all' | BoardKind;
 const KIND_LABEL: Record<BoardKind, string> = { general: '일반', vote: '표결', operation: '작전', notice: '공지' };
 const KIND_TONE: Record<BoardKind, ChipTone> = { general: 'neutral', vote: 'info', operation: 'moss', notice: 'bronze' };
 const KIND_TABS: { key: KindTab; label: string }[] = [
-    { key: 'all', label: '전체' }, { key: 'operation', label: '작전' }, { key: 'notice', label: '공지' },
+    { key: 'all', label: '전체' }, { key: 'vote', label: '표결' }, { key: 'operation', label: '작전' }, { key: 'notice', label: '공지' },
 ];
 
 // legacy BoardArticle.vue / BoardComment.vue는 `date.slice(5, 16)` → MM-DD HH:MM 로 렌더한다.
@@ -248,11 +248,11 @@ function BoardContent() {
     }, []);
 
     const counts = useMemo(() => {
-        const c: Record<KindTab, number> = { all: articles.filter((a) => kindOf(a) !== 'vote').length, general: 0, vote: 0, operation: 0, notice: 0 };
-        for (const a of articles) if (kindOf(a) !== 'vote') c[kindOf(a)] += 1;
+        const c: Record<KindTab, number> = { all: articles.length, general: 0, vote: 0, operation: 0, notice: 0 };
+        for (const a of articles) c[kindOf(a)] += 1;
         return c;
     }, [articles]);
-    const visible = articles.filter((a) => kindOf(a) !== 'vote' && (kindTab === 'all' || kindOf(a) === kindTab));
+    const visible = kindTab === 'all' ? articles : articles.filter((a) => kindOf(a) === kindTab);
     const activeCount = participants.filter((p) => p.active).length;
     const chiefs = participants.filter((p) => p.chief);
     const nation = front?.nation ?? null;

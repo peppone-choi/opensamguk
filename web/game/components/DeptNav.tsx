@@ -1,23 +1,21 @@
 'use client';
 
-// 부서 나브(44px) — ADR-LITE-049 S1. 6그룹(작전실·국가 운영·군사·정보·광장·기록)에 20버튼 + 전역 메뉴 14잎.
+// 부서 나브(44px) — 휘하 제품과 공통 읽기·소통 화면을 6그룹으로 묶는다.
 // 비활성은 숨기지 않고 점선 + 사유 툴팁(OPENSAM-113). 우측: 갱신 · 로비로 · 커뮤니티 ↗.
 // 게이팅을 아직 모르면(loading) 중립으로 두고, 서버 정보가 없으면(error) 「서버 정보 없음」만 붙인다 — 권한 사유를 지어내지 않는다.
 // 키보드: 그룹 버튼 Enter/Space/ArrowDown 으로 열고 첫 항목에 포커스, 항목 간 ArrowUp/Down·Home/End, Escape 로 닫고 버튼으로 복귀.
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { usePathname } from 'next/navigation';
-import { Chip, ReasonTooltip } from '@opensamguk/ui';
+import { ReasonTooltip } from '@opensamguk/ui';
 import { useAuthOptional } from '@/lib/auth-context';
 import {
-    buildDeptGroups,
+    DEPT_GROUPS,
     evaluateEntry,
-    groupHighlight,
     type ControlGating,
     type DeptEntryView,
     type DeptGroup,
     type GatingState,
 } from '@/lib/dept-menu-config';
-import type { MenuFlagSource } from '@/lib/menu-types';
 import {
     gameChildPath,
     normalizeGamePathname,
@@ -46,7 +44,6 @@ export function resolveDeptHref(href: string, serverId: string | undefined): str
 export interface DeptNavProps {
     gating: ControlGating | null;
     gatingState?: GatingState;
-    global: MenuFlagSource;
     /** 세로 목록(모바일 「더보기」 시트). */
     vertical?: boolean;
     onNavigate?: () => void;
@@ -108,7 +105,6 @@ function GroupMenu({
     group,
     gating,
     gatingState,
-    global,
     serverId,
     open,
     vertical,
@@ -120,7 +116,6 @@ function GroupMenu({
     group: DeptGroup;
     gating: ControlGating | null;
     gatingState: GatingState;
-    global: MenuFlagSource;
     serverId: string | undefined;
     open: boolean;
     vertical: boolean;
@@ -133,7 +128,6 @@ function GroupMenu({
     const buttonRef = useRef<HTMLButtonElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
     const single = group.entries.length === 1 && group.entries[0].kind === 'route';
-    const highlight = groupHighlight(group, gating, global);
     // 드롭다운은 position: fixed 다(그룹 줄의 가로 스크롤 컨테이너가 절대배치 메뉴를 잘라내서
     // 항목이 하나만 보였다). 좌표는 버튼 rect 에서 잡고, 열려 있는 동안 스크롤·리사이즈에 맞춰 갱신한다.
     const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
@@ -169,7 +163,10 @@ function GroupMenu({
     }, [open, vertical]);
 
     if (single) {
-        const view = evaluateEntry(group.entries[0], gating, global, gatingState);
+        const view = evaluateEntry(group.entries[0], gating, gatingState);
+        if (!view.enabled) {
+            return <ReasonTooltip reason={view.reason ?? '사용 불가'} className="os-nav-item"><span aria-disabled="true">{group.label}</span></ReasonTooltip>;
+        }
         return (
             <a
                 className={`os-nav-item${current ? ' os-nav-item--on' : ''}`}
@@ -204,11 +201,6 @@ function GroupMenu({
                 }}
             >
                 {group.label}
-                {highlight && (
-                    <Chip tone="bronze" style={{ height: 16, fontSize: 10, padding: '0 5px' }}>
-                        진행
-                    </Chip>
-                )}
                 {!vertical && <span aria-hidden="true" className="dept-nav__caret">▾</span>}
             </button>
             <ul
@@ -223,20 +215,20 @@ function GroupMenu({
                     : undefined}
             >
                 {group.entries.map((entry, i) => (
-                    <EntryRow key={i} view={evaluateEntry(entry, gating, global, gatingState)} serverId={serverId} onNavigate={onNavigate} onKeyNav={onKeyNav} />
+                    <EntryRow key={i} view={evaluateEntry(entry, gating, gatingState)} serverId={serverId} onNavigate={onNavigate} onKeyNav={onKeyNav} />
                 ))}
             </ul>
         </div>
     );
 }
 
-export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'loading', global, vertical = false, onNavigate, onReload }: DeptNavProps) {
+export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'loading', vertical = false, onNavigate, onReload }: DeptNavProps) {
     const serverId = useServerId();
     const pathname = usePathname();
     const normalized = normalizeGamePathname(pathname ?? '', serverId);
     const [openKey, setOpenKey] = useState<string | null>(null);
     const rootRef = useRef<HTMLElement>(null);
-    const groups = buildDeptGroups();
+    const groups = DEPT_GROUPS;
     const auth = useAuthOptional();
     const isAdmin = auth?.user?.role === 'ADMIN';
 
@@ -252,7 +244,7 @@ export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'load
     // 현재 경로가 속한 그룹(하이라이트용). 작전실은 /game 정확히.
     const currentGroup = groups.find((g) =>
         g.entries.some((e) => {
-            const v = evaluateEntry(e, gating, global, gatingState);
+            const v = evaluateEntry(e, gating, gatingState);
             const target = normalizeLegacyGamePath(v.href).split(/[?#]/)[0];
             return target === normalized;
         }),
@@ -267,7 +259,6 @@ export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'load
                         group={group}
                         gating={gating}
                         gatingState={gatingState}
-                        global={global}
                         serverId={serverId}
                         open={vertical || openKey === group.key}
                         vertical={vertical}

@@ -22,27 +22,28 @@ describe('휘하 제품 부서 메뉴', () => {
     expect(routes).toContain('/game/rankings');
   });
 
-  it('서버의 예전 전역 메뉴가 삼모 링크를 주어도 제품 메뉴에 반영하지 않는다', () => {
-    const serverMenu = [
-      { type: 'item' as const, name: '경매장', url: '/game/auction' },
-      { type: 'item' as const, name: '세력일람', url: '/game/rankings/kingdoms' },
-    ];
-    const routes = buildDeptGroups(serverMenu).flatMap((group) => group.entries);
+  it('정적 제품 메뉴에는 삼모 전역 링크가 없다', () => {
+    const routes = buildDeptGroups().flatMap((group) => group.entries);
     expect(routes).toEqual(DEPT_GROUPS.flatMap((group) => group.entries));
     expect(routes.some((entry) => entry.href === '/game/auction')).toBe(false);
     expect(routes.some((entry) => /\b(?:betting|tournament|inherit|vote|npc-control|troop|v2-lab)\b/.test(entry.href))).toBe(false);
-    expect(routes.every((entry) => evaluateEntry(entry, USER, {}).enabled)).toBe(true);
+    expect(routes.every((entry) => entry.href !== '/game/auction')).toBe(true);
   });
 
-  it('모바일 다섯 탭은 휘하 경로를 쓰고 국가 권한 사유를 유지한다', () => {
+  it('모바일 다섯 탭과 데스크톱 세력 정보가 같은 권한 사유를 쓴다', () => {
     expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
       '/game/hwiha/war-room', '/game/map',
       '/game/hwiha/war-room#reservedCommandPanel', '/game/my-nation', '#dept-more',
     ]);
     const nation = MOBILE_TABS.find((tab) => tab.key === 'nation')!;
-    expect(evaluateMobileTab(nation, USER, {}, 'ready')).toMatchObject({
+    const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/my-nation')!;
+    expect(evaluateEntry(desktopNation, USER, 'ready')).toMatchObject({
       enabled: false, reason: '장수 직위 이상 필요',
     });
-    expect(evaluateMobileTab(nation, { ...USER, myLevel: 1 }, {}, 'ready').enabled).toBe(true);
+    expect(evaluateMobileTab(nation, USER, 'ready')).toMatchObject({
+      enabled: false, reason: '장수 직위 이상 필요',
+    });
+    expect(evaluateMobileTab(nation, { ...USER, myLevel: 1 }, 'ready').enabled).toBe(true);
+    expect(evaluateEntry(desktopNation, null, 'error')).toMatchObject({ enabled: false, reason: '서버 정보 없음' });
   });
 });

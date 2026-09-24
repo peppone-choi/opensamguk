@@ -1,6 +1,3 @@
-import type { MenuFlagSource, MenuNode } from './menu-types';
-
-
 export type DeptKey = 'ops' | 'nation' | 'military' | 'info' | 'plaza' | 'records';
 
 export interface DeptRouteEntry {
@@ -27,14 +24,14 @@ export const OPS_ROUTE = route('작전실', '/game/hwiha/war-room');
 export const MAP_ROUTE = route('천하 지도', '/game/map');
 
 /** The product menu is local and fixed. The old server GlobalMenu describes SAMMO actions. */
-export function buildDeptGroups(_menuSource?: readonly MenuNode[]): readonly DeptGroup[] {
+export function buildDeptGroups(): readonly DeptGroup[] {
   return [
     { key: 'ops', label: '작전실', entries: [OPS_ROUTE] },
     {
       key: 'nation', label: '국가 운영', entries: [
         route('배치 · 방침 · 공사', '/game/hwiha/posts'),
         route('조정 결정', '/game/hwiha/orders'),
-        route('관직 · 외교 · 천도', '/game/hwiha/court'),
+        route('조정 구상 (입력 준비 중)', '/game/hwiha/court'),
         route('보급망 · 창고', '/game/hwiha/supply'),
         route('세력 정보', '/game/my-nation'),
         route('세력 도시', '/game/my-cities'),
@@ -101,38 +98,29 @@ export interface DeptEntryView {
 
 export function evaluateEntry(
   entry: DeptEntry,
-  _gating: ControlGating | null,
-  _global: MenuFlagSource,
-  _state: GatingState = 'ready',
+  gating: ControlGating | null,
+  state: GatingState = gating ? 'ready' : 'loading',
 ): DeptEntryView {
+  const hasServerInfo = state !== 'error';
+  const nationRoute = entry.href === '/game/my-nation';
+  const allowedByLevel = !nationRoute || !gating || gating.myLevel >= 1;
+  const enabled = hasServerInfo && allowedByLevel;
   return {
     entry,
     label: entry.label,
     href: entry.href,
-    enabled: true,
-    reason: null,
+    enabled,
+    reason: enabled ? null : !hasServerInfo ? GATING_UNKNOWN_REASON : NATION_REASON,
     highlight: false,
     newTab: false,
     hidden: false,
   };
 }
 
-export function groupHighlight(_group: DeptGroup, _gating: ControlGating | null, _global: MenuFlagSource): boolean {
-  return false;
-}
-
 export function evaluateMobileTab(
   tab: (typeof MOBILE_TABS)[number],
   gating: ControlGating | null,
-  global: MenuFlagSource,
   state: GatingState,
 ): DeptEntryView {
-  const view = evaluateEntry(route(tab.label, tab.href), gating, global, state);
-  if (tab.controlId !== 11) return view;
-  const enabled = gating ? gating.myLevel >= 1 : state === 'loading';
-  return {
-    ...view,
-    enabled,
-    reason: enabled ? null : gating ? NATION_REASON : GATING_UNKNOWN_REASON,
-  };
+  return evaluateEntry(route(tab.label, tab.href), gating, state);
 }
