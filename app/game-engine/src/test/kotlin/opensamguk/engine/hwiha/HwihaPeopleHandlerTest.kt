@@ -71,4 +71,21 @@ class HwihaPeopleHandlerTest {
         assertTrue(world.listRetainers().isEmpty())
         assertEquals(ready.experience, world.getGeneralById(actor.id)!!.experience)
     }
+
+    @Test fun `foreign lord captive is rejected before consent roll or transfer`() {
+        val route = fixture.route()
+        val actor = fixture.person(831, 1, route.startCity, userId = "42")
+        val lord = fixture.person(832, 2, route.startCity, lord = true).copy(meta =
+            fixture.person(832, 2, route.startCity, lord = true).meta +
+                ("hwihaCaptive" to mapOf("captorGeneralId" to actor.id)))
+        val world = fixture.world(listOf(actor to route.start, lord to route.start))
+        val handler = HwihaPeopleHandler(world, ChangeRecorder(), HwihaDomesticContext(), "test", ready) {
+            error("foreign lord gate must run before RNG")
+        }
+        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
+            actor.id, """{"targetGeneralId":832}""", "persuade-831", 42))
+        assertEquals(HwihaPeopleFailure.TARGET_IS_LORD.name, result.code)
+        assertEquals(lord, world.getGeneralById(lord.id))
+        assertTrue(world.listRetainers().isEmpty())
+    }
 }
