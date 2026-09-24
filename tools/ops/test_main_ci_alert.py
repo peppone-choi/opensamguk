@@ -59,15 +59,40 @@ class DecideTest(unittest.TestCase):
 
 
 class PreviousConclusionTest(unittest.TestCase):
-    def test_picks_the_latest_run_before_this_one(self):
+    def test_picks_the_run_that_finished_just_before_this_one(self):
         runs = {"workflow_runs": [
-            {"id": 200, "created_at": "2026-09-23T19:56:00Z", "conclusion": "success"},
-            {"id": 199, "created_at": "2026-09-23T19:45:00Z", "conclusion": "failure"},
-            {"id": 150, "created_at": "2026-09-23T08:00:00Z", "conclusion": "success"},
-            {"id": 201, "created_at": "2026-09-23T20:10:00Z", "conclusion": "success"},
+            {"id": 200, "updated_at": "2026-09-23T20:30:00Z", "conclusion": "success"},
+            {"id": 199, "updated_at": "2026-09-23T20:15:00Z", "conclusion": "failure"},
+            {"id": 150, "updated_at": "2026-09-23T08:30:00Z", "conclusion": "success"},
+            {"id": 201, "updated_at": "2026-09-23T20:45:00Z", "conclusion": "success"},
         ]}
         with patch.object(alert, "api", return_value=runs):
-            self.assertEqual("failure", alert.previous_conclusion("o/r", run(conclusion="success")))
+            this = run(conclusion="success", updated_at="2026-09-23T20:30:00Z")
+            self.assertEqual("failure", alert.previous_conclusion("o/r", this))
+
+    def test_out_of_order_finish_sends_one_recovery_not_two(self):
+        # 100 적색 뒤 101·102 가 만들어졌고 102 가 먼저 끝났다. 101 의 앞 상태는 초록 102 여야 한다.
+        runs = {"workflow_runs": [
+            {"id": 102, "created_at": "2026-09-23T20:02:00Z", "updated_at": "2026-09-23T20:30:00Z", "conclusion": "success"},
+            {"id": 101, "created_at": "2026-09-23T20:01:00Z", "updated_at": "2026-09-23T20:40:00Z", "conclusion": "success"},
+            {"id": 100, "created_at": "2026-09-23T19:00:00Z", "updated_at": "2026-09-23T19:30:00Z", "conclusion": "failure"},
+        ]}
+        with patch.object(alert, "api", return_value=runs):
+            late = run(id=101, conclusion="success", created_at="2026-09-23T20:01:00Z",
+                       updated_at="2026-09-23T20:40:00Z")
+            self.assertEqual("success", alert.previous_conclusion("o/r", late))
+            self.assertIsNone(alert.decide(late, None, alert.previous_conclusion("o/r", late)))
+
+    def test_rerun_that_turns_green_compares_with_its_previous_attempt(self):
+        seen = []
+
+        def fake_api(path):
+            seen.append(path)
+            return {"conclusion": "failure"}
+        with patch.object(alert, "api", side_effect=fake_api):
+            rerun = run(conclusion="success", run_attempt=2)
+            self.assertEqual("failure", alert.previous_conclusion("o/r", rerun))
+        self.assertEqual(["/repos/o/r/actions/runs/200/attempts/1"], seen)
 
 
 class MainTest(unittest.TestCase):

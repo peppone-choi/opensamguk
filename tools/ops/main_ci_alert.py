@@ -43,15 +43,24 @@ def failed_jobs(repo: str, run_id: int) -> list[str]:
 
 
 def previous_conclusion(repo: str, run: dict) -> str | None:
-    """같은 워크플로의 main push 완료 실행 중 이 실행 바로 앞의 결론."""
+    """이 실행이 끝나기 직전 main 의 CI 결론.
+
+    - 재실행(run_attempt ≥ 2)이면 같은 id 의 직전 시도가 앞 상태다 — 실패를 재실행으로 살린 복구를 놓치지 않는다.
+    - 아니면 main push 완료 실행 중 **완료 시각**(updated_at)이 바로 앞인 것. 생성 순으로 고르면 먼저 만든
+      실행이 나중에 끝날 때 두 실행이 같은 적색을 앞 상태로 보고 복구 알림이 두 번 간다.
+    - 조회는 한 쪽 100건이다. main 머지는 하루 10건 안팎이라 직전 실행이 밀려나지 않는다.
+    """
+    attempt = int(run.get("run_attempt") or 1)
+    if attempt >= 2:
+        return api(f"/repos/{repo}/actions/runs/{run['id']}/attempts/{attempt - 1}")["conclusion"]
     runs = api(
         f"/repos/{repo}/actions/workflows/{run['workflow_id']}/runs"
-        "?branch=main&event=push&status=completed&per_page=20"
+        "?branch=main&event=push&status=completed&per_page=100"
     )["workflow_runs"]
-    earlier = [r for r in runs if r["id"] != run["id"] and r["created_at"] < run["created_at"]]
+    earlier = [r for r in runs if r["id"] != run["id"] and r["updated_at"] < run["updated_at"]]
     if not earlier:
         return None
-    return max(earlier, key=lambda r: r["created_at"])["conclusion"]
+    return max(earlier, key=lambda r: r["updated_at"])["conclusion"]
 
 
 def decide(run: dict, jobs: list[str] | None, previous: str | None) -> dict | None:
