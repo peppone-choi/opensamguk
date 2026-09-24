@@ -114,9 +114,10 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `every direct military action is UI ready and has a handler`() {
+    fun `direct military actions expose their delivery state and have a handler`() {
         for (id in HwihaMilitaryInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(if (id == HwihaMilitaryInput.MUSTER) InputDeliveryState.HANDLER_READY
+                else InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
                 HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
