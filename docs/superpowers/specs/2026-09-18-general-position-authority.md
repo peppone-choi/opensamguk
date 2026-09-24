@@ -1,9 +1,18 @@
 # 장수 위치의 정본 — 省 위치 권위 (Tier-0 기반)
 
 > 작성일: 2026-09-18
-> 상태: **초안(제안).** 교차 비평·사용자 승인 전. 3단계 첫 기반, 판정문 [V59 일반화 판정](../research/2026-09-17-v59-generalization-verdict.md) §4.2·§4.3-1 의 「선행 리팩터 하나」.
+> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 0건: 해당 없음.** 3단계 첫 기반, 판정문 [V59 일반화 판정](../research/2026-09-17-v59-generalization-verdict.md) §4.2·§4.3-1 의 「선행 리팩터 하나」.
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §2.4·§4·§5.1·§6.2·§7·§17, [입력 registry 계약](./2026-09-17-input-registry-contract.md) §2(ruleProfile), ADR-LITE-050(공간 상태)·057.
 > 범위: 「장수가 어디에 있는가」의 정본과 동기 방향만 정한다. 행군 경로·조우·점유는 뒤 묶음(판정문 §4.3-2 이후)이고, 여기서는 그것들이 기댈 불변식만 둔다. 수치 없음.
+
+## 2026-09-24 구현 대조
+
+| 계약 | 현재 구현 | 처리 |
+|---|---|---|
+| HWIHA 장수와 위치 행 1:1, 城 바인딩 | `ScenarioImporter.insertGeneralPositions`, `InMemoryTurnWorld` 부팅의 orphan·missing 검사, `ChangeRecorder.recordGeneralCreate` | 계약과 일치. 별도 구현 차이 0건 |
+| 城 없는 省 이동과 도시 행동 차단 | `ChangeRecorder.moveGeneral`이 위치와 기준 城을 함께 쓰고, `isGeneralAtCity`가 도시 행동을 가른다 | 계약과 일치. 기존 SAMMO 동작은 롤백·동결 테스트 범위로만 유지 |
+
+아래 §1의 「현행 실측」과 §3의 「첫 묶음」은 작성 당시의 전후 비교다. `ruleProfile`이 아직 코드에 없다는 §3-6 문장은 역사적 선행 조건이고, 현재는 구현돼 있다. 제품 기본값을 HWIHA로 올리는 작업은 이 위치 계약 밖의 컷오버 [#249](https://github.com/peppone-choi/opensamguk/issues/249)가 맡는다.
 
 ## 1. 현행 실측(판정문에서 코드로 확인된 것)
 
